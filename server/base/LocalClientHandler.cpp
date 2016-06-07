@@ -3125,7 +3125,7 @@ void Client::requestFight(const uint16_t &fightId)
 void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std::string &text)
 {
     //send the network reply
-    removeFromQueryReceived(query_id);
+    //removeFromQueryReceived(query_id);->Some time need query the database before reply
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
     posOutput+=1;
@@ -3165,6 +3165,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             {
                 std::cerr << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
 
+                removeFromQueryReceived(query_id);
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
                 posOutput+=1;
@@ -3200,6 +3201,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             removeFromClan();
             clanChangeWithoutDb(public_and_private_informations.clan);
             //send the network reply
+            removeFromQueryReceived(query_id);
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
@@ -3232,6 +3234,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             }
             const std::vector<Client *> &players=clanList.at(public_and_private_informations.clan)->players;
             //send the network reply
+            removeFromQueryReceived(query_id);
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
@@ -3297,6 +3300,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                     haveAClan=false;
             bool isFound=playerByPseudo.find(text)!=playerByPseudo.cend();
             //send the network reply
+            removeFromQueryReceived(query_id);
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             if(isFound && !haveAClan)
             {
@@ -3341,6 +3345,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                     isIntoTheClan=true;
             bool isFound=playerByPseudo.find(text)!=playerByPseudo.cend();
             //send the network reply
+            removeFromQueryReceived(query_id);
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             if(isFound && isIntoTheClan)
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
