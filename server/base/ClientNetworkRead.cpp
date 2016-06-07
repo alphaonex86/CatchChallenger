@@ -821,7 +821,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 return false;
             }
             const uint8_t &monsterPosition=data[0x00];
-            const uint16_t &skill=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint32_t))));
+            const uint16_t &skill=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint8_t))));
             return learnSkill(monsterPosition,skill);
         }
         break;

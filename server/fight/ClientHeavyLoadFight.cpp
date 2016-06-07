@@ -67,16 +67,7 @@ void Client::loadMonsters_return()
             playerMonster.hp=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
             if(ok)
             {
-                const Monster::Stat &stat=CommonFightEngine::getStat(monster,playerMonster.level);
-                if(playerMonster.hp>stat.hp)
-                {
-                    normalOutput("monster hp: "+std::to_string(playerMonster.hp)+
-                                 " greater than max hp "+std::to_string(stat.hp)+
-                                 " for the level "+std::to_string(playerMonster.level)+
-                                 " of the monster "+std::to_string(playerMonster.monster)+
-                                 ", truncated");
-                    playerMonster.hp=stat.hp;
-                }
+                /// \warning HP need be controled after the monster type and level have been loaded
             }
             else
                 normalOutput("monster hp: "+GlobalServerData::serverPrivateVariables.db_common->value(3)+" is not a number");
@@ -367,6 +358,19 @@ void Client::loadMonsters_return()
         //finish it
         if(ok)
         {
+            const Monster::Stat &stat=CommonFightEngine::getStat(monster,playerMonster.level);
+            if(playerMonster.hp>stat.hp)
+            {
+                normalOutput("monster hp: "+std::to_string(playerMonster.hp)+
+                             " greater than max hp "+std::to_string(stat.hp)+
+                             " for the level "+std::to_string(playerMonster.level)+
+                             " of the monster database id: "+std::to_string(playerMonster.id)+
+                             ", truncated");
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                abort();
+                #endif
+                playerMonster.hp=stat.hp;
+            }
             public_and_private_informations.encyclopedia_monster[playerMonster.monster/8]|=(1<<(7-playerMonster.monster%8));
             if(place==0x01)
                 public_and_private_informations.playerMonster.push_back(playerMonster);
@@ -546,6 +550,9 @@ void Client::loadMonstersWarehouse_return()
                                  " for the level "+std::to_string(playerMonster.level)+
                                  " of the monster "+std::to_string(playerMonster.monster)+
                                  ", truncated");
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    abort();
+                    #endif
                     playerMonster.hp=stat.hp;
                 }
             }
