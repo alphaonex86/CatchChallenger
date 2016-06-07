@@ -1358,9 +1358,18 @@ void BaseWindow::on_inventory_itemSelectionChanged()
         isRecipe=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.find(items_graphical.value(item))!=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.cend();
         if(isRecipe)
         {
-            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.at(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(items_graphical.value(item))).requirements.reputation))
+            const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(items_graphical.value(item));
+            const CrafingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.at(recipeId);
+            if(!haveReputationRequirements(recipe.requirements.reputation))
             {
-                ui->inventory_description->setText(ui->inventory_description->text()+"<br />"+tr("Don't meet the requirements"));
+                QString string;
+                unsigned int index=0;
+                while(index<recipe.requirements.reputation.size())
+                {
+                    string+=reputationRequirementsToText(recipe.requirements.reputation.at(index));
+                    index++;
+                }
+                ui->inventory_description->setText(ui->inventory_description->text()+"<br />"+tr("<span style=\"color:#D50000\">Don't meet the requirements: %1</span>").arg(string));
                 isRecipe=false;
             }
         }
@@ -2946,8 +2955,24 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     if(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.cend())
     {
         Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
-        const uint8_t &recipe=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(itemId);
-        if(informations.recipes[recipe/8] & (1<<(7-recipe%8)))
+        const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(itemId);
+
+        //check if have the requirements
+        const CrafingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.at(recipeId);
+        if(!haveReputationRequirements(recipe.requirements.reputation))
+        {
+            QString string;
+            unsigned int index=0;
+            while(index<recipe.requirements.reputation.size())
+            {
+                string+=reputationRequirementsToText(recipe.requirements.reputation.at(index));
+                index++;
+            }
+            QMessageBox::information(this,tr("Information"),tr("You don't he the reputation requirements: %1").arg(string));
+            return;
+        }
+
+        if(informations.recipes[recipeId/8] & (1<<(7-recipeId%8)))
         {
             QMessageBox::information(this,tr("Information"),tr("You already know this recipe"));
             return;
