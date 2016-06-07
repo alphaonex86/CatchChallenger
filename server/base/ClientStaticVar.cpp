@@ -146,8 +146,10 @@ const std::string Client::text_commands_seem_not_right="commands seem not right:
 
 Direction Client::temp_direction;
 std::unordered_map<uint32_t,Client *> Client::playerById;
+#ifndef EPOLLCATCHCHALLENGERSERVER
 std::unordered_map<std::string,std::vector<Client *> > Client::captureCity;
 std::unordered_map<std::string,CaptureCityValidated> Client::captureCityValidatedList;
+#endif
 std::unordered_map<uint32_t,uint64_t> Client::characterCreationDateList;
 std::unordered_map<uint32_t,Clan *> Client::clanList;
 

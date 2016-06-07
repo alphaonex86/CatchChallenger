@@ -80,15 +80,19 @@ Client::Client(
     mMonsterChange(false),
     botFightCash(0),
     botFightId(0),
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     isInCityCapture(false),
+    #endif
     otherPlayerTrade(NULL),
     tradeIsValidated(false),
-    clan(NULL),
+    clan(NULL)
     #ifdef EPOLLCATCHCHALLENGERSERVER
-    socketString(NULL),
-    socketStringSize(0),
+    ,socketString(NULL),
+    socketStringSize(0)
     #endif
-    otherCityPlayerBattle(NULL)
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    ,otherCityPlayerBattle(NULL)
+    #endif
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ClientBase::public_and_private_informations_solo=&public_and_private_informations;
@@ -292,7 +296,9 @@ void Client::disconnectClient()
         playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
         playerById.erase(character_id);
         characterCreationDateList.erase(character_id);
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         leaveTheCityCapture();
+        #endif
         const uint64_t &addTime=sFrom1970()-connectedSince;
         if(addTime>5)
         {
