@@ -362,7 +362,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         while(pos<data.size())
         {
             const uint8_t &allow=data_raw[pos];
-            if(allow<1 || allow>1)
+            if(allow>=1 && allow<=1)
                 public_and_private_informations.allow.insert(static_cast<ActionAllow>(allow));
             else
             {
