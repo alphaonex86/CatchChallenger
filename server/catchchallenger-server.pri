@@ -5,11 +5,29 @@ SOURCES += \
     $$PWD/base/SqlFunction.cpp \
     $$PWD/base/BaseServer.cpp \
     $$PWD/base/BaseServerLoad.cpp \
+    $$PWD/base/BaseServerLoadProfile.cpp \
+    $$PWD/base/BaseServerLoadDatapack.cpp \
+    $$PWD/base/BaseServerLoadOther.cpp \
+    $$PWD/base/BaseServerLoadMap.cpp \
+    $$PWD/base/BaseServerLoadMapAfterDB.cpp \
+    $$PWD/base/BaseServerLoadBot.cpp \
     $$PWD/base/BaseServerLoadSQL.cpp \
     $$PWD/base/BaseServerUnload.cpp \
     $$PWD/base/BaseServerMasterLoadDictionary.cpp \
     $$PWD/base/BaseServerMasterSendDatapack.cpp \
     $$PWD/base/LocalClientHandler.cpp \
+    $$PWD/base/LocalClientHandlerMove.cpp \
+    $$PWD/base/LocalClientHandlerReputation.cpp \
+    $$PWD/base/LocalClientHandlerFightManage.cpp \
+    $$PWD/base/LocalClientHandlerObject.cpp \
+    $$PWD/base/LocalClientHandlerWarehouse.cpp \
+    $$PWD/base/LocalClientHandlerCommand.cpp \
+    $$PWD/base/LocalClientHandlerDatabaseSync.cpp \
+    $$PWD/base/LocalClientHandlerIndustries.cpp \
+    $$PWD/base/LocalClientHandlerShop.cpp \
+    $$PWD/base/LocalClientHandlerClan.cpp \
+    $$PWD/base/LocalClientHandlerMarket.cpp \
+    $$PWD/base/LocalClientHandlerCity.cpp \
     $$PWD/base/LocalClientHandlerWithoutSender.cpp \
     $$PWD/base/LocalClientHandlerQuest.cpp \
     $$PWD/base/LocalClientHandlerTrade.cpp \
@@ -41,9 +59,14 @@ SOURCES += \
     $$PWD/crafting/BaseServerCrafting.cpp \
     $$PWD/crafting/ClientLocalBroadcastCrafting.cpp \
     $$PWD/crafting/LocalClientHandlerCrafting.cpp \
-    $$PWD/fight/LocalClientHandlerFight.cpp \
-    $$PWD/fight/BaseServerFight.cpp \
     $$PWD/crafting/ClientHeavyLoadCrafting.cpp \
+    $$PWD/fight/LocalClientHandlerFight.cpp \
+    $$PWD/fight/LocalClientHandlerFightSkill.cpp \
+    $$PWD/fight/LocalClientHandlerFightBuff.cpp \
+    $$PWD/fight/LocalClientHandlerFightWild.cpp \
+    $$PWD/fight/LocalClientHandlerFightDatabase.cpp \
+    $$PWD/fight/LocalClientHandlerFightBattle.cpp \
+    $$PWD/fight/BaseServerFight.cpp \
     $$PWD/fight/ClientHeavyLoadFight.cpp \
     $$PWD/base/PreparedDBQuery.cpp \
     $$PWD/base/DatabaseBase.cpp \

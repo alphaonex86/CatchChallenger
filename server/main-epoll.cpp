@@ -839,6 +839,7 @@ int main(int argc, char *argv[])
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     TimerPurgeTokenAuthList timerPurgeTokenAuthList;
     #endif
+    #ifndef EPOLLCATCHCHALLENGERSERVER
     {
         GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
         const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-sFrom1970();
@@ -849,6 +850,7 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
     }
+    #endif
     {
         if(!timerDdos.start(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval*1000))
         {

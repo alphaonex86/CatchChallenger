@@ -125,121 +125,6 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
     }
 }
 
-void Client::syncMonsterBuff(const PlayerMonster &monster)
-{
-    char raw_buff[(1+1+1)*monster.buffs.size()];
-    uint8_t lastBuffId=0;
-    uint32_t sub_index=0;
-    while(sub_index<monster.buffs.size())
-    {
-        const PlayerBuff &buff=monster.buffs.at(sub_index);
-
-        #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-        //not ordened
-        uint8_t buffInt;
-        if(lastBuffId<=buff.buff)
-        {
-            buffInt=buff.buff-lastBuffId;
-            lastBuffId=buff.buff;
-        }
-        else
-        {
-            buffInt=256-lastBuffId+buff.buff;
-            lastBuffId=buff.buff;
-        }
-        #else
-        //ordened
-        const uint8_t &buffInt=buff.buff-lastBuffId;
-        lastBuffId=buff.buff;
-        #endif
-
-        raw_buff[sub_index*3+0]=buffInt;
-        raw_buff[sub_index*3+1]=buff.level;
-        raw_buff[sub_index*3+2]=buff.remainingNumberOfTurn;
-        sub_index++;
-    }
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_buff.compose(
-                binarytoHexa(raw_buff,sizeof(raw_buff)),
-                std::to_string(monster.id)
-                );
-    dbQueryWriteCommon(queryText);
-}
-
-void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
-{
-    char skills_endurance[monster.skills.size()*(1)];
-    char skills[monster.skills.size()*(2+1)];
-    unsigned int sub_index=0;
-    uint16_t lastSkillId=0;
-    const unsigned int &sub_size=monster.skills.size();
-    while(sub_index<sub_size)
-    {
-        const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(sub_index);
-        skills_endurance[sub_index]=playerSkill.endurance;
-
-        #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-        //not ordened
-        uint16_t skillInt;
-        if(lastSkillId<=playerSkill.skill)
-        {
-            skillInt=playerSkill.skill-lastSkillId;
-            lastSkillId=playerSkill.skill;
-        }
-        else
-        {
-            skillInt=65536-lastSkillId+playerSkill.skill;
-            lastSkillId=playerSkill.skill;
-        }
-        #else
-        //ordened
-        const uint16_t &skillInt=playerSkill.skill-lastSkillId;
-        lastSkillId=playerSkill.skill;
-        #endif
-
-        *reinterpret_cast<uint16_t *>(skills+sub_index*(2+1))=htole16(skillInt);
-        skills[2+sub_index*(2+1)]=playerSkill.level;
-
-        sub_index++;
-    }
-    const std::string &queryText=PreparedDBQueryCommon::db_query_monster_update_skill_and_endurance.compose(
-                binarytoHexa(skills,sizeof(skills)),
-                binarytoHexa(skills_endurance,sizeof(skills_endurance)),
-                std::to_string(monster.id)
-                );
-    dbQueryWriteCommon(queryText);
-}
-
-void Client::syncMonsterEndurance(const PlayerMonster &monster)
-{
-    char skills_endurance[monster.skills.size()*(1)];
-    unsigned int sub_index=0;
-    const unsigned int &sub_size=monster.skills.size();
-    while(sub_index<sub_size)
-    {
-        const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(sub_index);
-        skills_endurance[sub_index]=playerSkill.endurance;
-
-        sub_index++;
-    }
-    const std::string &queryText=PreparedDBQueryCommon::db_query_monster_update_endurance.compose(
-                binarytoHexa(skills_endurance,sizeof(skills_endurance)),
-                std::to_string(monster.id)
-                );
-    dbQueryWriteCommon(queryText);
-}
-
-void Client::saveAllMonsterPosition()
-{
-    const std::vector<PlayerMonster> &playerMonsterList=getPlayerMonster();
-    unsigned int index=0;
-    while(index<playerMonsterList.size())
-    {
-        const PlayerMonster &playerMonster=playerMonsterList.at(index);
-        saveMonsterPosition(playerMonster.id,index+1);
-        index++;
-    }
-}
-
 bool Client::checkKOCurrentMonsters()
 {
     if(getCurrentMonster()->hp==0)
@@ -352,48 +237,6 @@ void Client::fightFinished()
     CommonFightEngine::fightFinished();
 }
 
-void Client::syncForEndOfTurn()
-{
-    if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
-        saveStat();
-}
-
-void Client::saveStat()
-{
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    {
-        PlayerMonster * currentMonster=getCurrentMonster();
-        PublicPlayerMonster * otherMonster=getOtherMonster();
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
-        if(currentMonster!=NULL)
-            if(currentMonster->hp>currentMonsterStat.hp)
-            {
-                errorOutput("saveStat() The hp "+std::to_string(currentMonster->hp)+
-                            " of current monster "+std::to_string(currentMonster->monster)+
-                            " is greater than the max "+std::to_string(currentMonsterStat.hp)
-                            );
-                return;
-            }
-        if(otherMonster!=NULL)
-            if(otherMonster->hp>otherMonsterStat.hp)
-            {
-                errorOutput("saveStat() The hp "+std::to_string(otherMonster->hp)+
-                            " of other monster "+std::to_string(otherMonster->monster)+
-                            " is greater than the max "+std::to_string(otherMonsterStat.hp)
-                            );
-                return;
-            }
-    }
-    #endif
-    const PlayerMonster * const monster=getCurrentMonster();
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_hp_only.compose(
-                std::to_string(monster->hp),
-                std::to_string(monster->id)
-                );
-    dbQueryWriteCommon(queryText);
-}
-
 bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     if(isInFight())
@@ -462,15 +305,12 @@ bool Client::botFightStart(const uint32_t &botFightId)
     return true;
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
 void Client::setInCityCapture(const bool &isInCityCapture)
 {
     this->isInCityCapture=isInCityCapture;
 }
-
-Client *Client::getOtherPlayerBattle() const
-{
-    return otherPlayerBattle;
-}
+#endif
 
 PublicPlayerMonster *Client::getOtherMonster()
 {
@@ -485,44 +325,7 @@ PublicPlayerMonster *Client::getOtherMonster()
     return CommonFightEngine::getOtherMonster();
 }
 
-void Client::wildDrop(const uint32_t &monster)
-{
-    std::vector<MonsterDrops> drops=GlobalServerData::serverPrivateVariables.monsterDrops.at(monster);
-    if(questsDrop.find(monster)!=questsDrop.cend())
-        drops.insert(drops.end(),questsDrop.at(monster).begin(),questsDrop.at(monster).end());
-    unsigned int index=0;
-    bool success;
-    uint32_t quantity;
-    while(index<drops.size())
-    {
-        const uint32_t &tempLuck=drops.at(index).luck;
-        const uint32_t &quantity_min=drops.at(index).quantity_min;
-        const uint32_t &quantity_max=drops.at(index).quantity_max;
-        if(tempLuck==100)
-            success=true;
-        else
-        {
-            if(rand()%100<(int32_t)tempLuck)
-                success=true;
-            else
-                success=false;
-        }
-        if(success)
-        {
-            if(quantity_max==1)
-                quantity=1;
-            else if(quantity_min==quantity_max)
-                quantity=quantity_min;
-            else
-                quantity=rand()%(quantity_max-quantity_min+1)+quantity_min;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            normalOutput("Win "+std::to_string(quantity)+" item: "+std::to_string(drops.at(index).item));
-            #endif
-            addObjectAndSend(drops.at(index).item,quantity);
-        }
-        index++;
-    }
-}
+
 
 bool Client::isInFight() const
 {
@@ -531,299 +334,12 @@ bool Client::isInFight() const
     return otherPlayerBattle!=NULL || battleIsValidated;
 }
 
-bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint32_t &skill)
-{
-    if(monsterPosition>=public_and_private_informations.playerMonster.size())
-    {
-        errorOutput("The monster is not found: "+std::to_string(monsterPosition));
-        return false;
-    }
-    unsigned int index=monsterPosition;
-    const PlayerMonster &monster=public_and_private_informations.playerMonster.at(index);
-    unsigned int sub_index2=0;
-    while(sub_index2<monster.skills.size())
-    {
-        if(monster.skills.at(sub_index2).skill==skill)
-            break;
-        sub_index2++;
-    }
-    int sub_index=0;
-    const int &list_size=CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size();
-    while(sub_index<list_size)
-    {
-        const Monster::AttackToLearn &learn=CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.at(sub_index);
-        if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
-        {
-            if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills.at(sub_index2).level+1)==learn.learnSkillLevel)
-            {
-                if(CommonSettingsServer::commonSettingsServer.useSP)
-                {
-                    const Skill &skillStructure=CommonDatapack::commonDatapack.monsterSkills.at(learn.learnSkill);
-                    const uint32_t &sp=skillStructure.level.at(learn.learnSkillLevel-1).sp_to_learn;
-                    if(sp>monster.sp)
-                    {
-                        errorOutput("The attack require "+std::to_string(sp)+" sp to be learned, you have only "+std::to_string(monster.sp));
-                        return false;
-                    }
-                    public_and_private_informations.playerMonster[index].sp-=sp;
-                    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_sp_only.compose(
-                                std::to_string(public_and_private_informations.playerMonster.at(index).sp),
-                                std::to_string(public_and_private_informations.playerMonster.at(index).id)
-                                );
-                    dbQueryWriteCommon(queryText);
-                }
-                if(learn.learnSkillLevel==1)
-                {
-                    PlayerMonster::PlayerSkill temp;
-                    temp.skill=skill;
-                    temp.level=1;
-                    temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(temp.skill).level.front().endurance;
-                    public_and_private_informations.playerMonster[index].skills.push_back(temp);
-                    /*const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
-                    stringreplaceOne(queryText,"%1",std::to_string(monsterId));
-                    stringreplaceOne(queryText,"%2",std::to_string(temp.skill));
-                    stringreplaceOne(queryText,"%3","1");
-                    stringreplaceOne(queryText,"%4",std::to_string(temp.endurance));
-                    dbQueryWriteCommon(queryText);*/
-                }
-                else
-                {
-                    public_and_private_informations.playerMonster[index].skills[sub_index2].level++;
-                    /*const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_skill_level;
-                    stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.at(index).skills.at(sub_index2).level));
-                    stringreplaceOne(queryText,"%2",std::to_string(monsterId));
-                    stringreplaceOne(queryText,"%3",std::to_string(skill));
-                    dbQueryWriteCommon(queryText);*/
-                }
-                syncMonsterSkillAndEndurance(public_and_private_informations.playerMonster[index]);
-                return true;
-            }
-        }
-        sub_index++;
-    }
-    errorOutput("The skill "+std::to_string(skill)+" is not into learn skill list for the monster");
-    return false;
-}
-
-bool Client::isInBattle() const
-{
-    return (otherPlayerBattle!=NULL && battleIsValidated);
-}
-
-void Client::registerBattleRequest(Client *otherPlayerBattle)
-{
-    if(isInBattle())
-    {
-        normalOutput("Already in battle, internal error");
-        return;
-    }
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput(otherPlayerBattle->public_and_private_informations.public_informations.pseudo+" have requested battle with you");
-    #endif
-    this->otherPlayerBattle=otherPlayerBattle;
-    otherPlayerBattle->otherPlayerBattle=this;
-
-    //send the network reply
-    uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xDF;
-    posOutput+=1+1+4;
-
-    {
-        const std::string &text=otherPlayerBattle->public_and_private_informations.public_informations.pseudo;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
-        posOutput+=1;
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-        posOutput+=text.size();
-    }
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=otherPlayerBattle->public_and_private_informations.public_informations.skinId;
-    posOutput+=1;
-
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
-    sendBattleRequest(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-}
-
-void Client::battleCanceled()
-{
-    if(otherPlayerBattle!=NULL)
-        otherPlayerBattle->internalBattleCanceled(true);
-    internalBattleCanceled(true);
-}
-
-void Client::battleAccepted()
-{
-    if(otherPlayerBattle!=NULL)
-        otherPlayerBattle->internalBattleAccepted(true);
-    internalBattleAccepted(true);
-}
-
-void Client::battleFakeAccepted(Client *otherPlayer)
-{
-    battleFakeAcceptedInternal(otherPlayer);
-    otherPlayer->battleFakeAcceptedInternal(this);
-    otherPlayerBattle->internalBattleAccepted(true);
-    internalBattleAccepted(true);
-}
-
-void Client::battleFakeAcceptedInternal(Client * otherPlayer)
-{
-    this->otherPlayerBattle=otherPlayer;
-}
-
-void Client::battleFinished()
-{
-    if(!battleIsValidated)
-        return;
-    if(otherPlayerBattle==NULL)
-        return;
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput("Battle finished");
-    #endif
-    otherPlayerBattle->resetBattleAction();
-    resetBattleAction();
-    Client *tempOtherPlayerBattle=otherPlayerBattle;
-    otherPlayerBattle->battleFinishedReset();
-    battleFinishedReset();
-    updateCanDoFight();
-    tempOtherPlayerBattle->updateCanDoFight();
-}
-
-void Client::battleFinishedReset()
-{
-    otherPlayerBattle=NULL;
-    battleIsValidated=false;
-    mHaveCurrentSkill=false;
-    mMonsterChange=false;
-}
-
-void Client::resetTheBattle()
-{
-    //reset out of battle
-    mHaveCurrentSkill=false;
-    mMonsterChange=false;
-    battleIsValidated=false;
-    otherPlayerBattle=NULL;
-    updateCanDoFight();
-}
-
-void Client::internalBattleCanceled(const bool &send)
-{
-    if(otherPlayerBattle==NULL)
-    {
-        //normalOutput(QLatin1String("Battle already canceled"));
-        return;
-    }
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput("Battle canceled");
-    #endif
-    bool needUpdateCanDoFight=false;
-    if(battleIsValidated)
-        needUpdateCanDoFight=true;
-    otherPlayerBattle=NULL;
-    if(send)
-    {
-        //send the network message
-        ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x51;
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1);
-        receiveSystemText("Battle declined");
-    }
-    battleIsValidated=false;
-    mHaveCurrentSkill=false;
-    mMonsterChange=false;
-    if(needUpdateCanDoFight)
-        updateCanDoFight();
-}
-
-void Client::internalBattleAccepted(const bool &send)
-{
-    if(otherPlayerBattle==NULL)
-    {
-        normalOutput("Can't accept battle if not in battle");
-        return;
-    }
-    if(battleIsValidated)
-    {
-        normalOutput("Battle already validated");
-        return;
-    }
-    if(!otherPlayerBattle->getAbleToFight())
-    {
-        errorOutput("The other player can't fight");
-        return;
-    }
-    if(!getAbleToFight())
-    {
-        errorOutput("You can't fight");
-        return;
-    }
-    #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
-    normalOutput("Battle accepted");
-    #endif
-    startTheFight();
-    battleIsValidated=true;
-    mHaveCurrentSkill=false;
-    mMonsterChange=false;
-    if(send)
-    {
-        std::vector<PlayerMonster> playerMonstersPreview=otherPlayerBattle->public_and_private_informations.playerMonster;
-
-        //send the network message
-        uint32_t posOutput=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x52;
-        posOutput+=1+4;
-
-        {
-            const std::string &text=otherPlayerBattle->public_and_private_informations.public_informations.pseudo;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
-            posOutput+=1;
-            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-            posOutput+=text.size();
-        }
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=otherPlayerBattle->public_and_private_informations.public_informations.skinId;
-        posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=playerMonstersPreview.size();
-        posOutput+=1;
-        unsigned int index=0;
-        while(index<playerMonstersPreview.size() && index<255)
-        {
-            if(!monsterIsKO(playerMonstersPreview.at(index)))
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
-            else
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
-            posOutput+=1;
-            index++;
-        }
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
-        posOutput+=1;
-        posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster()));
-
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-    }
-}
-
-bool Client::haveBattleAction() const
-{
-    return mHaveCurrentSkill || mMonsterChange;
-}
-
-void Client::resetBattleAction()
-{
-    mHaveCurrentSkill=false;
-    mMonsterChange=false;
-}
-
 uint8_t Client::getOtherSelectedMonsterNumber() const
 {
     if(!isInBattle())
         return 0;
     else
         return otherPlayerBattle->getCurrentSelectedMonsterNumber();
-}
-
-void Client::haveUsedTheBattleAction()
-{
-    mHaveCurrentSkill=false;
-    mMonsterChange=false;
 }
 
 bool Client::currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const
@@ -841,117 +357,6 @@ bool Client::currentMonsterAttackFirst(const PlayerMonster * currentMonster,cons
     }
     else
         return CommonFightEngine::currentMonsterAttackFirst(currentMonster,otherMonster);
-}
-
-uint8_t Client::selectedMonsterNumberToMonsterPlace(const uint8_t &selectedMonsterNumber)
-{
-    return selectedMonsterNumber+1;
-}
-
-void Client::sendBattleReturn()
-{
-    unsigned int index,master_index;
-
-    //send the network message
-    uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x50;
-    posOutput+=1+4;
-
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturn.size();
-    posOutput+=1;
-    master_index=0;
-    while(master_index<attackReturn.size())
-    {
-        const Skill::AttackReturn &attackReturnTemp=attackReturn.at(master_index);
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.doByTheCurrentMonster;
-        posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.attackReturnCase;
-        posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.success;
-        posOutput+=1;
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(attackReturnTemp.attack);
-        posOutput+=2;
-        //ad buff
-        index=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.addBuffEffectMonster.size();
-        posOutput+=1;
-        while(index<attackReturnTemp.addBuffEffectMonster.size())
-        {
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.addBuffEffectMonster.at(index).buff;
-            posOutput+=1;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.addBuffEffectMonster.at(index).on;
-            posOutput+=1;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.addBuffEffectMonster.at(index).level;
-            posOutput+=1;
-            index++;
-        }
-        //remove buff
-        index=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.removeBuffEffectMonster.size();
-        posOutput+=1;
-        while(index<attackReturnTemp.removeBuffEffectMonster.size())
-        {
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.removeBuffEffectMonster.at(index).buff;
-            posOutput+=1;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.removeBuffEffectMonster.at(index).on;
-            posOutput+=1;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.removeBuffEffectMonster.at(index).level;
-            posOutput+=1;
-            index++;
-        }
-        //life effect
-        index=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.lifeEffectMonster.size();
-        posOutput+=1;
-        while(index<attackReturnTemp.lifeEffectMonster.size())
-        {
-            *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(attackReturnTemp.lifeEffectMonster.at(index).quantity);
-            posOutput+=4;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.lifeEffectMonster.at(index).on;
-            posOutput+=1;
-            index++;
-        }
-        //buff effect
-        index=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.buffLifeEffectMonster.size();
-        posOutput+=1;
-        while(index<attackReturnTemp.buffLifeEffectMonster.size())
-        {
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(attackReturnTemp.buffLifeEffectMonster.at(index).quantity);
-            posOutput+=4;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.buffLifeEffectMonster.at(index).on;
-            posOutput+=1;
-            index++;
-        }
-        master_index++;
-    }
-    if(otherPlayerBattle!=NULL && otherPlayerBattle->haveMonsterChange())
-    {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
-        posOutput+=1;
-        posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,*getOtherMonster());
-    }
-    attackReturn.clear();
-
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-}
-
-void Client::sendBattleMonsterChange()
-{
-    //send the network message
-    uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x50;
-    posOutput+=1+4;
-
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0;
-    posOutput+=1;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
-    posOutput+=1;
-    posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,*getOtherMonster());
-
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 //return true if change level, multiplicator do at datapack loading
@@ -1025,7 +430,9 @@ bool Client::finishTheTurn(const bool &isBot)
         {
             if(isBot)
             {
+                #ifndef EPOLLCATCHCHALLENGERSERVER
                 if(!isInCityCapture)
+                #endif
                 {
                     addCash(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(botFightId).cash);
                     public_and_private_informations.bot_already_beaten.insert(botFightId);
@@ -1044,27 +451,6 @@ bool Client::finishTheTurn(const bool &isBot)
         fightOrBattleFinish(win,0);
     }
     return win;
-}
-
-bool Client::useSkill(const uint32_t &skill)
-{
-    normalOutput("use the skill: "+std::to_string(skill));
-    if(!isInBattle())//wild or bot
-    {
-        CommonFightEngine::useSkill(skill);
-        return finishTheTurn(!botFightMonsters.empty());
-    }
-    else
-    {
-        if(haveBattleAction())
-        {
-            errorOutput("Have already a battle action");
-            return false;
-        }
-        mHaveCurrentSkill=true;
-        mCurrentSkillId=skill;
-        return checkIfCanDoTheTurn();
-    }
 }
 
 bool Client::bothRealPlayerIsReady() const
@@ -1117,11 +503,6 @@ bool Client::checkIfCanDoTheTurn()
     return true;
 }
 
-void Client::emitBattleWin()
-{
-    fightOrBattleFinish(true,0);
-}
-
 bool Client::dropKOOtherMonster()
 {
     const bool &commonReturn=CommonFightEngine::dropKOOtherMonster();
@@ -1141,243 +522,9 @@ bool Client::dropKOOtherMonster()
     return commonReturn || battleReturn;
 }
 
-uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonster)
-{
-    int position=999999;
-    bool ok;
-    const uint32_t monster_id=getMonsterId(&ok);
-    if(!ok)
-    {
-        errorFightEngine("No more monster id: getMonsterId(&ok) failed");
-        return 0;
-    }
-
-    char raw_skill_endurance[newMonster.skills.size()*(1)];
-    char raw_skill[newMonster.skills.size()*(2+1)];
-    {
-        unsigned int sub_index=0;
-        uint16_t lastSkillId=0;
-        const unsigned int &sub_size=newMonster.skills.size();
-        while(sub_index<sub_size)
-        {
-            const PlayerMonster::PlayerSkill &playerSkill=newMonster.skills.at(sub_index);
-            raw_skill_endurance[sub_index]=playerSkill.endurance;
-
-            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-            //not ordened
-            uint16_t skillInt;
-            if(lastSkillId<=playerSkill.skill)
-            {
-                skillInt=playerSkill.skill-lastSkillId;
-                lastSkillId=playerSkill.skill;
-            }
-            else
-            {
-                skillInt=65536-lastSkillId+playerSkill.skill;
-                lastSkillId=playerSkill.skill;
-            }
-            #else
-            //ordened
-            const uint16_t &skillInt=playerSkill.skill-lastSkillId;
-            lastSkillId=playerSkill.skill;
-            #endif
-
-            *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skillInt);
-            raw_skill[2+sub_index*(2+1)]=playerSkill.level;
-
-            sub_index++;
-        }
-    }
-
-    char raw_buff[(1+1+1)*newMonster.buffs.size()];
-    {
-        uint8_t lastBuffId=0;
-        uint32_t sub_index=0;
-        while(sub_index<newMonster.buffs.size())
-        {
-            const PlayerBuff &buff=newMonster.buffs.at(sub_index);
-
-            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-            //not ordened
-            uint8_t buffInt;
-            if(lastBuffId<=buff.buff)
-            {
-                buffInt=buff.buff-lastBuffId;
-                lastBuffId=buff.buff;
-            }
-            else
-            {
-                buffInt=256-lastBuffId+buff.buff;
-                lastBuffId=buff.buff;
-            }
-            #else
-            //ordened
-            const uint8_t &buffInt=buff.buff-lastBuffId;
-            lastBuffId=buff.buff;
-            #endif
-
-            raw_buff[sub_index*3+0]=buffInt;
-            raw_buff[sub_index*3+1]=buff.level;
-            raw_buff[sub_index*3+2]=buff.remainingNumberOfTurn;
-            sub_index++;
-        }
-    }
-
-    if(toStorage)
-    {
-        public_and_private_informations.warehouse_playerMonster.push_back(newMonster);
-        public_and_private_informations.warehouse_playerMonster.back().id=monster_id;
-        position=public_and_private_informations.warehouse_playerMonster.size();
-        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_full.compose(
-                    std::to_string(monster_id),
-                    std::to_string(character_id),
-                    "2",
-                    std::to_string(newMonster.hp),
-                    std::to_string(newMonster.monster),
-                    std::to_string(newMonster.level),
-                    std::to_string(newMonster.catched_with),
-                    std::to_string((uint8_t)newMonster.gender),
-                    std::to_string(character_id),
-                    std::to_string(position),
-                    binarytoHexa(raw_buff,sizeof(raw_buff)),
-                    binarytoHexa(raw_skill,sizeof(raw_skill)),
-                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
-                    );
-        dbQueryWriteCommon(queryText);
-    }
-    else
-    {
-        public_and_private_informations.playerMonster.push_back(newMonster);
-        public_and_private_informations.playerMonster.back().id=monster_id;
-        position=public_and_private_informations.playerMonster.size();
-        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_full.compose(
-                    std::to_string(monster_id),
-                    std::to_string(character_id),
-                    "1",
-                    std::to_string(newMonster.hp),
-                    std::to_string(newMonster.monster),
-                    std::to_string(newMonster.level),
-                    std::to_string(newMonster.catched_with),
-                    std::to_string((uint8_t)newMonster.gender),
-                    std::to_string(character_id),
-                    std::to_string(position),
-                    binarytoHexa(raw_buff,sizeof(raw_buff)),
-                    binarytoHexa(raw_skill,sizeof(raw_skill)),
-                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
-                    );
-        dbQueryWriteCommon(queryText);
-    }
-
-    /*unsigned int index=0;
-    while(index<newMonster.skills.size())
-    {
-        std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
-        stringreplaceOne(queryText,"%1",std::to_string(monster_id));
-        stringreplaceOne(queryText,"%2",std::to_string(newMonster.skills.at(index).skill));
-        stringreplaceOne(queryText,"%3",std::to_string(newMonster.skills.at(index).level));
-        stringreplaceOne(queryText,"%4",std::to_string(newMonster.skills.at(index).endurance));
-        dbQueryWriteCommon(queryText);
-        index++;
-    }
-    index=0;
-    while(index<newMonster.buffs.size())
-    {
-        if(CommonDatapack::commonDatapack.monsterBuffs.at(newMonster.buffs.at(index).buff).level.at(newMonster.buffs.at(index).level).duration==Buff::Duration_Always)
-        {
-            std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_buff;
-            stringreplaceOne(queryText,"%1",std::to_string(monster_id));
-            stringreplaceOne(queryText,"%2",std::to_string(newMonster.buffs.at(index).buff));
-            stringreplaceOne(queryText,"%3",std::to_string(newMonster.buffs.at(index).level));
-            dbQueryWriteCommon(queryText);
-        }
-        index++;
-    }*/
-    wildMonsters.erase(wildMonsters.begin());
-    return monster_id;
-}
-
-bool Client::haveCurrentSkill() const
-{
-    return mHaveCurrentSkill;
-}
-
-uint32_t Client::getCurrentSkill() const
-{
-    return mCurrentSkillId;
-}
-
 bool Client::haveMonsterChange() const
 {
     return mMonsterChange;
-}
-
-int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
-{
-    const int &returnCode=CommonFightEngine::addCurrentBuffEffect(effect);
-    if(returnCode==-2)
-        return returnCode;
-    if(CommonDatapack::commonDatapack.monsterBuffs.at(effect.buff).level.at(effect.level-1).duration==Buff::Duration_Always)
-    {
-        //if(returnCode==-1)
-            switch(effect.on)
-            {
-                case ApplyOn_AloneEnemy:
-                case ApplyOn_AllEnemy:
-                if(isInBattle())
-                {
-                    syncMonsterBuff(*otherPlayerBattle->getCurrentMonster());
-                    /*std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_buff;
-                    stringreplaceOne(queryText,"%1",std::to_string(->id));
-                    stringreplaceOne(queryText,"%2",std::to_string(effect.buff));
-                    stringreplaceOne(queryText,"%3",std::to_string(effect.level));
-                    dbQueryWriteCommon(queryText);*/
-                }
-                break;
-                case ApplyOn_Themself:
-                case ApplyOn_AllAlly:
-                {
-                    syncMonsterBuff(*getCurrentMonster());
-                    /*std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_buff;
-                    stringreplaceOne(queryText,"%1",std::to_string(getCurrentMonster()->id));
-                    stringreplaceOne(queryText,"%2",std::to_string(effect.buff));
-                    stringreplaceOne(queryText,"%3",std::to_string(effect.level));
-                    dbQueryWriteCommon(queryText);*/
-                }
-                break;
-                default:
-                    errorOutput("Not apply match, can't apply the buff");
-                break;
-            }
-        /*else
-            switch(effect.on)
-            {
-                case ApplyOn_AloneEnemy:
-                case ApplyOn_AllEnemy:
-                if(isInBattle())
-                {
-                    std::string queryText=PreparedDBQueryCommon::db_query_update_monster_level;
-                    stringreplaceOne(queryText,"%1",std::to_string(otherPlayerBattle->getCurrentMonster()->id));
-                    stringreplaceOne(queryText,"%2",std::to_string(effect.buff));
-                    stringreplaceOne(queryText,"%3",std::to_string(effect.level));
-                    dbQueryWriteCommon(queryText);
-                }
-                break;
-                case ApplyOn_Themself:
-                case ApplyOn_AllAlly:
-                {
-                    std::string queryText=PreparedDBQueryCommon::db_query_update_monster_level;
-                    stringreplaceOne(queryText,"%1",std::to_string(getCurrentMonster()->id));
-                    stringreplaceOne(queryText,"%2",std::to_string(effect.buff));
-                    stringreplaceOne(queryText,"%3",std::to_string(effect.level));
-                    dbQueryWriteCommon(queryText);
-                }
-                break;
-                default:
-                    errorOutput("Not apply match, can't apply the buff");
-                break;
-            }*/
-    }
-    return returnCode;
 }
 
 bool Client::moveUpMonster(const uint8_t &number)
@@ -1497,35 +644,6 @@ Skill::AttackReturn Client::doTheCurrentMonsterAttack(const uint32_t &skill, con
     if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
         doTurnIfChangeOfMonster=false;
     return attackReturn.back();
-}
-
-uint8_t Client::decreaseSkillEndurance(const uint32_t &skill)
-{
-    PlayerMonster * currentMonster=getCurrentMonster();
-    if(currentMonster==NULL)
-    {
-        errorOutput("Unable to locate the current monster");
-        return 0;
-    }
-    const uint8_t &newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
-    if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
-    {
-        /*std::string queryText=PreparedDBQueryCommon::db_query_monster_skill;
-        stringreplaceOne(queryText,"%1",std::to_string(newEndurance));
-        stringreplaceOne(queryText,"%2",std::to_string(currentMonster->id));
-        stringreplaceOne(queryText,"%3",std::to_string(skill));
-        dbQueryWriteCommon(queryText);*/
-        syncMonsterEndurance(*currentMonster);
-    }
-    else
-    {
-        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
-        {
-            //deferedEnduranceSync[currentMonster][skill]=newEndurance;
-            deferedEnduranceSync.insert(currentMonster);
-        }
-    }
-    return newEndurance;
 }
 
 std::vector<uint8_t> Client::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
@@ -1715,38 +833,6 @@ void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue
     dbQueryWriteCommon(queryText);
 }
 
-bool Client::removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId)
-{
-    if(currentMonster==NULL)
-    {
-        errorOutput("removeBuffOnMonster(): PlayerMonster * currentMonster==NULL");
-        return false;
-    }
-    const bool returnVal=CommonFightEngine::removeBuffOnMonster(currentMonster,buffId);
-    if(returnVal)
-    {
-        /*cosnt std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_specific_buff;
-        stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
-        stringreplaceOne(queryText,"%2",std::to_string(buffId));
-        dbQueryWriteCommon(queryText);*/
-        syncMonsterBuff(*currentMonster);
-    }
-    return returnVal;
-}
-
-bool Client::removeAllBuffOnMonster(PlayerMonster * currentMonster)
-{
-    const bool &returnVal=CommonFightEngine::removeAllBuffOnMonster(currentMonster);
-    if(returnVal)
-    {
-        /*std::string queryText=PreparedDBQueryCommon::db_query_delete_monster_buff;
-        stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
-        dbQueryWriteCommon(queryText);*/
-        syncMonsterBuff(*currentMonster);
-    }
-    return returnVal;
-}
-
 bool Client::addLevel(PlayerMonster * monster, const uint8_t &numberOfLevel)
 {
     if(!CommonFightEngine::addLevel(monster,numberOfLevel))
@@ -1763,41 +849,7 @@ bool Client::addLevel(PlayerMonster * monster, const uint8_t &numberOfLevel)
     return true;
 }
 
-bool Client::addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill)
+uint8_t Client::selectedMonsterNumberToMonsterPlace(const uint8_t &selectedMonsterNumber)
 {
-    if(!CommonFightEngine::addSkill(currentMonster,skill))
-        return false;
-    /*std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
-    stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
-    stringreplaceOne(queryText,"%2",std::to_string(skill.skill));
-    stringreplaceOne(queryText,"%3",std::to_string(skill.level));
-    stringreplaceOne(queryText,"%4",std::to_string(skill.endurance));
-    dbQueryWriteCommon(queryText);*/
-    syncMonsterSkillAndEndurance(*currentMonster);
-    return true;
-}
-
-bool Client::setSkillLevel(PlayerMonster * currentMonster,const unsigned int &index,const uint8_t &level)
-{
-    if(!CommonFightEngine::setSkillLevel(currentMonster,index,level))
-        return false;
-    /*std::string queryText=PreparedDBQueryCommon::db_query_update_monster_skill_level;
-    stringreplaceOne(queryText,"%1",std::to_string(level));
-    stringreplaceOne(queryText,"%2",std::to_string(currentMonster->id));
-    stringreplaceOne(queryText,"%3",std::to_string(currentMonster->skills.at(index).skill));
-    dbQueryWriteCommon(queryText);*/
-    syncMonsterSkillAndEndurance(*currentMonster);
-    return true;
-}
-
-bool Client::removeSkill(PlayerMonster * currentMonster,const unsigned int &index)
-{
-    if(!CommonFightEngine::removeSkill(currentMonster,index))
-        return false;
-    /*const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_specific_skill;
-    stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
-    stringreplaceOne(queryText,"%2",std::to_string(currentMonster->skills.at(index).skill));
-    dbQueryWriteCommon(queryText);*/
-    syncMonsterSkillAndEndurance(*currentMonster);
-    return true;
+    return selectedMonsterNumber+1;
 }
