@@ -178,13 +178,13 @@ protected:
     void unload_dictionary();
     void unload_profile();
 
-    void loadMonsterBuffs(const uint32_t &index);
+/*    void loadMonsterBuffs(const uint32_t &index);
     static void loadMonsterBuffs_static(void *object);
     void loadMonsterBuffs_return();
 
     void loadMonsterSkills(const uint32_t &index);
     static void loadMonsterSkills_static(void *object);
-    void loadMonsterSkills_return();
+    void loadMonsterSkills_return();*/
 
     bool initialize_the_database();
     void loadBotFile(const std::string &mapfile, const std::string &fileName);
@@ -209,6 +209,7 @@ protected:
     #ifdef EPOLLCATCHCHALLENGERSERVER
     std::vector<CATCHCHALLENGER_XMLDOCUMENT *> toDeleteAfterBotLoad;
     #endif
+    bool preload_market_monsters_prices_call;
 
     static std::regex regexXmlFile;
 };

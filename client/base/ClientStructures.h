@@ -61,6 +61,22 @@ struct ServerForSelection
     uint32_t playedTime;
     uint32_t lastConnect;
 };
+
+struct MarketObject
+{
+    uint32_t marketObjectUniqueId;
+    uint16_t item;
+    uint32_t quantity;
+    uint64_t price;
+};
+struct MarketMonster
+{
+    uint32_t index;
+    uint16_t monster;
+    uint8_t level;
+    uint64_t price;
+};
+
 }
 
 #endif // CATCHCHALLENGER_CLIENT_STRUCTURES_H

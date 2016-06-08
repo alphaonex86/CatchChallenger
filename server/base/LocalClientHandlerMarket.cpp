@@ -28,7 +28,7 @@ void Client::getMarketList(const uint32_t &query_id)
 
     unsigned int index;
     std::vector<MarketItem> marketItemList,marketOwnItemList;
-    std::vector<MarketPlayerMonster> marketPlayerMonsterList,marketOwnPlayerMonsterList;
+    std::vector<MarketPlayerMonster> marketMonsterList,marketOwnMonsterList;
     //object filter
     index=0;
     while(index<GlobalServerData::serverPrivateVariables.marketItemList.size())
@@ -46,9 +46,9 @@ void Client::getMarketList(const uint32_t &query_id)
     {
         const MarketPlayerMonster &marketPlayerMonster=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(index);
         if(marketPlayerMonster.player==character_id)
-            marketOwnPlayerMonsterList.push_back(marketPlayerMonster);
+            marketOwnMonsterList.push_back(marketPlayerMonster);
         else
-            marketPlayerMonsterList.push_back(marketPlayerMonster);
+            marketMonsterList.push_back(marketPlayerMonster);
         index++;
     }
     //object
@@ -60,29 +60,31 @@ void Client::getMarketList(const uint32_t &query_id)
         const MarketItem &marketObject=marketItemList.at(index);
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.marketObjectUniqueId);
         posOutput+=4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.item);
-        posOutput+=4;
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(marketObject.item);
+        posOutput+=2;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.quantity);
         posOutput+=4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.cash);
-        posOutput+=4;
+        const uint64_t &cash_temp=htole64(marketObject.price);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&cash_temp,sizeof(uint64_t));
+        posOutput+=sizeof(uint64_t);
         index++;
     }
     //monster
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonsterList.size());
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketMonsterList.size());
     posOutput+=4;
     index=0;
-    while(index<marketPlayerMonsterList.size())
+    while(index<marketMonsterList.size())
     {
-        const MarketPlayerMonster &marketPlayerMonster=marketPlayerMonsterList.at(index);
+        const MarketPlayerMonster &marketPlayerMonster=marketMonsterList.at(index);
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.monster.id);
         posOutput+=4;
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(marketPlayerMonster.monster.monster);
         posOutput+=2;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=marketPlayerMonster.monster.level;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.cash);
-        posOutput+=4;
+        const uint64_t &cash_temp=htole64(marketPlayerMonster.price);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&cash_temp,sizeof(uint64_t));
+        posOutput+=sizeof(uint64_t);
         index++;
     }
     //own object
@@ -94,29 +96,31 @@ void Client::getMarketList(const uint32_t &query_id)
         const MarketItem &marketObject=marketOwnItemList.at(index);
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.marketObjectUniqueId);
         posOutput+=4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.item);
-        posOutput+=4;
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(marketObject.item);
+        posOutput+=2;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.quantity);
         posOutput+=4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketObject.cash);
-        posOutput+=4;
+        const uint64_t &cash_temp=htole64(marketObject.price);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&cash_temp,sizeof(uint64_t));
+        posOutput+=sizeof(uint64_t);
         index++;
     }
     //own monster
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonsterList.size());
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketOwnMonsterList.size());
     posOutput+=4;
     index=0;
-    while(index<marketPlayerMonsterList.size())
+    while(index<marketOwnMonsterList.size())
     {
-        const MarketPlayerMonster &marketPlayerMonster=marketPlayerMonsterList.at(index);
+        const MarketPlayerMonster &marketPlayerMonster=marketOwnMonsterList.at(index);
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.monster.id);
         posOutput+=4;
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(marketPlayerMonster.monster.monster);
         posOutput+=2;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=marketPlayerMonster.monster.level;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(marketPlayerMonster.cash);
-        posOutput+=4;
+        const uint64_t &cash_temp=htole64(marketPlayerMonster.price);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&cash_temp,sizeof(uint64_t));
+        posOutput+=sizeof(uint64_t);
         index++;
     }
 
@@ -160,7 +164,7 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
                 return;
             }
             //check if have the price
-            if((quantity*marketItem.cash)>public_and_private_informations.cash)
+            if((quantity*marketItem.price)>public_and_private_informations.cash)
             {
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
@@ -188,14 +192,14 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
                             );
                 dbQueryWriteServer(queryText);
             }
-            removeCash(quantity*marketItem.cash);
+            removeCash(quantity*marketItem.price);
             if(playerById.find(marketItem.player)!=playerById.cend())
             {
-                if(!playerById.at(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.cash))
+                if(!playerById.at(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.price))
                     normalOutput("Problem at market cash adding");
             }
             const std::string &queryText=PreparedDBQueryServer::db_query_update_charaters_market_cash.compose(
-                        std::to_string(quantity*marketItem.cash),
+                        std::to_string(quantity*marketItem.price),
                         std::to_string(marketItem.player)
                         );
             dbQueryWriteServer(queryText);
@@ -246,7 +250,7 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &marketMon
         if(marketPlayerMonster.monster.id==marketMonsterUniqueId)
         {
             //check if have the price
-            if(marketPlayerMonster.cash>public_and_private_informations.cash)
+            if(marketPlayerMonster.price>public_and_private_informations.cash)
             {
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
@@ -256,11 +260,11 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &marketMon
             }
             //apply the buy
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.erase(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.begin()+index);
-            removeCash(marketPlayerMonster.cash);
+            removeCash(marketPlayerMonster.price);
             //entry created at first server connexion
             {
                 const std::string &queryText=PreparedDBQueryServer::db_query_update_charaters_market_cash.compose(
-                            std::to_string(marketPlayerMonster.cash),
+                            std::to_string(marketPlayerMonster.price),
                             std::to_string(marketPlayerMonster.player)
                             );
                 dbQueryWriteServer(queryText);
@@ -295,7 +299,7 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &marketMon
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price)
+void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity,const uint64_t &price)
 {
     if(getInTrade() || isInFight())
     {
@@ -331,7 +335,7 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
         if(marketItem.player==character_id && marketItem.item==objectId)
         {
             removeObject(objectId,quantity);
-            GlobalServerData::serverPrivateVariables.marketItemList[index].cash=price;
+            GlobalServerData::serverPrivateVariables.marketItemList[index].price=price;
             GlobalServerData::serverPrivateVariables.marketItemList[index].quantity+=quantity;
 
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
@@ -370,7 +374,7 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
                 );
     dbQueryWriteServer(queryText);
     MarketItem marketItem;
-    marketItem.cash=price;
+    marketItem.price=price;
     marketItem.item=objectId;
     marketItem.marketObjectUniqueId=marketObjectIdList.front();
     marketItem.player=character_id;
@@ -384,7 +388,7 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-void Client::putMarketMonster(const uint32_t &query_id,const uint8_t &monsterPosition,const uint32_t &price)
+void Client::putMarketMonster(const uint32_t &query_id, const uint8_t &monsterPosition, const uint64_t &price)
 {
     if(getInTrade() || isInFight())
     {
@@ -419,7 +423,7 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint8_t &monsterPos
         return;
     }
     MarketPlayerMonster marketPlayerMonster;
-    marketPlayerMonster.cash=price;
+    marketPlayerMonster.price=price;
     marketPlayerMonster.monster=playerMonster;
     marketPlayerMonster.player=character_id;
     dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_place.compose(
@@ -435,8 +439,7 @@ void Client::putMarketMonster(const uint32_t &query_id,const uint8_t &monsterPos
     {
         const std::string &queryText=PreparedDBQueryServer::db_query_insert_monster_market_price.compose(
                 std::to_string(marketPlayerMonster.monster.id),
-                std::to_string(price),
-                std::to_string(character_id)
+                std::to_string(price)
                 );
         dbQueryWriteServer(queryText);
     }
@@ -612,6 +615,13 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
             }
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.erase(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.begin()+index);
             addPlayerMonster(marketPlayerMonster.monster);
+            {
+                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_place.compose(
+                                "1",
+                                std::to_string(marketPlayerMonster.monster.id)
+                            );
+                dbQueryWriteCommon(queryText);
+            }
 
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
