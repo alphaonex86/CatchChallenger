@@ -555,6 +555,12 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
                 return false;
             }
             in >> buff.level;
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster buff level, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            in >> buff.remainingNumberOfTurn;
             monster.buffs.push_back(buff);
             sub_index++;
         }
@@ -606,7 +612,7 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
         PlayerMonster monster;
         PlayerBuff buff;
         PlayerMonster::PlayerSkill skill;
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
         {
             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster id bd, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return false;
@@ -699,6 +705,12 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
                 return false;
             }
             in >> buff.level;
+            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster buff level, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            in >> buff.remainingNumberOfTurn;
             monster.buffs.push_back(buff);
             sub_index++;
         }

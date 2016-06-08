@@ -411,11 +411,11 @@ public:
     void getMarketList();
     void buyMarketObject(const uint32_t &marketObjectId,const uint32_t &quantity=1);
     void buyMarketMonsterByPosition(const uint16_t &monsterPosition);
-    void putMarketObject(const uint32_t &objectId,const uint32_t &quantity,const uint64_t &price);
+    void putMarketObject(const uint16_t &objectId, const uint32_t &quantity, const uint64_t &price);
     void putMarketMonsterByPosition(const uint8_t &monsterPosition,const uint64_t &price);
     void recoverMarketCash();
     void withdrawMarketObject(const uint16_t &objectPosition, const uint32_t &quantity=1);
-    void withdrawMarketMonsterByPosition(const uint16_t &monsterPosition);
+    void withdrawMarketMonster(const uint32_t &monsterMarketId);
 };
 }
 

@@ -543,11 +543,9 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
             qRegisterMetaType<std::vector<uint8_t> >("std::vector<uint8_t>");//for battleAcceptedByOther(stat,publicPlayerMonster);
             qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-            qRegisterMetaType<std::vector<MarketMonster> >("std::vector<MarketMonster>");
             qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
             qRegisterMetaType<std::vector<uint8_t> >("std::vector<uint8_t>");//for battleAcceptedByOther(stat,publicPlayerMonster);
             qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-            qRegisterMetaType<std::vector<MarketMonster> >("std::vector<MarketMonster>");
             qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
             #if ! defined (ONLYMAPRENDER)
             qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");

@@ -808,21 +808,6 @@ struct BotFight
     std::vector<Item> items;
 };
 
-struct MarketObject
-{
-    uint16_t index;
-    uint16_t objectId;
-    uint32_t quantity;
-    uint64_t price;
-};
-struct MarketMonster
-{
-    uint16_t index;
-    uint16_t monster;
-    uint8_t level;
-    uint64_t price;
-};
-
 struct IndustryStatus
 {
     uint32_t last_update;

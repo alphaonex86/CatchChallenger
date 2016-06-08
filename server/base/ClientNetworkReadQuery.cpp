@@ -300,42 +300,36 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 }
                 const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                 pos+=sizeof(uint32_t);
-                if((size-pos)<(int)sizeof(uint32_t))
+                if((size-pos)<(int)sizeof(uint64_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
                     return false;
                 }
-                const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
-                pos+=sizeof(uint32_t);
-                if((size-pos)<(int)sizeof(double))
-                {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
-                    return false;
-                }
+                uint64_t priceTemp;
+                memcpy(&priceTemp,data+pos,sizeof(uint64_t));
+                const uint64_t &price=le64toh(priceTemp);
+                pos+=sizeof(uint64_t);
                 putMarketObject(queryNumber,objectId,quantity,price);
             }
             else
             {
-                if((size-pos)<(int)sizeof(uint32_t))
+                if((size-pos)<(int)sizeof(uint8_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
                     return false;
                 }
-                const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
-                pos+=sizeof(uint32_t);
-                if((size-pos)<(int)sizeof(uint32_t))
+                const uint8_t &monsterPosition=data[pos];
+                pos+=sizeof(uint8_t);
+                if((size-pos)<(int)sizeof(uint64_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
                     return false;
                 }
-                const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
-                pos+=sizeof(uint32_t);
-                if((size-pos)<(int)sizeof(double))
-                {
-                    errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
-                    return false;
-                }
-                putMarketMonster(queryNumber,monsterId,price);
+                uint64_t priceTemp;
+                memcpy(&priceTemp,data+pos,sizeof(uint64_t));
+                const uint64_t &price=le64toh(priceTemp);
+                pos+=sizeof(uint64_t);
+                putMarketMonster(queryNumber,monsterPosition,price);
             }
             if((size-pos)!=0)
             {
@@ -380,13 +374,13 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             }
             if(queryType==0x01)
             {
-                if((size-pos)<(int)sizeof(uint32_t))
+                if((size-pos)<(int)sizeof(uint16_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
                     return false;
                 }
-                const uint32_t &objectId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
-                pos+=sizeof(uint32_t);
+                const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint16_t);
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));

@@ -1323,7 +1323,7 @@ void Api_protocol::buyMarketMonsterByPosition(const uint16_t &monsterPosition)
     is_logged=character_selected=packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::putMarketObject(const uint32_t &objectId, const uint32_t &quantity, const uint64_t &price)
+void Api_protocol::putMarketObject(const uint16_t &objectId, const uint32_t &quantity, const uint64_t &price)
 {
     if(!is_logged)
     {
@@ -1339,8 +1339,8 @@ void Api_protocol::putMarketObject(const uint32_t &objectId, const uint32_t &qua
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
-    out << objectId;
-    out << quantity;
+    out << (quint16)objectId;
+    out << (quint32)quantity;
     out << (quint64)price;
     is_logged=character_selected=packOutcommingQuery(0x8F,queryNumber(),outputData.constData(),outputData.size());
 }
@@ -1361,7 +1361,7 @@ void Api_protocol::putMarketMonsterByPosition(const uint8_t &monsterPosition,con
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    out << monsterPosition;
+    out << (uint8_t)monsterPosition;
     out << (quint64)price;
     is_logged=character_selected=packOutcommingQuery(0x8F,queryNumber(),outputData.constData(),outputData.size());
 }
@@ -1402,7 +1402,7 @@ void Api_protocol::withdrawMarketObject(const uint16_t &objectPosition,const uin
     is_logged=character_selected=packOutcommingQuery(0x91,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::withdrawMarketMonsterByPosition(const uint16_t &monsterPosition)
+void Api_protocol::withdrawMarketMonster(const uint32_t &monsterMarketId)
 {
     if(!is_logged)
     {
@@ -1418,7 +1418,7 @@ void Api_protocol::withdrawMarketMonsterByPosition(const uint16_t &monsterPositi
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    out << monsterPosition;
+    out << monsterMarketId;
     is_logged=character_selected=packOutcommingQuery(0x91,queryNumber(),outputData.constData(),outputData.size());
 }
 

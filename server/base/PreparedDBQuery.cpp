@@ -370,8 +370,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_monster_buff_level="UPDATE `monster` SET `level`=%3 WHERE `monster`=%1 AND `buff`=%2";
         PreparedDBQueryCommon::db_query_delete_monster_specific_buff="DELETE FROM `monster_buff` WHERE `monster`=%1 AND `buff`=%2";
         PreparedDBQueryCommon::db_query_update_monster_position="UPDATE `monster` SET `position`=%1 WHERE `id`=%2";
-        PreparedDBQueryCommon::db_query_update_monster_position_and_place="UPDATE `monster` SET `position`=%1,`position`=%2 WHERE `id`=%3";
-        PreparedDBQueryCommon::db_query_update_monster_place="UPDATE `monster` SET `position`=%1 WHERE `id`=%2";
+        PreparedDBQueryCommon::db_query_update_monster_position_and_place="UPDATE `monster` SET `position`=%1,`place`=%2 WHERE `id`=%3";
+        PreparedDBQueryCommon::db_query_update_monster_place="UPDATE `monster` SET `place`=%1 WHERE `id`=%2";
         //PreparedDBQueryCommon::db_query_update_monster_skill_level="UPDATE `monster_skill` SET `level`=%1 WHERE `monster`=%2 AND `skill`=%3";
         PreparedDBQueryCommon::db_query_insert_monster_buff="INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3)";
 
@@ -605,7 +605,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_update_item_market_and_price="UPDATE `item_market` SET `quantity`=%1,`market_price`=%2 WHERE `item`=%3 AND `character`=%4;";
         PreparedDBQueryServer::db_query_update_charaters_market_cash="UPDATE `character_forserver` SET `market_cash`=`market_cash`+%1 WHERE `character`=%2";
         PreparedDBQueryServer::db_query_get_market_cash="UPDATE `character_forserver` SET `market_cash`=0 WHERE `id`=%1;";
-        PreparedDBQueryServer::db_query_insert_monster_market_price="INSERT INTO `monster_market_price`(`id`,`market_price`,`character`) VALUES(%1,%2,%3)";
+        PreparedDBQueryServer::db_query_insert_monster_market_price="INSERT INTO `monster_market_price`(`id`,`market_price`) VALUES(%1,%2)";
         PreparedDBQueryServer::db_query_delete_monster_market_price="DELETE FROM `monster_market_price` WHERE `id`=%1";
         PreparedDBQueryServer::db_query_delete_bot_already_beaten="DELETE FROM `bot_already_beaten` WHERE `character`=%1";
         PreparedDBQueryServer::db_query_select_plant="SELECT `pointOnMap`,`plant`,`plant_timestamps` FROM `plant` WHERE `character`=%1";
@@ -653,7 +653,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_update_item_market_and_price="UPDATE item_market SET quantity=%1,market_price=%2 WHERE item=%3 AND character=%4;";
         PreparedDBQueryServer::db_query_update_charaters_market_cash="UPDATE character_forserver SET market_cash=market_cash+%1 WHERE character=%2";
         PreparedDBQueryServer::db_query_get_market_cash="UPDATE character_forserver SET market_cash=0 WHERE id=%1;";
-        PreparedDBQueryServer::db_query_insert_monster_market_price="INSERT INTO monster_market_price(id,market_price,character) VALUES(%1,%2,%3)";
+        PreparedDBQueryServer::db_query_insert_monster_market_price="INSERT INTO monster_market_price(id,market_price) VALUES(%1,%2)";
         PreparedDBQueryServer::db_query_delete_monster_market_price="DELETE FROM monster_market_price WHERE id=%1";
         PreparedDBQueryServer::db_query_insert_factory="INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4)";
         PreparedDBQueryServer::db_query_update_factory="UPDATE factory SET resources='%1',products='%2',last_update=%3 WHERE id=%4";
@@ -705,7 +705,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_update_item_market_and_price="UPDATE item_market SET quantity=%1,market_price=%2 WHERE item=%3 AND character=%4;";
         PreparedDBQueryServer::db_query_update_charaters_market_cash="UPDATE character_forserver SET market_cash=market_cash+%1 WHERE character=%2";
         PreparedDBQueryServer::db_query_get_market_cash="UPDATE character_forserver SET market_cash=0 WHERE id=%1;";
-        PreparedDBQueryServer::db_query_insert_monster_market_price="INSERT INTO monster_market_price(id,market_price,character) VALUES(%1,%2,%3)";
+        PreparedDBQueryServer::db_query_insert_monster_market_price="INSERT INTO monster_market_price(id,market_price) VALUES(%1,%2)";
         PreparedDBQueryServer::db_query_delete_monster_market_price="DELETE FROM monster_market_price WHERE id=%1";
         PreparedDBQueryServer::db_query_update_character_quests="UPDATE character_forserver SET quest='\\x%1' WHERE character=%2";
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER

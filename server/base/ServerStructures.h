@@ -231,16 +231,16 @@ struct MarketPlayerMonster
 {
     PlayerMonster monster;
     uint32_t player;
-    uint32_t cash;
+    uint64_t price;
 };
 
 struct MarketItem
 {
     uint32_t marketObjectUniqueId;
-    uint32_t item;
+    uint16_t item;
     uint32_t quantity;
     uint32_t player;
-    uint32_t cash;
+    uint64_t price;
 };
 
 struct Clan
