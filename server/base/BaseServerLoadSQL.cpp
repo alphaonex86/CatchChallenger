@@ -522,6 +522,7 @@ void BaseServer::preload_industries_return()
 //unique table due to linked datas like skills/buffers product need of id, to be accruate on max id
 void BaseServer::preload_market_monsters_prices_sql()
 {
+    preload_market_monsters_prices_call=true;
     std::cout << GlobalServerData::serverPrivateVariables.industriesStatus.size() << " SQL industrie loaded" << std::endl;
 
     std::string queryText;
@@ -581,6 +582,11 @@ void BaseServer::preload_market_monsters_sql()
 {
     if(monsterSemiMarketList.size()==0)
     {
+        if(!preload_market_monsters_prices_call)
+        {
+            std::cerr << "preload_market_monsters_prices never call" << std::endl;
+            abort();
+        }
         preload_market_items();
         return;
     }
@@ -736,7 +742,7 @@ void BaseServer::preload_market_monsters_return()
         if(ok)
             marketPlayerMonster.player=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(9-spOffset),&ok);
         if(ok)
-            marketPlayerMonster.cash=monsterSemiMarketList.at(0).price;
+            marketPlayerMonster.price=monsterSemiMarketList.at(0).price;
         //stats
         if(ok)
         {
@@ -777,9 +783,9 @@ void BaseServer::preload_market_monsters_return()
         preload_market_monsters_sql();
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size()>0)
+    /*if(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size()>0)
         loadMonsterBuffs(0);
-    else
+    else*/
         preload_market_items();
 }
 
@@ -868,7 +874,7 @@ void BaseServer::preload_market_items_return()
             std::cerr << "player id is not a number, skip" << std::endl;
             continue;
         }
-        marketItem.cash=stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
+        marketItem.price=stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
         if(!ok)
         {
             std::cerr << "cash is not a number, skip" << std::endl;
@@ -893,7 +899,7 @@ void BaseServer::preload_market_items_return()
     baseServerMasterLoadDictionaryLoad();
 }
 
-void BaseServer::loadMonsterBuffs(const uint32_t &index)
+/*void BaseServer::loadMonsterBuffs(const uint32_t &index)
 {
     entryListIndex=index;
     if(index>=(uint32_t)GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
@@ -1061,7 +1067,7 @@ void BaseServer::loadMonsterSkills_return()
             skills.push_back(skill);
     }
     loadMonsterSkills(entryListIndex+1);
-}
+}*/
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void BaseServer::load_clan_max_id()
