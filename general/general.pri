@@ -27,6 +27,10 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/base/CommonDatapack.cpp \
     $$PWD/base/CommonDatapackServerSpec.cpp \
     $$PWD/fight/CommonFightEngine.cpp \
+    $$PWD/fight/CommonFightEngineTurn.cpp \
+    $$PWD/fight/CommonFightEngineBuff.cpp \
+    $$PWD/fight/CommonFightEngineSkill.cpp \
+    $$PWD/fight/CommonFightEngineWild.cpp \
     $$PWD/fight/CommonFightEngineBase.cpp \
     $$PWD/base/CommonSettingsCommon.cpp \
     $$PWD/base/CommonSettingsServer.cpp \
