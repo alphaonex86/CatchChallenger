@@ -817,6 +817,11 @@ private:
     static void loadMonsters_static(void *object);
     void loadMonsters_return();
 
+    static PlayerMonster loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok);
+    static bool loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMonster);
+    static bool loadSkillBlock(const std::string &dataHexa,PlayerMonster &playerMonster);
+    static bool loadSkillEnduranceBlock(const std::string &dataHexa,PlayerMonster &playerMonster);
+
     /*void loadItems();
     void loadItemsWarehouse();
     void loadRecipes();

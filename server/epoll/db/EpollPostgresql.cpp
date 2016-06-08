@@ -502,7 +502,11 @@ std::vector<char> EpollPostgresql::hexatoBinary(const std::string &data,bool *ok
     if(data.at(0)=='\\')
     {
         if(data.size()==2)
+        {
+            if(ok!=NULL)
+               *ok=true;
             return std::vector<char>();
+        }
         const std::string &hexaextract=data.substr(2,data.size()-2);
         #ifdef CATCHCHALLENGER_SERVER_TRUSTINTODATABASENUMBERRETURN
         if(hexaextract.size()%2!=0)

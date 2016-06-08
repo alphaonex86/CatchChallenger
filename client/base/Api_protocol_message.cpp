@@ -1767,10 +1767,10 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster size of list of the buff monsters, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return false;
                     }
-                    uint32_t sub_size;
-                    in >> sub_size;
-                    uint32_t sub_index=0;
-                    while(sub_index<sub_size)
+                    uint8_t sub_size8,sub_index8;
+                    in >> sub_size8;
+                    sub_index8=0;
+                    while(sub_index8<sub_size8)
                     {
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                         {
@@ -1785,7 +1785,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         }
                         in >> buff.level;
                         monster.buffs.push_back(buff);
-                        sub_index++;
+                        sub_index8++;
                     }
 
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
@@ -1793,9 +1793,10 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster size of list of the skill monsters, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return false;
                     }
-                    in >> sub_size;
-                    sub_index=0;
-                    while(sub_index<sub_size)
+                    uint16_t sub_size16,sub_index16;
+                    in >> sub_size16;
+                    sub_index16=0;
+                    while(sub_index16<sub_size16)
                     {
                         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
                         {
@@ -1810,7 +1811,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         }
                         in >> skill.level;
                         monster.skills.push_back(skill);
-                        sub_index++;
+                        sub_index16++;
                     }
                     tradeAddTradeMonster(monster);
                 }
@@ -1927,7 +1928,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             int index,indexAttackReturn;
             PublicPlayerMonster publicPlayerMonster;
             uint8_t genderInt;
-            int buffListSize;
+            uint8_t buffListSize;
             uint8_t monsterPlace;
 
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
@@ -2319,7 +2320,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             PublicPlayerMonster publicPlayerMonster;
             QList<uint8_t> stat;
             uint8_t genderInt;
-            int buffListSize;
+            uint8_t buffListSize;
             uint8_t monsterPlace;
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
             {

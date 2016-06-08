@@ -1188,12 +1188,12 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster size of list of the buff monsters, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                uint32_t sub_size,sub_index;
-                in >> sub_size;
-                sub_index=0;
-                while(sub_index<sub_size)
+                uint8_t sub_size8,sub_index8;
+                in >> sub_size8;
+                sub_index8=0;
+                while(sub_index8<sub_size8)
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster buff, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return false;
@@ -1212,7 +1212,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     }
                     in >> buff.remainingNumberOfTurn;
                     monster.buffs.push_back(buff);
-                    sub_index++;
+                    sub_index8++;
                 }
 
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
@@ -1220,9 +1220,10 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster size of list of the skill monsters, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                in >> sub_size;
-                sub_index=0;
-                while(sub_index<sub_size)
+                uint16_t sub_size16,sub_index16;
+                in >> sub_size16;
+                sub_index16=0;
+                while(sub_index16<sub_size16)
                 {
                     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
                     {
@@ -1243,7 +1244,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     }
                     in >> skill.endurance;
                     monster.skills.push_back(skill);
-                    sub_index++;
+                    sub_index16++;
                 }
                 marketBuyMonster(monster);
             }
@@ -1418,7 +1419,6 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster size of list of the buff monsters, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return false;
                     }
-                    uint16_t sub_size16,sub_index16;
                     uint8_t sub_size8,sub_index8;
                     in >> sub_size8;
                     sub_index8=0;
@@ -1451,6 +1451,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster size of list of the skill monsters, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return false;
                     }
+                    uint16_t sub_size16,sub_index16;
                     in >> sub_size16;
                     sub_index16=0;
                     while(sub_index16<sub_size16)
