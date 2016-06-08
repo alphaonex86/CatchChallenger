@@ -31,15 +31,21 @@ void BaseServer::preload_plant_on_map_sql()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::Type::Mysql:
             queryText=std::stringLiteral("SELECT `id`,`map`,`x`,`y`,`plant`,`character`,`plant_timestamps` FROM `plant`");
         break;
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::Type::SQLite:
             queryText=std::stringLiteral("SELECT id,map,x,y,plant,character,plant_timestamps FROM plant");
         break;
+        #endif
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::Type::PostgreSQL:
             queryText=std::stringLiteral("SELECT id,map,x,y,plant,character,plant_timestamps FROM plant");
         break;
+        #endif
     }
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText.toLatin1(),this,&BaseServer::preload_plant_on_map_static)==NULL)
     {
