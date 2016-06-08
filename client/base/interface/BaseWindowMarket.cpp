@@ -378,3 +378,113 @@ void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
     marketWithdrawInSuspend=true;
     delete item;
 }
+
+void BaseWindow::tradeAcceptedByOther(const QString &pseudo,const uint8_t &skinInt)
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_trade);
+    tradeOtherStat=TradeOtherStat_InWait;
+    //reset the current player info
+    ui->tradePlayerCash->setMinimum(0);
+    ui->tradePlayerCash->setValue(0);
+    ui->tradePlayerItems->clear();
+    ui->tradePlayerMonsters->clear();
+    ui->tradePlayerCash->setEnabled(true);
+    ui->tradePlayerItems->setEnabled(true);
+    ui->tradePlayerMonsters->setEnabled(true);
+    ui->tradeAddItem->setEnabled(true);
+    ui->tradeAddMonster->setEnabled(true);
+    ui->tradeValidate->setEnabled(true);
+
+    const QPixmap skin(getFrontSkinPath(skinInt));
+    if(!skin.isNull())
+    {
+        //reset the other player info
+        ui->tradePlayerImage->setVisible(true);
+        ui->tradePlayerPseudo->setVisible(true);
+        ui->tradeOtherImage->setVisible(true);
+        ui->tradeOtherPseudo->setVisible(true);
+        ui->tradeOtherImage->setPixmap(skin);
+        ui->tradeOtherPseudo->setText(pseudo);
+    }
+    else
+    {
+        ui->tradePlayerImage->setVisible(false);
+        ui->tradePlayerPseudo->setVisible(false);
+        ui->tradeOtherImage->setVisible(false);
+        ui->tradeOtherPseudo->setVisible(false);
+    }
+    ui->tradeOtherCash->setValue(0);
+    ui->tradeOtherItems->clear();
+    ui->tradeOtherMonsters->clear();
+    ui->tradeOtherStat->setText(tr("The other player have not validation their selection"));
+}
+
+void BaseWindow::tradeCanceledByOther()
+{
+    if(ui->stackedWidget->currentWidget()!=ui->page_trade)
+        return;
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    showTip(tr("The other player have canceled your trade request"));
+    addCash(ui->tradePlayerCash->value());
+    add_to_inventory(tradeCurrentObjects,false);
+    CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(tradeCurrentMonsters);
+    load_monsters();
+    tradeOtherObjects.clear();
+    tradeCurrentObjects.clear();
+    tradeCurrentMonsters.clear();
+    tradeOtherMonsters.clear();
+}
+
+void BaseWindow::tradeFinishedByOther()
+{
+    tradeOtherStat=TradeOtherStat_Accepted;
+    if(!ui->tradeValidate->isEnabled())
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
+    else
+        ui->tradeOtherStat->setText(tr("The other player have validated the selection"));
+}
+
+void BaseWindow::tradeValidatedByTheServer()
+{
+    if(ui->stackedWidget->currentWidget()==ui->page_trade)
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
+    showTip(tr("Your trade is successfull"));
+    add_to_inventory(tradeOtherObjects);
+    addCash(ui->tradeOtherCash->value());
+    tradeEvolutionMonsters=CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(tradeOtherMonsters);
+    load_monsters();
+    tradeOtherObjects.clear();
+    tradeCurrentObjects.clear();
+    tradeCurrentMonsters.clear();
+    tradeOtherMonsters.clear();
+    checkEvolution();
+}
+
+void BaseWindow::tradeAddTradeCash(const uint64_t &cash)
+{
+    ui->tradeOtherCash->setValue(ui->tradeOtherCash->value()+cash);
+}
+
+void BaseWindow::tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity)
+{
+    if(tradeOtherObjects.contains(item))
+        tradeOtherObjects[item]+=quantity;
+    else
+        tradeOtherObjects[item]=quantity;
+    ui->tradeOtherItems->clear();
+    QHashIterator<uint16_t,uint32_t> i(tradeOtherObjects);
+    while (i.hasNext()) {
+        i.next();
+        ui->tradeOtherItems->addItem(itemToGraphic(i.key(),i.value()));
+    }
+}
+
+void BaseWindow::tradeUpdateCurrentObject()
+{
+    ui->tradePlayerItems->clear();
+    QHashIterator<uint16_t,uint32_t> i(tradeCurrentObjects);
+    while (i.hasNext()) {
+        i.next();
+        ui->tradePlayerItems->addItem(itemToGraphic(i.key(),i.value()));
+    }
+}

@@ -1,31 +1,5 @@
 #include "BaseServer.h"
-/*#include "GlobalServerData.h"
 #include "../../general/base/FacilityLib.h"
-#include "../../general/base/FacilityLibGeneral.h"
-
-#include "../../general/base/CommonDatapackServerSpec.h"
-#include "../../general/base/DatapackGeneralLoader.h"
-#include "LocalClientHandlerWithoutSender.h"
-#include "ClientNetworkReadWithoutSender.h"
-#include "SqlFunction.h"
-#include "DictionaryLogin.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../general/base/cpp11addition.h"
-
-#include <vector>
-#include <time.h>
-#include <iostream>
-#include <chrono>
-#include <unistd.h>
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QTimer>
-#include <QFile>
-#include <QDir>
-#include <QDateTime>
-#include <QTime>
-#include <QCryptographicHash>
-#endif*/
 #include "../../general/base/CommonSettingsCommon.h"
 
 #include "PreparedDBQuery.h"
@@ -36,7 +10,6 @@
 #include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
 #include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.h"
 #include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.h"
-
 
 using namespace CatchChallenger;
 
