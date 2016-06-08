@@ -182,6 +182,7 @@ void BaseServer::preload_the_data()
     if(dataLoaded)
         return;
     dataLoaded=true;
+    preload_market_monsters_prices_call=false;
     GlobalServerData::serverPrivateVariables.stopIt=false;
 
     std::cout << "Datapack, base: " << GlobalServerData::serverSettings.datapack_basePath
@@ -294,6 +295,7 @@ void BaseServer::preload_finish()
     CommonSettingsCommon::commonSettingsCommon.datapackHashBase.clear();
     CommonSettingsServer::commonSettingsServer.datapackHashServerMain.clear();
     CommonSettingsServer::commonSettingsServer.datapackHashServerSub.clear();
+    preload_market_monsters_prices_call=false;
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVER

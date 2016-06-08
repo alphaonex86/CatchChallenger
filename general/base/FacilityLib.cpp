@@ -163,6 +163,7 @@ uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &mon
     posOutput+=1;
     *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.egg_step);
     posOutput+=4;
+
     data[posOutput]=(uint8_t)monster.character_origin==character_id;
     posOutput+=1;
 
@@ -171,9 +172,12 @@ uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &mon
     posOutput+=1;
     while(sub_index<monster.buffs.size())
     {
-        data[posOutput]=(uint8_t)SoldStat_PriceHaveChanged;
+        const PlayerBuff &playerBuff=monster.buffs.at(sub_index);
+        data[posOutput]=(uint8_t)playerBuff.buff;
         posOutput+=1;
-        data[posOutput]=(uint8_t)SoldStat_PriceHaveChanged;
+        data[posOutput]=(uint8_t)playerBuff.level;
+        posOutput+=1;
+        data[posOutput]=(uint8_t)playerBuff.remainingNumberOfTurn;
         posOutput+=1;
 
         sub_index++;

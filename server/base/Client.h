@@ -619,8 +619,8 @@ private:
     void getMarketList(const uint32_t &query_id);
     void buyMarketObject(const uint32_t &query_id,const uint32_t &marketObjectId,const uint32_t &quantity);
     void buyMarketMonster(const uint32_t &query_id, const uint32_t &marketMonsterUniqueId/*To ident even if the position have changed, imply search at server*/);
-    void putMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price);
-    void putMarketMonster(const uint32_t &query_id, const uint8_t &monsterPosition, const uint32_t &price);
+    void putMarketObject(const uint32_t &query_id, const uint32_t &objectId, const uint32_t &quantity, const uint64_t &price);
+    void putMarketMonster(const uint32_t &query_id, const uint8_t &monsterPosition, const uint64_t &price);
     void withdrawMarketCash(const uint32_t &query_id);
     void withdrawMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity);
     void withdrawMarketMonster(const uint32_t &query_id, const uint32_t &marketMonsterUniqueId/*To ident even if the position have changed, imply search at server*/);

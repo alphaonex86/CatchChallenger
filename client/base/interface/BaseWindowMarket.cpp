@@ -154,7 +154,7 @@ void BaseWindow::marketPut(const bool &success)
             MarketObject marketObject;
             marketObject.price=marketPutCashInSuspend;
             //marketObject.marketObjectId=0;
-            marketObject.objectId=marketPutObjectInSuspendList.first().first;
+            marketObject.item=marketPutObjectInSuspendList.first().first;
             marketObject.quantity=marketPutObjectInSuspendList.first().second;
             QListWidgetItem *item=new QListWidgetItem();
             updateMarketObject(item,marketObject);
@@ -227,10 +227,10 @@ void BaseWindow::on_marketWithdraw_clicked()
 
 void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &marketObject)
 {
-    item->setData(99,marketObject.index);
+    item->setData(99,marketObject.marketObjectUniqueId);
     item->setData(98,marketObject.quantity);
     item->setData(97,(quint64)marketObject.price);
-    item->setData(95,marketObject.objectId);
+    item->setData(95,marketObject.item);
     QString price;
     if(marketObject.price>0)
         price=tr("Price: %1$").arg(marketObject.price);
@@ -239,16 +239,16 @@ void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &ma
     QString quantity;
     if(marketObject.quantity>1)
         quantity=QStringLiteral(", ")+tr("quantity: %1").arg(marketObject.quantity);
-    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(marketObject.objectId))
+    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(marketObject.item))
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(marketObject.objectId).image);
-        item->setText(QStringLiteral("%1%2\n%3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(marketObject.objectId).name).arg(quantity).arg(price));
-        item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra.value(marketObject.objectId).description);
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(marketObject.item).image);
+        item->setText(QStringLiteral("%1%2\n%3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(marketObject.item).name).arg(quantity).arg(price));
+        item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra.value(marketObject.item).description);
     }
     else
     {
         item->setIcon(QIcon(":/images/monsters/default/small.png"));
-        item->setText(QStringLiteral("Unknown item with id %1%2\n%3").arg(marketObject.objectId).arg(quantity).arg(price));
+        item->setText(QStringLiteral("Unknown item with id %1%2\n%3").arg(marketObject.item).arg(quantity).arg(price));
     }
 }
 
@@ -293,10 +293,10 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
     else
     {
         MarketObject marketObject;
-        marketObject.index=item->data(99).toUInt();
+        marketObject.marketObjectUniqueId=item->data(99).toUInt();
         marketObject.quantity=item->data(98).toUInt();
         marketObject.price=item->data(97).toUInt();
-        marketObject.objectId=item->data(95).toUInt();
+        marketObject.item=item->data(95).toUInt();
         updateMarketObject(item,marketObject);
     }
 }
@@ -319,10 +319,10 @@ void BaseWindow::on_marketOwnObject_itemActivated(QListWidgetItem *item)
     CatchChallenger::Api_client_real::client->withdrawMarketObject(item->data(95).toUInt(),item->data(98).toUInt());
     marketWithdrawInSuspend=true;
     MarketObject marketObject;
-    marketObject.index=item->data(99).toUInt();
+    marketObject.marketObjectUniqueId=item->data(99).toUInt();
     marketObject.quantity=item->data(98).toUInt();
     marketObject.price=item->data(97).toUInt();
-    marketObject.objectId=item->data(95).toUInt();
+    marketObject.item=item->data(95).toUInt();
     marketWithdrawObjectList << marketObject;
     item->setData(98,item->data(98).toUInt()-quantity);
     if(item->data(98).toUInt()==0)
@@ -374,7 +374,7 @@ void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
     playerMonster.price=item->data(98).toUInt();
     playerMonster.level=item->data(96).toUInt();
     marketWithdrawMonsterList << playerMonster;
-    CatchChallenger::Api_client_real::client->withdrawMarketMonsterByPosition(item->data(99).toUInt());
+    CatchChallenger::Api_client_real::client->withdrawMarketMonster(item->data(99).toUInt());
     marketWithdrawInSuspend=true;
     delete item;
 }

@@ -205,6 +205,6 @@ void BaseServer::preload_map_semi_after_db_id()
     #ifndef EPOLLCATCHCHALLENGERSERVER
     preload_zone_sql();
     #else
-    preload_market_monsters_sql();
+    preload_market_monsters_prices_sql();
     #endif
 }
