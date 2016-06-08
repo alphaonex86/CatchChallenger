@@ -39,8 +39,13 @@ SOURCES += \
     $$PWD/base/ClientHeavyLoadLogin.cpp \
     $$PWD/base/ClientHeavyLoadMirror.cpp \
     $$PWD/base/ClientHeavyLoadSelectChar.cpp \
+    $$PWD/base/ClientHeavyLoadSelectCharCommon.cpp \
+    $$PWD/base/ClientHeavyLoadSelectCharServer.cpp \
+    $$PWD/base/ClientHeavyLoadSelectCharFinal.cpp \
     $$PWD/base/ClientNetworkWrite.cpp \
     $$PWD/base/ClientNetworkRead.cpp \
+    $$PWD/base/ClientNetworkReadMessage.cpp \
+    $$PWD/base/ClientNetworkReadQuery.cpp \
     $$PWD/base/ClientNetworkReadWithoutSender.cpp \
     $$PWD/base/ClientBroadCast.cpp \
     $$PWD/base/PlayerUpdater.cpp \

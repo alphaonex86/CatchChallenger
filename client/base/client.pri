@@ -25,6 +25,9 @@ SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/render/MapItem.cpp \
     $$PWD/Map_client.cpp \
     $$PWD/interface/BaseWindow.cpp \
+    $$PWD/interface/BaseWindowMap.cpp \
+    $$PWD/interface/BaseWindowBot.cpp \
+    $$PWD/interface/BaseWindowSelection.cpp \
     $$PWD/interface/BaseWindowCharacter.cpp \
     $$PWD/interface/BaseWindowCity.cpp \
     $$PWD/interface/BaseWindowClan.cpp \
@@ -48,6 +51,7 @@ SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/../crafting/interface/BaseWindowCrafting.cpp \
     $$PWD/Options.cpp \
     $$PWD/../fight/interface/BaseWindowFight.cpp \
+    $$PWD/../fight/interface/BaseWindowFightNextAction.cpp \
     $$PWD/interface/Chat.cpp \
     $$PWD/../fight/interface/ClientFightEngine.cpp \
     $$PWD/../fight/interface/MapVisualiserPlayerWithFight.cpp \
