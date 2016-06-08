@@ -1,29 +1,13 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "../../../general/base/FacilityLib.h"
-#include "../../../general/base/CommonDatapack.h"
-#include "../../../general/base/CommonDatapackServerSpec.h"
-#include "../../../general/base/CommonSettingsServer.h"
-#include "../../../general/base/CommonSettingsCommon.h"
-#include "../ClientVariable.h"
-#include "DatapackClientLoader.h"
-#include "Chat.h"
+#include "../Options.h"
 #include "../FacilityLibClient.h"
 #include "../../fight/interface/ClientFightEngine.h"
-#include "../Options.h"
-#ifndef CATCHCHALLENGER_NOAUDIO
-#include "../Audio.h"
-#endif
+#include "../../../general/base/CommonSettingsCommon.h"
+#include "../../../general/base/CommonSettingsServer.h"
+#include "../../../general/base/CommonDatapackServerSpec.h"
 
-#include <QListWidgetItem>
 #include <QBuffer>
-#include <QInputDialog>
-#include <QMessageBox>
-#include <QQmlContext>
-#ifndef CATCHCHALLENGER_NOAUDIO
-#include <vlc/vlc.h>
-#endif
-#include <iostream>
 #include <QStandardPaths>
 
 using namespace CatchChallenger;
