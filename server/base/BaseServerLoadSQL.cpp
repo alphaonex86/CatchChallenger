@@ -55,15 +55,21 @@ void BaseServer::preload_zone_sql()
         switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
         {
             default:
+            #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
             case DatabaseBase::DatabaseType::Mysql:
                 queryText="SELECT `clan` FROM `city` WHERE `city`='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
             break;
+                #endif
+            #ifndef EPOLLCATCHCHALLENGERSERVER
             case DatabaseBase::DatabaseType::SQLite:
                 queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
             break;
+            #endif
+            #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
             case DatabaseBase::DatabaseType::PostgreSQL:
                 queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
             break;
+            #endif
         }
         if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_zone_static)==NULL)
         {
@@ -86,15 +92,21 @@ void BaseServer::preload_pointOnMap_sql()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`map`,`x`,`y` FROM `dictionary_pointonmap` ORDER BY `map`,`x`,`y`";
         break;
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map,x,y";
         break;
+        #endif
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id,map,x,y FROM dictionary_pointonmap ORDER BY map,x,y";
         break;
+        #endif
     }
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_pointOnMap_static)==NULL)
     {
@@ -244,15 +256,21 @@ void BaseServer::preload_dictionary_map()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`map` FROM `dictionary_map` ORDER BY `map`";
         break;
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id,map FROM dictionary_map ORDER BY map";
         break;
+        #endif
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id,map FROM dictionary_map ORDER BY map";
         break;
+        #endif
     }
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_dictionary_map_static)==NULL)
     {
@@ -360,15 +378,21 @@ void BaseServer::preload_industries()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`resources`,`products`,`last_update` FROM `factory`";
         break;
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id,resources,products,last_update FROM factory";
         break;
+        #endif
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id,resources,products,last_update FROM factory";
         break;
+        #endif
     }
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_industries_static)==NULL)
     {
@@ -529,15 +553,21 @@ void BaseServer::preload_market_monsters_prices_sql()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`market_price` FROM `monster_market_price` ORDER BY `id`";
         break;
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id,market_price FROM monster_market_price ORDER BY id";
         break;
+        #endif
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id,market_price FROM monster_market_price ORDER BY id";
         break;
+        #endif
     }
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_market_monsters_prices_static)==NULL)
     {
@@ -592,35 +622,51 @@ void BaseServer::preload_market_monsters_sql()
     }
 
     std::string queryText;
-    if(CommonSettingsServer::commonSettingsServer.useSP)
-        switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
-        {
-            default:
-            case DatabaseBase::DatabaseType::Mysql:
-                queryText="SELECT `id`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character` FROM `monster` WHERE `id`="+std::to_string(monsterSemiMarketList.at(0).id);
-            break;
-            case DatabaseBase::DatabaseType::SQLite:
-                queryText="SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character FROM monster WHERE id="+std::to_string(monsterSemiMarketList.at(0).id);
-            break;
-            case DatabaseBase::DatabaseType::PostgreSQL:
-                queryText="SELECT id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character FROM monster WHERE id="+std::to_string(monsterSemiMarketList.at(0).id);
-            break;
-        }
-    else
-        switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
-        {
-            default:
-            case DatabaseBase::DatabaseType::Mysql:
-                queryText="SELECT `id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character` FROM `monster` WHERE `id`="+std::to_string(monsterSemiMarketList.at(0).id);
-            break;
-            case DatabaseBase::DatabaseType::SQLite:
-                queryText="SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character FROM monster WHERE id="+std::to_string(monsterSemiMarketList.at(0).id);
-            break;
-            case DatabaseBase::DatabaseType::PostgreSQL:
-                queryText="SELECT id,hp,monster,level,xp,captured_with,gender,egg_step,character FROM monster WHERE id="+std::to_string(monsterSemiMarketList.at(0).id);
-            break;
-        }
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::preload_market_monsters_static)==NULL)
+
+    switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
+    {
+        default:
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        std::cerr << "PreparedDBQuery: Unknown database type" << std::endl;
+        #else
+        std::cerr << "PreparedDBQuery: Unknown database type in epoll mode" << std::endl;
+        #endif
+        abort();
+        return;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
+        case DatabaseBase::DatabaseType::Mysql:
+        if(CommonSettingsServer::commonSettingsServer.useSP)
+            queryText="SELECT `id`,`character`,`place`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`buffs`,`skills`,`skills_endurance`,`sp` FROM `monster` WHERE `id`=%1";
+        else
+            queryText="SELECT `id`,`character`,`place`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`buffs`,`skills`,`skills_endurance` FROM `monster` WHERE `id`=%1";
+        break;
+        #endif
+
+        #ifndef EPOLLCATCHCHALLENGERSERVER
+        case DatabaseBase::DatabaseType::SQLite:
+        if(CommonSettingsServer::commonSettingsServer.useSP)
+            queryText="SELECT id,character,place,hp,monster,level,xp,captured_with,gender,egg_step,character_origin,buffs,skills,skills_endurance,sp FROM monster WHERE id=%1";
+        else
+            queryText="SELECT id,character,place,hp,monster,level,xp,captured_with,gender,egg_step,character_origin,buffs,skills,skills_endurance FROM monster WHERE id=%1";
+        break;
+        #endif
+
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
+        case DatabaseBase::DatabaseType::PostgreSQL:
+        if(CommonSettingsServer::commonSettingsServer.useSP)
+            queryText="SELECT id,character,place,hp,monster,level,xp,captured_with,gender,egg_step,character_origin,buffs,skills,skills_endurance,sp FROM monster WHERE id=%1";//for market
+        else
+            queryText="SELECT id,character,place,hp,monster,level,xp,captured_with,gender,egg_step,character_origin,buffs,skills,skills_endurance FROM monster WHERE id=%1";//for market
+        break;
+        #endif
+    }
+
+    StringWithReplacement finalQuery(queryText);
+    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(
+                finalQuery.compose(
+                    std::to_string(monsterSemiMarketList.at(0).id)
+                    )
+                ,this,&BaseServer::preload_market_monsters_static)==NULL)
     {
         monsterSemiMarketList.clear();
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
@@ -635,148 +681,34 @@ void BaseServer::preload_market_monsters_static(void *object)
 
 void BaseServer::preload_market_monsters_return()
 {
-    uint8_t spOffset;
-    if(CommonSettingsServer::commonSettingsServer.useSP)
-        spOffset=0;
-    else
-        spOffset=1;
     bool ok;
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         MarketPlayerMonster marketPlayerMonster;
-        PlayerMonster playerMonster;
-        playerMonster.id=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
-        if(!ok)
-            std::cerr << "monsterId: " << GlobalServerData::serverPrivateVariables.db_common->value(0) << " is not a number" << std::endl;
-        if(ok)
+        const uint8_t &place=GlobalServerData::serverPrivateVariables.db_common->stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
+        if(ok && place==0x03)
         {
-            playerMonster.monster=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
+            PlayerMonster playerMonster=Client::loadMonsters_DatabaseReturn_to_PlayerMonster(ok);
+            //finish it
             if(ok)
             {
-                if(CommonDatapack::commonDatapack.monsters.find(playerMonster.monster)==CommonDatapack::commonDatapack.monsters.end())
-                {
-                    ok=false;
-                    std::cerr << "monster: " << playerMonster.monster << " is not into monster list" << std::endl;
-                }
-            }
-            else
-                std::cerr << "monster: " << GlobalServerData::serverPrivateVariables.db_common->value(2) << " is not a number" << std::endl;
-        }
-        if(ok)
-        {
-            playerMonster.level=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
-            if(ok)
-            {
-                if(playerMonster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
-                {
-                    std::cerr << "level: " << playerMonster.level << " greater than " << CATCHCHALLENGER_MONSTER_LEVEL_MAX << ", truncated" << std::endl;
-                    playerMonster.level=CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                }
-            }
-            else
-                std::cerr << "level: " << GlobalServerData::serverPrivateVariables.db_common->value(3) << " is not a number" << std::endl;
-        }
-        if(ok)
-        {
-            playerMonster.remaining_xp=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
-            if(ok)
-            {
-                if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.monsters.at(playerMonster.monster).level_to_xp.at(playerMonster.level-1))
-                {
-                    std::cerr << "monster xp: " << playerMonster.remaining_xp << " greater than " << CommonDatapack::commonDatapack.monsters.at(playerMonster.monster).level_to_xp.at(playerMonster.level-1) << ", truncated" << std::endl;
-                    playerMonster.remaining_xp=0;
-                }
-            }
-            else
-                std::cerr << "monster xp: " << GlobalServerData::serverPrivateVariables.db_common->value(4) << " is not a number" << std::endl;
-        }
-        if(CommonSettingsServer::commonSettingsServer.useSP)
-        {
-            if(ok)
-            {
-                playerMonster.sp=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(5),&ok);
+                marketPlayerMonster.player=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
                 if(!ok)
-                    std::cerr << "monster sp: " << GlobalServerData::serverPrivateVariables.db_common->value(5) << " is not a number" << std::endl;
+                    std::cerr << "For character no a number: " << GlobalServerData::serverPrivateVariables.db_common->value(1) << std::endl;
+            }
+            if(ok)
+            {
+                marketPlayerMonster.price=monsterSemiMarketList.at(0).price;
+                marketPlayerMonster.monster=playerMonster;
+                GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.push_back(marketPlayerMonster);
             }
         }
         else
-            playerMonster.sp=0;
-        if(ok)
-        {
-            playerMonster.catched_with=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(6-spOffset),&ok);
-            if(ok)
-            {
-                if(CommonDatapack::commonDatapack.items.item.find(playerMonster.catched_with)==CommonDatapack::commonDatapack.items.item.end())
-                    std::cerr << "captured_with: " << playerMonster.catched_with << " is not is not into items list" << std::endl;
-            }
-            else
-                std::cerr << "captured_with: " << GlobalServerData::serverPrivateVariables.db_common->value(6-spOffset) << " is not a number" << std::endl;
-        }
-        if(ok)
-        {
-            const uint32_t &value=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(7-spOffset),&ok);
-            if(ok)
-            {
-                if(value>=1 && value<=3)
-                    playerMonster.gender=static_cast<Gender>(value);
-                else
-                {
-                    playerMonster.gender=Gender_Unknown;
-                    std::cerr << "unknown monster gender: " << value << std::endl;
-                    ok=false;
-                }
-            }
-            else
-            {
-                playerMonster.gender=Gender_Unknown;
-                std::cerr << "unknown monster gender: " << GlobalServerData::serverPrivateVariables.db_common->value(7-spOffset) << std::endl;
-                ok=false;
-            }
-        }
-        if(ok)
-        {
-            playerMonster.egg_step=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(8-spOffset),&ok);
-            if(!ok)
-                std::cerr << "monster egg_step: " << GlobalServerData::serverPrivateVariables.db_common->value(8-spOffset) << " is not a number" << std::endl;
-        }
-        if(ok)
-            marketPlayerMonster.player=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(9-spOffset),&ok);
-        if(ok)
-            marketPlayerMonster.price=monsterSemiMarketList.at(0).price;
-        //stats
-        if(ok)
-        {
-            playerMonster.hp=stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
-            if(ok)
-            {
-                const Monster::Stat &stat=CommonFightEngine::getStat(CommonDatapack::commonDatapack.monsters.at(playerMonster.monster),playerMonster.level);
-                if(playerMonster.hp>stat.hp)
-                {
-                    std::cerr << "market monster hp: "
-                    << playerMonster.hp
-                    << " greater than max hp "
-                    << stat.hp
-                    << " for the level "
-                    << playerMonster.level
-                    << " of the monster "
-                    << playerMonster.monster
-                    << " , truncated";
-                    playerMonster.hp=stat.hp;
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    abort();
-                    #endif
-                }
-            }
-            else
-                std::cerr << "monster hp: " << GlobalServerData::serverPrivateVariables.db_common->value(1) << " is not a number" << std::endl;
-        }
-        //finish it
-        if(ok)
-        {
-            marketPlayerMonster.monster=playerMonster;
-            GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.push_back(marketPlayerMonster);
-        }
+            std::cerr << "For place is not a number or not into place===0x03" << std::endl;
     }
+    else
+        std::cerr << "For a monster, price found but not entry into common list" << std::endl;
+
     monsterSemiMarketList.erase(monsterSemiMarketList.begin());
     if(monsterSemiMarketList.size()>0)
     {
@@ -806,15 +738,21 @@ void BaseServer::preload_market_items()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `item`,`quantity`,`character`,`market_price` FROM `item_market` ORDER BY `item`";
         break;
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT item,quantity,character,market_price FROM item_market ORDER BY item";
         break;
+        #endif
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT item,quantity,character,market_price FROM item_market ORDER BY item";
         break;
+        #endif
     }
     if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_market_items_static)==NULL)
     {
@@ -899,176 +837,6 @@ void BaseServer::preload_market_items_return()
     baseServerMasterLoadDictionaryLoad();
 }
 
-/*void BaseServer::loadMonsterBuffs(const uint32_t &index)
-{
-    entryListIndex=index;
-    if(index>=(uint32_t)GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
-    {
-        loadMonsterSkills(0);
-        return;
-    }
-    std::string queryText;
-    switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
-    {
-        default:
-        case DatabaseBase::DatabaseType::Mysql:
-            queryText="SELECT `buff`,`level` FROM `monster_buff` WHERE `monster`="+std::to_string(index)+" ORDER BY `buff`";
-        break;
-        case DatabaseBase::DatabaseType::SQLite:
-            queryText="SELECT buff,level FROM monster_buff WHERE monster="+std::to_string(index)+" ORDER BY buff";
-        break;
-        case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText="SELECT buff,level FROM monster_buff WHERE monster="+std::to_string(index)+" ORDER BY buff";
-        break;
-    }
-
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::loadMonsterBuffs_static)==NULL)
-    {
-        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-        loadMonsterSkills(0);
-    }
-}
-
-void BaseServer::loadMonsterBuffs_static(void *object)
-{
-    static_cast<BaseServer *>(object)->loadMonsterBuffs_return();
-}
-
-void BaseServer::loadMonsterBuffs_return()
-{
-    const uint32_t &monsterId=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(entryListIndex).monster.id;
-    std::vector<PlayerBuff> buffs;
-    bool ok;
-    while(GlobalServerData::serverPrivateVariables.db_common->next())
-    {
-        PlayerBuff buff;
-        buff.buff=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
-        if(ok)
-        {
-            if(CommonDatapack::commonDatapack.monsterBuffs.find(buff.buff)==CommonDatapack::commonDatapack.monsterBuffs.end())
-            {
-                ok=false;
-                std::cerr << "buff " << buff.buff << " for monsterId: " << monsterId << " is not found into buff list" << std::endl;
-            }
-        }
-        else
-            std::cerr << "buff id: " << GlobalServerData::serverPrivateVariables.db_common->value(0) << " is not a number" << std::endl;
-        if(ok)
-        {
-            buff.level=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
-            if(ok)
-            {
-                if(buff.level<=0 || buff.level>CommonDatapack::commonDatapack.monsterBuffs.at(buff.buff).level.size())
-                {
-                    ok=false;
-                    std::cerr << "buff " << buff.buff << " for monsterId: " << monsterId << " have not the level: " << buff.level << std::endl;
-                }
-            }
-            else
-                std::cerr << "buff level: " << GlobalServerData::serverPrivateVariables.db_common->value(2) << " is not a number" << std::endl;
-        }
-        if(ok)
-        {
-            if(CommonDatapack::commonDatapack.monsterBuffs.at(buff.buff).level.at(buff.level-1).duration!=Buff::Duration_Always)
-            {
-                ok=false;
-                std::cerr << "buff " << buff.buff << " for monsterId: " << monsterId << " can't be loaded from the db if is not permanent" << std::endl;
-            }
-        }
-        if(ok)
-            buffs.push_back(buff);
-    }
-    loadMonsterBuffs(entryListIndex+1);
-}
-
-void BaseServer::loadMonsterSkills(const uint32_t &index)
-{
-    entryListIndex=index;
-    if(index>=(uint32_t)GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size())
-    {
-        preload_market_items();
-        return;
-    }
-    std::string queryText;
-    switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
-    {
-        default:
-        case DatabaseBase::DatabaseType::Mysql:
-            queryText="SELECT `skill`,`level`,`endurance` FROM `monster_skill` WHERE `monster`="+std::to_string(index)+" ORDER BY `skill`";
-        break;
-        case DatabaseBase::DatabaseType::SQLite:
-            queryText="SELECT skill,level,endurance FROM monster_skill WHERE monster="+std::to_string(index)+" ORDER BY skill";
-        break;
-        case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText="SELECT skill,level,endurance FROM monster_skill WHERE monster="+std::to_string(index)+" ORDER BY skill";
-        break;
-    }
-    if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::loadMonsterSkills_static)==NULL)
-    {
-        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-        preload_market_items();
-    }
-}
-
-void BaseServer::loadMonsterSkills_static(void *object)
-{
-    static_cast<BaseServer *>(object)->loadMonsterSkills_return();
-}
-
-void BaseServer::loadMonsterSkills_return()
-{
-    const uint32_t &monsterId=GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.at(entryListIndex).monster.id;
-    std::vector<PlayerMonster::PlayerSkill> skills;
-    bool ok;
-    while(GlobalServerData::serverPrivateVariables.db_common->next())
-    {
-        PlayerMonster::PlayerSkill skill;
-        skill.skill=stringtouint16(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
-        if(ok)
-        {
-            if(CommonDatapack::commonDatapack.monsterSkills.find(skill.skill)==CommonDatapack::commonDatapack.monsterSkills.end())
-            {
-                ok=false;
-                std::cerr << "skill " << skill.skill << " for monsterId: " << monsterId << " is not found into skill list" << std::endl;
-            }
-        }
-        else
-            std::cerr << "skill id: " << GlobalServerData::serverPrivateVariables.db_common->value(0) << " is not a number" << std::endl;
-        if(ok)
-        {
-            skill.level=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(1),&ok);
-            if(ok)
-            {
-                if(skill.level>CommonDatapack::commonDatapack.monsterSkills.at(skill.skill).level.size())
-                {
-                    ok=false;
-                    std::cerr << "skill " << skill.skill << " for monsterId: " << monsterId << " have not the level: " << skill.level << std::endl;
-                }
-            }
-            else
-                std::cerr << "skill level: " << GlobalServerData::serverPrivateVariables.db_common->value(1) << " is not a number" << std::endl;
-        }
-        if(ok)
-        {
-            skill.endurance=stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
-            if(ok)
-            {
-                if(skill.endurance>CommonDatapack::commonDatapack.monsterSkills.at(skill.skill).level.at(skill.level-1).endurance)
-                {
-                    skill.endurance=CommonDatapack::commonDatapack.monsterSkills.at(skill.skill).level.at(skill.level-1).endurance;
-                    ok=false;
-                    std::cerr << "endurance of skill " << skill.skill << " for monsterId: " <<  monsterId<< " have been fixed by lower at " << skill.endurance << ": truncated" << std::endl;
-                }
-            }
-            else
-                std::cerr << "skill level: " << GlobalServerData::serverPrivateVariables.db_common->value(2) << " is not a number" << std::endl;
-        }
-        if(ok)
-            skills.push_back(skill);
-    }
-    loadMonsterSkills(entryListIndex+1);
-}*/
-
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void BaseServer::load_clan_max_id()
 {
@@ -1078,15 +846,21 @@ void BaseServer::load_clan_max_id()
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;";
         break;
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;";
         break;
+        #endif
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id FROM clan ORDER BY id DESC LIMIT 1;";
         break;
+        #endif
     }
     if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::load_clan_max_id_static)==NULL)
     {
@@ -1126,15 +900,21 @@ void BaseServer::load_account_max_id()
     switch(GlobalServerData::serverPrivateVariables.db_login->databaseType())
     {
         default:
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;";
         break;
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id FROM account ORDER BY id DESC LIMIT 0,1;";
         break;
+        #endif
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id FROM account ORDER BY id DESC LIMIT 1;";
         break;
+        #endif
     }
     if(GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText,this,&BaseServer::load_account_max_id_static)==NULL)
     {
@@ -1180,15 +960,21 @@ void BaseServer::load_character_max_id()
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
+        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;";
         break;
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id FROM character ORDER BY id DESC LIMIT 0,1;";
         break;
+        #endif
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id FROM character ORDER BY id DESC LIMIT 1;";
         break;
+        #endif
     }
     if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::load_character_max_id_static)==NULL)
     {
