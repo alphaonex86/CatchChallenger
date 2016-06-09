@@ -23,6 +23,7 @@ void BaseWindow::marketList(const uint64_t &price,const QList<MarketObject> &mar
         QListWidgetItem *item=new QListWidgetItem();
         updateMarketObject(item,marketObject);
         ui->marketObject->addItem(item);
+        index++;
     }
     //the monster list
     ui->marketMonster->clear();
@@ -51,6 +52,7 @@ void BaseWindow::marketList(const uint64_t &price,const QList<MarketObject> &mar
             item->setText(QStringLiteral("Unknown item with id %1 level %2\n%3").arg(marketMonster.monster).arg(marketMonster.level).arg(price));
         }
         ui->marketMonster->addItem(item);
+        index++;
     }
     //the object own list
     ui->marketOwnObject->clear();
@@ -63,7 +65,7 @@ void BaseWindow::marketList(const uint64_t &price,const QList<MarketObject> &mar
         ui->marketOwnObject->addItem(item);
         index++;
     }
-    //the object list
+    //the own monster list
     ui->marketOwnMonster->clear();
     index=0;
     while(index<marketOwnMonsterList.size())
@@ -118,7 +120,6 @@ void BaseWindow::marketBuy(const bool &success)
 
 void BaseWindow::marketBuyMonster(const PlayerMonster &playerMonster)
 {
-
     marketBuyInSuspend=false;
     ClientFightEngine::fightEngine.addPlayerMonster(playerMonster);
     load_monsters();
@@ -280,8 +281,15 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
             return;
     }
     CatchChallenger::Api_client_real::client->buyMarketObject(item->data(99).toUInt(),quantity);
+
+    /*updateMarketObject() define:
+    item->setData(99,marketObject.marketObjectUniqueId);
+    item->setData(98,marketObject.quantity);
+    item->setData(97,(quint64)marketObject.price);
+    item->setData(95,marketObject.item);*/
+
     QPair<uint32_t,uint32_t> newEntry;
-    newEntry.first=item->data(99).toUInt();
+    newEntry.first=item->data(95).toUInt();
     newEntry.second=quantity;
     marketBuyObjectList << newEntry;
     marketBuyInSuspend=true;
@@ -353,7 +361,7 @@ void BaseWindow::on_marketMonster_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("Error"),tr("Have not cash to buy it"));
         return;
     }
-    CatchChallenger::Api_client_real::client->buyMarketMonsterByPosition(item->data(99).toUInt());
+    CatchChallenger::Api_client_real::client->buyMarketMonster(item->data(99).toUInt());
     delete item;
 }
 
