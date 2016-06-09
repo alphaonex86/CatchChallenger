@@ -2160,7 +2160,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                             }
                             if(ok)
                             {
-                                reputationTemp.reputationDatabaseId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
+                                reputationTemp.internalIndex=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
                                 if(reputationTemp.level==0)
                                 {
                                     std::cerr << "Unable to open the xml file: " << file << ", reputation level is useless if level 0: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
@@ -2168,7 +2168,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                                 }
                                 else if(reputationTemp.level<0)
                                 {
-                                    if((-reputationTemp.level)>(int32_t)reputations.at(reputationTemp.reputationDatabaseId).reputation_negative.size())
+                                    if((-reputationTemp.level)>(int32_t)reputations.at(reputationTemp.internalIndex).reputation_negative.size())
                                     {
                                         std::cerr << "Unable to open the xml file: " << file << ", reputation level is lower than minimal level for " << reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type")) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                                         ok=false;
@@ -2176,7 +2176,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                                 }
                                 else// if(reputationTemp.level>0)
                                 {
-                                    if((reputationTemp.level)>=(int32_t)reputations.at(reputationTemp.reputationDatabaseId).reputation_positive.size())
+                                    if((reputationTemp.level)>=(int32_t)reputations.at(reputationTemp.internalIndex).reputation_positive.size())
                                     {
                                         std::cerr << "Unable to open the xml file: " << file << ", reputation level is higther than maximal level for " << reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type")) << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                                         ok=false;
