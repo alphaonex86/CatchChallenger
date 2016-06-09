@@ -410,7 +410,7 @@ public:
     //market
     void getMarketList();
     void buyMarketObject(const uint32_t &marketObjectId,const uint32_t &quantity=1);
-    void buyMarketMonsterByPosition(const uint16_t &monsterPosition);
+    void buyMarketMonster(const uint32_t &monsterMarketId);
     void putMarketObject(const uint16_t &objectId, const uint32_t &quantity, const uint64_t &price);
     void putMarketMonsterByPosition(const uint8_t &monsterPosition,const uint64_t &price);
     void recoverMarketCash();

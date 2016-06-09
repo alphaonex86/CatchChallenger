@@ -1064,13 +1064,13 @@ void EpollServerLoginMaster::loadTheProfile()
                 while(reputationIndex<profile.reputations.size())
                 {
                     const Profile::Reputation &reputation=profile.reputations.at(reputationIndex);
-                    if(reputation.reputationDatabaseId>=CommonDatapack::commonDatapack.reputation.size())
+                    if(reputation.internalIndex>=CommonDatapack::commonDatapack.reputation.size())
                     {
-                        std::cerr << "For profile the reputation " << reputation.reputationDatabaseId << " is not found (abort)" << std::endl;
+                        std::cerr << "For profile the reputation " << reputation.internalIndex << " is not found (abort)" << std::endl;
                         abort();
                     }
                     //type
-                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(CommonDatapack::commonDatapack.reputation.at(reputation.reputationDatabaseId).reverse_database_id);
+                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(CommonDatapack::commonDatapack.reputation.at(reputation.internalIndex).reverse_database_id);
                     rawServerListForC211Size+=sizeof(uint16_t);
                     //level
                     rawServerListForC211[rawServerListForC211Size]=reputation.level;

@@ -102,12 +102,34 @@ void BaseServer::preload_profile()
             }
             encyclopedia_item=binarytoHexa(bitlist,sizeof(bitlist));
         }
+
         std::string reputations;
         if(!profile.reputations.empty())
         {
+            struct ReputationTemp
+            {
+                uint8_t reputationDatabaseId;//datapack order, can can need the dicionary to db resolv
+                int8_t level;
+                int32_t point;
+            };
+            std::vector<ReputationTemp> reputationList;
+
+            {
+                unsigned int index=0;
+                while(index<profile.reputations.size())
+                {
+                    ReputationTemp temp;
+                    const Profile::Reputation &source=profile.reputations.at(index);
+                    temp.level=source.level;
+                    temp.point=source.point;
+                    temp.reputationDatabaseId=CommonDatapack::commonDatapack.reputation.at(source.internalIndex).reverse_database_id;
+                    reputationList.push_back(temp);
+                    index++;
+                }
+            }
             uint32_t lastReputationId=0;
-            auto reputations_list=profile.reputations;
-            std::sort(reputations_list.begin(),reputations_list.end(),[](const Profile::Reputation &a, const Profile::Reputation &b) {
+            auto reputations_list=reputationList;
+            std::sort(reputations_list.begin(),reputations_list.end(),[](const ReputationTemp &a, const ReputationTemp &b) {
                 return a.reputationDatabaseId<b.reputationDatabaseId;
             });
             uint32_t pos=0;

@@ -820,7 +820,8 @@ class Profile
 public:
     struct Reputation
     {
-        uint8_t reputationDatabaseId;//datapack order, can can need the dicionary to db resolv
+        //struct Reputation have int reverse_database_id; uint8_t reputationDatabaseId;//datapack order, can can need the dicionary to db resolv
+        uint8_t internalIndex;
         int8_t level;
         int32_t point;
     };

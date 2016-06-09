@@ -269,6 +269,11 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &marketMon
                             );
                 dbQueryWriteServer(queryText);
             }
+            if(playerById.find(marketPlayerMonster.player)!=playerById.cend())
+            {
+                if(!playerById.at(marketPlayerMonster.player)->addMarketCashWithoutSave(marketPlayerMonster.price))
+                    normalOutput("Problem at market cash adding");
+            }
             addPlayerMonster(marketPlayerMonster.monster);
 
             {
@@ -277,17 +282,23 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &marketMon
                             );
                 dbQueryWriteServer(queryText);
             }
-            /*{
-                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_new_player;
-                stringreplaceOne(queryText,"%1",std::to_string(character_id));
-                stringreplaceOne(queryText,"%2",std::to_string(getPlayerMonster().size()));
-                stringreplaceOne(queryText,"%3",std::to_string(marketPlayerMonster.monster.id));
+            {
+                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_new_player.compose(
+                            std::to_string(character_id),
+                            std::to_string(getPlayerMonster().size()),
+                            std::to_string(marketPlayerMonster.monster.id)
+                            );
                 dbQueryWriteCommon(queryText);
-            }*/
+            }
 
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
+
+            //lot of data not exposed via the simplified data into the market list
+            posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,marketPlayerMonster.monster,marketPlayerMonster.player);
+
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             return;
         }

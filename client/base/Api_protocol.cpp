@@ -1303,7 +1303,7 @@ void Api_protocol::buyMarketObject(const uint32_t &marketObjectId, const uint32_
     is_logged=character_selected=packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::buyMarketMonsterByPosition(const uint16_t &monsterPosition)
+void Api_protocol::buyMarketMonster(const uint32_t &monsterMarketId)
 {
     if(!is_logged)
     {
@@ -1319,7 +1319,7 @@ void Api_protocol::buyMarketMonsterByPosition(const uint16_t &monsterPosition)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    out << monsterPosition;
+    out << monsterMarketId;
     is_logged=character_selected=packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
 }
 

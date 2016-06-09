@@ -65,7 +65,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>15</number>
+        <number>18</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -6923,8 +6923,8 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="iconSize">
              <size>
-              <width>32</width>
-              <height>32</height>
+              <width>24</width>
+              <height>24</height>
              </size>
             </property>
            </widget>
@@ -6961,8 +6961,8 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="iconSize">
              <size>
-              <width>32</width>
-              <height>32</height>
+              <width>24</width>
+              <height>24</height>
              </size>
             </property>
            </widget>
@@ -7285,8 +7285,8 @@ border-image: url(:/images/empty.png);
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../../fight/resources/client-resources-fight.qrc"/>
   <include location="../resources/client-resources.qrc"/>
+  <include location="../../fight/resources/client-resources-fight.qrc"/>
   <include location="../resources/client-resources-multi.qrc"/>
  </resources>
  <connections>
