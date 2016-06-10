@@ -43,10 +43,10 @@ void Client::saveIndustryStatus(const uint32_t &factoryId,const IndustryStatus &
     else
     {
         const std::string &queryText=PreparedDBQueryServer::db_query_update_factory.compose(
-                    std::to_string(factoryId),
                     stringimplode(resourcesStringList,';'),
                     stringimplode(productsStringList,';'),
-                    std::to_string(industryStatus.last_update)
+                    std::to_string(industryStatus.last_update),
+                    std::to_string(factoryId)
                     );
         dbQueryWriteServer(queryText);
     }
@@ -433,8 +433,8 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
-        posOutput+=4;
+        /**reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
+        posOutput+=4;*/
     }
     else
     {
