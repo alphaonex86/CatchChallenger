@@ -31,15 +31,15 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("No requirements"),tr("You don't meet the requirements"));
         return;
     }
-    int i=1;
+    int quantityToBuy=1;
     if(cash>=(price*2) && quantity>1)
     {
         bool ok;
-        i = QInputDialog::getInt(this, tr("Buy"),tr("Amount %1 to buy:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantity, 1, &ok);
-        if(!ok || i<=0)
+        quantityToBuy = QInputDialog::getInt(this, tr("Buy"),tr("Amount %1 to buy:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantity, 1, &ok);
+        if(!ok || quantityToBuy<=0)
             return;
     }
-    quantity-=i;
+    quantity-=quantityToBuy;
     item->setData(97,quantity);
     if(quantity<1)
         delete item;
@@ -60,12 +60,12 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
         factoryToProductItem(item);
     }
     ItemToSellOrBuy itemToSellOrBuy;
-    itemToSellOrBuy.quantity=quantity;
+    itemToSellOrBuy.quantity=quantityToBuy;
     itemToSellOrBuy.object=id;
-    itemToSellOrBuy.price=i*price;
+    itemToSellOrBuy.price=quantityToBuy*price;
     itemsToBuy << itemToSellOrBuy;
     removeCash(itemToSellOrBuy.object);
-    CatchChallenger::Api_client_real::client->buyFactoryProduct(factoryId,id,i,price);
+    CatchChallenger::Api_client_real::client->buyFactoryProduct(factoryId,id,quantityToBuy,price);
     appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
 }
 
