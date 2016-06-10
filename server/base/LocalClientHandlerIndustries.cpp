@@ -69,10 +69,16 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
     #endif
     if(CommonDatapack::commonDatapack.industriesLink.find(factoryId)==CommonDatapack::commonDatapack.industriesLink.cend())
     {
+        errorOutput("factory link id not found");
+        return;
+    }
+    const IndustryLink &industryLink=CommonDatapack::commonDatapack.industriesLink.at(factoryId);
+    if(CommonDatapack::commonDatapack.industries.find(industryLink.industry)==CommonDatapack::commonDatapack.industries.cend())
+    {
         errorOutput("factory id not found");
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(factoryId).industry);
+    const Industry &industry=CommonDatapack::commonDatapack.industries.at(industryLink.industry);
     //send the shop items (no taxes from now)
     removeFromQueryReceived(query_id);
     //send the network reply
@@ -210,6 +216,7 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
         errorOutput("factory id not found");
         return;
     }
+    const IndustryLink &industryLink=CommonDatapack::commonDatapack.industriesLink.at(factoryId);
     if(CommonDatapack::commonDatapack.items.item.find(objectId)==CommonDatapack::commonDatapack.items.item.cend())
     {
         errorOutput("object id not found into the factory product list");
@@ -220,12 +227,12 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
         errorOutput("factory id not found in active list");
         return;
     }
-    if(!haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.at(factoryId).requirements.reputation))
+    if(!haveReputationRequirements(industryLink.requirements.reputation))
     {
         errorOutput("The player have not the requirement: "+std::to_string(factoryId)+" to use the factory");
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(factoryId).industry);
+    const Industry &industry=CommonDatapack::commonDatapack.industries.at(industryLink.industry);
     IndustryStatus industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.at(factoryId),industry);
     uint32_t quantityInStock=0;
     uint32_t actualPrice=0;
