@@ -424,7 +424,7 @@ void BaseWindow::tradeAcceptedByOther(const QString &pseudo,const uint8_t &skinI
     ui->tradeOtherCash->setValue(0);
     ui->tradeOtherItems->clear();
     ui->tradeOtherMonsters->clear();
-    ui->tradeOtherStat->setText(tr("The other player have not validation their selection"));
+    ui->tradeOtherStat->setText(tr("The other player don't have validate their selection"));
 }
 
 void BaseWindow::tradeCanceledByOther()
@@ -459,6 +459,7 @@ void BaseWindow::tradeValidatedByTheServer()
     showTip(tr("Your trade is successfull"));
     add_to_inventory(tradeOtherObjects);
     addCash(ui->tradeOtherCash->value());
+    removeCash(ui->tradePlayerCash->value());
     tradeEvolutionMonsters=CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(tradeOtherMonsters);
     load_monsters();
     tradeOtherObjects.clear();

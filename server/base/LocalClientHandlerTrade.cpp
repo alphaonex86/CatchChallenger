@@ -25,7 +25,7 @@ void Client::registerTradeRequest(Client * otherPlayerTrade)
     uint32_t pos=0;
 
     ProtocolParsingBase::tempBigBufferForOutput[pos]=0xE0;
-    pos=1+4+1;
+    pos=1+1+4;
 
     //sender pseudo
     const std::string &pseudo=otherPlayerTrade->public_and_private_informations.public_informations.pseudo;
@@ -38,7 +38,7 @@ void Client::registerTradeRequest(Client * otherPlayerTrade)
     pos+=1;
 
     //set the dynamic size
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(pos-1-4);
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(pos-1-1-4);
 
     sendTradeRequest(ProtocolParsingBase::tempBigBufferForOutput,pos);
 }
@@ -137,7 +137,7 @@ void Client::tradeFinished()
 
 
         //send the network message
-        ProtocolParsingBase::tempBigBufferForOutput[0x01]=0x5B;
+        ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x5B;
 
         otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
@@ -151,10 +151,9 @@ void Client::tradeFinished()
         #endif
 
         //send the network message
-        ProtocolParsingBase::tempBigBufferForOutput[0x01]=0x5A;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=0;//set the dynamic size
+        ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x5A;//fixed size
 
-        otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+4);
+        otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1);
     }
 }
 
@@ -454,8 +453,20 @@ void Client::internalTradeAccepted(const bool &send)
     {
         //send the network message
         ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x58;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1);//set the dynamic size
-        ProtocolParsingBase::tempBigBufferForOutput[1+4]=otherPlayerTrade->public_and_private_informations.public_informations.skinId;
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+4+1);
+        unsigned int pos=1+4;
+
+        //sender pseudo
+        const std::string &pseudo=otherPlayerTrade->public_and_private_informations.public_informations.pseudo;
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=pseudo.size();
+        pos+=1;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,pseudo.data(),pseudo.size());
+        pos+=pseudo.size();
+        //skin
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=otherPlayerTrade->public_and_private_informations.public_informations.skinId;
+        pos+=1;
+
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(pos-1-4);//set the dynamic size
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,pos);
     }
 }
