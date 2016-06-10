@@ -280,6 +280,8 @@ void BaseWindow::haveFactoryList(const uint32_t &remainingProductionTime,const Q
             }
             sub_index++;
         }
+        if(sub_index==industry.resources.size())
+            std::cerr << "sub_index==industry.resources.size()" << std::endl;
         QListWidgetItem *item=new QListWidgetItem();
         item->setData(99,resources.at(index).object);
         item->setData(98,resources.at(index).price);
@@ -288,6 +290,20 @@ void BaseWindow::haveFactoryList(const uint32_t &remainingProductionTime,const Q
         ui->factoryResources->addItem(item);
         index++;
     }
+    {
+        unsigned int sub_index=0;
+        while(sub_index<industry.resources.size())
+        {
+            const Industry::Resource &resource=industry.resources.at(sub_index);
+            if(industryStatus.resources.find(resource.item)==industryStatus.resources.cend())
+            {
+                std::cerr << "Ressource " << resource.item << " not returned, consider as full: " << industry.cycletobefull*resource.quantity << std::endl;
+                industryStatus.resources[resource.item]=industry.cycletobefull*resource.quantity;
+            }
+            sub_index++;
+        }
+    }
+
     ui->factoryProducts->clear();
     index=0;
     while(index<products.size())
