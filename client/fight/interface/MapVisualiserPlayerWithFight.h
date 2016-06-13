@@ -11,7 +11,7 @@ class MapVisualiserPlayerWithFight : public MapVisualiserPlayer
 public:
     explicit MapVisualiserPlayerWithFight(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &OpenGL=false);
     ~MapVisualiserPlayerWithFight();
-    void setBotsAlreadyBeaten(const QSet<uint16_t> &botAlreadyBeaten);
+    void setBotsAlreadyBeaten(const char * const botAlreadyBeaten);
     void addBeatenBotFight(const uint16_t &botFightId);
     bool haveBeatBot(const uint16_t &botFightId) const;
     void addRepelStep(const uint32_t &repel_step);
@@ -21,7 +21,7 @@ protected slots:
     virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
     virtual void resetAll();
 protected:
-    QSet<uint16_t> botAlreadyBeaten;
+    char * botAlreadyBeaten;
     uint32_t repel_step;
     Tiled::Tileset *fightCollisionBot;
 signals:

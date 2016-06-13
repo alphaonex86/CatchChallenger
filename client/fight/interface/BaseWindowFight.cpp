@@ -1581,14 +1581,15 @@ void BaseWindow::displayExperienceGain()
             doNextAction();
             return;
         }
+        #endif
         if(currentMonsterLevel==currentMonster->level && (uint32_t)ui->progressBarFightBottomExp->value()>currentMonster->remaining_xp)
         {
-            newError(tr("Internal error"),QStringLiteral("part0: displayed xp greater than the real xp: %1>%2").arg(ui->progressBarFightBottomExp->value()).arg(currentMonster->remaining_xp));
+            message(QStringLiteral("part0: displayed xp greater than the real xp: %1>%2, auto fix").arg(ui->progressBarFightBottomExp->value()).arg(currentMonster->remaining_xp));
+            ui->progressBarFightBottomExp->setValue(currentMonster->remaining_xp);
             mLastGivenXP=0;
             doNextAction();
             return;
         }
-        #endif
         doNextAction();
         return;
     }
@@ -1616,11 +1617,21 @@ void BaseWindow::displayExperienceGain()
     #endif
 
     uint32_t xp_to_change;
-    xp_to_change=ui->progressBarFightBottomExp->maximum()/200;//0.5%
-    if(xp_to_change==0)
-        xp_to_change=1;
-    if(xp_to_change>mLastGivenXP)
-        xp_to_change=mLastGivenXP;
+    if(currentMonsterLevel<CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+    {
+        xp_to_change=ui->progressBarFightBottomExp->maximum()/200;//0.5%
+        if(xp_to_change==0)
+            xp_to_change=1;
+        if(xp_to_change>mLastGivenXP)
+            xp_to_change=mLastGivenXP;
+    }
+    else
+    {
+        xp_to_change=0;
+        mLastGivenXP=0;
+        doNextAction();
+        return;
+    }
 
     uint32_t maxXp=ui->progressBarFightBottomExp->maximum();
     if(((uint32_t)ui->progressBarFightBottomExp->value()+xp_to_change)>=(uint32_t)maxXp)
@@ -1677,8 +1688,17 @@ void BaseWindow::displayExperienceGain()
     }
     else
     {
-        ui->progressBarFightBottomExp->setValue(ui->progressBarFightBottomExp->value()+xp_to_change);
-        ui->progressBarFightBottomExp->repaint();
+        if(currentMonsterLevel<CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+        {
+            ui->progressBarFightBottomExp->setValue(ui->progressBarFightBottomExp->value()+xp_to_change);
+            ui->progressBarFightBottomExp->repaint();
+        }
+        else
+        {
+            mLastGivenXP=0;
+            doNextAction();
+            return;
+        }
     }
     if(mLastGivenXP>xp_to_change)
         mLastGivenXP-=xp_to_change;

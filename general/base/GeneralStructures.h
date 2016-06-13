@@ -370,6 +370,7 @@ struct Player_private_and_public_informations
     char * encyclopedia_item;//should be: CommonDatapack::commonDatapack.items.item.size()/8+1
     uint32_t repel_step;
     bool clan_leader;
+    char * bot_already_beaten;//should be: CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1
 
     /* item and plant is keep under database format to keep the dataintegrity and save quickly the data
      * More memory usage by 2x, but improve the code maintenance because the id in memory is id in database
@@ -388,7 +389,6 @@ struct Player_private_and_public_informations
         #endif
         std::unordered_map<uint16_t, PlayerQuest> quests;
         std::unordered_map<uint8_t,PlayerReputation> reputation;
-        std::unordered_set<uint16_t> bot_already_beaten;
         std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
     #else
         std::set<ActionAllow> allow;
@@ -403,7 +403,6 @@ struct Player_private_and_public_informations
         #endif
         std::map<uint16_t, PlayerQuest> quests;
         std::map<uint8_t,PlayerReputation> reputation;
-        std::set<uint16_t> bot_already_beaten;
         std::map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
     #endif
 };

@@ -152,7 +152,12 @@ bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
     while(index<requirements.fightId.size())
     {
         const uint32_t &fightId=requirements.fightId.at(index);
-        if(public_and_private_informations.bot_already_beaten.find(fightId)==public_and_private_informations.bot_already_beaten.cend())
+        if(public_and_private_informations.bot_already_beaten==NULL)
+        {
+            normalOutput("quest requirement, have not beat list: "+std::to_string(fightId));
+            return false;
+        }
+        if(public_and_private_informations.bot_already_beaten[fightId/8] & (1<<(7-fightId%8)))
         {
             normalOutput("quest requirement, have not beat the bot: "+std::to_string(fightId));
             return false;
