@@ -306,39 +306,16 @@ void Client::syncDatabaseReputation()
 
 void Client::syncBotAlreadyBeaten()
 {
-    if((uint32_t)(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1)>=(uint32_t)sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    if(public_and_private_informations.bot_already_beaten==NULL)
     {
-        uint32_t posOutput=0;
-        char tempBigBufferForOutput[CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1];
-        auto i=public_and_private_informations.bot_already_beaten.begin();
-        while(i!=public_and_private_informations.bot_already_beaten.cend())
-        {
-            const uint16_t &bittoUp=*i;
-            tempBigBufferForOutput[bittoUp/8]|=(1<<(7-bittoUp%8));
-            ++i;
-        }
-        const std::string &queryText=PreparedDBQueryServer::db_query_update_character_bot_already_beaten.compose(
-                    binarytoHexa(tempBigBufferForOutput,posOutput),
-                    std::to_string(character_id)
-                    );
-        dbQueryWriteCommon(queryText);
+        std::cerr << "bot_already_beaten==NULL at syncBotAlreadyBeaten()" << std::endl;
+        return;
     }
-    else
-    {
-        uint32_t posOutput=0;
-        auto i=public_and_private_informations.bot_already_beaten.begin();
-        while(i!=public_and_private_informations.bot_already_beaten.cend())
-        {
-            const uint16_t &bittoUp=*i;
-            ProtocolParsingBase::tempBigBufferForOutput[bittoUp/8]|=(1<<(7-bittoUp%8));
-            ++i;
-        }
-        const std::string &queryText=PreparedDBQueryServer::db_query_update_character_bot_already_beaten.compose(
-                    binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput),
-                    std::to_string(character_id)
-                    );
-        dbQueryWriteCommon(queryText);
-    }
+    const std::string &queryText=PreparedDBQueryServer::db_query_update_character_bot_already_beaten.compose(
+                binarytoHexa(public_and_private_informations.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1),
+                std::to_string(character_id)
+                );
+    dbQueryWriteServer(queryText);
 }
 
 void Client::savePosition()

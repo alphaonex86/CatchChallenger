@@ -101,6 +101,7 @@ Client::Client(
     public_and_private_informations.recipes=NULL;
     public_and_private_informations.encyclopedia_monster=NULL;
     public_and_private_informations.encyclopedia_item=NULL;
+    public_and_private_informations.bot_already_beaten=NULL;
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     {
         memset(movePacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
