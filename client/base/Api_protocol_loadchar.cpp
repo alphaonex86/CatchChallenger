@@ -3,6 +3,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLib.h"
@@ -970,26 +971,82 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
         player_informations.quests[playerQuestId]=playerQuest;
         index++;
     }
-    //bot_already_beaten
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
+
+    //compressed block
+    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
     {
         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the reputation list size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
     }
-    uint16_t bot_already_beaten;
-    index=0;
-    in >> sub_size16;
-    while(index<sub_size16)
+    in >> sub_size32;
+    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<sub_size32)
     {
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the reputation list size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        return false;
+    }
+    decompressedSize=0;
+    if(ProtocolParsingBase::compressionTypeClient==CompressionType::None)
+    {
+        decompressedSize=sub_size32;
+        memcpy(ProtocolParsingBase::tempBigBufferForUncompressedInput,data.data()+in.device()->pos(),sub_size32);
+    }
+    else
+        decompressedSize=computeDecompression(data.data()+in.device()->pos(),ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
+    {
+        const QByteArray data2(ProtocolParsingBase::tempBigBufferForUncompressedInput,decompressedSize);
+        QDataStream in2(data2);
+        in2.setVersion(QDataStream::Qt_4_4);in2.setByteOrder(QDataStream::LittleEndian);
+        if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
         {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong text with main ident: %1, and queryNumber: %2").arg(packetCode).arg(queryNumber));
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max player, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
             return false;
         }
-        in >> bot_already_beaten;
-        player_informations.bot_already_beaten.insert(bot_already_beaten);
-        index++;
+        if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint8_t))
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the reputation list size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            return false;
+        }
+
+        //alloc
+        if(player_informations.bot_already_beaten!=NULL)
+        {
+            delete player_informations.bot_already_beaten;
+            player_informations.bot_already_beaten=NULL;
+        }
+        player_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+        memset(player_informations.bot_already_beaten,0x00,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+
+        //recipes
+        {
+            if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
+            {
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max player, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            uint16_t sub_size16;
+            in2 >> sub_size16;
+            if(sub_size16>0)
+            {
+                if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<sub_size16)
+                {
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the reputation list size, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                    return false;
+                }
+                if(sub_size16>CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1)
+                    memcpy(player_informations.bot_already_beaten,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+                else
+                    memcpy(player_informations.bot_already_beaten,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                in2.device()->seek(in2.device()->pos()+sub_size16);
+            }
+        }
+
+        if(in2.device()->size()!=in2.device()->pos())
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the in2.device()->size() %1 != in2.device()->pos() %2, line: %3").arg(in2.device()->size()).arg(in2.device()->pos()).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            return false;
+        }
     }
+    in.device()->seek(in.device()->pos()+sub_size32);
 
     //item on map
     {

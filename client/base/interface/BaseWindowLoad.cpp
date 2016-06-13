@@ -704,7 +704,7 @@ void BaseWindow::updateConnectingStatus()
         itemOnMap=player_private_and_public_informations.itemOnMap;
         plantOnMap=player_private_and_public_informations.plantOnMap;
         warehouse_playerMonster=stdvectorToQList(player_private_and_public_informations.warehouse_playerMonster);
-        MapController::mapController->setBotsAlreadyBeaten(stdunorderedsetToQSet(player_private_and_public_informations.bot_already_beaten));
+        MapController::mapController->setBotsAlreadyBeaten(player_private_and_public_informations.bot_already_beaten);
         MapController::mapController->setInformations(&items,&quests,&events,&itemOnMap,&plantOnMap);
         Api_client_real::client->unloadSelection();
         load_inventory();

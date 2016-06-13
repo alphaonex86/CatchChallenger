@@ -634,7 +634,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_update_character_quests="UPDATE character_forserver SET quest=UNHEX('%1') WHERE character=%2";
         PreparedDBQueryServer::db_query_update_plant="UPDATE character_forserver SET plants=UNHEX('%1') WHERE character=%2";
         PreparedDBQueryServer::db_query_update_itemonmap="UPDATE character_forserver SET itemonmap=UNHEX('%1') WHERE character=%2";
-        PreparedDBQueryServer::db_query_update_character_bot_already_beaten="UPDATE character_forserver SET bot_already_beaten=UNHEX('%1') WHERE character=%2";
+        PreparedDBQueryServer::db_query_update_character_bot_already_beaten="UPDATE character_forserver SET botfight_id=UNHEX('%1') WHERE character=%2";
         break;
         #endif
 
@@ -667,7 +667,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_update_character_quests="UPDATE character_forserver SET quest='%1' WHERE character=%2";
         PreparedDBQueryServer::db_query_update_plant="UPDATE character_forserver SET plants='%1' WHERE character=%2";
         PreparedDBQueryServer::db_query_update_itemonmap="UPDATE character_forserver SET itemonmap='%1' WHERE character=%2";
-        PreparedDBQueryServer::db_query_update_character_bot_already_beaten="UPDATE character_forserver SET bot_already_beaten='%1' WHERE character=%2";
+        PreparedDBQueryServer::db_query_update_character_bot_already_beaten="UPDATE character_forserver SET botfight_id='%1' WHERE character=%2";
 
         /*        PreparedDBQueryServer::db_query_delete_bot_already_beaten="DELETE FROM bot_already_beaten WHERE character=%1";
         PreparedDBQueryServer::db_query_select_plant="SELECT \"pointOnMap\",plant,plant_timestamps FROM plant WHERE character=%1";
@@ -718,7 +718,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_delete_character_server_by_id="DELETE FROM character_forserver WHERE character=%1";
         PreparedDBQueryServer::db_query_update_plant="UPDATE character_forserver SET plants='\\x%1' WHERE character=%2";
         PreparedDBQueryServer::db_query_update_itemonmap="UPDATE character_forserver SET itemonmap='\\x%1' WHERE character=%2";
-        PreparedDBQueryServer::db_query_update_character_bot_already_beaten="UPDATE character_forserver SET bot_already_beaten='\\x%1' WHERE character=%2";
+        PreparedDBQueryServer::db_query_update_character_bot_already_beaten="UPDATE character_forserver SET botfight_id='\\x%1' WHERE character=%2";
 
         /*
         PreparedDBQueryServer::db_query_delete_bot_already_beaten="DELETE FROM bot_already_beaten WHERE character=%1";

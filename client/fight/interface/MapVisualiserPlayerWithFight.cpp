@@ -12,6 +12,7 @@ MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnP
     items=NULL;
     quests=NULL;
     fightCollisionBot=NULL;
+    botAlreadyBeaten=NULL;
 }
 
 MapVisualiserPlayerWithFight::~MapVisualiserPlayerWithFight()
@@ -21,21 +22,32 @@ MapVisualiserPlayerWithFight::~MapVisualiserPlayerWithFight()
         delete fightCollisionBot;
         fightCollisionBot=NULL;
     }
+    if(botAlreadyBeaten!=NULL)
+    {
+        delete botAlreadyBeaten;
+        botAlreadyBeaten=NULL;
+    }
 }
 
-void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const QSet<uint16_t> &botAlreadyBeaten)
+void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const char * const botAlreadyBeaten)
 {
-    this->botAlreadyBeaten=botAlreadyBeaten;
+    if(this->botAlreadyBeaten!=NULL)
+    {
+        delete this->botAlreadyBeaten;
+        this->botAlreadyBeaten=NULL;
+    }
+    this->botAlreadyBeaten=(char *)malloc(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+    memcpy(this->botAlreadyBeaten,botAlreadyBeaten,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
 }
 
 void MapVisualiserPlayerWithFight::addBeatenBotFight(const uint16_t &botFightId)
 {
-    botAlreadyBeaten << botFightId;
+    botAlreadyBeaten[botFightId/8]|=(1<<(7-botFightId%8));
 }
 
 bool MapVisualiserPlayerWithFight::haveBeatBot(const uint16_t &botFightId) const
 {
-    return botAlreadyBeaten.contains(botFightId);
+    return botAlreadyBeaten[botFightId/8] & (1<<(7-botFightId%8));
 }
 
 void MapVisualiserPlayerWithFight::addRepelStep(const uint32_t &repel_step)
@@ -45,7 +57,11 @@ void MapVisualiserPlayerWithFight::addRepelStep(const uint32_t &repel_step)
 
 void MapVisualiserPlayerWithFight::resetAll()
 {
-    botAlreadyBeaten.clear();
+    if(botAlreadyBeaten!=NULL)
+    {
+        delete botAlreadyBeaten;
+        botAlreadyBeaten=NULL;
+    }
     MapVisualiserPlayer::resetAll();
 }
 
@@ -92,7 +108,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
             unsigned int index=0;
             while(index<botFightList.size())
             {
-                if(!botAlreadyBeaten.contains(botFightList.at(index)))
+                if(!haveBeatBot(botFightList.at(index)))
                 {
                     if(inMove)
                     {
@@ -234,7 +250,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
             unsigned int index=0;
             while(index<botFightList.size())
             {
-                if(!botAlreadyBeaten.contains(botFightList.at(index)))
+                if(!haveBeatBot(botFightList.at(index)))
                 {
                     if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
                     {

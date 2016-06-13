@@ -222,32 +222,24 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
 
     //botfight_id
     {
-        const std::vector<char> &botfight_id=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(13),&ok);
-        #ifndef CATCHCHALLENGER_EXTRA_CHECK
-        const char * const raw_botfight_id=botfight_id.data();
-        #endif
+        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(13),&ok);
         if(!ok)
         {
-            characterSelectionIsWrong(query_id,0x04,"botfight_id: "+GlobalServerData::serverPrivateVariables.db_server->value(13)+" is not a hexa");
+            characterSelectionIsWrong(query_id,0x04,"botfight_id not in hexa");
             return;
         }
-        else
+        const char * const data_raw=data.data();
+        if(public_and_private_informations.bot_already_beaten!=NULL)
         {
-            uint16_t index=0;
-            while(index<=CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId && (index/8)<botfight_id.size())
-            {
-                const uint16_t &bitgetUp=index;
-                if(
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        botfight_id
-                        #else
-                        raw_botfight_id
-                        #endif
-                        [bitgetUp/8] & (1<<(7-bitgetUp%8)))
-                    public_and_private_informations.bot_already_beaten.insert(bitgetUp);
-                index++;
-            }
+            delete public_and_private_informations.bot_already_beaten;
+            public_and_private_informations.bot_already_beaten=NULL;
         }
+        public_and_private_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+        memset(public_and_private_informations.bot_already_beaten,0x00,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+        if(data.size()>(uint16_t)(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1))
+            memcpy(public_and_private_informations.bot_already_beaten,data_raw,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+        else
+            memcpy(public_and_private_informations.bot_already_beaten,data_raw,data.size());
     }
     //itemonmap
     {

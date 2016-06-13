@@ -284,16 +284,54 @@ void Client::characterIsRightFinalStep()
         }
     }
 
-    //send bot_already_beaten
     {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.bot_already_beaten.size());
-        posOutput+=2;
-        auto k=public_and_private_informations.bot_already_beaten.begin();
-        while(k!=public_and_private_informations.bot_already_beaten.cend())
+        char *buffer;
+        if(ProtocolParsingBase::compressionTypeServer==CompressionType::None)
+            buffer=ProtocolParsingBase::tempBigBufferForOutput+posOutput+4;
+        else
+            buffer=ProtocolParsingBase::tempBigBufferForCompressedOutput;
+        uint32_t posOutputTemp=0;
+        //recipes
+        if(public_and_private_informations.bot_already_beaten!=NULL)
         {
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(*k);
-            posOutput+=2;
-            ++k;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId==0)
+            {
+                errorOutput("CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId==0");
+                return;
+            }
+            #endif
+            const auto &binarySize=CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1;
+            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
+            posOutputTemp+=2;
+            memcpy(buffer+posOutputTemp,public_and_private_informations.bot_already_beaten,binarySize);
+            posOutputTemp+=binarySize;
+        }
+        else
+        {
+            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
+            posOutputTemp+=2;
+        }
+
+        if(ProtocolParsingBase::compressionTypeServer==CompressionType::None)
+        {
+            *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(posOutputTemp);
+            posOutput+=4;
+            posOutput+=posOutputTemp;
+        }
+        else
+        {
+            //compress
+            const int32_t &compressedSize=computeCompression(buffer,ProtocolParsingBase::tempBigBufferForOutput+posOutput+4,posOutputTemp,sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput-1-4,ProtocolParsingBase::compressionTypeServer);
+            if(compressedSize<0)
+            {
+                errorOutput("Error to compress the data");
+                return;
+            }
+            //copy
+            *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(compressedSize);
+            posOutput+=4;
+            posOutput+=compressedSize;
         }
     }
 
