@@ -71,6 +71,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     player_informations.recipes=NULL;
     player_informations.encyclopedia_monster=NULL;
     player_informations.encyclopedia_item=NULL;
+    player_informations.bot_already_beaten=NULL;
     resetAll();
 
     connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::socketDestroyed,Qt::DirectConnection);
@@ -1727,7 +1728,6 @@ void Api_protocol::resetAll()
     number_of_map=0;
     selectedServerIndex=-1;
     player_informations.allow.clear();
-    player_informations.bot_already_beaten.clear();
     player_informations.cash=0;
     player_informations.clan=0;
     player_informations.clan_leader=false;
@@ -1771,6 +1771,11 @@ void Api_protocol::resetAll()
     {
         delete player_informations.encyclopedia_item;
         player_informations.encyclopedia_item=NULL;
+    }
+    if(player_informations.bot_already_beaten!=NULL)
+    {
+        delete player_informations.bot_already_beaten;
+        player_informations.bot_already_beaten=NULL;
     }
 
     ProtocolParsingInputOutput::reset();

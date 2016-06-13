@@ -252,12 +252,13 @@ bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TY
         while(index<botList.size())
         {
             const uint32_t &botFightId=botList.at(index);
-            if(public_and_private_informations.bot_already_beaten.find(botFightId)==public_and_private_informations.bot_already_beaten.cend())
-            {
-                normalOutput("is now in fight on map "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botFightId));
-                botFightStart(botFightId);
-                return true;
-            }
+            if(public_and_private_informations.bot_already_beaten!=NULL)
+                if(public_and_private_informations.bot_already_beaten[botFightId/8] & (1<<(7-botFightId%8)))
+                {
+                    normalOutput("is now in fight on map "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botFightId));
+                    botFightStart(botFightId);
+                    return true;
+                }
             index++;
         }
     }
@@ -435,12 +436,15 @@ bool Client::finishTheTurn(const bool &isBot)
                 #endif
                 {
                     addCash(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(botFightId).cash);
-                    public_and_private_informations.bot_already_beaten.insert(botFightId);
-                    /*const std::string &queryText=PreparedDBQueryServer::db_query_insert_bot_already_beaten;
-                    stringreplaceOne(queryText,"%1",std::to_string(character_id));
-                    stringreplaceOne(queryText,"%2",std::to_string(botFightId));
-                    dbQueryWriteServer(queryText);*/
-                    syncBotAlreadyBeaten();
+                    if(public_and_private_informations.bot_already_beaten!=NULL)
+                    {
+                        public_and_private_informations.bot_already_beaten[botFightId/8]|=(1<<(7-botFightId%8));
+                        /*const std::string &queryText=PreparedDBQueryServer::db_query_insert_bot_already_beaten;
+                        stringreplaceOne(queryText,"%1",std::to_string(character_id));
+                        stringreplaceOne(queryText,"%2",std::to_string(botFightId));
+                        dbQueryWriteServer(queryText);*/
+                        syncBotAlreadyBeaten();
+                    }
                 }
                 fightOrBattleFinish(win,botFightId);
                 normalOutput("Register the win against the bot fight: "+std::to_string(botFightId));
