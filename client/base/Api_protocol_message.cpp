@@ -953,26 +953,41 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("fileListSize==0 with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                 return false;
             }
+
+            uint32_t sub_size32=in.device()->size()-in.device()->pos();
+            uint32_t decompressedSize=0;
+            if(ProtocolParsingBase::compressionTypeClient==CompressionType::None || packetCode==0x76)
+            {
+                decompressedSize=sub_size32;
+                memcpy(ProtocolParsingBase::tempBigBufferForUncompressedInput,data.data()+in.device()->pos(),sub_size32);
+            }
+            else
+                decompressedSize=computeDecompression(data.data()+in.device()->pos(),ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
+
+            const QByteArray data2(ProtocolParsingBase::tempBigBufferForUncompressedInput,decompressedSize);
+            QDataStream in2(data2);
+            in2.setVersion(QDataStream::Qt_4_4);in2.setByteOrder(QDataStream::LittleEndian);
+
             int index=0;
             while(index<fileListSize)
             {
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+                if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)(sizeof(uint8_t)))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
                 QString fileName;
                 uint8_t fileNameSize;
-                in >> fileNameSize;
+                in2 >> fileNameSize;
                 if(fileNameSize>0)
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)fileNameSize)
+                    if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)fileNameSize)
                     {
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return false;
                     }
-                    QByteArray rawText=data.mid(in.device()->pos(),fileNameSize);
-                    in.device()->seek(in.device()->pos()+rawText.size());
+                    QByteArray rawText=data.mid(in2.device()->pos(),fileNameSize);
+                    in2.device()->seek(in2.device()->pos()+rawText.size());
                     fileName=QString::fromUtf8(rawText.data(),rawText.size());
                 }
                 if(!extensionAllowed.contains(QFileInfo(fileName).suffix()))
@@ -981,20 +996,20 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                     if(!tolerantMode)
                         return false;
                 }
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)(sizeof(uint32_t)))
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
                 uint32_t size;
-                in >> size;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<size)
+                in2 >> size;
+                if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<size)
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong file data size with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                QByteArray dataFile=data.mid(in.device()->pos(),size);
-                in.device()->seek(in.device()->pos()+size);
+                QByteArray dataFile=data.mid(in2.device()->pos(),size);
+                in2.device()->seek(in2.device()->pos()+size);
                 if(packetCode==0x76)
                     std::cout << "Raw file to create: ";
                 else
