@@ -391,7 +391,7 @@ void Client::errorOutput(const std::string &errorString)
 {
     if(stat==ClientStat::None)
     {
-        std::cerr << headerOutput() << "Kicked by: " << errorString << std::endl;
+        //std::cerr << headerOutput() << "Kicked by: " << errorString << std::endl;//silent if protocol not passed, to not flood the log if other client like http client (browser) is connected
         disconnectClient();
         return;
     }

@@ -302,9 +302,9 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(returnVar==0)
-                std::cerr << "Break due to need more in query number" << std::endl;
+                errorParsingLayer("Break due to need more in query number");
             else
-                std::cerr << "parseIncommingDataRaw() Have bug" << std::endl;
+                errorParsingLayer("parseIncommingDataRaw() Have bug");
             #endif
             return returnVar;
         }
@@ -322,9 +322,9 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(returnVar==0)
-                std::cerr << "Break due to need more in query number" << std::endl;
+                errorParsingLayer("Break due to need more in query number");
             else
-                std::cerr << "Not a reply to a query or similar bug" << std::endl;
+                errorParsingLayer("Not a reply to a query or similar bug");
             #endif
             return returnVar;
         }
@@ -409,7 +409,10 @@ int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const ui
         {
             dataSize=ProtocolParsingBase::packetFixedSize[packetCode];
             if(dataSize==0xFF)
+            {
+                errorParsingLayer("wrong packet code (header)");
                 return -1;//packetCode code wrong
+            }
             else if(dataSize!=0xFE)
                 flags |= 0x40;
             else
@@ -453,7 +456,10 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
             const uint8_t &replyTo=outputQueryNumberToPacketCode[queryNumber];
             //not a reply to a query
             if(replyTo==0x00)
+            {
+                errorParsingLayer("not a reply to q known query (parseQueryNumber)");
                 return -1;
+            }
             dataSize=ProtocolParsingBase::packetFixedSize[256+replyTo-128];
             if(dataSize==0xFF)
                 abort();//packetCode code wrong, how the output allow this! filter better the output
@@ -606,10 +612,10 @@ int8_t ProtocolParsingBase::parseData(const char * const commonBuffer, const uin
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-int32_t ProtocolParsing::computeDecompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType)
+int32_t ProtocolParsing::computeDecompression(const char* const source, char* const dest, const unsigned int &sourceSize, const unsigned int &maxDecompressedSize, const CompressionType &compressionType)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(maxDecompressedSize<compressedSize)
+    if(maxDecompressedSize<sourceSize)
     {
         std::cerr << "maxDecompressedSize<compressedSize in ProtocolParsingBase::computeDecompression" << std::endl;
         abort();
@@ -624,21 +630,21 @@ int32_t ProtocolParsing::computeDecompression(const char* const source, char* co
         break;
         case CompressionType::Zlib:
         default:
-            return ProtocolParsing::decompressZlib(source,compressedSize,dest,maxDecompressedSize);
+            return ProtocolParsing::decompressZlib(source,sourceSize,dest,maxDecompressedSize);
         break;
         case CompressionType::Xz:
-            return ProtocolParsing::decompressXz(source,compressedSize,dest,maxDecompressedSize);
+            return ProtocolParsing::decompressXz(source,sourceSize,dest,maxDecompressedSize);
         break;
         case CompressionType::Lz4:
-            return LZ4_decompress_safe(source,dest,compressedSize,maxDecompressedSize);
+            return LZ4_decompress_safe(source,dest,sourceSize,maxDecompressedSize);
         break;
     }
 }
 
-int32_t ProtocolParsing::computeCompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType)
+int32_t ProtocolParsing::computeCompression(const char* const source, char* const dest, const unsigned int &sourceSize, const unsigned int &maxDecompressedSize, const CompressionType &compressionType)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(maxDecompressedSize<compressedSize)
+    if(maxDecompressedSize<sourceSize)
     {
         std::cerr << "maxDecompressedSize<compressedSize in ProtocolParsingBase::computeDecompression" << std::endl;
         abort();
@@ -653,13 +659,13 @@ int32_t ProtocolParsing::computeCompression(const char* const source, char* cons
         break;
         case CompressionType::Zlib:
         default:
-            return ProtocolParsing::compressZlib(source,compressedSize,dest,maxDecompressedSize);
+            return ProtocolParsing::compressZlib(source,sourceSize,dest,maxDecompressedSize);
         break;
         case CompressionType::Xz:
-            return ProtocolParsing::compressXz(source,compressedSize,dest,maxDecompressedSize);
+            return ProtocolParsing::compressXz(source,sourceSize,dest,maxDecompressedSize);
         break;
         case CompressionType::Lz4:
-            return LZ4_compress_fast(source,dest,compressedSize,maxDecompressedSize,ProtocolParsing::compressionLevel);
+            return LZ4_compress_fast(source,dest,sourceSize,maxDecompressedSize,ProtocolParsing::compressionLevel);
         break;
     }
 }

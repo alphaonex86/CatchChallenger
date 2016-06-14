@@ -39,6 +39,11 @@ bool ProtocolParsingBase::internalPackOutcommingData(const char * const data,con
         std::cerr << "ProtocolParsingInputOutput::internalPackOutcommingData size is null: " << __LINE__ << std::endl;
         return false;
     }
+    if(size>CATCHCHALLENGER_MAX_PACKET_SIZE)
+    {
+        std::cerr << "ProtocolParsingInputOutput::internalPackOutcommingData size is null: " << __LINE__ << std::endl;
+        abort();
+    }
     #endif
     #ifdef PROTOCOLPARSINGDEBUG
     messageParsingLayer("internalPackOutcommingData(): start");
