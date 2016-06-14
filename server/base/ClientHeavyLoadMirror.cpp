@@ -446,7 +446,6 @@ void Client::sendCompressedFileContent()
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x77;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::compressedFilesBuffer.size());//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::compressedFilesBufferCount;
         posOutput+=1;
@@ -455,11 +454,11 @@ void Client::sendCompressedFileContent()
             errorOutput("Client::sendFileContent too big to reply");
             return;
         }
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,BaseServerMasterSendDatapack::compressedFilesBuffer.data(),BaseServerMasterSendDatapack::compressedFilesBuffer.size());
-        posOutput+=BaseServerMasterSendDatapack::compressedFilesBuffer.size();
 
-        const uint32_t &compressedSize=computeCompression(ProtocolParsingBase::tempBigBufferForOutput,ProtocolParsingBase::tempBigBufferForCompressedOutput,posOutput,sizeof(ProtocolParsingBase::tempBigBufferForCompressedOutput),ProtocolParsingBase::compressionTypeServer);
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForCompressedOutput,compressedSize);
+        const uint32_t &compressedSize=computeCompression(BaseServerMasterSendDatapack::compressedFilesBuffer.data(),ProtocolParsingBase::tempBigBufferForOutput+posOutput,BaseServerMasterSendDatapack::compressedFilesBuffer.size(),sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput,ProtocolParsingBase::compressionTypeServer);
+        posOutput+=compressedSize;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
         BaseServerMasterSendDatapack::compressedFilesBuffer.clear();
         BaseServerMasterSendDatapack::compressedFilesBufferCount=0;
