@@ -96,8 +96,8 @@ public:
     static int32_t compressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
 
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    int32_t computeDecompression(const char* const source, char* const dest, unsigned int compressedSize, unsigned int maxDecompressedSize, const CompressionType &compressionType);
-    int32_t computeCompression(const char* const source, char* const dest, unsigned int uncompressedSize, unsigned int maxCompressedSize, const CompressionType &compressionType);
+    int32_t computeDecompression(const char* const source, char* const dest, const unsigned int &sourceSize, const unsigned int &maxDecompressedSize, const CompressionType &compressionType);
+    int32_t computeCompression(const char* const source, char* const dest, const unsigned int &sourceSize, const unsigned int &maxCompressedSize, const CompressionType &compressionType);
     #endif
 protected:
     virtual void errorParsingLayer(const std::string &error) = 0;
