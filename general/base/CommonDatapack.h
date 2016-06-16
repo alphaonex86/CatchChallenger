@@ -27,6 +27,7 @@ public:
 public:
     void unload();
     void parseDatapack(const std::string &datapackPath);
+    bool isParsedContent() const;
 public:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     std::unordered_map<uint8_t,Plant> plants;

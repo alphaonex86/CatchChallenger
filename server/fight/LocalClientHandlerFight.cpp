@@ -237,6 +237,13 @@ void Client::fightFinished()
     CommonFightEngine::fightFinished();
 }
 
+bool Client::haveBeatBot(const uint16_t &botFightId) const
+{
+    if(public_and_private_informations.bot_already_beaten==NULL)
+        abort();
+    return public_and_private_informations.bot_already_beaten[botFightId/8] & (1<<(7-botFightId%8));
+}
+
 bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     if(isInFight())
@@ -253,12 +260,14 @@ bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TY
         {
             const uint32_t &botFightId=botList.at(index);
             if(public_and_private_informations.bot_already_beaten!=NULL)
-                if(public_and_private_informations.bot_already_beaten[botFightId/8] & (1<<(7-botFightId%8)))
+            {
+                if(!haveBeatBot(botFightId))
                 {
                     normalOutput("is now in fight on map "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botFightId));
                     botFightStart(botFightId);
                     return true;
                 }
+            }
             index++;
         }
     }
