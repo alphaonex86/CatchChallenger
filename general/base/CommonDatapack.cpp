@@ -15,6 +15,8 @@ CommonDatapack::CommonDatapack()
 {
     isParsed=false;
     parsing=false;
+    monstersMaxId=0;
+    crafingRecipesMaxId=0;
 }
 
 void CommonDatapack::parseDatapack(const std::string &datapackPath)
@@ -183,6 +185,11 @@ void CommonDatapack::parseLayersOptions()
     layersOptions=DatapackGeneralLoader::loadLayersOptions(datapackPath+DATAPACK_BASE_PATH_MAPBASE+"layers.xml");
     std::cout << "layers options parsed" << std::endl;
     #endif
+}
+
+bool CommonDatapack::isParsedContent() const
+{
+    return isParsed;
 }
 
 void CommonDatapack::unload()

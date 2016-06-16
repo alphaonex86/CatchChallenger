@@ -14,7 +14,7 @@
 
 using namespace CatchChallenger;
 
-bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t &queryNumber, const QByteArray &data)
+bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const uint8_t &queryNumber, const QByteArray &data)
 {
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
@@ -309,6 +309,63 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
         else
             CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.clear();
     }
+    emit haveDatapackMainSubCode();
+
+    if(!CatchChallenger::CommonDatapack::commonDatapack.isParsedContent())//for bit array
+    {
+        if(delayedLogin.data.isEmpty())
+        {
+            delayedLogin.data=data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos()));
+            delayedLogin.packetCode=packetCode;
+            delayedLogin.queryNumber=queryNumber;
+            return true;
+        }
+        else
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),
+                       QStringLiteral("Login in suspend already set with main ident: %1, and queryNumber: %2, line: %3")
+                       .arg(packetCode)
+                       .arg(queryNumber)
+                       .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
+                       );
+            return false;
+        }
+    }
+    if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.isParsedContent())//for botid
+    {
+        if(delayedLogin.data.isEmpty())
+        {
+            delayedLogin.data=data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos()));
+            delayedLogin.packetCode=packetCode;
+            delayedLogin.queryNumber=queryNumber;
+            return true;
+        }
+        else
+        {
+            parseError(QStringLiteral("Procotol wrong or corrupted"),
+                       QStringLiteral("Login in suspend already set with main ident: %1, and queryNumber: %2, line: %3")
+                       .arg(packetCode)
+                       .arg(queryNumber)
+                       .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
+                       );
+            return false;
+        }
+    }
+
+    parseCharacterBlockCharacter(packetCode,queryNumber,data);
+    return true;
+}
+
+bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const uint8_t &queryNumber, const QByteArray &data)
+{
+    QDataStream in(data);
+    in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
+    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
+    {
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the max player, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        return false;
+    }
+
     //Events not with default value list size
     {
         QList<QPair<uint8_t,uint8_t> > events;
@@ -1015,8 +1072,10 @@ bool Api_protocol::parseCharacterBlock(const uint8_t &packetCode, const uint8_t 
         }
         player_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
         memset(player_informations.bot_already_beaten,0x00,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+        if(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId<=0)
+             std::cerr << "CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId == 0, take care" << std::endl;
 
-        //recipes
+        //bot
         {
             if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
             {
