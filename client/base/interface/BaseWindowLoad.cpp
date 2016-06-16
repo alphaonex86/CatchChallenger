@@ -239,9 +239,6 @@ void BaseWindow::haveCharacter()
 
     haveCharacterInformation=true;
 
-    if(haveInventory && haveCharacterPosition && haveCharacterInformation)
-        sendDatapackContentMainSub();
-
     updateConnectingStatus();
 }
 
@@ -267,14 +264,17 @@ void BaseWindow::have_character_position()
 
     haveCharacterPosition=true;
 
-    if(haveInventory && haveCharacterPosition && haveCharacterInformation)
-        sendDatapackContentMainSub();
-
     updateConnectingStatus();
 }
 
 void BaseWindow::have_main_and_sub_datapack_loaded()
 {
+    CatchChallenger::Api_client_real::client->have_main_and_sub_datapack_loaded();
+    if(!CatchChallenger::Api_client_real::client->getCaracterSelected())
+    {
+        error("BaseWindow::have_main_and_sub_datapack_loaded(): don't have player info, need to code this delay part");
+        return;
+    }
     const Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
 
     clan=informations.clan;
@@ -354,6 +354,12 @@ void BaseWindow::haveTheDatapack()
         emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPathBase());
 }
 
+void BaseWindow::haveDatapackMainSubCode()
+{
+    sendDatapackContentMainSub();
+    updateConnectingStatus();
+}
+
 void BaseWindow::haveTheDatapackMainSub()
 {
     #ifdef DEBUG_BASEWINDOWS
@@ -408,8 +414,6 @@ void BaseWindow::have_inventory(const std::unordered_map<uint16_t,uint32_t> &ite
     this->items=items;
     this->warehouse_items=warehouse_items;
     haveInventory=true;
-    if(haveInventory && haveCharacterPosition && haveCharacterInformation)
-        sendDatapackContentMainSub();
     updateConnectingStatus();
 }
 
@@ -633,7 +637,7 @@ void BaseWindow::updateConnectingStatus()
                 return;
             }
         }
-        else if(!haveCharacterPosition && !haveCharacterInformation)
+        else if(!haveCharacterPosition && !haveCharacterInformation && !Api_client_real::client->character_select_is_send())
         {
             if(ui->stackedWidget->currentWidget()!=ui->page_character)
             {

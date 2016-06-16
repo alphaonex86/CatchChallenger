@@ -55,6 +55,8 @@ public:
     virtual QString subDatapackCode() const;
     void setDatapackPath(const QString &datapackPath);
     QByteArray toUTF8WithHeader(const QString &text);
+    void have_main_and_sub_datapack_loaded();//can now load player_informations
+    bool character_select_is_send();
 
     enum StageConnexion
     {
@@ -94,6 +96,7 @@ private:
     bool haveFirstHeader;
     bool is_logged;
     bool character_selected;
+    bool character_select_send;
     bool have_send_protocol;
     bool have_receive_protocol;
     bool tolerantMode;
@@ -120,6 +123,20 @@ private:
     static bool precomputeDone;
     static char hurgeBufferMove[4];
     #endif
+
+    struct DelayedReply
+    {
+        uint8_t packetCode;
+        uint8_t queryNumber;
+        QByteArray data;
+    };
+    DelayedReply delayedLogin;
+    struct DelayedMessage
+    {
+        uint8_t packetCode;
+        QByteArray data;
+    };
+    std::vector<DelayedMessage> delayedMessages;
 protected:
     virtual void socketDestroyed();
     void parseIncommingData();
@@ -131,7 +148,8 @@ protected:
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;
 
-    bool parseCharacterBlock(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data);
+    bool parseCharacterBlockServer(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data);
+    bool parseCharacterBlockCharacter(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data);
 
     /// \note This is note into server part to force to write manually the serial and improve the performance, this function is more easy but implies lot of memory copy via SIMD
     //send message without reply
@@ -215,6 +233,7 @@ signals:
     void connectedOnLoginServer() const;
     void connectingOnGameServer() const;
     void connectedOnGameServer() const;
+    void haveDatapackMainSubCode();
 
     //general info
     void number_of_player(const uint16_t &number,const uint16_t &max_players) const;

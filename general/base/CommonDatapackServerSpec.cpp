@@ -17,6 +17,7 @@ CommonDatapackServerSpec::CommonDatapackServerSpec()
 {
     isParsedSpec=false;
     parsingSpec=false;
+    botFightsMaxId=0;
 }
 
 void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath,const std::string &mainDatapackCode)
@@ -44,6 +45,11 @@ void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath,con
 
     parsingSpec=false;
     isParsedSpec=true;
+}
+
+bool CommonDatapackServerSpec::isParsedContent() const
+{
+    return isParsedSpec;
 }
 
 void CommonDatapackServerSpec::parseQuests()
