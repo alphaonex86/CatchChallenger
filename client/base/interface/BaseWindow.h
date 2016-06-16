@@ -222,6 +222,7 @@ private slots:
     //datapack
     void haveTheDatapack();
     void haveTheDatapackMainSub();
+    void haveDatapackMainSubCode();
     void newDatapackFile(const uint32_t &size);
     void progressingDatapackFile(const uint32_t &size);
     void datapackSize(const uint32_t &datapackFileNumber,const uint32_t &datapackFileSize);

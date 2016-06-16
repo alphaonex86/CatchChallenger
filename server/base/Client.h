@@ -653,6 +653,7 @@ private:
     bool checkFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
     void registerBattleRequest(Client * otherPlayerBattle);
     void saveAllMonsterPosition();
+    bool haveBeatBot(const uint16_t &botFightId) const;
 
     void battleFinished();
     void battleFinishedReset();

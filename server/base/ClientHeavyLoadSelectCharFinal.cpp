@@ -291,7 +291,7 @@ void Client::characterIsRightFinalStep()
         else
             buffer=ProtocolParsingBase::tempBigBufferForCompressedOutput;
         uint32_t posOutputTemp=0;
-        //recipes
+        //bot
         if(public_and_private_informations.bot_already_beaten!=NULL)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK

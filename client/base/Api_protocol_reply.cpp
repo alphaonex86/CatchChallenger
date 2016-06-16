@@ -13,6 +13,7 @@ using namespace CatchChallenger;
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLib.h"
@@ -540,7 +541,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         qDebug() << QStringLiteral("stageConnexion==StageConnexion::Stage4");
                     if(serverFromPoolForDisplay.host.isEmpty() && proxyMode==Api_protocol::ProxyMode::Reconnect)
                         qDebug() << QStringLiteral("serverFromPoolForDisplay.host.isEmpty()");
-                    return parseCharacterBlock(
+                    return parseCharacterBlockServer(
                                 packetCode,queryNumber,
                                 data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos()))
                                 );

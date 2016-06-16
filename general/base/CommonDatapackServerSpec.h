@@ -15,6 +15,7 @@ public:
 public:
     void unload();
     void parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode);
+    bool isParsedContent() const;
 public:
     std::unordered_map<uint16_t,BotFight> botFights;
     uint16_t botFightsMaxId;

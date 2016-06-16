@@ -37,16 +37,21 @@ void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const char * const botAl
         this->botAlreadyBeaten=NULL;
     }
     this->botAlreadyBeaten=(char *)malloc(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+    memset(this->botAlreadyBeaten,0,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
     memcpy(this->botAlreadyBeaten,botAlreadyBeaten,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
 }
 
 void MapVisualiserPlayerWithFight::addBeatenBotFight(const uint16_t &botFightId)
 {
+    if(botAlreadyBeaten==NULL)
+        abort();
     botAlreadyBeaten[botFightId/8]|=(1<<(7-botFightId%8));
 }
 
 bool MapVisualiserPlayerWithFight::haveBeatBot(const uint16_t &botFightId) const
 {
+    if(botAlreadyBeaten==NULL)
+        abort();
     return botAlreadyBeaten[botFightId/8] & (1<<(7-botFightId%8));
 }
 
@@ -108,8 +113,10 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
             unsigned int index=0;
             while(index<botFightList.size())
             {
-                if(!haveBeatBot(botFightList.at(index)))
+                const uint32_t &fightId=botFightList.at(index);
+                if(!haveBeatBot(fightId))
                 {
+                    qDebug() <<  "is now in fight with: " << fightId;
                     if(inMove)
                     {
                         inMove=false;

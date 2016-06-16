@@ -585,7 +585,13 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
         std::cerr << "character already selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
+    if(character_select_send)
+    {
+        std::cerr << "character select already send, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
 
+    character_select_send=true;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
@@ -596,6 +602,11 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
     this->selectedServerIndex=serverIndex;
     std::cerr << "this: " << this << ", socket: " << socket << ", select char: " << characterId << ", charactersGroupIndex: " << (uint32_t)charactersGroupIndex << ", serverUniqueKey: " << serverUniqueKey << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
     return true;
+}
+
+bool Api_protocol::character_select_is_send()
+{
+    return character_select_send;
 }
 
 void Api_protocol::useSeed(const uint8_t &plant_id)
@@ -1717,6 +1728,11 @@ void Api_protocol::resetAll()
         haveFirstHeader=false;
     else
         haveFirstHeader=true;
+    character_select_send=false;
+    delayedLogin.data.clear();
+    delayedLogin.packetCode=0;
+    delayedLogin.queryNumber=0;
+    delayedMessages.clear();
     haveTheServerList=false;
     haveTheLogicalGroupList=false;
     is_logged=false;
@@ -2360,4 +2376,29 @@ QByteArray Api_protocol::toUTF8WithHeader(const QString &text)
         return QByteArray();
     data[0]=data.size()-1;
     return data;
+}
+
+void Api_protocol::have_main_and_sub_datapack_loaded()//can now load player_informations
+{
+    if(!delayedLogin.data.isEmpty())
+    {
+        bool returnCode=parseCharacterBlockCharacter(delayedLogin.packetCode,delayedLogin.queryNumber,delayedLogin.data);
+        delayedLogin.data.clear();
+        delayedLogin.packetCode=0;
+        delayedLogin.queryNumber=0;
+        if(!returnCode)
+            return;
+    }
+    unsigned int index=0;
+    while(index<delayedMessages.size())
+    {
+        const DelayedMessage &delayedMessageTemp=delayedMessages.at(index);
+        if(!parseMessage(delayedMessageTemp.packetCode,delayedMessageTemp.data))
+        {
+            delayedMessages.clear();
+            return;
+        }
+        index++;
+    }
+    delayedMessages.clear();
 }
