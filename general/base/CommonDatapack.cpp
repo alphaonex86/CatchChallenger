@@ -16,7 +16,9 @@ CommonDatapack::CommonDatapack()
     isParsed=false;
     parsing=false;
     monstersMaxId=0;
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
     crafingRecipesMaxId=0;
+    #endif
 }
 
 void CommonDatapack::parseDatapack(const std::string &datapackPath)
