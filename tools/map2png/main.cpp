@@ -29,6 +29,7 @@
 #include "map2png.h"
 
 #include <QApplication>
+#include <QCoreApplication>
 #include <QFileDialog>
 #include <QStringList>
 #include <QString>
@@ -159,6 +160,11 @@ int main(int argc, char *argv[])
                     index++;
                 }
             }
+        }
+        if(arguments.size()>1 && (fileToOpen.isEmpty() || destination.isEmpty()))
+        {
+            qDebug() << QString("Arguments detected but no .tmx or .png passed: %1").arg(arguments.join(" "));
+            return 0;
         }
         Map2Png w;
         if (fileToOpen.isEmpty())
