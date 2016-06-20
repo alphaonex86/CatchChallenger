@@ -32,6 +32,7 @@ public:
     void disconnectClient();
     void unloadSelection();
     ServerFromPoolForDisplay getCurrentServer(const int &index);
+    bool dataToPlayerMonster(QDataStream &in, PlayerMonster &monster);
 
     //protocol command
     bool tryLogin(const QString &login,const QString &pass);
