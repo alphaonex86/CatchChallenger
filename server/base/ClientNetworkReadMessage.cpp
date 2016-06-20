@@ -529,14 +529,14 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 //monster
                 case 0x03:
                 {
-                    if((size-pos)<((int)sizeof(uint32_t)))
+                    if((size-pos)<((int)sizeof(uint8_t)))
                     {
                         errorOutput("wrong remaining size for trade add monster");
                         return false;
                     }
-                    const uint32_t &monsterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
-                    pos+=sizeof(uint32_t);
-                    tradeAddTradeMonster(monsterId);
+                    const uint8_t &monsterPosition=data[pos];
+                    pos+=sizeof(uint8_t);
+                    tradeAddTradeMonster(monsterPosition);
                 }
                 break;
                 default:
@@ -575,7 +575,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             std::vector<uint32_t> depositeMonsters;
             if((size-pos)<((int)sizeof(int64_t)))
             {
-                errorOutput("wrong remaining size for trade add monster");
+                errorOutput("wrong remaining size for warehouse cash");
                 return false;
             }
             uint64_t tempVar;
@@ -586,7 +586,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             uint16_t size16;
             if((size-pos)<((int)sizeof(uint16_t)))
             {
-                errorOutput("wrong remaining size for trade add monster");
+                errorOutput("wrong remaining size for warehouse item list");
                 return false;
             }
             size16=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
@@ -599,14 +599,14 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 {
                     if((size-pos)<((int)sizeof(uint16_t)))
                     {
-                        errorOutput("wrong remaining size for trade add monster");
+                        errorOutput("wrong remaining size for warehouse item id");
                         return false;
                     }
                     id=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                     pos+=sizeof(uint16_t);
                     if((size-pos)<((int)sizeof(uint32_t)))
                     {
-                        errorOutput("wrong remaining size for trade add monster");
+                        errorOutput("wrong remaining size for warehouse item quantity");
                         return false;
                     }
                     const int32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
@@ -617,7 +617,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             }
             if((size-pos)<((int)sizeof(uint32_t)))
             {
-                errorOutput("wrong remaining size for trade add monster");
+                errorOutput("wrong remaining size for warehouse monster list");
                 return false;
             }
             uint32_t size;
@@ -628,7 +628,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             {
                 if((size-pos)<((int)sizeof(uint32_t)))
                 {
-                    errorOutput("wrong remaining size for trade add monster");
+                    errorOutput("wrong remaining size for warehouse monster id");
                     return false;
                 }
                 const uint32_t &id=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
@@ -638,7 +638,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             }
             if((size-pos)<((int)sizeof(uint32_t)))
             {
-                errorOutput("wrong remaining size for trade add monster");
+                errorOutput("wrong remaining size for warehouse sub monster id");
                 return false;
             }
             size=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
@@ -648,7 +648,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             {
                 if((size-pos)<((int)sizeof(uint32_t)))
                 {
-                    errorOutput("wrong remaining size for trade add monster");
+                    errorOutput("wrong remaining size for warehouse monster deposite");
                     return false;
                 }
                 const uint32_t &id=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));

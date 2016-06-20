@@ -183,17 +183,29 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
         if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
         {
             qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
             abort();
+            #else
+            return;
+            #endif
         }
         if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
         {
             qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
             abort();
+            #else
+            return;
+            #endif
         }
         if(mDatapackMain==(mDatapackBase+"map/main/[main]/"))
         {
             qDebug() << "mDatapackMain==(mDatapackBase+\"map/main/[main]/\")";
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
             abort();
+            #else
+            return;
+            #endif
         }
     }
 
