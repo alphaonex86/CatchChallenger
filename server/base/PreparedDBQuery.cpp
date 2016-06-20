@@ -67,6 +67,7 @@ StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_hp_and_leve
 StringWithReplacement PreparedDBQueryCommon::db_query_select_monsters_by_player_id;
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_clan;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_move_to_new_player;
+StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_owner;
 #if defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_server_time;
 StringWithReplacement PreparedDBQueryCommon::db_query_update_server_time_played_time;
@@ -144,7 +145,6 @@ StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_skill_level
 StringWithReplacement PreparedDBQueryCommon::db_query_insert_monster_buff;
 
 StringWithReplacement PreparedDBQueryCommon::db_query_delete_monster_specific_skill;
-StringWithReplacement PreparedDBQueryCommon::db_query_update_monster_owner;
 #endif
 
 #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
@@ -376,7 +376,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_insert_monster_buff="INSERT INTO `monster_buff`(`monster`,`buff`,`level`) VALUES(%1,%2,%3)";
 
         //PreparedDBQueryCommon::db_query_delete_monster_specific_skill="DELETE FROM `monster_skill` WHERE `monster`=%1 AND `skill`=%2";
-        PreparedDBQueryCommon::db_query_update_monster_owner="UPDATE `monster` SET `character`=%2 WHERE `id`=%1;";
+        PreparedDBQueryCommon::db_query_update_monster_owner="UPDATE `monster` SET `character`=%1,`position`=%2 WHERE `id`=%3;";
         PreparedDBQueryCommon::db_query_insert_server_time="INSERT INTO `server_time`(`server`,`account`,`played_time`,`last_connect`) VALUES(%1,%2,0,%3);";
         PreparedDBQueryCommon::db_query_update_server_time_played_time="UPDATE `server_time` SET `played_time`=`played_time`+%1 WHERE `server`=%2 AND `account`=%3;";
         PreparedDBQueryCommon::db_query_update_server_time_last_connect="UPDATE `server_time` SET `last_connect`=%1 WHERE `server`=%2 AND `account`=%3;";
@@ -434,6 +434,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_monster_and_hp="UPDATE monster SET hp=%1,monster=%2 WHERE id=%3";
         PreparedDBQueryCommon::db_query_update_monster_hp_and_level="UPDATE monster SET hp=%1,level=%2 WHERE id=%3";
         PreparedDBQueryCommon::db_query_update_monster_move_to_new_player="UPDATE monster SET place=1,character=%1,position=%2 WHERE id=%3";
+        PreparedDBQueryCommon::db_query_update_monster_owner="UPDATE monster SET character=%1,position=%2 WHERE id=%3;";
         #endif
         break;
         #endif
@@ -488,6 +489,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_monster_and_hp="UPDATE monster SET hp=%1,monster=%2 WHERE id=%3";
         PreparedDBQueryCommon::db_query_update_monster_hp_and_level="UPDATE monster SET hp=%1,level=%2 WHERE id=%3";
         PreparedDBQueryCommon::db_query_update_monster_move_to_new_player="UPDATE monster SET place=1,character=%1,position=%2 WHERE id=%3";
+        PreparedDBQueryCommon::db_query_update_monster_owner="UPDATE monster SET character=%1,position=%2 WHERE id=%3;";
         #endif
         #if defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
         PreparedDBQueryCommon::db_query_insert_server_time="INSERT INTO server_time(server,account,played_time,last_connect) VALUES(%1,%2,0,%3);";

@@ -24,6 +24,9 @@ WithAnotherPlayer::WithAnotherPlayer(QWidget *parent,const WithAnotherPlayerType
         setWindowTitle(tr("Action"));
         break;
     }
+    time.restart();
+    connect(&timer,&QTimer::timeout,this,&WithAnotherPlayer::updateTiemout);
+    timer.start(200);
 }
 
 WithAnotherPlayer::~WithAnotherPlayer()
@@ -33,16 +36,30 @@ WithAnotherPlayer::~WithAnotherPlayer()
 
 void WithAnotherPlayer::on_yes_clicked()
 {
+    timer.stop();
     actionAccepted=true;
     close();
 }
 
 void WithAnotherPlayer::on_no_clicked()
 {
+    timer.stop();
     close();
 }
 
 bool WithAnotherPlayer::actionIsAccepted()
 {
     return actionAccepted;
+}
+
+void WithAnotherPlayer::updateTiemout()
+{
+    const uint64_t timems=time.elapsed();
+    if(timems>15*1000)
+        on_no_clicked();
+    else
+    {
+        ui->timeout->setValue(15*1000-timems);
+        ui->timeoutLabel->setText(QString::number(15-timems/1000)+"s");
+    }
 }

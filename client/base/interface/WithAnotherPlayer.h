@@ -3,6 +3,8 @@
 
 #include <QDialog>
 #include <QPixmap>
+#include <QTime>
+#include <QTimer>
 
 namespace Ui {
 class WithAnotherPlayer;
@@ -24,9 +26,12 @@ public:
 private slots:
     void on_yes_clicked();
     void on_no_clicked();
+    void updateTiemout();
 private:
     Ui::WithAnotherPlayer *ui;
     bool actionAccepted;
+    QTime time;
+    QTimer timer;
 };
 
 #endif // WITHANOTHERPLAYER_H

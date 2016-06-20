@@ -89,6 +89,7 @@ public:
     static StringWithReplacement db_query_update_monster_hp_and_level;
     static StringWithReplacement db_query_select_monsters_by_player_id;//don't filter by place, dispatched in internal, market volume should be low
     static StringWithReplacement db_query_update_monster_move_to_new_player;
+    static StringWithReplacement db_query_update_monster_owner;
 
     #if defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     static StringWithReplacement db_query_insert_server_time;
@@ -137,8 +138,7 @@ public:
 
     static StringWithReplacement db_query_update_monster_skill_level;
     static StringWithReplacement db_query_insert_monster_buff;
-    static StringWithReplacement db_query_delete_monster_specific_skill;
-    static StringWithReplacement db_query_update_monster_owner;*/
+    static StringWithReplacement db_query_delete_monster_specific_skill;*/
     #endif
 };
 #endif
