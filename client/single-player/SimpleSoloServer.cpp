@@ -85,6 +85,11 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     #endif
     connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded);
+    /* already done into another part: #ifdef CATCHCHALLENGER_GITCOMMIT
+    ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION)+QStringLiteral(" - ")+QStringLiteral(CATCHCHALLENGER_GITCOMMIT));
+    #else
+    ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION));
+    #endif*/
 }
 
 MainWindow::~MainWindow()
@@ -387,6 +392,7 @@ void MainWindow::gameIsLoaded()
     if(vlcPlayer!=NULL)
         libvlc_media_player_stop(vlcPlayer);
     #endif
+    this->setWindowTitle(QStringLiteral("CatchChallenger - %1").arg(CatchChallenger::Api_client_real::client->getPseudo()));
 }
 
 #ifndef CATCHCHALLENGER_NOAUDIO
