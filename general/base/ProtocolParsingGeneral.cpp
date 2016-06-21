@@ -486,6 +486,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             ProtocolParsingBase::packetFixedSize[0xC0]=4;
             ProtocolParsingBase::packetFixedSize[0xC1]=4;
 
+            ProtocolParsingBase::packetFixedSize[0xDF]=0xFE;
             ProtocolParsingBase::packetFixedSize[0xE0]=0xFE;
             ProtocolParsingBase::packetFixedSize[0xE1]=0xFE;
             ProtocolParsingBase::packetFixedSize[0xE2]=2;
@@ -531,6 +532,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             ProtocolParsingBase::packetFixedSize[128+0xC0]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
             ProtocolParsingBase::packetFixedSize[128+0xC1]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
 
+            ProtocolParsingBase::packetFixedSize[128+0xDF]=1;
             ProtocolParsingBase::packetFixedSize[128+0xE0]=1;
             ProtocolParsingBase::packetFixedSize[128+0xE1]=0;
             ProtocolParsingBase::packetFixedSize[128+0xE2]=0;
