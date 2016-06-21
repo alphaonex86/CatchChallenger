@@ -621,6 +621,7 @@ void MainWindow::gameIsLoaded()
     if(vlcPlayer!=NULL)
         libvlc_media_player_stop(vlcPlayer);
     #endif
+    this->setWindowTitle(QStringLiteral("CatchChallenger - %1 - %2").arg(server_name).arg(CatchChallenger::Api_client_real::client->getPseudo()));
 }
 
 #ifndef CATCHCHALLENGER_NOAUDIO
