@@ -26,7 +26,7 @@ The gateway need too curl.
 ====================================================
 Compiling
 
-Dep: zlib, xz-utils, openssl and Qt openssl enabled to have QSslSocket, libvlc for the client, Qt5. libssl, libcrypt (openssl), liblzma.
+Dep: zlib, xz-utils, openssl and Qt openssl enabled to have QSslSocket, libvlc for the client (with ogg/vorbis and opus support), Qt5. libssl, libcrypt (openssl), liblzma.
 For the server: db, db driver (mysql, sqlite for game solo, postgresql, depands of you choice)
 Ubuntu 16.04 add to the .pro:
 QMAKE_CFLAGS="-std=c++0x"
