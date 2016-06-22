@@ -296,6 +296,7 @@ uint8_t CommonFightEngine::getSkillLevel(const uint32_t &skill)
             return currentMonster->skills.at(index).level;
         index++;
     }
+    errorFightEngine("Unable to locate the current monster skill to get the level");
     return 0;
 }
 
@@ -317,5 +318,6 @@ uint8_t CommonFightEngine::decreaseSkillEndurance(const uint32_t &skill)
         }
         index++;
     }
+    errorFightEngine("Unable to locate the current monster skill to get the level");
     return 0;
 }
