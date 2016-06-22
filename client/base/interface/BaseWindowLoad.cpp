@@ -8,7 +8,6 @@
 #include "../../../general/base/CommonDatapackServerSpec.h"
 
 #include <QBuffer>
-#include <QMainWindow>
 #include <QStandardPaths>
 
 using namespace CatchChallenger;
