@@ -45,11 +45,25 @@ void BaseWindow::doNextAction()
     //apply the effect
     if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().empty())
     {
+        const Skill::AttackReturn returnAction=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first();
         PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
         if(otherMonster)
         {
             qDebug() << "doNextAction(): apply the effect and display it";
             displayAttack();
+        }
+        //do the monster change
+        else if(returnAction.publicPlayerMonster.monster!=0)
+        {
+            if(!CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(returnAction.monsterPlace,returnAction.publicPlayerMonster))
+                return;
+            //sendBattleReturn(returnAction);:already added because the information is into CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList()
+            init_other_monster_display();
+            updateOtherMonsterInformation();
+            resetPosition(true,true,false);
+            battleStep=BattleStep_Middle;
+            moveType=MoveType_Enter;
+            moveFightMonsterTop();
         }
         else
             emit newError("Internal bug","No other monster to display attack");

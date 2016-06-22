@@ -323,7 +323,11 @@ void Client::sendBattleMonsterChange()
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x50;
     posOutput+=1+4;
 
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=1;//attack return list size
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0;//doByTheCurrentMonster, it's the other monster
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=Skill::AttackReturnCase::AttackReturnCase_MonsterChange;//AttackReturnCase_MonsterChange=0x02
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
     posOutput+=1;
