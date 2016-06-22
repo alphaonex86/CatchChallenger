@@ -76,11 +76,11 @@ bool ClientFightEngine::addBattleMonster(const uint8_t &monsterPlace,const Publi
         emit error("not monster stat list loaded");
         return false;
     }
-    if(monsterPlace<=0 || monsterPlace>battleStat.size())
+    /*if(monsterPlace<=0 || monsterPlace>battleStat.size())
     {
-        emit error("monsterPlace greater than monster list");
+        emit error("monsterPlace greater than monster list: "+std::to_string(monsterPlace));
         return false;
-    }
+    }*/
     battleCurrentMonster << publicPlayerMonster;
     battleMonsterPlace << monsterPlace;
     return true;
@@ -162,9 +162,12 @@ bool ClientFightEngine::dropKOOtherMonster()
     bool battleReturn=false;
     if(!battleCurrentMonster.isEmpty())
     {
-        battleCurrentMonster.removeFirst();
-        battleStat[battleMonsterPlace.first()-1]=0x02;//not able to battle
-        battleMonsterPlace.removeFirst();
+        if(!battleStat.isEmpty() && battleMonsterPlace.first()<battleStat.size())
+        {
+            battleCurrentMonster.removeFirst();
+            battleStat[battleMonsterPlace.first()]=0x02;//not able to battle
+            battleMonsterPlace.removeFirst();
+        }
         battleReturn=true;
     }
     bool haveValidMonster=false;
