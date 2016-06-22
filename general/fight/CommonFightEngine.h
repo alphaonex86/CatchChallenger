@@ -21,7 +21,7 @@ public:
     bool isInFightWithWild() const;
     bool getAbleToFight() const;
     bool haveMonsters() const;
-    PlayerMonster *getCurrentMonster();
+    PlayerMonster * getCurrentMonster();//no const due to error message
     virtual PublicPlayerMonster *getOtherMonster();
     virtual Skill::AttackReturn generateOtherAttack();
     uint8_t getCurrentSelectedMonsterNumber() const;
@@ -53,9 +53,11 @@ public:
     virtual bool canEscape();
     virtual bool tryEscape();
     bool canDoFightAction();
-    virtual bool useSkill(const uint32_t &skill);
-    uint8_t getSkillLevel(const uint32_t &skill);
-    virtual uint8_t decreaseSkillEndurance(const uint32_t &skill);
+    virtual bool useSkill(const uint16_t &skill);
+    uint8_t getSkillLevel(const uint16_t &skill);//no const due to error message
+    bool haveTheSkill(const uint16_t &skill);//no const due to error message
+    PlayerMonster::PlayerSkill * getTheSkill(const uint16_t &skill);//no const due to error message
+    virtual uint8_t decreaseSkillEndurance(PlayerMonster::PlayerSkill * skill);
     bool haveMoreEndurance();
     std::vector<Skill::LifeEffectReturn> applyBuffLifeEffect(PublicPlayerMonster * playerMonster);
     std::vector<Skill::BuffEffect> removeOldBuff(PublicPlayerMonster *playerMonster);
@@ -69,7 +71,7 @@ public:
                                               #endif
                                               , const std::vector<uint8_t> &events);
     virtual bool doTheOtherMonsterTurn();
-    virtual void doTheTurn(const uint32_t &skill,const uint8_t &skillLevel,const bool currentMonsterStatIsFirstToAttack);
+    virtual void doTheTurn(const uint16_t &skill,const uint8_t &skillLevel,const bool currentMonsterStatIsFirstToAttack);
     virtual bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
     virtual uint32_t tryCapture(const uint16_t &item);
     virtual bool changeOfMonsterInFight(const uint8_t &monsterPosition);
@@ -95,8 +97,8 @@ protected:
     virtual bool addLevel(PlayerMonster * monster,const uint8_t &numberOfLevel=1);
     virtual void levelUp(const uint8_t &level,const uint8_t &monsterIndex);
     virtual std::vector<Monster::AttackToLearn> autoLearnSkill(const uint8_t &level,const uint8_t &monsterIndex);
-    virtual Skill::AttackReturn doTheCurrentMonsterAttack(const uint32_t &skill, const uint8_t &skillLevel);
-    Skill::AttackReturn genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const uint32_t &skill, const uint8_t &skillLevel);
+    virtual Skill::AttackReturn doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel);
+    Skill::AttackReturn genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const uint16_t &skill, const uint8_t &skillLevel);
     virtual uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;
     void startTheFight();
     virtual bool addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill);

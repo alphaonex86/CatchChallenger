@@ -57,7 +57,7 @@ public:
     Skill::AttackReturn generateOtherAttack();
     bool isInBattle() const;
     bool haveBattleOtherMonster() const;
-    virtual bool useSkill(const uint32_t &skill);
+    virtual bool useSkill(const uint16_t &skill);
     bool dropKOOtherMonster();
     void tryCatchClient(const uint32_t &item);
     virtual uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster);
@@ -76,7 +76,7 @@ private:
     QList<Skill::AttackReturn> fightEffectList;
     Player_private_and_public_informations player_informations_local;
     QByteArray randomSeeds;
-    Skill::AttackReturn doTheCurrentMonsterAttack(const uint32_t &skill, const uint8_t &skillLevel);
+    Skill::AttackReturn doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel);
     bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
     bool internalTryEscape();
     void levelUp(const uint8_t &level,const uint8_t &monsterIndex);

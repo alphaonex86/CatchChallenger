@@ -647,7 +647,7 @@ private:
     void syncMonsterBuff(const PlayerMonster &monster);
     bool checkLoose(bool withTeleport=true);
     bool isInBattle() const;
-    bool learnSkillInternal(const uint8_t &monsterPosition,const uint32_t &skill);
+    bool learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &skill);
     void getRandomNumberIfNeeded() const;
     bool botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
     bool checkFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
@@ -659,7 +659,7 @@ private:
     void battleFinishedReset();
     Client * getOtherPlayerBattle() const;
     bool finishTheTurn(const bool &isBot);
-    bool useSkill(const uint32_t &skill);
+    bool useSkill(const uint16_t &skill);
     bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
     void healAllMonsters();
     void battleFakeAccepted(Client * otherPlayer);
@@ -671,8 +671,8 @@ private:
     void saveMonsterPosition(const uint32_t &monsterId,const uint8_t &monsterPosition);
     bool doTheOtherMonsterTurn();
     Skill::AttackReturn generateOtherAttack();
-    Skill::AttackReturn doTheCurrentMonsterAttack(const uint32_t &skill, const uint8_t &skillLevel);
-    uint8_t decreaseSkillEndurance(const uint32_t &skill);
+    Skill::AttackReturn doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel);
+    uint8_t decreaseSkillEndurance(PlayerMonster::PlayerSkill * skill);
     void emitBattleWin();
     void hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue);
     bool removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId);
@@ -696,7 +696,7 @@ private:
     PublicPlayerMonster *getOtherMonster();
     void fightFinished();
     bool giveXPSP(int xp,int sp);
-    bool useSkillAgainstBotMonster(const uint32_t &skill, const uint8_t &skillLevel);
+    bool useSkillAgainstBotMonster(const uint16_t &skill, const uint8_t &skillLevel);
     void wildDrop(const uint32_t &monster);
     uint8_t getOneSeed(const uint8_t &max);
     bool bothRealPlayerIsReady() const;
