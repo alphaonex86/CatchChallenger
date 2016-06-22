@@ -189,7 +189,7 @@ std::vector<Monster::AttackToLearn> CommonFightEngine::autoLearnSkill(const uint
     return returnVar;
 }
 
-bool CommonFightEngine::useSkill(const uint32_t &skill)
+bool CommonFightEngine::useSkill(const uint16_t &skill)
 {
     doTurnIfChangeOfMonster=true;
     if(!isInFight())
@@ -214,11 +214,12 @@ bool CommonFightEngine::useSkill(const uint32_t &skill)
         errorFightEngine("Unable to locate the other monster");
         return false;
     }
-    uint8_t skillLevel=getSkillLevel(skill);
-    if(skillLevel==0)
+    uint8_t skillLevel=0;
+    PlayerMonster::PlayerSkill * currrentMonsterSkill=getTheSkill(skill);
+    if(currrentMonsterSkill==NULL)
     {
         if(!haveMoreEndurance() && skill==0 && CommonDatapack::commonDatapack.monsterSkills.find(skill)!=CommonDatapack::commonDatapack.monsterSkills.cend())
-            skillLevel=1;
+            skillLevel=1;//default attack
         else
         {
             errorFightEngine("Unable to fight because the current monster ("+std::to_string(currentMonster->monster)+
@@ -228,7 +229,16 @@ bool CommonFightEngine::useSkill(const uint32_t &skill)
         }
     }
     else
-        decreaseSkillEndurance(skill);
+    {
+        skillLevel=currrentMonsterSkill->level;
+        if(currrentMonsterSkill->endurance>0)
+            decreaseSkillEndurance(currrentMonsterSkill);
+        else
+        {
+            errorFightEngine("Try use skill without endurance: "+skill);
+            return false;
+        }
+    }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
         Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
@@ -281,9 +291,45 @@ bool CommonFightEngine::useSkill(const uint32_t &skill)
     return true;
 }
 
-uint8_t CommonFightEngine::getSkillLevel(const uint32_t &skill)
+bool CommonFightEngine::haveTheSkill(const uint16_t &skill)//no const due to error message
 {
-    PlayerMonster * currentMonster=getCurrentMonster();
+    const PlayerMonster * const currentMonster=getCurrentMonster();
+    if(currentMonster==NULL)
+    {
+        errorFightEngine("Unable to locate the current monster");
+        return 0;
+    }
+    unsigned int index=0;
+    while(index<currentMonster->skills.size())
+    {
+        if(currentMonster->skills.at(index).skill==skill && currentMonster->skills.at(index).endurance>0)
+            return true;
+        index++;
+    }
+    return false;
+}
+
+PlayerMonster::PlayerSkill * CommonFightEngine::getTheSkill(const uint16_t &skill)//no const due to error message
+{
+    PlayerMonster * const currentMonster=getCurrentMonster();
+    if(currentMonster==NULL)
+    {
+        errorFightEngine("Unable to locate the current monster");
+        return 0;
+    }
+    unsigned int index=0;
+    while(index<currentMonster->skills.size())
+    {
+        if(currentMonster->skills.at(index).skill==skill && currentMonster->skills.at(index).endurance>0)
+            return &currentMonster->skills[index];
+        index++;
+    }
+    return NULL;//normal case, hope this if skill is not found
+}
+
+uint8_t CommonFightEngine::getSkillLevel(const uint16_t &skill)//no const due to error message
+{
+    const PlayerMonster * const currentMonster=getCurrentMonster();
     if(currentMonster==NULL)
     {
         errorFightEngine("Unable to locate the current monster");
@@ -297,27 +343,25 @@ uint8_t CommonFightEngine::getSkillLevel(const uint32_t &skill)
         index++;
     }
     errorFightEngine("Unable to locate the current monster skill to get the level");
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    abort();//it's internal error
+    #endif
     return 0;
 }
 
-uint8_t CommonFightEngine::decreaseSkillEndurance(const uint32_t &skill)
+uint8_t CommonFightEngine::decreaseSkillEndurance(PlayerMonster::PlayerSkill *skill)
 {
-    PlayerMonster * currentMonster=getCurrentMonster();
-    if(currentMonster==NULL)
+    if(skill->endurance>0)
     {
-        errorFightEngine("Unable to locate the current monster");
+        skill->endurance--;
+        return skill->endurance;
+    }
+    else
+    {
+        errorFightEngine("Skill don't have correct endurance count");
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();//it's internal error
+        #endif
         return 0;
     }
-    unsigned int index=0;
-    while(index<currentMonster->skills.size())
-    {
-        if(currentMonster->skills.at(index).skill==skill && currentMonster->skills.at(index).endurance>0)
-        {
-            currentMonster->skills[index].endurance--;
-            return currentMonster->skills.at(index).endurance;
-        }
-        index++;
-    }
-    errorFightEngine("Unable to locate the current monster skill to get the level");
-    return 0;
 }

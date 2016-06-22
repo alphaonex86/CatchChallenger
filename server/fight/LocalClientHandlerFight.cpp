@@ -648,7 +648,7 @@ Skill::AttackReturn Client::generateOtherAttack()
     return attackReturn.back();
 }
 
-Skill::AttackReturn Client::doTheCurrentMonsterAttack(const uint32_t &skill, const uint8_t &skillLevel)
+Skill::AttackReturn Client::doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel)
 {
     if(!isInBattle())
         return CommonFightEngine::doTheCurrentMonsterAttack(skill,skillLevel);

@@ -9,7 +9,7 @@
 
 using namespace CatchChallenger;
 
-bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint32_t &skill)
+bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &skill)
 {
     if(monsterPosition>=public_and_private_informations.playerMonster.size())
     {
@@ -83,12 +83,13 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint32_t &s
     return false;
 }
 
-bool Client::useSkill(const uint32_t &skill)
+bool Client::useSkill(const uint16_t &skill)
 {
     normalOutput("use the skill: "+std::to_string(skill));
     if(!isInBattle())//wild or bot
     {
-        CommonFightEngine::useSkill(skill);
+        if(!CommonFightEngine::useSkill(skill))
+            return false;
         return finishTheTurn(!botFightMonsters.empty());
     }
     else
@@ -114,7 +115,7 @@ uint32_t Client::getCurrentSkill() const
     return mCurrentSkillId;
 }
 
-uint8_t Client::decreaseSkillEndurance(const uint32_t &skill)
+uint8_t Client::decreaseSkillEndurance(PlayerMonster::PlayerSkill * skill)
 {
     PlayerMonster * currentMonster=getCurrentMonster();
     if(currentMonster==NULL)
@@ -122,25 +123,33 @@ uint8_t Client::decreaseSkillEndurance(const uint32_t &skill)
         errorOutput("Unable to locate the current monster");
         return 0;
     }
-    const uint8_t &newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
-    if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
+    if(skill->endurance>0)
     {
-        /*std::string queryText=PreparedDBQueryCommon::db_query_monster_skill;
-        stringreplaceOne(queryText,"%1",std::to_string(newEndurance));
-        stringreplaceOne(queryText,"%2",std::to_string(currentMonster->id));
-        stringreplaceOne(queryText,"%3",std::to_string(skill));
-        dbQueryWriteCommon(queryText);*/
-        syncMonsterEndurance(*currentMonster);
+        const uint8_t &newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
+        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
+        {
+            /*std::string queryText=PreparedDBQueryCommon::db_query_monster_skill;
+            stringreplaceOne(queryText,"%1",std::to_string(newEndurance));
+            stringreplaceOne(queryText,"%2",std::to_string(currentMonster->id));
+            stringreplaceOne(queryText,"%3",std::to_string(skill));
+            dbQueryWriteCommon(queryText);*/
+            syncMonsterEndurance(*currentMonster);
+        }
+        else
+        {
+            if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
+            {
+                //deferedEnduranceSync[currentMonster][skill]=newEndurance;
+                deferedEnduranceSync.insert(currentMonster);
+            }
+        }
+        return newEndurance;
     }
     else
     {
-        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
-        {
-            //deferedEnduranceSync[currentMonster][skill]=newEndurance;
-            deferedEnduranceSync.insert(currentMonster);
-        }
+        errorOutput("Try use skill without endurance: "+std::to_string(skill->skill));
+        return 0;
     }
-    return newEndurance;
 }
 
 bool Client::addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill)

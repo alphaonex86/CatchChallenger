@@ -259,7 +259,7 @@ bool CommonFightEngine::haveAnotherEnnemyMonsterToFight()
     return false;
 }
 
-PlayerMonster * CommonFightEngine::getCurrentMonster()
+PlayerMonster * CommonFightEngine::getCurrentMonster()//no const due to error message
 {
     const int &playerMonsterSize=public_and_private_informations.playerMonster.size();
     if(selectedMonster>=0 && selectedMonster<playerMonsterSize)
@@ -832,7 +832,7 @@ void CommonFightEngine::startTheFight()
     updateCanDoFight();
 }
 
-Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const uint32_t &skill,const uint8_t &skillLevel)
+Skill::AttackReturn CommonFightEngine::doTheCurrentMonsterAttack(const uint16_t &skill,const uint8_t &skillLevel)
 {
     return genericMonsterAttack(getCurrentMonster(),getOtherMonster(),skill,skillLevel);
 }
