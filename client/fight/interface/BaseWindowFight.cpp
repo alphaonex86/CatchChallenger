@@ -2115,28 +2115,6 @@ void BaseWindow::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn
     doNextAction();
 }
 
-/*void BaseWindow::sendFullBattleReturn(const QList<Skill::AttackReturn> &attackReturn,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
-{
-    if(CatchChallenger::ClientFightEngine::fightEngine.haveBattleOtherMonster())
-    {
-        if(!CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster))
-            return;
-        sendBattleReturn(attackReturn);
-    }
-    else
-    {
-        if(!CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(monsterPlace,publicPlayerMonster))
-            return;
-        sendBattleReturn(attackReturn);
-        init_other_monster_display();
-        updateOtherMonsterInformation();
-        battleStep=BattleStep_Middle;
-        moveType=MoveType_Enter;
-        moveFightMonsterTop();
-    }
-}*/
-
-
 void BaseWindow::on_listWidgetFightAttack_itemActivated(QListWidgetItem *item)
 {
     Q_UNUSED(item);

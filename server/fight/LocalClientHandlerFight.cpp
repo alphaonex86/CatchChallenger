@@ -121,7 +121,8 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
         }
         deferedEndurance.clear();*/
 
-        syncMonsterSkillAndEndurance(monster);
+        if(!monster.skills.empty())
+            syncMonsterSkillAndEndurance(monster);
     }
 }
 
@@ -581,7 +582,7 @@ void Client::saveMonsterPosition(const uint32_t &monsterId,const uint8_t &monste
 
 bool Client::changeOfMonsterInFight(const uint8_t &monsterPosition)
 {
-    const bool &doTurnIfChangeOfMonster=this->doTurnIfChangeOfMonster;
+    const bool /*&:reference drop: prevent change during battle*/doTurnIfChangeOfMonster=this->doTurnIfChangeOfMonster;
 
     //save for sync at end of the battle
     PlayerMonster * monster=getCurrentMonster();
