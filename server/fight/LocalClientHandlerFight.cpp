@@ -483,6 +483,8 @@ bool Client::checkIfCanDoTheTurn()
         CommonFightEngine::useSkill(mCurrentSkillId);
     else
         doTheOtherMonsterTurn();
+    if(otherPlayerBattle==NULL)
+        return false;
     sendBattleReturn();
     otherPlayerBattle->sendBattleReturn();
     if(currentMonsterIsKO() || otherMonsterIsKO())
@@ -629,14 +631,14 @@ Skill::AttackReturn Client::generateOtherAttack()
         return attackReturnTemp;
     }
     const uint32_t &skill=otherPlayerBattle->getCurrentSkill();
-    uint8_t skillLevel=getSkillLevel(skill);
+    uint8_t skillLevel=otherPlayerBattle->getSkillLevel(skill);
     if(skillLevel==0)
     {
         if(!haveMoreEndurance() && skill==0 && CommonDatapack::commonDatapack.monsterSkills.find(skill)!=CommonDatapack::commonDatapack.monsterSkills.cend())
             skillLevel=1;
         else
         {
-            errorOutput("Unable to fight because the current monster have not the skill "+std::to_string(skill));
+            errorOutput("Unable to fight because the current monster have not the skill "+std::to_string(skill)+" and is level 0");
             return attackReturnTemp;
         }
     }
