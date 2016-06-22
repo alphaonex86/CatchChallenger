@@ -314,7 +314,7 @@ uint32_t ClientFightEngine::catchAWild(const bool &toStorage, const PlayerMonste
     return 0;
 }
 
-Skill::AttackReturn ClientFightEngine::doTheCurrentMonsterAttack(const uint32_t &skill,const uint8_t &skillLevel)
+Skill::AttackReturn ClientFightEngine::doTheCurrentMonsterAttack(const uint16_t &skill,const uint8_t &skillLevel)
 {
     fightEffectList << CommonFightEngine::doTheCurrentMonsterAttack(skill,skillLevel);
     return fightEffectList.last();
@@ -569,7 +569,7 @@ bool ClientFightEngine::haveBattleOtherMonster() const
     return !battleCurrentMonster.isEmpty();
 }
 
-bool ClientFightEngine::useSkill(const uint32_t &skill)
+bool ClientFightEngine::useSkill(const uint16_t &skill)
 {
     mLastGivenXP=0;
     Api_client_real::client->useSkill(skill);

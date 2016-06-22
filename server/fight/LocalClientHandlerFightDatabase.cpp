@@ -46,11 +46,26 @@ void Client::syncMonsterBuff(const PlayerMonster &monster)
                 binarytoHexa(raw_buff,sizeof(raw_buff)),
                 std::to_string(monster.id)
                 );
+    #if defined(CATCHCHALLENGER_EXTRA_CHECK) && defined(CATCHCHALLENGER_DB_POSTGRESQL)
+    if(!monster.buffs.empty() && queryText.find("buffs='\\x'")!=std::string::npos)
+    {
+        std::cerr << "buffs='\\x' when have buff to save" << std::endl;
+        abort();
+    }
+    #endif
     dbQueryWriteCommon(queryText);
 }
 
 void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
 {
+    if(monster.skills.empty())
+    {
+        normalOutput("Internal error: try sync skill when don't have skill");
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
+        return;
+    }
     char skills_endurance[monster.skills.size()*(1)];
     char skills[monster.skills.size()*(2+1)];
     unsigned int sub_index=0;
@@ -90,11 +105,26 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
                 binarytoHexa(skills_endurance,sizeof(skills_endurance)),
                 std::to_string(monster.id)
                 );
+    #if defined(CATCHCHALLENGER_EXTRA_CHECK) && defined(CATCHCHALLENGER_DB_POSTGRESQL)
+    if(queryText.find("skills='\\x'")!=std::string::npos)
+    {
+        std::cerr << "skills='\\x' when have skills to save" << std::endl;
+        abort();
+    }
+    #endif
     dbQueryWriteCommon(queryText);
 }
 
 void Client::syncMonsterEndurance(const PlayerMonster &monster)
 {
+    if(monster.skills.empty())
+    {
+        normalOutput("Internal error: try sync skill when don't have skill");
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
+        return;
+    }
     char skills_endurance[monster.skills.size()*(1)];
     unsigned int sub_index=0;
     const unsigned int &sub_size=monster.skills.size();
@@ -109,6 +139,13 @@ void Client::syncMonsterEndurance(const PlayerMonster &monster)
                 binarytoHexa(skills_endurance,sizeof(skills_endurance)),
                 std::to_string(monster.id)
                 );
+    #if defined(CATCHCHALLENGER_EXTRA_CHECK) && defined(CATCHCHALLENGER_DB_POSTGRESQL)
+    if(queryText.find("skills_endurance='\\x'")!=std::string::npos)
+    {
+        std::cerr << "skills_endurance='\\x' when have skills_endurance to save" << std::endl;
+        abort();
+    }
+    #endif
     dbQueryWriteCommon(queryText);
 }
 
