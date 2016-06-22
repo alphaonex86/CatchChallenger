@@ -25,7 +25,7 @@ bool CommonFightEngine::doTheOtherMonsterTurn()
     return false;
 }
 
-void CommonFightEngine::doTheTurn(const uint32_t &skill,const uint8_t &skillLevel,const bool currentMonsterStatIsFirstToAttack)
+void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLevel,const bool currentMonsterStatIsFirstToAttack)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
@@ -505,7 +505,7 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
     return attackReturn;
 }
 
-Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const uint32_t &skill, const uint8_t &skillLevel)
+Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const uint16_t &skill, const uint8_t &skillLevel)
 {
     Skill::AttackReturn attackReturn;
     attackReturn.doByTheCurrentMonster=true;
