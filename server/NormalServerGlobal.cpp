@@ -62,7 +62,12 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     if(!settings->contains("min_character"))
         settings->setValue("min_character",1);
     if(!settings->contains("automatic_account_creation"))
+    #if defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
         settings->setValue("automatic_account_creation",false);
+    #else
+        settings->setValue("automatic_account_creation",true);
+    #endif
+
     if(!settings->contains("maxPlayerMonsters"))
         settings->setValue("maxPlayerMonsters",8);
     if(!settings->contains("maxWarehousePlayerMonsters"))
@@ -298,14 +303,22 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     settings->beginGroup("db-login");
     if(!settings->contains("type"))
         settings->setValue("type",CATCHCHALLENGERDEFAULTDBTYPE);
-    if(!settings->contains("host"))
-        settings->setValue("host","localhost");
-    if(!settings->contains("login"))
-        settings->setValue("login","catchchallenger-login");
-    if(!settings->contains("pass"))
-        settings->setValue("pass","catchchallenger-pass");
-    if(!settings->contains("db"))
-        settings->setValue("db","catchchallenger_login");
+    if(settings->value("type")=="sqlite")
+    {
+        if(!settings->contains("file"))
+            settings->setValue("file","database.sqlite");
+    }
+    else
+    {
+        if(!settings->contains("host"))
+            settings->setValue("host","localhost");
+        if(!settings->contains("login"))
+            settings->setValue("login","catchchallenger-login");
+        if(!settings->contains("pass"))
+            settings->setValue("pass","catchchallenger-pass");
+        if(!settings->contains("db"))
+            settings->setValue("db","catchchallenger_login");
+    }
     if(!settings->contains("considerDownAfterNumberOfTry"))
         settings->setValue("considerDownAfterNumberOfTry",3);
     if(!settings->contains("tryInterval"))
@@ -315,14 +328,22 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     settings->beginGroup("db-base");
     if(!settings->contains("type"))
         settings->setValue("type",CATCHCHALLENGERDEFAULTDBTYPE);
-    if(!settings->contains("host"))
-        settings->setValue("host","localhost");
-    if(!settings->contains("login"))
-        settings->setValue("login","catchchallenger-base");
-    if(!settings->contains("pass"))
-        settings->setValue("pass","catchchallenger-pass");
-    if(!settings->contains("db"))
-        settings->setValue("db","catchchallenger_base");
+    if(settings->value("type")=="sqlite")
+    {
+        if(!settings->contains("file"))
+            settings->setValue("file","database.sqlite");
+    }
+    else
+    {
+        if(!settings->contains("host"))
+            settings->setValue("host","localhost");
+        if(!settings->contains("login"))
+            settings->setValue("login","catchchallenger-base");
+        if(!settings->contains("pass"))
+            settings->setValue("pass","catchchallenger-pass");
+        if(!settings->contains("db"))
+            settings->setValue("db","catchchallenger_base");
+    }
     if(!settings->contains("considerDownAfterNumberOfTry"))
         settings->setValue("considerDownAfterNumberOfTry",3);
     if(!settings->contains("tryInterval"))
@@ -333,14 +354,22 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     settings->beginGroup("db-common");
     if(!settings->contains("type"))
         settings->setValue("type",CATCHCHALLENGERDEFAULTDBTYPE);
-    if(!settings->contains("host"))
-        settings->setValue("host","localhost");
-    if(!settings->contains("login"))
-        settings->setValue("login","catchchallenger-login");
-    if(!settings->contains("pass"))
-        settings->setValue("pass","catchchallenger-pass");
-    if(!settings->contains("db"))
-        settings->setValue("db","catchchallenger_common");
+    if(settings->value("type")=="sqlite")
+    {
+        if(!settings->contains("file"))
+            settings->setValue("file","database.sqlite");
+    }
+    else
+    {
+        if(!settings->contains("host"))
+            settings->setValue("host","localhost");
+        if(!settings->contains("login"))
+            settings->setValue("login","catchchallenger-login");
+        if(!settings->contains("pass"))
+            settings->setValue("pass","catchchallenger-pass");
+        if(!settings->contains("db"))
+            settings->setValue("db","catchchallenger_common");
+    }
     if(!settings->contains("considerDownAfterNumberOfTry"))
         settings->setValue("considerDownAfterNumberOfTry",3);
     if(!settings->contains("tryInterval"))
@@ -350,14 +379,22 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     settings->beginGroup("db-server");
     if(!settings->contains("type"))
         settings->setValue("type",CATCHCHALLENGERDEFAULTDBTYPE);
-    if(!settings->contains("host"))
-        settings->setValue("host","localhost");
-    if(!settings->contains("login"))
-        settings->setValue("login","catchchallenger-login");
-    if(!settings->contains("pass"))
-        settings->setValue("pass","catchchallenger-pass");
-    if(!settings->contains("db"))
-        settings->setValue("db","catchchallenger_server");
+    if(settings->value("type")=="sqlite")
+    {
+        if(!settings->contains("file"))
+            settings->setValue("file","database.sqlite");
+    }
+    else
+    {
+        if(!settings->contains("host"))
+            settings->setValue("host","localhost");
+        if(!settings->contains("login"))
+            settings->setValue("login","catchchallenger-login");
+        if(!settings->contains("pass"))
+            settings->setValue("pass","catchchallenger-pass");
+        if(!settings->contains("db"))
+            settings->setValue("db","catchchallenger_server");
+    }
     if(!settings->contains("considerDownAfterNumberOfTry"))
         settings->setValue("considerDownAfterNumberOfTry",3);
     if(!settings->contains("tryInterval"))

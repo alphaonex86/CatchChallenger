@@ -188,6 +188,8 @@ void send_settings()
     if(settings->contains("mainDatapackCode"))
         CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings->value("mainDatapackCode","[main]");
     else
+        CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
+    if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
     {
         const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
         if(list.empty())
@@ -196,7 +198,7 @@ void send_settings()
             settings->sync();
             abort();
         }
-        if(list.size()==1)
+        if(list.size()>=1)
         {
             settings->setValue("mainDatapackCode",list.at(0).name);
             CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).name;
