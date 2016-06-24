@@ -150,6 +150,13 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
                     binarytoHexa(raw_skill,sizeof(raw_skill)),
                     binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
                     );
+        #if defined(CATCHCHALLENGER_EXTRA_CHECK) && defined(CATCHCHALLENGER_DB_POSTGRESQL)
+        if(queryText.find("skills='\\x'")!=std::string::npos)
+        {
+            std::cerr << "skills='\\x' when have skills to save" << std::endl;
+            abort();
+        }
+        #endif
         dbQueryWriteCommon(queryText);
     }
     else
@@ -172,6 +179,13 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
                     binarytoHexa(raw_skill,sizeof(raw_skill)),
                     binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
                     );
+        #if defined(CATCHCHALLENGER_EXTRA_CHECK) && defined(CATCHCHALLENGER_DB_POSTGRESQL)
+        if(queryText.find("skills='\\x'")!=std::string::npos)
+        {
+            std::cerr << "skills='\\x' when have skills to save" << std::endl;
+            abort();
+        }
+        #endif
         dbQueryWriteCommon(queryText);
     }
 
