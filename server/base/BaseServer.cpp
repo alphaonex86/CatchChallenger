@@ -390,7 +390,9 @@ bool BaseServer::initialize_the_database()
         }
         else
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType())
-                      << " at " << GlobalServerData::serverSettings.database_login.host << std::endl;
+                      << " at " << GlobalServerData::serverSettings.database_login.host
+                      << " (" << GlobalServerData::serverSettings.database_login.db << ")"
+                      << std::endl;
         break;
 
         case DatabaseBase::DatabaseType::SQLite:
@@ -427,7 +429,9 @@ bool BaseServer::initialize_the_database()
         }
         else
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType())
-                      << " at " << GlobalServerData::serverSettings.database_login.host << std::endl;
+                      << " at " << GlobalServerData::serverSettings.database_login.host
+                      << " (" << GlobalServerData::serverSettings.database_login.db << ")"
+                      << std::endl;
         break;
     }
     if(!GlobalServerData::serverPrivateVariables.db_login->asyncWrite("SELECT * FROM account"))
@@ -455,7 +459,9 @@ bool BaseServer::initialize_the_database()
         }
         else
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType())
-                      << " at " << GlobalServerData::serverSettings.database_base.host << std::endl;
+                      << " at " << GlobalServerData::serverSettings.database_base.host
+                      << " (" << GlobalServerData::serverSettings.database_base.db << ")"
+                      << std::endl;
         break;
 
         case DatabaseBase::DatabaseType::SQLite:
@@ -492,10 +498,12 @@ bool BaseServer::initialize_the_database()
         }
         else
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType())
-                      << " at " << GlobalServerData::serverSettings.database_base.host << std::endl;
+                      << " at " << GlobalServerData::serverSettings.database_base.host
+                      << " (" << GlobalServerData::serverSettings.database_base.db << ")"
+                      << std::endl;
         break;
     }
-    if(!GlobalServerData::serverPrivateVariables.db_base->asyncWrite("SELECT * FROM dictionary_allow"))
+    if(!GlobalServerData::serverPrivateVariables.db_base->asyncWrite("SELECT * FROM dictionary_reputation"))
     {
         std::cerr << "Basic test failed: " << GlobalServerData::serverPrivateVariables.db_base->errorMessage() << std::endl;
         return false;
@@ -521,7 +529,9 @@ bool BaseServer::initialize_the_database()
         }
         else
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType())
-                      << " at " << GlobalServerData::serverSettings.database_common.host << std::endl;
+                      << " at " << GlobalServerData::serverSettings.database_common.host
+                      << " (" << GlobalServerData::serverSettings.database_common.db << ")"
+                      << std::endl;
         break;
 
         case DatabaseBase::DatabaseType::SQLite:
@@ -558,7 +568,9 @@ bool BaseServer::initialize_the_database()
         }
         else
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType())
-                      << " at " << GlobalServerData::serverSettings.database_common.host << std::endl;
+                      << " at " << GlobalServerData::serverSettings.database_common.host
+                      << " (" << GlobalServerData::serverSettings.database_common.db << ")"
+                      << std::endl;
         break;
     }
     if(!GlobalServerData::serverPrivateVariables.db_common->asyncWrite("SELECT * FROM character"))
@@ -585,7 +597,9 @@ bool BaseServer::initialize_the_database()
         }
         else
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType())
-                      << " at " << GlobalServerData::serverSettings.database_server.host << std::endl;
+                      << " at " << GlobalServerData::serverSettings.database_server.host
+                      << " (" << GlobalServerData::serverSettings.database_server.db << ")"
+                      << std::endl;
         break;
 
         case DatabaseBase::DatabaseType::SQLite:
@@ -622,7 +636,9 @@ bool BaseServer::initialize_the_database()
         }
         else
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType())
-                      << " at " << GlobalServerData::serverSettings.database_server.host << std::endl;
+                      << " at " << GlobalServerData::serverSettings.database_server.host
+                      << " (" << GlobalServerData::serverSettings.database_server.db << ")"
+                      << std::endl;
         break;
     }
     if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite("SELECT * FROM character_forserver"))
