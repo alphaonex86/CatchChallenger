@@ -41,7 +41,7 @@ void BaseServer::preload_zone_return()
     #endif
     GlobalServerData::serverPrivateVariables.db_server->clear();
     entryListIndex++;
-    preload_market_monsters_sql();
+    preload_market_monsters_prices_sql();
 }
 
 void BaseServer::preload_zone_sql()
@@ -55,7 +55,9 @@ void BaseServer::preload_zone_sql()
         switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
         {
             default:
-            #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
+            abort();
+            break;
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
             case DatabaseBase::DatabaseType::Mysql:
                 queryText="SELECT `clan` FROM `city` WHERE `city`='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
             break;
@@ -92,7 +94,9 @@ void BaseServer::preload_pointOnMap_sql()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
-        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
+        abort();
+        break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`map`,`x`,`y` FROM `dictionary_pointonmap` ORDER BY `map`,`x`,`y`";
         break;
@@ -256,7 +260,9 @@ void BaseServer::preload_dictionary_map()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
-        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
+        abort();
+        break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`map` FROM `dictionary_map` ORDER BY `map`";
         break;
@@ -338,15 +344,23 @@ void BaseServer::preload_dictionary_map_return()
             switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
             {
                 default:
+                abort();
+                break;
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
                 case DatabaseBase::DatabaseType::Mysql:
                     queryText="INSERT INTO `dictionary_map`(`id`,`map`) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
+                #endif
+                #ifndef EPOLLCATCHCHALLENGERSERVER
                 case DatabaseBase::DatabaseType::SQLite:
                     queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
+                #endif
+                #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
                 case DatabaseBase::DatabaseType::PostgreSQL:
                     queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
+                #endif
             }
             if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText))
             {
@@ -378,7 +392,9 @@ void BaseServer::preload_industries()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
-        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
+        abort();
+        break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`resources`,`products`,`last_update` FROM `factory`";
         break;
@@ -553,7 +569,9 @@ void BaseServer::preload_market_monsters_prices_sql()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
-        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
+        abort();
+        break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`market_price` FROM `monster_market_price` ORDER BY `id`";
         break;
@@ -626,6 +644,8 @@ void BaseServer::preload_market_monsters_sql()
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
+        abort();
+        break;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         std::cerr << "PreparedDBQuery: Unknown database type" << std::endl;
         #else
@@ -633,7 +653,7 @@ void BaseServer::preload_market_monsters_sql()
         #endif
         abort();
         return;
-        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
         if(CommonSettingsServer::commonSettingsServer.useSP)
             queryText="SELECT `id`,`character`,`place`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`buffs`,`skills`,`skills_endurance`,`sp` FROM `monster` WHERE `id`=%1";
@@ -738,7 +758,9 @@ void BaseServer::preload_market_items()
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
         default:
-        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
+        abort();
+        break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `item`,`quantity`,`character`,`market_price` FROM `item_market` ORDER BY `item`";
         break;
@@ -846,7 +868,9 @@ void BaseServer::load_clan_max_id()
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
-        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
+        abort();
+        break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;";
         break;
@@ -900,7 +924,9 @@ void BaseServer::load_account_max_id()
     switch(GlobalServerData::serverPrivateVariables.db_login->databaseType())
     {
         default:
-        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
+        abort();
+        break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `account` ORDER BY `id` DESC LIMIT 0,1;";
         break;
@@ -960,7 +986,9 @@ void BaseServer::load_character_max_id()
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
-        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
+        abort();
+        break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;";
         break;

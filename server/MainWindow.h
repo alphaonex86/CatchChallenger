@@ -33,6 +33,7 @@ private:
     NormalServer server;
     bool need_be_restarted;
     bool need_be_closed;
+    bool settingsLoaded;
     void closeEvent(QCloseEvent *event);
     TinyXMLSettings *settings;
     void load_settings();
@@ -141,6 +142,9 @@ private slots:
     void on_compressionLevel_valueChanged(int value);
     void on_everyBodyIsRoot_toggled(bool checked);
     void on_teleportIfMapNotFoundOrOutOfMap_toggled(bool checked);
+    void on_mainDatapackCode_currentIndexChanged(const QString &arg1);
+    void on_subDatapackCode_currentIndexChanged(const QString &arg1);
+
 signals:
     void record_latency();
 };

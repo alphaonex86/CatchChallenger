@@ -32,15 +32,23 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation()
     switch(databaseBaseBase->databaseType())
     {
         default:
+        abort();
+        break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`reputation` FROM `dictionary_reputation` ORDER BY `reputation`";
         break;
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id,reputation FROM dictionary_reputation ORDER BY reputation";
         break;
+        #endif
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id,reputation FROM dictionary_reputation ORDER BY reputation";
         break;
+        #endif
     }
     if(databaseBaseBase->asyncRead(queryText,this,&BaseServerMasterLoadDictionary::preload_dictionary_reputation_static)==NULL)
     {
@@ -101,15 +109,23 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
             switch(databaseBaseBase->databaseType())
             {
                 default:
+                abort();
+                break;
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
                 case DatabaseBase::DatabaseType::Mysql:
                     queryText="INSERT INTO `dictionary_reputation`(`id`,`reputation`) VALUES("+std::to_string(lastId)+",'"+reputation+"');";
                 break;
+                #endif
+                #ifndef EPOLLCATCHCHALLENGERSERVER
                 case DatabaseBase::DatabaseType::SQLite:
                     queryText="INSERT INTO dictionary_reputation(id,reputation) VALUES("+std::to_string(lastId)+",'"+reputation+"');";
                 break;
+                #endif
+                #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
                 case DatabaseBase::DatabaseType::PostgreSQL:
                     queryText="INSERT INTO dictionary_reputation(id,reputation) VALUES("+std::to_string(lastId)+",'"+reputation+"');";
                 break;
+                #endif
             }
             if(!databaseBaseBase->asyncWrite(queryText))
             {
@@ -136,15 +152,23 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin()
     switch(databaseBaseBase->databaseType())
     {
         default:
+        abort();
+        break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`skin` FROM `dictionary_skin` ORDER BY `skin`";
         break;
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id,skin FROM dictionary_skin ORDER BY skin";
         break;
+        #endif
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id,skin FROM dictionary_skin ORDER BY skin";
         break;
+        #endif
     }
     if(databaseBaseBase->asyncRead(queryText,this,&BaseServerMasterLoadDictionary::preload_dictionary_skin_static)==NULL)
     {
@@ -205,15 +229,23 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
             switch(databaseBaseBase->databaseType())
             {
                 default:
+                abort();
+                break;
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
                 case DatabaseBase::DatabaseType::Mysql:
                     queryText="INSERT INTO `dictionary_skin`(`id`,`skin`) VALUES("+std::to_string(lastId)+",'"+skin+"');";
                 break;
+                #endif
+                #ifndef EPOLLCATCHCHALLENGERSERVER
                 case DatabaseBase::DatabaseType::SQLite:
                     queryText="INSERT INTO dictionary_skin(id,skin) VALUES("+std::to_string(lastId)+",'"+skin+"');";
                 break;
+                #endif
+                #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
                 case DatabaseBase::DatabaseType::PostgreSQL:
                     queryText="INSERT INTO dictionary_skin(id,skin) VALUES("+std::to_string(lastId)+",'"+skin+"');";
                 break;
+                #endif
             }
             if(!databaseBaseBase->asyncWrite(queryText))
             {
@@ -240,15 +272,23 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter()
     switch(databaseBaseBase->databaseType())
     {
         default:
+        abort();
+        break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id`,`starter` FROM `dictionary_starter` ORDER BY `starter`";
         break;
+        #endif
+        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id,starter FROM dictionary_starter ORDER BY starter";
         break;
+        #endif
+        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id,starter FROM dictionary_starter ORDER BY starter";
         break;
+        #endif
     }
     if(databaseBaseBase->asyncRead(queryText,this,&BaseServerMasterLoadDictionary::preload_dictionary_starter_static)==NULL)
     {

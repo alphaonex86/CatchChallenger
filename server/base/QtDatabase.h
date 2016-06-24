@@ -43,7 +43,6 @@ public:
     const std::string value(const int &value) const;
     bool isConnected() const;
     void receiveReply(const QSqlQuery &queryReturn);
-    DatabaseBase::DatabaseType databaseType() const;
     bool epollEvent(const uint32_t &events);
 
     QtDatabaseThread dbThread;
@@ -70,7 +69,6 @@ private:
     std::string lastErrorMessage;
     std::vector<CallBack> queue;
     std::vector<std::string> queriesList;
-    DatabaseBase::DatabaseType databaseConnected;
 };
 
 }
