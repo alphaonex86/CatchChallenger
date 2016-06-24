@@ -52,7 +52,7 @@ void BaseServer::preload_the_events()
                             while(nextStart<=time)
                                 nextStart+=(programmedEvent.cycle*60);
                             uint64_t previousStart=nextStart;
-                            while(nextStart>time)
+                            while(previousStart>time)
                                 previousStart-=(programmedEvent.cycle*60);
                             pastEventStart[previousStart]=sub_index;
                             #ifdef EPOLLCATCHCHALLENGERSERVER
