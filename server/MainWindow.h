@@ -90,7 +90,6 @@ private slots:
     void updateDbGroupbox();
     void on_sendPlayerNumber_toggled(bool checked);
     void on_db_sqlite_browse_clicked();
-    void on_tolerantMode_toggled(bool checked);
     void on_db_fight_sync_currentIndexChanged(int index);
     void on_comboBox_city_capture_frequency_currentIndexChanged(int index);
     void on_comboBox_city_capture_day_currentIndexChanged(int index);

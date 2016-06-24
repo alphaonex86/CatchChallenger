@@ -421,6 +421,8 @@ void MainWindow::load_settings()
         if(settings->contains("mainDatapackCode"))
             CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings->value("mainDatapackCode","[main]");
         else
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
+        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
         {
             const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
             if(list.empty())
@@ -429,7 +431,7 @@ void MainWindow::load_settings()
                 settings->sync();
                 abort();
             }
-            if(list.size()==1)
+            if(list.size()>=1)
             {
                 settings->setValue("mainDatapackCode",list.at(0).name);
                 CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).name;
@@ -999,7 +1001,10 @@ void MainWindow::load_settings()
     ui->db_mysql_login->setText(QString::fromStdString(formatedServerSettings.database_login.login));
     ui->db_mysql_pass->setText(QString::fromStdString(formatedServerSettings.database_login.pass));
     ui->db_mysql_base->setText(QString::fromStdString(formatedServerSettings.database_login.db));
-    ui->db_sqlite_file->setText(QString::fromStdString(formatedServerSettings.database_login.file));
+    if(formatedServerSettings.database_login.file.empty())
+        ui->db_sqlite_file->setText("database.sqlite");
+    else
+        ui->db_sqlite_file->setText(QString::fromStdString(formatedServerSettings.database_login.file));
 
     switch(formatedServerSettings.fightSync)
     {
@@ -1150,7 +1155,12 @@ void MainWindow::send_settings()
             formatedServerSettings.database_login.pass				= ui->db_mysql_pass->text().toStdString();
         break;
         case DatabaseBase::DatabaseType::SQLite:
+        {
             formatedServerSettings.database_login.file				= ui->db_sqlite_file->text().toStdString();
+            QFile dest(QString::fromStdString(formatedServerSettings.database_login.file));
+            if(!dest.exists())
+                QFile::copy(":/catchchallenger.db.sqlite",QString::fromStdString(formatedServerSettings.database_login.file));
+        }
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
             formatedServerSettings.database_login.host				= ui->db_mysql_host->text().toStdString();
@@ -1423,12 +1433,30 @@ void MainWindow::on_db_type_currentIndexChanged(int index)
         case 0:
         default:
             settings->setValue("type","mysql");
+            if(!settings->contains("host"))
+                settings->setValue("host","localhost");
+            if(!settings->contains("login"))
+                settings->setValue("login","catchchallenger-login");
+            if(!settings->contains("pass"))
+                settings->setValue("pass","catchchallenger-pass");
+            if(!settings->contains("db"))
+                settings->setValue("db","catchchallenger_server");
         break;
         case 1:
             settings->setValue("type","sqlite");
+            if(!settings->contains("file"))
+                settings->setValue("file","database.sqlite");
         break;
         case 2:
             settings->setValue("type","postgresql");
+            if(!settings->contains("host"))
+                settings->setValue("host","localhost");
+            if(!settings->contains("login"))
+                settings->setValue("login","catchchallenger-login");
+            if(!settings->contains("pass"))
+                settings->setValue("pass","catchchallenger-pass");
+            if(!settings->contains("db"))
+                settings->setValue("db","catchchallenger_server");
         break;
     }
     settings->endGroup();
@@ -1454,11 +1482,6 @@ void MainWindow::on_db_sqlite_browse_clicked()
     if(file.empty())
         return;
     ui->db_sqlite_file->setText(QString::fromStdString(file));
-}
-
-void MainWindow::on_tolerantMode_toggled(bool checked)
-{
-    settings->setValue("tolerantMode",checked);
 }
 
 void MainWindow::on_db_fight_sync_currentIndexChanged(int index)
