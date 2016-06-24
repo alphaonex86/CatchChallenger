@@ -19,7 +19,6 @@ QtDatabase::QtDatabase() :
 {
     connect(this,&QtDatabase::sendQuery,&dbThread,&QtDatabaseThread::receiveQuery,Qt::QueuedConnection);
     connect(&dbThread,&QtDatabaseThread::sendReply,this,&QtDatabase::receiveReply,Qt::QueuedConnection);
-    databaseConnected=DatabaseBase::DatabaseType::Mysql;
 }
 
 QtDatabase::~QtDatabase()
@@ -91,7 +90,7 @@ bool QtDatabase::syncConnect(const std::string &host, const std::string &dbname,
     conn=findConnexionToOpen(host,dbname,DatabaseBase::DatabaseType::Mysql);
     if(conn!=NULL)
     {
-        databaseConnected=DatabaseBase::DatabaseType::Mysql;
+        databaseTypeVar=DatabaseBase::DatabaseType::Mysql;
         return true;
     }
     conn = new QSqlDatabase();
@@ -107,7 +106,7 @@ bool QtDatabase::syncConnect(const std::string &host, const std::string &dbname,
         conn=NULL;
         return false;
     }
-    databaseConnected=DatabaseBase::DatabaseType::Mysql;
+    databaseTypeVar=DatabaseBase::DatabaseType::Mysql;
 
     QtDatabase::EstablishedConnexion establishedConnexion;
     establishedConnexion.conn=conn;
@@ -139,7 +138,7 @@ bool QtDatabase::syncConnectSqlite(const std::string &file)
     conn=findConnexionToOpen(file,std::string(),DatabaseBase::DatabaseType::SQLite);
     if(conn!=NULL)
     {
-        databaseConnected=DatabaseBase::DatabaseType::SQLite;
+        databaseTypeVar=DatabaseBase::DatabaseType::SQLite;
         return true;
     }
     conn = new QSqlDatabase();
@@ -152,7 +151,7 @@ bool QtDatabase::syncConnectSqlite(const std::string &file)
         conn=NULL;
         return false;
     }
-    databaseConnected=DatabaseBase::DatabaseType::SQLite;
+    databaseTypeVar=DatabaseBase::DatabaseType::SQLite;
 
     QtDatabase::EstablishedConnexion establishedConnexion;
     establishedConnexion.conn=conn;
@@ -178,7 +177,7 @@ bool QtDatabase::syncConnectPostgresql(const std::string &host,const std::string
     conn=findConnexionToOpen(host,dbname,DatabaseBase::DatabaseType::PostgreSQL);
     if(conn!=NULL)
     {
-        databaseConnected=DatabaseBase::DatabaseType::PostgreSQL;
+        databaseTypeVar=DatabaseBase::DatabaseType::PostgreSQL;
         return true;
     }
     conn = new QSqlDatabase();
@@ -196,7 +195,7 @@ bool QtDatabase::syncConnectPostgresql(const std::string &host,const std::string
         conn=NULL;
         return false;
     }
-    databaseConnected=DatabaseBase::DatabaseType::PostgreSQL;
+    databaseTypeVar=DatabaseBase::DatabaseType::PostgreSQL;
 
     QtDatabase::EstablishedConnexion establishedConnexion;
     establishedConnexion.conn=conn;
@@ -219,7 +218,7 @@ void QtDatabase::syncDisconnect()
     }
     findConnexionToClose(conn);
     conn=NULL;
-    databaseConnected=DatabaseBase::DatabaseType::Mysql;
+    databaseTypeVar=DatabaseBase::DatabaseType::Unknown;
 }
 
 DatabaseBase::CallBack *QtDatabase::asyncRead(const std::string &query,void * returnObject, CallBackDatabase method)
@@ -332,11 +331,6 @@ const std::string QtDatabase::value(const int &value) const
         return emptyString;
     const std::string &string(sqlQuery->value(value).toString().toStdString());
     return string;
-}
-
-DatabaseBase::DatabaseType QtDatabase::databaseType() const
-{
-    return databaseConnected;
 }
 
 QtDatabaseThread::QtDatabaseThread()

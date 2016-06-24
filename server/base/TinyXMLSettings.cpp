@@ -67,6 +67,8 @@ void TinyXMLSettings::beginGroup(const std::string &group)
 
 void TinyXMLSettings::endGroup()
 {
+    if(whereIs==document.RootElement())
+        return;
     CATCHCHALLENGER_XMLELEMENT * item = static_cast<CATCHCHALLENGER_XMLELEMENT *>(whereIs->Parent());
     if(item!=NULL)
         whereIs=item;

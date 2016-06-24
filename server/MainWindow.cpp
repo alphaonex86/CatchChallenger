@@ -33,6 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
     check_latency.start(1000);
     need_be_restarted=false;
     need_be_closed=false;
+    settingsLoaded=false;
     ui->tabWidget->setCurrentIndex(0);
     internal_currentLatency=0;
     load_settings();
@@ -791,6 +792,54 @@ void MainWindow::load_settings()
             ui->compression->setCurrentIndex(1);
         break;
     }
+
+    {
+        ui->mainDatapackCode->clear();
+        const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+        if(list.empty())
+        {
+            QMessageBox::critical(this,tr("Error"),tr("No main code detected into the current datapack"));
+            settings->sync();
+            abort();
+        }
+        unsigned int indexFound=0;
+        unsigned int index=0;
+        while(index<list.size())
+        {
+            if(list.at(index).name==CommonSettingsServer::commonSettingsServer.mainDatapackCode)
+                indexFound=index;
+            ui->mainDatapackCode->addItem(QString::fromStdString(list.at(index).name));
+            index++;
+        }
+        if(!list.empty())
+        {
+            ui->mainDatapackCode->setCurrentIndex(indexFound);
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode=ui->mainDatapackCode->currentText().toStdString();
+        }
+    }
+    {
+        ui->subDatapackCode->clear();
+        ui->subDatapackCode->addItem(QString());
+        const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/sub/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+        if(!list.empty())
+        {
+            unsigned int indexFound=0;
+            unsigned int index=0;
+            while(index<list.size())
+            {
+                if(list.at(index).name==CommonSettingsServer::commonSettingsServer.subDatapackCode)
+                    indexFound=index+1;
+                ui->subDatapackCode->addItem(QString::fromStdString(list.at(index).name));
+                index++;
+            }
+            if(!list.empty())
+            {
+                ui->subDatapackCode->setCurrentIndex(indexFound);
+                CommonSettingsServer::commonSettingsServer.subDatapackCode=ui->subDatapackCode->currentText().toStdString();
+            }
+        }
+    }
+
     ui->compressionLevel->setValue(formatedServerSettings.compressionLevel);
     ui->maxPlayerMonsters->setValue(CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters);
     ui->maxWarehousePlayerMonsters->setValue(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
@@ -894,7 +943,6 @@ void MainWindow::load_settings()
             formatedServerSettings.mapVisibility.withBorder.reshowWithBorder=formatedServerSettings.mapVisibility.withBorder.reshow;
             //settings->setValue(QLatin1Literal("ReshowWithBorder"),formatedServerSettings.mapVisibility.withBorder.reshow);
         }
-        settings->endGroup();
         ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setValue(formatedServerSettings.mapVisibility.withBorder.maxWithBorder);
         ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setValue(formatedServerSettings.mapVisibility.withBorder.reshowWithBorder);
         ui->MapVisibilityAlgorithmWithBorderMax->setValue(formatedServerSettings.mapVisibility.withBorder.max);
@@ -975,6 +1023,7 @@ void MainWindow::load_settings()
     ui->timeEdit_city_capture_time->setTime(QTime(formatedServerSettings.city.capture.hour,formatedServerSettings.city.capture.minute));
 
     send_settings();
+    settingsLoaded=true;
 }
 
 void MainWindow::send_settings()
@@ -1004,6 +1053,8 @@ void MainWindow::send_settings()
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters       = ui->maxWarehousePlayerMonsters->value();
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = ui->maxPlayerItems->value();
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems          = ui->maxWarehousePlayerItems->value();
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode                 = ui->mainDatapackCode->currentText().toStdString();
+    CommonSettingsServer::commonSettingsServer.subDatapackCode                  = ui->subDatapackCode->currentText().toStdString();
 
     //the listen
     formatedServerNormalSettings.server_port			= ui->server_port->value();
@@ -1200,6 +1251,46 @@ void MainWindow::send_settings()
             formatedServerSettings.city.capture.day=City::Capture::Sunday;
         break;
     }
+    if(settings->contains("mainDatapackCode"))
+        CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings->value("mainDatapackCode","[main]");
+    else
+    {
+        const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+        if(list.empty())
+        {
+            std::cerr << "No main code detected into the current datapack (abort)" << std::endl;
+            settings->sync();
+            abort();
+        }
+        if(list.size()==1)
+        {
+            settings->setValue("mainDatapackCode",list.at(0).name);
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).name;
+        }
+    }
+    if(settings->contains("subDatapackCode"))
+        CommonSettingsServer::commonSettingsServer.subDatapackCode=settings->value("subDatapackCode","");
+    else
+    {
+        const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/sub/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+        if(!list.empty())
+        {
+            if(list.size()==1)
+            {
+                settings->setValue("subDatapackCode",list.at(0).name);
+                CommonSettingsServer::commonSettingsServer.subDatapackCode=list.at(0).name;
+            }
+            else
+            {
+                std::cerr << "No sub code detected into the current datapack" << std::endl;
+                settings->setValue("subDatapackCode","");
+                settings->sync();
+                CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+            }
+        }
+        else
+            CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+    }
     QTime time=ui->timeEdit_city_capture_time->time();
     formatedServerSettings.city.capture.hour=time.hour();
     formatedServerSettings.city.capture.minute=time.minute();
@@ -1273,29 +1364,29 @@ void MainWindow::on_chat_allow_clan_toggled(bool checked)
 
 void MainWindow::on_db_mysql_host_editingFinished()
 {
-    settings->beginGroup("db");
-    settings->setValue("mysql_host",ui->db_mysql_host->text().toStdString());
+    settings->beginGroup("db-login");
+    settings->setValue("host",ui->db_mysql_host->text().toStdString());
     settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_login_editingFinished()
 {
-    settings->beginGroup("db");
-    settings->setValue("mysql_login",ui->db_mysql_login->text().toStdString());
+    settings->beginGroup("db-login");
+    settings->setValue("login",ui->db_mysql_login->text().toStdString());
     settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_pass_editingFinished()
 {
-    settings->beginGroup("db");
-    settings->setValue("mysql_pass",ui->db_mysql_pass->text().toStdString());
+    settings->beginGroup("db-login");
+    settings->setValue("pass",ui->db_mysql_pass->text().toStdString());
     settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_base_editingFinished()
 {
-    settings->beginGroup("db");
-    settings->setValue("mysql_db",ui->db_mysql_base->text().toStdString());
+    settings->beginGroup("db-login");
+    settings->setValue("db",ui->db_mysql_base->text().toStdString());
     settings->endGroup();
 }
 
@@ -1898,4 +1989,43 @@ void CatchChallenger::MainWindow::on_teleportIfMapNotFoundOrOutOfMap_toggled(boo
 {
     (void)checked;
     settings->setValue("everyBodyIsRoot",ui->everyBodyIsRoot->isChecked());
+}
+
+void CatchChallenger::MainWindow::on_mainDatapackCode_currentIndexChanged(const QString &arg1)
+{
+    if(!settingsLoaded)
+        return;
+    if(arg1.isEmpty())
+        return;
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode=arg1.toStdString();
+    settings->setValue("mainDatapackCode",CommonSettingsServer::commonSettingsServer.mainDatapackCode);
+    {
+        ui->subDatapackCode->clear();
+        ui->subDatapackCode->addItem(QString());
+        const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/sub/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+        if(!list.empty())
+        {
+            unsigned int indexFound=0;
+            unsigned int index=0;
+            while(index<list.size())
+            {
+                if(list.at(index).name==CommonSettingsServer::commonSettingsServer.subDatapackCode)
+                    indexFound=index+1;
+                ui->subDatapackCode->addItem(QString::fromStdString(list.at(index).name));
+                index++;
+            }
+            if(!list.empty())
+                ui->subDatapackCode->setCurrentIndex(indexFound);
+        }
+    }
+}
+
+void CatchChallenger::MainWindow::on_subDatapackCode_currentIndexChanged(const QString &arg1)
+{
+    if(!settingsLoaded)
+        return;
+    if(ui->mainDatapackCode->count()==0)
+        return;
+    CommonSettingsServer::commonSettingsServer.subDatapackCode=arg1.toStdString();
+    settings->setValue("subDatapackCode",CommonSettingsServer::commonSettingsServer.subDatapackCode);
 }
