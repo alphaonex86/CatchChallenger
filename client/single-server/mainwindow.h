@@ -57,7 +57,9 @@ private slots:
     void updateTheOkButton();
     void gameIsLoaded();
     #ifndef CATCHCHALLENGER_NOAUDIO
-    static void vlcevent(const libvlc_event_t *event, void *ptr);
+    static void vlceventStatic(const libvlc_event_t* event, void* ptr);
+    void vlcevent(const libvlc_event_t* event);
+    void audioLoop(void *player);
     #endif
 private:
     QSslSocket *realSslSocket;
@@ -88,6 +90,10 @@ private:
     QString proxy_dns_or_ip;
     uint16_t server_port;
     uint16_t proxy_port;
+signals:
+    #ifndef CATCHCHALLENGER_NOAUDIO
+    void audioLoopRestart(void *vlcPlayer);
+    #endif
 };
 
 #endif // MAINWINDOW_H
