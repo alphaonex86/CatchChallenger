@@ -8,7 +8,7 @@ HEADERS  += $$PWD/solo/InternalServer.h \
 
 FORMS    += $$PWD/solo/solowindow.ui
 
-RESOURCES += $$PWD/../../server/databases/resources-db-sqlite.qrc
+# done into all qt server: RESOURCES += $$PWD/../../server/databases/resources-db-sqlite.qrc
 
 #RESOURCES += $$PWD/resources/resources-single-player.qrc
 

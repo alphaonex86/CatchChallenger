@@ -202,6 +202,12 @@ BaseWindow::BaseWindow() :
     if(!connect(MapController::mapController,&MapController::teleportConditionNotRespected, this,&BaseWindow::teleportConditionNotRespected,Qt::QueuedConnection))
         abort();
 
+    #ifndef CATCHCHALLENGER_NOAUDIO
+    //audio
+    if(!connect(this,&BaseWindow::audioLoopRestart,this,&BaseWindow::audioLoop,Qt::QueuedConnection))
+        abort();
+    #endif
+
     //fight
     if(!connect(MapController::mapController,   &MapController::wildFightCollision,     this,&BaseWindow::wildFightCollision))
         abort();

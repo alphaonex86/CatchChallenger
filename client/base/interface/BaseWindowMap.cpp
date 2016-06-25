@@ -1,6 +1,9 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
 #include "../../../general/base/CommonSettingsServer.h"
+#ifndef CATCHCHALLENGER_NOAUDIO
+#include "../Audio.h"
+#endif
 
 using namespace CatchChallenger;
 
@@ -310,9 +313,13 @@ void BaseWindow::currentMapLoaded()
             while(!ambianceList.isEmpty())
             {
                 #ifndef CATCHCHALLENGER_NOAUDIO
-                libvlc_media_player_stop(ambianceList.first().player);
-                libvlc_media_player_release(ambianceList.first().player);
-                Audio::audio.removePlayer(ambianceList.first().player);
+                Ambiance &ambiance=ambianceList.first();
+                // Attach the event handler to the media player error's events
+                libvlc_event_detach(ambiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,ambiance.player);
+                libvlc_event_detach(ambiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,ambiance.player);
+                libvlc_media_player_stop(ambiance.player);
+                libvlc_media_player_release(ambiance.player);
+                Audio::audio.removePlayer(ambiance.player);
                 #endif
                 ambianceList.removeFirst();
             }
@@ -333,9 +340,13 @@ void BaseWindow::currentMapLoaded()
                     break;
                 }
                 #ifndef CATCHCHALLENGER_NOAUDIO
-                libvlc_media_player_stop(ambianceList.first().player);
-                libvlc_media_player_release(ambianceList.first().player);
-                Audio::audio.removePlayer(ambianceList.first().player);
+                Ambiance &ambiance=ambianceList.first();
+                // Attach the event handler to the media player error's events
+                libvlc_event_detach(ambiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,ambiance.player);
+                libvlc_event_detach(ambiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,ambiance.player);
+                libvlc_media_player_stop(ambiance.player);
+                libvlc_media_player_release(ambiance.player);
+                Audio::audio.removePlayer(ambiance.player);
                 #endif
                 ambianceList.removeFirst();
             }
@@ -351,9 +362,13 @@ void BaseWindow::currentMapLoaded()
                         Ambiance ambiance;
                         // Create a new libvlc player
                         ambiance.player = libvlc_media_player_new_from_media (vlcMedia);
+                        // Get event manager for the player instance
+                        ambiance.manager = libvlc_media_player_event_manager(ambiance.player);
+                        // Attach the event handler to the media player error's events
+                        libvlc_event_attach(ambiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,ambiance.player);
+                        libvlc_event_attach(ambiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,ambiance.player);
                         // Release the media
                         libvlc_media_release(vlcMedia);
-                        libvlc_media_add_option(vlcMedia, "input-repeat=-1");
                         // And start playback
                         libvlc_media_player_play(ambiance.player);
 
@@ -399,3 +414,36 @@ void BaseWindow::currentMapLoaded()
         }
     }
 }
+
+#ifndef CATCHCHALLENGER_NOAUDIO
+void BaseWindow::vlceventStatic(const libvlc_event_t *event, void *ptr)
+{
+    libvlc_media_player_t * const player=static_cast<libvlc_media_player_t *>(ptr);
+    switch(event->type)
+    {
+        case libvlc_MediaPlayerEncounteredError:
+        {
+            const char * string=libvlc_errmsg();
+            if(string==NULL)
+                qDebug() << "vlc error";
+            else
+                qDebug() << string;
+        }
+        break;
+        case libvlc_MediaPlayerEndReached:
+            BaseWindow::baseWindow->audioLoopRestart(player);
+        break;
+        default:
+            qDebug() << "vlc event: " << event->type;
+        break;
+    }
+}
+
+void BaseWindow::audioLoop(void *player)
+{
+    libvlc_media_player_t * const vlcPlayer=static_cast<libvlc_media_player_t *>(player);
+    libvlc_media_player_stop(vlcPlayer);
+    libvlc_media_player_play(vlcPlayer);
+}
+#endif
+
