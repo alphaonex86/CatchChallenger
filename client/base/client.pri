@@ -5,8 +5,8 @@ QT       += gui network xml core
 
 DEFINES += CATCHCHALLENGER_CLIENT
 
-DEFINES += CATCHCHALLENGER_NOAUDIO
-#LIBS += -lvlc
+#DEFINES += CATCHCHALLENGER_NOAUDIO
+LIBS += -lvlc
 
 SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/DatapackChecksum.cpp \

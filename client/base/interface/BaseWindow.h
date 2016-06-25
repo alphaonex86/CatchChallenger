@@ -219,6 +219,11 @@ private slots:
     void teleportConditionNotRespected(const QString &text);
     static QString reputationRequirementsToText(const ReputationRequirements &reputationRequirements);
 
+    #ifndef CATCHCHALLENGER_NOAUDIO
+    static void vlceventStatic(const libvlc_event_t *event, void *ptr);
+    void audioLoop(void *player);
+    #endif
+
     //datapack
     void haveTheDatapack();
     void haveTheDatapackMainSub();
@@ -688,6 +693,7 @@ private:
     {
         #ifndef CATCHCHALLENGER_NOAUDIO
         libvlc_media_player_t *player;
+        libvlc_event_manager_t *manager;
         #endif
         QString file;
     };
@@ -730,6 +736,9 @@ signals:
     //inventory
     void destroyObject(uint32_t object,uint32_t quantity=1);
     void gameIsLoaded();
+    #ifndef CATCHCHALLENGER_NOAUDIO
+    void audioLoopRestart(void *vlcPlayer);
+    #endif
 };
 }
 

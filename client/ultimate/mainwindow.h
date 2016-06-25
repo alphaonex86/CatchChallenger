@@ -58,6 +58,9 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     bool toQuit;
+    #ifndef CATCHCHALLENGER_NOAUDIO
+    libvlc_media_player_t *vlcPlayer;
+    #endif
 protected:
     void changeEvent(QEvent *e);
 private slots:
@@ -118,7 +121,9 @@ private slots:
     void gameIsLoaded();
     void updateTheOkButton();
     #ifndef CATCHCHALLENGER_NOAUDIO
-    static void vlcevent(const libvlc_event_t* event, void* ptr);
+    static void vlceventStatic(const libvlc_event_t* event, void* ptr);
+    void vlcevent(const libvlc_event_t* event);
+    void audioLoop(void *player);
     #endif
     void on_server_edit_clicked();
 
@@ -167,8 +172,9 @@ private:
     QHash<QString,uint32_t> lastServerWaitBeforeConnectAfterKick;
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
+signals:
     #ifndef CATCHCHALLENGER_NOAUDIO
-    libvlc_media_player_t *vlcPlayer;
+    void audioLoopRestart(void *vlcPlayer);
     #endif
 };
 

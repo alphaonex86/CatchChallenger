@@ -16,6 +16,7 @@
 #define CATCHCHALLENGER_UPDATER_URL "http://catchchallenger-update.first-world.info:10852/updater.txt"
 #define CATCHCHALLENGER_RSS_URL "http://catchchallenger-static.first-world.info:10852/rss_global.xml"
 
+#define CATCHCHALLENGER_CLIENT_MUSIC_LOADING "/music/loading.opus"
 #define CATCHCHALLENGER_CLIENT_INSTANT_SHOP
 
 #define TIMETODISPLAY_TIP 8000

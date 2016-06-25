@@ -7,6 +7,10 @@
 #include "../../../general/base/CommonSettingsServer.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
 
+#ifndef CATCHCHALLENGER_NOAUDIO
+#include "../Audio.h"
+#endif
+
 #include <QBuffer>
 #include <QStandardPaths>
 
