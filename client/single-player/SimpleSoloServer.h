@@ -35,7 +35,9 @@ public slots:
     void closeEvent(QCloseEvent *event);
     void gameIsLoaded();
     #ifndef CATCHCHALLENGER_NOAUDIO
-    static void vlcevent(const libvlc_event_t *event, void *ptr);
+    static void vlceventStatic(const libvlc_event_t* event, void* ptr);
+    void vlcevent(const libvlc_event_t* event);
+    void audioLoop(void *player);
     #endif
 private:
     Ui::SimpleSoloServer *ui;
@@ -50,6 +52,10 @@ private:
     QSettings settings;
     #ifndef CATCHCHALLENGER_NOAUDIO
     libvlc_media_player_t *vlcPlayer;
+    #endif
+signals:
+    #ifndef CATCHCHALLENGER_NOAUDIO
+    void audioLoopRestart(void *vlcPlayer);
     #endif
 };
 
