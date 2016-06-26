@@ -46,7 +46,14 @@ void Audio::setVolume(int volume)
 
 void Audio::addPlayer(libvlc_media_player_t * player)
 {
-    playerList<< player;
+    if(playerList.contains(player))
+        return;
+    playerList << player;
+    libvlc_audio_set_volume(player,volume);
+}
+
+void Audio::setPlayerVolume(libvlc_media_player_t * player)
+{
     libvlc_audio_set_volume(player,volume);
 }
 

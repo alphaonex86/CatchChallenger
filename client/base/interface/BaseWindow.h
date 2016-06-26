@@ -697,7 +697,7 @@ private:
         #endif
         QString file;
     };
-    QList<Ambiance> ambianceList;
+    Ambiance currentAmbiance;
 
     static QString text_type;
     static QString text_lang;
