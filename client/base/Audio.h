@@ -18,6 +18,7 @@ public:
     QStringList output_list();
     void addPlayer(libvlc_media_player_t *player);
     void removePlayer(libvlc_media_player_t *player);
+    void setPlayerVolume(libvlc_media_player_t * player);
 private:
     QList<libvlc_media_player_t *> playerList;
     int volume;
