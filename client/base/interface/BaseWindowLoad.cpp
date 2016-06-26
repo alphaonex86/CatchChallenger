@@ -136,14 +136,21 @@ void BaseWindow::resetAll()
         delete ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_monster;
         ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_monster=NULL;
     }*/
-    while(!ambianceList.isEmpty())
+
+    #ifndef CATCHCHALLENGER_NOAUDIO
+    if(currentAmbiance.manager!=NULL)
     {
-        #ifndef CATCHCHALLENGER_NOAUDIO
-        libvlc_media_player_stop(ambianceList.first().player);
-        libvlc_media_player_release(ambianceList.first().player);
-        #endif
-        ambianceList.removeFirst();
+        libvlc_event_detach(currentAmbiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,currentAmbiance.player);
+        libvlc_event_detach(currentAmbiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,currentAmbiance.player);
+        libvlc_media_player_stop(currentAmbiance.player);
+        libvlc_media_player_release(currentAmbiance.player);
+        Audio::audio.removePlayer(currentAmbiance.player);
+        currentAmbiance.manager=NULL;
+        currentAmbiance.player=NULL;
+        currentAmbiance.file.clear();
     }
+    #endif
+
     industryStatus.products.clear();
     industryStatus.resources.clear();
     if(newProfile!=NULL)

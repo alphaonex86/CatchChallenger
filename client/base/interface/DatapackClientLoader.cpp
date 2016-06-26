@@ -54,6 +54,8 @@ const QString DatapackClientLoader::text_client_logic=QLatin1Literal("client_log
 const QString DatapackClientLoader::text_map=QLatin1Literal("map");
 const QString DatapackClientLoader::text_items=QLatin1Literal("items");
 const QString DatapackClientLoader::text_zone=QLatin1Literal("zone");
+const QString DatapackClientLoader::text_music=QLatin1Literal("music");
+const QString DatapackClientLoader::text_backgroundsound=QLatin1Literal("backgroundsound");
 
 const QString DatapackClientLoader::text_monster=QLatin1Literal("monster");
 const QString DatapackClientLoader::text_monsters=QLatin1Literal("monsters");
@@ -1618,6 +1620,28 @@ void DatapackClientLoader::parseZoneExtra()
         }
         if(haveName)
             zonesExtra[zoneCodeName]=zone;
+
+        //load the audio ambiance
+        {
+            QDomElement item = root.firstChildElement(DatapackClientLoader::text_music);
+            while(!item.isNull())
+            {
+                if(item.isElement())
+                {
+                    if(item.hasAttribute(DatapackClientLoader::text_type) && item.hasAttribute(DatapackClientLoader::text_backgroundsound))
+                    {
+                        const QString &type=item.attribute(DatapackClientLoader::text_type);
+                        const QString &backgroundsound=item.attribute(DatapackClientLoader::text_backgroundsound);
+                        zonesExtra[zoneCodeName].audioAmbiance[type]=backgroundsound;
+                    }
+                    else
+                        qDebug() << QStringLiteral("Unable to open the file: %1, have not the music attribute: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
+                }
+                else
+                    qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
+                item = item.nextSiblingElement(DatapackClientLoader::text_music);
+            }
+        }
 
         index++;
     }
