@@ -48,6 +48,7 @@ public:
     struct ZoneExtra
     {
         QString name;
+        QHash<QString,QString> audioAmbiance;
     };
     struct BotFightExtra
     {
@@ -197,6 +198,8 @@ protected:
     static const QString text_map;
     static const QString text_items;
     static const QString text_zone;
+    static const QString text_music;
+    static const QString text_backgroundsound;
 
     static const QString text_monster;
     static const QString text_monsters;

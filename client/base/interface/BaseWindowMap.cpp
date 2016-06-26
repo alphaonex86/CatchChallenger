@@ -294,7 +294,10 @@ void BaseWindow::currentMapLoaded()
         QString visualName;
         if(!mapFull->zone.isEmpty())
             if(DatapackClientLoader::datapackLoader.zonesExtra.contains(mapFull->zone))
-                visualName=DatapackClientLoader::datapackLoader.zonesExtra.value(mapFull->zone).name;
+            {
+                const DatapackClientLoader::ZoneExtra &zoneExtra=DatapackClientLoader::datapackLoader.zonesExtra.value(mapFull->zone);
+                visualName=zoneExtra.name;
+            }
         if(visualName.isEmpty())
             visualName=mapFull->name;
         if(!visualName.isEmpty() && lastPlaceDisplayed!=visualName)
@@ -304,84 +307,97 @@ void BaseWindow::currentMapLoaded()
         }
     }
     const QString &type=MapController::mapController->currentMapType();
+    #ifndef CATCHCHALLENGER_NOAUDIO
     //sound
     {
-        bool noSound=false;
+        QStringList soundList;
         const QString &backgroundsound=MapController::mapController->currentBackgroundsound();
-        if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type) && backgroundsound.isEmpty())
-        {
-            while(!ambianceList.isEmpty())
+        //map sound
+        if(!backgroundsound.isEmpty() && !soundList.contains(backgroundsound))
+            soundList << backgroundsound;
+        //zone sound
+        MapVisualiserThread::Map_full *mapFull=MapController::mapController->currentMapFull();
+        if(!mapFull->zone.isEmpty())
+            if(DatapackClientLoader::datapackLoader.zonesExtra.contains(mapFull->zone))
             {
-                #ifndef CATCHCHALLENGER_NOAUDIO
-                Ambiance &ambiance=ambianceList.first();
-                // Attach the event handler to the media player error's events
-                libvlc_event_detach(ambiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,ambiance.player);
-                libvlc_event_detach(ambiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,ambiance.player);
-                libvlc_media_player_stop(ambiance.player);
-                libvlc_media_player_release(ambiance.player);
-                Audio::audio.removePlayer(ambiance.player);
-                #endif
-                ambianceList.removeFirst();
+                const DatapackClientLoader::ZoneExtra &zoneExtra=DatapackClientLoader::datapackLoader.zonesExtra.value(mapFull->zone);
+                if(zoneExtra.audioAmbiance.contains(type))
+                {
+                    const QString &backgroundsound=zoneExtra.audioAmbiance.value(type);
+                    if(!backgroundsound.isEmpty() && !soundList.contains(backgroundsound))
+                        soundList << backgroundsound;
+                }
             }
-            noSound=true;
+        //general sound
+        if(DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
+        {
+            const QString &backgroundsound=DatapackClientLoader::datapackLoader.audioAmbiance.value(type);
+            if(!backgroundsound.isEmpty() && !soundList.contains(backgroundsound))
+                soundList << backgroundsound;
         }
-        if(!noSound)
+
+        QString finalSound;
+        int index=0;
+        while(index<soundList.size())
         {
-            QString file;
-            if(DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
-                file=DatapackClientLoader::datapackLoader.audioAmbiance.value(type);
-            else
-                file=backgroundsound;
-            while(!ambianceList.isEmpty())
+            //search into main datapack
+            const QString &fileToSearchMain=QDir::toNativeSeparators(CatchChallenger::Api_client_real::client->datapackPathMain()+soundList.at(index));
+            if(QFileInfo(fileToSearchMain).isFile())
             {
-                if(ambianceList.first().file==file)
-                {
-                    noSound=true;
-                    break;
-                }
-                #ifndef CATCHCHALLENGER_NOAUDIO
-                Ambiance &ambiance=ambianceList.first();
-                // Attach the event handler to the media player error's events
-                libvlc_event_detach(ambiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,ambiance.player);
-                libvlc_event_detach(ambiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,ambiance.player);
-                libvlc_media_player_stop(ambiance.player);
-                libvlc_media_player_release(ambiance.player);
-                Audio::audio.removePlayer(ambiance.player);
-                #endif
-                ambianceList.removeFirst();
+                finalSound=fileToSearchMain;
+                break;
             }
-            if(!noSound)
+            //search into base datapack
+            const QString &fileToSearchBase=QDir::toNativeSeparators(CatchChallenger::Api_client_real::client->datapackPathBase()+soundList.at(index));
+            if(QFileInfo(fileToSearchBase).isFile())
             {
-                #ifndef CATCHCHALLENGER_NOAUDIO
-                if(Audio::audio.vlcInstance && QFileInfo(file).isFile())
-                {
-                    // Create a new Media
-                    libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, QDir::toNativeSeparators(file).toUtf8().constData());
-                    if(vlcMedia!=NULL)
-                    {
-                        Ambiance ambiance;
-                        // Create a new libvlc player
-                        ambiance.player = libvlc_media_player_new_from_media (vlcMedia);
-                        // Get event manager for the player instance
-                        ambiance.manager = libvlc_media_player_event_manager(ambiance.player);
-                        // Attach the event handler to the media player error's events
-                        libvlc_event_attach(ambiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,ambiance.player);
-                        libvlc_event_attach(ambiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,ambiance.player);
-                        // Release the media
-                        libvlc_media_release(vlcMedia);
-                        // And start playback
-                        libvlc_media_player_play(ambiance.player);
+                finalSound=fileToSearchBase;
+                break;
+            }
+            index++;
+        }
 
-                        ambiance.file=file;
-                        ambianceList << ambiance;
+        //set the sound
+        if(Audio::audio.vlcInstance && !finalSound.isEmpty() && currentAmbiance.file!=finalSound)
+        {
+            // reset the audio ambiance
+            if(currentAmbiance.manager!=NULL)
+            {
+                libvlc_event_detach(currentAmbiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,currentAmbiance.player);
+                libvlc_event_detach(currentAmbiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,currentAmbiance.player);
+                libvlc_media_player_stop(currentAmbiance.player);
+                libvlc_media_player_release(currentAmbiance.player);
+                Audio::audio.removePlayer(currentAmbiance.player);
+                currentAmbiance.manager=NULL;
+                currentAmbiance.player=NULL;
+                currentAmbiance.file.clear();
+            }
 
-                        Audio::audio.addPlayer(ambiance.player);
-                    }
-                }
-                #endif
+            // Create a new Media
+            libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, finalSound.toUtf8().constData());
+            if(vlcMedia!=NULL)
+            {
+                Ambiance ambiance;
+                // Create a new libvlc player
+                ambiance.player = libvlc_media_player_new_from_media (vlcMedia);
+                // Get event manager for the player instance
+                ambiance.manager = libvlc_media_player_event_manager(ambiance.player);
+                // Attach the event handler to the media player error's events
+                libvlc_event_attach(ambiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,ambiance.player);
+                libvlc_event_attach(ambiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,ambiance.player);
+                // Release the media
+                libvlc_media_release(vlcMedia);
+                // And start playback
+                libvlc_media_player_play(ambiance.player);
+
+                ambiance.file=finalSound;
+                currentAmbiance=ambiance;
+
+                Audio::audio.addPlayer(ambiance.player);
             }
         }
     }
+    #endif
     //color
     {
         if(visualCategory!=type)
