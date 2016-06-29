@@ -271,6 +271,12 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                             while((uint16_t)DictionaryLogin::dictionary_reputation_database_to_internal.size()<(databaseId+1))
                                 DictionaryLogin::dictionary_reputation_database_to_internal.push_back(-1);
                             DictionaryLogin::dictionary_reputation_database_to_internal[databaseId]=reputationListIndex;
+                            if(reputationListIndex>=CommonDatapack::commonDatapack.reputation.size())
+                            {
+                                std::cerr << "C211 master server have send out of range internal reputation id " << reputationListIndex << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            CommonDatapack::commonDatapack.reputation[reputationListIndex].reverse_database_id=databaseId;
                             reputationListIndex++;
                         }
                     }
