@@ -1547,19 +1547,25 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaMonster_itemActivated
         const std::vector<uint8_t> &types=monsterCommon.type;
         if(!types.empty())
         {
-            ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+"<br />"+tr("Type:"));
-            unsigned int index=0;
-            while(index<types.size())
+            QStringList typeList;
+            unsigned int sub_index=0;
+            while(sub_index<types.size())
             {
-                const uint8_t &type=types.at(index);
-                if(type<CommonDatapack::commonDatapack.types.size() && DatapackClientLoader::datapackLoader.typeExtra.contains(type))
+                const auto &typeSub=types.at(sub_index);
+                if(DatapackClientLoader::datapackLoader.typeExtra.contains(typeSub))
                 {
-                    const DatapackClientLoader::TypeText &typeText=DatapackClientLoader::datapackLoader.typeExtra.value(type);
-                    //const Type &typeCommon=CommonDatapack::commonDatapack.types.at(type);
-                    ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+" "+typeText.name);
+                    const DatapackClientLoader::TypeExtra &typeExtra=DatapackClientLoader::datapackLoader.typeExtra.value(typeSub);
+                    if(!typeExtra.name.isEmpty())
+                    {
+                        if(typeExtra.color.isValid())
+                            typeList << QString("<span style=\"background-color:%1;\">%2</span>").arg(typeExtra.color.name()).arg(typeExtra.name);
+                        else
+                            typeList << typeExtra.name;
+                    }
                 }
-                index++;
+                sub_index++;
             }
+            ui->labelEncyclopediaMonster->setText(ui->labelEncyclopediaMonster->text()+"<br />"+tr("Type:")+typeList.join(QStringLiteral(", ")));
         }
     }
 }
