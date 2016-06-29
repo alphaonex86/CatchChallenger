@@ -402,7 +402,7 @@ struct Player_private_and_public_informations
             std::map<uint16_t/*pointOnMap*/,PlayerPlant> plantOnMap;
         #endif
         std::map<uint16_t, PlayerQuest> quests;
-        std::map<uint8_t,PlayerReputation> reputation;
+        std::map<uint8_t/*internal id*/,PlayerReputation> reputation;
         std::map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
     #endif
 };
