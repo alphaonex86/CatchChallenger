@@ -100,7 +100,7 @@ bool EpollPostgresql::syncConnect(const std::string &host, const std::string &db
     return syncConnectInternal();
 }
 
-bool EpollPostgresql::syncConnectInternal()
+bool EpollPostgresql::syncConnectInternal(bool infinityTry)
 {
     conn=PQconnectdb(strCoPG);
     ConnStatusType connStatusType=PQstatus(conn);
@@ -133,7 +133,8 @@ bool EpollPostgresql::syncConnectInternal()
                 const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
-            index++;
+            if(!infinityTry)
+                index++;
             if(lastErrorMessage.find("the database system is starting up")!=std::string::npos || lastErrorMessage.find("the database system is shutting down")!=std::string::npos)
                 index=0;
         }
@@ -185,7 +186,7 @@ void EpollPostgresql::syncReconnect()
         std::cerr << "pg already connected" << std::endl;
         return;
     }
-    syncConnectInternal();
+    syncConnectInternal(true);
 }
 
 void EpollPostgresql::syncDisconnect()

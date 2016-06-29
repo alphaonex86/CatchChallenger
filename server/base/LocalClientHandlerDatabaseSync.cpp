@@ -267,23 +267,24 @@ void Client::syncDatabaseReputation()
     auto i=public_and_private_informations.reputation.begin();
     while(i!=public_and_private_informations.reputation.cend())
     {
+        const uint8_t &databaseType=CommonDatapack::commonDatapack.reputation.at(i->first).reverse_database_id;
         #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
         //not ordened
         uint8_t type;
-        if(lastReputationId<=i->first)
+        if(lastReputationId<=databaseType)
         {
-            type=i->first-lastReputationId;
-            lastReputationId=i->first;
+            type=databaseType-lastReputationId;
+            lastReputationId=databaseType;
         }
         else
         {
-            type=256-lastReputationId+i->first;
-            lastReputationId=i->first;
+            type=256-lastReputationId+databaseType;
+            lastReputationId=databaseType;
         }
         #else
         //ordened
-        const uint8_t &type=i->first-lastReputationId;
-        lastReputationId=i->first;
+        const uint8_t &type=databaseType-lastReputationId;
+        lastReputationId=databaseType;
         #endif
         const PlayerReputation &reputation=i->second;
         *reinterpret_cast<uint32_t *>(buffer+posOutput)=htole32(reputation.point);

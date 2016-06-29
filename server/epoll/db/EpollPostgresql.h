@@ -17,7 +17,7 @@ public:
     EpollPostgresql();
     ~EpollPostgresql();
     bool syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password);
-    bool syncConnectInternal();
+    bool syncConnectInternal(bool infinityTry=false);
     void syncDisconnect();
     void syncReconnect();
     CallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);

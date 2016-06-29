@@ -75,7 +75,7 @@ bool EpollMySQL::syncConnect(const std::string &host, const std::string &dbname,
     return syncConnectInternal();
 }
 
-bool EpollMySQL::syncConnectInternal()
+bool EpollMySQL::syncConnectInternal(bool infinityTry)
 {
     conn = mysql_init(NULL);
     if(conn == NULL)
@@ -110,7 +110,8 @@ bool EpollMySQL::syncConnectInternal()
                 const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
                 std::this_thread::sleep_for(std::chrono::milliseconds(ms));
             }
-            index++;
+            if(!infinityTry)
+                index++;
         }
         if(connectionisbad)
         {
@@ -157,7 +158,7 @@ void EpollMySQL::syncReconnect()
         std::cerr << "mysql already connected" << std::endl;
         return;
     }
-    syncConnectInternal();
+    syncConnectInternal(true);
 }
 
 void EpollMySQL::syncDisconnect()
