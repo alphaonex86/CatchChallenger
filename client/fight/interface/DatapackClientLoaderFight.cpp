@@ -363,8 +363,19 @@ void DatapackClientLoader::parseTypesExtra()
                     QString name=typeItem.attribute(DatapackClientLoader::text_name);
                     if(!duplicate.contains(name))
                     {
+                        TypeExtra type;
+
                         duplicate << name;
-                        TypeText type;
+                        if(typeItem.hasAttribute(DatapackClientLoader::text_color))
+                        {
+                            QColor color;
+                            color.setNamedColor(typeItem.attribute(DatapackClientLoader::text_color));
+                            if(color.isValid())
+                                type.color=color;
+                            else
+                                qDebug() << (QStringLiteral("Unable to open the file: %1, color is not valid: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber()));
+                        }
+
                         bool found=false;
                         QDomElement nameItem = typeItem.firstChildElement(DatapackClientLoader::text_name);
                         if(!language.isEmpty() && language!=DatapackClientLoader::text_en)

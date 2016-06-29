@@ -44,9 +44,18 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
         unsigned int sub_index=0;
         while(sub_index<monsterGeneralInfo.type.size())
         {
-            if(DatapackClientLoader::datapackLoader.typeExtra.contains(monsterGeneralInfo.type.at(sub_index)))
-                if(!DatapackClientLoader::datapackLoader.typeExtra.value(monsterGeneralInfo.type.at(sub_index)).name.isEmpty())
-                    typeList << DatapackClientLoader::datapackLoader.typeExtra.value(monsterGeneralInfo.type.at(sub_index)).name;
+            const auto &typeSub=monsterGeneralInfo.type.at(sub_index);
+            if(DatapackClientLoader::datapackLoader.typeExtra.contains(typeSub))
+            {
+                const DatapackClientLoader::TypeExtra &typeExtra=DatapackClientLoader::datapackLoader.typeExtra.value(typeSub);
+                if(!typeExtra.name.isEmpty())
+                {
+                    if(typeExtra.color.isValid())
+                        typeList << QString("<span style=\"background-color:%1;\">%2</span>").arg(typeExtra.color.name()).arg(typeExtra.name);
+                    else
+                        typeList << typeExtra.name;
+                }
+            }
             sub_index++;
         }
         QStringList extraInfo;

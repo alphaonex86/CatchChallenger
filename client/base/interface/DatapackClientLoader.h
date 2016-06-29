@@ -97,16 +97,17 @@ public:
         };
         QList<VisualCategoryCondition> conditions;
     };
-    struct TypeText
+    struct TypeExtra
     {
         QString name;
+        QColor color;
     };
     struct PlantIndexContent
     {
         QString map;
         uint8_t x,y;
     };
-    QHash<uint32_t,TypeText> typeExtra;
+    QHash<uint32_t,TypeExtra> typeExtra;
     QHash<uint32_t,MonsterExtra> monsterExtra;
     QHash<uint32_t,MonsterExtra::Buff> monsterBuffsExtra;
     QHash<uint32_t,MonsterExtra::Skill> monsterSkillsExtra;
