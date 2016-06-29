@@ -267,6 +267,13 @@ void Client::syncDatabaseReputation()
     auto i=public_and_private_informations.reputation.begin();
     while(i!=public_and_private_informations.reputation.cend())
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(i->first>=CommonDatapack::commonDatapack.reputation.size())
+        {
+            std::cerr << "public_and_private_informations.reputation internal id is out of range to save: " << i->first << std::endl;
+            abort();
+        }
+        #endif
         const uint8_t &databaseType=CommonDatapack::commonDatapack.reputation.at(i->first).reverse_database_id;
         #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
         //not ordened
