@@ -2021,6 +2021,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
         if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(startItem))
         {
             Profile profile;
+            profile.cash=0;
 
             if(startItem->Attribute("id")!=NULL)
                 profile.id=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(startItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id")));
@@ -2146,6 +2147,9 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                 while(reputationElement!=NULL)
                 {
                     Profile::Reputation reputationTemp;
+                    reputationTemp.internalIndex=255;
+                    reputationTemp.level=255;
+                    reputationTemp.point=0xFFFFFFFF;
                     if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(reputationElement) && reputationElement->Attribute("type")!=NULL && reputationElement->Attribute("level")!=NULL)
                     {
                         reputationTemp.level=stringtoint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level"))),&ok);

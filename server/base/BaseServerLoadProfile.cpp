@@ -122,6 +122,15 @@ void BaseServer::preload_profile()
                     const Profile::Reputation &source=profile.reputations.at(index);
                     temp.level=source.level;
                     temp.point=source.point;
+                    if(source.internalIndex>=CommonDatapack::commonDatapack.reputation.size())
+                    {
+                        std::cerr << "profile index out of range for profile preparation. internal error" << std::endl;
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        abort();
+                        #else
+                        break;
+                        #endif
+                    }
                     temp.reputationDatabaseId=CommonDatapack::commonDatapack.reputation.at(source.internalIndex).reverse_database_id;
                     reputationList.push_back(temp);
                     index++;

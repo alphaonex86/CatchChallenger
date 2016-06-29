@@ -91,9 +91,10 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
         }
         if(reputationResolution.find(reputation)!=reputationResolution.end())
         {
-            dictionary_reputation_database_to_internal[lastId]=reputationResolution.at(reputation);
+            const uint8_t &internalId=reputationResolution.at(reputation);
+            dictionary_reputation_database_to_internal[lastId]=internalId;
             foundReputation.insert(reputation);
-            CommonDatapack::commonDatapack.reputation[reputationResolution.at(reputation)].reverse_database_id=lastId;
+            CommonDatapack::commonDatapack.reputation[internalId].reverse_database_id=lastId;
         }
     }
     databaseBaseBase->clear();
