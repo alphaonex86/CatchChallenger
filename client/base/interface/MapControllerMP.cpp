@@ -892,7 +892,24 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
 
     CatchChallenger::Player_public_informations informations=otherPlayerList.value(id).informations;
     /// \warning search by loop because otherPlayerList.value(id).current_map is the full path, DatapackClientLoader::datapackLoader.maps relative path
-    const QString &tempCurrentMap=otherPlayerList.value(id).current_map;
+    QString tempCurrentMap=otherPlayerList.value(id).current_map;
+    //if not found, search into sub
+    if(!all_map.contains(tempCurrentMap) && !CatchChallenger::Api_client_real::client->subDatapackCode().isEmpty())
+    {
+        QString tempCurrentMapSub=tempCurrentMap;
+        tempCurrentMapSub.remove(CatchChallenger::Api_client_real::client->datapackPathSub());
+        if(all_map.contains(tempCurrentMapSub))
+            tempCurrentMap=tempCurrentMapSub;
+    }
+    //if not found, search into main
+    if(!all_map.contains(tempCurrentMap))
+    {
+        QString tempCurrentMapMain=tempCurrentMap;
+        tempCurrentMapMain.remove(CatchChallenger::Api_client_real::client->datapackPathMain());
+        if(all_map.contains(tempCurrentMapMain))
+            tempCurrentMap=tempCurrentMapMain;
+    }
+    //if remain not found
     if(!all_map.contains(tempCurrentMap))
     {
         qDebug() << "internal problem, revert map (" << otherPlayerList.value(id).current_map << ") index is wrong (" << DatapackClientLoader::datapackLoader.maps.join(";") << ")";
