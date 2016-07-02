@@ -53,10 +53,16 @@ void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
     {
         switch(direction)
         {
+            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
             case Direction_look_at_top:
             case Direction_look_at_right:
             case Direction_look_at_bottom:
             case Direction_look_at_left:
+            direction=lookToMove(direction);
+            case Direction_move_at_top:
+            case Direction_move_at_right:
+            case Direction_move_at_bottom:
+            case Direction_move_at_left:
                 if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
@@ -85,8 +91,7 @@ void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
             else
             {
                 const std::vector<uint32_t> shops=mapServer->shops.at(pos);
-                const int indexOf=vectorindexOf(shops,shopId);
-                if(indexOf==-1)
+                if(!vectorcontainsAtLeastOne(shops,shopId))
                 {
                     errorOutput("not shop into this direction");
                     return;
@@ -97,8 +102,7 @@ void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
     else
     {
         const std::vector<uint32_t> shops=mapServer->shops.at(pos);
-        const int indexOf=vectorindexOf(shops,shopId);
-        if(indexOf==-1)
+        if(!vectorcontainsAtLeastOne(shops,shopId))
         {
             errorOutput("not shop into this direction");
             return;
@@ -203,11 +207,16 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
         Direction direction=getLastDirection();
         switch(direction)
         {
+            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
             case Direction_look_at_top:
             case Direction_look_at_right:
             case Direction_look_at_bottom:
             case Direction_look_at_left:
-                direction=lookToMove(direction);
+            direction=lookToMove(direction);
+            case Direction_move_at_top:
+            case Direction_move_at_right:
+            case Direction_move_at_bottom:
+            case Direction_move_at_left:
                 if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
@@ -236,8 +245,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
         else
         {
             const std::vector<uint32_t> shops=mapServer->shops.at(pos);
-            const int indexOf=vectorindexOf(shops,shopId);
-            if(indexOf==-1)
+            if(!vectorcontainsAtLeastOne(shops,shopId))
             {
                 errorOutput("not shop into this direction");
                 return;
@@ -247,8 +255,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
     else
     {
         const std::vector<uint32_t> shops=mapServer->shops.at(pos);
-        const int indexOf=vectorindexOf(shops,shopId);
-        if(indexOf==-1)
+        if(!vectorcontainsAtLeastOne(shops,shopId))
         {
             errorOutput("not shop into this direction");
             return;
@@ -382,11 +389,16 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
         Direction direction=getLastDirection();
         switch(direction)
         {
+            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
             case Direction_look_at_top:
             case Direction_look_at_right:
             case Direction_look_at_bottom:
             case Direction_look_at_left:
-                direction=lookToMove(direction);
+            direction=lookToMove(direction);
+            case Direction_move_at_top:
+            case Direction_move_at_right:
+            case Direction_move_at_bottom:
+            case Direction_move_at_left:
                 if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
@@ -415,8 +427,7 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
         else
         {
             const std::vector<uint32_t> shops=mapServer->shops.at(pos);
-            const int indexOf=vectorindexOf(shops,shopId);
-            if(indexOf==-1)
+            if(!vectorcontainsAtLeastOne(shops,shopId))
             {
                 errorOutput("not shop into this direction");
                 return;
@@ -426,8 +437,7 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
     else
     {
         const std::vector<uint32_t> shops=mapServer->shops.at(pos);
-        const int indexOf=vectorindexOf(shops,shopId);
-        if(indexOf==-1)
+        if(!vectorcontainsAtLeastOne(shops,shopId))
         {
             errorOutput("not shop into this direction");
             return;
@@ -461,8 +471,7 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
 
     /*uint32_t realPrice=0;
     const std::vector<uint32_t> shops=mapServer->shops.at(pos);
-    const int indexOf=vectorindexOf(shops,shopId);
-    if(indexOf==-1)
+    if(!vectorcontainsAtLeastOne(shops,shopId))
         realPrice=shops.at(indexOf).at(objectId).price/2;
     else
         realPrice=CommonDatapack::commonDatapack.items.item.at(objectId).price/2;*/
