@@ -53,10 +53,16 @@ bool Client::learnSkill(const uint8_t &monsterPosition, const uint16_t &skill)
     {
         switch(direction)
         {
+            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
             case Direction_look_at_top:
             case Direction_look_at_right:
             case Direction_look_at_bottom:
             case Direction_look_at_left:
+            direction=lookToMove(direction);
+            case Direction_move_at_top:
+            case Direction_move_at_right:
+            case Direction_move_at_bottom:
+            case Direction_move_at_left:
                 if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
@@ -131,11 +137,16 @@ void Client::heal()
         Direction direction=getLastDirection();
         switch(direction)
         {
+            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
             case Direction_look_at_top:
             case Direction_look_at_right:
             case Direction_look_at_bottom:
             case Direction_look_at_left:
-                direction=lookToMove(direction);
+            direction=lookToMove(direction);
+            case Direction_move_at_top:
+            case Direction_move_at_right:
+            case Direction_move_at_bottom:
+            case Direction_move_at_left:
                 if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
@@ -239,11 +250,16 @@ void Client::requestFight(const uint16_t &fightId)
         Direction direction=getLastDirection();
         switch(direction)
         {
+            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
             case Direction_look_at_top:
             case Direction_look_at_right:
             case Direction_look_at_bottom:
             case Direction_look_at_left:
-                direction=lookToMove(direction);
+            direction=lookToMove(direction);
+            case Direction_move_at_top:
+            case Direction_move_at_right:
+            case Direction_move_at_bottom:
+            case Direction_move_at_left:
                 if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
                 {
                     if(!MoveOnTheMap::move(direction,&map,&x,&y,false))

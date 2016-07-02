@@ -75,18 +75,18 @@ uint64_t sFrom1970();
 template <class T, class U>
 int vectorindexOf(const std::vector<T> &list,const U &item)
 {
-    const auto &r=std::find(list.begin(),list.end(),item);
-    if(r==list.end())
+    const auto &r=std::find(list.cbegin(),list.cend(),item);
+    if(r==list.cend())
         return -1;
     else
-        return std::distance(list.begin(),r);
+        return std::distance(list.cbegin(),r);
 }
 
 template <class T, class U>
 bool vectorremoveOne(std::vector<T> &list,const U &item)
 {
-    const auto &r=std::find(list.begin(),list.end(),item);
-    if(r==list.end())
+    const auto &r=std::find(list.cbegin(),list.cend(),item);
+    if(r==list.cend())
     {
         return false;
     }
@@ -100,8 +100,8 @@ bool vectorremoveOne(std::vector<T> &list,const U &item)
 template <class T, class U>
 bool vectorcontainsAtLeastOne(const std::vector<T> &list,const U &item)
 {
-    const auto &r=std::find(list.begin(),list.end(),item);
-    if(r==list.end())
+    const auto &r=std::find(list.cbegin(),list.cend(),item);
+    if(r==list.cend())
         return false;
     else
         return true;
@@ -110,7 +110,7 @@ bool vectorcontainsAtLeastOne(const std::vector<T> &list,const U &item)
 template <class T, class U>
 unsigned int vectorcontainsCount(const std::vector<T> &list,const U &item)
 {
-    return std::count(list.begin(), list.end(), item);
+    return std::count(list.cbegin(), list.cend(), item);
 }
 
 template <class T, class U>
@@ -155,23 +155,23 @@ unsigned int vectorRemoveDuplicatesForSmallList(std::vector<T> &list)
     }
     return removedEntryNumber;*/
 
-    std::unordered_set<T> s(list.begin(),list.end());
+    std::unordered_set<T> s(list.cbegin(),list.cend());
     const unsigned int removedEntryNumber=list.size()-s.size();
-    list=std::vector<T>(s.begin(),s.end());
+    list=std::vector<T>(s.cbegin(),s.cend());
     return removedEntryNumber;
 }
 
 template <class T>
 unsigned int vectorRemoveDuplicatesForBigList(std::vector<T> &list)
 {
-    std::unordered_set<T> s(list.begin(),list.end());
+    std::unordered_set<T> s(list.cbegin(),list.cend());
     const unsigned int removedEntryNumber=list.size()-s.size();
-    list=std::vector<T>(s.begin(),s.end());
+    list=std::vector<T>(s.cbegin(),s.cend());
     return removedEntryNumber;
 }
 
 template <class T>
-bool vectorHaveDuplicatesForSmallList(std::vector<T> &list)
+bool vectorHaveDuplicatesForSmallList(const std::vector<T> &list)
 {
     std::unordered_set<T> s;
     unsigned int index=0;
