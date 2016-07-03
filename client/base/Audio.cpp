@@ -39,6 +39,7 @@ void Audio::setVolume(int volume)
     while(index<playerList.size())
     {
         libvlc_audio_set_volume(playerList.at(index),volume);
+        libvlc_audio_set_mute(playerList.at(index),0);
         index++;
     }
     this->volume=volume;
@@ -50,11 +51,13 @@ void Audio::addPlayer(libvlc_media_player_t * player)
         return;
     playerList << player;
     libvlc_audio_set_volume(player,volume);
+    libvlc_audio_set_mute(player,0);
 }
 
 void Audio::setPlayerVolume(libvlc_media_player_t * player)
 {
     libvlc_audio_set_volume(player,volume);
+    libvlc_audio_set_mute(player,0);
 }
 
 void Audio::removePlayer(libvlc_media_player_t * player)
