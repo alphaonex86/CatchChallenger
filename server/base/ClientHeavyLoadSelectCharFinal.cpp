@@ -342,7 +342,7 @@ void Client::characterIsRightFinalStep()
         while (i!=public_and_private_informations.itemOnMap.cend())
         {
             /** \warning can have entry in database but not into datapack, deleted. Used only to send to player the correct pos */
-            const uint16_t &pointOnMapOnlyIntoDatapackIndex=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(*i).datapack_index_item;
+            const uint16_t &pointOnMapOnlyIntoDatapackIndex=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.at(*i).datapack_index_item;
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(pointOnMapOnlyIntoDatapackIndex);
             posOutput+=2;
             ++i;
@@ -358,7 +358,7 @@ void Client::characterIsRightFinalStep()
     while(i!=public_and_private_informations.plantOnMap.cend())
     {
         /** \warning can have entry in database but not into datapack, deleted. Used only to send to player the correct pos */
-        const uint16_t &pointOnMapOnlyIntoDatapackIndex=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(i->first).datapack_index_plant;
+        const uint16_t &pointOnMapOnlyIntoDatapackIndex=DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.at(i->first).datapack_index_plant;
         const PlayerPlant &playerPlant=i->second;
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(pointOnMapOnlyIntoDatapackIndex);
         posOutput+=2;

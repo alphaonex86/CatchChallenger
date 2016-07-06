@@ -58,7 +58,14 @@ CREATE TABLE city (
 -- Name: dictionary_pointonmap; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
-CREATE TABLE dictionary_pointonmap (
+CREATE TABLE dictionary_pointonmap_plant (
+    id integer NOT NULL,
+    map integer,
+    x smallint,
+    y smallint
+);
+
+CREATE TABLE dictionary_pointonmap_item (
     id integer NOT NULL,
     map integer,
     x smallint,
