@@ -284,13 +284,13 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                         pos+=2;
                         continue;
                     }
-                    if(pointOnMapDatabaseId>=DictionaryServer::dictionary_pointOnMap_database_to_internal.size())
+                    if(pointOnMapDatabaseId>=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size())
                     {
                         normalOutput("item on map is not into the map list (1), skip: "+std::to_string(pointOnMapDatabaseId));
                         pos+=2;
                         continue;
                     }
-                    const DictionaryServer::MapAndPoint &resolvedEntry=DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMapDatabaseId);
+                    const DictionaryServer::MapAndPointItem &resolvedEntry=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.at(pointOnMapDatabaseId);
                     if(resolvedEntry.map==NULL)
                     {
                         normalOutput("item on map is not into the map list (2), skip: "+std::to_string(pointOnMapDatabaseId));
@@ -342,13 +342,13 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     lastPlantId=pointOnMap;
                     pos+=2;
 
-                    if(pointOnMap>=DictionaryServer::dictionary_pointOnMap_database_to_internal.size())
+                    if(pointOnMap>=DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size())
                     {
                         normalOutput("dirt on map is not into the map list (1), skip: "+std::to_string(pointOnMap));
                         pos+=1+8;
                         continue;
                     }
-                    if(DictionaryServer::dictionary_pointOnMap_database_to_internal.at(pointOnMap).map==NULL)
+                    if(DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.at(pointOnMap).map==NULL)
                     {
                         normalOutput("dirt on map is not into the map list (2), skip: "+std::to_string(pointOnMap));
                         pos+=1+8;
