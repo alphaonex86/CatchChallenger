@@ -30,53 +30,59 @@ void BaseServer::preload_map_semi_after_db_id()
                 uint16_t pointOnMapDbCode;
                 std::pair<uint8_t/*x*/,uint8_t/*y*/> pair(dirt.point.x,dirt.point.y);
                 bool found=false;
-                if(DictionaryServer::dictionary_pointOnMap_internal_to_database.find(sortFileName)!=DictionaryServer::dictionary_pointOnMap_internal_to_database.end())
+                if(DictionaryServer::dictionary_pointOnMap_plant_internal_to_database.find(sortFileName)!=DictionaryServer::dictionary_pointOnMap_plant_internal_to_database.end())
                 {
-                    const std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/> &subItem=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName);
+                    const std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/> &subItem=DictionaryServer::dictionary_pointOnMap_plant_internal_to_database.at(sortFileName);
                     if(subItem.find(pair)!=subItem.end())
                         found=true;
                 }
                 if(found)
-                    pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName).at(pair);
+                    pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_plant_internal_to_database.at(sortFileName).at(pair);
                 else
                 {
-                    dictionary_pointOnMap_maxId++;
+                    dictionary_pointOnMap_maxId_plant++;
                     std::string queryText;
                     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
                     {
                         default:
+                        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
                         case DatabaseBase::DatabaseType::Mysql:
-                            queryText="INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES("+
-                                    std::to_string(dictionary_pointOnMap_maxId)+","+
+                            queryText="INSERT INTO `dictionary_pointonmap_plant`(`id`,`map`,`x`,`y`) VALUES("+
+                                    std::to_string(dictionary_pointOnMap_maxId_plant)+","+
                                     std::to_string(mapServer->reverse_db_id)+","+
                                     std::to_string(dirt.point.x)+","+
                                     std::to_string(dirt.point.y)+");"
                                     ;
                         break;
+                        #endif
+                        #ifndef EPOLLCATCHCHALLENGERSERVER
                         case DatabaseBase::DatabaseType::SQLite:
-                            queryText="INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES("+
-                                    std::to_string(dictionary_pointOnMap_maxId)+","+
+                            queryText="INSERT INTO dictionary_pointonmap_plant(id,map,x,y) VALUES("+
+                                    std::to_string(dictionary_pointOnMap_maxId_plant)+","+
                                     std::to_string(mapServer->reverse_db_id)+","+
                                     std::to_string(dirt.point.x)+","+
                                     std::to_string(dirt.point.y)+");"
                                     ;
                         break;
+                        #endif
+                        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
                         case DatabaseBase::DatabaseType::PostgreSQL:
-                            queryText="INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES("+
-                                    std::to_string(dictionary_pointOnMap_maxId)+","+
+                            queryText="INSERT INTO dictionary_pointonmap_plant(id,map,x,y) VALUES("+
+                                    std::to_string(dictionary_pointOnMap_maxId_plant)+","+
                                     std::to_string(mapServer->reverse_db_id)+","+
                                     std::to_string(dirt.point.x)+","+
                                     std::to_string(dirt.point.y)+");"
                                     ;
                         break;
+                        #endif
                     }
                     if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText))
                     {
                         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
                     }
-                    DictionaryServer::dictionary_pointOnMap_internal_to_database[sortFileName][std::pair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=dictionary_pointOnMap_maxId;
-                    pointOnMapDbCode=dictionary_pointOnMap_maxId;
+                    DictionaryServer::dictionary_pointOnMap_plant_internal_to_database[sortFileName][std::pair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=dictionary_pointOnMap_maxId_plant;
+                    pointOnMapDbCode=dictionary_pointOnMap_maxId_plant;
                 }
 
                 MapServer::PlantOnMap plantOnMap;
@@ -90,17 +96,16 @@ void BaseServer::preload_map_semi_after_db_id()
                 mapServer->plants[pair]=plantOnMap;
 
                 {
-                    while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=pointOnMapDbCode)
+                    while((uint32_t)DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size()<=pointOnMapDbCode)
                     {
-                        DictionaryServer::MapAndPoint mapAndPoint;
+                        DictionaryServer::MapAndPointPlant mapAndPoint;
                         mapAndPoint.map=NULL;
                         mapAndPoint.x=0;
                         mapAndPoint.y=0;
-                        mapAndPoint.datapack_index_item=0;
                         mapAndPoint.datapack_index_plant=0;
-                        DictionaryServer::dictionary_pointOnMap_database_to_internal.push_back(mapAndPoint);
+                        DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.push_back(mapAndPoint);
                     }
-                    DictionaryServer::MapAndPoint &mapAndPoint=DictionaryServer::dictionary_pointOnMap_database_to_internal[pointOnMapDbCode];
+                    DictionaryServer::MapAndPointPlant &mapAndPoint=DictionaryServer::dictionary_pointOnMap_plant_database_to_internal[pointOnMapDbCode];
                     mapAndPoint.map=mapServer;
                     mapAndPoint.x=dirt.point.x;
                     mapAndPoint.y=dirt.point.y;
@@ -121,53 +126,59 @@ void BaseServer::preload_map_semi_after_db_id()
                 const std::pair<uint8_t/*x*/,uint8_t/*y*/> pair(item.point.x,item.point.y);
                 uint16_t pointOnMapDbCode;
                 bool found=false;
-                if(DictionaryServer::dictionary_pointOnMap_internal_to_database.find(sortFileName)!=DictionaryServer::dictionary_pointOnMap_internal_to_database.end())
+                if(DictionaryServer::dictionary_pointOnMap_item_internal_to_database.find(sortFileName)!=DictionaryServer::dictionary_pointOnMap_item_internal_to_database.end())
                 {
-                    const std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/> &subItem=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName);
+                    const std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/> &subItem=DictionaryServer::dictionary_pointOnMap_item_internal_to_database.at(sortFileName);
                     if(subItem.find(pair)!=subItem.end())
                         found=true;
                 }
                 if(found)
-                    pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_internal_to_database.at(sortFileName).at(pair);
+                    pointOnMapDbCode=DictionaryServer::dictionary_pointOnMap_item_internal_to_database.at(sortFileName).at(pair);
                 else
                 {
-                    dictionary_pointOnMap_maxId++;
+                    dictionary_pointOnMap_maxId_item++;
                     std::string queryText;
                     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
                     {
                         default:
+                        #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
                         case DatabaseBase::DatabaseType::Mysql:
-                            queryText="INSERT INTO `dictionary_pointonmap`(`id`,`map`,`x`,`y`) VALUES("+
-                                    std::to_string(dictionary_pointOnMap_maxId)+","+
+                            queryText="INSERT INTO `dictionary_pointonmap_item`(`id`,`map`,`x`,`y`) VALUES("+
+                                    std::to_string(dictionary_pointOnMap_maxId_item)+","+
                                     std::to_string(mapServer->reverse_db_id)+","+
                                     std::to_string(item.point.x)+","+
                                     std::to_string(item.point.y)+");"
                                     ;
                         break;
+                        #endif
+                        #ifndef EPOLLCATCHCHALLENGERSERVER
                         case DatabaseBase::DatabaseType::SQLite:
-                            queryText="INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES("+
-                                    std::to_string(dictionary_pointOnMap_maxId)+","+
+                            queryText="INSERT INTO dictionary_pointonmap_item(id,map,x,y) VALUES("+
+                                    std::to_string(dictionary_pointOnMap_maxId_item)+","+
                                     std::to_string(mapServer->reverse_db_id)+","+
                                     std::to_string(item.point.x)+","+
                                     std::to_string(item.point.y)+");"
                                     ;
                         break;
+                        #endif
+                        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
                         case DatabaseBase::DatabaseType::PostgreSQL:
-                            queryText="INSERT INTO dictionary_pointonmap(id,map,x,y) VALUES("+
-                                    std::to_string(dictionary_pointOnMap_maxId)+","+
+                            queryText="INSERT INTO dictionary_pointonmap_item(id,map,x,y) VALUES("+
+                                    std::to_string(dictionary_pointOnMap_maxId_item)+","+
                                     std::to_string(mapServer->reverse_db_id)+","+
                                     std::to_string(item.point.x)+","+
                                     std::to_string(item.point.y)+");"
                                     ;
                         break;
+                        #endif
                     }
                     if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText))
                     {
                         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
                     }
-                    DictionaryServer::dictionary_pointOnMap_internal_to_database[sortFileName][std::pair<uint8_t,uint8_t>(item.point.x,item.point.y)]=dictionary_pointOnMap_maxId;
-                    pointOnMapDbCode=dictionary_pointOnMap_maxId;
+                    DictionaryServer::dictionary_pointOnMap_item_internal_to_database[sortFileName][std::pair<uint8_t,uint8_t>(item.point.x,item.point.y)]=dictionary_pointOnMap_maxId_item;
+                    pointOnMapDbCode=dictionary_pointOnMap_maxId_item;
                 }
 
                 MapServer::ItemOnMap itemOnMap;
@@ -177,17 +188,16 @@ void BaseServer::preload_map_semi_after_db_id()
                 mapServer->pointOnMap_Item[pair]=itemOnMap;
 
                 {
-                    while((uint32_t)DictionaryServer::dictionary_pointOnMap_database_to_internal.size()<=pointOnMapDbCode)
+                    while((uint32_t)DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size()<=pointOnMapDbCode)
                     {
-                        DictionaryServer::MapAndPoint mapAndPoint;
+                        DictionaryServer::MapAndPointItem mapAndPoint;
                         mapAndPoint.map=NULL;
                         mapAndPoint.x=0;
                         mapAndPoint.y=0;
                         mapAndPoint.datapack_index_item=0;
-                        mapAndPoint.datapack_index_plant=0;
-                        DictionaryServer::dictionary_pointOnMap_database_to_internal.push_back(mapAndPoint);
+                        DictionaryServer::dictionary_pointOnMap_item_database_to_internal.push_back(mapAndPoint);
                     }
-                    DictionaryServer::MapAndPoint &mapAndPoint=DictionaryServer::dictionary_pointOnMap_database_to_internal[pointOnMapDbCode];
+                    DictionaryServer::MapAndPointItem &mapAndPoint=DictionaryServer::dictionary_pointOnMap_item_database_to_internal[pointOnMapDbCode];
                     mapAndPoint.map=mapServer;
                     mapAndPoint.x=item.point.x;
                     mapAndPoint.y=item.point.y;

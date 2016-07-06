@@ -65,7 +65,15 @@ CREATE TABLE IF NOT EXISTS `dictionary_map` (
 -- Table structure for table `dictionary_pointonmap`
 --
 
-CREATE TABLE IF NOT EXISTS `dictionary_pointonmap` (
+CREATE TABLE IF NOT EXISTS `dictionary_pointonmap_item` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `map` int(11) NOT NULL,
+  `x` smallint(6) NOT NULL,
+  `y` smallint(6) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `dictionary_pointonmap_plant` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `map` int(11) NOT NULL,
   `x` smallint(6) NOT NULL,

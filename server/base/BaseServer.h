@@ -144,9 +144,12 @@ protected:
     void preload_market_monsters_return();
     static void preload_market_monsters_prices_static(void *object);
     void preload_market_monsters_prices_return();
-    void preload_pointOnMap_return();
-    static void preload_pointOnMap_static(void *object);
-    void preload_pointOnMap_sql();
+    void preload_pointOnMap_item_return();
+    static void preload_pointOnMap_item_static(void *object);
+    void preload_pointOnMap_item_sql();
+    void preload_pointOnMap_plant_return();
+    static void preload_pointOnMap_plant_static(void *object);
+    void preload_pointOnMap_plant_sql();
     void preload_dictionary_map();
     static void preload_dictionary_map_static(void *object);
     void preload_dictionary_map_return();
@@ -196,7 +199,7 @@ protected:
     std::unordered_map<std::string/*file name*/,std::unordered_map<uint8_t/*bot id*/,CatchChallenger::Bot> > botFiles;
     std::unordered_set<uint32_t> botIdLoaded;
     uint64_t timeDatapack;
-    unsigned int dictionary_pointOnMap_maxId;
+    unsigned int dictionary_pointOnMap_maxId_item,dictionary_pointOnMap_maxId_plant;
     BaseServerMasterSendDatapack baseServerMasterSendDatapack;
     std::vector<Monster_Semi_Market> monsterSemiMarketList;
 

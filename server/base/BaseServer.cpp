@@ -21,7 +21,8 @@ BaseServer::BaseServer() :
 {
     ProtocolParsing::initialiseTheVariable();
 
-    dictionary_pointOnMap_maxId=0;
+    dictionary_pointOnMap_maxId_item=0;
+    dictionary_pointOnMap_maxId_plant=0;
     ProtocolParsing::compressionTypeServer                                = ProtocolParsing::CompressionType::Zlib;
 
     GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue=0;
