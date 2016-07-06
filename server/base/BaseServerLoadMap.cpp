@@ -533,7 +533,8 @@ bool BaseServer::preload_the_map()
 
     std::cout << GlobalServerData::serverPrivateVariables.map_list.size() << " map(s) loaded" << std::endl;
 
-    DictionaryServer::dictionary_pointOnMap_internal_to_database.clear();
+    DictionaryServer::dictionary_pointOnMap_item_internal_to_database.clear();
+    DictionaryServer::dictionary_pointOnMap_plant_internal_to_database.clear();
     #ifdef EPOLLCATCHCHALLENGERSERVER
     {
         unsigned int index=0;
