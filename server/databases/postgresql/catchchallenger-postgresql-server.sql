@@ -145,8 +145,11 @@ ALTER TABLE ONLY character_forserver
 -- Name: dictionary_itemOnMap_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
-ALTER TABLE ONLY dictionary_pointonmap
-    ADD CONSTRAINT "dictionary_pointOnMap_pkey" PRIMARY KEY (id);
+ALTER TABLE ONLY dictionary_pointonmap_item
+    ADD CONSTRAINT "dictionary_pointOnMap_item_pkey" PRIMARY KEY (id);
+
+ALTER TABLE ONLY dictionary_pointonmap_plant
+    ADD CONSTRAINT "dictionary_pointOnMap_plant_pkey" PRIMARY KEY (id);
 
 
 --
