@@ -459,7 +459,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             pos+=1;
             playerReputation.level=data_raw[pos];
             pos+=1;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(playerReputation.level<-100 || playerReputation.level>100)
             {
                 normalOutput("reputation level is <100 or >100, skip: "+std::to_string(typeReputation));
@@ -526,7 +525,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                     continue;
                 }
             }
-            #endif
             public_and_private_informations.reputation[reputationInternalId]=playerReputation;
         }
     }
