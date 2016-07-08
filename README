@@ -89,3 +89,9 @@ Under linux I have for the single player game:
 ======================================================
 Server:
 For the server you need an certificate for the SSL connection (can be self signed), near the binary and named server.crt/server.key.
+
+======================================================
+Sources:
+The sources of the client/server: https://github.com/alphaonex86/CatchChallenger
+The sources of the datapack: https://github.com/alphaonex86/CatchChallenger-datapack
+The sources of the site: https://github.com/alphaonex86/CatchChallenger-site
