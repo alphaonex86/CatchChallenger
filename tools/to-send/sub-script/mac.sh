@@ -39,7 +39,7 @@ function compil {
         BASEAPPNAME="catchchallenger-${TARGET}.app"
         ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSIONMAJ}/clang_64/bin/qmake *.pro -spec macx-clang -config release"
         echo "try make"
-        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3 > /dev/null"
+        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3"
         RETURN_CODE=$?
         if [ $? -ne 0 ]
         then
@@ -108,7 +108,7 @@ function compilserver {
         BASEAPPNAME="catchchallenger-${TARGET}.app"
         ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Users/user/Qt${QTVERSION}/${QTVERSIONMAJ}/clang_64/bin/qmake catchchallenger-${TARGET}.pro -spec macx-clang -config release"
         echo "try make"
-        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3 > /dev/null"
+        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3"
         RETURN_CODE=$?
         if [ $? -ne 0 ]
         then
