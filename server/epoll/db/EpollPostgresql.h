@@ -6,6 +6,7 @@
 #include <queue>
 #include <vector>
 #include <string>
+#include <chrono>
 
 #include "../../base/DatabaseBase.h"
 
@@ -47,6 +48,7 @@ private:
     static CallBack emptyCallback;
     static CallBack tempCallback;
     char strCoPG[255];
+    std::chrono::time_point<std::chrono::high_resolution_clock> start;
 };
 
 #endif

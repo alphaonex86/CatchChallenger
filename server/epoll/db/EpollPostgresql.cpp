@@ -225,6 +225,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::
         queriesList.push_back(query);
         return &queue.back();
     }
+    start = std::chrono::high_resolution_clock::now();
     queriesList.push_back(query);
     const int &stringlen=query.size();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -260,6 +261,7 @@ bool EpollPostgresql::asyncWrite(const std::string &query)
         queriesList.push_back(query);
         return true;
     }
+    start = std::chrono::high_resolution_clock::now();
     queriesList.push_back(query);
     const int &stringlen=query.size();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -366,6 +368,12 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                 std::cerr << "query async send failed: " << errorMessage() << ", PQgetResult(conn) have returned NULL" << std::endl;
             else
             {
+                auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double, std::milli> elapsed = end-start;
+                const uint32_t &ms=elapsed.count();
+                if(ms>5000)
+                    std::cerr << "query too slow, take " << ms << "ms" << std::endl;
+                start = std::chrono::high_resolution_clock::now();
                 while(result!=NULL)
                 {
                     const ExecStatusType &execStatusType=PQresultStatus(result);
