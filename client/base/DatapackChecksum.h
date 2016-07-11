@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_DATAPACKCHECKSUM_H
 #define CATCHCHALLENGER_DATAPACKCHECKSUM_H
 
-#ifndef QT_NO_EMIT
+#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
 #include <QThread>
 #endif
 
@@ -10,15 +10,15 @@
 
 namespace CatchChallenger {
 class DatapackChecksum
-        #ifndef QT_NO_EMIT
+        #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
         : public QObject
         #endif
 {
-    #ifndef QT_NO_EMIT
+    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
     Q_OBJECT
     #endif
 public:
-    #ifndef QT_NO_EMIT
+    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
     static QThread thread;
     #endif
     explicit DatapackChecksum();
@@ -35,7 +35,7 @@ public:
     static FullDatapackChecksumReturn doFullSyncChecksumBase(const std::string &datapackPath);
     static FullDatapackChecksumReturn doFullSyncChecksumMain(const std::string &datapackPath);
     static FullDatapackChecksumReturn doFullSyncChecksumSub(const std::string &datapackPath);
-    #ifndef QT_NO_EMIT
+    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
 public slots:
     void doDifferedChecksumBase(const std::string &datapackPath);
     void doDifferedChecksumMain(const std::string &datapackPath);
