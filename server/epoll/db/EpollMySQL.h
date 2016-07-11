@@ -6,6 +6,7 @@
 #include <queue>
 #include <vector>
 #include <string>
+#include <chrono>
 
 #include "../../base/DatabaseBase.h"
 #include "../BaseClassSwitch.h"
@@ -42,6 +43,7 @@ private:
     static char emptyString[1];
     static CallBack emptyCallback;
     static CallBack tempCallback;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start;
 
     char strCohost[255];
     char strCouser[255];

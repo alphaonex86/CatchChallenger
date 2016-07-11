@@ -197,6 +197,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const std::strin
         queriesList.push_back(query);
         return &queue.back();
     }
+    start = std::chrono::high_resolution_clock::now();
     queriesList.push_back(query);
     const int &stringlen=query.size();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -232,6 +233,7 @@ bool EpollMySQL::asyncWrite(const std::string &query)
         queriesList.push_back(query);
         return true;
     }
+    start = std::chrono::high_resolution_clock::now();
     queriesList.push_back(query);
     const int &stringlen=query.size();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -287,6 +289,12 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
             tuleIndex=-1;
             ntuples=0;
             nfields=0;
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> elapsed = end-start;
+            const uint32_t &ms=elapsed.count();
+            if(ms>5000)
+                std::cerr << "query too slow, take " << ms << "ms" << std::endl;
+            start = std::chrono::high_resolution_clock::now();
             result=mysql_store_result(conn);
             if(result!=NULL)//SELECT
             {
