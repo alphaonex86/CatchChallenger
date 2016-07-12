@@ -14,6 +14,7 @@ namespace CatchChallenger {
 struct MemoryStruct {
   char *memory;
   size_t size;
+  std::string fileName;
 };
 
 class EpollServerLoginSlave : public EpollGenericServer
