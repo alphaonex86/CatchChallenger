@@ -5,6 +5,8 @@ using namespace CatchChallenger;
 #include <iostream>
 #include <cmath>
 #include <regex>
+#include <thread>
+#include <chrono>
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
@@ -15,6 +17,7 @@ using namespace CatchChallenger;
 #include "LinkToGameServer.h"
 #include "EpollServerLoginSlave.h"
 #include "FacilityLibGateway.h"
+#include "DatapackDownloaderBase.h"
 
 void DatapackDownloaderMainSub::writeNewFileMain(const std::string &fileName,const std::vector<char> &data)
 {
@@ -49,7 +52,7 @@ void DatapackDownloaderMainSub::writeNewFileMain(const std::string &fileName,con
     }
 }
 
-bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const std::string &fileName)
+bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const std::string &fileName, const bool accumulate)
 {
     if(httpError)
         return false;
@@ -69,23 +72,56 @@ bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const st
     FILE *fp = fopen(fullPath.c_str(),"wb");
     if(fp!=NULL)
     {
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &fwrite);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-        const CURLcode res = curl_easy_perform(curl);
-        long http_code = 0;
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-        /// \todo control the downloaded max size
-        fclose(fp);
-        if(res!=CURLE_OK || http_code!=200)
+        CURL *curl=curl_easy_init();
+        if(!curl)
         {
-            httpError=true;
-            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
-            datapackDownloadError();
-            return false;
+            std::cerr << "curl_easy_init() failed abort" << std::endl;
+            abort();
+        }
+        if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
+            std::cerr << "Unable to set the curl keep alive" << std::endl;
+        if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 120L)!=CURLE_OK)
+            std::cerr << "Unable to set the curl keep alive" << std::endl;
+        if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L)!=CURLE_OK)
+            std::cerr << "Unable to set the curl keep alive" << std::endl;
+        std::cout << "Download: " << url << std::endl;
+        if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
+        {
+            std::cerr << "Unable to set the curl url: " << url << std::endl;
+            abort();
+        }
+        if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &fwrite)!=CURLE_OK)
+        {
+            std::cerr << "Unable to set curl CURLOPT_WRITEFUNCTION" << std::endl;
+            abort();
+        }
+        if(curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp)!=CURLE_OK)
+        {
+            std::cerr << "Unable to set curl CURLOPT_WRITEDATA" << std::endl;
+            abort();
+        }
+        if(accumulate)
+        {
+            curl_multi_add_handle(DatapackDownloaderBase::curlm, curl);
+            return true;
         }
         else
-            return true;
+        {
+            const CURLcode res = curl_easy_perform(curl);
+            long http_code = 0;
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+            /// \todo control the downloaded max size
+            fclose(fp);
+            if(res!=CURLE_OK || http_code!=200)
+            {
+                httpError=true;
+                std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", error string: " << curl_easy_strerror(res) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
+                datapackDownloadError();
+                return false;
+            }
+            else
+                return true;
+        }
     }
     else
     {
@@ -191,12 +227,6 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
     }
     else
     {
-        curl=curl_easy_init();
-        if(!curl)
-        {
-            std::cerr << "curl_easy_init() failed abort" << std::endl;
-            abort();
-        }
         if(datapackFilesListMain.empty())
         {
             index_mirror_main=0;
@@ -212,15 +242,40 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
             struct MemoryStruct chunk;
             chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
             chunk.size = 0;    /* no data at this point */
-            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+            CURL *curl=curl_easy_init();
+            if(!curl)
+            {
+                std::cerr << "curl_easy_init() failed abort" << std::endl;
+                abort();
+            }
+            if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
+                std::cerr << "Unable to set the curl keep alive" << std::endl;
+            if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 120L)!=CURLE_OK)
+                std::cerr << "Unable to set the curl keep alive" << std::endl;
+            if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L)!=CURLE_OK)
+                std::cerr << "Unable to set the curl keep alive" << std::endl;
+            std::cout << "Download: " << url << std::endl;
+            if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
+            {
+                std::cerr << "Unable to set the curl url: " << url << std::endl;
+                abort();
+            }
+            if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
+            {
+                std::cerr << "Unable to set curl CURLOPT_WRITEFUNCTION" << std::endl;
+                abort();
+            }
+            if(curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk)!=CURLE_OK)
+            {
+                std::cerr << "Unable to set curl CURLOPT_WRITEDATA" << std::endl;
+                abort();
+            }
             const CURLcode res = curl_easy_perform(curl);
             long http_code = 0;
             curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
             if(res!=CURLE_OK || http_code!=200)
             {
-                std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
+                std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", error string: " << curl_easy_strerror(res) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
                 httpFinishedForDatapackListMain();
                 return;
             }
@@ -241,15 +296,40 @@ void DatapackDownloaderMainSub::test_mirror_main()
         struct MemoryStruct chunk;
         chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
         chunk.size = 0;    /* no data at this point */
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+        CURL *curl=curl_easy_init();
+        if(!curl)
+        {
+            std::cerr << "curl_easy_init() failed abort" << std::endl;
+            abort();
+        }
+        if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
+            std::cerr << "Unable to set the curl keep alive" << std::endl;
+        if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 120L)!=CURLE_OK)
+            std::cerr << "Unable to set the curl keep alive" << std::endl;
+        if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L)!=CURLE_OK)
+            std::cerr << "Unable to set the curl keep alive" << std::endl;
+        std::cout << "Download: " << url << std::endl;
+        if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
+        {
+            std::cerr << "Unable to set the curl url: " << url << std::endl;
+            abort();
+        }
+        if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
+        {
+            std::cerr << "Unable to set curl CURLOPT_WRITEFUNCTION" << std::endl;
+            abort();
+        }
+        if(curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk)!=CURLE_OK)
+        {
+            std::cerr << "Unable to set curl CURLOPT_WRITEDATA" << std::endl;
+            abort();
+        }
         const CURLcode res = curl_easy_perform(curl);
         long http_code = 0;
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
         if(res!=CURLE_OK || http_code!=200)
         {
-            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
+            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", error string: " << curl_easy_strerror(res) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
             httpFinishedForDatapackListMain();
             return;
         }
@@ -269,15 +349,40 @@ void DatapackDownloaderMainSub::test_mirror_main()
         struct MemoryStruct chunk;
         chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
         chunk.size = 0;    /* no data at this point */
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+        CURL *curl=curl_easy_init();
+        if(!curl)
+        {
+            std::cerr << "curl_easy_init() failed abort" << std::endl;
+            abort();
+        }
+        if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
+            std::cerr << "Unable to set the curl keep alive" << std::endl;
+        if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 120L)!=CURLE_OK)
+            std::cerr << "Unable to set the curl keep alive" << std::endl;
+        if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L)!=CURLE_OK)
+            std::cerr << "Unable to set the curl keep alive" << std::endl;
+        std::cout << "Download: " << url << std::endl;
+        if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
+        {
+            std::cerr << "Unable to set the curl url: " << url << std::endl;
+            abort();
+        }
+        if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
+        {
+            std::cerr << "Unable to set curl CURLOPT_WRITEFUNCTION" << std::endl;
+            abort();
+        }
+        if(curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk)!=CURLE_OK)
+        {
+            std::cerr << "Unable to set curl CURLOPT_WRITEDATA" << std::endl;
+            abort();
+        }
         const CURLcode res = curl_easy_perform(curl);
         long http_code = 0;
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
         if(res!=CURLE_OK || http_code!=200)
         {
-            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
+            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", error string: " << curl_easy_strerror(res) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
             httpFinishedForDatapackListMain();
             return;
         }
@@ -395,7 +500,10 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
             }
             if(endOfText==std::string::npos)
             {
-                std::cerr << "not text delimitor into file list" << std::endl;
+                if(data.size()<50)
+                    std::cerr << "not text delimitor into file list: " << std::string(data.data(),data.size()) << std::endl;
+                else
+                    std::cerr << "not text delimitor into file list" << std::endl;
                 return;
             }
             std::vector<std::string> content;
@@ -437,7 +545,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                             const uint32_t &hashFileOnDisk=partialHashListMain.at(indexInDatapackList);
                             if(!FacilityLibGeneral::isFile(mDatapackMain+fileString))
                             {
-                                if(!getHttpFileMain(selectedMirror+fileString,fileString))
+                                if(!getHttpFileMain(selectedMirror+fileString,fileString,true))
                                 {
                                     datapackDownloadError();
                                     return;
@@ -445,7 +553,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                             }
                             else if(hashFileOnDisk!=partialHashString)
                             {
-                                if(!getHttpFileMain(selectedMirror+fileString,fileString))
+                                if(!getHttpFileMain(selectedMirror+fileString,fileString,true))
                                 {
                                     datapackDownloadError();
                                     return;
@@ -456,7 +564,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                         }
                         else
                         {
-                            if(!getHttpFileMain(selectedMirror+fileString,fileString))
+                            if(!getHttpFileMain(selectedMirror+fileString,fileString,true))
                             {
                                 datapackDownloadError();
                                 return;
@@ -466,6 +574,56 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                 }
                 index++;
             }
+
+            int handle_count=0;
+            CURLMsg *msg;
+            do
+            {
+                /*CURLMcode res = */curl_multi_perform(DatapackDownloaderBase::curlm, &handle_count);
+                int msgs_in_queue=0;
+                while((msg = curl_multi_info_read(DatapackDownloaderBase::curlm, &msgs_in_queue)))
+                {
+                    if(msg->msg == CURLMSG_DONE)
+                    {
+                        char *url=NULL;
+                        CURL *curl = msg->easy_handle;
+                        const CURLcode res = msg->data.result;
+                        long http_code = 0;
+                        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+                        curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url);
+                        if(res!=CURLE_OK || http_code!=200)
+                        {
+                            httpError=true;
+                            std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", error string: " << curl_easy_strerror(res) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
+                            datapackDownloadError();
+                            curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
+                            while((msg = curl_multi_info_read(DatapackDownloaderBase::curlm, &msgs_in_queue)))
+                                curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
+                            curl_easy_cleanup(curl);
+                            return;
+                        }
+                        std::cout << "Downloaded: " << url << std::endl;
+                        curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
+                        curl_easy_cleanup(curl);
+                    }
+                    else
+                        std::cerr << "CURLMsg " << msg->msg << std::endl;
+                }
+                if(handle_count == 0)
+                    break;
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+            while(handle_count>0);
+            {
+                unsigned int index=0;
+                while(index<DatapackDownloaderBase::fileToClose.size())
+                {
+                    fclose(DatapackDownloaderBase::fileToClose.at(index));
+                    index++;
+                }
+            }
+            curl_multi_cleanup(DatapackDownloaderBase::curlm);
+
             index=0;
             while(index<datapackFilesListMain.size())
             {
