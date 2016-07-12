@@ -133,7 +133,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     settings.beginGroup("Linux");
     if(!settings.contains("tcpCork"))
-        settings.setValue("tcpCork",true);
+        settings.setValue("tcpCork",false);
     if(!settings.contains("tcpNodelay"))
         settings.setValue("tcpNodelay",false);
     tcpCork=stringtobool(settings.value("tcpCork"));

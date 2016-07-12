@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
     /* Buffer where events are returned */
     epoll_event events[MAXEVENTS];
 
-    bool tcpCork=true,tcpNodelay=false;
+    bool tcpCork=false,tcpNodelay=false;
 
     char encodingBuff[1];
     #ifdef SERVERSSL
