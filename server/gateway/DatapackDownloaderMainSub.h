@@ -84,10 +84,9 @@ private:
     bool httpModeSub;
     const std::string mainDatapackCode;
     const std::string subDatapackCode;
-    CURL *curl;
 private:
-    bool getHttpFileMain(const std::string &url, const std::string &fileName);
-    bool getHttpFileSub(const std::string &url, const std::string &fileName);
+    bool getHttpFileMain(const std::string &url, const std::string &fileName, const bool accumulate=false);
+    bool getHttpFileSub(const std::string &url, const std::string &fileName, const bool accumulate=false);
 private:
     void writeNewFileMain(const std::string &fileName, const std::vector<char> &data);
     void writeNewFileSub(const std::string &fileName, const std::vector<char> &data);
