@@ -67,7 +67,7 @@ private:
         std::string fileName;
     };
 private:
-    bool getHttpFileBase(const std::string &url, const std::string &fileName, const bool accumulate=false);
+    bool getHttpFileBase(const std::string &url, const std::string &fileName);
 private:
     void datapackDownloadFinishedBase();
     void datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash, const std::vector<uint32_t> &partialHash);

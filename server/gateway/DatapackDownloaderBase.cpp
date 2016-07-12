@@ -185,7 +185,7 @@ void DatapackDownloaderBase::writeNewFileBase(const std::string &fileName,const 
     }
 }
 
-bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::string &fileName, const bool accumulate)
+bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::string &fileName)
 {
     if(httpError)
         return false;
@@ -194,73 +194,44 @@ bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::
 
     std::string fullPath=mDatapackBase+'/'+fileName;
     stringreplaceAll(fullPath,"//","/");
-    {
-        if(!FacilityLibGateway::mkpath(FacilityLibGeneral::getFolderFromFile(fullPath)))
-        {
-            std::cerr << "unable to make the path: " << fullPath << std::endl;
-            abort();
-        }
-    }
 
-    FILE *fp = fopen(fullPath.c_str(),"wb");
-    if(fp!=NULL)
+    MemoryStruct *chunk=new MemoryStruct;
+
+    CURL *curl=curl_easy_init();
+    if(!curl)
     {
-        CURL *curl=curl_easy_init();
-        if(!curl)
-        {
-            std::cerr << "curl_easy_init() failed abort" << std::endl;
-            abort();
-        }
-        if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
-            std::cerr << "Unable to set the curl keep alive" << std::endl;
-        if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 120L)!=CURLE_OK)
-            std::cerr << "Unable to set the curl keep alive" << std::endl;
-        if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L)!=CURLE_OK)
-            std::cerr << "Unable to set the curl keep alive" << std::endl;
-        std::cout << "Download: " << url << std::endl;
-        if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
-        {
-            std::cerr << "Unable to set the curl url: " << url << std::endl;
-            abort();
-        }
-        if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &fwrite)!=CURLE_OK)
-        {
-            std::cerr << "Unable to set curl CURLOPT_WRITEFUNCTION" << std::endl;
-            abort();
-        }
-        if(curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp)!=CURLE_OK)
-        {
-            std::cerr << "Unable to set curl CURLOPT_WRITEDATA" << std::endl;
-            abort();
-        }
-        if(accumulate)
-        {
-            curl_multi_add_handle(DatapackDownloaderBase::curlm, curl);
-            return true;
-        }
-        else
-        {
-            const CURLcode res = curl_easy_perform(curl);
-            long http_code = 0;
-            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-            /// \todo control the downloaded max size
-            fclose(fp);
-            if(res!=CURLE_OK || http_code!=200)
-            {
-                httpError=true;
-                std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", error string: " << curl_easy_strerror(res) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
-                datapackDownloadError();
-                return false;
-            }
-            else
-                return true;
-        }
+        std::cerr << "curl_easy_init() failed abort" << std::endl;
+        abort();
     }
-    else
+    if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
+        std::cerr << "Unable to set the curl keep alive" << std::endl;
+    if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 120L)!=CURLE_OK)
+        std::cerr << "Unable to set the curl keep alive" << std::endl;
+    if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L)!=CURLE_OK)
+        std::cerr << "Unable to set the curl keep alive" << std::endl;
+    std::cout << "Download: " << url << std::endl;
+    if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
     {
-        std::cerr << "unable to open file to write:" << fileName << std::endl;
-        return false;
+        std::cerr << "Unable to set the curl url: " << url << std::endl;
+        abort();
     }
+    if(curl_easy_setopt(curl, CURLOPT_PRIVATE, chunk)!=CURLE_OK)
+    {
+        std::cerr << "Unable to set curl CURLOPT_PRIVATE" << std::endl;
+        abort();
+    }
+    if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
+    {
+        std::cerr << "Unable to set curl CURLOPT_WRITEFUNCTION" << std::endl;
+        abort();
+    }
+    if(curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)chunk)!=CURLE_OK)
+    {
+        std::cerr << "Unable to set curl CURLOPT_WRITEDATA" << std::endl;
+        abort();
+    }
+    curl_multi_add_handle(DatapackDownloaderBase::curlm, curl);
+    return true;
 }
 
 void DatapackDownloaderBase::datapackDownloadFinishedBase()
@@ -736,11 +707,45 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                             datapackDownloadError();
                             curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
                             while((msg = curl_multi_info_read(DatapackDownloaderBase::curlm, &msgs_in_queue)))
+                            {
+                                MemoryStruct *chunk;
+                                curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE,chunk);
+                                delete chunk->memory;
+                                delete chunk;
                                 curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
+                            }
                             curl_easy_cleanup(curl);
                             return;
                         }
                         std::cout << "Downloaded: " << url << std::endl;
+
+                        {
+                            if(!FacilityLibGateway::mkpath(FacilityLibGeneral::getFolderFromFile(fullPath)))
+                            {
+                                std::cerr << "unable to make the path: " << fullPath << std::endl;
+                                abort();
+                            }
+                        }
+
+                        MemoryStruct *chunk;
+                        curl_easy_getinfo(curl, CURLINFO_PRIVATE,chunk);
+
+                        FILE *fp = fopen(chunk->fileName.c_str(),"wb");
+                        if(fp!=NULL)
+                        {
+                            fwrite(chunk->memory,1,chunk->size,fp);
+                            fclose(fp);
+                        }
+                        else
+                        {
+                            httpError=true;
+                            datapackDownloadError();
+                            std::cerr << "unable to open file to write:" << fileName << std::endl;
+                            return false;
+                        }
+
+                        delete chunk->memory;
+                        delete chunk;
                         curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
                         curl_easy_cleanup(curl);
                     }
