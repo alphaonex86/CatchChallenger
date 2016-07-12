@@ -195,8 +195,8 @@ void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseTy
 
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
-        PreparedDBQueryLogin::db_query_login="SELECT id,encode(password,'hex') FROM account WHERE login='\\x%1'";
-        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,'\\x%2','\\x%3',%4)";
+        PreparedDBQueryLogin::db_query_login="SELECT id,encode(password,'hex') FROM account WHERE login=decode('%1','hex')";
+        PreparedDBQueryLogin::db_query_insert_login="INSERT INTO account(id,login,password,date) VALUES(%1,decode('%2','hex'),decode('%3','hex'),%4)";
         break;
         #endif
     }
@@ -380,21 +380,21 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         //login and gameserver alone
         PreparedDBQueryCommon::db_query_delete_monster_by_id="DELETE FROM monster WHERE id=%1";
         PreparedDBQueryCommon::db_query_insert_monster="INSERT INTO monster(id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,buffs,skills,skills_endurance) "
-                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,'','\\x%11','\\x%12')";
+                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,'',decode('%11','hex'),decode('%12','hex'))";
         /*wild catch*/
         PreparedDBQueryCommon::db_query_insert_monster_full="INSERT INTO monster(id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,buffs,skills,skills_endurance) "
-                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,'\\x%11','\\x%12','\\x%13')";
+                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,decode('%11','hex'),decode('%12','hex'),decode('%13','hex'))";
 
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
-        PreparedDBQueryCommon::db_query_update_character_item="UPDATE character SET item='\\x%1' WHERE id=%2";
-        PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia="UPDATE character SET item='\\x%1',encyclopedia_item='\\x%2' WHERE id=%3";
-        PreparedDBQueryCommon::db_query_update_character_item_warehouse="UPDATE character SET item_warehouse='\\x%1' WHERE id=%2";
-        PreparedDBQueryCommon::db_query_update_character_monster_encyclopedia="UPDATE character SET encyclopedia_monster='\\x%1' WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_character_item="UPDATE character SET item=decode('%1','hex') WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia="UPDATE character SET item=decode('%1','hex'),encyclopedia_item=decode('%2','hex') WHERE id=%3";
+        PreparedDBQueryCommon::db_query_update_character_item_warehouse="UPDATE character SET item_warehouse=decode('%1','hex') WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_character_monster_encyclopedia="UPDATE character SET encyclopedia_monster=decode('%1','hex') WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_cash="UPDATE character SET cash=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_warehouse_cash="UPDATE character SET warehouse_cash=%1 WHERE id=%2";
-        PreparedDBQueryCommon::db_query_update_character_recipe="UPDATE character SET recipes='\\x%1' WHERE id=%2";
-        PreparedDBQueryCommon::db_query_update_character_allow="UPDATE character SET allow='\\x%1' WHERE id=%2";
-        PreparedDBQueryCommon::db_query_update_character_reputations="UPDATE character SET reputations='\\x%1' WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_character_recipe="UPDATE character SET recipes=decode('%1','hex') WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_character_allow="UPDATE character SET allow=decode('%1','hex') WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_character_reputations="UPDATE character SET reputations=decode('%1','hex') WHERE id=%2";
         PreparedDBQueryCommon::db_query_select_clan_by_name="SELECT id FROM clan WHERE name='%1'";
 
         PreparedDBQueryCommon::db_query_insert_clan="INSERT INTO clan(id,name,cash,date) VALUES(%1,'%2',0,%3);";
@@ -404,9 +404,9 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_monster_hp_only="UPDATE monster SET hp=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_sp_only="UPDATE monster SET sp=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_played_time="UPDATE character SET played_time=played_time+%1 WHERE id=%2";
-        PreparedDBQueryCommon::db_query_monster_update_skill_and_endurance="UPDATE monster SET skills='\\x%1',skills_endurance='\\x%2' WHERE id=%3";
-        PreparedDBQueryCommon::db_query_monster_update_endurance="UPDATE monster SET skills_endurance='\\x%1' WHERE id=%2";
-        PreparedDBQueryCommon::db_query_update_monster_buff="UPDATE monster SET buffs='\\x%1' WHERE id=%2";
+        PreparedDBQueryCommon::db_query_monster_update_skill_and_endurance="UPDATE monster SET skills=decode('%1','hex'),skills_endurance=decode('%2','hex') WHERE id=%3";
+        PreparedDBQueryCommon::db_query_monster_update_endurance="UPDATE monster SET skills_endurance=decode('%1','hex') WHERE id=%2";
+        PreparedDBQueryCommon::db_query_update_monster_buff="UPDATE monster SET buffs=decode('%1','hex') WHERE id=%2";
 
         PreparedDBQueryCommon::db_query_character_by_id="SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,encode(allow,'hex'),encode(item,'hex'),encode(item_warehouse,'hex'),encode(recipes,'hex'),encode(reputations,'hex'),encode(encyclopedia_monster,'hex'),encode(encyclopedia_item,'hex'),encode(achievements,'hex'),blob_version,date FROM character WHERE id=%1";
         PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero="UPDATE character SET time_to_delete=0 WHERE id=%1";
@@ -415,7 +415,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_change_right="UPDATE \"character\" SET \"type\"=%1 WHERE \"id\"=%2";
         PreparedDBQueryCommon::db_query_delete_monster_buff="UPDATE monster SET buffs='' WHERE id=%1";
         PreparedDBQueryCommon::db_query_insert_warehouse_monster="INSERT INTO monster(id,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,skills,skills_endurance) "
-                                                       "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7,'\\x%8','\\x%9')";
+                                                       "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7,decode('%8','hex'),decode('%9','hex'))";
         PreparedDBQueryCommon::db_query_update_monster_position="UPDATE monster SET position=%1 WHERE id=%2";
         PreparedDBQueryCommon::db_query_update_monster_position_and_place="UPDATE monster SET position=%1,place=%2 WHERE id=%3";
         PreparedDBQueryCommon::db_query_update_monster_place="UPDATE monster SET place=%1 WHERE id=%2";
@@ -606,16 +606,16 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_get_market_cash="UPDATE character_forserver SET market_cash=0 WHERE character=%1;";
         PreparedDBQueryServer::db_query_insert_monster_market_price="INSERT INTO monster_market_price(id,market_price) VALUES(%1,%2)";
         PreparedDBQueryServer::db_query_delete_monster_market_price="DELETE FROM monster_market_price WHERE id=%1";
-        PreparedDBQueryServer::db_query_update_character_quests="UPDATE character_forserver SET quest='\\x%1' WHERE character=%2";
+        PreparedDBQueryServer::db_query_update_character_quests="UPDATE character_forserver SET quest=decode('%1','hex') WHERE character=%2";
         #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
         PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,encode(botfight_id,'hex'),encode(itemonmap,'hex'),encode(quest,'hex'),blob_version,date,encode(plants,'hex') FROM character_forserver WHERE character=%1";
         #else
         PreparedDBQueryServer::db_query_character_server_by_id="SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,encode(botfight_id,'hex'),encode(itemonmap,'hex'),encode(quest,'hex'),blob_version,date FROM character_forserver WHERE character=%1";
         #endif
         PreparedDBQueryServer::db_query_delete_character_server_by_id="DELETE FROM character_forserver WHERE character=%1";
-        PreparedDBQueryServer::db_query_update_plant="UPDATE character_forserver SET plants='\\x%1' WHERE character=%2";
-        PreparedDBQueryServer::db_query_update_itemonmap="UPDATE character_forserver SET itemonmap='\\x%1' WHERE character=%2";
-        PreparedDBQueryServer::db_query_update_character_bot_already_beaten="UPDATE character_forserver SET botfight_id='\\x%1' WHERE character=%2";
+        PreparedDBQueryServer::db_query_update_plant="UPDATE character_forserver SET plants=decode('%1','hex') WHERE character=%2";
+        PreparedDBQueryServer::db_query_update_itemonmap="UPDATE character_forserver SET itemonmap=decode('%1','hex') WHERE character=%2";
+        PreparedDBQueryServer::db_query_update_character_bot_already_beaten="UPDATE character_forserver SET botfight_id=decode('%1','hex') WHERE character=%2";
         break;
         #endif
     }
