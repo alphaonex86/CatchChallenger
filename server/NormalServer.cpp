@@ -34,7 +34,7 @@ NormalServer::NormalServer() :
     normalServerSettings.server_port    = 42489;
     normalServerSettings.useSsl         = true;
     #ifdef __linux__
-    CommonSettingsServer::commonSettingsServer.tcpCork  = true;
+    CommonSettingsServer::commonSettingsServer.tcpCork  = false;
     normalServerSettings.tcpNodelay         = false;
     #endif
 

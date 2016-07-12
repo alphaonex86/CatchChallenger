@@ -189,7 +189,7 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     #ifdef __linux__
     settings->beginGroup("Linux");
     if(!settings->contains("tcpCork"))
-        settings->setValue("tcpCork",true);
+        settings->setValue("tcpCork",false);
     if(!settings->contains("tcpNodelay"))
         settings->setValue("tcpNodelay",false);
     settings->endGroup();
