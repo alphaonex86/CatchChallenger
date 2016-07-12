@@ -28,8 +28,7 @@ DatapackDownloaderMainSub::DatapackDownloaderMainSub(const std::string &mDatapac
     mDatapackBase(mDatapackBase),
     mDatapackMain(mDatapackBase+"map/main/"+mainDatapackCode+"/"),
     mainDatapackCode(mainDatapackCode),
-    subDatapackCode(subDatapackCode),
-    curl(NULL)
+    subDatapackCode(subDatapackCode)
 {
     datapackStatus=DatapackStatus::Main;
     datapackTarXzMain=false;
@@ -57,6 +56,8 @@ void DatapackDownloaderMainSub::datapackDownloadError()
         index++;
     }
     clientInSuspend.clear();
+    wait_datapack_content_main=false;
+    wait_datapack_content_sub=false;
 }
 
 void DatapackDownloaderMainSub::writeNewFileToRoute(const std::string &fileName, const std::vector<char> &data)
@@ -208,11 +209,7 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
 {
     if(DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())
     {
-        if(curl!=NULL)
-        {
-            curl_easy_cleanup(curl);
-            curl=NULL;
-        }
+        std::cout << "Have the datapack main sub" << std::endl;
     }
 
     unsigned int index=0;

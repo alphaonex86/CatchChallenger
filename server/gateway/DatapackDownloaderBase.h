@@ -41,6 +41,8 @@ public:
     static std::unordered_set<std::string> extensionAllowed;
     static std::string commandUpdateDatapackBase;
     static std::vector<std::string> httpDatapackMirrorBaseList;
+    static CURLM *curlm;
+    static std::vector<FILE *> fileToClose;
 private:
     static std::regex regex_DATAPACK_FILE_REGEX;
     bool datapackTarXzBase;
@@ -64,9 +66,8 @@ private:
     {
         std::string fileName;
     };
-    CURL *curl;
 private:
-    bool getHttpFileBase(const std::string &url, const std::string &fileName);
+    bool getHttpFileBase(const std::string &url, const std::string &fileName, const bool accumulate=false);
 private:
     void datapackDownloadFinishedBase();
     void datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash, const std::vector<uint32_t> &partialHash);
