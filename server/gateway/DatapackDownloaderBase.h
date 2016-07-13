@@ -26,6 +26,7 @@ public:
     void resetAll();
     void datapackFileList(const char * const data,const unsigned int &size);
     void writeNewFileBase(const std::string &fileName, const std::vector<char> &data);
+    void sendDatapackProgressionBase(void * client);
 
     //datapack related
     void sendDatapackContentBase();
@@ -42,7 +43,9 @@ public:
     static std::string commandUpdateDatapackBase;
     static std::vector<std::string> httpDatapackMirrorBaseList;
     static CURLM *curlm;
-    static std::vector<FILE *> fileToClose;
+    static unsigned int curlmCount;
+    static std::vector<CURL *> curlSuspendList;
+    static std::unordered_map<CURL *,void *> curlPrivateData;
 private:
     static std::regex regex_DATAPACK_FILE_REGEX;
     bool datapackTarXzBase;

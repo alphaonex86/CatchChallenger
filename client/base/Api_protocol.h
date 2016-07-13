@@ -235,6 +235,7 @@ signals:
     void connectingOnGameServer() const;
     void connectedOnGameServer() const;
     void haveDatapackMainSubCode();
+    void gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression);
 
     //general info
     void number_of_player(const uint16_t &number,const uint16_t &max_players) const;

@@ -32,11 +32,14 @@ std::vector<std::string> DatapackDownloaderBase::httpDatapackMirrorBaseList;
 
 DatapackDownloaderBase * DatapackDownloaderBase::datapackDownloaderBase=NULL;
 CURLM *DatapackDownloaderBase::curlm=NULL;
-std::vector<FILE *> DatapackDownloaderBase::fileToClose;
+unsigned int DatapackDownloaderBase::DatapackDownloaderBase::curlmCount=0;
+std::vector<CURL *> DatapackDownloaderBase::DatapackDownloaderBase::curlSuspendList;
+std::unordered_map<CURL *,void *> DatapackDownloaderBase::curlPrivateData;
 
 DatapackDownloaderBase::DatapackDownloaderBase(const std::string &mDatapackBase) :
     mDatapackBase(mDatapackBase)
 {
+    httpModeBase=false;
     datapackTarXzBase=false;
     index_mirror_base=0;
     wait_datapack_content_base=false;
@@ -196,6 +199,9 @@ bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::
     stringreplaceAll(fullPath,"//","/");
 
     MemoryStruct *chunk=new MemoryStruct;
+    chunk->fileName=fullPath;
+    chunk->memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
+    chunk->size = 0;    /* no data at this point */
 
     CURL *curl=curl_easy_init();
     if(!curl)
@@ -209,15 +215,9 @@ bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::
         std::cerr << "Unable to set the curl keep alive" << std::endl;
     if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L)!=CURLE_OK)
         std::cerr << "Unable to set the curl keep alive" << std::endl;
-    std::cout << "Download: " << url << std::endl;
     if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
     {
         std::cerr << "Unable to set the curl url: " << url << std::endl;
-        abort();
-    }
-    if(curl_easy_setopt(curl, CURLOPT_PRIVATE, chunk)!=CURLE_OK)
-    {
-        std::cerr << "Unable to set curl CURLOPT_PRIVATE" << std::endl;
         abort();
     }
     if(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, EpollServerLoginSlave::WriteMemoryCallback)!=CURLE_OK)
@@ -230,7 +230,14 @@ bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::
         std::cerr << "Unable to set curl CURLOPT_WRITEDATA" << std::endl;
         abort();
     }
-    curl_multi_add_handle(DatapackDownloaderBase::curlm, curl);
+    DatapackDownloaderBase::curlPrivateData[curl]=chunk;
+    if(DatapackDownloaderBase::DatapackDownloaderBase::curlmCount<10)
+    {
+        curl_multi_add_handle(DatapackDownloaderBase::curlm, curl);
+        DatapackDownloaderBase::DatapackDownloaderBase::curlmCount++;
+    }
+    else
+        DatapackDownloaderBase::curlSuspendList.push_back(curl);
     return true;
 }
 
@@ -654,7 +661,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                             const uint32_t &hashFileOnDisk=partialHashListBase.at(indexInDatapackList);
                             if(!FacilityLibGeneral::isFile(mDatapackBase+fileString))
                             {
-                                if(!getHttpFileBase(selectedMirror+fileString,fileString,true))
+                                if(!getHttpFileBase(selectedMirror+fileString,fileString))
                                 {
                                     datapackDownloadError();
                                     return;
@@ -662,7 +669,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                             }
                             else if(hashFileOnDisk!=partialHashString)
                             {
-                                if(!getHttpFileBase(selectedMirror+fileString,fileString,true))
+                                if(!getHttpFileBase(selectedMirror+fileString,fileString))
                                 {
                                     datapackDownloadError();
                                     return;
@@ -673,7 +680,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                         }
                         else
                         {
-                            if(!getHttpFileBase(selectedMirror+fileString,fileString,true))
+                            if(!getHttpFileBase(selectedMirror+fileString,fileString))
                             {
                                 datapackDownloadError();
                                 return;
@@ -688,18 +695,32 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
             CURLMsg *msg;
             do
             {
-                /*CURLMcode res = */curl_multi_perform(DatapackDownloaderBase::curlm, &handle_count);
+                /*const CURLMcode res = */curl_multi_perform(DatapackDownloaderBase::curlm, &handle_count);
                 int msgs_in_queue=0;
                 while((msg = curl_multi_info_read(DatapackDownloaderBase::curlm, &msgs_in_queue)))
                 {
                     if(msg->msg == CURLMSG_DONE)
                     {
+                        DatapackDownloaderBase::DatapackDownloaderBase::curlmCount--;
                         char *url=NULL;
                         CURL *curl = msg->easy_handle;
+                        if(curl==NULL)
+                        {
+                            std::cerr << "msg->easy_handle==NULL" << ", file: " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                            abort();
+                        }
                         const CURLcode res = msg->data.result;
                         long http_code = 0;
-                        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-                        curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url);
+                        if(curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code)!=CURLE_OK)
+                        {
+                            std::cerr << "curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code)!=CURLE_OK: " << curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                            abort();
+                        }
+                        if(curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url)!=CURLE_OK)
+                        {
+                            std::cerr << "curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url)!=CURLE_OK: " << curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                            abort();
+                        }
                         if(res!=CURLE_OK || http_code!=200)
                         {
                             httpError=true;
@@ -708,63 +729,83 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                             curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
                             while((msg = curl_multi_info_read(DatapackDownloaderBase::curlm, &msgs_in_queue)))
                             {
-                                MemoryStruct *chunk;
-                                curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE,chunk);
-                                delete chunk->memory;
-                                delete chunk;
+                                MemoryStruct *chunk=NULL;
+                                if(DatapackDownloaderBase::curlPrivateData.find(curl)==DatapackDownloaderBase::curlPrivateData.cend())
+                                {
+                                    std::cerr << "DatapackDownloaderBase::curlPrivateData.find(curl) not found: " << ", file: " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                    abort();
+                                }
+                                chunk=static_cast<MemoryStruct *>(DatapackDownloaderBase::curlPrivateData.at(curl));
+                                DatapackDownloaderBase::curlPrivateData.erase(curl);
+                                if(chunk!=NULL)
+                                {
+                                    if(chunk->memory!=NULL)
+                                        delete chunk->memory;
+                                    delete chunk;
+                                }
                                 curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
                             }
                             curl_easy_cleanup(curl);
                             return;
                         }
                         std::cout << "Downloaded: " << url << std::endl;
-
+                        if(DatapackDownloaderBase::DatapackDownloaderBase::curlmCount<10 && !DatapackDownloaderBase::curlSuspendList.empty())
                         {
-                            if(!FacilityLibGateway::mkpath(FacilityLibGeneral::getFolderFromFile(fullPath)))
-                            {
-                                std::cerr << "unable to make the path: " << fullPath << std::endl;
-                                abort();
-                            }
+                            curl_multi_add_handle(DatapackDownloaderBase::curlm, DatapackDownloaderBase::curlSuspendList.back());
+                            DatapackDownloaderBase::DatapackDownloaderBase::curlmCount++;
+                            DatapackDownloaderBase::curlSuspendList.pop_back();
                         }
 
-                        MemoryStruct *chunk;
-                        curl_easy_getinfo(curl, CURLINFO_PRIVATE,chunk);
-
-                        FILE *fp = fopen(chunk->fileName.c_str(),"wb");
-                        if(fp!=NULL)
+                        MemoryStruct *chunk=NULL;
+                        if(DatapackDownloaderBase::curlPrivateData.find(curl)==DatapackDownloaderBase::curlPrivateData.cend())
                         {
-                            fwrite(chunk->memory,1,chunk->size,fp);
-                            fclose(fp);
+                            std::cerr << "DatapackDownloaderBase::curlPrivateData.find(curl) not found: " << ", file: " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                            abort();
+                        }
+                        chunk=static_cast<MemoryStruct *>(DatapackDownloaderBase::curlPrivateData.at(curl));
+                        DatapackDownloaderBase::curlPrivateData.erase(curl);
+
+                        if(chunk!=NULL)
+                        {
+                            if(!FacilityLibGateway::mkpath(FacilityLibGeneral::getFolderFromFile(chunk->fileName)))
+                            {
+                                std::cerr << "unable to make the path: " << chunk->fileName << ", file: " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                abort();
+                            }
+
+                            FILE *fp = fopen(chunk->fileName.c_str(),"wb");
+                            if(fp!=NULL)
+                            {
+                                fwrite(chunk->memory,1,chunk->size,fp);
+                                fclose(fp);
+                            }
+                            else
+                            {
+                                httpError=true;
+                                datapackDownloadError();
+                                std::cerr << "unable to open file to write:" << chunk->fileName << std::endl;
+                                abort();
+                            }
+
+                            if(chunk->memory!=NULL)
+                                delete chunk->memory;
+                            delete chunk;
                         }
                         else
                         {
-                            httpError=true;
-                            datapackDownloadError();
-                            std::cerr << "unable to open file to write:" << fileName << std::endl;
-                            return false;
+                            std::cerr << "curl_easy_getinfo(curl, CURLINFO_PRIVATE,chunk) is null" << std::endl;
+                            abort();
                         }
-
-                        delete chunk->memory;
-                        delete chunk;
                         curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
                         curl_easy_cleanup(curl);
                     }
-                    else
-                        std::cerr << "CURLMsg " << msg->msg << std::endl;
                 }
                 if(handle_count == 0)
                     break;
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
-            while(handle_count>0);
-            {
-                unsigned int index=0;
-                while(index<DatapackDownloaderBase::fileToClose.size())
-                {
-                    fclose(DatapackDownloaderBase::fileToClose.at(index));
-                    index++;
-                }
-            }
+            while(handle_count>0 || !DatapackDownloaderBase::curlSuspendList.empty() || DatapackDownloaderBase::curlmCount>0);
+            std::cout << "handle_count == 0: leave the curl loop" << std::endl;
             curl_multi_cleanup(DatapackDownloaderBase::curlm);
 
             index=0;
@@ -854,4 +895,13 @@ void DatapackDownloaderBase::sendDatapackContentBase()
     std::sort(datapackFilesListBase.begin(),datapackFilesListBase.end());
     const DatapackChecksum::FullDatapackChecksumReturn &fullDatapackChecksumReturn=DatapackChecksum::doFullSyncChecksumBase(mDatapackBase);
     datapackChecksumDoneBase(fullDatapackChecksumReturn.datapackFilesList,fullDatapackChecksumReturn.hash,fullDatapackChecksumReturn.partialHashList);
+}
+
+void DatapackDownloaderBase::sendDatapackProgressionBase(void * client)
+{
+    EpollClientLoginSlave * const client_real=static_cast<EpollClientLoginSlave *>(client);
+    uint8_t progression=0;//do the adaptative from curl progression
+    if(clientInSuspend.empty())
+        progression=0;//not specific to base client, put 0 as generic value
+    client_real->sendDatapackProgression(progression);
 }
