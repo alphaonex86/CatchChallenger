@@ -23,6 +23,7 @@ using namespace CatchChallenger;
 EpollServerLoginSlave *EpollServerLoginSlave::epollServerLoginSlave=NULL;
 
 EpollServerLoginSlave::EpollServerLoginSlave() :
+    gatewayNumber(1),
     tcpNodelay(false),
     tcpCork(false),
     serverReady(false),

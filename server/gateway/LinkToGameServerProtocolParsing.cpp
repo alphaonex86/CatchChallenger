@@ -18,6 +18,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
     (void)data;
     switch(mainCodeType)
     {
+        //Protocol initialization for client
         case 0xA0:
         {
             if(stat==Stat::Reconnecting)
@@ -518,6 +519,28 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
             return true;//no remaining data, because all remaing is used as file data
         }
         break;
+        case 0x44://Cache updating
+        {
+            unsigned int pos=0;
+            if((size-pos)<(int)(sizeof(uint8_t)))
+            {
+                parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
+                return false;
+            }
+            uint8_t previousGatewayNumber=data[pos];
+            pos++;
+            if(previousGatewayNumber<255 && previousGatewayNumber>0)
+                if(EpollServerLoginSlave::epollServerLoginSlave->gatewayNumber<(previousGatewayNumber+1))
+                {
+                    EpollServerLoginSlave::epollServerLoginSlave->gatewayNumber=previousGatewayNumber+1;
+                    if(client!=NULL)
+                    {
+                        client->sendDatapackProgression(0);
+                        if(previousGatewayNumber!=1)
+                            return true;
+                    }
+                }
+        }
         default:
         break;
     }
@@ -611,7 +634,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     //do the work here
 
     /* intercept part here */
-    if(mainCodeType==0xA8)
+    if(mainCodeType==0xA8)//Get first data and send the login
     {
         if(size>(14+CATCHCHALLENGER_SHA224HASH_SIZE) && data[0x00]==0x01)//all is good, change the reply
         {
@@ -685,6 +708,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.push_back(this);
                 if(DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.size()==1)
                     DatapackDownloaderBase::datapackDownloaderBase->sendDatapackContentBase();
+                DatapackDownloaderBase::datapackDownloaderBase->sendDatapackProgressionBase(client);
             }
             else if(DatapackDownloaderBase::datapackDownloaderBase->hashBase!=DatapackDownloaderBase::datapackDownloaderBase->sendedHashBase)//need download the datapack content
             {
@@ -692,9 +716,11 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.push_back(this);
                 if(DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.size()==1)
                     DatapackDownloaderBase::datapackDownloaderBase->sendDatapackContentBase();
+                DatapackDownloaderBase::datapackDownloaderBase->sendDatapackProgressionBase(client);
             }
             else
             {
+                DatapackDownloaderBase::datapackDownloaderBase->sendDatapackProgressionBase(client);
                 //send the network reply
                 client->removeFromQueryReceived(queryNumber);
                 uint32_t posOutput=0;
@@ -716,7 +742,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             return true;
         }
     }
-    else if(mainCodeType==0xAC)
+    else if(mainCodeType==0xAC)//Select character
     {
         if(gameServerMode==GameServerMode::Reconnect)
         {
@@ -770,7 +796,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
         }
     }
     //intercept the file sending
-    else if(mainCodeType==0xA1)
+    else if(mainCodeType==0xA1)//Send datapack file list
     {
         if(reply04inWait!=NULL)
             DatapackDownloaderBase::datapackDownloaderBase->datapackFileList(data,size);
@@ -898,6 +924,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     downloader->clientInSuspend.push_back(this);
                     if(downloader->clientInSuspend.size()==1)
                         downloader->sendDatapackContentMainSub();
+                    downloader->sendDatapackProgressionMainSub(client);
                 }
                 else if(downloader->hashMain!=downloader->sendedHashMain || (!sub.empty() && downloader->hashSub!=downloader->sendedHashSub))//need download the datapack content
                 {
@@ -905,9 +932,11 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     downloader->clientInSuspend.push_back(this);
                     if(downloader->clientInSuspend.size()==1)
                         downloader->sendDatapackContentMainSub();
+                    downloader->sendDatapackProgressionMainSub(client);
                 }
                 else
                 {
+                    downloader->sendDatapackProgressionMainSub(client);
                     //send the network reply
                     client->removeFromQueryReceived(queryNumber);
                     uint32_t posOutput=0;
@@ -936,7 +965,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
         }
     }
 
-    if(mainCodeType==0x93)
+    if(mainCodeType==0x93)//Select character on game server
         client->fastForward=true;
 
     //send the network reply

@@ -231,6 +231,7 @@ private slots:
     void newDatapackFile(const uint32_t &size);
     void progressingDatapackFile(const uint32_t &size);
     void datapackSize(const uint32_t &datapackFileNumber,const uint32_t &datapackFileSize);
+    void gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression);
 
     //inventory
     void on_inventory_itemActivated(QListWidgetItem *item);
@@ -513,6 +514,8 @@ private:
     uint32_t datapackDownloadedCount;
     uint32_t datapackDownloadedSize;
     uint32_t progressingDatapackFileSize;
+    QHash<uint8_t,uint8_t> datapackGatewayProgression;
+    bool protocolIsGood;
 
     NewProfile *newProfile;
     uint32_t datapackFileNumber;

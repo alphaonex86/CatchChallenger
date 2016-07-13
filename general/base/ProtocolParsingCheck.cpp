@@ -70,13 +70,13 @@ bool ProtocolParsingCheck::parseReplyData(const uint8_t &mainCodeType,const uint
 
 void ProtocolParsingCheck::errorParsingLayer(const std::string &error)
 {
-    std::cerr << error << std::endl;
+    std::cerr << "ProtocolParsingCheck: " << error << std::endl;
     abort();
 }
 
 void ProtocolParsingCheck::messageParsingLayer(const std::string &message) const
 {
-    std::cerr << message << std::endl;
+    std::cerr << "ProtocolParsingCheck: " << message << std::endl;
 }
 
 void ProtocolParsingCheck::disconnectClient()

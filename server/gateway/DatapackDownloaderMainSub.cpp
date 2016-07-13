@@ -255,3 +255,11 @@ void DatapackDownloaderMainSub::checkIfContinueOrFinished()
     }
 }
 
+void DatapackDownloaderMainSub::sendDatapackProgressionMainSub(void * client)
+{
+    EpollClientLoginSlave * const client_real=static_cast<EpollClientLoginSlave *>(client);
+    uint8_t progression=0;//do the adaptative from curl progression
+    if(clientInSuspend.empty())
+        progression=0;//not specific to base client, put 0 as generic value
+    client_real->sendDatapackProgression(progression);
+}
