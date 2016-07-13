@@ -437,6 +437,7 @@ bool DatapackDownloaderMainSub::mirrorTryNextMain()
         if(index_mirror_main>=DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
         {
             std::cerr << "Get the list failed" << std::endl;
+            datapackDownloadError();
             return false;
         }
         else
