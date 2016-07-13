@@ -410,7 +410,7 @@ int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const ui
             dataSize=ProtocolParsingBase::packetFixedSize[packetCode];
             if(dataSize==0xFF)
             {
-                errorParsingLayer("wrong packet code (header)");
+                errorParsingLayer("wrong packet code (header): "+std::to_string(packetCode));
                 return -1;//packetCode code wrong
             }
             else if(dataSize!=0xFE)

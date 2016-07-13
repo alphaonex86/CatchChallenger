@@ -25,6 +25,7 @@ void BaseWindow::resetAll()
     ui->labelLastReplyTime->setText(tr("Last reply time: ?"));
     ui->labelQueryList->setText(tr("Running query: ? Query with worse time: ?"));
     #endif
+    datapackGatewayProgression.clear();
     ui->labelSlow->hide();
     ui->frame_main_display_interface_player->hide();
     ui->label_interface_number_of_player->setText("?/?");
@@ -33,6 +34,7 @@ void BaseWindow::resetAll()
     MapController::mapController->resetAll();
     waitedObjectType=ObjectType_All;
     lastReplyTimeValue=-1;
+    protocolIsGood=false;
     monsterBeforeMoveForChangeInWaiting=false;
     worseQueryTime=0;
     progressingDatapackFileSize=0;
@@ -211,12 +213,14 @@ void BaseWindow::logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedLi
     #endif
         CatchChallenger::Api_client_real::client->sendDatapackContentBase();
     isLogged=true;
+    datapackGatewayProgression.clear();
     updateConnectingStatus();
 }
 
 void BaseWindow::protocol_is_good()
 {
-    ui->label_connecting_status->setText(tr("Try login..."));
+    protocolIsGood=true;
+    updateConnectingStatus();
 }
 
 void BaseWindow::stateChanged(QAbstractSocket::SocketState socketState)
@@ -250,6 +254,7 @@ void BaseWindow::haveCharacter()
 
     haveCharacterInformation=true;
 
+    datapackGatewayProgression.clear();
     updateConnectingStatus();
 }
 
@@ -401,6 +406,14 @@ void BaseWindow::datapackSize(const uint32_t &datapackFileNumber,const uint32_t 
     this->datapackFileNumber=datapackFileNumber;
     this->datapackFileSize=datapackFileSize;
     updateConnectingStatus();
+}
+
+void BaseWindow::gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression)
+{
+    if(progression==100)
+        datapackGatewayProgression.remove(gateway);
+    else
+        datapackGatewayProgression[gateway]=progression;
 }
 
 void BaseWindow::newDatapackFile(const uint32_t &size)
@@ -702,6 +715,17 @@ void BaseWindow::updateConnectingStatus()
     }
     if(!haveDatapack)
     {
+        if(!protocolIsGood)
+            ui->label_connecting_status->setText(tr("Try send the protocol..."));
+        else
+        {
+            if(datapackGatewayProgression.isEmpty())
+                ui->label_connecting_status->setText(tr("Try login..."));
+            else if(datapackGatewayProgression.size()<2)
+                ui->label_connecting_status->setText(tr("Updating the gateway cache..."));
+            else
+                ui->label_connecting_status->setText(tr("Updating the %1 gateways cache...").arg(datapackGatewayProgression.size()));
+        }
         if(datapackFileSize==0)
             waitedData << tr("Loading of the datapack");
         else if(datapackFileSize<0)

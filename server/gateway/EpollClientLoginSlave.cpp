@@ -1,4 +1,5 @@
 #include "EpollClientLoginSlave.h"
+#include "EpollServerLoginSlave.h"
 
 #include <iostream>
 #include <string>
@@ -24,6 +25,7 @@ EpollClientLoginSlave::EpollClientLoginSlave(
             ),
         stat(EpollClientLoginStat::None),
         datapackStatus(DatapackStatus::Base),
+        lastProgressionSended(255),
         fastForward(false),
         linkToGameServer(NULL),
         socketString(NULL),
@@ -136,4 +138,23 @@ bool EpollClientLoginSlave::sendRawBlock(const char * const data,const int &size
 bool EpollClientLoginSlave::removeFromQueryReceived(const uint8_t &queryNumber)
 {
     return ProtocolParsingBase::removeFromQueryReceived(queryNumber);
+}
+
+bool EpollClientLoginSlave::sendDatapackProgression(const uint8_t progression)
+{
+    if(lastProgressionSended==progression)
+        return true;
+    lastProgressionSended=progression;
+    //send the network message
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x78;
+    posOutput+=1+4;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+1);//set the dynamic size
+
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=EpollServerLoginSlave::epollServerLoginSlave->gatewayNumber;
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=progression;
+    posOutput+=1;
+
+    return sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
