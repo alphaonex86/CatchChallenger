@@ -717,7 +717,7 @@ void BaseWindow::updateConnectingStatus()
     {
         if(!protocolIsGood)
             ui->label_connecting_status->setText(tr("Try send the protocol..."));
-        else
+        else if(!isLogged)
         {
             if(datapackGatewayProgression.isEmpty())
                 ui->label_connecting_status->setText(tr("Try login..."));
@@ -726,14 +726,17 @@ void BaseWindow::updateConnectingStatus()
             else
                 ui->label_connecting_status->setText(tr("Updating the %1 gateways cache...").arg(datapackGatewayProgression.size()));
         }
-        if(datapackFileSize==0)
-            waitedData << tr("Loading of the datapack");
-        else if(datapackFileSize<0)
-            waitedData << tr("Loaded datapack size: %1KB").arg((datapackDownloadedSize+progressingDatapackFileSize)/1000);//when the http server don't send the size
-        else if((datapackDownloadedSize+progressingDatapackFileSize)>=(uint32_t)datapackFileSize)
-            waitedData << tr("Loaded datapack file: 100%");
         else
-            waitedData << tr("Loaded datapack file: %1%").arg(((datapackDownloadedSize+progressingDatapackFileSize)*100)/datapackFileSize);
+        {
+            if(datapackFileSize==0)
+                waitedData << tr("Loading of the datapack");
+            else if(datapackFileSize<0)
+                waitedData << tr("Loaded datapack size: %1KB").arg((datapackDownloadedSize+progressingDatapackFileSize)/1000);//when the http server don't send the size
+            else if((datapackDownloadedSize+progressingDatapackFileSize)>=(uint32_t)datapackFileSize)
+                waitedData << tr("Loaded datapack file: 100%");
+            else
+                waitedData << tr("Loaded datapack file: %1%").arg(((datapackDownloadedSize+progressingDatapackFileSize)*100)/datapackFileSize);
+        }
     }
     else if(!datapackIsParsed)
         waitedData << tr("Opening the datapack");
