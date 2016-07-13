@@ -27,6 +27,7 @@ public:
     void resetAll();
     void datapackFileList(const char * const data,const unsigned int &size);
     void writeNewFileToRoute(const std::string &fileName, const std::vector<char> &data);
+    void sendDatapackProgressionMainSub(void * client);
 
     //datapack related
     void sendDatapackContentMainSub();
@@ -85,8 +86,8 @@ private:
     const std::string mainDatapackCode;
     const std::string subDatapackCode;
 private:
-    bool getHttpFileMain(const std::string &url, const std::string &fileName, const bool accumulate=false);
-    bool getHttpFileSub(const std::string &url, const std::string &fileName, const bool accumulate=false);
+    bool getHttpFileMain(const std::string &url, const std::string &fileName);
+    bool getHttpFileSub(const std::string &url, const std::string &fileName);
 private:
     void writeNewFileMain(const std::string &fileName, const std::vector<char> &data);
     void writeNewFileSub(const std::string &fileName, const std::vector<char> &data);

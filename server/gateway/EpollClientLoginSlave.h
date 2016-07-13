@@ -84,7 +84,9 @@ public:
     void parseNetworkReadError(const std::string &errorString);
     bool sendRawBlock(const char * const data,const int &size);
     bool removeFromQueryReceived(const uint8_t &queryNumber);
+    bool sendDatapackProgression(const uint8_t progression);
 
+    uint8_t lastProgressionSended;
     bool fastForward;
     LinkToGameServer *linkToGameServer;
     char *socketString;

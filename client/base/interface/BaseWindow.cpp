@@ -441,6 +441,7 @@ void BaseWindow::connectAllSignals()
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::marketWithdrawMonster,      this,&BaseWindow::marketWithdrawMonster);
     //datapack
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::datapackSizeBase,this,&BaseWindow::datapackSize);
+    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::gatewayCacheUpdate,this,&BaseWindow::gatewayCacheUpdate);
     #ifdef CATCHCHALLENGER_MULTI
     connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::newDatapackFileBase,            this,&BaseWindow::newDatapackFile);
     connect(static_cast<CatchChallenger::Api_client_real*>(CatchChallenger::Api_client_real::client),&CatchChallenger::Api_client_real::newDatapackFileMain,            this,&BaseWindow::newDatapackFile);

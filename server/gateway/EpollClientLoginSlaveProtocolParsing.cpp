@@ -127,6 +127,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
     (void)size;
     switch(mainCodeType)
     {
+        //Protocol initialization for client
         case 0xA0:
             if(memcmp(data,EpollClientLoginSlave::protocolHeaderToMatch,sizeof(EpollClientLoginSlave::protocolHeaderToMatch))==0)
             {
@@ -190,6 +191,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType,const char 
     }
     switch(mainCodeType)
     {
+        //Send position + direction
         case 0x02:
             if((movePacketKickTotalCache+movePacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITMOVE)
             {
@@ -198,6 +200,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType,const char 
             }
             movePacketKickNewValue++;
         break;
+        //Chat
         case 0x03:
             if((chatPacketKickTotalCache+chatPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT)
             {
