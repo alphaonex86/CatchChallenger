@@ -578,6 +578,7 @@ bool DatapackDownloaderBase::mirrorTryNextBase()
         if(index_mirror_base>=DatapackDownloaderBase::httpDatapackMirrorBaseList.size())
         {
             std::cerr << "Get the list failed" << std::endl;
+            datapackDownloadError();
             return false;
         }
         else
