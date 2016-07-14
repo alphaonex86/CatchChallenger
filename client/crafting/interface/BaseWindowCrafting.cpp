@@ -185,6 +185,11 @@ void BaseWindow::load_crafting_inventory()
     crafting_recipes_items_to_graphical.clear();
     crafting_recipes_items_graphical.clear();
     Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    if(informations.recipes==NULL)
+    {
+        qDebug() << "BaseWindow::load_crafting_inventory(), crafting null";
+        return;
+    }
     uint16_t index=0;
     while(index<=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipesMaxId)
     {

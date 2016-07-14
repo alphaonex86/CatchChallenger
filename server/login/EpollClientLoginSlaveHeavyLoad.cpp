@@ -314,7 +314,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 loginIsWrong(askLoginParam->query_id,0x03,"Password wrong: "+
-                             binarytoHexa(secretTokenBinary)+
+                             binarytoHexa(secretTokenBinary.data(),secretTokenBinary.size()-tempAddedToken.size())+
                              " + token "+
                              binarytoHexa(tempAddedToken)+
                              " = "+

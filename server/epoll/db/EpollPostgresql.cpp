@@ -227,8 +227,8 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::
     }
     start = std::chrono::high_resolution_clock::now();
     queriesList.push_back(query);
-    const int &stringlen=query.size();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    const int &stringlen=query.size();
     if(stringlen==0)
     {
         std::cerr << "query " << query << ", stringlen==0" << std::endl;
@@ -263,8 +263,8 @@ bool EpollPostgresql::asyncWrite(const std::string &query)
     }
     start = std::chrono::high_resolution_clock::now();
     queriesList.push_back(query);
-    const int &stringlen=query.size();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    const int &stringlen=query.size();
     if(stringlen==0)
     {
         std::cerr << "query " << query << ", stringlen==0" << std::endl;

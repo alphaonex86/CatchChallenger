@@ -209,7 +209,7 @@ long int EpollSslClient::bytesAvailable() const
 {
     if(infd==-1)
         return -1;
-    unsigned long int nbytes;
+    unsigned long int nbytes=0;
     // gives shorter than true amounts on Unix domain sockets.
     if(ioctl(infd, FIONREAD, &nbytes)>=0)
         return nbytes;

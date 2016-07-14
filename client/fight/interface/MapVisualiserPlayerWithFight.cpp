@@ -38,7 +38,8 @@ void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const char * const botAl
     }
     this->botAlreadyBeaten=(char *)malloc(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
     memset(this->botAlreadyBeaten,0,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
-    memcpy(this->botAlreadyBeaten,botAlreadyBeaten,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+    if(botAlreadyBeaten!=NULL)
+        memcpy(this->botAlreadyBeaten,botAlreadyBeaten,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
 }
 
 void MapVisualiserPlayerWithFight::addBeatenBotFight(const uint16_t &botFightId)
