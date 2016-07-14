@@ -111,8 +111,8 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
     server=gethostbyname(host);
     if(server==NULL)
     {
-        std::cerr << "ERROR, no such host to game server server (abort)" << std::endl;
-        abort();
+        std::cerr << "ERROR, dns resolution failed on: " << host << ", h_errno: " << std::to_string(h_errno) << " (abort)" << std::endl;
+        return -1;
     }
     sockaddr_in serv_addr;
     bzero((char *)&serv_addr, sizeof(serv_addr));

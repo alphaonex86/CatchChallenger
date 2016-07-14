@@ -716,15 +716,15 @@ void BaseWindow::updateConnectingStatus()
     if(!haveDatapack)
     {
         if(!protocolIsGood)
-            ui->label_connecting_status->setText(tr("Try send the protocol..."));
+            waitedData << tr("Try send the protocol...");
         else if(!isLogged)
         {
             if(datapackGatewayProgression.isEmpty())
-                ui->label_connecting_status->setText(tr("Try login..."));
+                waitedData << tr("Try login...");
             else if(datapackGatewayProgression.size()<2)
-                ui->label_connecting_status->setText(tr("Updating the gateway cache..."));
+                waitedData << tr("Updating the gateway cache...");
             else
-                ui->label_connecting_status->setText(tr("Updating the %1 gateways cache...").arg(datapackGatewayProgression.size()));
+                waitedData << tr("Updating the %1 gateways cache...").arg(datapackGatewayProgression.size());
         }
         else
         {
@@ -1474,7 +1474,7 @@ void CatchChallenger::BaseWindow::on_toolButtonEncyclopedia_clicked()
     ui->listWidgetEncyclopediaItem->clear();
     ui->labelEncyclopediaMonster->setText("");
     ui->labelEncyclopediaItem->setText("");
-
+    if(informations.encyclopedia_monster!=NULL)
     {
         QList<uint32_t> keys=DatapackClientLoader::datapackLoader.monsterExtra.keys();
         qSort(keys.begin(),keys.end());
@@ -1502,6 +1502,7 @@ void CatchChallenger::BaseWindow::on_toolButtonEncyclopedia_clicked()
             ++i;
         }
     }
+    if(informations.encyclopedia_item!=NULL)
     {
         QList<uint32_t> keys=DatapackClientLoader::datapackLoader.itemsExtra.keys();
         qSort(keys.begin(),keys.end());
