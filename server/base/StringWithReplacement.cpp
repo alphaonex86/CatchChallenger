@@ -90,6 +90,14 @@ void StringWithReplacement::set(const std::string &query)
                 }
                 index++;
             } while(index<=numberOfReplace);
+            if(numberOfReplace>15)
+            {
+                std::cerr << "StringWithReplacement::set(): numberOfReplace>15: " << numberOfReplace << std::endl;
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                abort();
+                #endif
+                return;
+            }
             //the last part:
             const uint16_t &size=query.size()-previousStringPos;
             *reinterpret_cast<uint16_t *>(preparedQueryTemp+pos)=size;
@@ -105,6 +113,15 @@ void StringWithReplacement::set(const std::string &query)
             //copy
             preparedQuery=(unsigned char *)malloc(pos+1);
             memcpy(preparedQuery,preparedQueryTemp,pos);
+            if(((uint32_t)*reinterpret_cast<uint16_t *>(preparedQuery+1)+1+100)>=sizeof(composeBuffer))
+            {
+                std::cerr << "StringWithReplacement::set(): preparedQuery header size too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << "+1+100>" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
+                std::cerr << "StringWithReplacement::set(): pos-3-(numberOfReplace*2+1): " << std::to_string(pos) << "-3-(" << std::to_string(numberOfReplace) << "*2+1)" << std::endl;
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                abort();
+                #endif
+                return;
+            }
             //dump:
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             //std::cout << "StringWithReplacement: saved: " << originalQuery() << std::endl;
@@ -113,8 +130,12 @@ void StringWithReplacement::set(const std::string &query)
         }
         --numberOfReplace;
         if(numberOfReplace<=0)
+        {
+            std::cerr << "StringWithReplacement: numberOfReplace<=0, no %1 found" << std::endl;
             return;
+        }
     }
+    std::cerr << "StringWithReplacement: out of loop" << std::endl;
 }
 
 bool StringWithReplacement::empty() const
@@ -225,7 +246,7 @@ std::string StringWithReplacement::compose(const std::string &arg1) const
     }
     if(preparedQuery[0]!=1)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -233,7 +254,7 @@ std::string StringWithReplacement::compose(const std::string &arg1) const
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+arg1.size()+1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (1) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -278,7 +299,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=2)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -286,7 +307,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+arg1.size()+arg2.size()+1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (2) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -336,7 +357,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=3)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -346,7 +367,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg1.size()+arg2.size()+arg3.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (3) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -401,7 +422,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=4)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -411,7 +432,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg1.size()+arg2.size()+arg3.size()+arg4.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (4) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -471,7 +492,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=5)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -482,7 +503,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg5.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (5) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << " " << arg5 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -547,7 +568,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=6)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -558,7 +579,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg5.size()+arg6.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (6) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << " " << arg5 << " " << arg6 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -628,7 +649,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=7)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -639,7 +660,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg5.size()+arg6.size()+arg7.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (7) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << " " << arg5 << " " << arg6 << " " << arg7 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -714,7 +735,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=8)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -725,7 +746,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg5.size()+arg6.size()+arg7.size()+arg8.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (8) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << " " << arg5 << " " << arg6 << " " << arg7 << " " << arg8 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -805,7 +826,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=9)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -817,15 +838,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg9.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big, preparedQuery[1]: "
-                  << std::to_string(preparedQuery[1])
-                  << ", sizeof(composeBuffer): "
-                  << sizeof(composeBuffer)
-                  << ", arg size: "
-                  << arg1.size()+arg2.size()+arg3.size()+arg4.size()+
-                     arg5.size()+arg6.size()+arg7.size()+arg8.size()+
-                     arg9.size()
-                  << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (9) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << " " << arg5 << " " << arg6 << " " << arg7 << " " << arg8 << " " << arg9 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -910,7 +923,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=10)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -922,7 +935,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg9.size()+arg10.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (10) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << " " << arg5 << " " << arg6 << " " << arg7 << " " << arg8 << " " << arg9 << " " << arg10 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -1012,7 +1025,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=11)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -1024,7 +1037,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg9.size()+arg10.size()+arg11.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (11) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << " " << arg5 << " " << arg6 << " " << arg7 << " " << arg8 << " " << arg9 << " " << arg10 << " " << arg11 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -1119,7 +1132,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=12)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -1131,7 +1144,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg9.size()+arg10.size()+arg11.size()+arg12.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (12) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << " " << arg5 << " " << arg6 << " " << arg7 << " " << arg8 << " " << arg9 << " " << arg10 << " " << arg11 << " " << arg12 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -1231,7 +1244,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=13)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -1244,7 +1257,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg13.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (13) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << " " << arg5 << " " << arg6 << " " << arg7 << " " << arg8 << " " << arg9 << " " << arg10 << " " << arg11 << " " << arg12 << " " << arg13 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -1349,7 +1362,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=14)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -1362,7 +1375,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg13.size()+arg14.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (14) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << " " << arg5 << " " << arg6 << " " << arg7 << " " << arg8 << " " << arg9 << " " << arg10 << " " << arg11 << " " << arg12 << " " << arg13 << " " << arg14 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -1472,7 +1485,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
     }
     if(preparedQuery[0]!=15)
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count" << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
@@ -1485,7 +1498,7 @@ std::string StringWithReplacement::compose(const std::string &arg1,
         arg13.size()+arg14.size()+arg15.size()+
         1)>=sizeof(composeBuffer))
     {
-        std::cerr << "StringWithReplacement::compose(): argument too big" << std::endl;
+        std::cerr << "StringWithReplacement::compose(): (15) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << " " << arg5 << " " << arg6 << " " << arg7 << " " << arg8 << " " << arg9 << " " << arg10 << " " << arg11 << " " << arg12 << " " << arg13 << " " << arg14 << " " << arg15 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif
