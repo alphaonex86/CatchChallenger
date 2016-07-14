@@ -205,7 +205,7 @@ long int EpollClient::bytesAvailable() const
 {
     if(infd==-1)
         return -1;
-    long int nbytes;
+    long int nbytes=0;
     // gives shorter than true amounts on Unix domain sockets.
     if(ioctl(infd, FIONREAD, &nbytes)>=0)
     {
