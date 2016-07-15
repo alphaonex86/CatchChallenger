@@ -339,7 +339,10 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
 {
     //todo: cache the user cache to locally double lock check to minimize the master
     if(queryNumberList.empty())
+    {
+        std::cerr << listTheRunningQuery() << std::endl;
         return false;
+    }
     DataForSelectedCharacterReturn dataForSelectedCharacterReturn;
     dataForSelectedCharacterReturn.client=client;
     dataForSelectedCharacterReturn.client_query_id=client_query_id;
@@ -362,6 +365,12 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
 
 void LinkToMaster::sendProtocolHeader()
 {
+    if(queryNumberList.empty())
+    {
+        std::cerr << listTheRunningQuery() << std::endl;
+        return;
+    }
+
     //register it
     registerOutputQuery(queryNumberList.back(),0xB8);
 
@@ -373,4 +382,25 @@ void LinkToMaster::sendProtocolHeader()
 bool LinkToMaster::sendRawBlock(const char * const data,const unsigned int &size)
 {
     return internalSendRawSmallPacket(data,size);
+}
+
+std::string LinkToMaster::listTheRunningQuery()
+{
+    std::string returnVar;
+    uint8_t index=0;
+    while(index<sizeof(outputQueryNumberToPacketCode))
+    {
+        if(outputQueryNumberToPacketCode[index]!=0x00)
+        {
+            if(!returnVar.empty())
+                returnVar+=", ";
+            returnVar+="query "+std::to_string(index)+" run packet code "+std::to_string(outputQueryNumberToPacketCode[index]);
+        }
+        index++;
+    }
+    if(!returnVar.empty())
+        returnVar="running query: "+returnVar;
+    else
+        returnVar="no running query";
+    return returnVar;
 }
