@@ -45,7 +45,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
 {
     if(!is_logged)
     {
-        if(packetCode==0x40 || packetCode==0x44)
+        if(packetCode==0x40 || packetCode==0x44 || packetCode==0x78)
         {}
         else
         {
