@@ -111,6 +111,12 @@ void EpollClientLoginSlave::messageParsingLayer(const std::string &message) cons
 
 void EpollClientLoginSlave::errorParsingLayer(const char * const error)
 {
+    if(stat==EpollClientLoginStat::None)
+    {
+        //std::cerr << headerOutput() << "Kicked by: " << errorString << std::endl;//silent if protocol not passed, to not flood the log if other client like http client (browser) is connected
+        disconnectClient();
+        return;
+    }
     std::cerr << socketString << ": " << error << std::endl;
     disconnectClient();
 }
