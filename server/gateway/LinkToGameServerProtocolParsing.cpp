@@ -252,7 +252,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                             return false;
                         }
                         posOutput+=1;
-                        std::cout << "Transmit the token: " << binarytoHexa(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT) << std::endl;
+                        //std::cout << "Transmit the token: " << binarytoHexa(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT) << std::endl;
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         posOutput+=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT;
 
@@ -657,9 +657,12 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
             if((size-pos)<1)
             {
-                delete reply04inWait;
-                reply04inWait=NULL;
-                parseNetworkReadError("need more size");
+                if(reply04inWait!=NULL)
+                {
+                    delete reply04inWait;
+                    reply04inWait=NULL;
+                }
+                parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                 return false;
             }
             const uint16_t startString=pos;
@@ -667,9 +670,12 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             pos+=1;
             if((size-pos)<stringSize)
             {
-                delete reply04inWait;
-                reply04inWait=NULL;
-                parseNetworkReadError("need more size");
+                if(reply04inWait!=NULL)
+                {
+                    delete reply04inWait;
+                    reply04inWait=NULL;
+                }
+                parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                 return false;
             }
             const std::string httpDatapackMirrorBase(data+pos,stringSize);
@@ -689,13 +695,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 }
             }
             unsigned int remainingSize=size-pos;
-            if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
-            {
-                delete reply0205inWait;
-                reply0205inWait=NULL;
-                parseNetworkReadError("need more size");
-                return false;
-            }
             reply04inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
             reply04inWait=new char[reply04inWaitSize];
             memcpy(reply04inWait+0,data,startString);
@@ -809,8 +808,11 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 {
                     if((size-pos)<1)
                     {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
+                        if(reply0205inWait!=NULL)
+                        {
+                            delete reply0205inWait;
+                            reply0205inWait=NULL;
+                        }
                         parseNetworkReadError("need more size");
                         return false;
                     }
@@ -818,9 +820,12 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     pos+=1;
                     if((size-pos)<stringSize)
                     {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                        parseNetworkReadError("need more size");
+                        if(reply0205inWait!=NULL)
+                        {
+                            delete reply0205inWait;
+                            reply0205inWait=NULL;
+                        }
+                        parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                         return false;
                     }
                     main=std::string(data+pos,stringSize);
@@ -829,18 +834,24 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 {
                     if((size-pos)<1)
                     {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                        parseNetworkReadError("need more size");
+                        if(reply0205inWait!=NULL)
+                        {
+                            delete reply0205inWait;
+                            reply0205inWait=NULL;
+                        }
+                        parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                         return false;
                     }
                     const uint8_t &stringSize=data[pos];
                     pos+=1;
                     if((size-pos)<stringSize)
                     {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                        parseNetworkReadError("need more size");
+                        if(reply0205inWait!=NULL)
+                        {
+                            delete reply0205inWait;
+                            reply0205inWait=NULL;
+                        }
+                        parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                         return false;
                     }
                     sub=std::string(data+pos,stringSize);
@@ -857,9 +868,12 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 }
                 if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
                 {
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                    parseNetworkReadError("need more size");
+                    if(reply0205inWait!=NULL)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                    }
+                    parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                     return false;
                 }
                 downloader->sendedHashMain.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
@@ -869,9 +883,12 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 {
                     if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
                     {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                        parseNetworkReadError("need more size");
+                        if(reply0205inWait!=NULL)
+                        {
+                            delete reply0205inWait;
+                            reply0205inWait=NULL;
+                        }
+                        parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                         return false;
                     }
                     downloader->sendedHashSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
@@ -880,9 +897,12 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 }
                 if((size-pos)<1)
                 {
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                    parseNetworkReadError("need more size");
+                    if(reply0205inWait!=NULL)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                    }
+                    parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                     return false;
                 }
                 const uint16_t startString=pos;
@@ -890,9 +910,12 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 pos+=1;
                 if((size-pos)<stringSize)
                 {
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                    parseNetworkReadError("need more size");
+                    if(reply0205inWait!=NULL)
+                    {
+                        delete reply0205inWait;
+                        reply0205inWait=NULL;
+                    }
+                    parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                     return false;
                 }
                 const std::string httpDatapackMirrorServer(data+pos,stringSize);

@@ -666,7 +666,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
                         }
                         else
                         {
-                            std::cerr << "curl_easy_getinfo(curl, CURLINFO_PRIVATE,chunk) is null" << std::endl;
+                            std::cerr << "chunk is null" << std::endl;
                             abort();
                         }
                         curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);

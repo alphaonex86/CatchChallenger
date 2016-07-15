@@ -794,7 +794,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                         }
                         else
                         {
-                            std::cerr << "curl_easy_getinfo(curl, CURLINFO_PRIVATE,chunk) is null" << std::endl;
+                            std::cerr << "chunk is null" << std::endl;
                             abort();
                         }
                         curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
@@ -900,6 +900,8 @@ void DatapackDownloaderBase::sendDatapackContentBase()
 
 void DatapackDownloaderBase::sendDatapackProgressionBase(void * client)
 {
+    if(client==NULL)
+        return;
     EpollClientLoginSlave * const client_real=static_cast<EpollClientLoginSlave *>(client);
     uint8_t progression=0;//do the adaptative from curl progression
     if(clientInSuspend.empty())
