@@ -65,22 +65,21 @@ LinkToGameServer::~LinkToGameServer()
     }
     if(reply04inWait!=NULL)
     {
-        unsigned int index=0;
-        while(index<DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.size())
-        {
-            if(DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.at(index)==this)
-            {
-                DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend[index]=NULL;
-                break;
-            }
-            index++;
-        }
+        vectorremoveOne(DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend,this);
         delete reply04inWait;
         reply04inWait=NULL;
     }
     if(reply0205inWait!=NULL)
     {
-        //todo
+        if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(main)==DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())
+        {}
+        else if(DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).find(sub)==DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).cend())
+        {}
+        else
+        {
+            DatapackDownloaderMainSub * const downloader=DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).at(sub);
+            vectorremoveOne(downloader->clientInSuspend,this);
+        }
         delete reply0205inWait;
         reply0205inWait=NULL;
     }

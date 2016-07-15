@@ -25,7 +25,6 @@ EpollClientLoginSlave::EpollClientLoginSlave(
             ),
         stat(EpollClientLoginStat::None),
         datapackStatus(DatapackStatus::Base),
-        lastProgressionSended(255),
         fastForward(false),
         linkToGameServer(NULL),
         socketString(NULL),
@@ -148,9 +147,6 @@ bool EpollClientLoginSlave::removeFromQueryReceived(const uint8_t &queryNumber)
 
 bool EpollClientLoginSlave::sendDatapackProgression(const uint8_t progression)
 {
-    if(lastProgressionSended==progression)
-        return true;
-    lastProgressionSended=progression;
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x78;

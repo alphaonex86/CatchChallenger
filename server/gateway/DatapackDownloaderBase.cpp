@@ -904,7 +904,10 @@ void DatapackDownloaderBase::sendDatapackContentBase()
 void DatapackDownloaderBase::sendDatapackProgressionBase(void * client)
 {
     if(client==NULL)
+    {
+        std::cerr << "DatapackDownloaderBase::sendDatapackProgressionBase, client is NULL" << std::endl;
         return;
+    }
     EpollClientLoginSlave * const client_real=static_cast<EpollClientLoginSlave *>(client);
     uint8_t progression=0;//do the adaptative from curl progression
     if(clientInSuspend.empty())
