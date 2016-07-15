@@ -414,6 +414,7 @@ void BaseWindow::gatewayCacheUpdate(const uint8_t gateway,const uint8_t progress
         datapackGatewayProgression.remove(gateway);
     else
         datapackGatewayProgression[gateway]=progression;
+    updateConnectingStatus();
 }
 
 void BaseWindow::newDatapackFile(const uint32_t &size)
