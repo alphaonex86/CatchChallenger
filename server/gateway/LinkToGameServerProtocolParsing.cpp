@@ -519,7 +519,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
             return true;//no remaining data, because all remaing is used as file data
         }
         break;
-        case 0x44://Cache updating
+        case 0x78://Gateway Cache updating
         {
             unsigned int pos=0;
             if((size-pos)<(int)(sizeof(uint8_t)))
@@ -541,6 +541,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     }
                 }
         }
+        break;
         default:
         break;
     }
