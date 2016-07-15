@@ -21,6 +21,8 @@ using namespace CatchChallenger;
 #include "FacilityLibGateway.h"
 #include "DatapackDownloaderBase.h"
 
+datapack.tar.xz -> for the main and sub?
+
 void DatapackDownloaderMainSub::writeNewFileSub(const std::string &fileName,const std::vector<char> &data)
 {
     if(data.size()>CATCHCHALLENGER_MAX_FILE_SIZE)
