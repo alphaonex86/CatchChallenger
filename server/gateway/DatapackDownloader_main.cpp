@@ -212,6 +212,8 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
         {
             std::cerr << "Datapack don't match with server hash, get from mirror" << std::endl;
 
+            if(index_mirror_main>=DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
+                index_mirror_main=0;
             const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_main)+"pack/diff/datapack-main-"+binarytoHexa(hash)+".tar.xz";
 
             struct MemoryStruct chunk;
@@ -748,6 +750,7 @@ void DatapackDownloaderMainSub::sendDatapackContentMain()
         return;
     }
 
+    index_mirror_main=0;
     datapackTarXzMain=false;
     wait_datapack_content_main=true;
     FacilityLibGateway::mkpath(mDatapackMain);
