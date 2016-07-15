@@ -353,6 +353,8 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
         {
             std::cerr << "Datapack don't match with server hash, get from mirror" << std::endl;
 
+            if(index_mirror_base>=DatapackDownloaderBase::httpDatapackMirrorBaseList.size())
+                index_mirror_base=0;
             const std::string url=DatapackDownloaderBase::httpDatapackMirrorBaseList.at(index_mirror_base)+"pack/diff/datapack-base-"+binarytoHexa(hash)+".tar.xz";
 
             CURL *curl=curl_easy_init();
@@ -889,6 +891,7 @@ void DatapackDownloaderBase::sendDatapackContentBase()
         return;
     }
 
+    index_mirror_base=0;
     datapackTarXzBase=false;
     wait_datapack_content_base=true;
     FacilityLibGateway::mkpath(mDatapackBase);

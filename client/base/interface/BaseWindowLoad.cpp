@@ -410,9 +410,9 @@ void BaseWindow::datapackSize(const uint32_t &datapackFileNumber,const uint32_t 
 
 void BaseWindow::gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression)
 {
-    if(progression==100)
+    /*if(progression==100)
         datapackGatewayProgression.remove(gateway);
-    else
+    else*/
         datapackGatewayProgression[gateway]=progression;
     updateConnectingStatus();
 }
