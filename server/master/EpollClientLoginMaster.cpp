@@ -173,6 +173,12 @@ void EpollClientLoginMaster::updateConsoleCountServer()
 //input/ouput layer
 void EpollClientLoginMaster::errorParsingLayer(const std::string &error)
 {
+    if(stat==EpollClientLoginMasterStat::None)
+    {
+        //std::cerr << headerOutput() << "Kicked by: " << errorString << std::endl;//silent if protocol not passed, to not flood the log if other client like http client (browser) is connected
+        disconnectClient();
+        return;
+    }
     std::cerr << socketString/* << ": " already concat to improve the performance*/ << error << std::endl;
     disconnectClient();
 }
