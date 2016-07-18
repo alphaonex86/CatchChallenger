@@ -306,8 +306,10 @@ void Api_client_real::test_mirror_main()
     const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarXzMain)
     {
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+
-                                       QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".tar.xz"));
+        QString fullDatapack=httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+
+                QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".tar.xz");
+        QNetworkRequest networkRequest(fullDatapack);
+        qDebug() << "Try download: " << fullDatapack;
         reply = qnam.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);//fix it, put httpFinished* broke it
@@ -442,7 +444,8 @@ void Api_client_real::httpFinishedForDatapackListMain()
     {
         if(!datapackTarXzMain)
         {
-            qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(reply->size()/1000);
+            qDebug() << QStringLiteral("pack/datapack-main-")+
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".tar.xz") << " size:" << QString("%1KB").arg(reply->size()/1000);
             datapackTarXzMain=true;
             QByteArray olddata=reply->readAll();
             std::vector<char> newdata;

@@ -21,8 +21,6 @@ using namespace CatchChallenger;
 #include "FacilityLibGateway.h"
 #include "DatapackDownloaderBase.h"
 
-datapack.tar.xz -> for the main and sub?
-
 void DatapackDownloaderMainSub::writeNewFileSub(const std::string &fileName,const std::vector<char> &data)
 {
     if(data.size()>CATCHCHALLENGER_MAX_FILE_SIZE)
@@ -143,16 +141,16 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
     if(DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())
     {
         {
-            if(remove((mDatapackSub+"/pack/datapack.tar.xz").c_str())!=0 && errno!=ENOENT)
+            if(remove((mDatapackSub+"/pack/datapack-sub-"+mainDatapackCode+"-"+subDatapackCode+".tar.xz").c_str())!=0 && errno!=ENOENT)
             {
-                std::cerr << "Unable to remove " << mDatapackSub << "/pack/datapack.tar.xz" << std::endl;
+                std::cerr << "Unable to remove " << mDatapackSub << "/pack/datapack-sub-"+mainDatapackCode+"-"+subDatapackCode+".tar.xz" << std::endl;
                 abort();
             }
         }
         {
-            if(remove((mDatapackSub+"/datapack-list/Sub.txt").c_str())!=0 && errno!=ENOENT)
+            if(remove((mDatapackSub+"/datapack-list/sub-"+mainDatapackCode+"-"+subDatapackCode+".txt").c_str())!=0 && errno!=ENOENT)
             {
-                std::cerr << "Unable to remove " << mDatapackSub << "/datapack-list/sub.txt" << std::endl;
+                std::cerr << "Unable to remove " << mDatapackSub << "/datapack-list/sub-"+mainDatapackCode+"-"+subDatapackCode+".txt" << std::endl;
                 abort();
             }
         }
@@ -283,7 +281,7 @@ void DatapackDownloaderMainSub::test_mirror_sub()
 {
     if(!datapackTarXzSub)
     {
-        const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_sub)+"pack/datapack.tar.xz";
+        const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_sub)+"pack/datapack-sub-"+mainDatapackCode+"-"+subDatapackCode+".tar.xz";
 
         struct MemoryStruct chunk;
         chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
@@ -336,7 +334,7 @@ void DatapackDownloaderMainSub::test_mirror_sub()
             /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/sub.txt, and only after that's quit */
             return;
 
-        const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_sub)+"datapack-list/sub.txt";
+        const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_sub)+"datapack-list/sub-"+mainDatapackCode+"-"+subDatapackCode+".txt";
 
         struct MemoryStruct chunk;
         chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
@@ -474,7 +472,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
     {
         if(!datapackTarXzSub)
         {
-            std::cerr << "datapack.tar.xz size:" << data.size()/1000 << "KB" << std::endl;
+            std::cerr << "datapack-sub-"+mainDatapackCode+"-"+subDatapackCode+".tar.xz size:" << data.size()/1000 << "KB" << std::endl;
             datapackTarXzSub=true;
             QXzDecode xzDecodeSub(data,16*1024*1024);
             decodedIsFinishSub(xzDecodeSub);
@@ -482,7 +480,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
         }
         else
         {
-            /*ref crash here*/const std::string selectedMirror=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_sub);
+            /*ref crash here*/const std::string selectedMirror=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_sub)+"map/main/"+mainDatapackCode+"/sub/"+subDatapackCode+"/";
 
             httpError=false;
 
@@ -602,7 +600,6 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
                         {
                             httpError=true;
                             std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", error string: " << curl_easy_strerror(res) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
-                            datapackDownloadError();
                             curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
                             while((msg = curl_multi_info_read(DatapackDownloaderBase::curlm, &msgs_in_queue)))
                             {
@@ -623,6 +620,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
                                 curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
                             }
                             curl_easy_cleanup(curl);
+                            datapackDownloadError();
                             return;
                         }
                         std::cout << "Downloaded: " << url << std::endl;

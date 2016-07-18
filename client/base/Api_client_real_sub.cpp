@@ -263,11 +263,13 @@ void Api_client_real::test_mirror_sub()
     const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarXzSub)
     {
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_sub)+QStringLiteral("pack/datapack-sub-")+
-                                       QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
-                                       QStringLiteral("-")+
-                                       QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)+
-                                       QStringLiteral(".tar.xz"));
+        QString fullDatapack=httpDatapackMirrorList.at(index_mirror_sub)+QStringLiteral("pack/datapack-sub-")+
+                QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
+                QStringLiteral("-")+
+                QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)+
+                QStringLiteral(".tar.xz");
+        qDebug() << "Try download: " << fullDatapack;
+        QNetworkRequest networkRequest(fullDatapack);
         reply = qnam4.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListSub);//fix it, put httpFinished* broke it
@@ -421,7 +423,11 @@ void Api_client_real::httpFinishedForDatapackListSub()
     {
         if(!datapackTarXzSub)
         {
-            qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(reply->size()/1000);
+            qDebug() << QStringLiteral("pack/datapack-sub-")+
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
+                        QStringLiteral("-")+
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)+
+                        QStringLiteral(".tar.xz") << " size:" << QString("%1KB").arg(reply->size()/1000);
             datapackTarXzSub=true;
             QByteArray olddata=reply->readAll();
             std::vector<char> newdata;
