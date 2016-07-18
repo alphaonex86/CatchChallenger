@@ -47,6 +47,7 @@ git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 mv CatchChallenger-datapack/datapack/ datapack/
 
 For the Epoll server (linux only):
+Ubuntu: apt-get install qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev
 cd server/
 qmake catchchallenger-server-epoll.pro
 make
