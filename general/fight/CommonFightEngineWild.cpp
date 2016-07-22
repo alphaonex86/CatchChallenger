@@ -6,6 +6,7 @@
 #include "../base/GeneralVariable.h"
 
 #include <iostream>
+#include <cmath>
 
 using namespace CatchChallenger;
 

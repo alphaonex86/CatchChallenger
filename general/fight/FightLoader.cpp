@@ -14,6 +14,7 @@
 #include <vector>
 #include <iostream>
 #include <math.h>
+#include <cmath>
 
 using namespace CatchChallenger;
 
