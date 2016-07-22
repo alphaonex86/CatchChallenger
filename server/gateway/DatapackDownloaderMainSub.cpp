@@ -231,16 +231,18 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
 
     resetAll();
 
-    /*if(!DatapackDownloaderMainSub::commandUpdateDatapackMain.empty())
+    if(!DatapackDownloaderMainSub::commandUpdateDatapackMain.empty())
     {
-        if(QProcess::execute(QString::fromStdString(DatapackDownloaderMainSub::commandUpdateDatapackMain),QStringList() << QString::fromStdString(mDatapackMain))<0)
-            std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackMain << " " << mDatapackMain << std::endl;
+        const int ret = system((DatapackDownloaderMainSub::commandUpdateDatapackMain+" "+mainDatapackCode).c_str());
+        if(ret==-1)
+            std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackMain << " " << mainDatapackCode << std::endl;
     }
-    if(!DatapackDownloaderMainSub::commandUpdateDatapackSub.empty() && !mDatapackSub.empty())
+    if(!DatapackDownloaderMainSub::commandUpdateDatapackSub.empty())
     {
-        if(QProcess::execute(QString::fromStdString(DatapackDownloaderMainSub::commandUpdateDatapackSub),QStringList() << QString::fromStdString(mDatapackSub))<0)
-            std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mDatapackSub << std::endl;
-    }*/
+        const int ret = system((DatapackDownloaderMainSub::commandUpdateDatapackSub+" "+mainDatapackCode+" "+subDatapackCode).c_str());
+        if(ret==-1)
+            std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mainDatapackCode << " " << subDatapackCode << std::endl;
+    }
 }
 
 void DatapackDownloaderMainSub::checkIfContinueOrFinished()
