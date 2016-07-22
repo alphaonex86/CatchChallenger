@@ -73,10 +73,12 @@ void DatapackDownloaderBase::haveTheDatapack()
 
     resetAll();
 
-    /** \todo fix this in unix
-     * if(!DatapackDownloaderBase::commandUpdateDatapackBase.empty())
-        if(QProcess::execute(QString::fromStdString(DatapackDownloaderBase::commandUpdateDatapackBase),QStringList() << QString::fromStdString(mDatapackBase))<0)
-            std::cerr << "Unable to execute " << DatapackDownloaderBase::commandUpdateDatapackBase << " " << mDatapackBase << std::endl;*/
+    if(!DatapackDownloaderBase::commandUpdateDatapackBase.empty())
+    {
+        const int ret = system(DatapackDownloaderBase::commandUpdateDatapackBase.c_str());
+        if(ret==-1)
+            std::cerr << "Unable to execute " << DatapackDownloaderBase::commandUpdateDatapackBase << std::endl;
+    }
 }
 
 void DatapackDownloaderBase::resetAll()
