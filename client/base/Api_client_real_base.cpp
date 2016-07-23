@@ -281,9 +281,7 @@ void Api_client_real::test_mirror_base()
     const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarXzBase)
     {
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack-sub-")+
-                                       QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"-"+
-                                       QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)+QStringLiteral(".tar.xz"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.xz"));
         reply = qnam.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase);//fix it, put httpFinished* broke it
