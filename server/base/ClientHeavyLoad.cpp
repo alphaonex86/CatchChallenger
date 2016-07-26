@@ -82,7 +82,11 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
                     {
                         if(buf.st_size<=CATCHCHALLENGER_MAX_FILE_SIZE)
                         {
-                            FILE *filedesc = fopen((path+returnList.at(index)).c_str(), "rb");
+                            std::string fullPathFileToOpen=path+returnList.at(index);
+                            #ifdef Q_OS_WIN32
+                            stringreplaceAll(fullPathFileToOpen,"/","\\");
+                            #endif
+                            FILE *filedesc=fopen(fullPathFileToOpen.c_str(),"rb");
                             if(filedesc!=NULL)
                             {
                                 #ifdef _WIN32

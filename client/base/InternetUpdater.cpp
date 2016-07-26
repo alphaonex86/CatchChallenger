@@ -7,11 +7,11 @@
 #include <QUrl>
 #include <QRegularExpression>
 
-#ifdef __unix__
+#if defined(__unix__) || defined(Q_OS_UNIX) || !defined(Q_OS_WIN32)
     #include <unistd.h>
     #include <sys/types.h>
 #endif
-#ifdef _WIN32
+#if defined(_WIN32) || defined(Q_OS_WIN32)
     #ifndef NOMINMAX
         #define NOMINMAX
     #endif
@@ -153,7 +153,7 @@ QString InternetUpdater::getText(const QString &version)
                                                          );
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(Q_OS_WIN32)
 QString InternetUpdater::GetOSDisplayString()
 {
    QString Os;

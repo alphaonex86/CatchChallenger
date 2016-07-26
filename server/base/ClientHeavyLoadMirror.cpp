@@ -222,7 +222,11 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         auto i=filesListForSize.begin();
         while(i!=filesListForSize.cend())
         {
-            FILE *filedesc = fopen((datapackPath+i->first).c_str(), "rb");
+            std::string fullPathFileToOpen=datapackPath+i->first;
+            #ifdef Q_OS_WIN32
+            stringreplaceAll(fullPathFileToOpen,"/","\\");
+            #endif
+            FILE *filedesc=fopen(fullPathFileToOpen.c_str(),"rb");
             if(filedesc!=NULL)
             {
                 struct stat buf;
@@ -474,7 +478,11 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
         return false;
     }
 
-    FILE *filedesc = fopen((datapackPath+fileName).c_str(), "rb");
+    std::string fullPathFileToOpen=datapackPath+fileName;
+    #ifdef Q_OS_WIN32
+    stringreplaceAll(fullPathFileToOpen,"/","\\");
+    #endif
+    FILE *filedesc=fopen(fullPathFileToOpen.c_str(),"rb");
     if(filedesc!=NULL)
     {
         const std::vector<char> &content=FacilityLibGeneral::readAllFileAndClose(filedesc);
