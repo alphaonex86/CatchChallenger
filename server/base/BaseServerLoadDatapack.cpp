@@ -107,7 +107,11 @@ void BaseServer::preload_the_datapack()
         while(index<datapack_file_temp.size()) {
             if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
-                FILE *filedesc = fopen((GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index)).c_str(), "rb");
+                std::string fullPathFileToOpen=GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index);
+                #ifdef Q_OS_WIN32
+                stringreplaceAll(fullPathFileToOpen,"/","\\");
+                #endif
+                FILE *filedesc=fopen(fullPathFileToOpen.c_str(),"rb");
                 if(filedesc!=NULL)
                 {
                     //read and load the file
@@ -220,7 +224,11 @@ void BaseServer::preload_the_datapack()
         while(index<datapack_file_temp.size()) {
             if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
-                FILE *filedesc = fopen((GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index)).c_str(), "rb");
+                std::string fullPathFileToOpen=GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index);
+                #ifdef Q_OS_WIN32
+                stringreplaceAll(fullPathFileToOpen,"/","\\");
+                #endif
+                FILE *filedesc=fopen(fullPathFileToOpen.c_str(),"rb");
                 if(filedesc!=NULL)
                 {
                     //read and load the file
@@ -302,7 +310,11 @@ void BaseServer::preload_the_datapack()
         while(index<datapack_file_temp.size()) {
             if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
-                FILE *filedesc = fopen((GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index)).c_str(), "rb");
+                std::string fullPathFileToOpen=GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index);
+                #ifdef Q_OS_WIN32
+                stringreplaceAll(fullPathFileToOpen,"/","\\");
+                #endif
+                FILE *filedesc=fopen(fullPathFileToOpen.c_str(),"rb");
                 if(filedesc!=NULL)
                 {
                     //read and load the file

@@ -102,7 +102,11 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                     if(buf.st_size<=CATCHCHALLENGER_MAX_FILE_SIZE)
                     #endif
                     {
-                        FILE *filedesc = fopen((text_datapack+datapack_file_temp.at(index)).c_str(), "rb");
+                        std::string fullPathFileToOpen=text_datapack+datapack_file_temp.at(index);
+                        #ifdef Q_OS_WIN32
+                        stringreplaceAll(fullPathFileToOpen,"/","\\");
+                        #endif
+                        FILE *filedesc=fopen(fullPathFileToOpen.c_str(),"rb");
                         if(filedesc!=NULL)
                         {
                             const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
