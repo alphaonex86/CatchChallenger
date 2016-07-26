@@ -56,7 +56,11 @@ std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPa
                 const std::string &suffix=CatchChallenger::FacilityLibGeneral::getSuffix(fileName);
                 if(!suffix.empty() && extensionAllowed.find(suffix)!=extensionAllowed.cend())
                 {
-                    FILE *file=fopen((datapackPath+fileName).c_str(),"r");
+                    std::string fullPathFileToOpen=datapackPath+fileName;
+                    #ifdef Q_OS_WIN32
+                    stringreplaceAll(fullPathFileToOpen,"/","\\");
+                    #endif
+                    FILE *file=fopen(fullPathFileToOpen.c_str(),"rb");
                     if(file!=NULL)
                     {
                         const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
@@ -107,7 +111,11 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
             const std::string &suffix=CatchChallenger::FacilityLibGeneral::getSuffix(fileName);
             if(!suffix.empty() && extensionAllowed.find(suffix)!=extensionAllowed.cend())
             {
-                FILE *file=fopen((datapackPath+fileName).c_str(),"r");
+                std::string fullPathFileToOpen=datapackPath+fileName;
+                #ifdef Q_OS_WIN32
+                stringreplaceAll(fullPathFileToOpen,"/","\\");
+                #endif
+                FILE *file=fopen(fullPathFileToOpen.c_str(),"rb");
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
                 if(file!=NULL)
                 {
@@ -156,7 +164,11 @@ std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPa
                 const std::string &suffix=CatchChallenger::FacilityLibGeneral::getSuffix(fileName);
                 if(!suffix.empty() && extensionAllowed.find(suffix)!=extensionAllowed.cend())
                 {
-                    FILE *file=fopen((datapackPath+fileName).c_str(),"r");
+                    std::string fullPathFileToOpen=datapackPath+fileName;
+                    #ifdef Q_OS_WIN32
+                    stringreplaceAll(fullPathFileToOpen,"/","\\");
+                    #endif
+                    FILE *file=fopen(fullPathFileToOpen.c_str(),"rb");
                     if(file!=NULL)
                     {
                         const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
@@ -207,7 +219,11 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
             const std::string &suffix=CatchChallenger::FacilityLibGeneral::getSuffix(fileName);
             if(!suffix.empty() && extensionAllowed.find(suffix)!=extensionAllowed.cend())
             {
-                FILE *file=fopen((datapackPath+fileName).c_str(),"r");
+                std::string fullPathFileToOpen=datapackPath+fileName;
+                #ifdef Q_OS_WIN32
+                stringreplaceAll(fullPathFileToOpen,"/","\\");
+                #endif
+                FILE *file=fopen(fullPathFileToOpen.c_str(),"rb");
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
                 if(file!=NULL)
                 {
@@ -254,7 +270,11 @@ std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPat
                 const std::string &suffix=CatchChallenger::FacilityLibGeneral::getSuffix(fileName);
                 if(!suffix.empty() && extensionAllowed.find(suffix)!=extensionAllowed.cend())
                 {
-                    FILE *file=fopen((datapackPath+fileName).c_str(),"r");
+                    std::string fullPathFileToOpen=datapackPath+fileName;
+                    #ifdef Q_OS_WIN32
+                    stringreplaceAll(fullPathFileToOpen,"/","\\");
+                    #endif
+                    FILE *file=fopen(fullPathFileToOpen.c_str(),"rb");
                     if(file!=NULL)
                     {
                         const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
@@ -304,7 +324,11 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
             const std::string &suffix=CatchChallenger::FacilityLibGeneral::getSuffix(fileName);
             if(!suffix.empty() && extensionAllowed.find(suffix)!=extensionAllowed.cend())
             {
-                FILE *file=fopen((datapackPath+fileName).c_str(),"r");
+                std::string fullPathFileToOpen=datapackPath+fileName;
+                #ifdef Q_OS_WIN32
+                stringreplaceAll(fullPathFileToOpen,"/","\\");
+                #endif
+                FILE *file=fopen(fullPathFileToOpen.c_str(),"rb");
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
                 if(file!=NULL)
                 {

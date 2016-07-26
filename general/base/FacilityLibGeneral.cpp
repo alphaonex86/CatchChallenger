@@ -160,7 +160,15 @@ std::vector<std::string> FacilityLibGeneral::skinIdList(const std::string& skinP
 
 bool FacilityLibGeneral::isFile(const std::string& file)
 {
-    if (FILE *filedesc = fopen(file.c_str(), "rb")) {
+    #ifdef Q_OS_WIN32
+    std::string fullPathFileToOpen=file;
+    stringreplaceAll(fullPathFileToOpen,"/","\\");
+    FILE *filedesc=fopen(fullPathFileToOpen.c_str(),"rb");
+    #else
+    FILE *filedesc = fopen(file.c_str(), "rb");
+    #endif
+    if(filedesc!=NULL)
+    {
         fclose(filedesc);
         return true;
     } else {
@@ -191,6 +199,18 @@ std::vector<char> FacilityLibGeneral::readAllFileAndClose(FILE * file)
     int64_t size=fread(data.data(),1,fsize,file);
     if(size!=fsize)
     {
+        if(ferror(file))
+        {
+            int ferrorCode=ferror(file);
+            int errnoCode=errno;
+            std::cerr << "I/O error when reading, ferrorCode: " << ferrorCode << ", errnoCode: " << errnoCode << std::endl;
+            abort();
+        }
+        if(feof(file))
+        {
+            std::cerr << "Error: At the end of file" << std::endl;
+            abort();
+        }
         std::cerr << "Read file size not same" << std::endl;
         abort();
     }
