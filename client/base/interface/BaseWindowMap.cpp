@@ -220,7 +220,7 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, 
 {
     if(!map->bots.contains(QPair<uint8_t,uint8_t>(x,y)))
     {
-        newError(tr("Internal error"),"Bot trigged but no bot at this place");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Bot trigged but no bot at this place");
         return;
     }
     uint8_t step=1;
@@ -228,7 +228,7 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, 
     isInQuest=false;
     if(actualBot.step.find(step)==actualBot.step.cend())
     {
-        newError(tr("Internal error"),"Bot trigged but no step found");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Bot trigged but no step found");
         return;
     }
     if(*actualBot.step.at(step)->Attribute(std::string("type"))=="fight")
@@ -250,7 +250,7 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, 
     }
     else
     {
-        newError(tr("Internal error"),"Bot trigged but not found");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Bot trigged but not found");
         return;
     }
 }

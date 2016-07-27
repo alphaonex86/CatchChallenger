@@ -9,6 +9,8 @@
 #include <QSslKey>
 #include <QInputDialog>
 #include <QSettings>
+#include <algorithm>
+#include <string>
 
 #include "../../general/base/GeneralVariable.h"
 #include "../base/PlatformMacro.h"
@@ -1001,7 +1003,8 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         return;
     }
     {
-        const std::string &pass=ui->lineEditPass->text().toStdString();
+        std::string pass=ui->lineEditPass->text().toStdString();
+        std::transform(pass.begin(), pass.end(), pass.begin(), ::tolower);
         unsigned int index=0;
         while(index<BlacklistPassword::list.size())
         {

@@ -262,7 +262,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             monsterPositionToLearn=itemId;
             if(!showLearnSkillByPosition(monsterPositionToLearn))
             {
-                newError(tr("Internal error"),"Unable to load the right monster");
+                newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Unable to load the right monster");
                 return;
             }
         }
@@ -388,7 +388,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             if(!DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
             {
                 qDebug() << "Item is not a plant";
-                QMessageBox::critical(this,tr("Error"),tr("Internal error"));
+                QMessageBox::critical(this,tr("Error"),tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
                 seed_in_waiting.removeLast();
                 return;
             }

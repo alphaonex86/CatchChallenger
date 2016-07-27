@@ -790,15 +790,15 @@ void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id
     switch(errorCode)
     {
         case 0x03:
-            errorParsingLayer("Character already connected/online");
+            errorParsingLayer("Master have relply: Character already connected/online");
         break;
         case 0x05:
         break;
         case 0x08:
-            errorParsingLayer("Character too recently disconnected");
+            errorParsingLayer("Master have relply: Character too recently disconnected");
         break;
         default:
-            errorParsingLayer("EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode));
+            errorParsingLayer("Master have relply: EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode));
         break;
     }
 }

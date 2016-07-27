@@ -506,7 +506,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
 
             if(selectedServerIndex==-1)
             {
-                parseError(QStringLiteral("Internal error"),QStringLiteral("selectedServerIndex==-1 with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("selectedServerIndex==-1 with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                 return false;
             }
             const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);

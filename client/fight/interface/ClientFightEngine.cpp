@@ -351,7 +351,7 @@ bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectRetu
                 publicPlayerMonster=&battleCurrentMonster.first();
             else
             {
-                emit newError(tr("Internal error"),"unknown other monster type");
+                emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"unknown other monster type");
                 return false;
             }
             quantity=effectReturn.quantity;
@@ -434,7 +434,7 @@ void ClientFightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackRet
                 qDebug() << "addAndApplyAttackReturnList() life effect on " << lifeEffect.on << ", quantity:" << lifeEffect.quantity;
                 if(!applyCurrentLifeEffectReturn(lifeEffect))
                 {
-                    emit newError(tr("Internal error"),"Error applying the life effect");
+                    emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Error applying the life effect");
                     return;
                 }
                 sub_index++;
@@ -448,7 +448,7 @@ void ClientFightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackRet
                 qDebug() << "addAndApplyAttackReturnList() life effect on " << buffEffect.on << ", quantity:" << buffEffect.quantity;
                 if(!applyCurrentLifeEffectReturn(buffEffect))
                 {
-                    emit newError(tr("Internal error"),"Error applying the life effect");
+                    emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Error applying the life effect");
                     return;
                 }
                 sub_index++;
@@ -544,12 +544,12 @@ bool ClientFightEngine::firstLifeEffectQuantityChange(int32_t quantity)
 {
     if(fightEffectList.isEmpty())
     {
-        emit newError(tr("Internal error"),"try add quantity to non existant life effect");
+        emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"try add quantity to non existant life effect");
         return false;
     }
     if(fightEffectList.first().lifeEffectMonster.empty())
     {
-        emit newError(tr("Internal error"),"try add quantity to life effect list empty");
+        emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"try add quantity to life effect list empty");
         return false;
     }
     fightEffectList.first().lifeEffectMonster.front().quantity+=quantity;

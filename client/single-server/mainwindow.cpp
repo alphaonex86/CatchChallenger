@@ -15,6 +15,8 @@
 #include <QNetworkProxy>
 #include <QStandardPaths>
 #include <QSslKey>
+#include <algorithm>
+#include <string>
 
 #ifdef __linux__
 #include <sys/types.h>
@@ -299,7 +301,8 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         return;
     }
     {
-        const std::string &pass=ui->lineEditPass->text().toStdString();
+        std::string pass=ui->lineEditPass->text().toStdString();
+        std::transform(pass.begin(), pass.end(), pass.begin(), ::tolower);
         unsigned int index=0;
         while(index<BlacklistPassword::list.size())
         {

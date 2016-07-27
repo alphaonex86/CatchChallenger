@@ -31,7 +31,7 @@ void BaseWindow::clanActionSuccess(const uint32_t &clanId)
             showTip(tr("You have correctly ejected the player from clan"));
         break;
         default:
-        newError(tr("Internal error"),"ActionClan unknown");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"ActionClan unknown");
         return;
     }
     actionClan.removeFirst();
@@ -54,7 +54,7 @@ void BaseWindow::clanActionFailed()
             showTip(tr("You have failed to eject the player from clan"));
         break;
         default:
-        newError(tr("Internal error"),"ActionClan unknown");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"ActionClan unknown");
         return;
     }
     actionClan.removeFirst();
