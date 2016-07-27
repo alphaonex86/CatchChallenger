@@ -113,7 +113,7 @@ void BaseWindow::doNextAction()
         uint32_t returnedLastGivenXP=CatchChallenger::ClientFightEngine::fightEngine.lastGivenXP();
         if(returnedLastGivenXP>2*1000*1000)
         {
-            newError(tr("Internal error"),QStringLiteral("returnedLastGivenXP is negative"));
+            newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("returnedLastGivenXP is negative"));
             doNextAction();
             return;
         }
@@ -254,7 +254,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
     }
     if(currentMonster==NULL)
     {
-        newError(tr("Internal error"),"displayAttack(): crash: unable to get the current monster");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"displayAttack(): crash: unable to get the current monster");
         doNextAction();
         return false;
     }
@@ -673,13 +673,13 @@ void BaseWindow::displayAttack()
     }
     if(currentMonster==NULL)
     {
-        newError(tr("Internal error"),"displayAttack(): crash: unable to get the current monster");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"displayAttack(): crash: unable to get the current monster");
         doNextAction();
         return;
     }
     if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().isEmpty())
     {
-        newError(tr("Internal error"),"displayAttack(): crash: display an empty attack return");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"displayAttack(): crash: display an empty attack return");
         doNextAction();
         return;
     }
@@ -717,7 +717,7 @@ void BaseWindow::displayAttack()
         lifeEffectReturn=attackReturn.buffLifeEffectMonster.front();
     else
     {
-        newError(tr("Internal error"),QStringLiteral("displayAttack(): strange: nothing to display, lifeEffectMonster.size(): %1, buffLifeEffectMonster.size(): %2, addBuffEffectMonster.size(): %3, removeBuffEffectMonster.size(): %4, AttackReturnList: %5")
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("displayAttack(): strange: nothing to display, lifeEffectMonster.size(): %1, buffLifeEffectMonster.size(): %2, addBuffEffectMonster.size(): %3, removeBuffEffectMonster.size(): %4, AttackReturnList: %5")
                     .arg(attackReturn.lifeEffectMonster.size())
                     .arg(attackReturn.buffLifeEffectMonster.size())
                     .arg(attackReturn.addBuffEffectMonster.size())
