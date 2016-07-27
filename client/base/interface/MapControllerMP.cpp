@@ -202,7 +202,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_right:
             case CatchChallenger::Direction_move_at_bottom:
             case CatchChallenger::Direction_move_at_left:
-            QMessageBox::critical(NULL,tr("Internal error"),tr("The direction send by the server is wrong"));
+            QMessageBox::critical(NULL,tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),tr("The direction send by the server is wrong"));
             return true;
             default:
             break;
@@ -242,7 +242,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             }
             break;
             default:
-            QMessageBox::critical(NULL,tr("Internal error"),tr("The direction send by the server is wrong"));
+            QMessageBox::critical(NULL,tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),tr("The direction send by the server is wrong"));
             return true;
         }
 
@@ -1073,7 +1073,7 @@ void MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const u
         }
         break;
         default:
-        QMessageBox::critical(NULL,tr("Internal error"),tr("The direction send by the server is wrong"));
+        QMessageBox::critical(NULL,tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),tr("The direction send by the server is wrong"));
         return;
     }
 

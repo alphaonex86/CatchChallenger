@@ -383,9 +383,9 @@ void CharactersGroup::lockTheCharacter(const uint32_t &characterId)
     }
     #endif
     lockedAccount[characterId]=0;
-    /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::cerr << "lock the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
-    #endif*/
+    #endif
 }
 
 //don't apply on InternalGameServer
@@ -400,9 +400,9 @@ void CharactersGroup::unlockTheCharacter(const uint32_t &characterId)
     const uint64_t &now=sFrom1970();
     lockedAccount[characterId]=now+CharactersGroup::maxLockAge;
     addToCacheLockToDelete(characterId,now+CharactersGroup::maxLockAge);
-    /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::cerr << "unlock the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
-    #endif*/
+    #endif
 }
 
 void CharactersGroup::waitBeforeReconnect(const uint32_t &characterId)
@@ -416,7 +416,9 @@ void CharactersGroup::waitBeforeReconnect(const uint32_t &characterId)
     const uint64_t &now=sFrom1970();
     lockedAccount[characterId]=now+5;
     addToCacheLockToDelete(characterId,now+CharactersGroup::maxLockAge);
-    //std::cerr << "waitBeforeReconnect the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cerr << "waitBeforeReconnect the char " << std::to_string(characterId) << " total locked: " << std::to_string(lockedAccount.size()) << std::endl;
+    #endif
 }
 
 void CharactersGroup::purgeTheLockedAccount()
@@ -452,13 +454,17 @@ void CharactersGroup::purgeTheLockedAccount()
     }
     if(index>=cacheLockToDeleteList.size())
     {
-        //std::cout << "purged char number: " << std::to_string(cacheLockToDeleteList.size()) << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cout << "purged char number: " << std::to_string(cacheLockToDeleteList.size()) << std::endl;
+        #endif
         cacheLockToDeleteList.clear();
     }
     else if(index<cacheLockToDeleteList.size() && index>0)
     {
         cacheLockToDeleteList.erase(cacheLockToDeleteList.cbegin(),cacheLockToDeleteList.cbegin()+index);
-        //std::cout << "purged char number " << std::to_string(index) << ", total locked: " << std::to_string(lockedAccount.size()) << ", remaining time locked: " << std::to_string(cacheLockToDeleteList.size()) << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cout << "purged char number " << std::to_string(index) << ", total locked: " << std::to_string(lockedAccount.size()) << ", remaining time locked: " << std::to_string(cacheLockToDeleteList.size()) << std::endl;
+        #endif
     }
 }
 

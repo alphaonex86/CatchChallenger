@@ -84,7 +84,7 @@ void BaseWindow::seed_planted(const bool &ok)
             if(!DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
             {
                 qDebug() << "Item is not a plant";
-                QMessageBox::critical(this,tr("Error"),tr("Internal error"));
+                QMessageBox::critical(this,tr("Error"),tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
                 return;
             }
             const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
