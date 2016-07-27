@@ -734,7 +734,7 @@ void BaseWindow::moveFightMonsterBottom()
                 PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
                 if(monster==NULL)
                 {
-                    newError(tr("Internal error"),"NULL pointer at updateCurrentMonsterInformation()");
+                    newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"NULL pointer at updateCurrentMonsterInformation()");
                     return;
                 }
                 ui->labelFightEnter->setText(tr("Go %1").arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster->monster).name));
@@ -805,7 +805,7 @@ void BaseWindow::updateCurrentMonsterInformationXp()
     PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(monster==NULL)
     {
-        newError(tr("Internal error"),"NULL pointer at updateCurrentMonsterInformation()");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"NULL pointer at updateCurrentMonsterInformation()");
         return;
     }
     ui->progressBarFightBottomExp->setValue(monster->remaining_xp);
@@ -820,13 +820,13 @@ void BaseWindow::updateCurrentMonsterInformation()
 {
     if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
     {
-        newError(tr("Internal error"),"Try update the monster when have not any ready monster");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Try update the monster when have not any ready monster");
         return;
     }
     PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(monster==NULL)
     {
-        newError(tr("Internal error"),"NULL pointer at updateCurrentMonsterInformation()");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"NULL pointer at updateCurrentMonsterInformation()");
         return;
     }
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT
@@ -847,13 +847,13 @@ void BaseWindow::updateAttackList()
 {
     if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
     {
-        newError(tr("Internal error"),"Try update the monster when have not any ready monster");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Try update the monster when have not any ready monster");
         return;
     }
     PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(monster==NULL)
     {
-        newError(tr("Internal error"),"NULL pointer at updateCurrentMonsterInformation()");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"NULL pointer at updateCurrentMonsterInformation()");
         return;
     }
     //list the attack
@@ -1108,7 +1108,7 @@ void BaseWindow::updateOtherMonsterInformation()
 {
     if(!CatchChallenger::ClientFightEngine::fightEngine.isInFight())
     {
-        newError(tr("Internal error"),"updateOtherMonsterInformation() but have not other monter");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"updateOtherMonsterInformation() but have not other monter");
         return;
     }
     QPoint p;
@@ -1160,7 +1160,7 @@ void BaseWindow::updateOtherMonsterInformation()
     }
     else
     {
-        newError(tr("Internal error"),"Unable to load the other monster");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Unable to load the other monster");
         return;
     }
 }
@@ -1221,7 +1221,7 @@ void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
     PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
     if(monster==NULL)
     {
-        newError(tr("Internal error"),"NULL pointer at updateCurrentMonsterInformation()");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"NULL pointer at updateCurrentMonsterInformation()");
         return;
     }
     if(useTheRescueSkill)
@@ -1564,7 +1564,7 @@ void BaseWindow::displayExperienceGain()
     if(currentMonster==NULL)
     {
         mLastGivenXP=0;
-        newError(tr("Internal error"),"displayAttack(): crash: unable to get the current monster");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"displayAttack(): crash: unable to get the current monster");
         doNextAction();
         return;
     }
@@ -1579,13 +1579,13 @@ void BaseWindow::displayExperienceGain()
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mLastGivenXP>4294000000)
         {
-            newError(tr("Internal error"),QStringLiteral("part0: mLastGivenXP is negative"));
+            newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("part0: mLastGivenXP is negative"));
             doNextAction();
             return;
         }
         if(currentMonsterLevel>currentMonster->level)
         {
-            newError(tr("Internal error"),QStringLiteral("par0: displayed level greater than the real level: %1>%2").arg(currentMonsterLevel).arg(currentMonster->level));
+            newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("par0: displayed level greater than the real level: %1>%2").arg(currentMonsterLevel).arg(currentMonster->level));
             mLastGivenXP=0;
             doNextAction();
             return;
@@ -1612,13 +1612,13 @@ void BaseWindow::displayExperienceGain()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(mLastGivenXP>4294000000)
     {
-        newError(tr("Internal error"),QStringLiteral("part1: mLastGivenXP is negative"));
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("part1: mLastGivenXP is negative"));
         doNextAction();
         return;
     }
     if(currentMonsterLevel>currentMonster->level)
     {
-        newError(tr("Internal error"),QStringLiteral("part1: displayed level greater than the real level: %1>%2").arg(currentMonsterLevel).arg(currentMonster->level));
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("part1: displayed level greater than the real level: %1>%2").arg(currentMonsterLevel).arg(currentMonster->level));
         mLastGivenXP=0;
         doNextAction();
         return;
@@ -1671,13 +1671,13 @@ void BaseWindow::displayExperienceGain()
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(mLastGivenXP>4294000000)
         {
-            newError(tr("Internal error"),QStringLiteral("part2: mLastGivenXP is negative"));
+            newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("part2: mLastGivenXP is negative"));
             doNextAction();
             return;
         }
         if(currentMonsterLevel>currentMonster->level)
         {
-            newError(tr("Internal error"),QStringLiteral("part2: displayed level greater than the real level: %1>%2").arg(currentMonsterLevel).arg(currentMonster->level));
+            newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("part2: displayed level greater than the real level: %1>%2").arg(currentMonsterLevel).arg(currentMonster->level));
             mLastGivenXP=0;
             doNextAction();
             return;
@@ -1716,13 +1716,13 @@ void BaseWindow::displayExperienceGain()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(mLastGivenXP>4294000000)
     {
-        newError(tr("Internal error"),QStringLiteral("part3: mLastGivenXP is negative"));
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("part3: mLastGivenXP is negative"));
         doNextAction();
         return;
     }
     if(currentMonsterLevel>currentMonster->level)
     {
-        newError(tr("Internal error"),QStringLiteral("part3: displayed level greater than the real level: %1>%2").arg(currentMonsterLevel).arg(currentMonster->level));
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("part3: displayed level greater than the real level: %1>%2").arg(currentMonsterLevel).arg(currentMonster->level));
         mLastGivenXP=0;
         doNextAction();
         return;
@@ -1745,7 +1745,7 @@ void BaseWindow::displayTrap()
     }
     if(currentMonster==NULL)
     {
-        newError(tr("Internal error"),"displayAttack(): crash: unable to get the current monster");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"displayAttack(): crash: unable to get the current monster");
         doNextAction();
         return;
     }
@@ -1966,7 +1966,7 @@ void BaseWindow::on_learnAttackList_itemActivated(QListWidgetItem *item)
 {
     if(!attack_to_learn_graphical.contains(item))
     {
-        newError(tr("Internal error"),"Selected item wrong");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Selected item wrong");
         return;
     }
     if(!learnSkillByPosition(monsterPositionToLearn,attack_to_learn_graphical.value(item)))
@@ -1983,7 +1983,7 @@ bool BaseWindow::learnSkillByPosition(const uint8_t &monsterPosition,const uint3
 {
     if(!showLearnSkillByPosition(monsterPosition))
     {
-        newError(tr("Internal error"),"Unable to load the right monster");
+        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Unable to load the right monster");
         return false;
     }
     if(ClientFightEngine::fightEngine.learnSkill(ClientFightEngine::fightEngine.monsterByPosition(monsterPosition),skill))

@@ -168,7 +168,7 @@ void Api_protocol::parseIncommingData()
 
 void Api_protocol::errorParsingLayer(const std::string &error)
 {
-    emit newError(tr("Internal error"),QString::fromStdString(error));
+    emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QString::fromStdString(error));
 }
 
 void Api_protocol::messageParsingLayer(const std::string &message) const
@@ -245,18 +245,18 @@ void Api_protocol::socketDisconnectedForReconnect()
     }
     if(selectedServerIndex==-1)
     {
-        parseError(QStringLiteral("Internal error"),QStringLiteral("selectedServerIndex==-1 with Api_protocol::socketDisconnectedForReconnect()"));
+        parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("selectedServerIndex==-1 with Api_protocol::socketDisconnectedForReconnect()"));
         return;
     }
     const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);
     if(serverFromPoolForDisplay.host.isEmpty())
     {
-        parseError(QStringLiteral("Internal error"),QStringLiteral("serverFromPoolForDisplay.host.isEmpty() with Api_protocol::socketDisconnectedForReconnect()"));
+        parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("serverFromPoolForDisplay.host.isEmpty() with Api_protocol::socketDisconnectedForReconnect()"));
         return;
     }
     if(socket==NULL)
     {
-        parseError(QStringLiteral("Internal error"),QStringLiteral("socket==NULL with Api_protocol::socketDisconnectedForReconnect()"));
+        parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("socket==NULL with Api_protocol::socketDisconnectedForReconnect()"));
         return;
     }
     stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3;//prevent loop in stage2
@@ -2138,7 +2138,7 @@ void Api_protocol::connectTheExternalSocketInternal()
         {
             if(selectedServerIndex==-1)
             {
-                parseError(QStringLiteral("Internal error"),QStringLiteral("Api_protocol::connectTheExternalSocket() selectedServerIndex==-1"));
+                parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("Api_protocol::connectTheExternalSocket() selectedServerIndex==-1"));
                 return;
             }
             const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);
@@ -2146,7 +2146,7 @@ void Api_protocol::connectTheExternalSocketInternal()
         }
         else
         {
-            parseError(QStringLiteral("Internal error"),QStringLiteral("Api_protocol::connectTheExternalSocket() stageConnexion!=StageConnexion::Stage1/3"));
+            parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("Api_protocol::connectTheExternalSocket() stageConnexion!=StageConnexion::Stage1/3"));
             return;
         }
         if(certFile.exists())
