@@ -56,9 +56,9 @@ public:
     void decodedIsFinishBase();
     void decodedIsFinishMain();
     void decodedIsFinishSub();
-    bool mirrorTryNextBase();
-    bool mirrorTryNextMain();
-    bool mirrorTryNextSub();
+    bool mirrorTryNextBase(const QString &error);
+    bool mirrorTryNextMain(const QString &error);
+    bool mirrorTryNextSub(const QString &error);
     void httpFinishedForDatapackListBase();
     void httpFinishedForDatapackListMain();
     void httpFinishedForDatapackListSub();

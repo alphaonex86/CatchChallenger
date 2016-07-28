@@ -146,7 +146,7 @@ void Api_client_real::httpFinishedBase()
     if(!reply->isFinished())
     {
         httpError=true;
-        newError(tr("Unable to download the datapack"),QStringLiteral("get the new update failed: not finished"));
+        newError(tr("Unable to download the datapack")+"<br />Details:<br />"+reply->url().toString()+"<br />get the new update failed: not finished",QStringLiteral("get the new update failed: not finished"));
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
@@ -154,13 +154,13 @@ void Api_client_real::httpFinishedBase()
     else if(reply->error())
     {
         httpError=true;
-        newError(tr("Unable to download the datapack"),QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
+        newError(tr("Unable to download the datapack")+"<br />Details:<br />"+reply->url().toString()+"<br />"+QStringLiteral("get the new update failed: %1").arg(reply->errorString()),QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
     } else if(!redirectionTarget.isNull()) {
         httpError=true;
-        newError(tr("Unable to download the datapack"),QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
+        newError(tr("Unable to download the datapack")+"<br />Details:<br />"+reply->url().toString()+"<br />"+QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()),QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
@@ -305,7 +305,7 @@ void Api_client_real::test_mirror_base()
     else
     {
         qDebug() << reply->url().toString() << reply->errorString();
-        mirrorTryNextBase();
+        mirrorTryNextBase(reply->url().toString()+": "+reply->errorString());
         return;
     }
 }
@@ -358,7 +358,7 @@ void Api_client_real::decodedIsFinishBase()
     }
 }
 
-bool Api_client_real::mirrorTryNextBase()
+bool Api_client_real::mirrorTryNextBase(const QString &error)
 {
     if(datapackTarXzBase==false)
     {
@@ -371,7 +371,7 @@ bool Api_client_real::mirrorTryNextBase()
         index_mirror_base++;
         if(index_mirror_base>=QString::fromStdString(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
         {
-            newError(tr("Unable to download the datapack"),QStringLiteral("Get the list failed"));
+            newError(tr("Unable to download the datapack")+"<br />Details:<br />"+error,QStringLiteral("Get the list failed: ")+error);
             return false;
         }
         else
@@ -394,21 +394,23 @@ void Api_client_real::httpFinishedForDatapackListBase()
     if(!reply->isFinished() || reply->error() || !redirectionTarget.isNull())
     {
         const QNetworkProxy &proxy=qnam.proxy();
+        QString errorString;
         if(proxy==QNetworkProxy::NoProxy)
-            qDebug() << (QStringLiteral("Problem with the datapack list reply:%1 %2 (try next)")
+            errorString=(QStringLiteral("Problem with the datapack list reply:%1 %2 (try next)")
                                                   .arg(reply->url().toString())
                                                   .arg(reply->errorString())
                                                   );
         else
-            qDebug() << (QStringLiteral("Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
+            errorString=(QStringLiteral("Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
                                                   .arg(reply->url().toString())
                                                   .arg(reply->errorString())
                                                   .arg(proxy.hostName())
                                                   .arg(proxy.port())
                                                   .arg(proxy.type())
                                                   );
+        qDebug() << errorString;
         reply->deleteLater();
-        mirrorTryNextBase();
+        mirrorTryNextBase(errorString);
         return;
     }
     else
