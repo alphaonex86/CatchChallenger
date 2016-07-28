@@ -75,6 +75,14 @@ function compil {
             echo "${FINAL_ARCHIVE} not exists!";
             exit;
         fi
+        minimumsize=10000000
+        actualsize=$(wc -c <"${FINAL_ARCHIVE}")
+        if [ $actualsize -ge $minimumsize ]; then
+            echo ${FINAL_ARCHIVE} size is over $minimumsize bytes, all is good
+        else
+            echo size is under $minimumsize bytes: abort
+            exit
+        fi
         ssh ${SSHUSER}@${IPMAC} "rm -fR /Users/${SSHUSER}/Desktop/CatchChallenger/"
         echo "Making binary debug Mac dmg... done"
     else
@@ -125,6 +133,14 @@ function compilserver {
         if [ ! -e ${FINAL_ARCHIVE} ]; then
             echo "${FINAL_ARCHIVE} not exists!";
             exit;
+        fi
+        minimumsize=10000000
+        actualsize=$(wc -c <"${FINAL_ARCHIVE}")
+        if [ $actualsize -ge $minimumsize ]; then
+            echo ${FINAL_ARCHIVE} size is over $minimumsize bytes, all is good
+        else
+            echo size is under $minimumsize bytes: abort
+            exit
         fi
         ssh ${SSHUSER}@${IPMAC} "rm -fR /Users/${SSHUSER}/Desktop/CatchChallenger/"
         echo "Making binary debug Mac dmg... done"
