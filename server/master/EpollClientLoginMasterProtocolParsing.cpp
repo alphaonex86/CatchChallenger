@@ -523,7 +523,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                     unsigned int characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                     pos+=sizeof(uint32_t);
                     connectedPlayer.insert(characterId);
-                    charactersGroupForGameServerInformation->lockedAccountByGameserver.erase(characterId);
+                    //charactersGroupForGameServerInformation->lockedAccountByGameserver.erase(characterId);-> not here, object not set, do a crash, already done by addGameServerUniqueKey()
                     index++;
                 }
             }
