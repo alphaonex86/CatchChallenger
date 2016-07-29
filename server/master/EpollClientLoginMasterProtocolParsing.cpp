@@ -172,16 +172,20 @@ bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType, const cha
                     return false;
                 }
                 const unsigned int posFromZero=gameServers.size()-1-index;
-                const unsigned int bufferPos=2-2*/*last is zero*/posFromZero;
-
-                if(EpollClientLoginMaster::serverServerListSize>=bufferPos)
-                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverServerList+EpollClientLoginMaster::serverServerListSize-bufferPos)=rawPlayerCount;
+                const unsigned int bufferPos=2+2*/*last is zero*/posFromZero;
+                if(bufferPos>8*1024*1024)
+                    std::cerr << "bufferPos>8M: 2+2*"+std::to_string(posFromZero) << std::endl;
                 else
-                    std::cerr << "EpollClientLoginMaster::serverServerListSize<bufferPos: "+std::to_string(EpollClientLoginMaster::serverServerListSize) << " and " << std::to_string(bufferPos) << std::endl;
-                if(EpollClientLoginMaster::loginPreviousToReplyCacheSize>=bufferPos)
-                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize-bufferPos)=rawPlayerCount;
-                else
-                    std::cerr << "EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize<bufferPos: " << std::to_string(EpollClientLoginMaster::loginPreviousToReplyCacheSize) << " and " << std::to_string(bufferPos) << std::endl;
+                {
+                    if(EpollClientLoginMaster::serverServerListSize>=bufferPos)
+                        *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverServerList+EpollClientLoginMaster::serverServerListSize-bufferPos)=rawPlayerCount;
+                    else
+                        std::cerr << "EpollClientLoginMaster::serverServerListSize<bufferPos: "+std::to_string(EpollClientLoginMaster::serverServerListSize) << " and " << std::to_string(bufferPos) << std::endl;
+                    if(EpollClientLoginMaster::loginPreviousToReplyCacheSize>=bufferPos)
+                        *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize-bufferPos)=rawPlayerCount;
+                    else
+                        std::cerr << "EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize<bufferPos: " << std::to_string(EpollClientLoginMaster::loginPreviousToReplyCacheSize) << " and " << std::to_string(bufferPos) << std::endl;
+                }
             }
             currentPlayerForGameServerToUpdate=true;
             return true;
