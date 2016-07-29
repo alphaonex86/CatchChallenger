@@ -148,26 +148,40 @@ bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType, const cha
                 return false;
             }
             #endif
-            charactersGroupForGameServerInformation->currentPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(parseMessagedata)));
-            if(charactersGroupForGameServerInformation->currentPlayer>charactersGroupForGameServerInformation->maxPlayer)
+            const uint16_t rawPlayerCount=*reinterpret_cast<uint16_t *>(const_cast<char *>(parseMessagedata));
+            const uint16_t newPlayerCount=le16toh(rawPlayerCount);
+            if(newPlayerCount>charactersGroupForGameServerInformation->maxPlayer)
             {
                 parseNetworkReadError("charactersGroupForGameServerInformation->currentPlayer > charactersGroupForGameServerInformation->maxPlayer main ident: "+std::to_string(mainCodeType));
                 return false;
             }
+            charactersGroupForGameServerInformation->currentPlayer=newPlayerCount;
             {
                 /*do the partial alteration of:
                 EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
                 EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();*/
                 const int index=vectorindexOf(gameServers,this);
-                if(index==-1)
+                if(index<0)
                 {
                     parseNetworkReadError("gameServers.indexOf(this)==-1 main ident: "+std::to_string(mainCodeType));
                     return false;
                 }
-                const int posFromZero=gameServers.size()-1-index;
+                if(gameServers.size()<(1+(unsigned int)index))
+                {
+                    parseNetworkReadError("gameServers.size()<(1+index): "+std::to_string(gameServers.size())+"<(1+"+std::to_string(index)+") main ident: "+std::to_string(mainCodeType));
+                    return false;
+                }
+                const unsigned int posFromZero=gameServers.size()-1-index;
                 const unsigned int bufferPos=2-2*/*last is zero*/posFromZero;
-                *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverServerList+EpollClientLoginMaster::serverServerListSize-bufferPos)=*reinterpret_cast<uint16_t *>(const_cast<char *>(parseMessagedata));
-                *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize-bufferPos)=*reinterpret_cast<uint16_t *>(const_cast<char *>(parseMessagedata));
+
+                if(EpollClientLoginMaster::serverServerListSize>=bufferPos)
+                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::serverServerList+EpollClientLoginMaster::serverServerListSize-bufferPos)=rawPlayerCount;
+                else
+                    std::cerr << "EpollClientLoginMaster::serverServerListSize<bufferPos: "+std::to_string(EpollClientLoginMaster::serverServerListSize) << " and " << std::to_string(bufferPos) << std::endl;
+                if(EpollClientLoginMaster::loginPreviousToReplyCacheSize>=bufferPos)
+                    *reinterpret_cast<uint16_t *>(EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize-bufferPos)=rawPlayerCount;
+                else
+                    std::cerr << "EpollClientLoginMaster::loginPreviousToReplyCache+EpollClientLoginMaster::loginPreviousToReplyCacheSize<bufferPos: " << std::to_string(EpollClientLoginMaster::loginPreviousToReplyCacheSize) << " and " << std::to_string(bufferPos) << std::endl;
             }
             currentPlayerForGameServerToUpdate=true;
             return true;
