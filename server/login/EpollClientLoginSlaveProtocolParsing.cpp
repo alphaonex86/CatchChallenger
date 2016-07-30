@@ -319,7 +319,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
         case 0x02:
             if((movePacketKickTotalCache+movePacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITMOVE)
             {
-                parseNetworkReadError("Too many move in sort time, check DDOS limit");
+                parseNetworkReadError("Too many move in sort time, check DDOS limit: ("+std::to_string(movePacketKickTotalCache)+"+"+std::to_string(movePacketKickNewValue)+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITMOVE));
                 return false;
             }
             movePacketKickNewValue++;
@@ -327,7 +327,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
         case 0x03:
             if((chatPacketKickTotalCache+chatPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITMOVE)
             {
-                parseNetworkReadError("Too many chat in sort time, check DDOS limit");
+                parseNetworkReadError("Too many chat in sort time, check DDOS limit: ("+std::to_string(chatPacketKickTotalCache)+"+"+std::to_string(chatPacketKickNewValue)+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITCHAT));
                 return false;
             }
             chatPacketKickNewValue++;
@@ -335,7 +335,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
         default:
             if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
             {
-                parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+                parseNetworkReadError("Too many packet in sort time, check DDOS limit: ("+std::to_string(otherPacketKickTotalCache)+"+"+std::to_string(otherPacketKickNewValue)+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER));
                 return false;
             }
             otherPacketKickNewValue++;
