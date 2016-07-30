@@ -1,5 +1,6 @@
 #include "TimerDdos.h"
 #include "../epoll/Epoll.h"
+#include "EpollClientLoginSlave.h"
 
 TimerDdos::TimerDdos()
 {
@@ -8,5 +9,5 @@ TimerDdos::TimerDdos()
 
 void TimerDdos::exec()
 {
-    //todo
+    CatchChallenger::EpollClientLoginSlave::doDDOSComputeAll();
 }

@@ -231,17 +231,21 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
 
     resetAll();
 
-    if(!DatapackDownloaderMainSub::commandUpdateDatapackMain.empty())
+    if(!DatapackDownloaderMainSub::commandUpdateDatapackMain.empty() && !mainDatapackCode.empty())
     {
         const int ret = system((DatapackDownloaderMainSub::commandUpdateDatapackMain+" "+mainDatapackCode).c_str());
         if(ret==-1)
             std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackMain << " " << mainDatapackCode << std::endl;
+        else
+            std::cout << "Correctly execute " << DatapackDownloaderMainSub::commandUpdateDatapackMain << " " << mainDatapackCode << " with return code: " << std::to_string(ret) << std::endl;
     }
-    if(!DatapackDownloaderMainSub::commandUpdateDatapackSub.empty())
+    if(!DatapackDownloaderMainSub::commandUpdateDatapackSub.empty() && !mainDatapackCode.empty() && !subDatapackCode.empty())
     {
         const int ret = system((DatapackDownloaderMainSub::commandUpdateDatapackSub+" "+mainDatapackCode+" "+subDatapackCode).c_str());
         if(ret==-1)
             std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mainDatapackCode << " " << subDatapackCode << std::endl;
+        else
+            std::cout << "Correctly execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mainDatapackCode << " " << subDatapackCode << " with return code: " << std::to_string(ret) << std::endl;
     }
 }
 

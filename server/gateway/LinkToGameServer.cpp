@@ -97,6 +97,11 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
         std::cerr << "ERROR port is 0 (abort)" << std::endl;
         abort();
     }
+    if(host==NULL)
+    {
+        std::cerr << "ERROR LinkToGameServer::tryConnect() host==NULL (abort)" << std::endl;
+        //abort();
+    }
 
     struct hostent *server;
 

@@ -78,6 +78,8 @@ void DatapackDownloaderBase::haveTheDatapack()
         const int ret = system(DatapackDownloaderBase::commandUpdateDatapackBase.c_str());
         if(ret==-1)
             std::cerr << "Unable to execute " << DatapackDownloaderBase::commandUpdateDatapackBase << std::endl;
+        else
+            std::cout << "Correctly execute " << DatapackDownloaderBase::commandUpdateDatapackBase << " with return code: " << std::to_string(ret) << std::endl;
     }
 }
 
