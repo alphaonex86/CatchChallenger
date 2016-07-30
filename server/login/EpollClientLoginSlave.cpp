@@ -36,23 +36,26 @@ EpollClientLoginSlave::EpollClientLoginSlave(
         serverListForReplyRawData(NULL),
         serverListForReplyRawDataSize(0),
         serverListForReplyInSuspend(0),
+        movePacketKickSize(0),
         movePacketKickTotalCache(0),
         movePacketKickNewValue(0),
+        chatPacketKickSize(0),
         chatPacketKickTotalCache(0),
         chatPacketKickNewValue(0),
+        otherPacketKickSize(0),
         otherPacketKickTotalCache(0),
         otherPacketKickNewValue(0)
 {
     {
         memset(movePacketKick,
                0x00,
-               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(uint8_t));
+               sizeof(movePacketKick));
         memset(chatPacketKick,
                0x00,
-               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(uint8_t));
+               sizeof(chatPacketKick));
         memset(otherPacketKick,
                0x00,
-               CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE*sizeof(uint8_t));
+               sizeof(otherPacketKick));
     }
     client_list.push_back(this);
 }

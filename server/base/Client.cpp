@@ -65,10 +65,13 @@ Client::Client(
     connected_players(0),
     stopIt(false),
     #ifdef CATCHCHALLENGER_DDOS_FILTER
+    movePacketKickSize(0),
     movePacketKickTotalCache(0),
     movePacketKickNewValue(0),
+    chatPacketKickSize(0),
     chatPacketKickTotalCache(0),
     chatPacketKickNewValue(0),
+    otherPacketKickSize(0),
     otherPacketKickTotalCache(0),
     otherPacketKickNewValue(0),
     #endif

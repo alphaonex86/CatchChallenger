@@ -30,7 +30,7 @@ void EpollClientLoginSlave::doDDOSCompute()
     {
         movePacketKickTotalCache=0;
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE;
-        while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+        while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(index<0)
@@ -67,7 +67,7 @@ void EpollClientLoginSlave::doDDOSCompute()
     {
         chatPacketKickTotalCache=0;
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE;
-        while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+        while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(index<0)
@@ -92,7 +92,7 @@ void EpollClientLoginSlave::doDDOSCompute()
     {
         otherPacketKickTotalCache=0;
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE;
-        while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+        while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(index<0)
