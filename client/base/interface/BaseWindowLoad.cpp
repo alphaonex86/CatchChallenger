@@ -662,7 +662,7 @@ void BaseWindow::updateConnectingStatus()
                 return;
             }
         }
-        else if(!haveCharacterPosition && !haveCharacterInformation && !Api_client_real::client->character_select_is_send())
+        else if(!haveCharacterPosition && !haveCharacterInformation && !Api_client_real::client->character_select_is_send() && serverSelected<serverOrdenedList.size())
         {
             if(ui->stackedWidget->currentWidget()!=ui->page_character)
             {
