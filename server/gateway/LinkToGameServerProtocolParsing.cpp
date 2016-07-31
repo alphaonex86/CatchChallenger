@@ -701,6 +701,8 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             memcpy(reply04inWait+0,data,startString);
             memcpy(reply04inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.data(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
             memcpy(reply04inWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
+            client->allowDynamicSize();
+            flags|=0x08;
 
             DatapackDownloaderBase::datapackDownloaderBase->sendDatapackProgressionBase(client);
             if(DatapackDownloaderBase::datapackDownloaderBase->hashBase.empty())//checksum never done
@@ -822,6 +824,9 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 main=std::string(data+pos,stringSize);
                 pos+=stringSize;
             }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            messageParsingLayer("main datapack code: "+main);
+            #endif
             {
                 if((size-pos)<1)
                 {
@@ -848,6 +853,9 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 sub=std::string(data+pos,stringSize);
                 pos+=stringSize;
             }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            messageParsingLayer("sub datapack code: "+sub);
+            #endif
 
             DatapackDownloaderMainSub *downloader=NULL;
             {
@@ -870,6 +878,9 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             downloader->sendedHashMain.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
             memcpy(downloader->sendedHashMain.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
             pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            messageParsingLayer("sendedHashMain: "+binarytoHexa(downloader->sendedHashMain));
+            #endif
             if(!sub.empty())
             {
                 if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
@@ -885,6 +896,9 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 downloader->sendedHashSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
                 memcpy(downloader->sendedHashSub.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
                 pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                messageParsingLayer("sendedHashSub: "+binarytoHexa(downloader->sendedHashSub));
+                #endif
             }
             if((size-pos)<1)
             {
@@ -925,7 +939,30 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     }
                 }
             }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            messageParsingLayer("httpDatapackMirrorServer: "+httpDatapackMirrorServer);
+            #endif
+            if(size<pos)
+            {
+                if(reply0205inWait!=NULL)
+                {
+                    delete reply0205inWait;
+                    reply0205inWait=NULL;
+                }
+                parseNetworkReadError("size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                return false;
+            }
             unsigned int remainingSize=size-pos;
+            if(remainingSize>8*1024*1024)
+            {
+                if(reply0205inWait!=NULL)
+                {
+                    delete reply0205inWait;
+                    reply0205inWait=NULL;
+                }
+                parseNetworkReadError("remainingSize>8M: size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                return false;
+            }
             reply0205inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
             reply0205inWait=new char[reply0205inWaitSize];
             memcpy(reply0205inWait+0,data,startString);

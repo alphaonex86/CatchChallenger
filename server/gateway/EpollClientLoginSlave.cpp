@@ -55,20 +55,7 @@ EpollClientLoginSlave::EpollClientLoginSlave(
 
 EpollClientLoginSlave::~EpollClientLoginSlave()
 {
-    {
-        unsigned int index=0;
-        while(index<client_list.size())
-        {
-            const EpollClientLoginSlave * const client=client_list.at(index);
-            if(this==client)
-            {
-                client_list.erase(client_list.begin()+index);
-                break;
-            }
-            index++;
-        }
-    }
-
+    vectorremoveOne(client_list,this);
     if(socketString!=NULL)
     {
         delete socketString;
@@ -96,7 +83,9 @@ void EpollClientLoginSlave::disconnectClient()
         linkToGameServer=NULL;
     }
     epollSocket.close();
-    //messageParsingLayer("Disconnected client");
+    vectorremoveOne(client_list,this);
+    if(stat!=EpollClientLoginStat::None)
+        messageParsingLayer("Disconnected client");
 }
 
 //input/ouput layer
@@ -162,4 +151,9 @@ bool EpollClientLoginSlave::sendDatapackProgression(const uint8_t progression)
     posOutput+=1;
 
     return sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+}
+
+void EpollClientLoginSlave::allowDynamicSize()
+{
+    flags|=0x08;
 }

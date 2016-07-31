@@ -66,6 +66,7 @@ private:
     CatchChallenger::DatapackChecksum datapackChecksum;
     unsigned int index_mirror_main;
     unsigned int index_mirror_sub;
+    unsigned int numberOfFileWrittenMain,numberOfFileWrittenSub;
     static std::regex excludePathMain;
     enum DatapackStatus
     {
