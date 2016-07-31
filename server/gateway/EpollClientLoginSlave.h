@@ -35,9 +35,9 @@
 
 #define CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE 8
 #define CATCHCHALLENGER_DDOS_COMPUTERINTERVAL 5//in seconds
-#define CATCHCHALLENGER_DDOS_KICKLIMITMOVE 60
-#define CATCHCHALLENGER_DDOS_KICKLIMITCHAT 5
-#define CATCHCHALLENGER_DDOS_KICKLIMITOTHER 30
+#define CATCHCHALLENGER_DDOS_KICKLIMITMOVE 140
+#define CATCHCHALLENGER_DDOS_KICKLIMITCHAT 15
+#define CATCHCHALLENGER_DDOS_KICKLIMITOTHER 45
 
 namespace CatchChallenger {
 
@@ -85,6 +85,7 @@ public:
     bool sendRawBlock(const char * const data,const int &size);
     bool removeFromQueryReceived(const uint8_t &queryNumber);
     bool sendDatapackProgression(const uint8_t progression);
+    void allowDynamicSize();
 
     bool fastForward;
     LinkToGameServer *linkToGameServer;
