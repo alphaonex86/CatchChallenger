@@ -73,7 +73,7 @@ void DatapackDownloaderBase::haveTheDatapack()
 
     resetAll();
 
-    if(!DatapackDownloaderBase::commandUpdateDatapackBase.empty())
+    if(numberOfFileWritten>0 && !DatapackDownloaderBase::commandUpdateDatapackBase.empty())
     {
         const int ret = system(DatapackDownloaderBase::commandUpdateDatapackBase.c_str());
         if(ret==-1)
@@ -161,6 +161,7 @@ void DatapackDownloaderBase::datapackFileList(const char * const data,const unsi
 
 void DatapackDownloaderBase::writeNewFileBase(const std::string &fileName,const std::vector<char> &data)
 {
+    numberOfFileWritten++;
     if(data.size()>CATCHCHALLENGER_MAX_FILE_SIZE)
     {
         std::cerr << "file too big: " << fileName << std::endl;
@@ -818,6 +819,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
             index=0;
             while(index<datapackFilesListBase.size())
             {
+                numberOfFileWritten++;
                 if(::remove((mDatapackBase+datapackFilesListBase.at(index)).c_str())!=0)
                 {
                     std::cerr << "Unable to remove" << datapackFilesListBase.at(index) << std::endl;
@@ -860,6 +862,7 @@ const std::vector<std::string> DatapackDownloaderBase::listDatapackBase(std::str
             //is invalid
             else
             {
+                numberOfFileWritten++;
                 std::cerr << "listDatapack(): remove invalid file: " << suffix << fileInfo.absoluteFilePath << std::endl;
                 if(::remove((mDatapackBase+suffix+fileInfo.name).c_str())!=0)
                     std::cerr << "listDatapack(): unable remove invalid file: " << suffix << fileInfo.absoluteFilePath << ": " << errno << std::endl;
@@ -895,6 +898,7 @@ void DatapackDownloaderBase::sendDatapackContentBase()
         return;
     }
 
+    numberOfFileWritten=0;
     index_mirror_base=0;
     datapackTarXzBase=false;
     wait_datapack_content_base=true;
@@ -903,6 +907,7 @@ void DatapackDownloaderBase::sendDatapackContentBase()
     std::sort(datapackFilesListBase.begin(),datapackFilesListBase.end());
     const DatapackChecksum::FullDatapackChecksumReturn &fullDatapackChecksumReturn=DatapackChecksum::doFullSyncChecksumBase(mDatapackBase);
     datapackChecksumDoneBase(fullDatapackChecksumReturn.datapackFilesList,fullDatapackChecksumReturn.hash,fullDatapackChecksumReturn.partialHashList);
+
 }
 
 void DatapackDownloaderBase::sendDatapackProgressionBase(void * client)

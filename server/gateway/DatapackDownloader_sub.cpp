@@ -23,6 +23,7 @@ using namespace CatchChallenger;
 
 void DatapackDownloaderMainSub::writeNewFileSub(const std::string &fileName,const std::vector<char> &data)
 {
+    numberOfFileWrittenSub++;
     if(data.size()>CATCHCHALLENGER_MAX_FILE_SIZE)
     {
         std::cerr << "file too big: " << fileName << std::endl;
@@ -686,6 +687,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
             index=0;
             while(index<datapackFilesListSub.size())
             {
+                numberOfFileWrittenSub++;
                 if(::remove((mDatapackSub+datapackFilesListSub.at(index)).c_str())!=0)
                 {
                     std::cerr << "Unable to remove" << datapackFilesListSub.at(index) << std::endl;
@@ -728,6 +730,7 @@ const std::vector<std::string> DatapackDownloaderMainSub::listDatapackSub(std::s
             //is invalid
             else
             {
+                numberOfFileWrittenSub++;
                 std::cerr << "listDatapack(): remove invalid file: " << suffix << fileInfo.absoluteFilePath << std::endl;
                 if(::remove((mDatapackSub+suffix+fileInfo.name).c_str())!=0)
                     std::cerr << "listDatapack(): unable remove invalid file: " << suffix << fileInfo.absoluteFilePath << ": " << errno << std::endl;
@@ -763,6 +766,7 @@ void DatapackDownloaderMainSub::sendDatapackContentSub()
         return;
     }
 
+    numberOfFileWrittenSub=0;
     index_mirror_sub=0;
     datapackTarXzSub=false;
     wait_datapack_content_sub=true;

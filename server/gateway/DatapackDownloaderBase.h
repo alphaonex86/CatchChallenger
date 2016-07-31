@@ -51,6 +51,7 @@ private:
     bool datapackTarXzBase;
     CatchChallenger::DatapackChecksum datapackChecksum;
     unsigned int index_mirror_base;
+    unsigned int numberOfFileWritten;
     static std::regex excludePathBase;
     //file list
     struct query_files
