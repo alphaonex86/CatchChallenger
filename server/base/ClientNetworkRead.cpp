@@ -20,8 +20,8 @@ void Client::doDDOSCompute()
     }
     #endif
     {
-        movePacketKickTotalCache=0;
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        movePacketKickTotalCache-=movePacketKick[index];
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -42,7 +42,6 @@ void Client::doDDOSCompute()
             }
             #endif
             movePacketKick[index]=movePacketKick[index+1];
-            movePacketKickTotalCache+=movePacketKick[index];
             index++;
         }
         movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=movePacketKickNewValue;
@@ -57,8 +56,8 @@ void Client::doDDOSCompute()
         movePacketKickNewValue=0;
     }
     {
-        chatPacketKickTotalCache=0;
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        chatPacketKickTotalCache-=chatPacketKick[index];
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -70,7 +69,6 @@ void Client::doDDOSCompute()
                 std::cerr << "index out of range in array for index " << chatPacketKick[index] << ", chatPacketKick" << std::endl;
             #endif
             chatPacketKick[index]=chatPacketKick[index+1];
-            chatPacketKickTotalCache+=chatPacketKick[index];
             index++;
         }
         chatPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=chatPacketKickNewValue;
@@ -82,8 +80,8 @@ void Client::doDDOSCompute()
         chatPacketKickNewValue=0;
     }
     {
-        otherPacketKickTotalCache=0;
         int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        otherPacketKickTotalCache-=otherPacketKick[index];
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -95,7 +93,6 @@ void Client::doDDOSCompute()
                 std::cerr << "index out of range in array for index " << otherPacketKick[index] << ", chatPacketKick" << std::endl;
             #endif
             otherPacketKick[index]=otherPacketKick[index+1];
-            otherPacketKickTotalCache+=otherPacketKick[index];
             index++;
         }
         otherPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=otherPacketKickNewValue;

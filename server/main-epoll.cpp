@@ -495,7 +495,7 @@ void send_settings()
         master_considerDownAfterNumberOfTry=stringtouint8(settings->value("considerDownAfterNumberOfTry"),&ok);
         if(master_considerDownAfterNumberOfTry<=0 || master_considerDownAfterNumberOfTry>=60 || !ok)
         {
-            std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
+            std::cerr << "considerDownAfterNumberOfTry==0 || master_considerDownAfterNumberOfTry>=60 (abort) " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             abort();
         }
         LinkToMaster::maxLockAge=stringtouint16(settings->value("maxLockAge"),&ok);
