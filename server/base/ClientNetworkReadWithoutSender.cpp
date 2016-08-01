@@ -9,7 +9,7 @@ ClientNetworkReadWithoutSender ClientNetworkReadWithoutSender::clientNetworkRead
 #ifdef CATCHCHALLENGER_DDOS_FILTER
 void ClientNetworkReadWithoutSender::doDDOSAction()
 {
-    if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>0)
+    if(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE>0)
     {
         const int &size=Client::clientBroadCastList.size();
         int index=0;
