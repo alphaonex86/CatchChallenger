@@ -203,8 +203,6 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     settings->beginGroup("DDOS");
     if(!settings->contains("waitBeforeConnectAfterKick"))
         settings->setValue("waitBeforeConnectAfterKick",30);
-    if(!settings->contains("computeAverageValueNumberOfValue"))
-        settings->setValue("computeAverageValueNumberOfValue",3);
     if(!settings->contains("computeAverageValueTimeInterval"))
         settings->setValue("computeAverageValueTimeInterval",5);
     #ifdef CATCHCHALLENGER_DDOS_FILTER

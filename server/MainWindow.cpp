@@ -490,7 +490,6 @@ void MainWindow::load_settings()
 
         settings->beginGroup("DDOS");
         CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick         = stringtouint32(settings->value("waitBeforeConnectAfterKick"));
-        formatedServerSettings.ddos.computeAverageValueNumberOfValue      = stringtouint32(settings->value("computeAverageValueNumberOfValue"));
         formatedServerSettings.ddos.computeAverageValueTimeInterval       = stringtouint32(settings->value("computeAverageValueTimeInterval"));
         #ifdef CATCHCHALLENGER_DDOS_FILTER
         formatedServerSettings.ddos.kickLimitMove                         = stringtouint32(settings->value("kickLimitMove"));
@@ -972,7 +971,6 @@ void MainWindow::load_settings()
     }
 
     ui->DDOSwaitBeforeConnectAfterKick->setValue(CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick);
-    ui->DDOScomputeAverageValueNumberOfValue->setValue(formatedServerSettings.ddos.computeAverageValueNumberOfValue);
     ui->DDOScomputeAverageValueTimeInterval->setValue(formatedServerSettings.ddos.computeAverageValueTimeInterval);
     ui->DDOSkickLimitMove->setValue(formatedServerSettings.ddos.kickLimitMove);
     ui->DDOSkickLimitChat->setValue(formatedServerSettings.ddos.kickLimitChat);
@@ -1084,7 +1082,6 @@ void MainWindow::send_settings()
 
     //ddos
     CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=ui->DDOSwaitBeforeConnectAfterKick->value();
-    formatedServerSettings.ddos.computeAverageValueNumberOfValue=ui->DDOScomputeAverageValueNumberOfValue->value();
     formatedServerSettings.ddos.computeAverageValueTimeInterval=ui->DDOScomputeAverageValueTimeInterval->value();
     formatedServerSettings.ddos.kickLimitMove=ui->DDOSkickLimitMove->value();
     formatedServerSettings.ddos.kickLimitChat=ui->DDOSkickLimitChat->value();

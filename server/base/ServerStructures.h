@@ -200,7 +200,6 @@ struct GameServerSettings
         uint8_t kickLimitChat;
         uint8_t kickLimitOther;
         #endif
-        int computeAverageValueNumberOfValue;
         uint8_t computeAverageValueTimeInterval;
         int dropGlobalChatMessageGeneral;
         int dropGlobalChatMessageLocalClan;

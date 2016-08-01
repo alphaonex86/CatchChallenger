@@ -107,15 +107,15 @@ Client::Client(
     public_and_private_informations.bot_already_beaten=NULL;
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     {
-        memset(movePacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
+        memset(movePacketKick,
                0x00,
-               GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(uint8_t));
-        memset(chatPacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
+               CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
+        memset(chatPacketKick,
                0x00,
-               GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(uint8_t));
-        memset(otherPacketKick+(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue),
+               CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
+        memset(otherPacketKick,
                0x00,
-               GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue*sizeof(uint8_t));
+               CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
     }
     #endif
     queryNumberList.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
