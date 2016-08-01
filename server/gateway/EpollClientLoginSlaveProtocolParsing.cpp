@@ -29,6 +29,11 @@ void EpollClientLoginSlave::doDDOSCompute()
     #endif
     {
         int index=0;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(movePacketKick[index]>movePacketKickTotalCache)
+            std::cerr << "movePacketKick[index]>movePacketKickTotalCache" << std::endl;
+        else
+        #endif
         movePacketKickTotalCache-=movePacketKick[index];
         while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
         {
@@ -52,6 +57,19 @@ void EpollClientLoginSlave::doDDOSCompute()
             movePacketKick[index]=movePacketKick[index+1];
             index++;
         }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            int index=0;
+            int tot=0;
+            while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
+            {
+                tot+=movePacketKick[index];
+                index++;
+            }
+            if(tot!=movePacketKickTotalCache)
+                std::cerr << "tot!=movePacketKickTotalCache: cache is wrong" << std::endl;
+        }
+        #endif
         movePacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1]=movePacketKickNewValue;
         movePacketKickTotalCache+=movePacketKickNewValue;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -65,6 +83,11 @@ void EpollClientLoginSlave::doDDOSCompute()
     }
     {
         int index=0;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(chatPacketKick[index]>chatPacketKickTotalCache)
+            std::cerr << "chatPacketKick[index]>chatPacketKickTotalCache" << std::endl;
+        else
+        #endif
         chatPacketKickTotalCache-=chatPacketKick[index];
         while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
         {
@@ -79,30 +102,34 @@ void EpollClientLoginSlave::doDDOSCompute()
             chatPacketKick[index]=chatPacketKick[index+1];
             index++;
         }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            int index=0;
+            int tot=0;
+            while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
+            {
+                tot+=chatPacketKick[index];
+                index++;
+            }
+            if(tot!=chatPacketKickTotalCache)
+                std::cerr << "tot!=chatPacketKickTotalCache: cache is wrong" << std::endl;
+        }
+        #endif
         chatPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1]=chatPacketKickNewValue;
         chatPacketKickTotalCache+=chatPacketKickNewValue;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(chatPacketKickTotalCache>CATCHCHALLENGER_DDOS_KICKLIMITCHAT*2)
             std::cerr << "bug in DDOS calculation count" << std::endl;
-        /*{
-            bool moreThanZero=false;
-            std::vector<std::string> contentList;
-            int index=0;
-            while(index<CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE)
-            {
-                contentList.push_back(std::to_string(chatPacketKick[index]));
-                if(chatPacketKick[index]>0)
-                    moreThanZero=true;
-                index++;
-            }
-            if(moreThanZero)
-                std::cerr << "contentList: " << stringimplode(contentList,",") << std::endl;
-        }*/
         #endif
         chatPacketKickNewValue=0;
     }
     {
         int index=0;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(otherPacketKick[index]>otherPacketKickTotalCache)
+            std::cerr << "otherPacketKick[index]>otherPacketKickTotalCache" << std::endl;
+        else
+        #endif
         otherPacketKickTotalCache-=otherPacketKick[index];
         while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
         {
@@ -117,6 +144,19 @@ void EpollClientLoginSlave::doDDOSCompute()
             otherPacketKick[index]=otherPacketKick[index+1];
             index++;
         }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            int index=0;
+            int tot=0;
+            while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
+            {
+                tot+=otherPacketKick[index];
+                index++;
+            }
+            if(tot!=otherPacketKickTotalCache)
+                std::cerr << "tot!=movePacketKickTotalCache: cache is wrong" << std::endl;
+        }
+        #endif
         otherPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1]=otherPacketKickNewValue;
         otherPacketKickTotalCache+=otherPacketKickNewValue;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
