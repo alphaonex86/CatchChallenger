@@ -105,15 +105,15 @@ public:
 
     bool sendRawBlock(const char * const data,const unsigned int &size);
 
-    static std::vector<int> generalChatDrop;
-    static int generalChatDropTotalCache;
-    static int generalChatDropNewValue;
-    static std::vector<int> clanChatDrop;
-    static int clanChatDropTotalCache;
-    static int clanChatDropNewValue;
-    static std::vector<int> privateChatDrop;
-    static int privateChatDropTotalCache;
-    static int privateChatDropNewValue;
+    static uint16_t generalChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    static uint16_t generalChatDropTotalCache;
+    static uint16_t generalChatDropNewValue;
+    static uint16_t clanChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    static uint16_t clanChatDropTotalCache;
+    static uint16_t clanChatDropNewValue;
+    static uint16_t privateChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    static uint16_t privateChatDropTotalCache;
+    static uint16_t privateChatDropNewValue;
     static std::vector<uint16_t> marketObjectIdList;
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     static uint64_t datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;

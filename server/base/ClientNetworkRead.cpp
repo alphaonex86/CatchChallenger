@@ -27,6 +27,7 @@ void Client::doDDOSCompute()
         else
         #endif
         movePacketKickTotalCache-=movePacketKick[index];
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -49,6 +50,9 @@ void Client::doDDOSCompute()
             movePacketKick[index]=movePacketKick[index+1];
             index++;
         }
+        #else
+        memmove(movePacketKick,movePacketKick+1,sizeof(movePacketKick)-1);
+        #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
             int index=0;
@@ -81,6 +85,7 @@ void Client::doDDOSCompute()
         else
         #endif
         chatPacketKickTotalCache-=chatPacketKick[index];
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -94,6 +99,9 @@ void Client::doDDOSCompute()
             chatPacketKick[index]=chatPacketKick[index+1];
             index++;
         }
+        #else
+        memmove(chatPacketKick,chatPacketKick+1,sizeof(chatPacketKick)-1);
+        #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
             int index=0;
@@ -123,6 +131,7 @@ void Client::doDDOSCompute()
         else
         #endif
         otherPacketKickTotalCache-=otherPacketKick[index];
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -136,6 +145,9 @@ void Client::doDDOSCompute()
             otherPacketKick[index]=otherPacketKick[index+1];
             index++;
         }
+        #else
+        memmove(otherPacketKick,otherPacketKick+1,sizeof(otherPacketKick)-1);
+        #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
             int index=0;
