@@ -80,6 +80,7 @@ public:
     void parseIncommingData();
     void doDDOSCompute();
     static void doDDOSComputeAll();
+    void breakNeedMoreData();
 
     void parseNetworkReadError(const std::string &errorString);
     bool sendRawBlock(const char * const data,const int &size);

@@ -368,9 +368,6 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
 
 void ProtocolParsingBase::breakNeedMoreData()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    std::cerr << "Break due to need more in parse data" << std::endl;
-    #endif
 }
 
 bool ProtocolParsingBase::isReply() const

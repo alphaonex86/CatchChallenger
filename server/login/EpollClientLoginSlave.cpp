@@ -234,3 +234,14 @@ bool EpollClientLoginSlave::removeFromQueryReceived(const uint8_t &queryNumber)
     return ProtocolParsingBase::removeFromQueryReceived(queryNumber);
 }
 
+void EpollClientLoginSlave::breakNeedMoreData()
+{
+    if(stat==EpollClientLoginStat::None)
+    {
+        disconnectClient();
+        return;
+    }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    //std::cerr << "Break due to need more in parse data" << std::endl;
+    #endif
+}

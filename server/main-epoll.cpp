@@ -487,17 +487,21 @@ void send_settings()
             abort();
         }
         master_tryInterval=stringtouint8(settings->value("tryInterval"),&ok);
-        if(master_tryInterval<=0 || master_tryInterval>=60 || !ok)
+        if(master_tryInterval<=0 || !ok)
         {
-            std::cerr << "master_tryInterval<=0 || master_tryInterval>=60 || !ok (abort)" << std::endl;
+            std::cerr << "master_tryInterval<=0 || !ok (abort)" << std::endl;
             abort();
         }
+        if(master_tryInterval>=60)
+            std::cerr << "Take care: master_tryInterval>=60" << std::endl;
         master_considerDownAfterNumberOfTry=stringtouint8(settings->value("considerDownAfterNumberOfTry"),&ok);
-        if(master_considerDownAfterNumberOfTry<=0 || master_considerDownAfterNumberOfTry>=60 || !ok)
+        if(master_considerDownAfterNumberOfTry<=0 || !ok)
         {
-            std::cerr << "considerDownAfterNumberOfTry==0 || master_considerDownAfterNumberOfTry>=60 (abort) " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            std::cerr << "considerDownAfterNumberOfTry==0 || !ok (abort) " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             abort();
         }
+        if(master_considerDownAfterNumberOfTry>=60)
+            std::cerr << "Take care: master_considerDownAfterNumberOfTry>=60 " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         LinkToMaster::maxLockAge=stringtouint16(settings->value("maxLockAge"),&ok);
         if(LinkToMaster::maxLockAge<1 || LinkToMaster::maxLockAge>3600 || !ok)
         {

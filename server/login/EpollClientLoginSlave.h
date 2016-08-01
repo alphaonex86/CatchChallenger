@@ -107,6 +107,7 @@ public:
     void parseIncommingData();
     void doDDOSCompute();
     static void doDDOSComputeAll();
+    void breakNeedMoreData();
 
     void selectCharacter_ReturnToken(const uint8_t &query_id,const char * const token);
     void selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode);

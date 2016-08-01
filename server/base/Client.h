@@ -88,6 +88,7 @@ public:
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     void doDDOSCompute();
     #endif
+    void breakNeedMoreData();
     void receive_instant_player_number(const uint16_t &connected_players, const char * const data, const uint8_t &size);
     void parseIncommingData();
     #ifndef EPOLLCATCHCHALLENGERSERVER
