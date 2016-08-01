@@ -530,3 +530,16 @@ bool EpollClientLoginMaster::sendGameServerPing(const uint64_t &msecondFrom1970)
     queryNumberList.pop_back();
     return sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,2);
 }
+
+void EpollClientLoginMaster::breakNeedMoreData()
+{
+    if(stat==EpollClientLoginMaster::None)
+    {
+        disconnectClient();
+        return;
+    }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    //std::cerr << "Break due to need more in parse data" << std::endl;
+    #endif
+}
+

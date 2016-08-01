@@ -157,3 +157,16 @@ void EpollClientLoginSlave::allowDynamicSize()
 {
     flags|=0x08;
 }
+
+void EpollClientLoginSlave::breakNeedMoreData()
+{
+    if(stat==EpollClientLoginStat::None)
+    {
+        disconnectClient();
+        return;
+    }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    //std::cerr << "Break due to need more in parse data" << std::endl;
+    #endif
+}
+

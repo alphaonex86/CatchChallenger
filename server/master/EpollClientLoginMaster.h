@@ -25,6 +25,7 @@ public:
     ~EpollClientLoginMaster();
     void disconnectClient();
     void parseIncommingData();
+    void breakNeedMoreData();
     void selectCharacter(const uint8_t &query_id, const uint32_t &serverUniqueKey, const uint8_t &charactersGroupIndex, const uint32_t &characterId, const uint32_t &accountId);
     bool trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId, const uint32_t &accountId);
     void selectCharacter_ReturnToken(const uint8_t &query_id,const char * const token);
