@@ -77,15 +77,15 @@ uint16_t Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=0;
 const unsigned char Client::protocolHeaderToMatch[] = PROTOCOL_HEADER_GAMESERVER;
 #endif
 
-std::vector<int> Client::generalChatDrop;
-int Client::generalChatDropTotalCache=0;
-int Client::generalChatDropNewValue=0;
-std::vector<int> Client::clanChatDrop;
-int Client::clanChatDropTotalCache=0;
-int Client::clanChatDropNewValue=0;
-std::vector<int> Client::privateChatDrop;
-int Client::privateChatDropTotalCache=0;
-int Client::privateChatDropNewValue=0;
+uint16_t Client::generalChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+uint16_t Client::generalChatDropTotalCache=0;
+uint16_t Client::generalChatDropNewValue=0;
+uint16_t Client::clanChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+uint16_t Client::clanChatDropTotalCache=0;
+uint16_t Client::clanChatDropNewValue=0;
+uint16_t Client::privateChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+uint16_t Client::privateChatDropTotalCache=0;
+uint16_t Client::privateChatDropNewValue=0;
 std::vector<uint16_t> Client::marketObjectIdList;
 #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
 std::queue<Client::PlantInWaiting> Client::plant_list_in_waiting;
