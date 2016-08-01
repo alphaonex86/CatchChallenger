@@ -12,13 +12,6 @@ using namespace CatchChallenger;
 #ifdef CATCHCHALLENGER_DDOS_FILTER
 void Client::doDDOSCompute()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE<=0)
-    {
-        std::cerr << "GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue out of range:" << CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE << std::endl;
-        return;
-    }
-    #endif
     {
         int index=0;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
