@@ -88,14 +88,9 @@ void BaseServer::preload_the_events()
 void BaseServer::preload_the_ddos()
 {
     unload_the_ddos();
-    int index=0;
-    while(index<CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
-    {
-        Client::generalChatDrop.push_back(0);
-        Client::clanChatDrop.push_back(0);
-        Client::privateChatDrop.push_back(0);
-        index++;
-    }
+    memset(Client::generalChatDrop,0x00,sizeof(Client::generalChatDrop));
+    memset(Client::clanChatDrop,0x00,sizeof(Client::clanChatDrop));
+    memset(Client::privateChatDrop,0x00,sizeof(Client::privateChatDrop));
     Client::generalChatDropTotalCache=0;
     Client::generalChatDropNewValue=0;
     Client::clanChatDropTotalCache=0;

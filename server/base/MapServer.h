@@ -20,9 +20,9 @@ public:
     MapServer();
     void doDDOSLocalChat();
     std::map<std::pair<uint8_t,uint8_t>,Orientation/*,pairhash*/> rescue;
-    int localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
-    int localChatDropTotalCache;
-    int localChatDropNewValue;
+    uint8_t localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
+    uint8_t localChatDropTotalCache;
+    uint8_t localChatDropNewValue;
     int reverse_db_id;
 
     //at last to improve the other variable cache
