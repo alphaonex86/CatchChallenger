@@ -14,13 +14,15 @@ MapServer::MapServer() :
 
 void MapServer::doDDOSLocalChat()
 {
-    int index=0;
-    localChatDropTotalCache-=localChatDrop[index];
-    while(index<(int)(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+    /*int index=0;
+    localChatDropTotalCache-=localChatDrop[index];*/
+    localChatDropTotalCache-=localChatDrop[0];
+    memmove(localChatDrop,localChatDrop+1,sizeof(localChatDrop)-1);
+/*    while(index<(int)(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
     {
         localChatDrop[index]=localChatDrop[index+1];
         index++;
-    }
+    }*/
     localChatDrop[(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1)]=localChatDropNewValue;
     localChatDropTotalCache+=localChatDropNewValue;
     localChatDropNewValue=0;

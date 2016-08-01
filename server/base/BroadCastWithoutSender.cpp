@@ -69,41 +69,38 @@ void BroadCastWithoutSender::receive_instant_player_number(const int16_t &connec
 
 void BroadCastWithoutSender::doDDOSChat()
 {
-    if(Client::generalChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        int index=0;
-        Client::generalChatDropTotalCache-=Client::generalChatDrop[index];
-        while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+        Client::generalChatDropTotalCache-=Client::generalChatDrop[0];
+        memmove(Client::generalChatDrop,Client::generalChatDrop+2,sizeof(Client::generalChatDrop)-2);
+        /*int index=0;while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
             Client::generalChatDrop[index]=Client::generalChatDrop[index+1];
             index++;
-        }
+        }*/
         Client::generalChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=Client::generalChatDropNewValue;
         Client::generalChatDropTotalCache+=Client::generalChatDropNewValue;
         Client::generalChatDropNewValue=0;
     }
-    if(Client::clanChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        int index=0;
-        Client::clanChatDropTotalCache-=Client::clanChatDrop[index];
-        while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+        Client::clanChatDropTotalCache-=Client::clanChatDrop[0];
+        memmove(Client::clanChatDrop,Client::clanChatDrop+2,sizeof(Client::clanChatDrop)-2);
+        /*int index=0;while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
             Client::clanChatDrop[index]=Client::clanChatDrop[index+1];
             index++;
-        }
+        }*/
         Client::clanChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=Client::clanChatDropNewValue;
         Client::clanChatDropTotalCache+=Client::clanChatDropNewValue;
         Client::clanChatDropNewValue=0;
     }
-    if(Client::privateChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        int index=0;
-        Client::privateChatDropTotalCache-=Client::privateChatDrop[index];
-        while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+        Client::privateChatDropTotalCache-=Client::privateChatDrop[0];
+        memmove(Client::privateChatDrop,Client::privateChatDrop+2,sizeof(Client::privateChatDrop)-2);
+        /*int index=0;while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
             Client::privateChatDrop[index]=Client::privateChatDrop[index+1];
             index++;
-        }
+        }*/
         Client::privateChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=Client::privateChatDropNewValue;
         Client::privateChatDropTotalCache+=Client::privateChatDropNewValue;
         Client::privateChatDropNewValue=0;
