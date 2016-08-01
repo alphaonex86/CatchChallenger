@@ -17,9 +17,9 @@ TimerDdos::TimerDdos()
 void TimerDdos::exec()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(CatchChallenger::GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue<0 || CatchChallenger::GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+    if(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE<=0)
     {
-        std::cerr << "GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue out of range:" << CatchChallenger::GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue << std::endl;
+        std::cerr << "CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE out of range:" << CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE << std::endl;
         return;
     }
     #endif

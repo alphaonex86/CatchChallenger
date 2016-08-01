@@ -257,7 +257,6 @@ void send_settings()
 
     settings->beginGroup("DDOS");
     CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick         = stringtouint32(settings->value("waitBeforeConnectAfterKick"));
-    formatedServerSettings.ddos.computeAverageValueNumberOfValue      = stringtouint32(settings->value("computeAverageValueNumberOfValue"));
     formatedServerSettings.ddos.computeAverageValueTimeInterval       = stringtouint32(settings->value("computeAverageValueTimeInterval"));
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     formatedServerSettings.ddos.kickLimitMove                         = stringtouint32(settings->value("kickLimitMove"));

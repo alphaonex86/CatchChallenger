@@ -71,12 +71,11 @@ void BroadCastWithoutSender::doDDOSChat()
 {
     if(Client::generalChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        Client::generalChatDropTotalCache=0;
-        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        int index=0;
+        Client::generalChatDropTotalCache-=Client::generalChatDrop[index];
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
             Client::generalChatDrop[index]=Client::generalChatDrop[index+1];
-            Client::generalChatDropTotalCache+=Client::generalChatDrop[index];
             index++;
         }
         Client::generalChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=Client::generalChatDropNewValue;
@@ -85,12 +84,11 @@ void BroadCastWithoutSender::doDDOSChat()
     }
     if(Client::clanChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        Client::clanChatDropTotalCache=0;
-        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        int index=0;
+        Client::clanChatDropTotalCache-=Client::clanChatDrop[index];
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
             Client::clanChatDrop[index]=Client::clanChatDrop[index+1];
-            Client::clanChatDropTotalCache+=Client::clanChatDrop[index];
             index++;
         }
         Client::clanChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=Client::clanChatDropNewValue;
@@ -99,12 +97,11 @@ void BroadCastWithoutSender::doDDOSChat()
     }
     if(Client::privateChatDrop.size()==CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
     {
-        Client::privateChatDropTotalCache=0;
-        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        int index=0;
+        Client::privateChatDropTotalCache-=Client::privateChatDrop[index];
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
             Client::privateChatDrop[index]=Client::privateChatDrop[index+1];
-            Client::privateChatDropTotalCache+=Client::privateChatDrop[index];
             index++;
         }
         Client::privateChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=Client::privateChatDropNewValue;

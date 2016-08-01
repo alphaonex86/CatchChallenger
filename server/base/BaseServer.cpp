@@ -25,7 +25,6 @@ BaseServer::BaseServer() :
     dictionary_pointOnMap_maxId_plant=0;
     ProtocolParsing::compressionTypeServer                                = ProtocolParsing::CompressionType::Zlib;
 
-    GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue=0;
     GlobalServerData::serverPrivateVariables.connected_players      = 0;
     GlobalServerData::serverPrivateVariables.number_of_bots_logged  = 0;
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -105,7 +104,6 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.ddos.kickLimitChat                         = 5;
     GlobalServerData::serverSettings.ddos.kickLimitOther                        = 30;
     #endif
-    GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue      = 3;
     GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval       = 5;
     GlobalServerData::serverSettings.ddos.dropGlobalChatMessageGeneral          = 20;
     GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan        = 20;
@@ -840,11 +838,6 @@ void BaseServer::loadAndFixSettings()
         }
     }
 
-    if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>9)
-    {
-        std::cerr << "GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>9" << std::endl;
-        GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue=9;
-    }
     if(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval<1)
     {
         std::cerr << "GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval<1" << std::endl;

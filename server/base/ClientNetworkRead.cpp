@@ -13,14 +13,19 @@ using namespace CatchChallenger;
 void Client::doDDOSCompute()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue<0 || GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue>CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
+    if(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE<=0)
     {
-        std::cerr << "GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue out of range:" << GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue << std::endl;
+        std::cerr << "GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue out of range:" << CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE << std::endl;
         return;
     }
     #endif
     {
-        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        int index=0;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(movePacketKick[index]>movePacketKickTotalCache)
+            std::cerr << "movePacketKick[index]>movePacketKickTotalCache" << std::endl;
+        else
+        #endif
         movePacketKickTotalCache-=movePacketKick[index];
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
@@ -44,6 +49,19 @@ void Client::doDDOSCompute()
             movePacketKick[index]=movePacketKick[index+1];
             index++;
         }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            int index=0;
+            int tot=0;
+            while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+            {
+                tot+=movePacketKick[index];
+                index++;
+            }
+            if(tot!=movePacketKickTotalCache)
+                std::cerr << "tot!=movePacketKickTotalCache: cache is wrong" << std::endl;
+        }
+        #endif
         movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=movePacketKickNewValue;
         movePacketKickTotalCache+=movePacketKickNewValue;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -56,7 +74,12 @@ void Client::doDDOSCompute()
         movePacketKickNewValue=0;
     }
     {
-        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        int index=0;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(chatPacketKick[index]>chatPacketKickTotalCache)
+            std::cerr << "chatPacketKick[index]>chatPacketKickTotalCache" << std::endl;
+        else
+        #endif
         chatPacketKickTotalCache-=chatPacketKick[index];
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
@@ -71,6 +94,19 @@ void Client::doDDOSCompute()
             chatPacketKick[index]=chatPacketKick[index+1];
             index++;
         }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            int index=0;
+            int tot=0;
+            while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+            {
+                tot+=chatPacketKick[index];
+                index++;
+            }
+            if(tot!=chatPacketKickTotalCache)
+                std::cerr << "tot!=chatPacketKickTotalCache: cache is wrong" << std::endl;
+        }
+        #endif
         chatPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=chatPacketKickNewValue;
         chatPacketKickTotalCache+=chatPacketKickNewValue;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -80,7 +116,12 @@ void Client::doDDOSCompute()
         chatPacketKickNewValue=0;
     }
     {
-        int index=CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-GlobalServerData::serverSettings.ddos.computeAverageValueNumberOfValue;
+        int index=0;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(otherPacketKick[index]>otherPacketKickTotalCache)
+            std::cerr << "otherPacketKick[index]>otherPacketKickTotalCache" << std::endl;
+        else
+        #endif
         otherPacketKickTotalCache-=otherPacketKick[index];
         while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
         {
@@ -95,6 +136,19 @@ void Client::doDDOSCompute()
             otherPacketKick[index]=otherPacketKick[index+1];
             index++;
         }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            int index=0;
+            int tot=0;
+            while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
+            {
+                tot+=otherPacketKick[index];
+                index++;
+            }
+            if(tot!=otherPacketKickTotalCache)
+                std::cerr << "tot!=movePacketKickTotalCache: cache is wrong" << std::endl;
+        }
+        #endif
         otherPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=otherPacketKickNewValue;
         otherPacketKickTotalCache+=otherPacketKickNewValue;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
