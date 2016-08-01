@@ -698,3 +698,16 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
     }
 }
 #endif
+
+void Client::breakNeedMoreData()
+{
+    if(stat==Client::None)
+    {
+        disconnectClient();
+        return;
+    }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    //std::cerr << "Break due to need more in parse data" << std::endl;
+    #endif
+}
+
