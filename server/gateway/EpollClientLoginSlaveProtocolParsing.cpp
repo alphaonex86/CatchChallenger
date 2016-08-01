@@ -20,13 +20,6 @@ void EpollClientLoginSlave::doDDOSComputeAll()
 
 void EpollClientLoginSlave::doDDOSCompute()
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE<0 || CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE>CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE)
-    {
-        std::cerr << "CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE out of range:" << CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE << std::endl;
-        return;
-    }
-    #endif
     {
         int index=0;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
