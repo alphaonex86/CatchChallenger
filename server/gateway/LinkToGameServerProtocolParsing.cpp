@@ -667,34 +667,37 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                 return false;
             }
-            const std::string httpDatapackMirrorBase(data+pos,stringSize);
-            pos+=stringSize;
-            if(stringSize>0 && DatapackDownloaderBase::httpDatapackMirrorBaseList.empty())//can't change for performance
+            if(stringSize>0)
             {
-                DatapackDownloaderBase::httpDatapackMirrorBaseList=stringsplit(httpDatapackMirrorBase,';');
-                vectorRemoveEmpty(DatapackDownloaderBase::httpDatapackMirrorBaseList);
+                const std::string httpDatapackMirrorBase(data+pos,stringSize);
+                pos+=stringSize;
+                if(DatapackDownloaderBase::httpDatapackMirrorBaseList.empty())//can't change for performance and current download in progression corruption
                 {
-                    unsigned int index=0;
-                    while(index<DatapackDownloaderBase::httpDatapackMirrorBaseList.size())
+                    DatapackDownloaderBase::httpDatapackMirrorBaseList=stringsplit(httpDatapackMirrorBase,';');
+                    vectorRemoveEmpty(DatapackDownloaderBase::httpDatapackMirrorBaseList);
                     {
-                        const std::string &currentMirror=DatapackDownloaderBase::httpDatapackMirrorBaseList.at(index);
-
-                        const std::string::size_type &pos=currentMirror.find(LinkToGameServer::protocolString);
-                        if(pos==std::string::npos)
+                        unsigned int index=0;
+                        while(index<DatapackDownloaderBase::httpDatapackMirrorBaseList.size())
                         {
-                            parseNetworkReadError("no \"://\" found: "+currentMirror+", data dump: "+binarytoHexa(data,size));
-                            return false;
-                        }
-                        const std::string &protocol=currentMirror.substr(0,pos);
-                        if(protocol!=LinkToGameServer::protocolHttp && protocol!=LinkToGameServer::protocolHttps)
-                        {
-                            parseNetworkReadError("protocol not supported: "+protocol+" into "+currentMirror+", data dump: "+binarytoHexa(data,size));
-                            return false;
-                        }
+                            const std::string &currentMirror=DatapackDownloaderBase::httpDatapackMirrorBaseList.at(index);
 
-                        if(!stringEndsWith(currentMirror,'/'))
-                            DatapackDownloaderBase::httpDatapackMirrorBaseList[index]+='/';
-                        index++;
+                            const std::string::size_type &pos=currentMirror.find(LinkToGameServer::protocolString);
+                            if(pos==std::string::npos)
+                            {
+                                parseNetworkReadError("no \"://\" found: "+currentMirror+", data dump: "+binarytoHexa(data,size));
+                                return false;
+                            }
+                            const std::string &protocol=currentMirror.substr(0,pos);
+                            if(protocol!=LinkToGameServer::protocolHttp && protocol!=LinkToGameServer::protocolHttps)
+                            {
+                                parseNetworkReadError("protocol not supported: "+protocol+" into "+currentMirror+", data dump: "+binarytoHexa(data,size));
+                                return false;
+                            }
+
+                            if(!stringEndsWith(currentMirror,'/'))
+                                DatapackDownloaderBase::httpDatapackMirrorBaseList[index]+='/';
+                            index++;
+                        }
                     }
                 }
             }
@@ -926,7 +929,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             {
                 const std::string httpDatapackMirrorServer(data+pos,stringSize);
                 pos+=stringSize;
-                if(stringSize>0 && DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())//can't change for performance
+                if(DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())//can't change for performance and current download in progression corruption
                 {
                     DatapackDownloaderMainSub::httpDatapackMirrorServerList=stringsplit(httpDatapackMirrorServer,';');
                     vectorRemoveEmpty(DatapackDownloaderMainSub::httpDatapackMirrorServerList);
@@ -1124,34 +1127,37 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                     return false;
                 }
-                const std::string httpDatapackMirrorServer(data+pos,stringSize);
-                pos+=stringSize;
-                if(stringSize>0 && DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())//can't change for performance
+                if(stringSize>0)
                 {
-                    DatapackDownloaderMainSub::httpDatapackMirrorServerList=stringsplit(httpDatapackMirrorServer,';');
-                    vectorRemoveEmpty(DatapackDownloaderMainSub::httpDatapackMirrorServerList);
+                    const std::string httpDatapackMirrorServer(data+pos,stringSize);
+                    pos+=stringSize;
+                    if(DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())//can't change for performance and current download in progression corruption
                     {
-                        unsigned int index=0;
-                        while(index<DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
+                        DatapackDownloaderMainSub::httpDatapackMirrorServerList=stringsplit(httpDatapackMirrorServer,';');
+                        vectorRemoveEmpty(DatapackDownloaderMainSub::httpDatapackMirrorServerList);
                         {
-                            const std::string &currentMirror=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index);
-
-                            const std::string::size_type &pos=currentMirror.find(LinkToGameServer::protocolString);
-                            if(pos==std::string::npos)
+                            unsigned int index=0;
+                            while(index<DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
                             {
-                                parseNetworkReadError("no \"://\" found: "+currentMirror+", data dump: "+binarytoHexa(data,size));
-                                return false;
-                            }
-                            const std::string &protocol=currentMirror.substr(0,pos);
-                            if(protocol!=LinkToGameServer::protocolHttp && protocol!=LinkToGameServer::protocolHttps)
-                            {
-                                parseNetworkReadError("protocol not supported: "+protocol+" into "+currentMirror+", data dump: "+binarytoHexa(data,size));
-                                return false;
-                            }
+                                const std::string &currentMirror=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index);
 
-                            if(!stringEndsWith(currentMirror,'/'))
-                                DatapackDownloaderMainSub::httpDatapackMirrorServerList[index]+='/';
-                            index++;
+                                const std::string::size_type &pos=currentMirror.find(LinkToGameServer::protocolString);
+                                if(pos==std::string::npos)
+                                {
+                                    parseNetworkReadError("no \"://\" found: "+currentMirror+", data dump: "+binarytoHexa(data,size));
+                                    return false;
+                                }
+                                const std::string &protocol=currentMirror.substr(0,pos);
+                                if(protocol!=LinkToGameServer::protocolHttp && protocol!=LinkToGameServer::protocolHttps)
+                                {
+                                    parseNetworkReadError("protocol not supported: "+protocol+" into "+currentMirror+", data dump: "+binarytoHexa(data,size));
+                                    return false;
+                                }
+
+                                if(!stringEndsWith(currentMirror,'/'))
+                                    DatapackDownloaderMainSub::httpDatapackMirrorServerList[index]+='/';
+                                index++;
+                            }
                         }
                     }
                 }
