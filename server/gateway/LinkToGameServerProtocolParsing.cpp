@@ -488,9 +488,9 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                 else
                     parseNetworkReadError("Compressed file to create: "+fileName);
 
-                if(reply04inWait!=NULL)
+                if(replySelectListInWait!=NULL)
                     DatapackDownloaderBase::datapackDownloaderBase->writeNewFileBase(fileName,dataFile);
-                else if(reply0205inWait!=NULL)
+                else if(replySelectCharInWait!=NULL)
                 {
                     if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(main)!=DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())
                     {
@@ -637,13 +637,11 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     /* intercept part here */
     if(mainCodeType==0xA8)//Get first data and send the login
     {
-        if(size>(14+CATCHCHALLENGER_SHA224HASH_SIZE) && data[0x00]==0x01)//all is good, change the reply
+        if(size>(40+CATCHCHALLENGER_SHA224HASH_SIZE) && data[0x00]==0x01)//all is good, change the reply
         {
             unsigned int pos=14;
-            if(reply04inWait!=NULL)
+            if(replySelectListInWait!=NULL)
             {
-                delete reply04inWait;
-                reply04inWait=NULL;
                 parseNetworkReadError("another reply04inWait in suspend");
                 return false;
             }
@@ -658,11 +656,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
             if((size-pos)<1)
             {
-                if(reply04inWait!=NULL)
-                {
-                    delete reply04inWait;
-                    reply04inWait=NULL;
-                }
                 parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                 return false;
             }
@@ -671,11 +664,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             pos+=1;
             if((size-pos)<stringSize)
             {
-                if(reply04inWait!=NULL)
-                {
-                    delete reply04inWait;
-                    reply04inWait=NULL;
-                }
                 parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                 return false;
             }
@@ -689,32 +677,62 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     unsigned int index=0;
                     while(index<DatapackDownloaderBase::httpDatapackMirrorBaseList.size())
                     {
-                        if(!stringEndsWith(DatapackDownloaderBase::httpDatapackMirrorBaseList.at(index),'/'))
+                        const std::string &currentMirror=DatapackDownloaderBase::httpDatapackMirrorBaseList.at(index);
+
+                        const std::string::size_type &pos=currentMirror.find(LinkToGameServer::protocolString);
+                        if(pos==std::string::npos)
+                        {
+                            parseNetworkReadError("no \"://\" found: "+currentMirror+", data dump: "+binarytoHexa(data,size));
+                            return false;
+                        }
+                        const std::string &protocol=currentMirror.substr(0,pos);
+                        if(protocol!=LinkToGameServer::protocolHttp && protocol!=LinkToGameServer::protocolHttps)
+                        {
+                            parseNetworkReadError("protocol not supported: "+protocol+" into "+currentMirror+", data dump: "+binarytoHexa(data,size));
+                            return false;
+                        }
+
+                        if(!stringEndsWith(currentMirror,'/'))
                             DatapackDownloaderBase::httpDatapackMirrorBaseList[index]+='/';
                         index++;
                     }
                 }
             }
+            if(size<pos)
+            {
+                parseNetworkReadError("size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                return false;
+            }
             unsigned int remainingSize=size-pos;
-            reply04inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
-            reply04inWait=new char[reply04inWaitSize];
-            memcpy(reply04inWait+0,data,startString);
-            memcpy(reply04inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.data(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
-            memcpy(reply04inWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
+            if(remainingSize>8*1024*1024)
+            {
+                parseNetworkReadError("remainingSize>8M: size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                return false;
+            }
+            if(remainingSize==0)
+            {
+                parseNetworkReadError("remainingSize==0: size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                return false;
+            }
+            replySelectListInWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
+            replySelectListInWait=new char[replySelectListInWaitSize];
+            memcpy(replySelectListInWait+0,data,startString);
+            memcpy(replySelectListInWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.data(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
+            memcpy(replySelectListInWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
             client->allowDynamicSize();
             flags|=0x08;
 
             DatapackDownloaderBase::datapackDownloaderBase->sendDatapackProgressionBase(client);
             if(DatapackDownloaderBase::datapackDownloaderBase->hashBase.empty())//checksum never done
             {
-                reply04inWaitQueryNumber=queryNumber;
+                replySelectListInWaitQueryNumber=queryNumber;
                 DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.push_back(this);
                 if(DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.size()==1)
                     DatapackDownloaderBase::datapackDownloaderBase->sendDatapackContentBase();
             }
             else if(DatapackDownloaderBase::datapackDownloaderBase->hashBase!=DatapackDownloaderBase::datapackDownloaderBase->sendedHashBase)//need download the datapack content
             {
-                reply04inWaitQueryNumber=queryNumber;
+                replySelectListInWaitQueryNumber=queryNumber;
                 DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.push_back(this);
                 if(DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend.size()==1)
                     DatapackDownloaderBase::datapackDownloaderBase->sendDatapackContentBase();
@@ -728,21 +746,21 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 posOutput+=1;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                 posOutput+=1+4;
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(reply04inWaitSize);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(replySelectListInWaitSize);//set the dynamic size
 
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,reply04inWait,reply04inWaitSize);
-                posOutput+=reply04inWaitSize;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,replySelectListInWait,replySelectListInWaitSize);
+                posOutput+=replySelectListInWaitSize;
 
                 client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-                delete reply04inWait;
-                reply04inWait=NULL;
-                reply04inWaitSize=0;
+                delete replySelectListInWait;
+                replySelectListInWait=NULL;
+                replySelectListInWaitSize=0;
             }
             return true;
         }
     }
-    else if(mainCodeType==0xAC)//Select character
+    else if(mainCodeType==0x93 || mainCodeType==0xAC)//Select character
     {
         if(gameServerMode==GameServerMode::Reconnect)
         {
@@ -801,28 +819,31 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             {
                 if((size-pos)<1)
                 {
-                    if(reply0205inWait!=NULL)
-                    {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                    }
                     parseNetworkReadError("need more size");
                     return false;
                 }
                 const uint8_t &stringSize=data[pos];
                 pos+=1;
-                if((size-pos)<stringSize)
+                if(stringSize>0)
                 {
-                    if(reply0205inWait!=NULL)
+                    if((size-pos)<stringSize)
                     {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
+                        parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                        return false;
                     }
-                    parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                    main=std::string(data+pos,stringSize);
+                    pos+=stringSize;
+                    if(!regex_search(main,LinkToGameServer::mainDatapackCodeFilter))
+                    {
+                        parseNetworkReadError("main datapack code wrong: "+main+", data dump: "+binarytoHexa(data,size));
+                        return false;
+                    }
+                }
+                else
+                {
+                    parseNetworkReadError("main datapack code can't be empty, data dump: "+binarytoHexa(data,size));
                     return false;
                 }
-                main=std::string(data+pos,stringSize);
-                pos+=stringSize;
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             messageParsingLayer("main datapack code: "+main);
@@ -830,28 +851,26 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             {
                 if((size-pos)<1)
                 {
-                    if(reply0205inWait!=NULL)
-                    {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                    }
                     parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                     return false;
                 }
                 const uint8_t &stringSize=data[pos];
                 pos+=1;
-                if((size-pos)<stringSize)
+                if(stringSize>0)
                 {
-                    if(reply0205inWait!=NULL)
+                    if((size-pos)<stringSize)
                     {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
+                        parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                        return false;
                     }
-                    parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
-                    return false;
+                    sub=std::string(data+pos,stringSize);
+                    pos+=stringSize;
+                    if(!regex_search(sub,LinkToGameServer::subDatapackCodeFilter))
+                    {
+                        parseNetworkReadError("main datapack code wrong: "+main+", data dump: "+binarytoHexa(data,size));
+                        return false;
+                    }
                 }
-                sub=std::string(data+pos,stringSize);
-                pos+=stringSize;
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             messageParsingLayer("sub datapack code: "+sub);
@@ -867,11 +886,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             }
             if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
             {
-                if(reply0205inWait!=NULL)
-                {
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                }
                 parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                 return false;
             }
@@ -885,11 +899,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             {
                 if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
                 {
-                    if(reply0205inWait!=NULL)
-                    {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                    }
                     parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                     return false;
                 }
@@ -902,11 +911,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             }
             if((size-pos)<1)
             {
-                if(reply0205inWait!=NULL)
-                {
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                }
                 parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                 return false;
             }
@@ -915,71 +919,79 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             pos+=1;
             if((size-pos)<stringSize)
             {
-                if(reply0205inWait!=NULL)
-                {
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                }
                 parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                 return false;
             }
-            const std::string httpDatapackMirrorServer(data+pos,stringSize);
-            pos+=stringSize;
-            if(stringSize>0 && DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())//can't change for performance
+            if(stringSize>0)
             {
-                DatapackDownloaderMainSub::httpDatapackMirrorServerList=stringsplit(httpDatapackMirrorServer,';');
-                vectorRemoveEmpty(DatapackDownloaderMainSub::httpDatapackMirrorServerList);
+                const std::string httpDatapackMirrorServer(data+pos,stringSize);
+                pos+=stringSize;
+                if(stringSize>0 && DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())//can't change for performance
                 {
-                    unsigned int index=0;
-                    while(index<DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
+                    DatapackDownloaderMainSub::httpDatapackMirrorServerList=stringsplit(httpDatapackMirrorServer,';');
+                    vectorRemoveEmpty(DatapackDownloaderMainSub::httpDatapackMirrorServerList);
                     {
-                        if(!stringEndsWith(DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index),'/'))
-                            DatapackDownloaderMainSub::httpDatapackMirrorServerList[index]+='/';
-                        index++;
+                        unsigned int index=0;
+                        while(index<DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
+                        {
+                            const std::string &currentMirror=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index);
+
+                            const std::string::size_type &pos=currentMirror.find(LinkToGameServer::protocolString);
+                            if(pos==std::string::npos)
+                            {
+                                parseNetworkReadError("no \"://\" found: "+currentMirror+", data dump: "+binarytoHexa(data,size));
+                                return false;
+                            }
+                            const std::string &protocol=currentMirror.substr(0,pos);
+                            if(protocol!=LinkToGameServer::protocolHttp && protocol!=LinkToGameServer::protocolHttps)
+                            {
+                                parseNetworkReadError("protocol not supported: "+protocol+" into "+currentMirror+", data dump: "+binarytoHexa(data,size));
+                                return false;
+                            }
+
+                            if(!stringEndsWith(currentMirror,'/'))
+                                DatapackDownloaderMainSub::httpDatapackMirrorServerList[index]+='/';
+                            index++;
+                        }
                     }
                 }
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                messageParsingLayer("httpDatapackMirrorServer: "+httpDatapackMirrorServer);
+                #endif
             }
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            messageParsingLayer("httpDatapackMirrorServer: "+httpDatapackMirrorServer);
-            #endif
             if(size<pos)
             {
-                if(reply0205inWait!=NULL)
-                {
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                }
                 parseNetworkReadError("size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                 return false;
             }
             unsigned int remainingSize=size-pos;
             if(remainingSize>8*1024*1024)
             {
-                if(reply0205inWait!=NULL)
-                {
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                }
                 parseNetworkReadError("remainingSize>8M: size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                 return false;
             }
-            reply0205inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
-            reply0205inWait=new char[reply0205inWaitSize];
-            memcpy(reply0205inWait+0,data,startString);
-            memcpy(reply0205inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.data(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
-            memcpy(reply0205inWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
+            if(remainingSize==0)
+            {
+                parseNetworkReadError("remainingSize==0: size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                return false;
+            }
+            replySelectCharInWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
+            replySelectCharInWait=new char[replySelectCharInWaitSize];
+            memcpy(replySelectCharInWait+0,data,startString);
+            memcpy(replySelectCharInWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.data(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
+            memcpy(replySelectCharInWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
 
             downloader->sendDatapackProgressionMainSub(client);
             if(downloader->hashMain.empty() || (!sub.empty() && downloader->hashSub.empty()))//checksum never done
             {
-                reply0205inWaitQueryNumber=queryNumber;
+                replySelectCharInWaitQueryNumber=queryNumber;
                 downloader->clientInSuspend.push_back(this);
                 if(downloader->clientInSuspend.size()==1)
                     downloader->sendDatapackContentMainSub();
             }
             else if(downloader->hashMain!=downloader->sendedHashMain || (!sub.empty() && downloader->hashSub!=downloader->sendedHashSub))//need download the datapack content
             {
-                reply0205inWaitQueryNumber=queryNumber;
+                replySelectCharInWaitQueryNumber=queryNumber;
                 downloader->clientInSuspend.push_back(this);
                 if(downloader->clientInSuspend.size()==1)
                     downloader->sendDatapackContentMainSub();
@@ -993,16 +1005,16 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 posOutput+=1;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                 posOutput+=1+4;
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(reply0205inWaitSize);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(replySelectCharInWaitSize);//set the dynamic size
 
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,reply0205inWait,reply0205inWaitSize);
-                posOutput+=reply0205inWaitSize;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,replySelectCharInWait,replySelectCharInWaitSize);
+                posOutput+=replySelectCharInWaitSize;
 
                 client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-                delete reply0205inWait;
-                reply0205inWait=NULL;
-                reply0205inWaitSize=0;
+                delete replySelectCharInWait;
+                replySelectCharInWait=NULL;
+                replySelectCharInWaitSize=0;
             }
             return true;
         }
@@ -1010,65 +1022,66 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     //intercept the file sending
     else if(mainCodeType==0xA1)//Send datapack file list
     {
-        if(reply04inWait!=NULL)
+        if(replySelectListInWait!=NULL)
             DatapackDownloaderBase::datapackDownloaderBase->datapackFileList(data,size);
-        else if(reply0205inWait==NULL)
+        else if(replySelectCharInWait==NULL)
         {
-            if(size>39 && data[0x00]==0x01)//all is good, change the reply
+            if(size>40 && data[0x00]==0x01)//all is good, change the reply
             {
                 unsigned int pos=40;
 
                 {
                     if((size-pos)<1)
                     {
-                        if(reply0205inWait!=NULL)
-                        {
-                            delete reply0205inWait;
-                            reply0205inWait=NULL;
-                        }
                         parseNetworkReadError("need more size");
                         return false;
                     }
                     const uint8_t &stringSize=data[pos];
                     pos+=1;
-                    if((size-pos)<stringSize)
+                    if(stringSize>0)
                     {
-                        if(reply0205inWait!=NULL)
+                        if((size-pos)<stringSize)
                         {
-                            delete reply0205inWait;
-                            reply0205inWait=NULL;
+                            parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                            return false;
                         }
-                        parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                        main=std::string(data+pos,stringSize);
+                        pos+=stringSize;
+                        if(!regex_search(main,LinkToGameServer::mainDatapackCodeFilter))
+                        {
+                            parseNetworkReadError("main datapack code wrong: "+main+", data dump: "+binarytoHexa(data,size));
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        parseNetworkReadError("main datapack code can't be empty, data dump: "+binarytoHexa(data,size));
                         return false;
                     }
-                    main=std::string(data+pos,stringSize);
-                    pos+=stringSize;
                 }
                 {
                     if((size-pos)<1)
                     {
-                        if(reply0205inWait!=NULL)
-                        {
-                            delete reply0205inWait;
-                            reply0205inWait=NULL;
-                        }
                         parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                         return false;
                     }
                     const uint8_t &stringSize=data[pos];
                     pos+=1;
-                    if((size-pos)<stringSize)
+                    if(stringSize>0)
                     {
-                        if(reply0205inWait!=NULL)
+                        if((size-pos)<stringSize)
                         {
-                            delete reply0205inWait;
-                            reply0205inWait=NULL;
+                            parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                            return false;
                         }
-                        parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
-                        return false;
+                        sub=std::string(data+pos,stringSize);
+                        pos+=stringSize;
+                        if(!regex_search(sub,LinkToGameServer::subDatapackCodeFilter))
+                        {
+                            parseNetworkReadError("main datapack code wrong: "+main+", data dump: "+binarytoHexa(data,size));
+                            return false;
+                        }
                     }
-                    sub=std::string(data+pos,stringSize);
-                    pos+=stringSize;
                 }
 
                 DatapackDownloaderMainSub *downloader=NULL;
@@ -1081,11 +1094,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 }
                 if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
                 {
-                    if(reply0205inWait!=NULL)
-                    {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                    }
                     parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                     return false;
                 }
@@ -1096,11 +1104,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 {
                     if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
                     {
-                        if(reply0205inWait!=NULL)
-                        {
-                            delete reply0205inWait;
-                            reply0205inWait=NULL;
-                        }
                         parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                         return false;
                     }
@@ -1110,11 +1113,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 }
                 if((size-pos)<1)
                 {
-                    if(reply0205inWait!=NULL)
-                    {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                    }
                     parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                     return false;
                 }
@@ -1123,11 +1121,6 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 pos+=1;
                 if((size-pos)<stringSize)
                 {
-                    if(reply0205inWait!=NULL)
-                    {
-                        delete reply0205inWait;
-                        reply0205inWait=NULL;
-                    }
                     parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
                     return false;
                 }
@@ -1141,30 +1134,60 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                         unsigned int index=0;
                         while(index<DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
                         {
-                            if(!stringEndsWith(DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index),'/'))
+                            const std::string &currentMirror=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index);
+
+                            const std::string::size_type &pos=currentMirror.find(LinkToGameServer::protocolString);
+                            if(pos==std::string::npos)
+                            {
+                                parseNetworkReadError("no \"://\" found: "+currentMirror+", data dump: "+binarytoHexa(data,size));
+                                return false;
+                            }
+                            const std::string &protocol=currentMirror.substr(0,pos);
+                            if(protocol!=LinkToGameServer::protocolHttp && protocol!=LinkToGameServer::protocolHttps)
+                            {
+                                parseNetworkReadError("protocol not supported: "+protocol+" into "+currentMirror+", data dump: "+binarytoHexa(data,size));
+                                return false;
+                            }
+
+                            if(!stringEndsWith(currentMirror,'/'))
                                 DatapackDownloaderMainSub::httpDatapackMirrorServerList[index]+='/';
                             index++;
                         }
                     }
                 }
+                if(size<pos)
+                {
+                    parseNetworkReadError("size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                    return false;
+                }
                 unsigned int remainingSize=size-pos;
-                reply0205inWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
-                reply0205inWait=new char[reply0205inWaitSize];
-                memcpy(reply0205inWait+0,data,startString);
-                memcpy(reply0205inWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.data(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
-                memcpy(reply0205inWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
+                if(remainingSize>8*1024*1024)
+                {
+                    parseNetworkReadError("remainingSize>8M: size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                    return false;
+                }
+                if(remainingSize==0)
+                {
+                    parseNetworkReadError("remainingSize==0: size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
+                    return false;
+                }
+                replySelectCharInWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
+                replySelectCharInWait=new char[replySelectCharInWaitSize];
+                memcpy(replySelectCharInWait+0,data,startString);
+                memcpy(replySelectCharInWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.data(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
+                memcpy(replySelectCharInWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
 
                 downloader->sendDatapackProgressionMainSub(client);
                 if(downloader->hashMain.empty() || (!sub.empty() && downloader->hashSub.empty()))//checksum never done
                 {
-                    reply0205inWaitQueryNumber=queryNumber;
+                    replySelectCharInWaitQueryNumber=queryNumber;
                     downloader->clientInSuspend.push_back(this);
                     if(downloader->clientInSuspend.size()==1)
                         downloader->sendDatapackContentMainSub();
                 }
                 else if(downloader->hashMain!=downloader->sendedHashMain || (!sub.empty() && downloader->hashSub!=downloader->sendedHashSub))//need download the datapack content
                 {
-                    reply0205inWaitQueryNumber=queryNumber;
+                    replySelectCharInWaitQueryNumber=queryNumber;
                     downloader->clientInSuspend.push_back(this);
                     if(downloader->clientInSuspend.size()==1)
                         downloader->sendDatapackContentMainSub();
@@ -1178,16 +1201,16 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     posOutput+=1;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
                     posOutput+=1+4;
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(reply0205inWaitSize);//set the dynamic size
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(replySelectCharInWaitSize);//set the dynamic size
 
-                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,reply0205inWait,reply0205inWaitSize);
-                    posOutput+=reply0205inWaitSize;
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,replySelectCharInWait,replySelectCharInWaitSize);
+                    posOutput+=replySelectCharInWaitSize;
 
                     client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-                    delete reply0205inWait;
-                    reply0205inWait=NULL;
-                    reply0205inWaitSize=0;
+                    delete replySelectCharInWait;
+                    replySelectCharInWait=NULL;
+                    replySelectCharInWaitSize=0;
                 }
                 return true;
             }

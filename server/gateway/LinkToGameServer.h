@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <regex>
 
 namespace CatchChallenger {
 class EpollClientLoginSlave;
@@ -54,6 +55,11 @@ public:
     std::string main;
     std::string sub;
     static std::string lastconnectErrorMessage;
+    static const std::regex mainDatapackCodeFilter;
+    static const std::regex subDatapackCodeFilter;
+    static const std::string protocolString;
+    static const std::string protocolHttp;
+    static const std::string protocolHttps;
 
     void setConnexionSettings();
     BaseClassSwitch::EpollObjectType getType() const;
@@ -85,12 +91,12 @@ protected:
     bool parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
 private:
     int socketFd;
-    char *reply04inWait;
-    unsigned int reply04inWaitSize;
-    uint8_t reply04inWaitQueryNumber;
-    char *reply0205inWait;
-    unsigned int reply0205inWaitSize;
-    uint8_t reply0205inWaitQueryNumber;
+    char *replySelectListInWait;
+    unsigned int replySelectListInWaitSize;
+    uint8_t replySelectListInWaitQueryNumber;
+    char *replySelectCharInWait;
+    unsigned int replySelectCharInWaitSize;
+    uint8_t replySelectCharInWaitQueryNumber;
     uint8_t queryIdToReconnect;
     char tokenForGameServer[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
 };

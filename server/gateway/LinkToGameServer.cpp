@@ -43,12 +43,12 @@ LinkToGameServer::LinkToGameServer(
         haveTheFirstSslHeader(false),
         protocolQueryNumber(0),
         socketFd(infd),
-        reply04inWait(NULL),
-        reply04inWaitSize(0),
-        reply04inWaitQueryNumber(0),
-        reply0205inWait(NULL),
-        reply0205inWaitSize(0),
-        reply0205inWaitQueryNumber(0),
+        replySelectListInWait(NULL),
+        replySelectListInWaitSize(0),
+        replySelectListInWaitQueryNumber(0),
+        replySelectCharInWait(NULL),
+        replySelectCharInWaitSize(0),
+        replySelectCharInWaitQueryNumber(0),
         queryIdToReconnect(0)
 {
     flags|=0x08;
@@ -63,13 +63,13 @@ LinkToGameServer::~LinkToGameServer()
         client->linkToGameServer=NULL;
         client=NULL;
     }
-    if(reply04inWait!=NULL)
+    if(replySelectListInWait!=NULL)
     {
         vectorremoveOne(DatapackDownloaderBase::datapackDownloaderBase->clientInSuspend,this);
-        delete reply04inWait;
-        reply04inWait=NULL;
+        delete replySelectListInWait;
+        replySelectListInWait=NULL;
     }
-    if(reply0205inWait!=NULL)
+    if(replySelectCharInWait!=NULL)
     {
         if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(main)==DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())
         {}
@@ -80,8 +80,8 @@ LinkToGameServer::~LinkToGameServer()
             DatapackDownloaderMainSub * const downloader=DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).at(sub);
             vectorremoveOne(downloader->clientInSuspend,this);
         }
-        delete reply0205inWait;
-        reply0205inWait=NULL;
+        delete replySelectCharInWait;
+        replySelectCharInWait=NULL;
     }
     if(DatapackDownloaderBase::datapackDownloaderBase==NULL)
     {
@@ -262,6 +262,16 @@ void LinkToGameServer::disconnectClient()
         client->linkToGameServer=NULL;
         client=NULL;
     }
+    if(replySelectListInWait!=NULL)
+    {
+        delete replySelectListInWait;
+        replySelectListInWait=NULL;
+    }
+    if(replySelectCharInWait!=NULL)
+    {
+        delete replySelectCharInWait;
+        replySelectCharInWait=NULL;
+    }
     epollSocket.close();
     messageParsingLayer("Disconnected client");
 }
@@ -336,29 +346,29 @@ void LinkToGameServer::sendDiffered04Reply()
         parseNetworkReadError("client not connected 04");
         return;
     }
-    if(reply04inWait==NULL)
+    if(replySelectListInWait==NULL)
     {
         parseNetworkReadError("LinkToGameServer::sendDiffered04Reply() reply04inWait==NULL");
         return;
     }
     //send the network reply
-    client->removeFromQueryReceived(reply04inWaitQueryNumber);
+    client->removeFromQueryReceived(replySelectListInWaitQueryNumber);
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
     posOutput+=1;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=reply04inWaitQueryNumber;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=replySelectListInWaitQueryNumber;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(reply04inWaitSize);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(replySelectListInWaitSize);//set the dynamic size
 
-    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,reply04inWait,reply04inWaitSize);
-    posOutput+=reply04inWaitSize;
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,replySelectListInWait,replySelectListInWaitSize);
+    posOutput+=replySelectListInWaitSize;
 
     client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-    delete reply04inWait;
-    reply04inWait=NULL;
-    reply04inWaitSize=0;
-    reply04inWaitQueryNumber=0;
+    delete replySelectListInWait;
+    replySelectListInWait=NULL;
+    replySelectListInWaitSize=0;
+    replySelectListInWaitQueryNumber=0;
 }
 
 void LinkToGameServer::sendDiffered0205Reply()
@@ -368,30 +378,30 @@ void LinkToGameServer::sendDiffered0205Reply()
         parseNetworkReadError("client not connected 0205");
         return;
     }
-    if(reply0205inWait==NULL)
+    if(replySelectCharInWait==NULL)
     {
         parseNetworkReadError("LinkToGameServer::sendDiffered0205Reply() reply0205inWait==NULL");
         return;
     }
 
     //send the network reply
-    client->removeFromQueryReceived(reply0205inWaitQueryNumber);
+    client->removeFromQueryReceived(replySelectCharInWaitQueryNumber);
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
     posOutput+=1;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=reply0205inWaitQueryNumber;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=replySelectCharInWaitQueryNumber;
     posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(reply0205inWaitSize);//set the dynamic size
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(replySelectCharInWaitSize);//set the dynamic size
 
-    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,reply0205inWait,reply0205inWaitSize);
-    posOutput+=reply0205inWaitSize;
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,replySelectCharInWait,replySelectCharInWaitSize);
+    posOutput+=replySelectCharInWaitSize;
 
     client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-    delete reply0205inWait;
-    reply0205inWait=NULL;
-    reply0205inWaitSize=0;
-    reply0205inWaitQueryNumber=0;
+    delete replySelectCharInWait;
+    replySelectCharInWait=NULL;
+    replySelectCharInWaitSize=0;
+    replySelectCharInWaitQueryNumber=0;
 }
 
 bool LinkToGameServer::sendRawSmallPacket(const char * const data,const int &size)
