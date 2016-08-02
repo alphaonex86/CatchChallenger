@@ -363,7 +363,8 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                             parseNetworkReadError("parseFullMessage() missing data for server host string size: "+std::to_string(mainCodeType));
                             return false;
                         }
-                        serverReconnect.host=std::string(data+pos,stringSize);
+                        if(stringSize>0)
+                            serverReconnect.host=std::string(data+pos,stringSize);
                         if(serverReconnect.host.empty())
                         {
                             parseNetworkReadError("parseFullMessage() server list, host can't be empty: "+std::to_string(mainCodeType));
@@ -388,10 +389,12 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                             parseNetworkReadError("parseFullMessage() missing data for server host string size: "+std::to_string(mainCodeType));
                             return false;
                         }
-                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+pos-2,2+stringSize);
+                        if(stringSize>0)
+                        {
+                            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+pos-2,2+stringSize);
+                            pos+=stringSize;
+                        }
                         posOutput+=2+stringSize;
-
-                        pos+=stringSize;
                     }
                     //skip Logical group and max player
                     if((size-pos)<(1+2))
