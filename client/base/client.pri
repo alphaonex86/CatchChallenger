@@ -5,11 +5,13 @@ QT       += gui network xml core
 
 DEFINES += CATCHCHALLENGER_CLIENT
 
-#mac:DEFINES += CATCHCHALLENGER_NOAUDIO
-#!mac:LIBS += -lvlc
-
-!linux:DEFINES += CATCHCHALLENGER_NOAUDIO
-linux:LIBS += -lvlc
+linux|macx {
+    LIBS += -lvlc
+}
+else
+{
+    DEFINES += CATCHCHALLENGER_NOAUDIO
+}
 
 SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/DatapackChecksum.cpp \
@@ -145,8 +147,8 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
 #commented to workaround to compil under wine
 #win32:RC_FILE += $$PWD/resources/resources-windows.rc
 ICON = $$PWD/resources/client.icns
-macx:INCLUDEPATH += /usr/local/include/
-macx:LIBS += -L/usr/local/lib/
+macx:INCLUDEPATH += /Users/user/Desktop/VLC.app/Contents/MacOS/include/
+macx:LIBS += -L/Users/user/Desktop/VLC.app/Contents/MacOS/lib/
 
 RESOURCES += $$PWD/resources/client-resources.qrc \
     $$PWD/../crafting/resources/client-resources-plant.qrc \
