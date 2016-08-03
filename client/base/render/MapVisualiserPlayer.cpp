@@ -814,6 +814,8 @@ void MapVisualiserPlayer::finalPlayerStep()
                 stopAndSend();
                 parseStop();
             }
+            if(keyPressed.empty())
+                parseAction();
         }
     }
 }

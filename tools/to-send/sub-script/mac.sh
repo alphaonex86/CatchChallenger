@@ -39,11 +39,27 @@ function compil {
         BASEAPPNAME="catchchallenger-${TARGET}.app"
         ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSIONMAJ}/clang_64/bin/qmake *.pro -spec macx-clang -config release"
         echo "try make"
-        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3"
+        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3 > /dev/null"
         RETURN_CODE=$?
         if [ $? -ne 0 ]
         then
             echo "make failed on the mac: ${RETURN_CODE}"
+            exit
+        fi
+        rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/*.app/Contents/MacOS/catchchallenger-* /tmp/macbuild/
+        if [ ! -f /tmp/macbuild/catchchallenger-* ]
+        then
+            ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3"
+            echo "make failed on the mac: ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/*.app/Contents/MacOS/catchchallenger-*"
+            exit
+        fi
+        minimumsize=5000000
+        actualsize=$(wc -c <"/tmp/macbuild/catchchallenger-*")
+        if [ $actualsize -ge $minimumsize ]; then
+            echo /tmp/macbuild/catchchallenger-* size is over $minimumsize bytes, all is good
+        else
+            ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3"
+            echo /tmp/macbuild/catchchallenger-* size is under $minimumsize bytes: abort
             exit
         fi
         

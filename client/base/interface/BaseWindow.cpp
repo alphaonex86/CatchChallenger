@@ -188,21 +188,21 @@ BaseWindow::BaseWindow() :
         abort();
 
     //render, logical part into Map_Client
-    if(!connect(MapController::mapController,&MapController::stopped_in_front_of,   this,&BaseWindow::stopped_in_front_of))
+    if(!connect(MapController::mapController,&MapController::send_player_direction, this,&BaseWindow::send_player_direction,Qt::QueuedConnection))
         abort();
-    if(!connect(MapController::mapController,&MapController::actionOn,              this,&BaseWindow::actionOn))
+    if(!connect(MapController::mapController,&MapController::stopped_in_front_of,   this,&BaseWindow::stopped_in_front_of,Qt::QueuedConnection))
         abort();
-    if(!connect(MapController::mapController,&MapController::actionOnNothing,       this,&BaseWindow::actionOnNothing))
+    if(!connect(MapController::mapController,&MapController::actionOn,              this,&BaseWindow::actionOn,Qt::QueuedConnection))
         abort();
-    if(!connect(MapController::mapController,&MapController::blockedOn,             this,&BaseWindow::blockedOn))
+    if(!connect(MapController::mapController,&MapController::actionOnNothing,       this,&BaseWindow::actionOnNothing,Qt::QueuedConnection))
+        abort();
+    if(!connect(MapController::mapController,&MapController::blockedOn,             this,&BaseWindow::blockedOn,Qt::QueuedConnection))
         abort();
     if(!connect(MapController::mapController,&MapController::error,                 this,&BaseWindow::error))
         abort();
     if(!connect(MapController::mapController,&MapController::errorWithTheCurrentMap,this,&BaseWindow::errorWithTheCurrentMap))
         abort();
     if(!connect(MapController::mapController,&MapController::repelEffectIsOver,     this,&BaseWindow::repelEffectIsOver))
-        abort();
-    if(!connect(MapController::mapController,&MapController::send_player_direction, this,&BaseWindow::send_player_direction,Qt::QueuedConnection))
         abort();
     if(!connect(MapController::mapController,&MapController::teleportConditionNotRespected, this,&BaseWindow::teleportConditionNotRespected,Qt::QueuedConnection))
         abort();

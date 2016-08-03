@@ -15,6 +15,8 @@ using namespace CatchChallenger;
 
 ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
 {
+    if(socket==NULL)
+        return -1;
     #if defined (CATCHCHALLENGER_EXTRA_CHECK) && ! defined (EPOLLCATCHCHALLENGERSERVER)
     if(socket->openMode()|QIODevice::WriteOnly)
     {}
