@@ -410,7 +410,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                     MapPointToParse newPoint=tempPoint;
                     newPoint.x++;
                     if(newPoint.x<simplifiedMapList.value(current_map).width)
-                        if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y))
+                        if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
                             QPair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
                             if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
@@ -428,7 +428,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                     if(newPoint.x>0)
                     {
                         newPoint.x--;
-                        if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y))
+                        if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
                             QPair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
                             if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
@@ -446,7 +446,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                     MapPointToParse newPoint=tempPoint;
                     newPoint.y++;
                     if(newPoint.y<simplifiedMapList.value(current_map).height)
-                        if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y))
+                        if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
                             QPair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
                             if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
@@ -464,7 +464,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                     if(newPoint.y>0)
                     {
                         newPoint.y--;
-                        if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y))
+                        if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
                             QPair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
                             if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
