@@ -1764,6 +1764,41 @@ bool MapControllerMP::nextPathStep()//true if have step
         }
         else
         {
+            if(direction==CatchChallenger::Direction_move_at_bottom)
+                this->direction=CatchChallenger::Direction_look_at_bottom;
+            else if(direction==CatchChallenger::Direction_move_at_top)
+                this->direction=CatchChallenger::Direction_look_at_top;
+            else if(direction==CatchChallenger::Direction_move_at_right)
+                this->direction=CatchChallenger::Direction_look_at_right;
+            else if(direction==CatchChallenger::Direction_move_at_left)
+                this->direction=CatchChallenger::Direction_look_at_left;
+            //emit send_player_direction(this->direction);
+
+            moveStep=0;
+            uint8_t baseTile;
+            switch(this->direction)
+            {
+                case CatchChallenger::Direction_look_at_left:
+                baseTile=10;
+                break;
+                case CatchChallenger::Direction_look_at_right:
+                baseTile=4;
+                break;
+                case CatchChallenger::Direction_look_at_top:
+                baseTile=1;
+                break;
+                case CatchChallenger::Direction_look_at_bottom:
+                baseTile=7;
+                break;
+                default:
+                qDebug() << QStringLiteral("moveStepSlot(): nextPathStep: %1, wrong direction").arg(moveStep);
+                pathList.clear();
+                return false;
+            }
+            Tiled::Cell cell=playerMapObject->cell();
+            cell.tile=playerTileset->tileAt(baseTile+0);
+            playerMapObject->setCell(cell);
+
             std::cerr << "Error at path found, collision detected" << std::endl;
             pathList.clear();
             return false;
@@ -1804,6 +1839,8 @@ void MapControllerMP::pathFindingResult(const QString &current_map,const uint8_t
                         stopAndSend();
                         parseStop();
                     }
+                    if(keyPressed.empty())
+                        parseAction();
                 }
                 else
                     std::cerr << "Wrong start point to start the path finding" << std::endl;
