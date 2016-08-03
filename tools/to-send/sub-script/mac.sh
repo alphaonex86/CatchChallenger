@@ -16,10 +16,10 @@ QTVERSIONMAJ="5.4"
 function compil {
     cd ${TEMP_PATH}/
     TARGET=$1
-    FINAL_ARCHIVE="catchchallenger-${TARGET}-mac-os-x-${CATCHCHALLENGER_VERSION}.dmg"
+    FINAL_ARCHIVE="catchchallenger-${TARGET}-mac-os-x-${CATCHCHALLENGER_VERSION}.zip"
     if [ ! -e ${FINAL_ARCHIVE} ]
     then
-        echo "Making Mac dmg: ${FINAL_ARCHIVE} ..."
+        echo "Making Mac zip: ${FINAL_ARCHIVE} ..."
 
         rm -Rf ${TEMP_PATH}/${TARGET}-mac-os-x/
         cp -aRf ${CATCHCHALLENGER_SOURCE}/ ${TEMP_PATH}/${TARGET}-mac-os-x/
@@ -39,27 +39,30 @@ function compil {
         BASEAPPNAME="catchchallenger-${TARGET}.app"
         ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSIONMAJ}/clang_64/bin/qmake *.pro -spec macx-clang -config release"
         echo "try make"
-        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3 > /dev/null"
+        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3 > /dev/null 2>&1"
         RETURN_CODE=$?
         if [ $? -ne 0 ]
         then
             echo "make failed on the mac: ${RETURN_CODE}"
             exit
         fi
+        rm -Rf /tmp/macbuild/
         rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/*.app/Contents/MacOS/catchchallenger-* /tmp/macbuild/
         if [ ! -f /tmp/macbuild/catchchallenger-* ]
         then
             ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3"
             echo "make failed on the mac: ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/*.app/Contents/MacOS/catchchallenger-*"
+            echo rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/*.app/Contents/MacOS/catchchallenger-* /tmp/macbuild/
             exit
         fi
-        minimumsize=5000000
-        actualsize=$(wc -c <"/tmp/macbuild/catchchallenger-*")
-        if [ $actualsize -ge $minimumsize ]; then
+        minimumsize=1000000
+        actualsize=$(wc -c </tmp/macbuild/catchchallenger-*)
+        if [ $actualsize -ge $minimumsize ]
+        then
             echo /tmp/macbuild/catchchallenger-* size is over $minimumsize bytes, all is good
         else
             ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3"
-            echo /tmp/macbuild/catchchallenger-* size is under $minimumsize bytes: abort
+            echo /tmp/macbuild/catchchallenger-* $actualsize size is under $minimumsize bytes: abort
             exit
         fi
         
@@ -85,9 +88,10 @@ function compil {
             ssh ${SSHUSER}@${IPMAC} "mkdir /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/datapack/internal/"
             rsync -art ${DATAPACK_SOURCE} ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/datapack/internal/
         fi
-        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSIONMAJ}/clang_64/bin/macdeployqt ${BASEAPPNAME}/ -dmg"
-        rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.dmg ${TEMP_PATH}/${FINAL_ARCHIVE}
+        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSIONMAJ}/clang_64/bin/macdeployqt ${BASEAPPNAME}/;zip -r9 catchchallenger-${TARGET}.zip catchchallenger-${TARGET}.app/ > /dev/null 2>&1"
+        rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.zip ${TEMP_PATH}/${FINAL_ARCHIVE}
         if [ ! -e ${FINAL_ARCHIVE} ]; then
+            echo ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSIONMAJ}/clang_64/bin/macdeployqt ${BASEAPPNAME}/;zip -r9 catchchallenger-${TARGET}.zip catchchallenger-${TARGET}.app/"
             echo "${FINAL_ARCHIVE} not exists!";
             exit;
         fi
@@ -96,11 +100,11 @@ function compil {
         if [ $actualsize -ge $minimumsize ]; then
             echo ${FINAL_ARCHIVE} size is over $minimumsize bytes, all is good
         else
-            echo size is under $minimumsize bytes: abort
+            echo $actualsize size is under $minimumsize bytes: abort
             exit
         fi
         ssh ${SSHUSER}@${IPMAC} "rm -fR /Users/${SSHUSER}/Desktop/CatchChallenger/"
-        echo "Making binary debug Mac dmg... done"
+        echo "Making binary debug Mac zip... done"
     else
         echo "Archive already exists: ${FINAL_ARCHIVE}"
     fi
@@ -109,10 +113,10 @@ function compil {
 function compilserver {
     cd ${TEMP_PATH}/
     TARGET=$1
-    FINAL_ARCHIVE="catchchallenger-${TARGET}-mac-os-x-${CATCHCHALLENGER_VERSION}.dmg"
+    FINAL_ARCHIVE="catchchallenger-${TARGET}-mac-os-x-${CATCHCHALLENGER_VERSION}.zip"
     if [ ! -e ${FINAL_ARCHIVE} ]
     then
-        echo "Making Mac dmg: ${FINAL_ARCHIVE} ..."
+        echo "Making Mac zip: ${FINAL_ARCHIVE} ..."
 
         rm -Rf ${TEMP_PATH}/${TARGET}-mac-os-x/
         cp -aRf ${CATCHCHALLENGER_SOURCE}/ ${TEMP_PATH}/${TARGET}-mac-os-x/
@@ -132,11 +136,29 @@ function compilserver {
         BASEAPPNAME="catchchallenger-${TARGET}.app"
         ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Users/user/Qt${QTVERSION}/${QTVERSIONMAJ}/clang_64/bin/qmake catchchallenger-${TARGET}.pro -spec macx-clang -config release"
         echo "try make"
-        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3"
+        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3 > /dev/null 2>&1"
         RETURN_CODE=$?
         if [ $? -ne 0 ]
         then
-            echo "make failed on the mac: ${RETURN_CODE}"
+            echo "make failed on the mac server: ${RETURN_CODE}"
+            exit
+        fi
+        rm -Rf /tmp/macbuild/
+        rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger-${TARGET}.app/Contents/MacOS/catchchallenger-* /tmp/macbuild/
+        if [ ! -f /tmp/macbuild/catchchallenger-* ]
+        then
+            ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3"
+            echo "make server failed on the mac"
+            exit
+        fi
+        minimumsize=1000000
+        actualsize=$(wc -c </tmp/macbuild/catchchallenger-*)
+        if [ $actualsize -ge $minimumsize ]
+        then
+            echo /tmp/macbuild/catchchallenger-* size is over $minimumsize bytes, all is good
+        else
+            ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Applications/Xcode.app/Contents/Developer/usr/bin/gnumake -j 3"
+            echo /tmp/macbuild/catchchallenger-* size $actualsize is under $minimumsize bytes: abort
             exit
         fi
         
@@ -144,8 +166,8 @@ function compilserver {
         
         rsync -art ${DATAPACK_SOURCE} ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger-${TARGET}.app/Contents/MacOS/datapack/
         rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/server/databases/catchchallenger.db.sqlite ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger-${TARGET}.app/Contents/MacOS/
-        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Users/user/Qt${QTVERSION}/${QTVERSIONMAJ}/clang_64/bin/macdeployqt ${BASEAPPNAME}/ -dmg"
-        rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger-${TARGET}.dmg ${TEMP_PATH}/${FINAL_ARCHIVE}
+        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Users/user/Qt${QTVERSION}/${QTVERSIONMAJ}/clang_64/bin/macdeployqt ${BASEAPPNAME}/;zip -r9 catchchallenger-${TARGET}.zip catchchallenger-${TARGET}.app/ > /dev/null 2>&1"
+        rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger-${TARGET}.zip ${TEMP_PATH}/${FINAL_ARCHIVE}
         if [ ! -e ${FINAL_ARCHIVE} ]; then
             echo "${FINAL_ARCHIVE} not exists!";
             exit;
@@ -155,11 +177,11 @@ function compilserver {
         if [ $actualsize -ge $minimumsize ]; then
             echo ${FINAL_ARCHIVE} size is over $minimumsize bytes, all is good
         else
-            echo size is under $minimumsize bytes: abort
+            echo $actualsize size is under $minimumsize bytes: abort
             exit
         fi
         ssh ${SSHUSER}@${IPMAC} "rm -fR /Users/${SSHUSER}/Desktop/CatchChallenger/"
-        echo "Making binary debug Mac dmg... done"
+        echo "Making binary debug Mac zip... done"
     else
         echo "Archive already exists: ${FINAL_ARCHIVE}"
     fi
