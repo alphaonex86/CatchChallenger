@@ -430,6 +430,11 @@ int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &
         std::cerr << "skin provided: " << skinId << " is not into profile " << profileIndex << " forced skin list" << std::endl;
         return -1;
     }
+    if(monsterGroupId>=profile.monstergroup.size())
+    {
+        std::cerr << "monsterGroupId: " << monsterGroupId << " is not into profile " << profileIndex << std::endl;
+        return -1;
+    }
     AddCharacterParam addCharacterParam;
     addCharacterParam.query_id=query_id;
     addCharacterParam.profileIndex=profileIndex;
@@ -537,6 +542,38 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     }
     const EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.at(profileIndex);
 
+    if(maxCharacterId.empty())
+    {
+        client->addCharacter_ReturnFailed(query_id,0x03);
+        std::cerr << "maxCharacterIdRequested is empty" << std::endl;
+        return;
+    }
+    if(maxCharacterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK && !maxCharacterIdRequested)
+    {
+        maxCharacterIdRequested=true;
+        if(LinkToMaster::linkToMaster->queryNumberList.empty())
+        {
+            client->addCharacter_ReturnFailed(query_id,0x03);
+            std::cerr << "Unable to get query id at createAccount_return" << std::endl;
+            return;
+        }
+        const uint8_t &queryNumber=LinkToMaster::linkToMaster->queryNumberList.back();
+        LinkToMaster::linkToMaster->queryNumberList.pop_back();
+
+        //send the network reply
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xC0;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=index;
+        posOutput+=1;
+
+        LinkToMaster::linkToMaster->registerOutputQuery(queryNumber,0xC0);
+        LinkToMaster::linkToMaster->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        LinkToMaster::queryNumberToCharacterGroup[queryNumber]=index;
+    }
+
     const uint32_t &characterId=maxCharacterId.back();
     const std::string &characterIdString=std::to_string(characterId);
     maxCharacterId.pop_back();
@@ -547,11 +584,45 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     const std::string &monster_encyclopedia_insert=profile.monster_encyclopedia_insert.at(monsterGroupId);
     if(!monsters.empty())
     {
+        if(maxMonsterId.size()<monsters.size())
+        {
+            client->addCharacter_ReturnFailed(query_id,0x03);
+            std::cerr << "maxMonsterId is empty or too small" << std::endl;
+            return;
+        }
+
         unsigned int index=0;
         while(index<monsters.size())
         {
             const EpollServerLoginSlave::LoginProfile::Monster &monster=monsterGroup.at(index);
             const StringWithReplacement &monsterQuery=monsters.at(index);
+
+            if(maxMonsterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK && !maxMonsterIdRequested)
+            {
+                maxMonsterIdRequested=true;
+                if(LinkToMaster::linkToMaster->queryNumberList.empty())
+                {
+                    client->addCharacter_ReturnFailed(query_id,0x03);
+                    std::cerr << "Unable to get query id at createAccount_return" << std::endl;
+                    std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
+                    return;
+                }
+                const uint8_t &queryNumber=LinkToMaster::linkToMaster->queryNumberList.back();
+                LinkToMaster::linkToMaster->queryNumberList.pop_back();
+
+                //send the network reply
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xC1;
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=index;
+                posOutput+=1;
+
+                LinkToMaster::linkToMaster->registerOutputQuery(queryNumber,0xC1);
+                LinkToMaster::linkToMaster->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                LinkToMaster::queryNumberToCharacterGroup[queryNumber]=index;
+            }
 
             const uint32_t monster_id=maxMonsterId.back();
             maxMonsterId.pop_back();

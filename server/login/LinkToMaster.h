@@ -47,6 +47,7 @@ public:
     static unsigned char header_magic_number[11];
     static unsigned char private_token_master[TOKEN_SIZE_FOR_MASTERAUTH];
     static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char queryNumberToCharacterGroup[CATCHCHALLENGER_MAXPROTOCOLQUERY];
 
     std::vector<uint8_t> queryNumberList;
     BaseClassSwitch::EpollObjectType getType() const;

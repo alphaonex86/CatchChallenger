@@ -43,7 +43,7 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
 {
     if(!is_logged)
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("is not logged with main ident: %1").arg(packetCode));
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("is not logged with main ident: %1 %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
     }
     QDataStream in(data);

@@ -1169,6 +1169,110 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 std::cerr << "parseFullReplyData() !selectCharacterClients.contains(queryNumber): mainCodeType: " << mainCodeType << ", queryNumber: " << queryNumber << std::endl;
         }
         return true;
+        case 0xBF:
+        {
+            unsigned int pos=0;
+            EpollClientLoginSlave::maxAccountIdList.reserve(EpollClientLoginSlave::maxAccountIdList.size()+CATCHCHALLENGER_SERVER_MAXIDBLOCK);
+            unsigned int index=0;
+            while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+            {
+                if((size-pos)<4)
+                {
+                    std::cerr << "reply to 08 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    abort();
+                }
+                EpollClientLoginSlave::maxAccountIdList.push_back(le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos))));
+                pos+=4;
+                index++;
+            }
+            if(vectorHaveDuplicatesForSmallList(EpollClientLoginSlave::maxAccountIdList))
+            {
+                std::cerr << "reply to 08: duplicate maxAccountIdList in " << __FILE__ << ":" <<__LINE__ << ", content: ";
+                unsigned int index=0;
+                while(index<EpollClientLoginSlave::maxAccountIdList.size())
+                {
+                    if(index>0)
+                        std::cerr << ", ";
+                    std::cerr << EpollClientLoginSlave::maxAccountIdList[index];
+                    index++;
+                }
+                std::cerr << std::endl;
+                abort();
+            }
+        }
+        break;
+        case 0xC0:
+        {
+            const uint8_t groupIndex=LinkToMaster::queryNumberToCharacterGroup[queryNumber];
+
+            unsigned int pos=0;
+            CharactersGroupForLogin::list[groupIndex]->maxCharacterId.reserve(CharactersGroupForLogin::list[groupIndex]->maxCharacterId.size()+CATCHCHALLENGER_SERVER_MAXIDBLOCK);
+            unsigned int index=0;
+            while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+            {
+                if((size-pos)<4)
+                {
+                    std::cerr << "reply to 08 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    abort();
+                }
+                CharactersGroupForLogin::list[groupIndex]->maxCharacterId.push_back(le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos))));
+                pos+=4;
+                index++;
+            }
+            if(vectorHaveDuplicatesForSmallList(CharactersGroupForLogin::list[groupIndex]->maxCharacterId))
+            {
+                std::cerr << "reply to 08: duplicate maxCharacterId " << groupIndex << " in " << __FILE__ << ":" <<__LINE__ << ", content: ";
+                unsigned int index=0;
+                while(index<CharactersGroupForLogin::list[groupIndex]->maxCharacterId.size())
+                {
+                    if(index>0)
+                        std::cerr << ", ";
+                    std::cerr << CharactersGroupForLogin::list[groupIndex]->maxCharacterId[index];
+                    index++;
+                }
+                std::cerr << std::endl;
+                abort();
+            }
+
+            LinkToMaster::queryNumberToCharacterGroup[queryNumber]=0;
+        }
+        break;
+        case 0xC1:
+        {
+            const uint8_t groupIndex=LinkToMaster::queryNumberToCharacterGroup[queryNumber];
+
+            unsigned int pos=0;
+            CharactersGroupForLogin::list[groupIndex]->maxMonsterId.reserve(CharactersGroupForLogin::list[groupIndex]->maxMonsterId.size()+CATCHCHALLENGER_SERVER_MAXIDBLOCK);
+            unsigned int index=0;
+            while(index<CATCHCHALLENGER_SERVER_MAXIDBLOCK)
+            {
+                if((size-pos)<4)
+                {
+                    std::cerr << "reply to 08 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    abort();
+                }
+                CharactersGroupForLogin::list[groupIndex]->maxMonsterId.push_back(le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos))));
+                pos+=4;
+                index++;
+            }
+            if(vectorHaveDuplicatesForSmallList(CharactersGroupForLogin::list[groupIndex]->maxMonsterId))
+            {
+                std::cerr << "reply to 08: duplicate maxMonsterId " << groupIndex << " in " << __FILE__ << ":" <<__LINE__ << ", content: ";
+                unsigned int index=0;
+                while(index<CharactersGroupForLogin::list[groupIndex]->maxMonsterId.size())
+                {
+                    if(index>0)
+                        std::cerr << ", ";
+                    std::cerr << CharactersGroupForLogin::list[groupIndex]->maxMonsterId[index];
+                    index++;
+                }
+                std::cerr << std::endl;
+                abort();
+            }
+
+            LinkToMaster::queryNumberToCharacterGroup[queryNumber]=0;
+        }
+        break;
         default:
             parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType)+", file:"+__FILE__+":"+std::to_string(__LINE__));
             return false;
