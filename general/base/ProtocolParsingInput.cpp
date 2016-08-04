@@ -15,9 +15,9 @@ using namespace CatchChallenger;
 
 ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
 {
+    #if defined (CATCHCHALLENGER_EXTRA_CHECK) && ! defined (EPOLLCATCHCHALLENGERSERVER)
     if(socket==NULL)
         return -1;
-    #if defined (CATCHCHALLENGER_EXTRA_CHECK) && ! defined (EPOLLCATCHCHALLENGERSERVER)
     if(socket->openMode()|QIODevice::WriteOnly)
     {}
     else
@@ -31,6 +31,8 @@ ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
         #ifdef EPOLLCATCHCHALLENGERSERVER
         const int &temp_size=epollSocket.read(data,size);
         #else
+        if(socket==NULL)
+            return -1;
         const int &temp_size=socket->read(data,size);
         #endif
         RXSize+=temp_size;
@@ -39,6 +41,8 @@ ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
         #ifdef EPOLLCATCHCHALLENGERSERVER
         return epollSocket.read(data,size);
         #else
+        if(socket==NULL)
+            return -1;
         return socket->read(data,size);
         #endif
     #endif
@@ -47,6 +51,8 @@ ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
 ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t &size)
 {
     #if defined (CATCHCHALLENGER_EXTRA_CHECK) && ! defined (EPOLLCATCHCHALLENGERSERVER)
+    if(socket==NULL)
+        return -1;
     if(socket->openMode()|QIODevice::WriteOnly)
     {}
     else
@@ -120,6 +126,8 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
     #ifdef EPOLLCATCHCHALLENGERSERVER
     const ssize_t &byteWriten=epollSocket.write(data,size);
     #else
+    if(socket==NULL)
+        return -1;
     const ssize_t &byteWriten=socket->write(data,size);
     #endif
     #ifndef EPOLLCATCHCHALLENGERSERVER
