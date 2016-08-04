@@ -616,13 +616,6 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
             }
             const uint8_t &queryNumber=LinkToMaster::linkToMaster->queryNumberList.back();
             LinkToMaster::linkToMaster->queryNumberList.pop_back();
-            ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xBF;
-            ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumber;
-            if(!internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,2))
-            {
-                errorParsingLayer("Unable to send at createAccount_return");
-                return;
-            }
 
             //send the network reply
             removeFromQueryReceived(queryNumber);

@@ -49,6 +49,7 @@ LinkToMaster::LinkToMaster(
         queryNumberList[index]=index;
         index++;
     }
+    memset(LinkToMaster::queryNumberToCharacterGroup,0x00,sizeof(LinkToMaster::queryNumberToCharacterGroup));
 }
 
 LinkToMaster::~LinkToMaster()
@@ -298,8 +299,6 @@ void LinkToMaster::tryReconnect()
 {
     stat=Stat::Unconnected;
     EpollClientLoginSlave::maxAccountIdList.clear();
-    EpollClientLoginSlave::maxCharacterIdList.clear();
-    EpollClientLoginSlave::maxClanIdList.clear();
     {
         unsigned int index=0;
         while(index<CharactersGroupForLogin::list.size())
