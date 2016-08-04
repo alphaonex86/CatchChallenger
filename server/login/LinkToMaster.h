@@ -60,7 +60,7 @@ public:
     void connectInternal();
     void readTheFirstSslHeader();
     bool sendRawBlock(const char * const data,const unsigned int &size);
-    std::string listTheRunningQuery();
+    std::string listTheRunningQuery() const;
 protected:
     void disconnectClient();
     void errorParsingLayer(const std::string &error);

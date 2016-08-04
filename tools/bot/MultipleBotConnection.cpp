@@ -261,6 +261,12 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
     }
 }
 
+void MultipleBotConnection::haveDatapackMainSubCode_with_client(CatchChallengerClient *client)
+{
+    qDebug() << "MultipleBotConnection::haveDatapackMainSubCode_with_client(): Bot version:" << botInterface->name() << botInterface->version();
+    client->api->sendDatapackContentMainSub();
+}
+
 void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerClient *client)
 {
     Q_UNUSED(client);
@@ -417,8 +423,9 @@ void MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * cli
     connect(client->socket,&CatchChallenger::ConnectedSocket::disconnected,          this,&MultipleBotConnection::disconnected);
     if(apiToCatchChallengerClient.isEmpty())
     {
-        connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapack,      this,&MultipleBotConnection::haveTheDatapack);
-        connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapackMainSub,      this,&MultipleBotConnection::haveTheDatapackMainSub);
+        connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapack,         this,&MultipleBotConnection::haveTheDatapack);
+        connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapackMainSub,  this,&MultipleBotConnection::haveTheDatapackMainSub);
+        connect(client->api,&CatchChallenger::Api_client_real::haveDatapackMainSubCode,  this,&MultipleBotConnection::haveTheDatapackMainSubCode);
     }
     client->haveShowDisconnectionReason=false;
     client->haveBeenDiscounted=false;

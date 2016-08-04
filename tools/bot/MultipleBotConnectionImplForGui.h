@@ -44,6 +44,7 @@ private:
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId);
     virtual void haveTheDatapack();
     virtual void haveTheDatapackMainSub();
+    virtual void haveTheDatapackMainSubCode();
     virtual void sslErrors(const QList<QSslError> &errors);
     virtual void protocol_is_good();
     virtual void newSocketError(QAbstractSocket::SocketError error);
