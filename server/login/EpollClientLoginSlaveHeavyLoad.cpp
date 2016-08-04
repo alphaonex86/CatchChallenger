@@ -731,6 +731,7 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
         return;
     }
 
@@ -835,6 +836,7 @@ void EpollClientLoginSlave::removeCharacterLater(const uint8_t &query_id, const 
         removeFromQueryReceived(query_id);
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
         errorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
         return;
     }
 }
@@ -856,7 +858,10 @@ void EpollClientLoginSlave::addCharacter_ReturnFailed(const uint8_t &query_id,co
     *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::addCharacterReply+0x04)=(uint32_t)0;
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::addCharacterReply),sizeof(EpollClientLoginSlave::addCharacterReply));
     if(errorCode!=0x01)
+    {
         errorParsingLayer("EpollClientLoginSlave::addCharacter() out of query to request the master server: "+std::to_string(errorCode)+": "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
+    }
 }
 
 void EpollClientLoginSlave::removeCharacter_ReturnOk(const uint8_t &query_id)
@@ -874,7 +879,10 @@ void EpollClientLoginSlave::removeCharacter_ReturnFailed(const uint8_t &query_id
     removeFromQueryReceived(query_id);
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::removeCharacterReply),sizeof(EpollClientLoginSlave::removeCharacterReply));
     if(errorString.empty())
+    {
         errorParsingLayer("EpollClientLoginSlave::removeCharacter() out of query to request the master server: "+std::to_string(errorCode)+": "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
+    }
     else
         errorParsingLayer(errorString+": "+std::to_string(errorCode));
 }
