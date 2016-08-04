@@ -383,7 +383,7 @@ bool LinkToMaster::sendRawBlock(const char * const data,const unsigned int &size
     return internalSendRawSmallPacket(data,size);
 }
 
-std::string LinkToMaster::listTheRunningQuery()
+std::string LinkToMaster::listTheRunningQuery() const
 {
     std::string returnVar;
     uint8_t index=0;

@@ -66,6 +66,7 @@ protected:
     virtual void protocol_is_good_with_client(CatchChallengerClient *client);
     virtual void haveTheDatapack_with_client(CatchChallengerClient *client);
     virtual void haveTheDatapackMainSub_with_client(CatchChallengerClient *client);
+    virtual void haveDatapackMainSubCode_with_client(CatchChallengerClient *client);
     virtual void ifMultipleConnexionStartCreation();
     virtual void connectTimerSlot();
     void newCharacterId_with_client(CatchChallengerClient *client,const quint8 &returnCode, const quint32 &characterId);
@@ -76,6 +77,7 @@ protected:
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId) = 0;
     virtual void haveTheDatapack() = 0;
     virtual void haveTheDatapackMainSub() = 0;
+    virtual void haveTheDatapackMainSubCode() = 0;
     virtual void sslErrors(const QList<QSslError> &errors) = 0;
     virtual void protocol_is_good() = 0;
     virtual void newSocketError(QAbstractSocket::SocketError error) = 0;

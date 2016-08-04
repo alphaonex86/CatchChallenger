@@ -126,7 +126,10 @@ void MultipleBotConnectionImplForGui::characterSelectForFirstCharacter(const qui
             return;
         }
         else
+        {
             qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): BUG: characterOnMap.contains(charId): " << charId;
+            return;
+        }
     }
 
     qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Have any first char to select:" << charId;
@@ -259,6 +262,19 @@ void MultipleBotConnectionImplForGui::haveTheDatapackMainSub()
 
     MultipleBotConnection::haveTheDatapackMainSub_with_client(apiToCatchChallengerClient.value(senderObject));
     emit datapackMainSubIsReady();
+}
+
+void MultipleBotConnectionImplForGui::haveTheDatapackMainSubCode()
+{
+    qDebug() << "MultipleBotConnectionImplFoprGui::haveTheDatapackMainSubCode()";
+    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
+    if(senderObject==NULL)
+    {
+        qDebug() << "MultipleBotConnectionImplFoprGui::haveTheDatapackMainSubCode(): sender()==NULL";
+        return;
+    }
+
+    MultipleBotConnection::haveDatapackMainSubCode_with_client(apiToCatchChallengerClient.value(senderObject));
 }
 
 void MultipleBotConnectionImplForGui::sslErrors(const QList<QSslError> &errors)
