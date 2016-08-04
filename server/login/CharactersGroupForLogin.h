@@ -31,6 +31,8 @@ public:
     std::vector<EpollClientLoginSlave *> clientQueryForReadReturn;
     std::vector<uint32_t> maxCharacterId;
     std::vector<uint32_t> maxMonsterId;
+    bool maxCharacterIdRequested;
+    bool maxMonsterIdRequested;
     uint8_t index;
     struct AddCharacterParam
     {

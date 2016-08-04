@@ -128,11 +128,7 @@ public:
      * uint8_t accountCharatersCount; */
 
     static std::vector<unsigned int> maxAccountIdList;
-    static std::vector<unsigned int> maxCharacterIdList;
-    static std::vector<unsigned int> maxClanIdList;
     static bool maxAccountIdRequested;
-    static bool maxCharacterIdRequested;
-    static bool maxMonsterIdRequested;
     static char replyToRegisterLoginServerCharactersGroup[1024];
     static unsigned int replyToRegisterLoginServerCharactersGroupSize;
     static char baseDatapackSum[28];

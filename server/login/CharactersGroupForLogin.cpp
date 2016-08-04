@@ -8,6 +8,8 @@ std::vector<CharactersGroupForLogin *> CharactersGroupForLogin::list;
 char CharactersGroupForLogin::tempBuffer[4096];
 
 CharactersGroupForLogin::CharactersGroupForLogin(const char * const db,const char * const host,const char * const login,const char * const pass,const uint8_t &considerDownAfterNumberOfTry,const uint8_t &tryInterval) :
+    maxCharacterIdRequested(false),
+    maxMonsterIdRequested(false),
     databaseBaseCommon(new EpollPostgresql())
 {
     databaseBaseCommon->considerDownAfterNumberOfTry=considerDownAfterNumberOfTry;

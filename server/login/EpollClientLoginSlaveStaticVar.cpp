@@ -7,11 +7,7 @@ using namespace CatchChallenger;
 std::vector<EpollClientLoginSlave *> EpollClientLoginSlave::client_list;
 std::vector<EpollClientLoginSlave *> EpollClientLoginSlave::stat_client_list;
 std::vector<unsigned int> EpollClientLoginSlave::maxAccountIdList;
-std::vector<unsigned int> EpollClientLoginSlave::maxCharacterIdList;
-std::vector<unsigned int> EpollClientLoginSlave::maxClanIdList;
 bool EpollClientLoginSlave::maxAccountIdRequested=false;
-bool EpollClientLoginSlave::maxCharacterIdRequested=false;
-bool EpollClientLoginSlave::maxMonsterIdRequested=false;
 
 unsigned char EpollClientLoginSlave::protocolReplyProtocolNotSupported[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x02/*return code*/};
 unsigned char EpollClientLoginSlave::protocolReplyServerFull[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x03/*return code*/};
