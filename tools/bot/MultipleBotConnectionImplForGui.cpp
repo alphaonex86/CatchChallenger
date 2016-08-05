@@ -208,15 +208,17 @@ void MultipleBotConnectionImplForGui::haveCharacter()
             qDebug() << "MultipleBotConnectionImplFoprGui::haveCharacter(): sender()==NULL";
             return;
         }
-        senderObject->sendDatapackContentMainSub();
     }
+    /*CatchChallenger::ClientFightEngine::fightEngine.public_and_private_informations.playerMonster=CatchChallenger::Api_client_real::client->player_informations.playerMonster;
+    CatchChallenger::ClientFightEngine::fightEngine.setVariableContent(CatchChallenger::Api_client_real::client->get_player_informations());*/
     MultipleBotConnection::haveCharacter();
 }
 
 void MultipleBotConnectionImplForGui::connectTheExternalSocket(CatchChallengerClient * client)
 {
     MultipleBotConnection::connectTheExternalSocket(client);
-    connect(client->api,&CatchChallenger::Api_client_real::new_chat_text,            this,&MultipleBotConnectionImplForGui::chat_text,Qt::QueuedConnection);
+    if(!connect(client->api,&CatchChallenger::Api_client_real::new_chat_text,            this,&MultipleBotConnectionImplForGui::chat_text,Qt::QueuedConnection))
+        abort();
 }
 
 void MultipleBotConnectionImplForGui::newCharacterId(const quint8 &returnCode, const quint32 &characterId)
@@ -342,7 +344,10 @@ void MultipleBotConnectionImplForGui::newError(QString error,QString detailedErr
 
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
+    {
+        qDebug() << QString("MultipleBotConnectionImplFoprGui::newError() senderObject==NULL error: %1, detailedError: %2").arg(error).arg(detailedError);
         return;
+    }
 
     apiToCatchChallengerClient[senderObject]->haveShowDisconnectionReason=true;
     statusError(QStringLiteral("Error: %1, detailedError: %2").arg(error).arg(detailedError));
@@ -354,17 +359,28 @@ void MultipleBotConnectionImplForGui::have_current_player_info(const CatchChalle
 {
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
+    {
+        qDebug() << QString("MultipleBotConnectionImplFoprGui::have_current_player_info() senderObject==NULL");
         return;
+    }
     MultipleBotConnection::have_current_player_info_with_client(apiToCatchChallengerClient[senderObject],informations);
 }
 
 void MultipleBotConnectionImplForGui::disconnected()
 {
-    MultipleBotConnection::disconnected();
-
     CatchChallenger::ConnectedSocket *senderObject = qobject_cast<CatchChallenger::ConnectedSocket *>(sender());
     if(senderObject==NULL)
+    {
+        newError(QStringLiteral("Internal problem"),QStringLiteral("MultipleBotConnectionImplForGui::disconnected() senderObject==NULL"));
         return;
+    }
+
+    if(connectedSocketToCatchChallengerClient.value(senderObject)->api->stage()==CatchChallenger::Api_protocol::StageConnexion::Stage4)
+    {
+        std::cout << "MultipleBotConnectionImplForGui::disconnected() for reconnect, ignore" << std::endl;
+        return;
+    }
+    MultipleBotConnection::disconnected();
 
     connectedSocketToCatchChallengerClient[senderObject]->haveShowDisconnectionReason=false;
     if(connectedSocketToCatchChallengerClient.value(senderObject)->selectedCharacter==true)
