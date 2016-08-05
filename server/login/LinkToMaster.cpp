@@ -309,6 +309,18 @@ void LinkToMaster::tryReconnect()
             index++;
         }
     }
+    //same as contructor
+    {
+        flags|=0x08;
+        queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
+        unsigned int index=0;
+        while(index<queryNumberList.size())
+        {
+            queryNumberList[index]=index;
+            index++;
+        }
+        memset(LinkToMaster::queryNumberToCharacterGroup,0x00,sizeof(LinkToMaster::queryNumberToCharacterGroup));
+    }
 
     if(stat!=Stat::Unconnected)
         return;

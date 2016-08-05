@@ -848,11 +848,34 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
                 const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=loginServerReturnForCharaterSelect.front();
                 if(size==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                 {
+                    /*std::cout << "EpollClientLoginMaster::parseReplyData(), reply got on: "
+                              << charactersGroupForGameServerInformation->uniqueKey
+                              << ", host: "
+                              << charactersGroupForGameServerInformation->host
+                              << ":"
+                              << charactersGroupForGameServerInformation->port
+                              << std::endl;*/
                     if(dataForSelectedCharacterReturn.loginServer!=NULL)
                         dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnToken(dataForSelectedCharacterReturn.client_query_id,data);
+                    else
+                        std::cerr << "EpollClientLoginMaster::parseReplyData(), error reply got on: "
+                                  << charactersGroupForGameServerInformation->uniqueKey
+                                  << ", host: "
+                                  << charactersGroupForGameServerInformation->host
+                                  << ":"
+                                  << charactersGroupForGameServerInformation->port
+                                  << " but no login server connected"
+                                  << std::endl;
                 }
                 else if(size==1)
                 {
+                    std::cerr << "EpollClientLoginMaster::parseReplyData(), error reply got on: "
+                              << charactersGroupForGameServerInformation->uniqueKey
+                              << ", host: "
+                              << charactersGroupForGameServerInformation->host
+                              << ":"
+                              << charactersGroupForGameServerInformation->port
+                              << std::endl;
                     if(data[0]!=0x03)
                     {
                         //internal error, no more token, ...
@@ -868,6 +891,15 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
                     }
                     if(dataForSelectedCharacterReturn.loginServer!=NULL)
                         dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
+                    else
+                        std::cerr << "EpollClientLoginMaster::parseReplyData(), error reply got on: "
+                                  << charactersGroupForGameServerInformation->uniqueKey
+                                  << ", host: "
+                                  << charactersGroupForGameServerInformation->host
+                                  << ":"
+                                  << charactersGroupForGameServerInformation->port
+                                  << " but no login server connected"
+                                  << std::endl;
                 }
                 else
                     parseNetworkReadError("main ident: "+std::to_string(mainCodeType)+", reply size for 8101 wrong");

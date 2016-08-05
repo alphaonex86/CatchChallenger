@@ -47,8 +47,9 @@ LinkToMaster::LinkToMaster(
         tryInterval(5),
         considerDownAfterNumberOfTry(3)
 {
-    flags|=0x08;
     rng.seed(time(0));
+
+    flags|=0x08;
     queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
     unsigned int index=0;
     while(index<queryNumberList.size())
@@ -561,6 +562,17 @@ void LinkToMaster::askMoreMaxClanId()
 
 void LinkToMaster::tryReconnect()
 {
+    //contructor
+    {
+        flags|=0x08;
+        queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
+        unsigned int index=0;
+        while(index<queryNumberList.size())
+        {
+            queryNumberList[index]=index;
+            index++;
+        }
+    }
     stat=Stat::Unconnected;
     GlobalServerData::serverPrivateVariables.maxMonsterId.clear();
     GlobalServerData::serverPrivateVariables.maxClanId.clear();
