@@ -120,6 +120,7 @@ void MultipleBotConnectionImplForGui::characterSelectForFirstCharacter(const qui
                 qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Unable to manual select character:" << charId;
             else
             {
+                qDebug() << "add character on map: " << charId << " at " << __FILE__ << ":" << __LINE__;
                 characterOnMap << charId;
                 qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Manual select character:" << charId;
             }

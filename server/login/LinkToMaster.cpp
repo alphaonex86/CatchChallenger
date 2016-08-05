@@ -339,6 +339,7 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
     //todo: cache the user cache to locally double lock check to minimize the master
     if(queryNumberList.empty())
     {
+        errorParsingLayer("EpollClientLoginSlave::trySelectCharacter() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         std::cerr << listTheRunningQuery() << std::endl;
         return false;
     }
@@ -392,8 +393,8 @@ std::string LinkToMaster::listTheRunningQuery() const
         if(outputQueryNumberToPacketCode[index]!=0x00)
         {
             if(!returnVar.empty())
-                returnVar+=", ";
-            returnVar+="query "+std::to_string(index)+" run packet code "+std::to_string(outputQueryNumberToPacketCode[index]);
+                returnVar+=",";
+            returnVar+="["+std::to_string(index)+"]="+std::to_string(outputQueryNumberToPacketCode[index]);
         }
         index++;
     }

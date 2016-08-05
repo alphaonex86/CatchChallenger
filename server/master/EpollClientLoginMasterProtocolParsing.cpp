@@ -95,6 +95,7 @@ bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
                 errorParsingLayer("send login before the protocol");
                 return false;
             }
+            errorParsingLayer("send login before the protocol or wrong path");
         break;
         default:
             parseNetworkReadError("wrong data before login with mainIdent: "+std::to_string(mainCodeType));
@@ -772,6 +773,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             }
 
             internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            messageParsingLayer("get maxCharacterId block replied");
         }
         break;
         //get maxMonsterId block
@@ -813,6 +815,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             }
 
             internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            messageParsingLayer("get maxMonsterId block replied");
         }
         break;
         default:

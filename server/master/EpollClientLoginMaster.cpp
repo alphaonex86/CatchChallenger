@@ -218,6 +218,12 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
     }
     if(!CharactersGroup::list.at(charactersGroupIndex)->containsGameServerUniqueKey(serverUniqueKey))
     {
+        //should be filtred by the login server, then very minimal
+        {
+            errorParsingLayer("!CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->containsGameServerUniqueKey("+std::to_string(serverUniqueKey)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name);
+            std::cerr << CharactersGroup::list.at(charactersGroupIndex)->gameServerUniqueKeyHumanReadableList() << std::endl;
+        }
+
         //send the network reply
         removeFromQueryReceived(query_id);
         uint32_t posOutput=0;
