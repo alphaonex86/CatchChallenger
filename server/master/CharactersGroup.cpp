@@ -310,6 +310,25 @@ bool CharactersGroup::containsGameServerUniqueKey(const uint32_t &serverUniqueKe
     return gameServers.find(serverUniqueKey)!=gameServers.cend();
 }
 
+std::string CharactersGroup::gameServerUniqueKeyHumanReadableList() const
+{
+    if(gameServers.empty())
+        return "No server in this group";
+    else
+    {
+        std::string returnList;
+        auto i=gameServers.begin();
+        while(i!=gameServers.cend())
+        {
+            if(!returnList.empty())
+                returnList+=",";
+            returnList+=std::to_string(i->first);
+            ++i;
+        }
+        return returnList;
+    }
+}
+
 CharactersGroup::CharacterLock CharactersGroup::characterIsLocked(const uint32_t &characterId)
 {
     if(lockedAccount.find(characterId)!=lockedAccount.cend())

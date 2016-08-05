@@ -188,10 +188,13 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
             const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.at(charactersGroupIndex).size()).character_id;
             if(!characterOnMap.contains(character_id))
             {
-                qDebug() << "MultipleBotConnection::logged_with_client(): Manual select character:" << character_id;
-                characterOnMap << character_id;
                 if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,character_id))
                     qDebug() << "Unable to do automatic character selection:" << character_id;
+                else
+                {
+                    qDebug() << "MultipleBotConnection::logged_with_client(): Add char on map: Manual select character:" << character_id;
+                    characterOnMap << character_id;
+                }
             }
         }
         return;
@@ -222,21 +225,26 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
 
     if(client->charactersList.count()<=0 || charactersGroupIndex>=client->charactersList.size() || client->charactersList.at(charactersGroupIndex).empty())
     {
-        qDebug() << client->login << "have not character";
-        if(autoCreateCharacter() || multipleConnexion())
+        if(serverIsSelected)
         {
-            qDebug() << client->login << "create new character";
-            quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
-            QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
-            uint8_t skinId;
-            const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
-            if(!profile.forcedskin.empty())
-                skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
-            else
-                skinId=rand()%skinsList.size();
-            uint8_t monstergroupId=rand()%profile.monstergroup.size();
-            client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo,monstergroupId,skinId);
+            qDebug() << client->login << "have not character";
+            if(autoCreateCharacter() || multipleConnexion())
+            {
+                qDebug() << client->login << "create new character";
+                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
+                QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
+                uint8_t skinId;
+                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
+                if(!profile.forcedskin.empty())
+                    skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
+                else
+                    skinId=rand()%skinsList.size();
+                uint8_t monstergroupId=rand()%profile.monstergroup.size();
+                client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo,monstergroupId,skinId);
+            }
         }
+        else
+            qDebug() << client->login << "have not character but no server selected";
         return;
     }
     //ifMultipleConnexionStartCreation();
@@ -251,12 +259,14 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
                 qDebug() << "if(!serverIsSelected) for multipleConnexion()";
                 abort();
             }
-            qDebug() << "haveTheDatapack_with_client: Manual select character:" << character_id;
-            characterOnMap << character_id;
             if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,character_id))
                 qDebug() << "Unable to select character after datapack loading:" << character_id;
             else
+            {
+                qDebug() << "haveTheDatapack_with_client: Manual select character:" << character_id;
+                characterOnMap << character_id;
                 qDebug() << "Select character after datapack loading:" << character_id;
+            }
         }
     }
 }
@@ -333,14 +343,20 @@ void MultipleBotConnection::newCharacterId_with_client(MultipleBotConnection::Ca
         qDebug() << "new character not created, server have returned a failed: " << returnCode;
         return;
     }
+    if(serverUniqueKey==0)
+    {
+        qDebug() << "Unable to select the freshlly created char because don't have select the server: " << returnCode;
+        return;
+    }
 
     if(!characterOnMap.contains(characterId))
     {
-        characterOnMap << characterId;
         if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,characterId))
             qDebug() << "Unable to select character after creation:" << characterId;
         else
         {
+            qDebug() << "add character on map: " << characterId << " at " << __FILE__ << ":" << __LINE__;
+            characterOnMap << characterId;
             qDebug() << "Select new character created after creation:" << characterId;
             ifMultipleConnexionStartCreation();
         }
