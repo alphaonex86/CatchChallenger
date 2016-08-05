@@ -49,6 +49,7 @@ public:
                                 const uint16_t &currentPlayer, const uint16_t &maxPlayer, const std::unordered_set<uint32_t> &lockedAccount);
     void removeGameServerUniqueKey(void * const client);
     bool containsGameServerUniqueKey(const uint32_t &serverUniqueKey) const;
+    std::string gameServerUniqueKeyHumanReadableList() const;
     CharacterLock characterIsLocked(const uint32_t &characterId);
     //need check if is already locked before this call
     //don't apply on InternalGameServer
