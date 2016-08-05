@@ -372,7 +372,12 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                 std::chrono::duration<double, std::milli> elapsed = end-start;
                 const uint32_t &ms=elapsed.count();
                 if(ms>5000)
-                    std::cerr << "query too slow, take " << ms << "ms" << std::endl;
+                {
+                    if(queriesList.empty())
+                        std::cerr << "query too slow, take " << ms << "ms" << std::endl;
+                    else
+                        std::cerr << queriesList.front() << ": query too slow, take " << ms << "ms" << std::endl;
+                }
                 start = std::chrono::high_resolution_clock::now();
                 while(result!=NULL)
                 {
