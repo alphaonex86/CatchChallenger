@@ -464,7 +464,23 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
             //not a reply to a query
             if(replyTo==0x00)
             {
-                errorParsingLayer("not a reply to q known query (parseQueryNumber)");
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                std::string returnedList;
+                unsigned int index=0;
+                while(index<sizeof(outputQueryNumberToPacketCode))
+                {
+                    if(outputQueryNumberToPacketCode[index]!=0x00)
+                    {
+                        if(!returnedList.empty())
+                            returnedList+=",";
+                        returnedList+="["+std::to_string(index)+"]="+std::to_string(outputQueryNumberToPacketCode[index]);
+                    }
+                    index++;
+                }
+                errorParsingLayer("not a reply to a known query (parseQueryNumber): "+std::to_string(queryNumber)+", query in progress: "+returnedList);
+                #else
+                errorParsingLayer("not a reply to a known query (parseQueryNumber): "+std::to_string(queryNumber));
+                #endif
                 return -1;
             }
             dataSize=ProtocolParsingBase::packetFixedSize[256+replyTo-128];

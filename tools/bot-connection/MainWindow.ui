@@ -6,17 +6,23 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>488</width>
-    <height>904</height>
+    <width>1193</width>
+    <height>621</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Bot connection</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="verticalLayout_4">
-    <item>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0" rowspan="2">
      <widget class="QGroupBox" name="groupBox">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>400</height>
+       </size>
+      </property>
       <property name="title">
        <string>Connection</string>
       </property>
@@ -255,8 +261,14 @@
       </layout>
      </widget>
     </item>
-    <item>
+    <item row="0" column="1">
      <widget class="QGroupBox" name="groupBox_Server">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>250</height>
+       </size>
+      </property>
       <property name="title">
        <string>Servers</string>
       </property>
@@ -285,7 +297,7 @@
       </layout>
      </widget>
     </item>
-    <item>
+    <item row="1" column="1">
      <widget class="QGroupBox" name="groupBox_char">
       <property name="title">
        <string>Character</string>
@@ -322,7 +334,7 @@
       </layout>
      </widget>
     </item>
-    <item>
+    <item row="2" column="0">
      <widget class="QGroupBox" name="groupBox_3">
       <property name="title">
        <string>Options</string>
@@ -359,7 +371,7 @@
       </layout>
      </widget>
     </item>
-    <item>
+    <item row="2" column="1">
      <widget class="QGroupBox" name="groupBox_5">
       <property name="title">
        <string>Connexion informations</string>

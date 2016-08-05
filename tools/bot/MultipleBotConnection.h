@@ -4,6 +4,7 @@
 #include "../../general/base/QFakeSocket.h"
 #include "../../general/base/ConnectedSocket.h"
 #include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../client/base/Api_client_real.h"
 #include "../../client/base/ClientStructures.h"
 #include "BotInterface.h"

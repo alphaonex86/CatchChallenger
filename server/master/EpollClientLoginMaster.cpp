@@ -243,6 +243,9 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
         const CharactersGroup::CharacterLock &lockResult=CharactersGroup::list.at(charactersGroupIndex)->characterIsLocked(characterId);
         if(lockResult!=CharactersGroup::CharacterLock::Unlocked)
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            errorParsingLayer("CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->characterIsLocked("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name+": "+std::to_string(lockResult));
+            #endif
             //send the network reply
             removeFromQueryReceived(query_id);
             uint32_t posOutput=0;
@@ -273,6 +276,9 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
     EpollClientLoginMaster * gameServer=static_cast<EpollClientLoginMaster *>(CharactersGroup::list.at(charactersGroupIndex)->gameServers.at(serverUniqueKey).link);
     if(!gameServer->trySelectCharacterGameServer(this,query_id,serverUniqueKey,charactersGroupIndex,characterId,accountId))
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        errorParsingLayer("CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->trySelectCharacterGameServer("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name+": "+std::to_string(characterId));
+        #endif
         //send the network reply
         removeFromQueryReceived(query_id);
         uint32_t posOutput=0;
@@ -288,13 +294,26 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
+
     CharactersGroup::list[charactersGroupIndex]->lockTheCharacter(characterId);
     gameServer->charactersGroupForGameServerInformation->lockedAccountByGameserver.insert(characterId);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    errorParsingLayer("CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->characterIsLocked("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name);
+    #endif
+
+    //reply send at trySelectCharacterGameServer() above
 }
 
 bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId, const uint32_t &accountId)
 {
     //here you are on game server link
+    /*std::cout << "EpollClientLoginMaster::trySelectCharacterGameServer(), query send on game server to server it: "
+              << charactersGroupForGameServerInformation->uniqueKey
+              << ", host: "
+              << charactersGroupForGameServerInformation->host
+              << ":"
+              << charactersGroupForGameServerInformation->port
+              << std::endl;*/
 
     //check if the characterId is linked to the correct account on login server
     if(queryNumberList.empty())
