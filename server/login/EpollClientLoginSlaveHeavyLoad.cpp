@@ -730,8 +730,8 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
         posOutput+=1;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
+        /*message directly into the functionerrorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;*/
         return;
     }
 
@@ -801,7 +801,7 @@ void EpollClientLoginSlave::addCharacter(const uint8_t &query_id, const uint8_t 
 {
     if(characterGroupIndex>=CharactersGroupForLogin::list.size())
     {
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
+        errorParsingLayer("EpollClientLoginSlave::addCharacter() charactersGroupIndex is out of range");
         return;
     }
     const int8_t &addCharacter=CharactersGroupForLogin::list.at(characterGroupIndex)->addCharacter(this,query_id,profileIndex,pseudo,monsterGroupId,skinId);
@@ -817,7 +817,7 @@ void EpollClientLoginSlave::addCharacter(const uint8_t &query_id, const uint8_t 
             internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::addCharacterIsWrongBuffer),sizeof(EpollClientLoginSlave::addCharacterIsWrongBuffer));
         }
         if(addCharacter<0)
-            errorParsingLayer("EpollClientLoginSlave::selectCharacter() hack detected");
+            errorParsingLayer("EpollClientLoginSlave::addCharacter() hack detected");
         return;
     }
 }
@@ -826,7 +826,7 @@ void EpollClientLoginSlave::removeCharacterLater(const uint8_t &query_id, const 
 {
     if(characterGroupIndex>=CharactersGroupForLogin::list.size())
     {
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter() charactersGroupIndex is out of range");
+        errorParsingLayer("EpollClientLoginSlave::removeCharacterLater() charactersGroupIndex is out of range");
         return;
     }
     if(!CharactersGroupForLogin::list.at(characterGroupIndex)->removeCharacterLater(this,query_id,characterId))
@@ -835,7 +835,7 @@ void EpollClientLoginSlave::removeCharacterLater(const uint8_t &query_id, const 
         EpollClientLoginSlave::loginIsWrongBufferReply[1+1+4]=0x02;
         removeFromQueryReceived(query_id);
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
-        errorParsingLayer("EpollClientLoginSlave::selectCharacter() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        errorParsingLayer("EpollClientLoginSlave::removeCharacterLater() out of query to request the master server: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
         return;
     }
