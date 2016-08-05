@@ -218,7 +218,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             }
             if(size!=1)
             {
-                parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+std::to_string(mainCodeType));
+                parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery(): "+std::to_string(mainCodeType));
                 return false;
             }
             const unsigned char &charactersGroupIndex=*data;
@@ -259,7 +259,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             }
             if(size!=1)
             {
-                parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+std::to_string(mainCodeType));
+                parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery(): "+std::to_string(mainCodeType));
                 return false;
             }
             const unsigned char &charactersGroupIndex=*data;
@@ -744,7 +744,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             }
             if(size!=1)
             {
-                parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+std::to_string(mainCodeType));
+                parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery(): "+std::to_string(mainCodeType));
                 return false;
             }
             const unsigned char &charactersGroupIndex=*data;
@@ -786,7 +786,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             }
             if(size!=1)
             {
-                parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery()"+std::to_string(mainCodeType));
+                parseNetworkReadError("size!=1 EpollClientLoginMaster::parseFullQuery(): "+std::to_string(mainCodeType));
                 return false;
             }
             const unsigned char &charactersGroupIndex=*data;

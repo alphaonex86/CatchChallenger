@@ -484,8 +484,8 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             ProtocolParsingBase::packetFixedSize[0xBD]=CATCHCHALLENGER_SHA224HASH_SIZE;
             ProtocolParsingBase::packetFixedSize[0xBE]=1+4+4+4;
             ProtocolParsingBase::packetFixedSize[0xBF]=0;
-            ProtocolParsingBase::packetFixedSize[0xC0]=4;
-            ProtocolParsingBase::packetFixedSize[0xC1]=4;
+            ProtocolParsingBase::packetFixedSize[0xC0]=1;
+            ProtocolParsingBase::packetFixedSize[0xC1]=1;
 
             ProtocolParsingBase::packetFixedSize[0xDF]=0xFE;
             ProtocolParsingBase::packetFixedSize[0xE0]=0xFE;
