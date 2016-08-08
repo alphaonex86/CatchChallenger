@@ -145,7 +145,9 @@ protected:
     /* flags & 0x80 = have header
      * flags & 0x40 = have data size
      * flags & 0x20 = have query number
+     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
      * flags & 0x10 = isClient
+     #endif
      * flags & 0x08 = allowDynamicSize
     */
 protected:
@@ -157,6 +159,7 @@ protected:
     virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size) = 0;
 
     virtual void reset();
+    virtual void resetForReconnect();
 private:
     std::vector<char> dataToWithoutHeader;
     uint32_t dataSize;
@@ -222,6 +225,7 @@ public:
     bool socketIsOpen();//for epoll delete
     bool socketIsClosed();//for epoll delete
     #endif
+    void resetForReconnect();
 protected:
     void parseIncommingData();
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION

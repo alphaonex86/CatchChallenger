@@ -5,6 +5,7 @@
 #include "CharactersGroupForLogin.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../epoll/EpollSocket.h"
+#include "VariableLoginServer.h"
 
 #include <iostream>
 #include <openssl/sha.h>
@@ -956,7 +957,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 return false;
             }
         }
-        break;
+        return true;
         //Register login server
         case 0xBD:
         {
@@ -1027,7 +1028,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     }
                     if(vectorHaveDuplicatesForSmallList(CharactersGroupForLogin::list[groupIndex]->maxCharacterId))
                     {
-                        std::cerr << "reply to 08: duplicate maxCharacterId " << groupIndex << " in " << __FILE__ << ":" <<__LINE__ << ", content: ";
+                        std::cerr << "reply to 08: duplicate maxCharacterId " << std::to_string(groupIndex) << " in " << __FILE__ << ":" <<__LINE__ << ", content: ";
                         unsigned int index=0;
                         while(index<CharactersGroupForLogin::list[groupIndex]->maxCharacterId.size())
                         {
@@ -1055,7 +1056,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     }
                     if(vectorHaveDuplicatesForSmallList(CharactersGroupForLogin::list[groupIndex]->maxMonsterId))
                     {
-                        std::cerr << "reply to 08: duplicate maxMonsterId " << groupIndex << " in " << __FILE__ << ":" <<__LINE__ << ", content: ";
+                        std::cerr << "reply to 08: duplicate maxMonsterId " << std::to_string(groupIndex) << " in " << __FILE__ << ":" <<__LINE__ << ", content: ";
                         unsigned int index=0;
                         while(index<CharactersGroupForLogin::list[groupIndex]->maxMonsterId.size())
                         {
@@ -1199,8 +1200,12 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 std::cerr << std::endl;
                 abort();
             }
+            EpollClientLoginSlave::maxAccountIdRequested=false;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cout << "Add more id to list: EpollClientLoginSlave::maxAccountIdList.size(): " << EpollClientLoginSlave::maxAccountIdList.size() << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            #endif
         }
-        break;
+        return true;
         case 0xC0:
         {
             const uint8_t groupIndex=LinkToMaster::queryNumberToCharacterGroup[queryNumber];
@@ -1221,7 +1226,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
             }
             if(vectorHaveDuplicatesForSmallList(CharactersGroupForLogin::list[groupIndex]->maxCharacterId))
             {
-                std::cerr << "reply to 08: duplicate maxCharacterId " << groupIndex << " in " << __FILE__ << ":" <<__LINE__ << ", content: ";
+                std::cerr << "reply to 08: duplicate maxCharacterId " << std::to_string(groupIndex) << " in " << __FILE__ << ":" <<__LINE__ << ", content: ";
                 unsigned int index=0;
                 while(index<CharactersGroupForLogin::list[groupIndex]->maxCharacterId.size())
                 {
@@ -1233,10 +1238,14 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 std::cerr << std::endl;
                 abort();
             }
+            #ifdef DEBUG_MESSAGE_QUERY_IDLIST
+            std::cout << "Add more id to list: CharactersGroupForLogin::list[" << std::to_string(groupIndex) << "]->maxCharacterId: " << CharactersGroupForLogin::list[groupIndex]->maxCharacterId.size() << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            #endif
 
             LinkToMaster::queryNumberToCharacterGroup[queryNumber]=0;
+            CharactersGroupForLogin::list[groupIndex]->maxCharacterIdRequested=false;
         }
-        break;
+        return true;
         case 0xC1:
         {
             const uint8_t groupIndex=LinkToMaster::queryNumberToCharacterGroup[queryNumber];
@@ -1257,7 +1266,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
             }
             if(vectorHaveDuplicatesForSmallList(CharactersGroupForLogin::list[groupIndex]->maxMonsterId))
             {
-                std::cerr << "reply to 08: duplicate maxMonsterId " << groupIndex << " in " << __FILE__ << ":" <<__LINE__ << ", content: ";
+                std::cerr << "reply to 08: duplicate maxMonsterId " << std::to_string(groupIndex) << " in " << __FILE__ << ":" <<__LINE__ << ", content: ";
                 unsigned int index=0;
                 while(index<CharactersGroupForLogin::list[groupIndex]->maxMonsterId.size())
                 {
@@ -1269,17 +1278,20 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 std::cerr << std::endl;
                 abort();
             }
+            #ifdef DEBUG_MESSAGE_QUERY_IDLIST
+            std::cout << "Add more id to list: CharactersGroupForLogin::list[" << std::to_string(groupIndex) << "]->maxMonsterId.size(): " << CharactersGroupForLogin::list[groupIndex]->maxMonsterId.size() << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            #endif
 
             LinkToMaster::queryNumberToCharacterGroup[queryNumber]=0;
+            CharactersGroupForLogin::list[groupIndex]->maxMonsterIdRequested=false;
         }
-        break;
+        return true;
         default:
-            parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType)+", file:"+__FILE__+":"+std::to_string(__LINE__));
+            parseNetworkReadError("The master server responds to not coded value into the switch (or end with break not return): "+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+", file:"+__FILE__+":"+std::to_string(__LINE__));
             return false;
         break;
     }
-    parseNetworkReadError("The server for now not ask anything: "+std::to_string(mainCodeType)+","+std::to_string(queryNumber));
-    return false;
+    return true;
 }
 
 void LinkToMaster::parseNetworkReadError(const std::string &errorString)

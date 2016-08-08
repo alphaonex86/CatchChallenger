@@ -33,7 +33,7 @@ public:
     std::vector<uint32_t> maxMonsterId;
     bool maxCharacterIdRequested;
     bool maxMonsterIdRequested;
-    uint8_t index;
+    uint8_t charactersGroupIndex;
     struct AddCharacterParam
     {
         void * client;

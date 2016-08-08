@@ -297,6 +297,11 @@ void LinkToMaster::parseIncommingData()
 
 void LinkToMaster::tryReconnect()
 {
+    {
+        //abort all pending request asked to master server
+        //as selectCharacter():
+        /// \todo abort selectCharacter() pending
+    }
     stat=Stat::Unconnected;
     EpollClientLoginSlave::maxAccountIdList.clear();
     {
@@ -308,6 +313,10 @@ void LinkToMaster::tryReconnect()
             group->maxMonsterId.clear();
             index++;
         }
+    }
+    //same than base contructor
+    {
+        resetForReconnect();
     }
     //same as contructor
     {

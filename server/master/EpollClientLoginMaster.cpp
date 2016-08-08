@@ -244,7 +244,7 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
         if(lockResult!=CharactersGroup::CharacterLock::Unlocked)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            errorParsingLayer("CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->characterIsLocked("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name+": "+std::to_string(lockResult));
+            messageParsingLayer("Lock result wrong: "+std::to_string(lockResult)+" CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->characterIsLocked("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name);
             #endif
             //send the network reply
             removeFromQueryReceived(query_id);
@@ -277,7 +277,7 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
     if(!gameServer->trySelectCharacterGameServer(this,query_id,serverUniqueKey,charactersGroupIndex,characterId,accountId))
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        errorParsingLayer("CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->trySelectCharacterGameServer("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name+": "+std::to_string(characterId));
+        messageParsingLayer("Unable to lock: CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->trySelectCharacterGameServer("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name+": "+std::to_string(characterId));
         #endif
         //send the network reply
         removeFromQueryReceived(query_id);
@@ -298,7 +298,7 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
     CharactersGroup::list[charactersGroupIndex]->lockTheCharacter(characterId);
     gameServer->charactersGroupForGameServerInformation->lockedAccountByGameserver.insert(characterId);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    errorParsingLayer("CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->characterIsLocked("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name);
+    messageParsingLayer("Locked: CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->characterIsLocked("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name);
     #endif
 
     //reply send at trySelectCharacterGameServer() above

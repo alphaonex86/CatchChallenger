@@ -165,9 +165,9 @@ private:
     #endif
 
     static unsigned char loginInProgressBuffer[7];
-    static unsigned char addCharacterIsWrongBuffer[11];
+    static unsigned char addCharacterIsWrongBuffer[3+4];
     static char loginCharacterList[1024];
-    static unsigned char addCharacterReply[3+4+4];
+    static unsigned char addCharacterReply[3+4];
     static unsigned char removeCharacterReply[3+4];
 
     static const unsigned char protocolHeaderToMatch[5];

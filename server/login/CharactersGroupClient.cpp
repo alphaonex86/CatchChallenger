@@ -1,5 +1,6 @@
 #include "CharactersGroupForLogin.h"
 #include "EpollServerLoginSlave.h"
+#include "VariableLoginServer.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../base/SqlFunction.h"
 #include "../base/PreparedDBQuery.h"
@@ -152,7 +153,7 @@ void CharactersGroupForLogin::character_list_object()
     }
     tempRawData[0]=validCharaterCount;
 
-    client->character_list_return(this->index,tempRawData,tempRawDataSize);
+    client->character_list_return(this->charactersGroupIndex,tempRawData,tempRawDataSize);
     //delete tempRawData;//delete later to order the list, see EpollClientLoginSlave::server_list_return(), QMapIterator<uint8_t,CharacterListForReply> i(characterTempListForReply);, delete i.value().rawData;
 
     //get server list
@@ -548,30 +549,50 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
         std::cerr << "maxCharacterIdRequested is empty" << std::endl;
         return;
     }
-    if(maxCharacterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK && !maxCharacterIdRequested)
+    if(maxCharacterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK)
     {
-        maxCharacterIdRequested=true;
-        if(LinkToMaster::linkToMaster->queryNumberList.empty())
+        if(!maxCharacterIdRequested)
         {
-            client->addCharacter_ReturnFailed(query_id,0x03);
-            std::cerr << "Unable to get query id at createAccount_return" << std::endl;
-            return;
+            #ifdef DEBUG_MESSAGE_QUERY_IDLIST
+            std::cout << "Ask more to master: maxCharacterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK: " << std::to_string(maxCharacterId.size()) << "<" << std::to_string(CATCHCHALLENGER_SERVER_MINIDBLOCK) << " for charactersGroupIndex: " << std::to_string(charactersGroupIndex) << std::endl;
+            #endif
+            if(LinkToMaster::linkToMaster->queryNumberList.empty())
+            {
+                std::cerr << "Unable to get query id at createAccount_return, maxCharacterIdRequested is empty for charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
+                client->addCharacter_ReturnFailed(query_id,0x03);
+                return;
+            }
+            const uint8_t &queryNumber=LinkToMaster::linkToMaster->queryNumberList.back();
+            if(LinkToMaster::queryNumberToCharacterGroup[queryNumber]!=0)
+            {
+                std::cerr << "LinkToMaster::queryNumberToCharacterGroup[queryNumber]!=0 for maxCharacterId: " << std::to_string(charactersGroupIndex) << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
+                client->addCharacter_ReturnFailed(query_id,0x03);
+                return;
+            }
+            maxCharacterIdRequested=true;
+            LinkToMaster::linkToMaster->queryNumberList.pop_back();
+
+            //send the network reply
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xC0;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=this->charactersGroupIndex;
+            posOutput+=1;
+
+            LinkToMaster::linkToMaster->registerOutputQuery(queryNumber,0xC0);
+            LinkToMaster::linkToMaster->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            LinkToMaster::queryNumberToCharacterGroup[queryNumber]=this->charactersGroupIndex;
         }
-        const uint8_t &queryNumber=LinkToMaster::linkToMaster->queryNumberList.back();
-        LinkToMaster::linkToMaster->queryNumberList.pop_back();
-
-        //send the network reply
-        uint32_t posOutput=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xC0;
-        posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
-        posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=index;
-        posOutput+=1;
-
-        LinkToMaster::linkToMaster->registerOutputQuery(queryNumber,0xC0);
-        LinkToMaster::linkToMaster->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-        LinkToMaster::queryNumberToCharacterGroup[queryNumber]=index;
+        else
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cout << "Don't ask more to master (already requested): maxCharacterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK: " << std::to_string(maxCharacterId.size()) << "<" << std::to_string(CATCHCHALLENGER_SERVER_MINIDBLOCK) << " for charactersGroupIndex: " << std::to_string(charactersGroupIndex) << std::endl;
+            #endif
+        }
     }
 
     const uint32_t &characterId=maxCharacterId.back();
@@ -586,8 +607,8 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     {
         if(maxMonsterId.size()<monsters.size())
         {
+            std::cerr << "maxMonsterId is empty or too small: " << maxMonsterId.size() << "<" << monsters.size() << " for charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             client->addCharacter_ReturnFailed(query_id,0x03);
-            std::cerr << "maxMonsterId is empty or too small" << std::endl;
             return;
         }
 
@@ -597,31 +618,50 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
             const EpollServerLoginSlave::LoginProfile::Monster &monster=monsterGroup.at(index);
             const StringWithReplacement &monsterQuery=monsters.at(index);
 
-            if(maxMonsterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK && !maxMonsterIdRequested)
+            if(maxMonsterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK)
             {
-                maxMonsterIdRequested=true;
-                if(LinkToMaster::linkToMaster->queryNumberList.empty())
+                if(!maxMonsterIdRequested)
                 {
-                    client->addCharacter_ReturnFailed(query_id,0x03);
-                    std::cerr << "Unable to get query id at createAccount_return" << std::endl;
-                    std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
-                    return;
+                    #ifdef DEBUG_MESSAGE_QUERY_IDLIST
+                    std::cout << "Ask more to master: maxMonsterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK: " << std::to_string(maxMonsterId.size()) << "<" << std::to_string(CATCHCHALLENGER_SERVER_MINIDBLOCK) << " for charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                    #endif
+                    if(LinkToMaster::linkToMaster->queryNumberList.empty())
+                    {
+                        std::cerr << "Unable to get query id at createAccount_return" << std::endl;
+                        std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
+                        client->addCharacter_ReturnFailed(query_id,0x03);
+                        return;
+                    }
+                    const uint8_t &queryNumber=LinkToMaster::linkToMaster->queryNumberList.back();
+                    if(LinkToMaster::queryNumberToCharacterGroup[queryNumber]!=0)
+                    {
+                        std::cerr << "LinkToMaster::queryNumberToCharacterGroup[queryNumber]!=0 for maxMonsterId: " << std::to_string(charactersGroupIndex) << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                        std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
+                        client->addCharacter_ReturnFailed(query_id,0x03);
+                        return;
+                    }
+                    maxMonsterIdRequested=true;
+                    LinkToMaster::linkToMaster->queryNumberList.pop_back();
+
+                    //send the network reply
+                    uint32_t posOutput=0;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xC1;
+                    posOutput+=1;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                    posOutput+=1;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=this->charactersGroupIndex;
+                    posOutput+=1;
+
+                    LinkToMaster::linkToMaster->registerOutputQuery(queryNumber,0xC1);
+                    LinkToMaster::linkToMaster->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    LinkToMaster::queryNumberToCharacterGroup[queryNumber]=this->charactersGroupIndex;
                 }
-                const uint8_t &queryNumber=LinkToMaster::linkToMaster->queryNumberList.back();
-                LinkToMaster::linkToMaster->queryNumberList.pop_back();
-
-                //send the network reply
-                uint32_t posOutput=0;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xC1;
-                posOutput+=1;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
-                posOutput+=1;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=index;
-                posOutput+=1;
-
-                LinkToMaster::linkToMaster->registerOutputQuery(queryNumber,0xC1);
-                LinkToMaster::linkToMaster->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                LinkToMaster::queryNumberToCharacterGroup[queryNumber]=index;
+                else
+                {
+                    #ifdef DEBUG_MESSAGE_QUERY_IDLIST
+                    std::cout << "Not ask more to master (already in progress): maxMonsterId.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK: " << std::to_string(maxMonsterId.size()) << "<" << std::to_string(CATCHCHALLENGER_SERVER_MINIDBLOCK) << " for charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                    #endif
+                }
             }
 
             const uint32_t monster_id=maxMonsterId.back();
@@ -663,8 +703,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-    posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+    posOutput+=1;
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
     posOutput+=1;
