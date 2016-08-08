@@ -881,8 +881,7 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-        posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+        posOutput+=1;
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
@@ -966,8 +965,7 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-        posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+        posOutput+=1;
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
@@ -1035,8 +1033,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-        posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+        posOutput+=1;
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
@@ -1109,8 +1106,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-    posOutput+=1+4;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
+    posOutput+=1;
 
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
     posOutput+=1;

@@ -359,7 +359,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             memcpy(EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroup+EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize,CharactersGroupForLoginName.data(),CharactersGroupForLoginName.size());
             EpollClientLoginSlave::replyToRegisterLoginServerCharactersGroupSize+=CharactersGroupForLoginName.size();
 
-            CharactersGroupForLogin::hash[CharactersGroupForLoginName]->index=index;
+            CharactersGroupForLogin::hash[CharactersGroupForLoginName]->charactersGroupIndex=index;
             CharactersGroupForLogin::list.push_back(CharactersGroupForLogin::hash.at(CharactersGroupForLoginName));
 
             index++;
