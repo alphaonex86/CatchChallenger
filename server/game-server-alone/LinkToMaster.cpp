@@ -562,7 +562,14 @@ void LinkToMaster::askMoreMaxClanId()
 
 void LinkToMaster::tryReconnect()
 {
-    //contructor
+    stat=Stat::Unconnected;
+    GlobalServerData::serverPrivateVariables.maxMonsterId.clear();
+    GlobalServerData::serverPrivateVariables.maxClanId.clear();
+    //same than base contructor
+    {
+        resetForReconnect();
+    }
+    //same as contructor
     {
         flags|=0x08;
         queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
@@ -573,9 +580,7 @@ void LinkToMaster::tryReconnect()
             index++;
         }
     }
-    stat=Stat::Unconnected;
-    GlobalServerData::serverPrivateVariables.maxMonsterId.clear();
-    GlobalServerData::serverPrivateVariables.maxClanId.clear();
+
     if(stat!=Stat::Unconnected)
         return;
     else

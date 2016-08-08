@@ -7,8 +7,8 @@ QT       -= gui widgets network sql
 #QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations"
 #QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations -std=c++0x"
 
-QMAKE_CFLAGS+="-fstack-protector-all"
-QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x"
+QMAKE_CFLAGS+="-fstack-protector-all -g"
+QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g"
 
 #DEFINES += CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 DEFINES += SERVERNOBUFFER
