@@ -1,8 +1,8 @@
 #QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -std=c++0x"
 #QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -std=c++0x"
 
-QMAKE_CFLAGS+="-fstack-protector-all"
-QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x"
+QMAKE_CFLAGS+="-fstack-protector-all -g"
+QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g"
 
 QT       -= gui widgets network sql xml
 QT       -= xml core
@@ -111,7 +111,8 @@ HEADERS += \
     ../../general/base/cpp11addition.h \
     ../base/TinyXMLSettings.h \
     ../base/DatabaseFunction.h \
-    ../base/StringWithReplacement.h
+    ../base/StringWithReplacement.h \
+    VariableLoginServer.h
 
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1
 #DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2

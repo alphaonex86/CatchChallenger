@@ -472,7 +472,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType:%2, and queryNumber: %3, line: %4").arg(packetCode).arg('X').arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                 return false;
             }
-            uint32_t characterId;
+            uint32_t characterId;//include if null, drop the dynamic size overhead
             in >> characterId;
             std::cout << "created character with id: " << characterId << ", returnCode: " << std::to_string(returnCode) << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
             newCharacterId(returnCode,characterId);

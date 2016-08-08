@@ -519,7 +519,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             ProtocolParsingBase::packetFixedSize[128+0xA1]=0xFE;
             ProtocolParsingBase::packetFixedSize[128+0xA8]=0xFE;
             ProtocolParsingBase::packetFixedSize[128+0xA9]=0xFE;
-            ProtocolParsingBase::packetFixedSize[128+0xAA]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xAA]=1+4;/*drop dynamica size to improve the overhead*/
             ProtocolParsingBase::packetFixedSize[128+0xAB]=0xFE;
             ProtocolParsingBase::packetFixedSize[128+0xAC]=0xFE;
             ProtocolParsingBase::packetFixedSize[128+0xAD]=0x01;
@@ -620,6 +620,33 @@ void ProtocolParsingBase::reset()
     //outputQueryNumberToPacketCode.clear();
 
     dataClear();
+}
+
+void ProtocolParsingBase::resetForReconnect()
+{
+    flags &= 0x18;
+    // ProtocolParsingBase
+    // for data
+    dataSize=0;
+    //to parse the netwrok stream
+    packetCode=0;
+    queryNumber=0;
+    memset(outputQueryNumberToPacketCode,0x00,sizeof(outputQueryNumberToPacketCode));
+}
+
+void ProtocolParsingInputOutput::resetForReconnect()
+{
+    ProtocolParsingBase::resetForReconnect();
+
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    parseIncommingDataCount=0;
+    #endif
+    //ProtocolParsingInputOutput
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    RXSize=0;
+    TXSize=0;
+    #endif
+    memset(inputQueryNumberToPacketCode,0x00,sizeof(inputQueryNumberToPacketCode));
 }
 
 ProtocolParsingInputOutput::ProtocolParsingInputOutput(

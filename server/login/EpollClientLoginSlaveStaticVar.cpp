@@ -21,8 +21,8 @@ unsigned char EpollClientLoginSlave::protocolReplyCompressionLz4[]={CATCHCHALLEN
 unsigned char EpollClientLoginSlave::loginIsWrongBufferReply[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x00/*temp return code*/};
 
 unsigned char EpollClientLoginSlave::loginInProgressBuffer[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x06/*return code*/};
-unsigned char EpollClientLoginSlave::addCharacterIsWrongBuffer[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x00/*temp return code*/,0x00,0x00,0x00,0x00};
-unsigned char EpollClientLoginSlave::addCharacterReply[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x05,0x00,0x00,0x00/*reply size*/,0x00/*temp return code*/};
+unsigned char EpollClientLoginSlave::addCharacterIsWrongBuffer[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x00/*temp return code*/,0x00,0x00,0x00,0x00/*Fixed size to drop dynamic size overhead*/};
+unsigned char EpollClientLoginSlave::addCharacterReply[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x00/*temp return code*/,0x00,0x00,0x00,0x00};
 unsigned char EpollClientLoginSlave::removeCharacterReply[]={CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size*/,0x00/*temp return code*/};
 char EpollClientLoginSlave::baseDatapackSum[];
 char EpollClientLoginSlave::loginGood[];

@@ -7,6 +7,7 @@
 #include <chrono>
 #include <openssl/sha.h>
 #include "../../general/base/CommonSettingsCommon.h"
+#include "VariableLoginServer.h"
 
 using namespace CatchChallenger;
 
@@ -605,28 +606,39 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
             loginIsWrong(askLoginParam->query_id,0x04,"maxAccountIdList is empty");
             return;
         }
-        if(maxAccountIdList.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK && !EpollClientLoginSlave::maxAccountIdRequested)
+        if(maxAccountIdList.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK)
         {
-            EpollClientLoginSlave::maxAccountIdRequested=true;
-            if(LinkToMaster::linkToMaster->queryNumberList.empty())
+            if(!EpollClientLoginSlave::maxAccountIdRequested)
             {
-                std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
-                errorParsingLayer("Unable to get query id at createAccount_return");
-                return;
+                #ifdef DEBUG_MESSAGE_QUERY_IDLIST
+                std::cout << "Ask more to master: maxAccountIdList.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK: " << maxAccountIdList.size() << "<" << CATCHCHALLENGER_SERVER_MINIDBLOCK << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                #endif
+                EpollClientLoginSlave::maxAccountIdRequested=true;
+                if(LinkToMaster::linkToMaster->queryNumberList.empty())
+                {
+                    std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
+                    errorParsingLayer("Unable to get query id at createAccount_return");
+                    return;
+                }
+                const uint8_t &queryNumber=LinkToMaster::linkToMaster->queryNumberList.back();
+                LinkToMaster::linkToMaster->queryNumberList.pop_back();
+
+                //send the network reply
+                uint32_t posOutput=0;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xBF;
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
+                posOutput+=1;
+
+                LinkToMaster::linkToMaster->registerOutputQuery(queryNumber,0xBF);
+                LinkToMaster::linkToMaster->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             }
-            const uint8_t &queryNumber=LinkToMaster::linkToMaster->queryNumberList.back();
-            LinkToMaster::linkToMaster->queryNumberList.pop_back();
-
-            //send the network reply
-            removeFromQueryReceived(queryNumber);
-            uint32_t posOutput=0;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0xBF;
-            posOutput+=1;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
-            posOutput+=1;
-
-            LinkToMaster::linkToMaster->registerOutputQuery(queryNumber,0xBF);
-            LinkToMaster::linkToMaster->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            else
+            {
+                #ifdef DEBUG_MESSAGE_QUERY_IDLIST
+                std::cout << "Don't ask more to master (already in progress): maxAccountIdList.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK: " << maxAccountIdList.size() << "<" << CATCHCHALLENGER_SERVER_MINIDBLOCK << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                #endif
+            }
         }
         account_id=maxAccountIdList.front();
         maxAccountIdList.erase(maxAccountIdList.begin());
@@ -844,22 +856,21 @@ void EpollClientLoginSlave::removeCharacterLater(const uint8_t &query_id, const 
 void EpollClientLoginSlave::addCharacter_ReturnOk(const uint8_t &query_id,const uint32_t &characterId)
 {
     EpollClientLoginSlave::addCharacterReply[1]=query_id;
-    EpollClientLoginSlave::addCharacterReply[3]=0x00;
+    EpollClientLoginSlave::addCharacterReply[2]=0x00;
     removeFromQueryReceived(query_id);
-    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::addCharacterReply+0x04)=htole32(characterId);
+    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::addCharacterReply+0x03)=htole32(characterId);
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::addCharacterReply),sizeof(EpollClientLoginSlave::addCharacterReply));
 }
 
 void EpollClientLoginSlave::addCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode)
 {
-    EpollClientLoginSlave::addCharacterReply[1]=query_id;
-    EpollClientLoginSlave::addCharacterReply[3]=errorCode;
+    EpollClientLoginSlave::addCharacterIsWrongBuffer[1]=query_id;
+    EpollClientLoginSlave::addCharacterIsWrongBuffer[2]=errorCode;
     removeFromQueryReceived(query_id);
-    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::addCharacterReply+0x04)=(uint32_t)0;
-    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::addCharacterReply),sizeof(EpollClientLoginSlave::addCharacterReply));
+    internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::addCharacterIsWrongBuffer),sizeof(addCharacterIsWrongBuffer));
     if(errorCode!=0x01)
     {
-        errorParsingLayer("EpollClientLoginSlave::addCharacter() out of query to request the master server: "+std::to_string(errorCode)+": "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        errorParsingLayer("EpollClientLoginSlave::addCharacter() in waiting to more id form master server or unknown error: "+std::to_string(errorCode)+": "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
     }
 }
