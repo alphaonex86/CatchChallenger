@@ -51,7 +51,7 @@ protected:
     quint16 numberOfSelectedCharacter;
     bool haveEnError;
     uint8_t charactersGroupIndex;
-    quint32 serverUniqueKey;
+    int64_t/*to have -1*/ serverUniqueKey;
     bool serverIsSelected;
 protected:
     virtual void insert_player_with_client(CatchChallengerClient *client,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
