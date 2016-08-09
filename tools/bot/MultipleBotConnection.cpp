@@ -11,7 +11,7 @@ MultipleBotConnection::MultipleBotConnection() :
     botInterface(NULL),
     haveEnError(false),
     charactersGroupIndex(0),
-    serverUniqueKey(0),
+    serverUniqueKey(-1),
     serverIsSelected(false)
 {
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
@@ -368,9 +368,9 @@ void MultipleBotConnection::newCharacterId_with_client(MultipleBotConnection::Ca
         qDebug() << "new character not created, server have returned a failed: " << returnCode;
         return;
     }
-    if(serverUniqueKey==0)
+    if(serverUniqueKey==-1)
     {
-        qDebug() << "Unable to select the freshlly created char because don't have select the server: " << returnCode;
+        qDebug() << "Unable to select the freshly created char because don't have select the server: " << returnCode;
         return;
     }
 
