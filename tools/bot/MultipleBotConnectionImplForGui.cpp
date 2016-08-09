@@ -312,21 +312,85 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
     qDebug() << "newSocketError()" << error;
     haveEnError=true;
 
-    if(error==0)
+    QString errorString;
+    switch(error)
     {
-        qDebug() << "MultipleBotConnectionImplFoprGui::newError() Connection refused";
-        statusError(QStringLiteral("Connection refused"));
+        case 0:
+            errorString="The connection was refused by the peer (or timed out).";
+        break;
+        case 1:
+            errorString="The remote host closed the connection. Note that the client socket (i.e., this socket) will be closed after the remote close notification has been sent.";
+        break;
+        case 2:
+            errorString="The host address was not found.";
+        break;
+        case 3:
+            errorString="The socket operation failed because the application lacked the required privileges.";
+        break;
+        case 4:
+            errorString="The local system ran out of resources (e.g., too many sockets).";
+        break;
+        case 5:
+            errorString="The socket operation timed out.";
+        break;
+        case 6:
+            errorString="The datagram was larger than the operating system's limit (which can be as low as 8192 bytes).";
+        break;
+        case 7:
+            errorString="An error occurred with the network (e.g., the network cable was accidentally plugged out).";
+        break;
+        case 8:
+            errorString="The address specified to QAbstractSocket::bind() is already in use and was set to be exclusive.";
+        break;
+        case 9:
+            errorString="The address specified to QAbstractSocket::bind() does not belong to the host.";
+        break;
+        case 10:
+            errorString="The requested socket operation is not supported by the local operating system (e.g., lack of IPv6 support).";
+        break;
+        case 11:
+            errorString="Used by QAbstractSocketEngine only, The last operation attempted has not finished yet (still in progress in the background).";
+        break;
+        case 12:
+            errorString="The socket is using a proxy, and the proxy requires authentication.";
+        break;
+        case 13:
+            errorString="The SSL/TLS handshake failed, so the connection was closed (only used in QSslSocket)";
+        break;
+        case 14:
+            errorString="Could not contact the proxy server because the connection to that server was denied";
+        break;
+        case 15:
+            errorString="The connection to the proxy server was closed unexpectedly (before the connection to the final peer was established)";
+        break;
+        case 16:
+            errorString="The connection to the proxy server timed out or the proxy server stopped responding in the authentication phase.";
+        break;
+        case 17:
+            errorString="The proxy address set with setProxy() (or the application proxy) was not found.";
+        break;
+        case 18:
+            errorString="The connection negotiation with the proxy server failed, because the response from the proxy server could not be understood.";
+        break;
+        case 19:
+            errorString="An operation was attempted while the socket was in a state that did not permit it.";
+        break;
+        case 20:
+            errorString="The SSL library being used reported an internal error. This is probably the result of a bad installation or misconfiguration of the library.";
+        break;
+        case 21:
+            errorString="Invalid data (certificate, key, cypher, etc.) was provided and its use resulted in an error in the SSL library.";
+        break;
+        case 22:
+            errorString="A temporary error occurred (e.g., operation would block and socket is non-blocking).";
+        break;
+        default:
+            errorString="An unidentified error occurred.";
+        break;
     }
-    else if(error==13)
-    {
-        qDebug() << "MultipleBotConnectionImplFoprGui::newError() SslHandshakeFailedError";
-        statusError(QStringLiteral("SslHandshakeFailedError"));
-    }
-    else
-    {
-        qDebug() << QString("MultipleBotConnectionImplFoprGui::newError() error: %1").arg(error);
-        statusError(QStringLiteral("Error: %1").arg(error));
-    }
+
+    qDebug() << QString("MultipleBotConnectionImplFoprGui::newError() error: %1 %2").arg(error).arg(errorString);
+    statusError(QStringLiteral("Error: %1 %2").arg(error).arg(errorString));
     CatchChallenger::ConnectedSocket *senderObject = qobject_cast<CatchChallenger::ConnectedSocket *>(sender());
     if(senderObject!=NULL)
     {
