@@ -3,6 +3,13 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/FacilityLib.h"
 #include "PreparedDBQuery.h"
+#include "StaticText.h"
+#ifdef CATCHCHALLENGER_SERVER_DEBUG_COMMAND
+#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+#include "LinkToMaster.h"
+#endif
+#endif
+#include "GameServerVariables.h"
 
 using namespace CatchChallenger;
 
@@ -270,23 +277,23 @@ void Client::receive_instant_player_number(const uint16_t &connected_players, co
 
 void Client::sendBroadCastCommand(const std::string &command,const std::string &extraText)
 {
-    normalOutput(Client::text_command+command+Client::text_space+extraText);
-    if(command==Client::text_chat)
+    normalOutput(StaticText::text_command+command+StaticText::text_space+extraText);
+    if(command==StaticText::text_chat)
     {
         std::vector<std::string> list=stringsplit(extraText,' ');
         if(list.size()<2)
         {
-            receiveSystemText(Client::text_commandnotunderstand+command+Client::text_space+extraText);
-            normalOutput(Client::text_commandnotunderstand+command+Client::text_space+extraText);
+            receiveSystemText(StaticText::text_commandnotunderstand+command+StaticText::text_space+extraText);
+            normalOutput(StaticText::text_commandnotunderstand+command+StaticText::text_space+extraText);
             return;
         }
-        if(list.front()==Client::text_system)
+        if(list.front()==StaticText::text_system)
         {
             list.erase(list.begin());
             sendChatText(Chat_type_system,stringimplode(list,' '));
             return;
         }
-        if(list.front()==Client::text_system_important)
+        if(list.front()==StaticText::text_system_important)
         {
             list.erase(list.begin());
             sendChatText(Chat_type_system_important,stringimplode(list,' '));
@@ -294,88 +301,114 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
         }
         else
         {
-            receiveSystemText(Client::text_commandnotunderstand+extraText);
-            normalOutput(Client::text_commandnotunderstand+extraText);
+            receiveSystemText(StaticText::text_commandnotunderstand+extraText);
+            normalOutput(StaticText::text_commandnotunderstand+extraText);
             return;
         }
     }
-    else if(command==Client::text_setrights)
+    else if(command==StaticText::text_setrights)
     {
         std::vector<std::string> list=stringsplit(extraText,' ');
         if(list.size()!=2)
         {
-            receiveSystemText(Client::text_commandnotunderstand+command+Client::text_space+extraText);
-            normalOutput(Client::text_commandnotunderstand+command+Client::text_space+extraText);
+            receiveSystemText(StaticText::text_commandnotunderstand+command+StaticText::text_space+extraText);
+            normalOutput(StaticText::text_commandnotunderstand+command+StaticText::text_space+extraText);
             return;
         }
         if(playerByPseudo.find(list.front())==playerByPseudo.cend())
         {
-            receiveSystemText(Client::text_unabletofoundtheconnectedplayertokick+extraText);
-            normalOutput(Client::text_unabletofoundtheconnectedplayertokick+extraText);
+            receiveSystemText(StaticText::text_unabletofoundtheconnectedplayertokick+extraText);
+            normalOutput(StaticText::text_unabletofoundtheconnectedplayertokick+extraText);
             return;
         }
         Client * client=playerByPseudo.at(list.front());
         if(client==NULL)
         {
             std::cerr << "Internal bug for setrights, client is NULL" << std::endl;
-            normalOutput(Client::text_unabletofoundtheconnectedplayertokick+extraText);
+            normalOutput(StaticText::text_unabletofoundtheconnectedplayertokick+extraText);
             return;
         }
-        if(list.back()==Client::text_normal)
+        if(list.back()==StaticText::text_normal)
             client->setRights(Player_type_normal);
-        else if(list.back()==Client::text_premium)
+        else if(list.back()==StaticText::text_premium)
             client->setRights(Player_type_premium);
-        else if(list.back()==Client::text_gm)
+        else if(list.back()==StaticText::text_gm)
             client->setRights(Player_type_gm);
-        else if(list.back()==Client::text_dev)
+        else if(list.back()==StaticText::text_dev)
             client->setRights(Player_type_dev);
         else
         {
-            receiveSystemText(Client::text_unabletofoundthisrightslevel+list.back());
-            normalOutput(Client::text_unabletofoundthisrightslevel+list.back());
+            receiveSystemText(StaticText::text_unabletofoundthisrightslevel+list.back());
+            normalOutput(StaticText::text_unabletofoundthisrightslevel+list.back());
             return;
         }
     }
-    else if(command==Client::text_playerlist)
+    else if(command==StaticText::text_playerlist)
     {
         if(playerByPseudo.size()==1)
-            receiveSystemText(Client::text_Youarealoneontheserver);
+            receiveSystemText(StaticText::text_Youarealoneontheserver);
         else
         {
             std::vector<std::string> playerStringList;
             auto i=playerByPseudo.begin();
             while(i!=playerByPseudo.cend())
             {
-                playerStringList.push_back(Client::text_startbold+i->second->public_and_private_informations.public_informations.pseudo+Client::text_stopbold);
+                playerStringList.push_back(StaticText::text_startbold+i->second->public_and_private_informations.public_informations.pseudo+StaticText::text_stopbold);
                 ++i;
             }
-            receiveSystemText(Client::text_playersconnectedspace+stringimplode(playerStringList,Client::text_commaspace));
+            receiveSystemText(StaticText::text_playersconnectedspace+stringimplode(playerStringList,StaticText::text_commaspace));
         }
         return;
     }
-    else if(command==Client::text_playernumber)
+    else if(command==StaticText::text_playernumber)
     {
         if(playerByPseudo.size()==1)
-            receiveSystemText(Client::text_Youarealoneontheserver);
+            receiveSystemText(StaticText::text_Youarealoneontheserver);
         else
-            receiveSystemText(Client::text_startbold+std::to_string(playerByPseudo.size())+Client::text_stopbold+Client::text_playersconnected);
+            receiveSystemText(StaticText::text_startbold+std::to_string(playerByPseudo.size())+StaticText::text_stopbold+StaticText::text_playersconnected);
         return;
     }
-    else if(command==Client::text_kick)
+    else if(command==StaticText::text_kick)
     {
         //drop, and do the command here to separate the loop
         if(playerByPseudo.find(extraText)==playerByPseudo.cend())
         {
-            receiveSystemText(Client::text_unabletofoundtheconnectedplayertokick+extraText);
-            normalOutput(Client::text_unabletofoundtheconnectedplayertokick+extraText);
+            receiveSystemText(StaticText::text_unabletofoundtheconnectedplayertokick+extraText);
+            normalOutput(StaticText::text_unabletofoundtheconnectedplayertokick+extraText);
             return;
         }
         playerByPseudo.at(extraText)->kick();
-        sendSystemMessage(extraText+Client::text_havebeenkickedby+public_and_private_informations.public_informations.pseudo);
+        sendSystemMessage(extraText+StaticText::text_havebeenkickedby+public_and_private_informations.public_informations.pseudo);
         return;
     }
+    #ifdef CATCHCHALLENGER_SERVER_DEBUG_COMMAND
+    else if(command==StaticText::text_debug)
+    {
+        if(extraText=="moreid")
+        {
+            #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+            if(LinkToMaster::linkToMaster->askMoreMaxMonsterId())
+                receiveSystemText("More monster id asked");
+            else
+                receiveSystemText("Monster id ask already in progress");
+            if(LinkToMaster::linkToMaster->askMoreMaxClanId())
+                receiveSystemText("More clan id asked");
+            else
+                receiveSystemText("Clan id ask already in progress");
+            #else
+            receiveSystemText("This can be do on gameserver alone, not all in one");
+            normalOutput("This can be do on gameserver alone, not all in one");
+            #endif
+        }
+        else
+        {
+            receiveSystemText("unknown sub command: "+command+", text: "+extraText);
+            normalOutput("unknown sub command: "+command+", text: "+extraText);
+        }
+    }
+    #endif
     else
-        normalOutput("unknow command: "+command+", text: "+extraText);
+        normalOutput("unknown command: "+command+", text: "+extraText);
 }
 
 void Client::setRights(const Player_type& type)

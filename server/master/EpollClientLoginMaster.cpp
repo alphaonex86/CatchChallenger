@@ -315,6 +315,17 @@ bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster
               << charactersGroupForGameServerInformation->port
               << std::endl;*/
 
+    if(EpollClientLoginMaster::getTokenForCharacterSelect[0x00]!=0xF8)
+    {
+        std::cerr << "EpollClientLoginMaster::getTokenForCharacterSelect[0x00]!=0xF8: "
+                  << charactersGroupForGameServerInformation->uniqueKey
+                  << ", host: "
+                  << charactersGroupForGameServerInformation->host
+                  << ":"
+                  << charactersGroupForGameServerInformation->port
+                  << std::endl;
+        return false;
+    }
     //check if the characterId is linked to the correct account on login server
     if(queryNumberList.empty())
     {

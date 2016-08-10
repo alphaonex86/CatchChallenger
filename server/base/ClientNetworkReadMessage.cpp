@@ -1,11 +1,13 @@
 #include "Client.h"
 #include "GlobalServerData.h"
 #include "MapServer.h"
+#include "StaticText.h"
 #include "../../general/base/ProtocolParsingCheck.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "BaseServerLogin.h"
 #endif
+#include "GameServerVariables.h"
 
 using namespace CatchChallenger;
 
@@ -140,7 +142,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                         }
                     }
 
-                    normalOutput(Client::text_slashpmspace+pseudo+Client::text_space+text);
+                    normalOutput(StaticText::text_slashpmspace+pseudo+StaticText::text_space+text);
                     sendPM(text,pseudo);
                 }
                 else
@@ -197,7 +199,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 {
                     std::string command;
                     /// \warning don't use regex here, slow and do DDOS risk
-                    std::size_t found=text.find(Client::text_space);
+                    std::size_t found=text.find(StaticText::text_space);
                     if(found!=std::string::npos)
                     {
                         command=text.substr(1,found-1);
@@ -208,86 +210,93 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
 
                     //the normal player command
                     {
-                        if(command==Client::text_playernumber)
+                        if(command==StaticText::text_playernumber)
                         {
                             sendBroadCastCommand(command,text);
-                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                             return true;
                         }
-                        else if(command==Client::text_playerlist)
+                        else if(command==StaticText::text_playerlist)
                         {
                             sendBroadCastCommand(command,text);
-                            normalOutput(Client::text_send_command_slash+command+" "+text);
+                            normalOutput(StaticText::text_send_command_slash+command+" "+text);
                             return true;
                         }
-                        else if(command==Client::text_trade)
+                        else if(command==StaticText::text_trade)
                         {
                             sendHandlerCommand(command,text);
-                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                             return true;
                         }
-                        else if(command==Client::text_battle)
+                        else if(command==StaticText::text_battle)
                         {
                             sendHandlerCommand(command,text);
-                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                             return true;
                         }
                     }
                     //the admin command
                     if(public_and_private_informations.public_informations.type==Player_type_gm || public_and_private_informations.public_informations.type==Player_type_dev || GlobalServerData::serverSettings.everyBodyIsRoot)
                     {
-                        if(command==Client::text_give)
+                        if(command==StaticText::text_give)
                         {
                             sendHandlerCommand(command,text);
-                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                         }
-                        else if(command==Client::text_setevent)
+                        else if(command==StaticText::text_setevent)
                         {
                             sendHandlerCommand(command,text);
-                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                         }
-                        else if(command==Client::text_take)
+                        else if(command==StaticText::text_take)
                         {
                             sendHandlerCommand(command,text);
-                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                         }
-                        else if(command==Client::text_tp)
+                        else if(command==StaticText::text_tp)
                         {
                             sendHandlerCommand(command,text);
-                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                         }
-                        else if(command==Client::text_kick)
+                        else if(command==StaticText::text_kick)
                         {
                             sendBroadCastCommand(command,text);
-                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                         }
-                        else if(command==Client::text_chat)
+                        else if(command==StaticText::text_chat)
                         {
                             sendBroadCastCommand(command,text);
-                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                         }
-                        else if(command==Client::text_setrights)
+                        else if(command==StaticText::text_setrights)
                         {
                             sendBroadCastCommand(command,text);
-                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                         }
-                        else if(command==Client::text_stop || command==Client::text_restart)
+                        else if(command==StaticText::text_stop || command==StaticText::text_restart)
                         {
                             #ifndef EPOLLCATCHCHALLENGERSERVER
                             BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
                             #endif
-                            normalOutput(Client::text_send_command_slash+command+Client::text_space+text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                         }
+                        #ifdef CATCHCHALLENGER_SERVER_DEBUG_COMMAND
+                        else if(command==StaticText::text_debug)
+                        {
+                            sendBroadCastCommand(command,text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
+                        }
+                        #endif
                         else
                         {
-                            normalOutput(Client::text_unknown_send_command_slash+command+Client::text_space+text);
-                            receiveSystemText(Client::text_unknown_send_command_slash+command+Client::text_space+text);
+                            normalOutput(StaticText::text_unknown_send_command_slash+command+StaticText::text_space+text);
+                            receiveSystemText(StaticText::text_unknown_send_command_slash+command+StaticText::text_space+text);
                         }
                     }
                     else
                     {
-                        normalOutput(Client::text_unknown_send_command_slash+command+Client::text_space+text);
-                        receiveSystemText(Client::text_unknown_send_command_slash+command+Client::text_space+text);
+                        normalOutput(StaticText::text_unknown_send_command_slash+command+StaticText::text_space+text);
+                        receiveSystemText(StaticText::text_unknown_send_command_slash+command+StaticText::text_space+text);
                     }
                 }
             }

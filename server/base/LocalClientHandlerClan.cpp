@@ -2,6 +2,7 @@
 #include "PreparedDBQuery.h"
 #include "GlobalServerData.h"
 #include "SqlFunction.h"
+#include "StaticText.h"
 
 using namespace CatchChallenger;
 
@@ -463,16 +464,16 @@ void Client::insertIntoAClan(const uint32_t &clanId)
     if(GlobalServerData::serverPrivateVariables.db_common->databaseType()!=DatabaseBase::DatabaseType::PostgreSQL)
     {
         if(public_and_private_informations.clan_leader)
-            clan_leader=Client::text_1;
+            clan_leader=StaticText::text_1;
         else
-            clan_leader=Client::text_0;
+            clan_leader=StaticText::text_0;
     }
     else
     {
         if(public_and_private_informations.clan_leader)
-            clan_leader=Client::text_true;
+            clan_leader=StaticText::text_true;
         else
-            clan_leader=Client::text_false;
+            clan_leader=StaticText::text_false;
     }
     const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_clan_and_leader.compose(
                 std::to_string(clanId),

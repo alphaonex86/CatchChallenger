@@ -45,7 +45,9 @@ LinkToMaster::LinkToMaster(
             ),
         stat(Stat::Unconnected),
         tryInterval(5),
-        considerDownAfterNumberOfTry(3)
+        considerDownAfterNumberOfTry(3),
+        askMoreMaxClanIdInProgress(false),
+        askMoreMaxMonsterIdInProgress(false)
 {
     rng.seed(time(0));
 
@@ -532,8 +534,11 @@ void LinkToMaster::currentPlayerChange(const uint16_t &currentPlayer)
     internalSendRawSmallPacket(LinkToMaster::sendCurrentPlayer,sizeof(LinkToMaster::sendCurrentPlayer));
 }
 
-void LinkToMaster::askMoreMaxMonsterId()
+bool LinkToMaster::askMoreMaxMonsterId()
 {
+    if(askMoreMaxMonsterIdInProgress)
+        return false;
+    askMoreMaxMonsterIdInProgress=true;
     //send the network query
     registerOutputQuery(queryNumberList.back(),0xB0);
     uint32_t posOutput=0;
@@ -544,10 +549,14 @@ void LinkToMaster::askMoreMaxMonsterId()
     posOutput+=1;
 
     internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    return true;
 }
 
-void LinkToMaster::askMoreMaxClanId()
+bool LinkToMaster::askMoreMaxClanId()
 {
+    if(askMoreMaxClanIdInProgress)
+        return false;
+    askMoreMaxClanIdInProgress=true;
     //send the network query
     registerOutputQuery(queryNumberList.back(),0xB1);
     uint32_t posOutput=0;
@@ -558,6 +567,7 @@ void LinkToMaster::askMoreMaxClanId()
     posOutput+=1;
 
     internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    return true;
 }
 
 void LinkToMaster::tryReconnect()
@@ -565,6 +575,8 @@ void LinkToMaster::tryReconnect()
     stat=Stat::Unconnected;
     GlobalServerData::serverPrivateVariables.maxMonsterId.clear();
     GlobalServerData::serverPrivateVariables.maxClanId.clear();
+    askMoreMaxClanIdInProgress=false;
+    askMoreMaxMonsterIdInProgress=false;
     //same than base contructor
     {
         resetForReconnect();
