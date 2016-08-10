@@ -12,6 +12,7 @@
 #include "../../general/base/ProtocolParsingCheck.h"
 #include "DatabaseFunction.h"
 #include "SqlFunction.h"
+#include "StaticText.h"
 #include "PreparedDBQuery.h"
 #include "DictionaryLogin.h"
 #include "DictionaryServer.h"
@@ -159,22 +160,22 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         {
             const std::string &fileName=files.at(index);
             const uint32_t &clientPartialHash=partialHashList.at(index);
-            if(fileName.find(Client::text_dotslash) != std::string::npos)
+            if(fileName.find(StaticText::text_dotslash) != std::string::npos)
             {
                 errorOutput("file name contains illegale char (1): "+fileName);
                 return;
             }
-            if(fileName.find(Client::text_antislash) != std::string::npos)
+            if(fileName.find(StaticText::text_antislash) != std::string::npos)
             {
                 errorOutput("file name contains illegale char (2): "+fileName);
                 return;
             }
-            if(fileName.find(Client::text_double_slash) != std::string::npos)
+            if(fileName.find(StaticText::text_double_slash) != std::string::npos)
             {
                 errorOutput("file name contains illegale char (3): "+fileName);
                 return;
             }
-            if(regex_search(fileName,fileNameStartStringRegex) || stringStartWith(fileName,Client::text_slash))
+            if(regex_search(fileName,fileNameStartStringRegex) || stringStartWith(fileName,StaticText::text_slash))
             {
                 errorOutput("start with wrong string: "+fileName);
                 return;

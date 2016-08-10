@@ -5,25 +5,26 @@
 #include "PreparedDBQuery.h"
 #include "GlobalServerData.h"
 #include "MapServer.h"
+#include "StaticText.h"
 
 using namespace CatchChallenger;
 
 void Client::sendHandlerCommand(const std::string &command,const std::string &extraText)
 {
-    if(command==Client::text_give)
+    if(command==StaticText::text_give)
     {
         bool ok;
         std::vector<std::string> arguments=stringsplit(extraText,' ');
         vectorRemoveEmpty(arguments);
         if(arguments.size()==2)
-            arguments.push_back(Client::text_1);
+            arguments.push_back(StaticText::text_1);
         while(arguments.size()>3)
         {
             const std::string arg1=arguments.at(arguments.size()-3);
             arguments.erase(arguments.end()-3);
             const std::string arg2=arguments.at(arguments.size()-2);
             arguments.erase(arguments.end()-2);
-            arguments.insert(arguments.end(),arg1+Client::text_space+arg2);
+            arguments.insert(arguments.end(),arg1+StaticText::text_space+arg2);
         }
         if(arguments.size()!=3)
         {
@@ -53,7 +54,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                     arguments.erase(arguments.end()-2);
                     const std::string arg2=arguments.at(arguments.size()-1);
                     arguments.erase(arguments.end()-1);
-                    arguments.insert(arguments.end(),arg1+Client::text_space+arg2);
+                    arguments.insert(arguments.end(),arg1+StaticText::text_space+arg2);
                 }
                 quantity=1;
                 //receiveSystemText(std::stringLiteral("quantity is not a number, usage: /give objectId player [quantity=1]"));
@@ -74,7 +75,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                      std::to_string(quantity));
         playerByPseudo.at(arguments.at(1))->addObjectAndSend(objectId,quantity);
     }
-    else if(command==Client::text_setevent)
+    else if(command==StaticText::text_setevent)
     {
         std::vector<std::string> arguments=stringsplit(extraText,' ');
         vectorRemoveEmpty(arguments);
@@ -123,13 +124,13 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
     }
-    else if(command==Client::text_take)
+    else if(command==StaticText::text_take)
     {
         bool ok;
         std::vector<std::string> arguments=stringsplit(extraText,' ');
         vectorRemoveEmpty(arguments);
         if(arguments.size()==2)
-            arguments.push_back(Client::text_1);
+            arguments.push_back(StaticText::text_1);
         if(arguments.size()!=3)
         {
             receiveSystemText("Wrong arguments number for the command, usage: /take objectId player [quantity=1]");
@@ -160,13 +161,13 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         normalOutput(public_and_private_informations.public_informations.pseudo+" have take to "+arguments.at(1)+" the item with id: "+std::to_string(objectId)+" in quantity: "+std::to_string(quantity));
         playerByPseudo.at(arguments.at(1))->sendRemoveObject(objectId,playerByPseudo.at(arguments.at(1))->removeObject(objectId,quantity));
     }
-    else if(command==Client::text_tp)
+    else if(command==StaticText::text_tp)
     {
         std::vector<std::string> arguments=stringsplit(extraText,' ');
         vectorRemoveEmpty(arguments);
         if(arguments.size()==3)
         {
-            if(arguments.at(1)!=Client::text_to)
+            if(arguments.at(1)!=StaticText::text_to)
             {
                 receiveSystemText("wrong second arguement: "+arguments.at(1)+", usage: /tp player1 to player2");
                 return;
@@ -190,7 +191,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
     }
-    else if(command==Client::text_trade)
+    else if(command==StaticText::text_trade)
     {
         if(extraText.size()==0)
         {
@@ -238,7 +239,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         otherPlayerTrade=playerByPseudo.at(extraText);
         otherPlayerTrade->registerTradeRequest(this);
     }
-    else if(command==Client::text_battle)
+    else if(command==StaticText::text_battle)
     {
         if(extraText.size()==0)
         {

@@ -11,6 +11,7 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/ProtocolParsingCheck.h"
 #include "DatabaseFunction.h"
+#include "StaticText.h"
 #include "SqlFunction.h"
 #include "PreparedDBQuery.h"
 #include "DictionaryLogin.h"
@@ -1077,9 +1078,9 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                 if(monsterDatapack.ratio_gender!=-1)
                 {
                     if(rand()%101<monsterDatapack.ratio_gender)
-                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,Client::text_2,characterIdString));
+                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,StaticText::text_2,characterIdString));
                     else
-                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,Client::text_1,characterIdString));
+                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,StaticText::text_1,characterIdString));
                 }
                 else
                     dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,characterIdString));

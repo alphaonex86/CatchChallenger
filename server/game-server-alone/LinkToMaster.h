@@ -69,8 +69,8 @@ public:
     bool setSettings(TinyXMLSettings * const settings);
     void characterDisconnected(const uint32_t &characterId);
     void currentPlayerChange(const uint16_t &currentPlayer);
-    void askMoreMaxMonsterId();
-    void askMoreMaxClanId();
+    bool askMoreMaxMonsterId();
+    bool askMoreMaxClanId();
     void tryReconnect();
     void readTheFirstSslHeader();
     void moveClientFastPath(const uint8_t &, const uint8_t &);
@@ -102,6 +102,8 @@ private:
     std::string charactersGroup;
     uint32_t uniqueKey;
     std::string logicalGroup;
+    bool askMoreMaxClanIdInProgress;
+    bool askMoreMaxMonsterIdInProgress;
 };
 }
 

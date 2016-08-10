@@ -111,6 +111,8 @@ bool EpollPostgresql::syncConnectInternal(bool infinityTry)
             return false;
         if(lastErrorMessage.find("authentication failed")!=std::string::npos)
             return false;
+        if(lastErrorMessage.find("role \"")!=std::string::npos && lastErrorMessage.find("\" does not exist")!=std::string::npos)
+            return false;
         std::cerr << "pg connexion not OK: " << lastErrorMessage << ", retrying..." << std::endl;
 
         unsigned int index=0;

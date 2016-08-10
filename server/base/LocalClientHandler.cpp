@@ -5,6 +5,7 @@
 #include "PreparedDBQuery.h"
 #include "GlobalServerData.h"
 #include "MapServer.h"
+#include "StaticText.h"
 
 using namespace CatchChallenger;
 
@@ -32,24 +33,24 @@ std::string Client::directionToStringToSave(const Direction &direction)
     {
         case Direction_look_at_top:
         case Direction_move_at_top:
-            return "1";
+            return StaticText::text_1;
         break;
         case Direction_look_at_right:
         case Direction_move_at_right:
-            return "2";
+            return StaticText::text_2;
         break;
         case Direction_look_at_bottom:
         case Direction_move_at_bottom:
-            return "3";
+            return StaticText::text_3;
         break;
         case Direction_look_at_left:
         case Direction_move_at_left:
-            return "4";
+            return StaticText::text_4;
         break;
         default:
         break;
     }
-    return Client::text_bottom;
+    return StaticText::text_bottom;
 }
 
 std::string Client::orientationToStringToSave(const Orientation &orientation)
@@ -57,21 +58,21 @@ std::string Client::orientationToStringToSave(const Orientation &orientation)
     switch(orientation)
     {
         case Orientation_top:
-            return Client::text_top;
+            return StaticText::text_top;
         break;
         case Orientation_bottom:
-            return Client::text_bottom;
+            return StaticText::text_bottom;
         break;
         case Orientation_right:
-            return Client::text_right;
+            return StaticText::text_right;
         break;
         case Orientation_left:
-            return Client::text_left;
+            return StaticText::text_left;
         break;
         default:
         break;
     }
-    return Client::text_bottom;
+    return StaticText::text_bottom;
 }
 
 /* why do that's here?

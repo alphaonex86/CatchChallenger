@@ -311,6 +311,8 @@ void LinkToMaster::tryReconnect()
             CharactersGroupForLogin * const group=CharactersGroupForLogin::list.at(index);
             group->maxCharacterId.clear();
             group->maxMonsterId.clear();
+            group->maxCharacterIdRequested=false;
+            group->maxMonsterIdRequested=false;
             index++;
         }
     }

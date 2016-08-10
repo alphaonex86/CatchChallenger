@@ -584,7 +584,8 @@ ProtocolParsingBase::ProtocolParsingBase(
     //    messageParsingLayer(std::to_string(isClient)+std::stringLiteral(" ProtocolParsingInputOutput::ProtocolParsingInputOutput(): can't connect the object"));
     #endif
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-    flags |= (packetModeTransmission==PacketModeTransmission_Client);
+    if(packetModeTransmission==PacketModeTransmission_Client)
+        flags |= 0x10;
     #endif
     memset(outputQueryNumberToPacketCode,0x00,sizeof(outputQueryNumberToPacketCode));
 }
@@ -685,7 +686,8 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        flags |= (packetModeTransmission==PacketModeTransmission_Client);
+        if(packetModeTransmission==PacketModeTransmission_Client)
+            flags |= 0x10;
         if(packetModeTransmission==PacketModeTransmission_Client)
             protocolParsingCheck=new ProtocolParsingCheck(PacketModeTransmission_Server);
         else

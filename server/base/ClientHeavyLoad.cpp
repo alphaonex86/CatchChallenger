@@ -19,6 +19,9 @@
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "BaseServerLogin.h"
 #endif
+#ifdef _WIN32
+#include "StaticText.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,7 +93,7 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
                             if(filedesc!=NULL)
                             {
                                 #ifdef _WIN32
-                                stringreplaceAll(fileName,Client::text_antislash,Client::text_slash);//remplace if is under windows server
+                                stringreplaceAll(fileName,StaticText::text_antislash,StaticText::text_slash);//remplace if is under windows server
                                 #endif
                                 const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
                                 SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
