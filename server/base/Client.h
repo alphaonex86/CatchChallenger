@@ -15,7 +15,6 @@
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/ProtocolParsing.h"
-#include "../VariableServer.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER
 #include "../epoll/BaseClassSwitch.h"
 #else
@@ -302,49 +301,6 @@ private:
     //std::unordered_map<uint32_t/*currentMonster->id*/, std::unordered_map<uint32_t/*skill*/,uint32_t> > deferedEnduranceSync;
     std::unordered_set<PlayerMonster *> deferedEnduranceSync;
 
-    //player indexed list
-    static const std::string text_chat;
-    static const std::string text_space;
-    static const std::string text_system;
-    static const std::string text_system_important;
-    static const std::string text_setrights;
-    static const std::string text_normal;
-    static const std::string text_premium;
-    static const std::string text_gm;
-    static const std::string text_dev;
-    static const std::string text_playerlist;
-    static const std::string text_startbold;
-    static const std::string text_stopbold;
-    static const std::string text_playernumber;
-    static const std::string text_kick;
-    static const std::string text_Youarealoneontheserver;
-    static const std::string text_playersconnected;
-    static const std::string text_playersconnectedspace;
-    static const std::string text_havebeenkickedby;
-    static const std::string text_unknowcommand;
-    static const std::string text_commandnotunderstand;
-    static const std::string text_command;
-    static const std::string text_commaspace;
-    static const std::string text_unabletofoundtheconnectedplayertokick;
-    static const std::string text_unabletofoundthisrightslevel;
-
-    static const std::string text_server_full;
-    static const std::string text_slashpmspace;
-    static const std::string text_slash;
-    static const std::string text_regexresult1;
-    static const std::string text_regexresult2;
-    static const std::string text_send_command_slash;
-    static const std::string text_trade;
-    static const std::string text_battle;
-    static const std::string text_give;
-    static const std::string text_setevent;
-    static const std::string text_take;
-    static const std::string text_tp;
-    static const std::string text_stop;
-    static const std::string text_restart;
-    static const std::string text_unknown_send_command_slash;
-    static const std::string text_commands_seem_not_right;
-
     struct DatapackCacheFile
     {
         //uint32_t mtime;
@@ -360,24 +316,6 @@ private:
     #endif
     static std::regex fileNameStartStringRegex;
 
-    static std::string single_quote;
-    static std::string antislash_single_quote;
-    static const std::string text_dotslash;
-    static const std::string text_dotcomma;
-    static const std::string text_double_slash;
-    static const std::string text_antislash;
-    static const std::string text_top;
-    static const std::string text_bottom;
-    static const std::string text_left;
-    static const std::string text_right;
-    static const std::string text_dottmx;
-    static const std::string text_unknown;
-    static const std::string text_female;
-    static const std::string text_male;
-    static const std::string text_warehouse;
-    static const std::string text_wear;
-    static const std::string text_market;
-
     //info linked
     static Direction	temp_direction;
     static std::unordered_map<uint32_t,Client *> playerById;
@@ -386,15 +324,6 @@ private:
     static std::unordered_map<std::string,CaptureCityValidated> captureCityValidatedList;
     #endif
     static std::unordered_map<uint32_t,uint64_t> characterCreationDateList;
-
-    static const std::string text_0;
-    static const std::string text_1;
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    static const std::string text_2;
-    #endif
-    static const std::string text_false;
-    static const std::string text_true;
-    static const std::string text_to;
 
     //socket related
     #ifndef EPOLLCATCHCHALLENGERSERVER
