@@ -405,6 +405,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
             std::cerr << "reply to 08: duplicate maxMonsterId in " << __FILE__ << ":" <<__LINE__ << std::endl;
             abort();
         }
+        askMoreMaxMonsterIdInProgress=false;
         return true;
         //get maxClanId block
         case 0xB1:
@@ -430,6 +431,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
             std::cerr << "reply to 08: duplicate maxClanId in " << __FILE__ << ":" <<__LINE__ << std::endl;
             abort();
         }
+        askMoreMaxClanIdInProgress=false;
         return true;
         default:
             parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType));

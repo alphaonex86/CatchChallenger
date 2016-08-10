@@ -78,7 +78,8 @@ SOURCES += \
     $$PWD/base/BaseServerLogin.cpp \
     $$PWD/base/TinyXMLSettings.cpp \
     $$PWD/base/DatabaseFunction.cpp \
-    $$PWD/base/StringWithReplacement.cpp
+    $$PWD/base/StringWithReplacement.cpp \
+    $$PWD/base/StaticText.cpp
 
 HEADERS += \
     $$PWD/base/GlobalServerData.h \
@@ -111,4 +112,6 @@ HEADERS += \
     $$PWD/base/BaseServerLogin.h \
     $$PWD/base/TinyXMLSettings.h \
     $$PWD/base/DatabaseFunction.h \
-    $$PWD/base/StringWithReplacement.h
+    $$PWD/base/StringWithReplacement.h \
+    $$PWD/base/StaticText.h \
+    $$PWD/base/GameServerVariables.h
