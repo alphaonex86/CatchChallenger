@@ -192,6 +192,8 @@ MainWindow::MainWindow(QWidget *parent) :
                     qDebug() << string;
             }
         }
+        else
+            qDebug() << "The loading file sound not exists: " << soundFile;
     }
     else
     {

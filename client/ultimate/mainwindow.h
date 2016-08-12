@@ -11,6 +11,7 @@
 #include <QNetworkReply>
 #include <QDateTime>
 #include <QSet>
+#include "../base/ClientVariableAudio.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
 #include <vlc/libvlc_structures.h>

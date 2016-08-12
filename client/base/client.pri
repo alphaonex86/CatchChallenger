@@ -5,13 +5,10 @@ QT       += gui network xml core
 
 DEFINES += CATCHCHALLENGER_CLIENT
 
-linux|macx {
-    LIBS += -lvlc
-}
-else
-{
-    DEFINES += CATCHCHALLENGER_NOAUDIO
-}
+# see the file ClientVariableAudio.h
+linux:LIBS += -lvlc
+macx:LIBS += -lvlc
+win32:LIBS += -lvlc
 
 SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/DatapackChecksum.cpp \
@@ -134,7 +131,8 @@ HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/qt-tar-xz/xz_lzma2.h \
     $$PWD/qt-tar-xz/xz_private.h \
     $$PWD/qt-tar-xz/xz_stream.h \
-    $$PWD/qt-tar-xz/xz.h
+    $$PWD/qt-tar-xz/xz.h \
+    $$PWD/ClientVariableAudio.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
@@ -145,7 +143,7 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/NewGame.ui
 
 #commented to workaround to compil under wine
-#win32:RC_FILE += $$PWD/resources/resources-windows.rc
+win32:RC_FILE += $$PWD/resources/resources-windows.rc
 ICON = $$PWD/resources/client.icns
 macx:INCLUDEPATH += /Users/user/Desktop/VLC.app/Contents/MacOS/include/
 macx:LIBS += -L/Users/user/Desktop/VLC.app/Contents/MacOS/lib/
