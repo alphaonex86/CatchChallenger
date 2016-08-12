@@ -33,8 +33,9 @@ Audio::Audio()
         qDebug() << "Audio disabled due to previous crash";
 }
 
-void Audio::setVolume(int volume)
+void Audio::setVolume(const int &volume)
 {
+    qDebug() << "Audio volume set to: " << volume;
     int index=0;
     while(index<playerList.size())
     {
@@ -45,7 +46,7 @@ void Audio::setVolume(int volume)
     this->volume=volume;
 }
 
-void Audio::addPlayer(libvlc_media_player_t * player)
+void Audio::addPlayer(libvlc_media_player_t * const player)
 {
     if(playerList.contains(player))
         return;
@@ -54,13 +55,13 @@ void Audio::addPlayer(libvlc_media_player_t * player)
     libvlc_audio_set_mute(player,0);
 }
 
-void Audio::setPlayerVolume(libvlc_media_player_t * player)
+void Audio::setPlayerVolume(libvlc_media_player_t * const player)
 {
     libvlc_audio_set_volume(player,volume);
     libvlc_audio_set_mute(player,0);
 }
 
-void Audio::removePlayer(libvlc_media_player_t * player)
+void Audio::removePlayer(libvlc_media_player_t * const player)
 {
     playerList.removeOne(player);
 }
