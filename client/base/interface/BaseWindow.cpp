@@ -312,6 +312,9 @@ BaseWindow::BaseWindow() :
     #ifndef CATCHCHALLENGER_NOAUDIO
     Audio::audio.setVolume(Options::options.getAudioVolume());
     #endif
+    #ifdef CATCHCHALLENGER_NOAUDIO
+    qDebug() << "CATCHCHALLENGER_NOAUDIO def, audio disabled";
+    #endif
 }
 
 BaseWindow::~BaseWindow()
