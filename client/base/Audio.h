@@ -14,11 +14,11 @@ public:
     ~Audio();
     static Audio audio;
     libvlc_instance_t *vlcInstance;
-    void setVolume(int volume);
+    void setVolume(const int &volume);
     QStringList output_list();
-    void addPlayer(libvlc_media_player_t *player);
-    void removePlayer(libvlc_media_player_t *player);
-    void setPlayerVolume(libvlc_media_player_t * player);
+    void addPlayer(libvlc_media_player_t * const player);
+    void removePlayer(libvlc_media_player_t * const player);
+    void setPlayerVolume(libvlc_media_player_t * const player);
 private:
     QList<libvlc_media_player_t *> playerList;
     int volume;
