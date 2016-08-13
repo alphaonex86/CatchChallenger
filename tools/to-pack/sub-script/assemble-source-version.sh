@@ -18,7 +18,7 @@ if [ ! -e ${FINAL_ARCHIVE} ]; then
 	find ${TEMP_PATH}/catchchallenger-src/ -name "GeneralVariable.h" -exec sed -i "s/#define CATCHCHALLENGER_EXTRA_CHECK/\/\/#define CATCHCHALLENGER_EXTRA_CHECK/g" {} \; > /dev/null 2>&1
 	find ${TEMP_PATH}/catchchallenger-src/ -iname "*.qm" -exec rm {} \; > /dev/null 2>&1
 
-	tar cJpf ${FINAL_ARCHIVE} catchchallenger-src/
+	tar cJf ${FINAL_ARCHIVE} catchchallenger-src/ --owner=0 --group=0 --mtime='2010-01-01' -H ustar
 	if [ ! -e ${FINAL_ARCHIVE} ]; then
 		echo "${FINAL_ARCHIVE} not exists!";
 		exit;
