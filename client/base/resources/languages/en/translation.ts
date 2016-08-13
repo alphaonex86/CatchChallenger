@@ -738,8 +738,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="894"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="896"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="897"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="899"/>
         <source>You have obtained: </source>
         <translation type="unfinished"></translation>
     </message>
@@ -883,72 +883,72 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="702"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="707"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="705"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="710"/>
         <source>Error with the protocol</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="716"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="719"/>
         <source>Map error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="716"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="719"/>
         <source>The current map into the datapack is in error (not found, read failed, wrong format, corrupted, ...)
 Report the bug to the datapack maintainer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="721"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="724"/>
         <source>The repel effect is over</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="756"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="759"/>
         <location filename="../../../interface/BaseWindowShop.cpp" line="69"/>
         <source>Select an object</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="769"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="772"/>
         <location filename="../../../interface/BaseWindowShop.cpp" line="79"/>
         <source>Unknown name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="770"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="773"/>
         <location filename="../../../interface/BaseWindowShop.cpp" line="80"/>
         <source>Unknown description</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="800"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="803"/>
         <source>&lt;span style=&quot;color:#D50000&quot;&gt;Don&apos;t meet the requirements: %1&lt;/span&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="926"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="929"/>
         <source>Planting seed...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="929"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="932"/>
         <source>Collecting plant...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="932"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="935"/>
         <source>Unknown action...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1620"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1623"/>
         <source>The last query was slow (%1ms)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1628"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1631"/>
         <source>Remain query in suspend (%1ms ago)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1131,14 +1131,14 @@ Report the bug to the datapack maintainer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1195"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="1197"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1198"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1200"/>
         <source>You have better reputation into %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1202"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="1204"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1205"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1207"/>
         <source>You have worse reputation into %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1232,24 +1232,24 @@ Report the bug to the datapack maintainer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1280"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="1287"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="1289"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1283"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1290"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1292"/>
         <source>Destroy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1280"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1283"/>
         <source>Quantity to destroy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1287"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1290"/>
         <source>Are you sure you want to destroy %1 %2?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1289"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1292"/>
         <source>Are you sure you want to destroy %1 unknow item (id: %2)?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1306,24 +1306,24 @@ Report the bug to the datapack maintainer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1359"/>
-        <location filename="../../../interface/BaseWindow.cpp" line="1367"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1362"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1370"/>
         <location filename="../../../interface/BaseWindowLoad.cpp" line="306"/>
         <source>Cash: %1$</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1559"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1562"/>
         <source>Last reply time: %1ms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1595"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1598"/>
         <source>Running query: %1 (%3 and %4), query with worse time: %2ms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../interface/BaseWindow.cpp" line="1602"/>
+        <location filename="../../../interface/BaseWindow.cpp" line="1605"/>
         <source>No query running</source>
         <translation type="unfinished"></translation>
     </message>
