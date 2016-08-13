@@ -104,6 +104,8 @@ function compil {
 	if [ ${CRACKED} ]
 	then
 		sed -i "s/crackedVersion=false/crackedVersion=true/g" ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/client/ultimate/mainwindow.cpp > /dev/null 2>&1
+    else
+        sed -i "s/crackedVersion=true/crackedVersion=false/g" ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/client/ultimate/mainwindow.cpp > /dev/null 2>&1
 	fi
         cp -Rf ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/client/base/resources/music/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/music/
         cd ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/client/${TARGET}/
