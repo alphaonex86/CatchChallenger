@@ -80,7 +80,7 @@ find ${TEMP_PATH}/${TARGET}/ -type d -empty -delete > /dev/null 2>&1
 find ${TEMP_PATH}/${TARGET}/ -type d -empty -delete > /dev/null 2>&1
 
 cd ${TEMP_PATH}/
-tar cjpf ${TARGET}.tar.bz2 ${TARGET}/
+tar cjf ${TARGET}.tar.bz2 ${TARGET}/ --owner=0 --group=0 --mtime='2010-01-01' -H ustar
 if [ ! -e ${TARGET}.tar.bz2 ]; then
 	echo "${TARGET}.tar.bz2 not exists!";
 	exit;

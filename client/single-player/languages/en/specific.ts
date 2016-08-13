@@ -4,45 +4,45 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="133"/>
-        <location filename="../../SimpleSoloServer.cpp" line="188"/>
-        <location filename="../../SimpleSoloServer.cpp" line="200"/>
-        <location filename="../../SimpleSoloServer.cpp" line="289"/>
-        <location filename="../../SimpleSoloServer.cpp" line="295"/>
-        <location filename="../../SimpleSoloServer.cpp" line="345"/>
-        <location filename="../../SimpleSoloServer.cpp" line="367"/>
+        <location filename="../../SimpleSoloServer.cpp" line="135"/>
+        <location filename="../../SimpleSoloServer.cpp" line="190"/>
+        <location filename="../../SimpleSoloServer.cpp" line="202"/>
+        <location filename="../../SimpleSoloServer.cpp" line="291"/>
+        <location filename="../../SimpleSoloServer.cpp" line="297"/>
+        <location filename="../../SimpleSoloServer.cpp" line="347"/>
+        <location filename="../../SimpleSoloServer.cpp" line="369"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="133"/>
+        <location filename="../../SimpleSoloServer.cpp" line="135"/>
         <source>Unable to load internal value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="188"/>
-        <location filename="../../SimpleSoloServer.cpp" line="200"/>
+        <location filename="../../SimpleSoloServer.cpp" line="190"/>
+        <location filename="../../SimpleSoloServer.cpp" line="202"/>
         <source>No main code detected into the current datapack</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="248"/>
+        <location filename="../../SimpleSoloServer.cpp" line="250"/>
         <source>Disconnected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="248"/>
+        <location filename="../../SimpleSoloServer.cpp" line="250"/>
         <source>Disconnected by the reason: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="289"/>
-        <location filename="../../SimpleSoloServer.cpp" line="295"/>
+        <location filename="../../SimpleSoloServer.cpp" line="291"/>
+        <location filename="../../SimpleSoloServer.cpp" line="297"/>
         <source>The engine is closed due to: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../SimpleSoloServer.cpp" line="345"/>
+        <location filename="../../SimpleSoloServer.cpp" line="347"/>
         <source>Unable to save internal value at game stopping</source>
         <translation type="unfinished"></translation>
     </message>
