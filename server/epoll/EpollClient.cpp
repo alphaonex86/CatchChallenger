@@ -112,7 +112,7 @@ ssize_t EpollClient::write(const char *buffer, const size_t &bufferSize)
     {
         if(errno != EAGAIN)
         {
-            std::cerr << "Write socket error" << std::endl;
+            std::cerr << "Write socket error: " << errno << std::endl;
             close();
             return -1;
         }

@@ -22,6 +22,7 @@ function assemble {
                 echo "no application found into ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/..."
                 exit
         fi
+    rm -f ${FINAL_ARCHIVE}
     if [ ! -e ${FINAL_ARCHIVE} ]; then
         echo "creating the archive ${TARGET}..."
         find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -iname "*.a" -exec rm {} \; > /dev/null 2>&1
@@ -85,6 +86,7 @@ function assemble {
         echo "creating the archive ${TARGET}... done"
     fi
     FINAL_ARCHIVE="catchchallenger-${TARGET}-windows-${ARCHITECTURE}-${CATCHCHALLENGER_VERSION}-setup.exe"
+    rm -f ${FINAL_ARCHIVE}
     if [ ${DEBUG} -eq 0 ] && [ ! -e ${FINAL_ARCHIVE} ]; then
         echo "creating the installer ${TARGET}..."
         cd ${TEMP_PATH}/
