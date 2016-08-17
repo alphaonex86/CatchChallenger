@@ -639,7 +639,7 @@ void Api_client_real::cleanDatapackMain(std::string suffix)
 
 void Api_client_real::datapackDownloadFinishedMain()
 {
-
+    datapackStatus=DatapackStatus::Sub;
 }
 
 void Api_client_real::downloadProgressDatapackMain(int64_t bytesReceived, int64_t bytesTotal)

@@ -12,6 +12,9 @@ cd ${TEMP_PATH}/
 source ${BASE_PWD}/sub-script/compil.sh
 source ${BASE_PWD}/sub-script/assemble.sh
 
+compil "ultimate" 0 0 0 0 32 "-mtune=generic -march=i686" 0
+exit
+
 #TARGET=$1
 #DEBUG=$2
 #DEBUG_REAL=$3
