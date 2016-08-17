@@ -1023,7 +1023,8 @@ int main(int argc, char *argv[])
                         list of fds to monitor. */
                         numberOfConnectedClient++;
 
-                        int s = EpollSocket::make_non_blocking(infd);
+                        //int s = EpollSocket::make_non_blocking(infd);->do problem with large datapack from interne protocol
+                        int s = 0;
                         if(s == -1)
                             std::cerr << "unable to make to socket non blocking" << std::endl;
                         else

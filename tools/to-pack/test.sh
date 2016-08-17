@@ -10,6 +10,7 @@ cd ${BASE_PWD}
 export CATCHCHALLENGER_VERSION=`grep -F "CATCHCHALLENGER_VERSION" ${CATCHCHALLENGERSOURCESPATH}/general/base/GeneralVariable.h | grep -F "0." | sed -r "s/^.*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*$/\1/g"`
 echo ${CATCHCHALLENGER_VERSION}
 
+rm -Rf /home/ultracopier-temp/*
 rm -Rf ${TEMP_PATH} > /dev/null 2>&1
 mkdir -p ${TEMP_PATH}
 find ../ -name "Thumbs.db" -exec rm {} \; >> /dev/null 2>&1
@@ -20,7 +21,16 @@ source sub-script/test.sh
 cd ${BASE_PWD}
 echo "Do the test folder... done"
 
+exit
+
 ./4-clean-all.sh
 
-cp /home/ultracopier-temp/*.zip /home/first-world.info/files/temp/
+rm /home/first-world.info/files-rw/temp/catchchallenger-*
+cp /home/ultracopier-temp/*.* /home/first-world.info/files-rw/temp/
+cd /home/first-world.info/files-rw/temp/
+for f in `ls -1 catchchallenger-*`
+do
+    echo "http://files.first-world.info/temp/"${f}
+done
+
 

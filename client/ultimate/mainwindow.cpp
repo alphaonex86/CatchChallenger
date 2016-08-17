@@ -62,7 +62,7 @@ MainWindow::MainWindow(QWidget *parent) :
             key=QInputDialog::getText(this,tr("Key"),tr("Give the key of this software, more information on <a href=\"http://catchchallenger.first-world.info/\">catchchallenger.first-world.info</a>"));
             if(key.isEmpty())
             {
-                QCoreApplication::quit();
+                //Windows crash: QCoreApplication::quit();->do crash under windows
                 toQuit=true;
                 return;
             }

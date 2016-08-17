@@ -168,6 +168,9 @@ void Api_protocol::parseIncommingData()
 
 void Api_protocol::errorParsingLayer(const std::string &error)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    abort();
+    #endif
     emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QString::fromStdString(error));
 }
 
@@ -185,6 +188,9 @@ void Api_protocol::parseError(const QString &userMessage,const QString &errorStr
         std::cerr << userMessage.toStdString() << " " << errorString.toStdString() << std::endl;
         newError(userMessage,errorString);
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    abort();
+    #endif
 }
 
 Player_private_and_public_informations &Api_protocol::get_player_informations()

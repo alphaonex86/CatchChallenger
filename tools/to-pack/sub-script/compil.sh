@@ -48,6 +48,13 @@ function compil {
 	find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -name "*.pro.user" -exec rm {} \; > /dev/null 2>&1
 	find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -name "*-build-desktop" -type d -exec rm -Rf {} \; > /dev/null 2>&1
 	find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -name "GeneralVariable.h" -exec sed -i "s/#define CATCHCHALLENGER_EXTRA_CHECK/\/\/#define CATCHCHALLENGER_EXTRA_CHECK/g" {} \; > /dev/null 2>&1
+    if [ ${CRACKED} -eq 1 ]
+    then
+        echo cracked: ${CRACKED}
+        sed -i "s/crackedVersion=false/crackedVersion=true/g" ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/client/ultimate/mainwindow.cpp
+    else
+        sed -i "s/crackedVersion=true/crackedVersion=false/g" ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/client/ultimate/mainwindow.cpp
+    fi
 	if [ ${BITS} -eq 32 ]
 	then
 		REAL_WINEPREFIX="${WINEBASEPATH}/qt-5.0-32Bits-for-catchchallenger/"
@@ -101,12 +108,6 @@ function compil {
         mv ${COMPIL_FOLDER}/*.exe ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/
         /usr/bin/find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type f -not \( -name "*.xml" -or -name "*.dll" -or -name "*.a" -or -name "*.exe" -or -name "*.txt" -or -name "*.qm" -or -name "*.png" \) -exec rm -f {} \;
     else
-	if [ ${CRACKED} ]
-	then
-		sed -i "s/crackedVersion=false/crackedVersion=true/g" ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/client/ultimate/mainwindow.cpp > /dev/null 2>&1
-    else
-        sed -i "s/crackedVersion=true/crackedVersion=false/g" ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/client/ultimate/mainwindow.cpp > /dev/null 2>&1
-	fi
         cp -Rf ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/client/base/resources/music/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/music/
         cd ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/client/${TARGET}/
         echo "catchchallenger-${TARGET}-windows-x86 application..."
@@ -127,7 +128,7 @@ function compil {
             upx --lzma -9 ${COMPIL_FOLDER}/catchchallenger*.exe > /dev/null 2>&1
         fi
         mv ${COMPIL_FOLDER}/catchchallenger*.exe ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/
-        /usr/bin/find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type f -not \( -name "*.xml" -or -name "*.dll" -or -name "*.a" -or -name "*.exe" -or -name "*.txt" -or -name "*.qm" -or -name "*.png" -or -name "*.ogg" -or -name "*.opus" \) -exec rm -f {} \;
+        /usr/bin/find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type f -not \( -name "*.xml" -or -name "*.dll" -or -name "*.a" -or -name "*.exe" -or -name "*.txt" -or -name "*.qm" -or -name "*.png" -or -name "*.ogg" -or -name "*.opus" -or -name "*.cpp" \) -exec rm -f {} \;
     fi
 	find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type d -empty -delete > /dev/null 2>&1
 	find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-x86/ -type d -empty -delete > /dev/null 2>&1

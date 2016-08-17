@@ -1,7 +1,7 @@
 //to have winsock2 include before Windows.h, prevent mingw warn
 #include "../Api_client_real.h"
 
-#include "../base/ClientVariableAudio.h"
+#include "../ClientVariableAudio.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
 #endif

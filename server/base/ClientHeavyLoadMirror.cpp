@@ -423,7 +423,6 @@ void Client::sendFileContent()
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
         posOutput+=1+4;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::rawFilesBufferCount;
         posOutput+=1;
@@ -434,6 +433,8 @@ void Client::sendFileContent()
         }
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,BaseServerMasterSendDatapack::rawFilesBuffer.data(),BaseServerMasterSendDatapack::rawFilesBuffer.size());
         posOutput+=BaseServerMasterSendDatapack::rawFilesBuffer.size();
+
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
@@ -552,7 +553,6 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 uint32_t posOutput=0;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x76;
                 posOutput+=1+4;
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(1+BaseServerMasterSendDatapack::rawFilesBuffer.size());//set the dynamic size
 
                 //number of file
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=1;
@@ -571,6 +571,10 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
 
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,content.data(),contentsize);
                 posOutput+=contentsize;
+
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+
+                //std::cout << binaryToHex() << std::endl;
 
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             }

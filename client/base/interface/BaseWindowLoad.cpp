@@ -529,6 +529,10 @@ void BaseWindow::datapackParsed()
 
 void BaseWindow::datapackParsedMainSub()
 {
+    if(CatchChallenger::Api_client_real::client==NULL)
+        return;
+    if(MapController::mapController==NULL)
+        return;
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::datapackParsedMainSub()";
     #endif
