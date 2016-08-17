@@ -89,12 +89,14 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
     {
         case 0xA1:
         {
+            std::cout << "Select character: " << datapackStatus << std::endl;
             switch(datapackStatus)
             {
                 case DatapackStatus::Base:
                 {
                     if(datapackFilesListBase.empty() && data.size()==1)
                     {
+                        datapackStatus=DatapackStatus::Main;
                         if(!httpModeBase)
                             haveTheDatapack();
                         return true;
@@ -148,9 +150,10 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                 {
                     if(datapackFilesListMain.empty() && data.size()==1)
                     {
+                        datapackStatus=DatapackStatus::Sub;
                         if(!httpModeMain)
                             checkIfContinueOrFinished();
-                        return false;
+                        return true;
                     }
                     QList<bool> boolList;
                     while((in.device()->size()-in.device()->pos())>0)
@@ -201,6 +204,7 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                 {
                     if(datapackFilesListSub.empty() && data.size()==1)
                     {
+                        datapackStatus=DatapackStatus::Finished;
                         if(!httpModeSub)
                             datapackDownloadFinishedSub();
                         return true;

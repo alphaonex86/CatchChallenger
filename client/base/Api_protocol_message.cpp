@@ -1014,6 +1014,8 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             QDataStream in2(data2);
             in2.setVersion(QDataStream::Qt_4_4);in2.setByteOrder(QDataStream::LittleEndian);
 
+            //std::cout << QString(data.mid(0,in.device()->size()).toHex()).toStdString() << " " << QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__).toStdString() << std::endl;
+
             int index=0;
             while(index<fileListSize)
             {
@@ -1032,13 +1034,13 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return false;
                     }
-                    QByteArray rawText=data.mid(in2.device()->pos(),fileNameSize);
+                    QByteArray rawText=data2.mid(in2.device()->pos(),fileNameSize);
                     in2.device()->seek(in2.device()->pos()+rawText.size());
                     fileName=QString::fromUtf8(rawText.data(),rawText.size());
                 }
                 if(!extensionAllowed.contains(QFileInfo(fileName).suffix()))
                 {
-                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("extension not allowed: %4 with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)).arg(QFileInfo(fileName).suffix()));
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("extension not allowed: %4 with main ident: %1, line: %2, data: %3").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)).arg(QString(data.mid(0,in.device()->size()).toHex())).arg(QFileInfo(fileName).suffix()));
                     if(!tolerantMode)
                         return false;
                 }
@@ -1054,7 +1056,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong file data size with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                QByteArray dataFile=data.mid(in2.device()->pos(),size);
+                QByteArray dataFile=data2.mid(in2.device()->pos(),size);
                 in2.device()->seek(in2.device()->pos()+size);
                 if(packetCode==0x76)
                     std::cout << "Raw file to create: ";
