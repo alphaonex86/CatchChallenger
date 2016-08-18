@@ -8,7 +8,8 @@
 
 Audio Audio::audio;
 
-Audio::Audio()
+Audio::Audio() :
+    vlcInstance(NULL)
 {
     QSettings settings;
     if(!settings.contains(QStringLiteral("audio_init")) || settings.value(QStringLiteral("audio_init")).toInt()==2)
@@ -35,6 +36,8 @@ Audio::Audio()
 
 void Audio::setVolume(const int &volume)
 {
+    if(vlcInstance==NULL)
+        return;
     qDebug() << "Audio volume set to: " << volume;
     int index=0;
     while(index<playerList.size())
@@ -48,6 +51,8 @@ void Audio::setVolume(const int &volume)
 
 void Audio::addPlayer(libvlc_media_player_t * const player)
 {
+    if(vlcInstance==NULL)
+        return;
     if(playerList.contains(player))
         return;
     playerList << player;
@@ -57,6 +62,8 @@ void Audio::addPlayer(libvlc_media_player_t * const player)
 
 void Audio::setPlayerVolume(libvlc_media_player_t * const player)
 {
+    if(vlcInstance==NULL)
+        return;
     libvlc_audio_set_volume(player,volume);
     libvlc_audio_set_mute(player,0);
 }
@@ -82,6 +89,9 @@ Audio::~Audio()
 {
     /* Release libVLC instance on quit */
     if(vlcInstance)
+    {
         libvlc_release(vlcInstance);
+        vlcInstance=NULL;
+    }
 }
 #endif

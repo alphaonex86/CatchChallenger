@@ -127,7 +127,7 @@ private slots:
     void audioLoop(void *player);
     #endif
     void on_server_edit_clicked();
-
+    void askForUltimateCopy();
 private:
     enum ServerMode
     {
@@ -173,6 +173,7 @@ private:
     QHash<QString,uint32_t> lastServerWaitBeforeConnectAfterKick;
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
+    QTimer triggerUltimateCopy;
 signals:
     #ifndef CATCHCHALLENGER_NOAUDIO
     void audioLoopRestart(void *vlcPlayer);

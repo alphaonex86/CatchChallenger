@@ -44,43 +44,14 @@ MainWindow::MainWindow(QWidget *parent) :
     toQuit(false),
     ui(new Ui::MainWindow)
 {
-    static bool crackedVersion=false;
-    if(!crackedVersion)
-    {
-        while(1)
-        {
-            QSettings keySettings;
-            QString key;
-            if(keySettings.contains(QStringLiteral("key")))
-            {
-                QCryptographicHash hash(QCryptographicHash::Sha224);
-                hash.addData(keySettings.value(QStringLiteral("key")).toString().toUtf8());
-                const QByteArray &result=hash.result();
-                if(!result.isEmpty() && result.at(0)==0x00 && result.at(1)==0x00)
-                    break;
-            }
-            key=QInputDialog::getText(this,tr("Key"),tr("Give the key of this software, more information on <a href=\"http://catchchallenger.first-world.info/\">catchchallenger.first-world.info</a>"));
-            if(key.isEmpty())
-            {
-                //Windows crash: QCoreApplication::quit();->do crash under windows
-                toQuit=true;
-                return;
-            }
-            {
-                QCryptographicHash hash(QCryptographicHash::Sha224);
-                hash.addData(key.toUtf8());
-                const QByteArray &result=hash.result();
-                if(!result.isEmpty() && result.at(0)==0x00 && result.at(1)==0x00)
-                {
-                    keySettings.setValue(QStringLiteral("key"),key);
-                    break;
-                }
-            }
-        }
-    }
-
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     qDebug() << "QStandardPaths::writableLocation(QStandardPaths::DataLocation)" << QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     serverMode=ServerMode_None;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
@@ -92,6 +63,9 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
     qRegisterMetaType<QList<FeedNews::FeedEntry> >("QList<FeedNews::FeedEntry>");
 
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     socket=NULL;
     realSslSocket=NULL;
     internalServer=NULL;
@@ -101,6 +75,9 @@ MainWindow::MainWindow(QWidget *parent) :
     spacerServer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
     ui->setupUi(this);
     ui->update->setVisible(false);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     if(settings.contains("news"))
     {
         ui->news->setVisible(true);
@@ -108,12 +85,21 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     else
         ui->news->setVisible(false);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     InternetUpdater::internetUpdater=new InternetUpdater();
     connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
     FeedNews::feedNews=new FeedNews();
     if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList))
         qDebug() << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed";
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/"),QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/savegames/"),false);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back);
     connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play);
     ui->stackedWidget->addWidget(solowindow);
@@ -125,14 +111,26 @@ MainWindow::MainWindow(QWidget *parent) :
     mergedConnexionInfoList=temp_customConnexionInfoList+temp_xmlConnexionInfoList;
     qSort(mergedConnexionInfoList);
     selectedServer=NULL;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     displayServerList();
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     CatchChallenger::BaseWindow::baseWindow=new CatchChallenger::BaseWindow();
     ui->stackedWidget->addWidget(CatchChallenger::BaseWindow::baseWindow);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
     connect(CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection);
     //connect(CatchChallenger::BaseWindow::baseWindow,                &CatchChallenger::BaseWindow::needQuit,             this,&MainWindow::needQuit);
     connect(&updateTheOkButtonTimer,&QTimer::timeout,this,&MainWindow::updateTheOkButton);
 
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
     updateTheOkButtonTimer.setSingleShot(false);
@@ -140,12 +138,24 @@ MainWindow::MainWindow(QWidget *parent) :
     numberForFlood=0;
     haveShowDisconnectionReason=false;
 
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     stateChanged(QAbstractSocket::UnconnectedState);
 
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     setWindowTitle(QStringLiteral("CatchChallenger Ultimate"));
     downloadFile();
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
 
     #ifndef CATCHCHALLENGER_NOAUDIO
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     vlcPlayer=NULL;
     if(Audio::audio.vlcInstance!=NULL)
     {
@@ -174,7 +184,10 @@ MainWindow::MainWindow(QWidget *parent) :
                     Audio::audio.addPlayer(vlcPlayer);
                     //audio
                     if(!connect(this,&MainWindow::audioLoopRestart,this,&MainWindow::audioLoop,Qt::QueuedConnection))
+                    {
+                        std::cerr << "!connect(this,&MainWindow::audioLoopRestart,this,&MainWindow::audioLoop,Qt::QueuedConnection)" << std::endl;
                         abort();
+                    }
                 }
                 else
                 {
@@ -209,10 +222,27 @@ MainWindow::MainWindow(QWidget *parent) :
     #else
     ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION));
     #endif
+
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
+    if(!connect(&triggerUltimateCopy,&QTimer::timeout,this,&MainWindow::askForUltimateCopy,Qt::QueuedConnection))
+    {
+        std::cerr << "failed: !connect(&triggerUltimateCopy,&QTimer::timeout,this,&MainWindow::askForUltimateCopy): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        abort();
+    }
+    triggerUltimateCopy.setSingleShot(true);
+    triggerUltimateCopy.start(0);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
 }
 
 MainWindow::~MainWindow()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     #ifndef CATCHCHALLENGER_NOAUDIO
     if(vlcPlayer!=NULL)
     {
@@ -237,8 +267,67 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::askForUltimateCopy()
+{
+    //after all to prevent not initialised pointer
+    static bool crackedVersion=false;
+    if(!crackedVersion)
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        #endif
+        while(1)
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            #endif
+            QSettings keySettings;
+            QString key;
+            if(keySettings.contains(QStringLiteral("key")))
+            {
+                QCryptographicHash hash(QCryptographicHash::Sha224);
+                hash.addData(keySettings.value(QStringLiteral("key")).toString().toUtf8());
+                const QByteArray &result=hash.result();
+                if(!result.isEmpty() && result.at(0)==0x00 && result.at(1)==0x00)
+                    break;
+            }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            #endif
+            key=QInputDialog::getText(this,tr("Key"),tr("Give the key of this software, more information on <a href=\"http://catchchallenger.first-world.info/\">catchchallenger.first-world.info</a>"));
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            #endif
+            if(key.isEmpty())
+            {
+                //Windows crash: QCoreApplication::quit();->do crash under windows
+                toQuit=true;
+                QCoreApplication::quit();
+                std::cout << "key.isEmpty() for ultimate version: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                return;
+            }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            #endif
+            {
+                QCryptographicHash hash(QCryptographicHash::Sha224);
+                hash.addData(key.toUtf8());
+                const QByteArray &result=hash.result();
+                if(!result.isEmpty() && result.at(0)==0x00 && result.at(1)==0x00)
+                {
+                    keySettings.setValue(QStringLiteral("key"),key);
+                    break;
+                }
+            }
+        }
+    }
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     #ifndef CATCHCHALLENGER_NOAUDIO
     if(vlcPlayer!=NULL)
         libvlc_media_player_stop(vlcPlayer);
@@ -1931,11 +2020,17 @@ void MainWindow::updateTheOkButton()
 #ifndef CATCHCHALLENGER_NOAUDIO
 void MainWindow::vlceventStatic(const libvlc_event_t *event, void *ptr)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     static_cast<MainWindow *>(ptr)->vlcevent(event);
 }
 
 void MainWindow::vlcevent(const libvlc_event_t *event)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+    #endif
     switch(event->type)
     {
         case libvlc_MediaPlayerEncounteredError:
