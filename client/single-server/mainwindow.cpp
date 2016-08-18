@@ -161,7 +161,10 @@ MainWindow::MainWindow(QWidget *parent) :
                     Audio::audio.addPlayer(vlcPlayer);
                     //audio
                     if(!connect(this,&MainWindow::audioLoopRestart,this,&MainWindow::audioLoop,Qt::QueuedConnection))
+                    {
+                        std::cerr << "!connect(this,&MainWindow::audioLoopRestart,this,&MainWindow::audioLoop,Qt::QueuedConnection)" << std::endl;
                         abort();
+                    }
                 }
                 else
                 {
