@@ -267,6 +267,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+//MS-Windows don't support show modal input into the contructor, then move out it
 void MainWindow::askForUltimateCopy()
 {
     //after all to prevent not initialised pointer
