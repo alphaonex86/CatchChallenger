@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
-    
+
     LocalListener localListener;
     const QStringList &arguments=QCoreApplication::arguments();
     if(arguments.size()==2 && arguments.last()=="quit")
@@ -34,5 +34,9 @@ int main(int argc, char *argv[])
     if(w.toQuit)
         return 523;
     w.show();
-    return a.exec();
+    const auto returnCode=a.exec();
+    if(w.toQuit)
+        return 523;
+    else
+        return returnCode;
 }
