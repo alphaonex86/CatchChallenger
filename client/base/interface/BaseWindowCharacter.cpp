@@ -63,9 +63,9 @@ void BaseWindow::newProfileFinished()
     //characterEntry.mapId=DatapackClientLoader::datapackLoader.mapToId.value(profile.map);
     characterEntry.played_time=0;
     characterEntry.pseudo=nameGame.pseudo().toStdString();
-    characterEntry.monsterGroupId=nameGame.monsterGroupId();
+    characterEntry.charactersGroupIndex=nameGame.monsterGroupId();
     characterEntry.skinId=nameGame.skinId();
-    Api_client_real::client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,profileIndex,QString::fromStdString(characterEntry.pseudo),characterEntry.monsterGroupId,characterEntry.skinId);
+    Api_client_real::client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,profileIndex,QString::fromStdString(characterEntry.pseudo),characterEntry.charactersGroupIndex,characterEntry.skinId);
     characterEntryListInWaiting << characterEntry;
     if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
         ui->character_add->setEnabled(false);

@@ -1,6 +1,8 @@
 #include "GlobalControler.h"
 
-GlobalControler::GlobalControler(QObject *parent) : QObject(parent)
+GlobalControler::GlobalControler(QObject *parent) :
+    QObject(parent),
+    settings(QCoreApplication::applicationDirPath()+"/bottest.xml",QSettings::NativeFormat)
 {
     qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
@@ -22,6 +24,7 @@ GlobalControler::GlobalControler(QObject *parent) : QObject(parent)
     connect(&multipleBotConnexion,&MultipleBotConnection::emit_lastReplyTime,this,&GlobalControler::lastReplyTime,Qt::QueuedConnection);
     connect(&slowDownTimer,&QTimer::timeout,&multipleBotConnexion,&MultipleBotConnectionImplForGui::detectSlowDown,Qt::QueuedConnection);
     slowDownTimer.start(200);
+    connect(&autoConnect,&QTimer::timeout,this,&GlobalControler::on_connect_clicked,Qt::QueuedConnection);
     autoConnect.setSingleShot(true);
     autoConnect.start(0);
     character_id=0;
@@ -62,14 +65,19 @@ GlobalControler::GlobalControler(QObject *parent) : QObject(parent)
     else
         settings.setValue("serverUniqueKey","9999");
     if(settings.contains("character"))
-        character=settings.value("character").toUInt();
+        character=settings.value("character").toString();
     else
         settings.setValue("character","botTest");
 }
 
-void GlobalControler::detectSlowDown(QString text)
+void GlobalControler::detectSlowDown(uint32_t, uint32_t worseTime)
 {
-//    ui->labelQueryList->setText(text);
+    if(worseTime>7*1000)
+    {
+        qDebug() << "One query take more than 7000ms: " << worseTime << " (abort)";
+        QCoreApplication::exit(29);
+        return;
+    }
 }
 
 void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
@@ -83,9 +91,9 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
 
     this->serverOrdenedList=serverOrdenedList;
     this->characterEntryList=characterEntryList;
-    if(characterEntryList.size()>=charactersGroupIndex)
+    if(charactersGroupIndex>=(uint32_t)characterEntryList.size())
     {
-        qDebug() << "charactersGroupIndex not found";
+        qDebug() << "charactersGroupIndex not found " << charactersGroupIndex << ">=" << characterEntryList.size();
         QCoreApplication::exit(24);
         return;
     }
@@ -96,23 +104,33 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
         while(index<characterEntryListNew.size())
         {
             const CatchChallenger::CharacterEntry &characterEntry=characterEntryListNew.at(index);
-            if(characterEntry.pseudo==character.toStdString())
+            if(characterEntry.pseudo==character.toStdString() && characterEntry.charactersGroupIndex==charactersGroupIndex)
             {
                 character_id=characterEntry.character_id;
-                multipleBotConnexion.characterSelectForFirstCharacter(characterEntry.character_id);
+                //multipleBotConnexion.characterSelectForFirstCharacter(characterEntry.character_id);-> do into datapackIsReady
                 return;
             }
+            else
+                std::cerr << "character not match: \"" << characterEntry.pseudo << "\"!=\"" << character.toStdString() << "\", charactersGroupIndex: " << std::to_string(characterEntry.charactersGroupIndex) << "!=" << std::to_string(charactersGroupIndex) << std::endl;
             index++;
         }
         {
-            qDebug() << "character not found";
+            std::cerr << "character not found: \"" << character.toStdString() << "\", charactersGroupIndex: " << std::to_string(charactersGroupIndex) << std::endl;
+            int index=0;
+            QList<CatchChallenger::CharacterEntry> characterEntryListNew=characterEntryList.at(charactersGroupIndex);
+            while(index<characterEntryListNew.size())
+            {
+                const CatchChallenger::CharacterEntry &characterEntry=characterEntryListNew.at(index);
+                std::cout << "- character: \"" << characterEntry.pseudo << "\", id: " << characterEntry.character_id << ", charactersGroupIndex: " << std::to_string(characterEntry.charactersGroupIndex);
+                index++;
+            }
             QCoreApplication::exit(25);
             return;
         }
     }
 }
 
-void GlobalControler::updateServerList(CatchChallenger::Api_client_real *senderObject)
+void GlobalControler::updateServerList(CatchChallenger::Api_client_real *)
 {
     //do the grouping for characterGroup count
     {
@@ -139,11 +157,23 @@ void GlobalControler::updateServerList(CatchChallenger::Api_client_real *senderO
         {
             const CatchChallenger::ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
             if(server.charactersGroupIndex==charactersGroupIndex && server.uniqueKey==serverUniqueKey)
+            {
+                //multipleBotConnexion.serverSelect(characterEntry.character_id);-> do into datapackIsReady
                 return;
+            }
             index++;
         }
     }
     qDebug() << "server or charactersGroupIndex not found";
+    {
+        int index=0;
+        while(index<serverOrdenedList.size())
+        {
+            const CatchChallenger::ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
+            qDebug() << server.name << " (" << server.host << ":" << server.port << "), charactersGroupIndex: " << server.charactersGroupIndex << ", unique key: " << server.uniqueKey;
+            index++;
+        }
+    }
     QCoreApplication::exit(23);
 }
 
@@ -160,6 +190,7 @@ void GlobalControler::statusError(QString error)
 
 void GlobalControler::on_connect_clicked()
 {
+    qDebug() << "GlobalControler::on_connect_clicked()";
     if(pass.size()<6)
     {
         qDebug() << "Your password need to be at minimum of 6 characters";
@@ -185,6 +216,14 @@ void GlobalControler::on_connect_clicked()
     multipleBotConnexion.mHost=host;
     multipleBotConnexion.mPort=port;
 
+    QDir datapack(QCoreApplication::applicationDirPath()+"/datapack/");
+    if(!datapack.exists())
+        if(!datapack.mkpath(datapack.absolutePath()))
+        {
+            std::cerr << "Unable to create the datapack folder: " << datapack.absolutePath().toStdString() << std::endl;
+            abort();
+        }
+
     //do only the first client to download the datapack
     multipleBotConnexion.createClient();
 }
@@ -199,11 +238,11 @@ void GlobalControler::datapackIsReady()
 void GlobalControler::datapackMainSubIsReady()
 {
     qDebug() << "GlobalControler::datapackMainSubIsReady()";
+    QCoreApplication::exit(0);
 }
 
 void GlobalControler::all_player_on_map()
 {
     qDebug() << "GlobalControler::all_player_on_map()";
-    QCoreApplication::exit(0);
 }
 
