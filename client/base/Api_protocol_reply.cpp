@@ -346,6 +346,9 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                             }
                             in >> characterEntry.last_connect;
 
+                            //important
+                            characterEntry.charactersGroupIndex=charatersGroupIndex;
+
                             characterEntryList << characterEntry;
                             characterListIndex++;
                         }

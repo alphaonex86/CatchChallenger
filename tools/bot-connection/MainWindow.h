@@ -35,7 +35,7 @@ private:
     QList<CatchChallenger::ServerFromPoolForDisplay *> serverOrdenedList;
     QList<QList<CatchChallenger::CharacterEntry> > characterEntryList;
 public slots:
-    void detectSlowDown(QString text);
+    void detectSlowDown(uint32_t queryCount, uint32_t worseTime);
 private slots:
     void lastReplyTime(const quint32 &time);
     void on_connect_clicked();
