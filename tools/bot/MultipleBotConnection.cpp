@@ -205,7 +205,8 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
 
 void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *client)
 {
-    qDebug() << "MultipleBotConnection::haveTheDatapack_with_client(): Bot version:" << botInterface->name() << botInterface->version();
+    if(botInterface!=NULL)
+        qDebug() << "MultipleBotConnection::haveTheDatapack_with_client(): Bot version:" << botInterface->name() << botInterface->version();
     //load the datapack
     {
         CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());
@@ -275,14 +276,16 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
 
 void MultipleBotConnection::haveDatapackMainSubCode_with_client(CatchChallengerClient *client)
 {
-    qDebug() << "MultipleBotConnection::haveDatapackMainSubCode_with_client(): Bot version:" << botInterface->name() << botInterface->version();
+    if(botInterface!=NULL)
+        qDebug() << "MultipleBotConnection::haveDatapackMainSubCode_with_client(): Bot version:" << botInterface->name() << botInterface->version();
     client->api->sendDatapackContentMainSub();
 }
 
 void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerClient *client)
 {
     Q_UNUSED(client);
-    qDebug() << "MultipleBotConnection::haveTheDatapackMainSub_with_client(): Bot version:" << botInterface->name() << botInterface->version();
+    if(botInterface!=NULL)
+        qDebug() << "MultipleBotConnection::haveTheDatapackMainSub_with_client(): Bot version:" << botInterface->name() << botInterface->version();
     {
         if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
         {

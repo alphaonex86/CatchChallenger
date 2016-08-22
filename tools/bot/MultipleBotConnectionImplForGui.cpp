@@ -82,14 +82,7 @@ void MultipleBotConnectionImplForGui::detectSlowDown()
                 worseTime=time;
         }
     }
-    if(worseTime>3600*1000)
-        emit emit_detectSlowDown(tr("Running query: %1 Query with worse time: %2h").arg(queryCount).arg(worseTime/(3600*1000)));
-    else if(worseTime>2*60*1000)
-        emit emit_detectSlowDown(tr("Running query: %1 Query with worse time: %2min").arg(queryCount).arg(worseTime/(60*1000)));
-    else if(worseTime>5*1000)
-        emit emit_detectSlowDown(tr("Running query: %1 Query with worse time: %2s").arg(queryCount).arg(worseTime/(1000)));
-    else
-        emit emit_detectSlowDown(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));
+    emit emit_detectSlowDown(queryCount,worseTime);
 }
 
 void MultipleBotConnectionImplForGui::characterSelectForFirstCharacter(const quint32 &charId)
@@ -169,7 +162,8 @@ void MultipleBotConnectionImplForGui::insert_player(const CatchChallenger::Playe
     MultipleBotConnection::insert_player_with_client(apiToCatchChallengerClient.value(senderObject),player,mapId,x,y,direction);
 
     if(player.simplifiedId==apiToCatchChallengerClient.value(senderObject)->api->getId())
-        botInterface->insert_player(apiToCatchChallengerClient.value(senderObject)->api,player,mapId,x,y,direction);
+        if(botInterface!=NULL)
+            botInterface->insert_player(apiToCatchChallengerClient.value(senderObject)->api,player,mapId,x,y,direction);
 }
 
 void MultipleBotConnectionImplForGui::logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList)
@@ -242,8 +236,16 @@ void MultipleBotConnectionImplForGui::haveTheDatapack()
     qDebug() << "MultipleBotConnectionImplFoprGui::haveTheDatapack()";
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
+    {
+        qDebug() << "MultipleBotConnectionImplFoprGui::haveTheDatapack(): senderObject==NULL";
         return;
+    }
 
+    if(!apiToCatchChallengerClient.contains(senderObject))
+    {
+        qDebug() << "MultipleBotConnectionImplFoprGui::haveTheDatapack(): !apiToCatchChallengerClient.contains(senderObject)";
+        return;
+    }
     MultipleBotConnection::haveTheDatapack_with_client(apiToCatchChallengerClient.value(senderObject));
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
     {
@@ -453,7 +455,8 @@ void MultipleBotConnectionImplForGui::disconnected()
         numberOfSelectedCharacter--;
         emit emit_numberOfSelectedCharacter(numberOfSelectedCharacter);
     }
-    botInterface->removeClient(connectedSocketToCatchChallengerClient.value(senderObject)->api);
+    if(botInterface!=NULL)
+        botInterface->removeClient(connectedSocketToCatchChallengerClient.value(senderObject)->api);
 }
 
 

@@ -33,12 +33,12 @@ private:
     QString login,pass,host,proxy,character;
     uint32_t serverUniqueKey,charactersGroupIndex,port,proxyport,character_id;
 public slots:
-    void detectSlowDown(QString text);
+    void detectSlowDown(uint32_t, uint32_t worseTime);
 private slots:
     void lastReplyTime(const quint32 &time);
     void on_connect_clicked();
     void logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack);
-    void updateServerList(CatchChallenger::Api_client_real *senderObject);
+    void updateServerList(CatchChallenger::Api_client_real *);
     void statusError(QString error);
     void datapackIsReady();
     void datapackMainSubIsReady();

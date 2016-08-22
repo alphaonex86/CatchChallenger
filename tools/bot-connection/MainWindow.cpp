@@ -86,24 +86,8 @@ void MainWindow::lastReplyTime(const quint32 &time)
 }
 
 
-void MainWindow::detectSlowDown(QString text)
+void MainWindow::detectSlowDown(uint32_t queryCount,uint32_t worseTime)
 {
-    ui->labelQueryList->setText(text);
-/*    quint32 queryCount=0;
-    quint32 worseTime=0;
-    QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
-    while (i.hasNext()) {
-        i.next();
-        const QMap<quint8,QTime> &values=i.key()->getQuerySendTimeList();
-        queryCount+=values.size();
-        QMapIterator<quint8,QTime> i(values);
-        while (i.hasNext()) {
-            i.next();
-            const quint32 &time=i.value().elapsed();
-            if(time>worseTime)
-                worseTime=time;
-        }
-    }
     if(worseTime>3600*1000)
         ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2h").arg(queryCount).arg(worseTime/(3600*1000)));
     else if(worseTime>2*60*1000)
@@ -111,7 +95,7 @@ void MainWindow::detectSlowDown(QString text)
     else if(worseTime>5*1000)
         ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2s").arg(queryCount).arg(worseTime/(1000)));
     else
-        ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));*/
+        ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));
 }
 
 void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)

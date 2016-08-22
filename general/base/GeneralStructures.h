@@ -411,7 +411,7 @@ struct CharacterEntry
 {
     uint32_t character_id;
     std::string pseudo;
-    uint8_t monsterGroupId;
+    uint8_t charactersGroupIndex;
     uint8_t skinId;
     uint32_t delete_time_left;
     uint32_t played_time;
