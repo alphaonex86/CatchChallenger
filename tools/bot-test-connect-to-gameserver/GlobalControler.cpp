@@ -28,6 +28,7 @@ GlobalControler::GlobalControler(QObject *parent) : QObject(parent)
     connect(&autoConnect,&QTimer::timeout,&multipleBotConnexion,&MultipleBotConnectionImplForGui::on_connect_clicked,Qt::QueuedConnection);
     autoConnect.setSingleShot(true);
     autoConnect.start(0);
+    character_id=0;
 
     multipleBotConnexion.botInterface=NULL;
 
@@ -88,6 +89,7 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
     this->characterEntryList=characterEntryList;
     if(characterEntryList.size()>=charactersGroupIndex)
     {
+        qDebug() << "charactersGroupIndex not found";
         QCoreApplication::exit(24);
         return;
     }
@@ -100,12 +102,14 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
             const CatchChallenger::CharacterEntry &characterEntry=characterEntryListNew.at(index);
             if(characterEntry.pseudo==character)
             {
+                character_id=characterEntry.character_id;
                 multipleBotConnexion.characterSelectForFirstCharacter(characterEntry.character_id);
                 return;
             }
             index++;
         }
         {
+            qDebug() << "character not found";
             QCoreApplication::exit(25);
             return;
         }
@@ -143,25 +147,28 @@ void GlobalControler::updateServerList(CatchChallenger::Api_client_real *senderO
             index++;
         }
     }
+    qDebug() << "server or charactersGroupIndex not found";
     QCoreApplication::exit(23);
 }
 
 void GlobalControler::statusError(QString error)
 {
+    qDebug() << error;
     QCoreApplication::exit(26);
-    ui->statusBar->showMessage(error);
 }
 
 void GlobalControler::on_connect_clicked()
 {
     if(pass.size()<6)
     {
-        QMessageBox::warning(this,tr("Error"),tr("Your password need to be at minimum of 6 characters"));
+        qDebug() << "Your password need to be at minimum of 6 characters";
+        QCoreApplication::exit(27);
         return;
     }
     if(login.size()<3)
     {
-        QMessageBox::warning(this,tr("Error"),tr("Your login need to be at minimum of 3 characters"));
+        qDebug() << "Your login need to be at minimum of 3 characters";
+        QCoreApplication::exit(28);
         return;
     }
 
@@ -181,151 +188,16 @@ void GlobalControler::on_connect_clicked()
     multipleBotConnexion.createClient();
 }
 
-void GlobalControler::on_serverList_activated(const QModelIndex &index)
-{
-    Q_UNUSED(index);
-    on_serverListSelect_clicked();
-}
-
-void GlobalControler::on_serverListSelect_clicked()
-{
-    const QList<QTreeWidgetItem *> &selectedItems=ui->serverList->selectedItems();
-    if(selectedItems.size()!=1)
-        return;
-
-    const QTreeWidgetItem * const selectedItem=selectedItems.at(0);
-    unsigned int serverSelectedIndex=selectedItem->data(99,99).toUInt();
-
-    CatchChallenger::ServerFromPoolForDisplay * const serverSelected=serverOrdenedList.at(serverSelectedIndex);
-    const uint8_t &charactersGroupIndex=serverSelected->charactersGroupIndex;
-    if(charactersGroupIndex>=characterEntryList.size())
-    {
-        ui->groupBox_Server->setEnabled(false);
-        QMessageBox::critical(this,tr("Error"),tr("The group index is wrong, maybe the server list have change"));
-        return;
-    }
-    multipleBotConnexion.serverSelect(serverSelected->charactersGroupIndex,serverSelected->uniqueKey);
-
-    ui->groupBox_Server->setEnabled(false);
-    if(!ui->multipleConnexion->isChecked())
-    {
-        ui->groupBox_char->setEnabled(true);
-        int index=0;
-        while(index<characterEntryList.size())
-        {
-            const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).at(index);
-            ui->characterList->addItem(QString::fromStdString(character.pseudo),character.character_id);
-            index++;
-        }
-    }
-    else
-    {
-        ui->groupBox_char->setEnabled(false);
-        if(characterEntryList.size()>0)
-        {
-            if(characterEntryList.at(charactersGroupIndex).empty())
-            {
-                qDebug() << "GlobalControler::on_serverListSelect_clicked(): ui->characterList->count()==0";
-                return;
-            }
-            const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).first();
-            multipleBotConnexion.characterSelectForFirstCharacter(character.character_id);
-        }
-        else
-        {
-            qDebug() << "GlobalControler::on_serverListSelect_clicked(): ui->characterList->count()==0";
-        }
-    }
-    ui->characterSelect->setEnabled(ui->characterList->count()>0 && !ui->multipleConnexion->isChecked());
-}
-
-void GlobalControler::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView)
-{
-    item->setText(0,logicialGroup.name);
-    {
-        //to order the group
-        QStringList keys=logicialGroup.logicialGroupList.keys();
-        keys.sort();
-        //list the group
-        int index=0;
-        while(index<keys.size())
-        {
-            QTreeWidgetItem * const itemGroup=new QTreeWidgetItem(item);
-            addToServerList(logicialGroup.logicialGroupList[keys.value(index)],itemGroup,currentDate,fullView);
-            index++;
-        }
-    }
-    {
-        qSort(logicialGroup.servers);
-        //list the server
-        int index=0;
-        while(index<logicialGroup.servers.size())
-        {
-            const CatchChallenger::ServerFromPoolForDisplay &server=logicialGroup.servers.at(index);
-            QTreeWidgetItem *itemServer=new QTreeWidgetItem(item);
-            QString text;
-            QString groupText;
-            if(serverByCharacterGroup.size()>1)
-                groupText=QStringLiteral(" (%1)").arg(serverByCharacterGroup.value(server.charactersGroupIndex).second);
-            QString name=server.name;
-            if(name.isEmpty())
-                name=tr("Default server");
-            if(fullView)
-            {
-                text=name+groupText;
-                if(server.playedTime>0)
-                {
-                    if(!server.description.isEmpty())
-                        text+=" "+tr("%1 played").arg(CatchChallenger::FacilityLibClient::timeToString(server.playedTime));
-                    else
-                        text+="\n"+tr("%1 played").arg(CatchChallenger::FacilityLibClient::timeToString(server.playedTime));
-                }
-                if(!server.description.isEmpty())
-                    text+="\n"+server.description;
-            }
-            else
-            {
-                if(server.description.isEmpty())
-                    text=name+groupText;
-                else
-                    text=name+groupText+" - "+server.description;
-            }
-            itemServer->setText(0,text);
-
-            //do the icon here
-            if(server.playedTime>5*365*24*3600)
-                itemServer->setToolTip(0,tr("Played time greater than 5y, bug?"));
-            else if(server.lastConnect>0 && server.lastConnect<1420070400)
-                itemServer->setToolTip(0,tr("Played before 2015, bug?"));
-            else if(server.maxPlayer<=65533 && (server.maxPlayer<server.currentPlayer || server.maxPlayer==0))
-            {
-                if(server.maxPlayer<server.currentPlayer)
-                    itemServer->setToolTip(0,tr("maxPlayer<currentPlayer"));
-                else
-                    itemServer->setToolTip(0,tr("maxPlayer==0"));
-            }
-            if(server.maxPlayer<=65533)
-                itemServer->setText(1,QStringLiteral("%1/%2").arg(server.currentPlayer).arg(server.maxPlayer));
-            itemServer->setData(99,99,server.serverOrdenedListIndex);
-            index++;
-        }
-    }
-}
-
 void GlobalControler::datapackIsReady()
 {
-    ui->groupBox_Server->setEnabled(true);
-    select the server
+    qDebug() << "GlobalControler::datapackIsReady()";
+    multipleBotConnexion.serverSelect(charactersGroupIndex,serverUniqueKey);
+    multipleBotConnexion.characterSelectForFirstCharacter(character_id);
 }
 
 void GlobalControler::datapackMainSubIsReady()
 {
-}
-
-void GlobalControler::on_autoCreateCharacter_stateChanged(int arg1)
-{
-    Q_UNUSED(arg1);
-    settings.setValue("autoCreateCharacter",ui->autoCreateCharacter->isChecked());
+    qDebug() << "GlobalControler::datapackMainSubIsReady()";
 }
 
 void GlobalControler::all_player_connected()
