@@ -38,6 +38,7 @@ private slots:
     void lastReplyTime(const quint32 &time);
     void on_connect_clicked();
     void logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack);
+    void updateServerList(CatchChallenger::Api_client_real *senderObject);
     void statusError(QString error);
     void datapackIsReady();
     void datapackMainSubIsReady();

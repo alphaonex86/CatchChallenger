@@ -17,15 +17,11 @@ GlobalControler::GlobalControler(QObject *parent) : QObject(parent)
     connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackIsReady,this,&GlobalControler::datapackIsReady,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackMainSubIsReady,this,&GlobalControler::datapackMainSubIsReady,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::statusError,this,&GlobalControler::statusError,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfSelectedCharacter,this,&GlobalControler::display_numberOfSelectedCharacter,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfBotConnected,this,&GlobalControler::display_numberOfBotConnected);//,Qt::QueuedConnection
     connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_detectSlowDown,this,&GlobalControler::detectSlowDown,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_all_player_connected,this,&GlobalControler::all_player_connected,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_all_player_on_map,this,&GlobalControler::all_player_on_map,Qt::QueuedConnection);
     connect(&multipleBotConnexion,&MultipleBotConnection::emit_lastReplyTime,this,&GlobalControler::lastReplyTime,Qt::QueuedConnection);
     connect(&slowDownTimer,&QTimer::timeout,&multipleBotConnexion,&MultipleBotConnectionImplForGui::detectSlowDown,Qt::QueuedConnection);
     slowDownTimer.start(200);
-    connect(&autoConnect,&QTimer::timeout,&multipleBotConnexion,&MultipleBotConnectionImplForGui::on_connect_clicked,Qt::QueuedConnection);
     autoConnect.setSingleShot(true);
     autoConnect.start(0);
     character_id=0;
@@ -100,7 +96,7 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
         while(index<characterEntryListNew.size())
         {
             const CatchChallenger::CharacterEntry &characterEntry=characterEntryListNew.at(index);
-            if(characterEntry.pseudo==character)
+            if(characterEntry.pseudo==character.toStdString())
             {
                 character_id=characterEntry.character_id;
                 multipleBotConnexion.characterSelectForFirstCharacter(characterEntry.character_id);
@@ -151,6 +147,11 @@ void GlobalControler::updateServerList(CatchChallenger::Api_client_real *senderO
     QCoreApplication::exit(23);
 }
 
+void GlobalControler::lastReplyTime(const quint32 &time)
+{
+    qDebug() << tr("Last reply time: %1ms").arg(time);
+}
+
 void GlobalControler::statusError(QString error)
 {
     qDebug() << error;
@@ -198,11 +199,6 @@ void GlobalControler::datapackIsReady()
 void GlobalControler::datapackMainSubIsReady()
 {
     qDebug() << "GlobalControler::datapackMainSubIsReady()";
-}
-
-void GlobalControler::all_player_connected()
-{
-    qDebug() << "GlobalControler::all_player_connected()";
 }
 
 void GlobalControler::all_player_on_map()
