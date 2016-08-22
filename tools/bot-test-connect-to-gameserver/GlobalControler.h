@@ -31,7 +31,7 @@ private:
     QList<QList<CatchChallenger::CharacterEntry> > characterEntryList;
 
     QString login,pass,host,proxy,character;
-    uint32_t serverUniqueKey,charactersGroupIndex,port,proxyport;
+    uint32_t serverUniqueKey,charactersGroupIndex,port,proxyport,character_id;
 public slots:
     void detectSlowDown(QString text);
 private slots:
@@ -39,10 +39,6 @@ private slots:
     void on_connect_clicked();
     void logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack);
     void statusError(QString error);
-    void on_serverList_activated(const QModelIndex &index);
-    void on_serverListSelect_clicked();
-    void updateServerList(CatchChallenger::Api_client_real *senderObject);
-    //void addToServerList(CatchChallenger::LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView=true);
     void datapackIsReady();
     void datapackMainSubIsReady();
     void all_player_on_map();
