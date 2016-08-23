@@ -18,7 +18,6 @@ using namespace CatchChallenger;
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/GeneralType.h"
-#include "LanguagesSelect.h"
 
 #include <QCoreApplication>
 #include <QRegularExpression>

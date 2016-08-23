@@ -169,6 +169,11 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
         qDebug() << client->login << "have not character";
         if((autoCreateCharacter() || multipleConnexion()) && serverIsSelected)
         {
+            if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
+            {
+                qDebug() << "Profile list is empty";
+                return;
+            }
             qDebug() << client->login << "create new character";
             quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
             QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
@@ -220,11 +225,6 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
             index++;
         }
     }
-    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
-    {
-        qDebug() << "Profile list is empty";
-        return;
-    }
 
     if(client->charactersList.count()<=0 || charactersGroupIndex>=client->charactersList.size() || client->charactersList.at(charactersGroupIndex).empty())
     {
@@ -233,6 +233,11 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
             qDebug() << client->login << "have not character";
             if(autoCreateCharacter() || multipleConnexion())
             {
+                if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
+                {
+                    qDebug() << "Profile list is empty";
+                    return;
+                }
                 qDebug() << client->login << "create new character";
                 quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
                 QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
