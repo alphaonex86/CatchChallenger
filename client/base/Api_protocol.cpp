@@ -28,6 +28,7 @@ const unsigned char protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERV
 #include <QCoreApplication>
 #include <QStandardPaths>
 #include <QSslKey>
+#include <QDataStream>
 
 #ifdef BENCHMARKMUTIPLECLIENT
 char Api_protocol::hurgeBufferForBenchmark[4096];

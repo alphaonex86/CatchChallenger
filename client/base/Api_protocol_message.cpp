@@ -22,6 +22,7 @@ using namespace CatchChallenger;
 #include <QCoreApplication>
 #include <QDebug>
 #include <iostream>
+#include <QDataStream>
 
 #ifdef BENCHMARKMUTIPLECLIENT
 #include <fstream>
