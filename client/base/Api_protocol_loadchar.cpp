@@ -10,6 +10,7 @@
 #include "../../general/base/GeneralType.h"
 
 #include <QRegularExpression>
+#include <QDataStream>
 
 using namespace CatchChallenger;
 
