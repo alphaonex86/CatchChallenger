@@ -30,6 +30,7 @@ void CommonDatapack::parseDatapack(const std::string &datapackPath)
     parsing=true;
 
     this->datapackPath=datapackPath;
+    #ifndef BOTTESTCONNECT
     parseSkins();
     parseReputation();
     parseBuff();
@@ -46,6 +47,7 @@ void CommonDatapack::parseDatapack(const std::string &datapackPath)
     parseIndustries();
     parseProfileList();
     parseLayersOptions();
+    #endif
 
     parsing=false;
     isParsed=true;

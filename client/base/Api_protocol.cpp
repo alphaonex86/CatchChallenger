@@ -20,8 +20,10 @@ const unsigned char protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERV
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/GeneralType.h"
+#ifndef BOTTESTCONNECT
 #include "SslCert.h"
 #include "LanguagesSelect.h"
+#endif
 
 #include <QCoreApplication>
 #include <QStandardPaths>
@@ -2159,7 +2161,7 @@ void Api_protocol::connectTheExternalSocketInternal()
         {
             if(socket->sslSocket->mode()==QSslSocket::UnencryptedMode)
             {
-                #if !defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)
+                #if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(BOTTESTCONNECT)
                 SslCert sslCert(NULL);
                 sslCert.exec();
                 if(sslCert.validated())
@@ -2175,7 +2177,7 @@ void Api_protocol::connectTheExternalSocketInternal()
             {
                 if(socket->sslSocket->peerCertificate().publicKey().toPem()!=certFile.readAll())
                 {
-                    #if !defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)
+                    #if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(BOTTESTCONNECT)
                     SslCert sslCert(NULL);
                     sslCert.exec();
                     if(sslCert.validated())

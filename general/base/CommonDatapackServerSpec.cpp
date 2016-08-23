@@ -31,6 +31,7 @@ void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath,con
     this->datapackPath=datapackPath;
     this->mainDatapackCode=mainDatapackCode;
 
+    #ifndef BOTTESTCONNECT
     CommonDatapack::commonDatapack.parseDatapack(datapackPath);
 
     parseQuests();
@@ -38,6 +39,7 @@ void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath,con
     parseShop();
     parseServerProfileList();
     parseIndustries();
+    #endif
 
     #ifdef EPOLLCATCHCHALLENGERSERVER
     Map_loader::teleportConditionsUnparsed.clear();

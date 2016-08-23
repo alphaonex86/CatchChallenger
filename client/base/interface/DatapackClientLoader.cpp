@@ -159,6 +159,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN "na/";
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
+    #ifndef BOTTESTCONNECT
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath.toStdString());
     language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     parseVisualCategory();
@@ -171,6 +172,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     parsePlantsExtra();
     parseAudioAmbiance();
     parseReputationExtra();
+    #endif
     inProgress=false;
     emit datapackParsed();
 }
