@@ -1,5 +1,5 @@
 #include "GlobalControler.h"
-#include <QApplication>
+#include <QCoreApplication>
 
 /* return code:
  * 23: server or charactersGroupIndex not found
@@ -13,7 +13,7 @@
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QCoreApplication a(argc, argv);
     a.setOrganizationDomain("CatchChallenger");
     a.setOrganizationName("bot-test-connect-to-gameserver");
     GlobalControler w;
