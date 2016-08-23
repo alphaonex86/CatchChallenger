@@ -17,6 +17,7 @@ using namespace CatchChallenger;
 #include "../../general/base/GeneralType.h"
 
 #include <QCoreApplication>
+#include <QDataStream>
 
 #ifdef BENCHMARKMUTIPLECLIENT
 #include <iostream>

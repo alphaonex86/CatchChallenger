@@ -11,6 +11,7 @@ using namespace CatchChallenger;
 #include <cmath>
 #include <QRegularExpression>
 #include <QNetworkReply>
+#include <QDataStream>
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
