@@ -21,6 +21,7 @@ using namespace CatchChallenger;
 
 #include <QCoreApplication>
 #include <QRegularExpression>
+#include <QDataStream>
 
 #ifdef BENCHMARKMUTIPLECLIENT
 #include <iostream>
