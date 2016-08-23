@@ -15,7 +15,9 @@ using namespace CatchChallenger;
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/GeneralType.h"
+#ifndef BOTTESTCONNECT
 #include "LanguagesSelect.h"
+#endif
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -1436,10 +1438,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             serverOrdenedList.clear();
             characterListForSelection.clear();
             QString language;
+            #ifndef BOTTESTCONNECT
             if(LanguagesSelect::languagesSelect==NULL)
                 language="en";
             else
                 language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+            #else
+            language="en";
+            #endif
             serverListIndex=0;
             while(serverListIndex<serverListSize)
             {
@@ -1472,10 +1478,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             if(logicalGroupSize>0)
             {
                 QString language;
+                #ifndef BOTTESTCONNECT
                 if(LanguagesSelect::languagesSelect==NULL)
                     language="en";
                 else
                     language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+                #else
+                    language="en";
+                #endif
                 while(logicalGroupIndex<logicalGroupSize)
                 {
                     QString path;

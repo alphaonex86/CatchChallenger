@@ -3,6 +3,8 @@ include(../../client/tiled/tiled.pri)
 TEMPLATE = app
 TARGET = map2png
 
+QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g"
+
 QT += xml
 
 DEFINES += ONLYMAPRENDER

@@ -179,7 +179,8 @@ void GlobalControler::updateServerList(CatchChallenger::Api_client_real *)
 
 void GlobalControler::lastReplyTime(const quint32 &time)
 {
-    qDebug() << tr("Last reply time: %1ms").arg(time);
+    if(time>5000)
+        qDebug() << tr("Last reply time: %1ms").arg(time);
 }
 
 void GlobalControler::statusError(QString error)

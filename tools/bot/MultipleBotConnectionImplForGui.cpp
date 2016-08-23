@@ -247,11 +247,13 @@ void MultipleBotConnectionImplForGui::haveTheDatapack()
         return;
     }
     MultipleBotConnection::haveTheDatapack_with_client(apiToCatchChallengerClient.value(senderObject));
+    #ifndef BOTTESTCONNECT
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
     {
         qDebug() << "Profile list is empty";
         return;
     }
+    #endif
     emit datapackIsReady();
 }
 
