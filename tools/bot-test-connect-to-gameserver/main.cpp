@@ -9,6 +9,7 @@
  * 27: Your password need to be at minimum of 6 characters
  * 28: Your login need to be at minimum of 3 characters
  * 29: Query too slow to responds
+ * 30: Timeout
  */
 
 int main(int argc, char *argv[])

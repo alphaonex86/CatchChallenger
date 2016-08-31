@@ -27,6 +27,9 @@ GlobalControler::GlobalControler(QObject *parent) :
     connect(&autoConnect,&QTimer::timeout,this,&GlobalControler::on_connect_clicked,Qt::QueuedConnection);
     autoConnect.setSingleShot(true);
     autoConnect.start(0);
+    connect(&timeoutTimer,&QTimer::timeout,this,&GlobalControler::timeoutSlot,Qt::QueuedConnection);
+    timeoutTimer.setSingleShot(true);
+
     character_id=0;
 
     multipleBotConnexion.botInterface=NULL;
@@ -34,40 +37,76 @@ GlobalControler::GlobalControler(QObject *parent) :
     if(settings.contains("login"))
         login=settings.value("login").toString();
     else
+    {
+        login="login";
         settings.setValue("login","login");
+    }
     if(settings.contains("pass"))
         pass=settings.value("pass").toString();
     else
+    {
+        pass="pass";
         settings.setValue("pass","pass");
+    }
     if(settings.contains("host"))
         host=settings.value("host").toString();
     else
+    {
+        host="localhost";
         settings.setValue("host","localhost");
+    }
     if(settings.contains("port"))
         port=settings.value("port").toUInt();
     else
+    {
+        port=9999;
         settings.setValue("port","9999");
+    }
     if(settings.contains("proxy"))
         proxy=settings.value("proxy").toString();
     else
+    {
+        proxy="";
         settings.setValue("proxy","");
+    }
     if(settings.contains("proxyport"))
         proxyport=settings.value("proxyport").toUInt();
     else
+    {
+        proxyport=9999;
         settings.setValue("proxyport","9999");
+    }
 
     if(settings.contains("charactersGroupIndex"))
         charactersGroupIndex=settings.value("charactersGroupIndex").toUInt();
     else
+    {
+        charactersGroupIndex=0;
         settings.setValue("charactersGroupIndex","0");
+    }
     if(settings.contains("serverUniqueKey"))
         serverUniqueKey=settings.value("serverUniqueKey").toUInt();
     else
+    {
+        serverUniqueKey=9999;
         settings.setValue("serverUniqueKey","9999");
+    }
     if(settings.contains("character"))
         character=settings.value("character").toString();
     else
+    {
+        character="botTest";
         settings.setValue("character","botTest");
+    }
+
+    if(settings.contains("timeout"))
+        timeout=settings.value("timeout").toUInt();
+    else
+    {
+        timeout=5*60;
+        settings.setValue("timeout",5*60);
+    }
+    timeoutTimer.start(timeout*1000);
 }
 
 void GlobalControler::detectSlowDown(uint32_t, uint32_t worseTime)
@@ -78,6 +117,12 @@ void GlobalControler::detectSlowDown(uint32_t, uint32_t worseTime)
         QCoreApplication::exit(29);
         return;
     }
+}
+
+void GlobalControler::timeoutSlot()
+{
+    qDebug() << "Unable to connect into the correct time (timeout): " << timeout << "s (abort)";
+    QCoreApplication::exit(30);
 }
 
 void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
