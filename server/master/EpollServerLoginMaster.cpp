@@ -205,7 +205,7 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
     if(!settings.contains("min_character"))
         settings.setValue("min_character",1);
     if(!settings.contains("maxLockAge"))
-        settings.setValue("maxLockAge",10*60);
+        settings.setValue("maxLockAge",5);
     if(!settings.contains("purgeLockPeriod"))
         settings.setValue("purgeLockPeriod",3*60);
     settings.sync();

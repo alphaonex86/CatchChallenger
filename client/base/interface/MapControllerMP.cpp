@@ -174,7 +174,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
     #endif
     if(player.simplifiedId==player_informations.public_informations.simplifiedId)
     {
-        //ignore to improve the performance serveur because can reinsert all player of map using the overall client list
+        //ignore to improve the performance server because can reinsert all player of map using the overall client list
         if(!current_map.isEmpty())
         {
             qDebug() << "Current player already loaded on the map";
@@ -254,7 +254,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         if(otherPlayerList.contains(player.simplifiedId))
         {
             qDebug() << QStringLiteral("Other player (%1) already loaded on the map").arg(player.simplifiedId);
-            return true;
+            //return true;-> ignored to fix temporally, but need remove at map unload
         }
         OtherPlayer tempPlayer;
         tempPlayer.x=x;
@@ -554,6 +554,14 @@ void MapControllerMP::unloadOtherPlayerFromMap(OtherPlayer otherPlayer)
         else
             qDebug() << QStringLiteral("unloadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains otherPlayer.labelMapObject->objectGroup()");
     }
+    /* done into remove_player_final()
+    {
+        const uint16_t &simplifiedId=otherPlayer.informations.simplifiedId;
+        if(otherPlayerList.contains(simplifiedId))
+            otherPlayerList.remove(simplifiedId);
+        else
+            qDebug() << QStringLiteral("simplifiedId: %1 not found into otherPlayerList").arg(simplifiedId);
+    }*/
 
     QSetIterator<QString> i(otherPlayer.mapUsed);
     while (i.hasNext())
@@ -1817,7 +1825,7 @@ void MapControllerMP::pathFindingResult(const QString &current_map,const uint8_t
             pathFindingNotFound();
             return;
         }
-        if(keyAccepted.isEmpty() || (keyAccepted.contains(Qt::Key_Return) && keyAccepted.size()))
+        if(keyAccepted.isEmpty() || keyAccepted.contains(Qt::Key_Return))
         {
             //take care of the returned data
             PathResolved pathResolved;
@@ -1845,6 +1853,7 @@ void MapControllerMP::pathFindingResult(const QString &current_map,const uint8_t
                 else
                     std::cerr << "Wrong start point to start the path finding" << std::endl;
             }
+            wasPathFindingUsed=true;
             return;
         }
     }

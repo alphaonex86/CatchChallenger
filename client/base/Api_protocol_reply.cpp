@@ -166,6 +166,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             }
             else
             {
+                //messageParsingLayer("Dump to debug login reply: "+binarytoHexa(data.constData(),data.size()));
                 if(!haveTheServerList)
                 {
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("don't have server list before this reply main ident: %1 and queryNumber: %2, line: %3").arg(packetCode).arg(queryNumber).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -286,6 +287,10 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         uint8_t characterListSize;
                         in >> characterListSize;
                         uint8_t characterListIndex=0;
+                        if(characterListSize>0)
+                            messageParsingLayer("For the character group "+std::to_string(charatersGroupIndex)+" you have "+std::to_string(characterListSize)+" character:");
+                        else
+                            messageParsingLayer("For the character group "+std::to_string(charatersGroupIndex)+" you don't have character");
                         while(characterListIndex<characterListSize)
                         {
                             CharacterEntry characterEntry;
@@ -348,6 +353,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
 
                             //important
                             characterEntry.charactersGroupIndex=charatersGroupIndex;
+
+                            messageParsingLayer("- "+characterEntry.pseudo+" ("+std::to_string(characterEntry.character_id)+")");
 
                             characterEntryList << characterEntry;
                             characterListIndex++;
