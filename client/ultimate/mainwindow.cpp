@@ -2021,17 +2021,17 @@ void MainWindow::updateTheOkButton()
 #ifndef CATCHCHALLENGER_NOAUDIO
 void MainWindow::vlceventStatic(const libvlc_event_t *event, void *ptr)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
-    #endif
+    #endif*/
     static_cast<MainWindow *>(ptr)->vlcevent(event);
 }
 
 void MainWindow::vlcevent(const libvlc_event_t *event)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::cout << "step point: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
-    #endif
+    #endif*/
     switch(event->type)
     {
         case libvlc_MediaPlayerEncounteredError:
