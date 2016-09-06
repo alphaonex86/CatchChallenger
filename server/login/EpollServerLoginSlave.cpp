@@ -415,9 +415,9 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             LinkToMaster::linkToMaster->stat=LinkToMaster::Stat::Connected;
             LinkToMaster::linkToMaster->readTheFirstSslHeader();
             LinkToMaster::linkToMaster->setConnexionSettings();
-            const int &s = EpollSocket::make_non_blocking(linkfd);
+            /*const int &s = EpollSocket::make_non_blocking(linkfd);
             if(s == -1)
-                std::cerr << "unable to make to socket non blocking" << std::endl;
+                std::cerr << "unable to make to socket non blocking" << std::endl;*/
         }
 
         LinkToMaster::linkToMaster->httpDatapackMirror=httpDatapackMirror;

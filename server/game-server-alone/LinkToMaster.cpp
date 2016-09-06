@@ -243,7 +243,12 @@ void LinkToMaster::readTheFirstSslHeader()
     #endif
     haveTheFirstSslHeader=true;
     stat=Stat::Connected;
-    EpollSocket::make_non_blocking(LinkToMaster::linkToMasterSocketFd);
+    /*const int s = EpollSocket::make_non_blocking(LinkToMaster::linkToMasterSocketFd);
+    if(s == -1)
+    {
+        std::cerr << "unable to make to socket non blocking" << std::endl;
+        abort();
+    }*/
     sendProtocolHeader();
 }
 

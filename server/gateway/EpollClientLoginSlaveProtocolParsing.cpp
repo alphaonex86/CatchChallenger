@@ -205,9 +205,9 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                     //wait readTheFirstSslHeader() to sendProtocolHeader();
                     linkToGameServer->setConnexionSettings();
                     linkToGameServer->parseIncommingData();
-                    int s = EpollSocket::make_non_blocking(socketFd);
+                    /*int s = EpollSocket::make_non_blocking(socketFd);
                     if(s == -1)
-                        std::cerr << "unable to make to socket non blocking" << std::endl;
+                        std::cerr << "unable to make to socket non blocking" << std::endl;*/
                 }
                 else
                 {

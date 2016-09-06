@@ -88,12 +88,16 @@ void BaseWindow::newCharacterId(const uint8_t &returnCode, const uint32_t &chara
     /*    else
             ui->stackedWidget->setCurrentWidget(ui->page_character);*/
     }
-    else if(returnCode==0x01)
-        QMessageBox::warning(this,tr("Error"),tr("This pseudo is already taken"));
-    else if(returnCode==0x02)
-        QMessageBox::warning(this,tr("Error"),tr("Have already the max caraters taken"));
     else
-        QMessageBox::warning(this,tr("Error"),tr("Unable to create the character"));
+    {
+        if(returnCode==0x01)
+            QMessageBox::warning(this,tr("Error"),tr("This pseudo is already taken"));
+        else if(returnCode==0x02)
+            QMessageBox::warning(this,tr("Error"),tr("Have already the max caraters taken"));
+        else
+            QMessageBox::warning(this,tr("Error"),tr("Unable to create the character"));
+        on_character_back_clicked();
+    }
 }
 
 void BaseWindow::updateCharacterList()

@@ -1023,8 +1023,8 @@ int main(int argc, char *argv[])
                         list of fds to monitor. */
                         numberOfConnectedClient++;
 
-                        //int s = EpollSocket::make_non_blocking(infd);->do problem with large datapack from interne protocol
-                        int s = 0;
+                        //const int s = EpollSocket::make_non_blocking(infd);->do problem with large datapack from interne protocol
+                        const int s = 0;
                         if(s == -1)
                             std::cerr << "unable to make to socket non blocking" << std::endl;
                         else
@@ -1100,7 +1100,7 @@ int main(int argc, char *argv[])
                             epoll_event event;
                             event.data.ptr = client;
                             event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET | EPOLLRDHUP;//EPOLLET | EPOLLOUT | EPOLLHUP
-                            s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+                            const int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {
                                 std::cerr << "epoll_ctl on socket error" << std::endl;
