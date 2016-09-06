@@ -72,6 +72,7 @@ protected:
     bool stepAlternance;
     QString mLastLocation;
     bool blocked;
+    bool wasPathFindingUsed;
 
     //display
     bool centerOnPlayer;

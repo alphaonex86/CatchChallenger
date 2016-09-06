@@ -29,6 +29,7 @@ To not send: store "is blocked but direction not send", cautch the close event, 
 MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
     MapVisualiser(debugTags,useCache,OpenGL)
 {
+    wasPathFindingUsed=false;
     blocked=false;
     inMove=false;
     teleportedOnPush=false;
@@ -814,8 +815,12 @@ void MapVisualiserPlayer::finalPlayerStep()
                 stopAndSend();
                 parseStop();
             }
-            if(keyPressed.empty())
-                parseAction();
+            if(wasPathFindingUsed)
+            {
+                if(keyPressed.empty())
+                    parseAction();
+                wasPathFindingUsed=false;
+            }
         }
     }
 }
@@ -1181,6 +1186,7 @@ void MapVisualiserPlayer::resetAll()
     lookToMove.stop();
     keyPressed.clear();
     blocked=false;
+    wasPathFindingUsed=false;
     inMove=false;
     MapVisualiser::resetAll();
     lastAction.restart();

@@ -298,7 +298,7 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
     CharactersGroup::list[charactersGroupIndex]->lockTheCharacter(characterId);
     gameServer->charactersGroupForGameServerInformation->lockedAccountByGameserver.insert(characterId);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    messageParsingLayer("Locked: CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->characterIsLocked("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name);
+    messageParsingLayer("Locked: CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->characterIsLocked("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name+" on server: "+gameServer->charactersGroupForGameServerInformation->host+":"+std::to_string(gameServer->charactersGroupForGameServerInformation->port)+" "+std::to_string(gameServer->charactersGroupForGameServerInformation->uniqueKey));
     #endif
 
     //reply send at trySelectCharacterGameServer() above

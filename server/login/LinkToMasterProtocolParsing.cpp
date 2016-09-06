@@ -1129,9 +1129,9 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                                     //wait readTheFirstSslHeader() to sendProtocolHeader();
                                     linkToGameServer->setConnexionSettings();
                                     linkToGameServer->parseIncommingData();
-                                    const int &s = EpollSocket::make_non_blocking(socketFd);
+                                    /*const int &s = EpollSocket::make_non_blocking(socketFd);
                                     if(s == -1)
-                                        std::cerr << "unable to make to socket non blocking" << std::endl;
+                                        std::cerr << "unable to make to socket non blocking" << std::endl;*/
                                 }
                                 else
                                 {

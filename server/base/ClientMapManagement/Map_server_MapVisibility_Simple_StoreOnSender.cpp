@@ -242,31 +242,67 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         ++index;
                     }
                 }
+
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+
+                //send the packet
+                {
+                    unsigned int index=0;
+                    while(index<clients.size())
+                    {
+                        MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index);
+                        if(client->to_send_insert)
+                        {
+                            clientsToSendDataNewClients[clientsToSendDataSizeNewClients]=client;
+                            clientsToSendDataSizeNewClients++;
+                        }
+                        else
+                        {
+                            client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                            clientsToSendDataOldClients[clientsToSendDataSizeOldClients]=client;
+                            clientsToSendDataSizeOldClients++;
+                        }
+                        index++;
+                    }
+                }
             }
             else
-                std::cerr << "insert_player count is null!" << std::endl;
-
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-
-            //send the packet
             {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                std::cerr << "insert_player count is null! clients.size(): " << std::to_string(clients.size()) << std::endl;
+
                 unsigned int index=0;
                 while(index<clients.size())
                 {
-                    MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index);
-                    if(client->to_send_insert)
-                    {
-                        clientsToSendDataNewClients[clientsToSendDataSizeNewClients]=client;
-                        clientsToSendDataSizeNewClients++;
-                    }
-                    else
-                    {
-                        client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                        clientsToSendDataOldClients[clientsToSendDataSizeOldClients]=client;
-                        clientsToSendDataSizeOldClients++;
-                    }
+                    const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
+                    std::cerr << "- " << client->public_and_private_informations.public_informations.pseudo
+                              << " to_send_insert: " << std::to_string(client->to_send_insert)
+                              << " haveNewMove: " << std::to_string(client->haveNewMove)
+                              << std::endl;
                     index++;
                 }
+
+                if(to_send_remove.size()>0)
+                {
+                    std::cerr << "to_send_remove:";
+                    index=0;
+                    while(index<to_send_remove.size())
+                    {
+                        std::cerr << " " << std::to_string(to_send_remove.at(index));
+                        index++;
+                    }
+                    std::cerr << std::endl;
+                }
+
+                std::cerr << "to_send_remove_size: " << std::to_string(to_send_remove_size) << std::endl;
+                std::cerr << "show: " << std::to_string(show) << std::endl;
+                std::cerr << "to_send_insert: " << std::to_string(to_send_insert) << std::endl;
+                std::cerr << "send_drop_all: " << std::to_string(send_drop_all) << std::endl;
+                std::cerr << "send_reinsert_all: " << std::to_string(send_reinsert_all) << std::endl;
+                std::cerr << "have_change: " << std::to_string(have_change) << std::endl;
+                #else
+                std::cerr << "insert_player count is null! clients.size(): " << std::to_string(clients.size()) << std::endl;
+                #endif
             }
         }
         //insert old + new (excluding them self) on new
