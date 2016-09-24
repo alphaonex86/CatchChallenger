@@ -1,3 +1,10 @@
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided this notice is
+# preserved.  This file is offered as-is, without any warranty.
+# Names of contributors must not be used to endorse or promote products
+# derived from this file without specific prior written permission.
+
+
 *.pro.user*
 *build-desktop*
 *.qm
@@ -9,4 +16,79 @@
 *kate-swp
 *windows-x86*
 tools/to-pack/data/windows-x*
+
+# Temp files
+*~
+*.bak
+*.backup
+\#*
+.\#*
+*\#
+*.swp
+*.swap
+*.sav
+*.save
+*.autosav
 *.autosave*
+
+# Generated binaries
+*.o
+*.obj
+*.elf
+*.lo
+*.ko
+*.so
+*.so.*
+*.dll
+*.dylib
+*.dynlib
+*.a
+*.la
+*.out
+*.output
+*.class
+*.pyc
+*.elc
+
+# Intermediate files of the compilation
+*.asm
+*.ihx
+*.lk
+*.lst
+*.map
+*.mem
+*.rel
+*.rst
+*.s
+*.sym
+
+# Archives
+*.zip
+*.tar.*
+*.tgz
+*.gz
+*.bz2
+*.bzip
+*.xz
+*.lz
+*.lzma
+*.7z
+*.deb
+*.rpm
+*.apk
+*.exe
+*.msi
+*.dmg
+*.ipa
+
+# OS specific useless files
+thumbs.db
+Thumbs.db
+__MACOSX/
+__MAC_OS_X/
+__OSX/
+__OS_X/
+__WINDOWS/
+__MS_WINDOWS/
+.DS_Store
+.directory
