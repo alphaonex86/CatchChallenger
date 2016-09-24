@@ -48,6 +48,7 @@ mv CatchChallenger-datapack/datapack/ datapack/
 
 For the Epoll server (linux only):
 Ubuntu: apt-get install qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev
+Debian stretch: apt-get install build-essential gcc automake qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default
 cd server/
 qmake catchchallenger-server-cli-epoll.pro
 make
@@ -55,6 +56,7 @@ git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 mv CatchChallenger-datapack/datapack/ datapack/
 
 For the game solo:
+Debian stretch: apt-get install build-essential gcc automake qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default qtdeclarative5-dev qtscript5-dev libvlc-dev
 cd client/single-player/
 qmake *.pro
 make
@@ -62,6 +64,7 @@ git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 mv CatchChallenger-datapack/datapack/ datapack/
 
 For the game version ultimate:
+Debian stretch: apt-get install build-essential gcc automake qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default qtdeclarative5-dev qtscript5-dev libvlc-dev
 cd client/ultimate/
 qmake *.pro
 make
