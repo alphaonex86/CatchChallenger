@@ -83,7 +83,7 @@ void Map::adjustDrawMargins(const QMargins &margins)
 int Map::layerCount(Layer::TypeFlag type) const
 {
     int count = 0;
-    foreach (Layer *layer, mLayers)
+    foreach (const Layer *layer, mLayers)
        if (layer->layerType() == type)
            count++;
     return count;
@@ -124,7 +124,7 @@ void Map::addLayer(Layer *layer)
 
 int Map::indexOfLayer(const QString &layerName, unsigned layertypes) const
 {
-    for (int index = 0; index < mLayers.size(); index++)
+    for (unsigned int index = 0; index < mLayers.size(); index++)
         if (layerAt(index)->name() == layerName
                 && (layertypes & layerAt(index)->layerType()))
             return index;
@@ -226,15 +226,16 @@ QString Tiled::orientationToString(Map::Orientation orientation)
 
 Map::Orientation Tiled::orientationFromString(const QString &string)
 {
-    Map::Orientation orientation = Map::Unknown;
     if (string == Map::text_orthogonal) {
-        orientation = Map::Orthogonal;
-    } else if (string == Map::text_isometric) {
-        orientation = Map::Isometric;
-    } else if (string == Map::text_staggered) {
-        orientation = Map::Staggered;
+        return Map::Orthogonal;
     }
-    return orientation;
+    if (string == Map::text_isometric) {
+        return Map::Isometric;
+    }
+    if (string == Map::text_staggered) {
+        return Map::Staggered;
+    }
+    return Map::Unknown;
 }
 
 Map *Map::fromLayer(Layer *layer)

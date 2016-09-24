@@ -209,7 +209,8 @@ bool BaseWindow::check_monsters()
     while(index<size)
     {
         const PlayerMonster &monster=CatchChallenger::Api_client_real::client->player_informations.playerMonster.at(index);
-        if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)==CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
+        if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster) ==
+	   CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
         {
             error(QStringLiteral("the monster %1 is not into monster list").arg(monster.monster));
             return false;
@@ -235,7 +236,8 @@ bool BaseWindow::check_monsters()
         sub_index=0;
         while(sub_index<sub_size)
         {
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.find(monster.buffs.at(sub_index).buff)==CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.find(monster.buffs.at(sub_index).buff) ==
+	       CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
             {
                 error(QStringLiteral("the buff %1 is not into the buff list").arg(monster.buffs.at(sub_index).buff));
                 return false;
@@ -251,7 +253,8 @@ bool BaseWindow::check_monsters()
         sub_index=0;
         while(sub_index<sub_size)
         {
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(monster.skills.at(sub_index).skill)==CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(monster.skills.at(sub_index).skill) ==
+	       CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
             {
                 error(QStringLiteral("the skill %1 is not into the skill list").arg(monster.skills.at(sub_index).skill));
                 return false;
@@ -296,24 +299,28 @@ void BaseWindow::load_monsters()
                         index++;
                         continue;
                     }
-                    if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(objectInUsing.last())==CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(objectInUsing.last()) ==
+		       CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend())
                     {
                         index++;
                         continue;
                     }
-                    if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(objectInUsing.last()).find(monster.monster)==CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(objectInUsing.last()).cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(objectInUsing.last()).find(monster.monster) ==
+		       CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(objectInUsing.last()).cend())
                     {
                         index++;
                         continue;
                     }
                 break;
                 case ObjectType_ItemLearnOnMonster:
-                    if(CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.find(objectInUsing.last())==CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.find(objectInUsing.last()) ==
+		       CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.cend())
                     {
                         index++;
                         continue;
                     }
-                    if(CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.at(objectInUsing.last()).find(monster.monster)==CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.at(objectInUsing.last()).cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.at(objectInUsing.last()).find(monster.monster) ==
+		       CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.at(objectInUsing.last()).cend())
                     {
                         index++;
                         continue;
@@ -433,7 +440,7 @@ void BaseWindow::load_monsters()
 
 void BaseWindow::wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y)
 {
-    if(!fightCollision(map,x,y))
+    if(!fightCollision(map, x, y))
         return;
     prepareFight();
     battleType=BattleType_Wild;
@@ -460,7 +467,8 @@ void BaseWindow::prepareFight()
 
 void BaseWindow::botFight(const uint32_t &fightId)
 {
-    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightId)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
+    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightId) ==
+       CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
     {
         emit error("fight id not found at collision");
         return;
@@ -788,8 +796,9 @@ void BaseWindow::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16
     Q_UNUSED(x);
     Q_UNUSED(y);
     Q_UNUSED(direction);
-    if(CatchChallenger::ClientFightEngine::fightEngine.currentMonsterIsKO() && !CatchChallenger::ClientFightEngine::fightEngine.haveAnotherMonsterOnThePlayerToFight())//then is dead, is teleported to the last rescue point
+    if(CatchChallenger::ClientFightEngine::fightEngine.currentMonsterIsKO() && !CatchChallenger::ClientFightEngine::fightEngine.haveAnotherMonsterOnThePlayerToFight())
     {
+        //then is dead, is teleported to the last rescue point
         qDebug() << "tp on loose: " << fightTimerFinish;
         if(fightTimerFinish)
             loose();
@@ -802,8 +811,9 @@ void BaseWindow::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16
 
 void BaseWindow::updateCurrentMonsterInformationXp()
 {
-    PlayerMonster *monster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
-    if(monster==NULL)
+    PlayerMonster *monster =
+      CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    if(monster == NULL)
     {
         newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"NULL pointer at updateCurrentMonsterInformation()");
         return;
@@ -900,9 +910,9 @@ void BaseWindow::updateAttackList()
 
 void BaseWindow::moveFightMonsterTop()
 {
-    if(moveType==MoveType_Enter)
+    if(moveType == MoveType_Enter)
     {
-        QPoint p=ui->labelFightMonsterTop->pos();
+        QPoint p = ui->labelFightMonsterTop->pos();
         p.setX(p.rx()-4);
         ui->labelFightMonsterTop->move(p);
         if(ui->labelFightMonsterTop->pos().rx()>510)
@@ -913,7 +923,7 @@ void BaseWindow::moveFightMonsterTop()
             doNextAction();
         }
     }
-    if(moveType==MoveType_Leave)
+    if(moveType == MoveType_Leave)
     {
         QPoint p=ui->labelFightMonsterTop->pos();
         p.setX(p.rx()+4);
@@ -926,7 +936,7 @@ void BaseWindow::moveFightMonsterTop()
             doNextAction();
         }
     }
-    if(moveType==MoveType_Dead)
+    if(moveType == MoveType_Dead)
     {
         QPoint p=ui->labelFightMonsterTop->pos();
         p.setX(p.rx()+4);
@@ -993,9 +1003,9 @@ void BaseWindow::moveFightMonsterTop()
 
 void BaseWindow::moveFightMonsterBoth()
 {
-    if(moveType==MoveType_Enter)
+    if(moveType == MoveType_Enter)
     {
-        QPoint p=ui->labelFightMonsterTop->pos();
+        QPoint p = ui->labelFightMonsterTop->pos();
         p.setX(p.rx()-4);
         ui->labelFightMonsterTop->move(p);
         p=ui->labelFightMonsterBottom->pos();
@@ -1653,9 +1663,11 @@ void BaseWindow::displayExperienceGain()
         else
             mLastGivenXP=0;
 
-        const Monster::Stat &oldStat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonsterLevel);
-        const Monster::Stat &newStat=CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonsterLevel+1);
-        if(oldStat.hp<newStat.hp)
+        const Monster::Stat &oldStat =
+	  CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonsterLevel);
+        const Monster::Stat &newStat =
+	  CatchChallenger::ClientFightEngine::fightEngine.getStat(CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonsterLevel+1);
+        if(oldStat.hp < newStat.hp)
         {
             qDebug() << QStringLiteral("Now the old hp: %1/%2 increased of %3 for the old level %4").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()).arg(newStat.hp-oldStat.hp).arg(currentMonsterLevel);
             ui->progressBarFightBottomHP->setMaximum(ui->progressBarFightBottomHP->maximum()+(newStat.hp-oldStat.hp));
@@ -1735,9 +1747,11 @@ void BaseWindow::displayExperienceGain()
 
 void BaseWindow::displayTrap()
 {
-    PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
-    PublicPlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
-    if(otherMonster==NULL)
+    PublicPlayerMonster * otherMonster =
+      CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+    PublicPlayerMonster * currentMonster =
+      CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    if(otherMonster == NULL)
     {
         error("displayAttack(): crash: unable to get the other monster to use trap");
         doNextAction();
@@ -2114,10 +2128,10 @@ void BaseWindow::sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT
     {
         const PlayerMonster * currentMonster=ClientFightEngine::fightEngine.getCurrentMonster();
-        if(currentMonster!=NULL)
+        if(currentMonster != NULL)
             qDebug() << "currentMonster have hp" << currentMonster->hp << "and buff" << currentMonster->buffs.size();
         const PublicPlayerMonster * otherMonster=ClientFightEngine::fightEngine.getOtherMonster();
-        if(currentMonster!=NULL)
+        if(currentMonster != NULL)
             qDebug() << "otherMonster have hp" << otherMonster->hp << "and buff" << otherMonster->buffs.size();
     }
     #endif
@@ -2218,7 +2232,9 @@ void BaseWindow::battleAcceptedByOtherFull(const BattleInformations &battleInfor
     moveFightMonsterBoth();
     CatchChallenger::ClientFightEngine::fightEngine.setBattleMonster(battleInformations.stat,battleInformations.monsterPlace,battleInformations.publicPlayerMonster);
 
-    init_environement_display(MapController::mapController->getMapObject(),MapController::mapController->getX(),MapController::mapController->getY());
+    init_environement_display(MapController::mapController->getMapObject(),
+			      MapController::mapController->getX(),
+			      MapController::mapController->getY());
 }
 
 void BaseWindow::battleCanceledByOther()
@@ -2235,13 +2251,13 @@ void BaseWindow::battleCanceledByOther()
     battleInformationsList.removeFirst();
     if(!battleInformationsList.isEmpty())
     {
-        const BattleInformations &battleInformations=battleInformationsList.first();
+        const BattleInformations &battleInformations = battleInformationsList.first();
         battleInformationsList.removeFirst();
         battleAcceptedByOtherFull(battleInformations);
     }
     else if(!botFightList.isEmpty())
     {
-        uint32_t fightId=botFightList.first();
+        uint32_t fightId = botFightList.first();
         botFightList.removeFirst();
         botFight(fightId);
     }
