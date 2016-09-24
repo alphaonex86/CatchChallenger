@@ -1,27 +1,27 @@
-The client and server is under GPL3. And part of the project:
+The client and server is under GPLv3. And part of the project:
 http://catchchallenger.first-world.info/
 
-The license of the datapack is GPL3. But will be totally remaked in cartoon style.
+The license of the datapack is GPLv3. But will be totally remaked in cartoon style.
 
 The extrapart like xz embedded o lz4 have their own license.
 
 ===================================================
-This game is a MMORPG, Lan game and a single player game. It's mix of pokemon for the RPG part, lineage for the crafting/clan/MMORPG, X3 for the commerce/fabric/industry. With mod possibility, and datapack.
+This game is a MMORPG, Lan game and a single player game. It's mix of Pokemon for the RPG part, lineage for the crafting/clan/MMORPG, X3 for the commerce/fabric/industry. With mod possibility, and datapack.
 
-It's a pixel art game. The work is concentrated on the gameplay/performance/security/creativity/accessibility. The income is to paid the developping and the artwork. The game is fully open source (GPL3).
+It's a pixel art game. The work is concentrated on the gameplay/performance/security/creativity/accessibility. The income is to paid the developping and the artwork. The game is fully open source (GPLv3).
 
-The gameplay have strong team part, but remain interresting in single player. Have clear advantage on 3G/wifi/TOR connexion or into the tiers world.
+The gameplay have strong team part, but remain interresting in single player. Have clear advantage on 3G/WiFi/Tor connexion or into the tiers world.
 
 ===================================================
 Programming:
 
 Asynchronous protocol with no influence of internet and server latency. Thread isolation for the important or heavy server task. It can be hosted on ADSL connection.
 Qt programming to have multi-platform and assembly access. Internal implementation with event. CLI and GUI server, but no epoll server.
-SGBD for Qt version: Mysql 5+, SQLite, PostgreSQL 9+. SGBD for epoll version (async to high performance): Mysql 5.5+, PostgreSQL 9+.
+SGBD for Qt version: MySQL 5+, SQLite, PostgreSQL 9+. SGBD for epoll version (async to high performance): MySQL 5.5+, PostgreSQL 9+.
 The code source is into 3 part: server, client, datapack.
-Use C++11, you need compatible compiler with good std::regex support, like llvm/clang 3.5+, gcc 4.9+.
-Epoll server use libpg (postgresql).
-The gateway need too curl.
+Use C++11, you need compatible compiler, like llvm/clang 3.5+, gcc 4.9+. You also need a standard library with good std::regex support.
+Epoll server use libpg (PostgreSQL).
+The gateway needs too curl.
 
 ====================================================
 Compiling
@@ -92,7 +92,7 @@ Under linux I have for the single player game:
 
 ======================================================
 Server:
-For the server you need an certificate for the SSL connection (can be self signed), near the binary and named server.crt/server.key.
+For the server you need an certificate for the TLS connection (can be self signed), near the binary and named server.crt/server.key.
 
 ======================================================
 Sources:

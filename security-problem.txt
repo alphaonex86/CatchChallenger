@@ -1,12 +1,12 @@
 Description:
-The socket are blocking for the first by from server same for connecting (sync call), mean in infrastructure mode allow freeze by master DDOS, maybe same for database
+The socket are blocking for the first by from server same for connecting (sync call), mean in infrastructure mode allow freeze by master DDOS, maybe same for database.
 Security impact: low: master -> login, medium: master -> game, very low: server -> client
 
 Description:
-The client is poorly controled on some part (trust on server, but can be improved), but correctly controled on most part
+The client is poorly controled on some part (trust on server, but can be improved), but correctly controled on most part.
 Security impact: client: low: exploit only on some part
 
 Description:
-The client link to master don't support encryption. Then the communications to master server is clear.
+The client link to master does not support encryption. Then the communications to master server is clear.
 Security impact: medium
 Workaround: use ssh tunnel
