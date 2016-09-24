@@ -8,6 +8,8 @@
 #include <QRect>
 #include <unordered_map>
 #include <unordered_set>
+#include <string>
+#include <vector>
 
 namespace CatchChallenger {
 class FacilityLibClient
