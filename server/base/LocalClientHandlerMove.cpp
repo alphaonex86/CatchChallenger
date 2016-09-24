@@ -123,7 +123,7 @@ bool Client::singleMove(const Direction &direction)
                         return false;
                     }
                     const auto &fightId=teleporter.condition.value;
-                    if(!public_and_private_informations.bot_already_beaten[fightId/8] & (1<<(7-fightId%8)))
+                    if(!(public_and_private_informations.bot_already_beaten[fightId/8] & (1<<(7-fightId%8))))
                     {
                         errorOutput("Need have FightBot win to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                         return false;

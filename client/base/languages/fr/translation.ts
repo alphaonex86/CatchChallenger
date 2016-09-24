@@ -451,85 +451,85 @@
 <context>
     <name>CatchChallenger::Api_client_real</name>
     <message>
-        <location filename="../../Api_client_real.cpp" line="120"/>
-        <location filename="../../Api_client_real.cpp" line="141"/>
-        <location filename="../../Api_client_real.cpp" line="174"/>
-        <location filename="../../Api_client_real.cpp" line="195"/>
-        <location filename="../../Api_client_real.cpp" line="228"/>
-        <location filename="../../Api_client_real.cpp" line="249"/>
-        <location filename="../../Api_client_real.cpp" line="269"/>
+        <location filename="../../Api_client_real.cpp" line="121"/>
+        <location filename="../../Api_client_real.cpp" line="142"/>
+        <location filename="../../Api_client_real.cpp" line="175"/>
+        <location filename="../../Api_client_real.cpp" line="196"/>
+        <location filename="../../Api_client_real.cpp" line="229"/>
+        <location filename="../../Api_client_real.cpp" line="250"/>
+        <location filename="../../Api_client_real.cpp" line="270"/>
         <source>Procotol wrong or corrupted</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../Api_client_real_base.cpp" line="119"/>
-        <location filename="../../Api_client_real_base.cpp" line="127"/>
-        <location filename="../../Api_client_real_base.cpp" line="171"/>
-        <location filename="../../Api_client_real_base.cpp" line="389"/>
-        <location filename="../../Api_client_real_base.cpp" line="613"/>
-        <location filename="../../Api_client_real_main.cpp" line="107"/>
-        <location filename="../../Api_client_real_main.cpp" line="115"/>
-        <location filename="../../Api_client_real_main.cpp" line="157"/>
-        <location filename="../../Api_client_real_main.cpp" line="418"/>
-        <location filename="../../Api_client_real_main.cpp" line="661"/>
-        <location filename="../../Api_client_real_sub.cpp" line="101"/>
-        <location filename="../../Api_client_real_sub.cpp" line="109"/>
-        <location filename="../../Api_client_real_sub.cpp" line="141"/>
-        <location filename="../../Api_client_real_sub.cpp" line="397"/>
-        <location filename="../../Api_client_real_sub.cpp" line="633"/>
+        <location filename="../../Api_client_real_base.cpp" line="120"/>
+        <location filename="../../Api_client_real_base.cpp" line="128"/>
+        <location filename="../../Api_client_real_base.cpp" line="172"/>
+        <location filename="../../Api_client_real_base.cpp" line="390"/>
+        <location filename="../../Api_client_real_base.cpp" line="614"/>
+        <location filename="../../Api_client_real_main.cpp" line="108"/>
+        <location filename="../../Api_client_real_main.cpp" line="116"/>
+        <location filename="../../Api_client_real_main.cpp" line="158"/>
+        <location filename="../../Api_client_real_main.cpp" line="419"/>
+        <location filename="../../Api_client_real_main.cpp" line="662"/>
+        <location filename="../../Api_client_real_sub.cpp" line="102"/>
+        <location filename="../../Api_client_real_sub.cpp" line="110"/>
+        <location filename="../../Api_client_real_sub.cpp" line="142"/>
+        <location filename="../../Api_client_real_sub.cpp" line="398"/>
+        <location filename="../../Api_client_real_sub.cpp" line="634"/>
         <source>Datapack downloading error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../Api_client_real_base.cpp" line="149"/>
-        <location filename="../../Api_client_real_base.cpp" line="157"/>
-        <location filename="../../Api_client_real_base.cpp" line="163"/>
-        <location filename="../../Api_client_real_base.cpp" line="374"/>
-        <location filename="../../Api_client_real_main.cpp" line="135"/>
-        <location filename="../../Api_client_real_main.cpp" line="143"/>
-        <location filename="../../Api_client_real_main.cpp" line="149"/>
-        <location filename="../../Api_client_real_main.cpp" line="403"/>
-        <location filename="../../Api_client_real_sub.cpp" line="119"/>
-        <location filename="../../Api_client_real_sub.cpp" line="127"/>
-        <location filename="../../Api_client_real_sub.cpp" line="133"/>
-        <location filename="../../Api_client_real_sub.cpp" line="377"/>
+        <location filename="../../Api_client_real_base.cpp" line="150"/>
+        <location filename="../../Api_client_real_base.cpp" line="158"/>
+        <location filename="../../Api_client_real_base.cpp" line="164"/>
+        <location filename="../../Api_client_real_base.cpp" line="375"/>
+        <location filename="../../Api_client_real_main.cpp" line="136"/>
+        <location filename="../../Api_client_real_main.cpp" line="144"/>
+        <location filename="../../Api_client_real_main.cpp" line="150"/>
+        <location filename="../../Api_client_real_main.cpp" line="404"/>
+        <location filename="../../Api_client_real_sub.cpp" line="120"/>
+        <location filename="../../Api_client_real_sub.cpp" line="128"/>
+        <location filename="../../Api_client_real_sub.cpp" line="134"/>
+        <location filename="../../Api_client_real_sub.cpp" line="378"/>
         <source>Unable to download the datapack</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../Api_client_real_base.cpp" line="342"/>
-        <location filename="../../Api_client_real_main.cpp" line="371"/>
-        <location filename="../../Api_client_real_sub.cpp" line="339"/>
+        <location filename="../../Api_client_real_base.cpp" line="343"/>
+        <location filename="../../Api_client_real_main.cpp" line="372"/>
+        <location filename="../../Api_client_real_sub.cpp" line="340"/>
         <source>Disk error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../Api_client_real_base.cpp" line="348"/>
-        <location filename="../../Api_client_real_main.cpp" line="377"/>
-        <location filename="../../Api_client_real_sub.cpp" line="345"/>
+        <location filename="../../Api_client_real_base.cpp" line="349"/>
+        <location filename="../../Api_client_real_main.cpp" line="378"/>
+        <location filename="../../Api_client_real_sub.cpp" line="346"/>
         <source>Security error, file not allowed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../Api_client_real_base.cpp" line="451"/>
-        <location filename="../../Api_client_real_base.cpp" line="460"/>
-        <location filename="../../Api_client_real_base.cpp" line="470"/>
-        <location filename="../../Api_client_real_main.cpp" line="484"/>
-        <location filename="../../Api_client_real_main.cpp" line="493"/>
-        <location filename="../../Api_client_real_main.cpp" line="503"/>
+        <location filename="../../Api_client_real_base.cpp" line="452"/>
+        <location filename="../../Api_client_real_base.cpp" line="461"/>
+        <location filename="../../Api_client_real_base.cpp" line="471"/>
+        <location filename="../../Api_client_real_main.cpp" line="485"/>
+        <location filename="../../Api_client_real_main.cpp" line="494"/>
+        <location filename="../../Api_client_real_main.cpp" line="504"/>
         <source>Wrong datapack format</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../Api_client_real_base.cpp" line="499"/>
-        <location filename="../../Api_client_real_base.cpp" line="508"/>
-        <location filename="../../Api_client_real_base.cpp" line="520"/>
-        <location filename="../../Api_client_real_main.cpp" line="532"/>
-        <location filename="../../Api_client_real_main.cpp" line="541"/>
-        <location filename="../../Api_client_real_main.cpp" line="553"/>
-        <location filename="../../Api_client_real_sub.cpp" line="516"/>
-        <location filename="../../Api_client_real_sub.cpp" line="525"/>
-        <location filename="../../Api_client_real_sub.cpp" line="537"/>
+        <location filename="../../Api_client_real_base.cpp" line="500"/>
+        <location filename="../../Api_client_real_base.cpp" line="509"/>
+        <location filename="../../Api_client_real_base.cpp" line="521"/>
+        <location filename="../../Api_client_real_main.cpp" line="533"/>
+        <location filename="../../Api_client_real_main.cpp" line="542"/>
+        <location filename="../../Api_client_real_main.cpp" line="554"/>
+        <location filename="../../Api_client_real_sub.cpp" line="517"/>
+        <location filename="../../Api_client_real_sub.cpp" line="526"/>
+        <location filename="../../Api_client_real_sub.cpp" line="538"/>
         <source>Unable to get datapack file</source>
         <translation type="unfinished"></translation>
     </message>
@@ -537,7 +537,7 @@
 <context>
     <name>CatchChallenger::Api_protocol</name>
     <message>
-        <location filename="../../Api_protocol.cpp" line="174"/>
+        <location filename="../../Api_protocol.cpp" line="177"/>
         <source>Internal error</source>
         <translation>Erreur interne</translation>
     </message>
@@ -554,7 +554,7 @@
     <message>
         <location filename="../../Api_protocol_reply.cpp" line="124"/>
         <location filename="../../Api_protocol_reply.cpp" line="162"/>
-        <location filename="../../Api_protocol_reply.cpp" line="441"/>
+        <location filename="../../Api_protocol_reply.cpp" line="451"/>
         <source>Unknown error %1</source>
         <translation>Erreur inconnu: %1</translation>
     </message>
@@ -584,42 +584,42 @@
         <translation>Login déjà en cour</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol_reply.cpp" line="437"/>
+        <location filename="../../Api_protocol_reply.cpp" line="447"/>
         <source>Login already used</source>
         <translation>Login déjà utilisé</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol_reply.cpp" line="439"/>
+        <location filename="../../Api_protocol_reply.cpp" line="449"/>
         <source>Not created</source>
         <translation>Pas créé</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol_reply.cpp" line="518"/>
+        <location filename="../../Api_protocol_reply.cpp" line="528"/>
         <source>Character not found</source>
         <translation>Avatar non trouvé</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol_reply.cpp" line="520"/>
+        <location filename="../../Api_protocol_reply.cpp" line="530"/>
         <source>Already logged</source>
         <translation>Déjà loggé</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol_reply.cpp" line="522"/>
+        <location filename="../../Api_protocol_reply.cpp" line="532"/>
         <source>Server internal problem</source>
         <translation>Probléme interne du serveur</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol_reply.cpp" line="524"/>
+        <location filename="../../Api_protocol_reply.cpp" line="534"/>
         <source>Server not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../Api_protocol_reply.cpp" line="526"/>
+        <location filename="../../Api_protocol_reply.cpp" line="536"/>
         <source>Too recently disconnected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../Api_protocol_reply.cpp" line="528"/>
+        <location filename="../../Api_protocol_reply.cpp" line="538"/>
         <source>Unknown error: %1</source>
         <translation>Erreur inconnu: %1</translation>
     </message>
@@ -746,10 +746,10 @@
     <message>
         <location filename="../../interface/BaseWindowCharacter.cpp" line="16"/>
         <location filename="../../interface/BaseWindowCharacter.cpp" line="49"/>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="92"/>
         <location filename="../../interface/BaseWindowCharacter.cpp" line="94"/>
         <location filename="../../interface/BaseWindowCharacter.cpp" line="96"/>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="154"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="98"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="158"/>
         <location filename="../../interface/BaseWindowMarket.cpp" line="260"/>
         <location filename="../../interface/BaseWindowMarket.cpp" line="273"/>
         <location filename="../../interface/BaseWindowMarket.cpp" line="316"/>
@@ -781,104 +781,104 @@
         <translation>Créer votre nouveau personnage</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="92"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="94"/>
         <source>This pseudo is already taken</source>
         <translation>Ce pseudo est déjà pris</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="94"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="96"/>
         <source>Have already the max caraters taken</source>
         <translation>Vous avez déjà le nombre maximum d&apos;avatar</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="96"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="98"/>
         <source>Unable to create the character</source>
         <translation>Impossible de créé l&apos;avatar</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="112"/>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="305"/>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="307"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="116"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="309"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="311"/>
         <source>%1 played</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="114"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="118"/>
         <source>Never played</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="116"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="120"/>
         <source>%1 to be deleted</source>
         <translation>%1 pour être supprimé</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="298"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="302"/>
         <source>Default server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="325"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="329"/>
         <source>Played time greater than 5y, bug?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="330"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="334"/>
         <source>Played before 2015, bug?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="336"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="340"/>
         <source>maxPlayer&lt;currentPlayer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="338"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="342"/>
         <source>maxPlayer==0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="350"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="354"/>
         <source>Played time greater than 24h, last connect in this last 24h</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="355"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="359"/>
         <source>Played time greater than 24h, last connect not in this last 24h</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="363"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="367"/>
         <source>Into the more recent server used, out of the most used server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="368"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="372"/>
         <source>Into the more recent server used, into the most used server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="376"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="380"/>
         <source>Out of the more recent server used, out of the most used server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="381"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="385"/>
         <source>Out of the more recent server used, into the most used server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="154"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="158"/>
         <source>Deleting already planned</source>
         <translation>Suppression déjà prévu</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="170"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="174"/>
         <source>Your charater will be deleted into %1</source>
         <translation>Votre personnage vas être supprimé dans %1</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="184"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="188"/>
         <source>Selecting your character</source>
         <translation>Selection de votre personnage</translation>
     </message>
@@ -1216,7 +1216,7 @@ Repporter le bug au mainteneur du datapack.</translation>
         <translation>Sélectionnez la quantité</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="170"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="174"/>
         <location filename="../../interface/BaseWindowFactory.cpp" line="171"/>
         <location filename="../../interface/BaseWindowFactory.cpp" line="175"/>
         <location filename="../../interface/BaseWindowFactory.cpp" line="215"/>
@@ -2647,27 +2647,27 @@ Cout en SP: %3</translation>
 <context>
     <name>DatapackClientLoader</name>
     <message>
-        <location filename="../../interface/DatapackClientLoader.cpp" line="825"/>
+        <location filename="../../interface/DatapackClientLoader.cpp" line="827"/>
         <source>Unknown object</source>
         <translation>Objet inconnu</translation>
     </message>
     <message>
-        <location filename="../../interface/DatapackClientLoader.cpp" line="867"/>
+        <location filename="../../interface/DatapackClientLoader.cpp" line="869"/>
         <source>This object is not listed as know object. The information can&apos;t be found.</source>
         <translation>Cet objet n&apos;est pas listé dans les objets connus. Les informations ne peuvent être trouver.</translation>
     </message>
     <message>
-        <location filename="../../interface/DatapackClientLoader.cpp" line="1301"/>
-        <location filename="../../interface/DatapackClientLoader.cpp" line="1427"/>
+        <location filename="../../interface/DatapackClientLoader.cpp" line="1303"/>
+        <location filename="../../interface/DatapackClientLoader.cpp" line="1429"/>
         <source>No text</source>
         <translation>Pas de texte</translation>
     </message>
     <message>
-        <location filename="../../interface/DatapackClientLoader.cpp" line="496"/>
-        <location filename="../../interface/DatapackClientLoader.cpp" line="555"/>
-        <location filename="../../interface/DatapackClientLoader.cpp" line="677"/>
+        <location filename="../../interface/DatapackClientLoader.cpp" line="498"/>
+        <location filename="../../interface/DatapackClientLoader.cpp" line="557"/>
         <location filename="../../interface/DatapackClientLoader.cpp" line="679"/>
         <location filename="../../interface/DatapackClientLoader.cpp" line="681"/>
+        <location filename="../../interface/DatapackClientLoader.cpp" line="683"/>
         <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="248"/>
         <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="250"/>
         <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="305"/>
@@ -2988,14 +2988,14 @@ Cout en SP: %3</translation>
     <message>
         <location filename="../../interface/MapControllerMP.cpp" line="205"/>
         <location filename="../../interface/MapControllerMP.cpp" line="245"/>
-        <location filename="../../interface/MapControllerMP.cpp" line="1076"/>
+        <location filename="../../interface/MapControllerMP.cpp" line="1084"/>
         <source>Internal error</source>
         <translation>Erreur interne</translation>
     </message>
     <message>
         <location filename="../../interface/MapControllerMP.cpp" line="205"/>
         <location filename="../../interface/MapControllerMP.cpp" line="245"/>
-        <location filename="../../interface/MapControllerMP.cpp" line="1076"/>
+        <location filename="../../interface/MapControllerMP.cpp" line="1084"/>
         <source>The direction send by the server is wrong</source>
         <translation>La direction envoyé par le serveur est fausse</translation>
     </message>
