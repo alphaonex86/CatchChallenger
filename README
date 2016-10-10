@@ -4,6 +4,7 @@ http://catchchallenger.first-world.info/
 The license of the datapack is GPL3. But will be totally remaked in cartoon style.
 
 The extrapart like xz embedded o lz4 have their own license.
+client/tiled/ is extracted version of http://www.mapeditor.org/, https://github.com/bjorn/tiled
 
 ===================================================
 This game is a MMORPG, Lan game and a single player game. It's mix of pokemon for the RPG part, lineage for the crafting/clan/MMORPG, X3 for the commerce/fabric/industry. With mod possibility, and datapack.
