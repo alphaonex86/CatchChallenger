@@ -1157,7 +1157,25 @@ void MainWindow::send_settings()
             formatedServerSettings.database_login.file				= ui->db_sqlite_file->text().toStdString();
             QFile dest(QString::fromStdString(formatedServerSettings.database_login.file));
             if(!dest.exists())
-                QFile::copy(":/catchchallenger.db.sqlite",QString::fromStdString(formatedServerSettings.database_login.file));
+            {
+                QFile source(":/catchchallenger.db.sqlite");
+                if(source.open(QIODevice::ReadOnly))
+                {
+                    QByteArray data=source.readAll();
+                    QFile destination(QString::fromStdString(formatedServerSettings.database_login.file));
+                    if(destination.open(QIODevice::WriteOnly))
+                    {
+                        destination.write(data);
+                        destination.close();
+                    }
+                    else
+                        QMessageBox::critical(this,tr("Error"),tr("Unable to open destination file"));
+                    destination.setPermissions(destination.permissions() | QFileDevice::WriteOwner | QFileDevice::WriteUser);
+                    source.close();
+                }
+                else
+                    QMessageBox::critical(this,tr("Error"),tr("Unable to open source file"));
+            }
         }
         break;
         case DatabaseBase::DatabaseType::PostgreSQL:
