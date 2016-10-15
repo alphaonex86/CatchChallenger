@@ -21,28 +21,28 @@ SET default_with_oids = false;
 
 CREATE TABLE "character" (
     id integer NOT NULL,
-    account integer,
-    pseudo character varying(20),
-    skin smallint,
-    type smallint,
-    clan integer,
-    clan_leader boolean,
-    date bigint,
-    cash bigint,
-    warehouse_cash bigint,
-    time_to_delete integer,
-    played_time integer,
-    last_connect integer,
-    starter smallint,
-    allow bytea,
-    item bytea,
-    item_warehouse bytea,
-    recipes bytea,
-    reputations bytea,
-    encyclopedia_monster bytea,
-    encyclopedia_item bytea,
-    achievements bytea,
-    blob_version smallint
+    account integer NOT NULL,
+    pseudo character varying(20) NOT NULL,
+    skin smallint NOT NULL,
+    type smallint NOT NULL,
+    clan integer NOT NULL,
+    clan_leader boolean NOT NULL,
+    date bigint NOT NULL,
+    cash bigint NOT NULL,
+    warehouse_cash bigint NOT NULL,
+    time_to_delete integer NOT NULL,
+    played_time integer NOT NULL,
+    last_connect integer NOT NULL,
+    starter smallint NOT NULL,
+    allow bytea NOT NULL,
+    item bytea NOT NULL,
+    item_warehouse bytea NOT NULL,
+    recipes bytea NOT NULL,
+    reputations bytea NOT NULL,
+    encyclopedia_monster bytea NOT NULL,
+    encyclopedia_item bytea NOT NULL,
+    achievements bytea NOT NULL,
+    blob_version smallint NOT NULL
 );
 
 
@@ -52,29 +52,29 @@ CREATE TABLE "character" (
 
 CREATE TABLE clan (
     id integer NOT NULL,
-    name text,
-    cash bigint,
-    date bigint
+    name text NOT NULL,
+    cash bigint NOT NULL,
+    date bigint NOT NULL
 );
 
 
 CREATE TABLE monster (
-    id integer,
-    "character" integer,
-    place smallint,
-    hp smallint,
-    monster smallint,
-    level smallint,
-    xp integer,
-    sp integer,
-    captured_with smallint,
-    gender smallint,
-    egg_step integer,
-    character_origin integer,
-    "position" smallint,
-    buffs bytea,
-    skills bytea,
-    skills_endurance bytea
+    id integer NOT NULL,
+    "character" integer NOT NULL,
+    place smallint NOT NULL,
+    hp smallint NOT NULL,
+    monster smallint NOT NULL,
+    level smallint NOT NULL,
+    xp integer NOT NULL,
+    sp integer NOT NULL,
+    captured_with smallint NOT NULL,
+    gender smallint NOT NULL,
+    egg_step integer NOT NULL,
+    character_origin integer NOT NULL,
+    "position" smallint NOT NULL,
+    buffs bytea NOT NULL,
+    skills bytea NOT NULL,
+    skills_endurance bytea NOT NULL
 );
 
 --
@@ -84,8 +84,8 @@ CREATE TABLE monster (
 CREATE TABLE server_time (
     server smallint NOT NULL,
     account integer NOT NULL,
-    played_time integer,
-    last_connect integer
+    played_time integer NOT NULL,
+    last_connect integer NOT NULL
 );
 
 

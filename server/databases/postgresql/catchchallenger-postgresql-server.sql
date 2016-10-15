@@ -21,25 +21,25 @@ SET default_with_oids = false;
 
 CREATE TABLE character_forserver (
     "character" integer NOT NULL,
-    map smallint,
-    x smallint,
-    y smallint,
-    orientation smallint,
-    rescue_map smallint,
-    rescue_x smallint,
-    rescue_y smallint,
-    rescue_orientation smallint,
-    unvalidated_rescue_map smallint,
-    unvalidated_rescue_x smallint,
-    unvalidated_rescue_y smallint,
-    unvalidated_rescue_orientation smallint,
-    date bigint,
-    market_cash bigint,
-    botfight_id bytea,
-    itemonmap bytea,
-    plants bytea,
-    quest bytea,
-    blob_version smallint
+    map smallint NOT NULL,
+    x smallint NOT NULL,
+    y smallint NOT NULL,
+    orientation smallint NOT NULL,
+    rescue_map smallint NOT NULL,
+    rescue_x smallint NOT NULL,
+    rescue_y smallint NOT NULL,
+    rescue_orientation smallint NOT NULL,
+    unvalidated_rescue_map smallint NOT NULL,
+    unvalidated_rescue_x smallint NOT NULL,
+    unvalidated_rescue_y smallint NOT NULL,
+    unvalidated_rescue_orientation smallint NOT NULL,
+    date bigint NOT NULL,
+    market_cash bigint NOT NULL,
+    botfight_id bytea NOT NULL,
+    itemonmap bytea NOT NULL,
+    plants bytea NOT NULL,
+    quest bytea NOT NULL,
+    blob_version smallint NOT NULL
 );
 
 
@@ -49,7 +49,7 @@ CREATE TABLE character_forserver (
 
 CREATE TABLE city (
     city character varying(64) NOT NULL,
-    clan integer
+    clan integer NOT NULL
 );
 
 
@@ -60,16 +60,16 @@ CREATE TABLE city (
 
 CREATE TABLE dictionary_pointonmap_plant (
     id integer NOT NULL,
-    map integer,
-    x smallint,
-    y smallint
+    map integer NOT NULL,
+    x smallint NOT NULL,
+    y smallint NOT NULL
 );
 
 CREATE TABLE dictionary_pointonmap_item (
     id integer NOT NULL,
-    map integer,
-    x smallint,
-    y smallint
+    map integer NOT NULL,
+    x smallint NOT NULL,
+    y smallint NOT NULL
 );
 
 
@@ -80,7 +80,7 @@ CREATE TABLE dictionary_pointonmap_item (
 
 CREATE TABLE dictionary_map (
     id integer NOT NULL,
-    map text
+    map text NOT NULL
 );
 
 
@@ -91,9 +91,9 @@ CREATE TABLE dictionary_map (
 
 CREATE TABLE factory (
     id integer NOT NULL,
-    resources text,
-    products text,
-    last_update bigint
+    resources text NOT NULL,
+    products text NOT NULL,
+    last_update bigint NOT NULL
 );
 
 
@@ -103,10 +103,10 @@ CREATE TABLE factory (
 --
 
 CREATE TABLE item_market (
-    item smallint,
-    "character" integer,
-    quantity integer,
-    market_price bigint
+    item smallint NOT NULL,
+    "character" integer NOT NULL,
+    quantity integer NOT NULL,
+    market_price bigint NOT NULL
 );
 
 
@@ -117,7 +117,7 @@ CREATE TABLE item_market (
 
 CREATE TABLE monster_market_price (
     id integer NOT NULL,
-    market_price integer
+    market_price integer NOT NULL
 );
 
 
@@ -127,10 +127,10 @@ CREATE TABLE monster_market_price (
 --
 
 CREATE TABLE plant (
-    "character" integer,
-    "pointOnMap" smallint,
-    plant smallint,
-    plant_timestamps integer
+    "character" integer NOT NULL,
+    "pointOnMap" smallint NOT NULL,
+    plant smallint NOT NULL,
+    plant_timestamps integer NOT NULL
 );
 
 --

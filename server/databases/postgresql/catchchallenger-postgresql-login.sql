@@ -17,10 +17,10 @@ SET default_with_oids = false;
 
 CREATE TABLE account (
     id integer NOT NULL,
-    login bytea,
-    password bytea,
-    date bigint,
-    email text
+    login bytea NOT NULL,
+    password bytea NOT NULL,
+    date bigint NOT NULL,
+    email text NOT NULL
 );
 
 
@@ -29,11 +29,11 @@ CREATE TABLE account (
 --
 
 CREATE TABLE account_register (
-    login bytea,
-    password bytea,
-    email text,
-    key text,
-    date bigint
+    login bytea NOT NULL,
+    password bytea NOT NULL,
+    email text NOT NULL,
+    key text NOT NULL,
+    date bigint NOT NULL
 );
 
 --
