@@ -656,20 +656,46 @@ void SoloWindow::on_SaveGame_Copy_clicked()
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write another savegame"));
         return;
     }
-    if(!QFile::copy(savegamesPath+SoloWindow::text_metadatadotconf,destinationPath+SoloWindow::text_metadatadotconf))
+
     {
-        CatchChallenger::FacilityLibGeneral::rmpath(destinationPath.toStdString());
-        QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write another savegame (Error: metadata.conf)"));
-        updateSavegameList();
-        return;
+        QFile source(savegamesPath+SoloWindow::text_metadatadotconf);
+        if(source.open(QIODevice::ReadOnly))
+        {
+            QByteArray data=source.readAll();
+            QFile destination(destinationPath+SoloWindow::text_metadatadotconf);
+            if(destination.open(QIODevice::WriteOnly))
+            {
+                destination.write(data);
+                destination.close();
+            }
+            else
+                QMessageBox::critical(this,tr("Error"),tr("Unable to open destination file"));
+            destination.setPermissions(destination.permissions() | QFileDevice::WriteOwner | QFileDevice::WriteUser);
+            source.close();
+        }
+        else
+            QMessageBox::critical(this,tr("Error"),tr("Unable to open source file"));
     }
-    if(!QFile::copy(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite,destinationPath+SoloWindow::text_catchchallenger_db_sqlite))
     {
-        CatchChallenger::FacilityLibGeneral::rmpath(destinationPath.toStdString());
-        QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write another savegame (Error: catchchallenger.db.sqlite)"));
-        updateSavegameList();
-        return;
+        QFile source(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite);
+        if(source.open(QIODevice::ReadOnly))
+        {
+            QByteArray data=source.readAll();
+            QFile destination(destinationPath+SoloWindow::text_catchchallenger_db_sqlite);
+            if(destination.open(QIODevice::WriteOnly))
+            {
+                destination.write(data);
+                destination.close();
+            }
+            else
+                QMessageBox::critical(this,tr("Error"),tr("Unable to open destination file"));
+            destination.setPermissions(destination.permissions() | QFileDevice::WriteOwner | QFileDevice::WriteUser);
+            source.close();
+        }
+        else
+            QMessageBox::critical(this,tr("Error"),tr("Unable to open source file"));
     }
+
     QSettings metaData(destinationPath+SoloWindow::text_metadatadotconf,QSettings::IniFormat);
     metaData.setValue(SoloWindow::text_title,tr("Copy of %1").arg(metaData.value(SoloWindow::text_title).toString()));
     updateSavegameList();
