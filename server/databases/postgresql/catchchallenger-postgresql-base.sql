@@ -17,7 +17,7 @@ SET default_with_oids = false;
 
 CREATE TABLE dictionary_allow (
     id integer NOT NULL,
-    allow text
+    allow text NOT NULL
 );
 
 
@@ -27,7 +27,7 @@ CREATE TABLE dictionary_allow (
 
 CREATE TABLE dictionary_reputation (
     id integer NOT NULL,
-    reputation text
+    reputation text NOT NULL
 );
 
 
@@ -37,7 +37,7 @@ CREATE TABLE dictionary_reputation (
 
 CREATE TABLE dictionary_skin (
     id integer NOT NULL,
-    skin text
+    skin text NOT NULL
 );
 
 
@@ -47,7 +47,7 @@ CREATE TABLE dictionary_skin (
 
 CREATE TABLE dictionary_starter (
     id integer NOT NULL,
-    starter text
+    starter text NOT NULL
 );
 
 --
