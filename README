@@ -32,6 +32,9 @@ For the server: db, db driver (mysql, sqlite for game solo, postgresql, depands 
 Ubuntu 16.04 add to the .pro:
 QMAKE_CFLAGS="-std=c++0x"
 QMAKE_CXXFLAGS="-std=c++0x"
+In general:
+Ubuntu: apt-get install qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev libvlc-dev
+Debian stretch: apt-get install build-essential gcc automake qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default libqt5sql5-psql libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev libvlc-dev
 
 For the Gui server:
 cd server/
