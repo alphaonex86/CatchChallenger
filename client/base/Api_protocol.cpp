@@ -213,6 +213,11 @@ uint16_t Api_protocol::getId()
 
 uint8_t Api_protocol::queryNumber()
 {
+    if(lastQueryNumber.empty())
+    {
+        std::cerr << "Api_protocol::queryNumber(): no more lastQueryNumber" << std::endl;
+        abort();
+    }
     const uint8_t lastQueryNumberTemp=this->lastQueryNumber.back();
     querySendTime[lastQueryNumberTemp].start();
     this->lastQueryNumber.pop_back();
