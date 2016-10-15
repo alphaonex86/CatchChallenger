@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     updateActionButton();
     qRegisterMetaType<Chat_type>("Chat_type");
+    qRegisterMetaType<Player_private_and_public_informations>("Player_private_and_public_informations");
     connect(&server,&NormalServer::is_started,          this,&MainWindow::server_is_started);
     connect(&server,&NormalServer::need_be_stopped,     this,&MainWindow::server_need_be_stopped);
     connect(&server,&NormalServer::need_be_restarted,   this,&MainWindow::server_need_be_restarted);
@@ -618,7 +619,7 @@ void MainWindow::load_settings()
         formatedServerSettings.database_server.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
         settings->endGroup();
 
-        settings->beginGroup("db");
+        settings->beginGroup("db-login");
         if(settings->value("db_fight_sync")=="FightSync_AtEachTurn")
             formatedServerSettings.fightSync                       = CatchChallenger::GameServerSettings::FightSync_AtEachTurn;
         else if(settings->value("db_fight_sync")=="FightSync_AtTheDisconnexion")
@@ -1374,11 +1375,29 @@ void MainWindow::on_db_mysql_host_editingFinished()
     settings->beginGroup("db-login");
     settings->setValue("host",ui->db_mysql_host->text().toStdString());
     settings->endGroup();
+    settings->beginGroup("db-base");
+    settings->setValue("host",ui->db_mysql_host->text().toStdString());
+    settings->endGroup();
+    settings->beginGroup("db-common");
+    settings->setValue("host",ui->db_mysql_host->text().toStdString());
+    settings->endGroup();
+    settings->beginGroup("db-server");
+    settings->setValue("host",ui->db_mysql_host->text().toStdString());
+    settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_login_editingFinished()
 {
     settings->beginGroup("db-login");
+    settings->setValue("login",ui->db_mysql_login->text().toStdString());
+    settings->endGroup();
+    settings->beginGroup("db-base");
+    settings->setValue("login",ui->db_mysql_login->text().toStdString());
+    settings->endGroup();
+    settings->beginGroup("db-common");
+    settings->setValue("login",ui->db_mysql_login->text().toStdString());
+    settings->endGroup();
+    settings->beginGroup("db-server");
     settings->setValue("login",ui->db_mysql_login->text().toStdString());
     settings->endGroup();
 }
@@ -1388,11 +1407,29 @@ void MainWindow::on_db_mysql_pass_editingFinished()
     settings->beginGroup("db-login");
     settings->setValue("pass",ui->db_mysql_pass->text().toStdString());
     settings->endGroup();
+    settings->beginGroup("db-base");
+    settings->setValue("pass",ui->db_mysql_pass->text().toStdString());
+    settings->endGroup();
+    settings->beginGroup("db-common");
+    settings->setValue("pass",ui->db_mysql_pass->text().toStdString());
+    settings->endGroup();
+    settings->beginGroup("db-server");
+    settings->setValue("pass",ui->db_mysql_pass->text().toStdString());
+    settings->endGroup();
 }
 
 void MainWindow::on_db_mysql_base_editingFinished()
 {
     settings->beginGroup("db-login");
+    settings->setValue("db",ui->db_mysql_base->text().toStdString());
+    settings->endGroup();
+    settings->beginGroup("db-base");
+    settings->setValue("db",ui->db_mysql_base->text().toStdString());
+    settings->endGroup();
+    settings->beginGroup("db-common");
+    settings->setValue("db",ui->db_mysql_base->text().toStdString());
+    settings->endGroup();
+    settings->beginGroup("db-server");
     settings->setValue("db",ui->db_mysql_base->text().toStdString());
     settings->endGroup();
 }
@@ -1424,39 +1461,46 @@ void MainWindow::on_MapVisibilityAlgorithmSimpleReshow_editingFinished()
 
 void MainWindow::on_db_type_currentIndexChanged(int index)
 {
-    settings->beginGroup("db");
-    switch(index)
+    QStringList list;
+    list << "db-login" << "db-base" << "db-common" << "db-server";
+    int indexDb=0;
+    while(indexDb<list.size())
     {
-        case 0:
-        default:
-            settings->setValue("type","mysql");
-            if(!settings->contains("host"))
-                settings->setValue("host","localhost");
-            if(!settings->contains("login"))
-                settings->setValue("login","catchchallenger-login");
-            if(!settings->contains("pass"))
-                settings->setValue("pass","catchchallenger-pass");
-            if(!settings->contains("db"))
-                settings->setValue("db","catchchallenger_server");
-        break;
-        case 1:
-            settings->setValue("type","sqlite");
-            if(!settings->contains("file"))
-                settings->setValue("file","database.sqlite");
-        break;
-        case 2:
-            settings->setValue("type","postgresql");
-            if(!settings->contains("host"))
-                settings->setValue("host","localhost");
-            if(!settings->contains("login"))
-                settings->setValue("login","catchchallenger-login");
-            if(!settings->contains("pass"))
-                settings->setValue("pass","catchchallenger-pass");
-            if(!settings->contains("db"))
-                settings->setValue("db","catchchallenger_server");
-        break;
+        settings->beginGroup(list.at(indexDb).toStdString());
+        switch(index)
+        {
+            case 0:
+            default:
+                settings->setValue("type","mysql");
+                if(!settings->contains("host"))
+                    settings->setValue("host","localhost");
+                if(!settings->contains("login"))
+                    settings->setValue("login","catchchallenger-login");
+                if(!settings->contains("pass"))
+                    settings->setValue("pass","catchchallenger-pass");
+                if(!settings->contains("db"))
+                    settings->setValue("db","catchchallenger_server");
+            break;
+            case 1:
+                settings->setValue("type","sqlite");
+                if(!settings->contains("file"))
+                    settings->setValue("file","database.sqlite");
+            break;
+            case 2:
+                settings->setValue("type","postgresql");
+                if(!settings->contains("host"))
+                    settings->setValue("host","localhost");
+                if(!settings->contains("login"))
+                    settings->setValue("login","catchchallenger-login");
+                if(!settings->contains("pass"))
+                    settings->setValue("pass","catchchallenger-pass");
+                if(!settings->contains("db"))
+                    settings->setValue("db","catchchallenger_server");
+            break;
+        }
+        settings->endGroup();
+        indexDb++;
     }
-    settings->endGroup();
     updateDbGroupbox();
 }
 
@@ -1483,7 +1527,7 @@ void MainWindow::on_db_sqlite_browse_clicked()
 
 void MainWindow::on_db_fight_sync_currentIndexChanged(int index)
 {
-    settings->beginGroup("db");
+    settings->beginGroup("db-login");
     switch(index)
     {
         case 0:
@@ -1976,14 +2020,32 @@ void CatchChallenger::MainWindow::on_maxWarehousePlayerItems_editingFinished()
 
 void CatchChallenger::MainWindow::on_tryInterval_editingFinished()
 {
-    settings->beginGroup("db");
+    settings->beginGroup("db-login");
+    settings->setValue("tryInterval",ui->tryInterval->value());
+    settings->endGroup();
+    settings->beginGroup("db-base");
+    settings->setValue("tryInterval",ui->tryInterval->value());
+    settings->endGroup();
+    settings->beginGroup("db-common");
+    settings->setValue("tryInterval",ui->tryInterval->value());
+    settings->endGroup();
+    settings->beginGroup("db-server");
     settings->setValue("tryInterval",ui->tryInterval->value());
     settings->endGroup();
 }
 
 void CatchChallenger::MainWindow::on_considerDownAfterNumberOfTry_editingFinished()
 {
-    settings->beginGroup("db");
+    settings->beginGroup("db-login");
+    settings->setValue("considerDownAfterNumberOfTry",ui->considerDownAfterNumberOfTry->value());
+    settings->endGroup();
+    settings->beginGroup("db-base");
+    settings->setValue("considerDownAfterNumberOfTry",ui->considerDownAfterNumberOfTry->value());
+    settings->endGroup();
+    settings->beginGroup("db-common");
+    settings->setValue("considerDownAfterNumberOfTry",ui->considerDownAfterNumberOfTry->value());
+    settings->endGroup();
+    settings->beginGroup("db-server");
     settings->setValue("considerDownAfterNumberOfTry",ui->considerDownAfterNumberOfTry->value());
     settings->endGroup();
 }

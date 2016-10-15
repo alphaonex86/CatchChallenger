@@ -20,7 +20,7 @@ CREATE TABLE account (
     login bytea NOT NULL,
     password bytea NOT NULL,
     date bigint NOT NULL,
-    email text NOT NULL
+    email text
 );
 
 
