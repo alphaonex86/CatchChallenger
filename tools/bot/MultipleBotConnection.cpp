@@ -76,6 +76,7 @@ void MultipleBotConnection::disconnected()
                     connectedSocketToCatchChallengerClient[senderObject]->haveBeenDiscounted=true;
                     numberOfBotConnected--;
                     emit emit_numberOfBotConnected(numberOfBotConnected);
+                    std::cout << "disconnected(): numberOfBotConnected--: " << connectedSocketToCatchChallengerClient[senderObject]->api->player_informations.public_informations.pseudo << std::endl;
                 }
             }
         }
@@ -113,6 +114,7 @@ void MultipleBotConnection::tryLink(CatchChallengerClient * client)
 {
     numberOfBotConnected++;
     emit emit_numberOfBotConnected(numberOfBotConnected);
+    std::cout << "MultipleBotConnection::tryLink(): numberOfBotConnected--: " << client->api->player_informations.public_informations.pseudo << std::endl;
 
     if(!connect(client->api,&CatchChallenger::Api_client_real::protocol_is_good,this,&MultipleBotConnection::protocol_is_good))
         abort();
@@ -400,16 +402,21 @@ void MultipleBotConnection::newCharacterId_with_client(MultipleBotConnection::Ca
 
 void MultipleBotConnection::have_current_player_info_with_client(CatchChallengerClient *client,const CatchChallenger::Player_private_and_public_informations &informations)
 {
+    if(client->selectedCharacter==true)
+        return;
     client->selectedCharacter=true;
     numberOfSelectedCharacter++;
     emit emit_numberOfSelectedCharacter(numberOfSelectedCharacter);
 
-    const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
-    if(diff==0 && numberOfSelectedCharacter>=connexionCountTarget())
-        emit emit_all_player_on_map();
+    if(numberOfBotConnected>=numberOfSelectedCharacter)
+    {
+        const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
+        if(diff==0 && numberOfSelectedCharacter>=connexionCountTarget())
+            emit emit_all_player_on_map();
+    }
 
     Q_UNUSED(informations);
-//    DebugClass::debugConsole(QStringLiteral("MultipleBotConnection::have_current_player_info() pseudo: %1").arg(informations.public_informations.pseudo));
+    std::cout << "MultipleBotConnection::have_current_player_info() pseudo: " << informations.public_informations.pseudo << std::endl;
 }
 
 void MultipleBotConnection::newError_with_client(CatchChallengerClient *client, QString error,QString detailedError)
