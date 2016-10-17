@@ -771,8 +771,15 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                 return false;
             }
             QString text;
-            uint8_t textSize;
-            in >> textSize;
+            uint16_t textSize;
+            if(chat_type_int>=1 && chat_type_int<=6)
+            {
+                uint8_t textSize8;
+                in >> textSize8;
+                textSize=textSize8;
+            }
+            else
+                in >> textSize;
             if(textSize>0)
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)textSize)
