@@ -375,13 +375,26 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
         }
         /*if(playerByPseudo.size()==1)
             receiveSystemText(StaticText::text_Youarealoneontheserver);
-        else*/
+        else*/ if(playerByPseudo.size()>200)
         {
+            receiveSystemText(StaticText::text_toolongplayerlist);
+            return;
+        }
+        else
+        {
+            uint16_t textSize=0;
             std::vector<std::string> playerStringList;
             auto i=playerByPseudo.begin();
             while(i!=playerByPseudo.cend())
             {
-                playerStringList.push_back(StaticText::text_startbold+i->second->public_and_private_informations.public_informations.pseudo+StaticText::text_stopbold);
+                const std::string &pseudo=i->second->public_and_private_informations.public_informations.pseudo;
+                textSize+=3/*text_startbold*/+pseudo.size()+4/*text_stopbold*/+2/*text_commaspace*/;
+                if(textSize>5000)
+                {
+                    receiveSystemText(StaticText::text_toolongplayerlist);
+                    return;
+                }
+                playerStringList.push_back(StaticText::text_startbold+pseudo+StaticText::text_stopbold);
                 ++i;
             }
             receiveSystemText(StaticText::text_playersconnectedspace+stringimplode(playerStringList,StaticText::text_commaspace));
