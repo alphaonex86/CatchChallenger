@@ -345,9 +345,14 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
     }
     else if(command==StaticText::text_playerlist)
     {
-        if(playerByPseudo.size()==1)
+        if(!GlobalServerData::serverSettings.sendPlayerNumber)
+        {
+            receiveSystemText(StaticText::text_forbidenonthisserver);
+            return;
+        }
+        /*if(playerByPseudo.size()==1)
             receiveSystemText(StaticText::text_Youarealoneontheserver);
-        else
+        else*/
         {
             std::vector<std::string> playerStringList;
             auto i=playerByPseudo.begin();
@@ -362,6 +367,11 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
     }
     else if(command==StaticText::text_playernumber)
     {
+        if(!GlobalServerData::serverSettings.sendPlayerNumber)
+        {
+            receiveSystemText(StaticText::text_forbidenonthisserver);
+            return;
+        }
         if(playerByPseudo.size()==1)
             receiveSystemText(StaticText::text_Youarealoneontheserver);
         else
