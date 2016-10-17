@@ -16,6 +16,7 @@ const std::string StaticText::text_playernumber="playernumber";
 const std::string StaticText::text_kick="kick";
 const std::string StaticText::text_Youarealoneontheserver="You are alone on the server!";
 const std::string StaticText::text_forbidenonthisserver="This is forbidden on this server!";
+const std::string StaticText::text_toolongplayerlist="Too long player list to be send!";
 const std::string StaticText::text_playersconnected=" players connected";
 const std::string StaticText::text_playersconnectedspace="players connected ";
 const std::string StaticText::text_havebeenkickedby=" have been kicked by ";
