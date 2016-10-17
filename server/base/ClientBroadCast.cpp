@@ -72,15 +72,20 @@ void Client::clanChangeWithoutDb(const uint32_t &clanId)
     }
 }
 
-void Client::sendPM(const std::string &text,const std::string &pseudo)
+bool Client::sendPM(const std::string &text,const std::string &pseudo)
 {
+    if(text.size()>255)
+    {
+        errorOutput("Client::sendPM() chat text dropped because is too big for the 8Bits header");
+        return false;
+    }
     if((privateChatDropTotalCache+privateChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessagePrivate)
-        return;
+        return false;
     privateChatDropNewValue++;
     if(this->public_and_private_informations.public_informations.pseudo==pseudo)
     {
         errorOutput("Can't send them self the PM");
-        return;
+        return false;
     }
     if(playerByPseudo.find(pseudo)==playerByPseudo.cend())
     {
@@ -89,7 +94,7 @@ void Client::sendPM(const std::string &text,const std::string &pseudo)
             normalOutput(std::to_string(character_id)+" have try send message to not connected user");
         else
             normalOutput(this->public_and_private_informations.public_informations.pseudo+" have try send message to not connected user: "+pseudo);
-        return;
+        return true;
     }
     if(!GlobalServerData::serverSettings.anonymous)
         normalOutput("[chat PM]: "+this->public_and_private_informations.public_informations.pseudo+" -> "+pseudo+": "+text);
@@ -97,10 +102,16 @@ void Client::sendPM(const std::string &text,const std::string &pseudo)
     BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->public_and_private_informations.public_informations.pseudo,Chat_type_pm,"to "+pseudo+": "+text);
     #endif
     playerByPseudo.at(pseudo)->receiveChatText(Chat_type_pm,text,this);
+    return false;
 }
 
-void Client::receiveChatText(const Chat_type &chatType,const std::string &text,const Client *sender_informations)
+bool Client::receiveChatText(const Chat_type &chatType,const std::string &text,const Client *sender_informations)
 {
+    if(text.size()>255)
+    {
+        std::cerr << "Client::receiveChatText() chat text dropped because is too big for the 8Bits header" << std::endl;
+        return false;
+    }
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
@@ -129,10 +140,16 @@ void Client::receiveChatText(const Chat_type &chatType,const std::string &text,c
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    return true;
 }
 
-void Client::receiveSystemText(const std::string &text,const bool &important)
+bool Client::receiveSystemText(const std::string &text,const bool &important)
 {
+    if(text.size()>65535)
+    {
+        std::cerr << "Client::receiveSystemText() chat text dropped because is too big for the 16Bits header" << std::endl;
+        return false;
+    }
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
@@ -144,18 +161,24 @@ void Client::receiveSystemText(const std::string &text,const bool &important)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Chat_type_system;
     posOutput+=1;
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
-        posOutput+=1;
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(text.size());
+        posOutput+=2;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
     }
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    return true;
 }
 
-void Client::sendChatText(const Chat_type &chatType,const std::string &text)
+bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
 {
+    if(text.size()>255)
+    {
+        std::cerr << "Client::sendChatText() chat text dropped because is too big for the 8Bits header" << std::endl;
+        return false;
+    }
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
@@ -164,7 +187,7 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
     if(chatType==Chat_type_clan)
     {
         if((clanChatDropTotalCache+clanChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
-            return;
+            return false;
         if(clan==0)
             errorOutput("Unable to chat with clan, you have not clan");
         else
@@ -211,14 +234,14 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
                 index++;
             }
         }
-        return;
+        return true;
     }
 /* Now do by command
  *	else if(chatType==Chat_type_system || chatType==Chat_type_system_important)*/
     else
     {
         if((generalChatDropTotalCache+generalChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageGeneral)
-            return;
+            return false;
         if(!GlobalServerData::serverSettings.anonymous)
             normalOutput("[chat all] "+public_and_private_informations.public_informations.pseudo+": "+text);
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -257,7 +280,7 @@ void Client::sendChatText(const Chat_type &chatType,const std::string &text)
                 client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             index++;
         }
-        return;
+        return true;
     }
 }
 
