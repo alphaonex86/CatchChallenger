@@ -23,6 +23,7 @@ public:
     static const std::string text_playernumber;
     static const std::string text_kick;
     static const std::string text_Youarealoneontheserver;
+    static const std::string text_forbidenonthisserver;
     static const std::string text_playersconnected;
     static const std::string text_playersconnectedspace;
     static const std::string text_havebeenkickedby;
