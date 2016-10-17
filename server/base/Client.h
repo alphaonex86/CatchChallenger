@@ -335,10 +335,10 @@ private:
     void fake_receive_data(std::vector<char> data);
     #endif
     //global slot
-    void sendPM(const std::string &text,const std::string &pseudo);
-    void receiveChatText(const Chat_type &chatType, const std::string &text, const Client *sender_informations);
-    void receiveSystemText(const std::string &text,const bool &important=false);
-    void sendChatText(const Chat_type &chatType,const std::string &text);
+    bool sendPM(const std::string &text,const std::string &pseudo);
+    bool receiveChatText(const Chat_type &chatType, const std::string &text, const Client *sender_informations);
+    bool receiveSystemText(const std::string &text,const bool &important=false);
+    bool sendChatText(const Chat_type &chatType,const std::string &text);
     void sendBroadCastCommand(const std::string &command,const std::string &extraText);
     void setRights(const Player_type& type);
     //normal slots
