@@ -114,7 +114,7 @@ void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,const QLi
     ui->characterList->setEnabled(ui->characterList->count()>0 && !ui->multipleConnexion->isChecked());
 
     ui->serverList->header()->setSectionResizeMode(QHeaderView::Fixed);
-    ui->serverList->header()->resizeSection(0,680);
+    ui->serverList->header()->resizeSection(0,400);
     updateServerList(senderObject);
 }
 
@@ -279,6 +279,18 @@ void MainWindow::on_serverListSelect_clicked()
         QMessageBox::critical(this,tr("Error"),tr("The group index is wrong, maybe the server list have change"));
         return;
     }
+    const quint32 &connectionTargetCount=ui->connexionCountTarget->value();
+    if(ui->multipleConnexion->isChecked())
+        if(serverSelected->maxPlayer<65533 && serverSelected->maxPlayer>=serverSelected->currentPlayer)
+        {
+            const quint32 &freeSlot=serverSelected->maxPlayer-serverSelected->currentPlayer;
+            if(connectionTargetCount>freeSlot)
+            {
+                ui->groupBox_Server->setEnabled(false);
+                QMessageBox::critical(this,tr("Error"),tr("Too many connexion count target for the free slot"));
+                return;
+            }
+        }
     multipleBotConnexion.serverSelect(serverSelected->charactersGroupIndex,serverSelected->uniqueKey);
 
     ui->groupBox_Server->setEnabled(false);
