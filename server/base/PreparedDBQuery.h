@@ -5,6 +5,9 @@
 #include "StringWithReplacement.h"
 #include <string>
 
+#if defined(CATCHCHALLENGER_DB_POSTGRESQL)
+#endif
+
 namespace CatchChallenger {
 
 #if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
