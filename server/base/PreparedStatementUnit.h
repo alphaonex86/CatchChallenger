@@ -30,9 +30,9 @@ private:
     #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
     //prepared statement
     char uniqueName[3];
-    #else
-    StringWithReplacement query;
+    static uint16_t queryCount;
     #endif
+    StringWithReplacement query;
 };
 }
 

@@ -207,6 +207,104 @@ void EpollPostgresql::syncDisconnect()
     conn=NULL;
 }
 
+#if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(const std::string &query,const char *id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
+{
+    if(conn==NULL)
+    {
+        std::cerr << "pg not connected" << std::endl;
+        return NULL;
+    }
+    char *paramValues[values.size()];
+    {
+        uint8_t index=0;
+        while(index<values.size())
+        {
+            paramValues[index]=values.at(index).c_str();
+            index++;
+        }
+    }
+    tempCallback.object=returnObject;
+    tempCallback.method=method;
+    if(queue.size()>0 || result!=NULL)
+    {
+        if(queue.size()>=CATCHCHALLENGER_MAXBDQUERIES)
+        {
+            std::cerr << "pg queue full" << std::endl;
+            return NULL;
+        }
+        queue.push_back(tempCallback);
+        queriesList.push_back(query);
+        return &queue.back();
+    }
+    start = std::chrono::high_resolution_clock::now();
+    queriesList.push_back(query);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    const int &stringlen=query.size();
+    if(stringlen==0)
+    {
+        std::cerr << "query " << query << ", stringlen==0" << std::endl;
+        abort();
+    }
+    #endif
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    std::cout << strCoPG << ", query " << query << std::endl;
+    #endif
+    const int &query_id=PQsendQueryPrepared(conn,id,paramValues,values.size(), NULL, NULL, 0);
+    if(query_id==0)
+    {
+        std::cerr << "query send failed: " << errorMessage() << std::endl;
+        return NULL;
+    }
+    queue.push_back(tempCallback);
+    return &queue.back();
+}
+
+bool EpollPostgresql::asyncPreparedWrite(const std::string &query,const char *id,const std::vector<std::string> &values)
+{
+    if(conn==NULL)
+    {
+        std::cerr << "pg not connected" << std::endl;
+        return false;
+    }
+    char *paramValues[values.size()];
+    {
+        uint8_t index=0;
+        while(index<values.size())
+        {
+            paramValues[index]=values.at(index).c_str();
+            index++;
+        }
+    }
+    if(queue.size()>0 || result!=NULL)
+    {
+        queue.push_back(emptyCallback);
+        queriesList.push_back(query);
+        return true;
+    }
+    start = std::chrono::high_resolution_clock::now();
+    queriesList.push_back(query);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    const int &stringlen=query.size();
+    if(stringlen==0)
+    {
+        std::cerr << "query " << query << ", stringlen==0" << std::endl;
+        abort();
+    }
+    #endif
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    std::cout << strCoPG << ", query " << query << std::endl;
+    #endif
+    const int &query_id=PQsendQueryPrepared(conn,id,paramValues,values.size(), NULL, NULL, 0);
+    if(query_id==0)
+    {
+        std::cerr << "query send failed" << std::endl;
+        return false;
+    }
+    queue.push_back(emptyCallback);
+    return true;
+}
+#else
 CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::string &query,void * returnObject,CallBackDatabase method)
 {
     if(conn==NULL)
@@ -285,6 +383,7 @@ bool EpollPostgresql::asyncWrite(const std::string &query)
     queue.push_back(emptyCallback);
     return true;
 }
+#endif
 
 void EpollPostgresql::clear()
 {
@@ -408,7 +507,12 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                         queriesList.erase(queriesList.cbegin());
                     if(!queriesList.empty())
                     {
-                        const int &query_id=PQsendQuery(conn,queriesList.front().c_str());
+                        const auto &firstEntry=queriesList.front();
+                        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+                        const int &query_id=PQsendQueryPrepared(conn,firstEntry.id,firstEntry.paramValues,firstEntry.paramValuesCount, NULL, NULL, 0);
+                        #else
+                        const int &query_id=PQsendQuery(conn,firstEntry.front().c_str());
+                        #endif
                         if(query_id==0)
                         {
                             std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << stringimplode(queriesList,';') << std::endl;

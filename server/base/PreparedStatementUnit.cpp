@@ -2,6 +2,10 @@
 
 using namespace CatchChallenger;
 
+#if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+uint16_t PreparedStatementUnit::queryCount=0;
+#endif
+
 PreparedStatementUnit::PreparedStatementUnit() :
     database(NULL)
     #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
@@ -24,19 +28,44 @@ bool PreparedStatementUnit::setQuery(const std::string &query)
 {
     if(query.empty())
         return false;
+    this->query=query;
     #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
-    convert query %1 into ?
-                remove "
-    PGresult *resprep = PQprepare(conn, "testprepared",query.c_str(), 1, NULL/*paramTypes*/);
+    strcpy(uniqueName,std::to_string(PreparedStatementUnit::queryCount).c_str());
+    PreparedStatementUnit::queryCount++;
+    std::string newQuery=query;
+    newQuery.replace("\"","");
+    {
+        int8_t index=15;
+        while(index>=0)
+        {
+            newQuery.replace("%"+std::to_string(index),"?");
+            index--;
+        }
+    }
+    PGresult *resprep = PQprepare(database,uniqueName,newQuery.c_str(), 1, NULL/*paramTypes*/);
     if (PQresultStatus(resprep) != PGRES_COMMAND_OK)
     { //if failed quit
-        printf("Problem to prepare it\n");
-        PQclear(resprep);
-        do_exit(conn);
+        std::cerr << "Problem to prepare the query: " << newQuery << std::endl;
+        abort();
     }
-    char uniqueName[3];
+    #endif
+}
+
+CallBack * PreparedStatementUnit::asyncRead(void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
+{
+    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    return database->asyncPreparedRead(uniqueName,returnObject,method,values);
     #else
-    this->query=query;
+    return database->asyncRead(query.compose(values),returnObject,method);
+    #endif
+}
+
+bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
+{
+    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    return database->asyncPreparedWrite(uniqueName,values);
+    #else
+    return database->asyncWrite(query.compose(values));
     #endif
 }
 
