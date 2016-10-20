@@ -19,6 +19,7 @@ CharactersGroupForLogin::CharactersGroupForLogin(const char * const db,const cha
         std::cerr << "Connect to common database failed:" << databaseBaseCommon->errorMessage() << ", host: " << host << ", db: " << db << ", login: " << login << std::endl;
         abort();
     }
+    preparedDBQueryCommonForLogin.initDatabaseQueryCommonWithoutSP(databaseBaseCommon->databaseType(),databaseBaseCommon);
 }
 
 CharactersGroupForLogin::~CharactersGroupForLogin()

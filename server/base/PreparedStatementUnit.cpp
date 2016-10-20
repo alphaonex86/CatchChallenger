@@ -8,18 +8,18 @@ uint16_t PreparedStatementUnit::queryCount=0;
 
 PreparedStatementUnit::PreparedStatementUnit() :
     database(NULL)
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
-    ,uniqueName("")
-    #endif
 {
+    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    uniqueName[0]=0;
+    #endif
 }
 
-PreparedStatementUnit::PreparedStatementUnit(const std::string &query, void * const database) :
+PreparedStatementUnit::PreparedStatementUnit(const std::string &query, CatchChallenger::DatabaseBase * const database) :
     database(database)
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
-    ,uniqueName("")
-    #endif
 {
+    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    uniqueName[0]=0;
+    #endif
     if(!query.empty())
         setQuery(query);
 }
@@ -49,6 +49,20 @@ bool PreparedStatementUnit::setQuery(const std::string &query)
         abort();
     }
     #endif
+}
+
+bool PreparedStatementUnit::empty() const
+{
+    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    return false;
+    #else
+    return query.empty();
+    #endif
+}
+
+const std::string &PreparedStatementUnit::queryText() const
+{
+    return query;
 }
 
 CallBack * PreparedStatementUnit::asyncRead(void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
