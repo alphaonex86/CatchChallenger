@@ -45,6 +45,12 @@ EpollPostgresql::EpollPostgresql() :
 
     queue.reserve(CATCHCHALLENGER_MAXBDQUERIES);
     queriesList.reserve(CATCHCHALLENGER_MAXBDQUERIES);
+
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+    std::cout << "CATCHCHALLENGER_DB_PREPAREDSTATEMENT enabled" << std::endl;
+    #else
+    std::cout << "CATCHCHALLENGER_DB_PREPAREDSTATEMENT disabled" << std::endl;
+    #endif
 }
 
 EpollPostgresql::~EpollPostgresql()
