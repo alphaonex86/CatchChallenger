@@ -2,6 +2,7 @@
 #define StringWithReplacement_H
 
 #include <string>
+#include <vector>
 
 class StringWithReplacement
 {
@@ -19,6 +20,7 @@ public:
     bool empty() const;
     std::string compose(const std::vector<std::string> &values) const;
     std::string originalQuery() const;
+    uint8_t argumentsCount() const;
 private:
     /* [0]: occurence to replace
      * [1,2]: total size of the String

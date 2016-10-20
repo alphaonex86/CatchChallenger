@@ -19,7 +19,8 @@ CharactersGroupForLogin::CharactersGroupForLogin(const char * const db,const cha
         std::cerr << "Connect to common database failed:" << databaseBaseCommon->errorMessage() << ", host: " << host << ", db: " << db << ", login: " << login << std::endl;
         abort();
     }
-    preparedDBQueryCommonForLogin.initDatabaseQueryCommonWithoutSP(databaseBaseCommon->databaseType(),databaseBaseCommon);
+    preparedDBQueryCommon.initDatabaseQueryCommonWithoutSP(databaseBaseCommon->databaseType(),databaseBaseCommon);
+    preparedDBQueryCommonForLogin.initDatabaseQueryCommonForLogin(databaseBaseCommon->databaseType(),databaseBaseCommon);
 }
 
 CharactersGroupForLogin::~CharactersGroupForLogin()
@@ -63,4 +64,9 @@ BaseClassSwitch::EpollObjectType CharactersGroupForLogin::getType() const
 DatabaseBase::DatabaseType CharactersGroupForLogin::databaseType() const
 {
     return databaseBaseCommon->databaseType();
+}
+
+DatabaseBase * CharactersGroupForLogin::database() const
+{
+    return databaseBaseCommon;
 }

@@ -5,6 +5,9 @@
 #include "StringWithReplacement.h"
 #include <string>
 #include <vector>
+#if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+#include <unordered_map>
+#endif
 
 namespace CatchChallenger {
 class PreparedStatementUnit
@@ -22,7 +25,7 @@ public:
     virtual DatabaseBase::CallBack * asyncRead(void * returnObject,CallBackDatabase method,const std::vector<std::string> &values);
     virtual bool asyncWrite(const std::vector<std::string> &values);
     bool empty() const;
-    const std::string &queryText() const;
+    std::string queryText() const;
 private:
     #ifdef EPOLLCATCHCHALLENGERSERVER
     CatchChallenger::DatabaseBase *database;
@@ -32,7 +35,7 @@ private:
     #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
     //prepared statement
     char uniqueName[3];
-    static uint16_t queryCount;
+    static std::unordered_map<CatchChallenger::DatabaseBase *,uint16_t> queryCount;
     #endif
     StringWithReplacement query;
 };

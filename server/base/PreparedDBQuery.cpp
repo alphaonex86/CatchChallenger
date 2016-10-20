@@ -10,10 +10,10 @@ PreparedStatementUnit PreparedDBQueryLogin::db_query_login;
 PreparedStatementUnit PreparedDBQueryLogin::db_query_insert_login;
 #endif
 
-StringWithReplacement PreparedDBQueryLogin::db_query_insert_monster;
+StringWithReplacement PreparedDBQueryCommon::db_query_insert_monster;
 
 #if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
-void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseType &type, void * const database)
+void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseType &type, CatchChallenger::DatabaseBase * const database)
 {
     switch(type)
     {
@@ -50,7 +50,7 @@ void PreparedDBQueryLogin::initDatabaseQueryLogin(const DatabaseBase::DatabaseTy
 #endif
 
 #if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
-void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const DatabaseBase::DatabaseType &type, void * const database)
+void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const DatabaseBase::DatabaseType &type, CatchChallenger::DatabaseBase * const database)
 {
     switch(type)
     {
@@ -105,7 +105,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
 #endif
 
 #if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
-void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase::DatabaseType &type, void * const database)
+void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase::DatabaseType &type, CatchChallenger::DatabaseBase * const database)
 {
     switch(type)
     {
@@ -280,7 +280,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
     }
 }
 
-void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::DatabaseType &type, const bool &useSP, void * const database)
+void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::DatabaseType &type, const bool &useSP, CatchChallenger::DatabaseBase * const database)
 {
     (void)useSP;
     (void)database;
@@ -355,7 +355,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithSP(const DatabaseBase::Da
 #endif
 
 #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
-void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::DatabaseType &type, void * const database)
+void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::DatabaseType &type, CatchChallenger::DatabaseBase * const database)
 {
     switch(type)
     {

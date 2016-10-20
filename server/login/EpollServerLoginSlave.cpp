@@ -266,7 +266,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         PreparedDBQueryLogin::initDatabaseQueryLogin(EpollClientLoginSlave::databaseBaseLogin.databaseType(),&EpollClientLoginSlave::databaseBaseLogin);
-        PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(EpollClientLoginSlave::databaseBaseLogin.databaseType(),&EpollClientLoginSlave::databaseBaseLogin);
         #endif
         //PreparedDBQueryBase::initDatabaseQueryBase(EpollClientLoginSlave::databaseBaseLogin.databaseType());//don't exist, allow dictionary and loaded without cache
     }
@@ -594,7 +593,6 @@ void EpollServerLoginSlave::preload_profile()
         std::cerr << "EpollServerLoginSlave::preload_profile() CharactersGroupForLogin::list.isEmpty() (abort)" << std::endl;
         abort();
     }
-    const DatabaseBase::DatabaseType &type=CharactersGroupForLogin::list.at(0)->databaseType();
 
     unsigned int index=0;
     while(index<EpollServerLoginSlave::loginProfileList.size())
@@ -664,132 +662,140 @@ void EpollServerLoginSlave::preload_profile()
             reputations=binarytoHexa(reputation_raw,sizeof(reputation_raw));
         }
 
-        //assume here all is the same type
+        unsigned int indexDatabaseCommon=0;
+        while(indexDatabaseCommon<CharactersGroupForLogin::list.size())
         {
-            unsigned int monsterGroupIndex=0;
-            profile.monster_insert.resize(profile.monstergroup.size());
-            while(monsterGroupIndex<profile.monstergroup.size())
+            DatabaseBase * const database=CharactersGroupForLogin::list.at(indexDatabaseCommon)->database();
+            const DatabaseBase::DatabaseType &databaseType=CharactersGroupForLogin::list.at(indexDatabaseCommon)->databaseType();
+            LoginProfile::PreparedStatementForCreation &preparedStatementForCreation=profile.preparedStatementForCreationByCommon[database];
+            //assume here all is the same type
             {
-                const auto &monsters=profile.monstergroup.at(monsterGroupIndex);
-                std::vector<uint16_t> monsterForEncyclopedia;
-                std::vector<StringWithReplacement> &monsterGroupQuery=profile.monster_insert[monsterGroupIndex];
-                unsigned int monsterIndex=0;
-                while(monsterIndex<monsters.size())
+                unsigned int monsterGroupIndex=0;
+                //profile.monster_insert.resize(profile.monstergroup.size());
+                while(monsterGroupIndex<profile.monstergroup.size())
                 {
-                    const auto &monster=monsters.at(monsterIndex);
-                    if(monster.skills.empty())
+                    const auto &monsters=profile.monstergroup.at(monsterGroupIndex);
+                    std::vector<uint16_t> monsterForEncyclopedia;
+                    std::vector<PreparedStatementUnit> &monsterGroupQuery=preparedStatementForCreation.monster_insert[monsterGroupIndex];
+                    unsigned int monsterIndex=0;
+                    while(monsterIndex<monsters.size())
                     {
-                        std::cerr << "monster.skills.empty() for some profile" << std::endl;
-                        abort();
-                    }
-                    uint32_t lastSkillId=0;
-                    auto skills_list=monster.skills;
-                    std::sort(skills_list.begin(),skills_list.end(),[](const LoginProfile::Monster::Skill &a, const LoginProfile::Monster::Skill &b) {
-                        return a.id<b.id;
-                    });
-
-                    char raw_skill[(2+1)*skills_list.size()],raw_skill_endurance[1*skills_list.size()];
-                    //the skills
-                    unsigned int sub_index=0;
-                    while(sub_index<skills_list.size())
-                    {
-                        const auto &skill=skills_list.at(sub_index);
-                        *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.id-lastSkillId);
-                        lastSkillId=skill.id;
-                        raw_skill[sub_index*(2+1)+2]=skill.level;
-                        raw_skill_endurance[sub_index]=skill.endurance;
-                        sub_index++;
-                    }
-                    //dynamic part
-                    {
-                        //id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,skills,skills_endurance
-                        if(monster.ratio_gender!=-1)
+                        const auto &monster=monsters.at(monsterIndex);
+                        if(monster.skills.empty())
                         {
-                            const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose({
-                                    "%1",
-                                    "%2",
-                                    "1",
-                                    std::to_string(monster.hp),
-                                    std::to_string(monster.id),
-                                    std::to_string(monster.level),
-                                    std::to_string(monster.captured_with),
-                                    "%3",
-                                    "%4",
-                                    std::to_string(monsterIndex+1),
-                                    binarytoHexa(raw_skill,sizeof(raw_skill)),
-                                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
-                                    });
-                            monsterGroupQuery.push_back(queryText);
+                            std::cerr << "monster.skills.empty() for some profile" << std::endl;
+                            abort();
                         }
-                        else
-                        {
-                            const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose({
-                                    "%1",
-                                    "%2",
-                                    "1",
-                                    std::to_string(monster.hp),
-                                    std::to_string(monster.id),
-                                    std::to_string(monster.level),
-                                    std::to_string(monster.captured_with),
-                                    "3",
-                                    "%3",
-                                    std::to_string(monsterIndex+1),
-                                    binarytoHexa(raw_skill,sizeof(raw_skill)),
-                                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
-                                    });
-                            monsterGroupQuery.push_back(queryText);
-                        }
-                    }
-                    monsterForEncyclopedia.push_back(monster.id);
-                    monsterIndex++;
-                }
-                //do the encyclopedia monster
-                const auto &result=std::max_element(monsterForEncyclopedia.begin(),monsterForEncyclopedia.end());
-                const size_t size=*result/8+1;
-                char bitlist[size];
-                memset(bitlist,0,size);
-                monsterIndex=0;
-                while(monsterIndex<monsterForEncyclopedia.size())
-                {
-                    uint16_t bittoUp=monsterForEncyclopedia.at(monsterIndex);
-                    bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
-                    monsterIndex++;
-                }
-                profile.monster_encyclopedia_insert.push_back(binarytoHexa(bitlist,sizeof(bitlist)));
+                        uint32_t lastSkillId=0;
+                        auto skills_list=monster.skills;
+                        std::sort(skills_list.begin(),skills_list.end(),[](const LoginProfile::Monster::Skill &a, const LoginProfile::Monster::Skill &b) {
+                            return a.id<b.id;
+                        });
 
-                monsterGroupIndex++;
+                        char raw_skill[(2+1)*skills_list.size()],raw_skill_endurance[1*skills_list.size()];
+                        //the skills
+                        unsigned int sub_index=0;
+                        while(sub_index<skills_list.size())
+                        {
+                            const auto &skill=skills_list.at(sub_index);
+                            *reinterpret_cast<uint16_t *>(raw_skill+sub_index*(2+1))=htole16(skill.id-lastSkillId);
+                            lastSkillId=skill.id;
+                            raw_skill[sub_index*(2+1)+2]=skill.level;
+                            raw_skill_endurance[sub_index]=skill.endurance;
+                            sub_index++;
+                        }
+                        //dynamic part
+                        {
+                            //id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,skills,skills_endurance
+                            if(monster.ratio_gender!=-1)
+                            {
+                                const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose({
+                                        "%1",
+                                        "%2",
+                                        "1",
+                                        std::to_string(monster.hp),
+                                        std::to_string(monster.id),
+                                        std::to_string(monster.level),
+                                        std::to_string(monster.captured_with),
+                                        "%3",
+                                        "%4",
+                                        std::to_string(monsterIndex+1),
+                                        binarytoHexa(raw_skill,sizeof(raw_skill)),
+                                        binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
+                                        });
+                                monsterGroupQuery.push_back(PreparedStatementUnit(queryText,database));
+                            }
+                            else
+                            {
+                                const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose({
+                                        "%1",
+                                        "%2",
+                                        "1",
+                                        std::to_string(monster.hp),
+                                        std::to_string(monster.id),
+                                        std::to_string(monster.level),
+                                        std::to_string(monster.captured_with),
+                                        "3",
+                                        "%3",
+                                        std::to_string(monsterIndex+1),
+                                        binarytoHexa(raw_skill,sizeof(raw_skill)),
+                                        binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
+                                        });
+                                monsterGroupQuery.push_back(PreparedStatementUnit(queryText,database));
+                            }
+                        }
+                        monsterForEncyclopedia.push_back(monster.id);
+                        monsterIndex++;
+                    }
+                    //do the encyclopedia monster
+                    const auto &result=std::max_element(monsterForEncyclopedia.begin(),monsterForEncyclopedia.end());
+                    const size_t size=*result/8+1;
+                    char bitlist[size];
+                    memset(bitlist,0,size);
+                    monsterIndex=0;
+                    while(monsterIndex<monsterForEncyclopedia.size())
+                    {
+                        uint16_t bittoUp=monsterForEncyclopedia.at(monsterIndex);
+                        bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
+                        monsterIndex++;
+                    }
+
+                    switch(databaseType)
+                    {
+                        default:
+                        case DatabaseBase::DatabaseType::Mysql:
+                            preparedStatementForCreation.character_insert.push_back(PreparedStatementUnit(std::string("INSERT INTO `character`("
+                                    "`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,"
+                                    "`time_to_delete`,`played_time`,`last_connect`,`starter`,`item`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`"
+                                    ",`blob_version`) VALUES(%1,%2,'%3',%4,0,0,"+
+                                    std::to_string(profile.cash)+",%5,0,0,"
+                                    "0,0,0,"+
+                                    std::to_string(profile.databaseId/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('"+binarytoHexa(bitlist,sizeof(bitlist))+"'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(common_blobversion_datapack)+");"),database));
+                        break;
+                        case DatabaseBase::DatabaseType::SQLite:
+                            preparedStatementForCreation.character_insert.push_back(PreparedStatementUnit(std::string("INSERT INTO character("
+                                    "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
+                                    "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
+                                    ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
+                                    std::to_string(profile.cash)+",%5,0,0,"
+                                    "0,0,0,"+
+                                    std::to_string(profile.databaseId/*starter*/)+",'"+item+"','"+reputations+"','"+binarytoHexa(bitlist,sizeof(bitlist))+"','"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");"),database));
+                        break;
+                        case DatabaseBase::DatabaseType::PostgreSQL:
+                            preparedStatementForCreation.character_insert.push_back(PreparedStatementUnit(std::string("INSERT INTO character("
+                                    "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
+                                    "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
+                                    ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
+                                    std::to_string(profile.cash)+",%5,0,FALSE,"
+                                    "0,0,0,"+
+                                    std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x"+binarytoHexa(bitlist,sizeof(bitlist))+"','\\x"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");"),database));
+                        break;
+                    }
+
+                    monsterGroupIndex++;
+                }
             }
-        }
-        switch(type)
-        {
-            default:
-            case DatabaseBase::DatabaseType::Mysql:
-                profile.character_insert=std::string("INSERT INTO `character`("
-                        "`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,"
-                        "`time_to_delete`,`played_time`,`last_connect`,`starter`,`item`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`"
-                        ",`blob_version`) VALUES(%1,%2,'%3',%4,0,0,"+
-                        std::to_string(profile.cash)+",%5,0,0,"
-                        "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('%6'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(common_blobversion_datapack)+");");
-            break;
-            case DatabaseBase::DatabaseType::SQLite:
-                profile.character_insert=std::string("INSERT INTO character("
-                        "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
-                        "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
-                        ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
-                        std::to_string(profile.cash)+",%5,0,0,"
-                        "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",'"+item+"','"+reputations+"','%6','"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");");
-            break;
-            case DatabaseBase::DatabaseType::PostgreSQL:
-                profile.character_insert=std::string("INSERT INTO character("
-                        "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
-                        "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
-                        ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
-                        std::to_string(profile.cash)+",%5,0,FALSE,"
-                        "0,0,0,"+
-                        std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x%6','\\x"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");");
-            break;
+            indexDatabaseCommon++;
         }
 
         index++;
