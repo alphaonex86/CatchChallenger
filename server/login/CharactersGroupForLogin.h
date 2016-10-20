@@ -3,6 +3,7 @@
 
 #include "../epoll/BaseClassSwitch.h"
 #include "../epoll/db/EpollPostgresql.h"
+#include "../base/PreparedDBQuery.h"
 #include "EpollClientLoginSlave.h"
 #include <string>
 #include <unordered_map>
@@ -92,6 +93,7 @@ private:
     void dbQueryWriteCommon(const std::string &queryText);
 private:
     EpollPostgresql *databaseBaseCommon;
+    PreparedDBQueryCommonForLogin preparedDBQueryCommonForLogin;
     std::unordered_map<uint32_t,InternalGameServer> servers;
     std::vector<void *> clientAddReturnList;
     std::vector<void *> clientRemoveReturnList;

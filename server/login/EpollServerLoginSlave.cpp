@@ -265,8 +265,8 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         settings.sync();
 
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        PreparedDBQueryLogin::initDatabaseQueryLogin(EpollClientLoginSlave::databaseBaseLogin.databaseType());
-        PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(EpollClientLoginSlave::databaseBaseLogin.databaseType());
+        PreparedDBQueryLogin::initDatabaseQueryLogin(EpollClientLoginSlave::databaseBaseLogin.databaseType(),&EpollClientLoginSlave::databaseBaseLogin);
+        PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(EpollClientLoginSlave::databaseBaseLogin.databaseType(),&EpollClientLoginSlave::databaseBaseLogin);
         #endif
         //PreparedDBQueryBase::initDatabaseQueryBase(EpollClientLoginSlave::databaseBaseLogin.databaseType());//don't exist, allow dictionary and loaded without cache
     }
@@ -364,8 +364,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
             index++;
         }
-        if(!CharactersGroupForLogin::list.empty())
-            PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(CharactersGroupForLogin::list.back()->databaseType());
     }
 
     {
@@ -707,7 +705,7 @@ void EpollServerLoginSlave::preload_profile()
                         //id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,skills,skills_endurance
                         if(monster.ratio_gender!=-1)
                         {
-                            const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose(
+                            const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose({
                                     "%1",
                                     "%2",
                                     "1",
@@ -720,12 +718,12 @@ void EpollServerLoginSlave::preload_profile()
                                     std::to_string(monsterIndex+1),
                                     binarytoHexa(raw_skill,sizeof(raw_skill)),
                                     binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
-                                    );
+                                    });
                             monsterGroupQuery.push_back(queryText);
                         }
                         else
                         {
-                            const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose(
+                            const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose({
                                     "%1",
                                     "%2",
                                     "1",
@@ -738,7 +736,7 @@ void EpollServerLoginSlave::preload_profile()
                                     std::to_string(monsterIndex+1),
                                     binarytoHexa(raw_skill,sizeof(raw_skill)),
                                     binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
-                                    );
+                                    });
                             monsterGroupQuery.push_back(queryText);
                         }
                     }
