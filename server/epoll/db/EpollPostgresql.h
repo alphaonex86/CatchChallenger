@@ -9,6 +9,7 @@
 #include <chrono>
 
 #include "../../base/DatabaseBase.h"
+#include "../../VariableServer.h"
 
 #define CATCHCHALLENGER_MAXBDQUERIES 1024
 
@@ -66,6 +67,9 @@ private:
     static CallBack emptyCallback;
     static CallBack tempCallback;
     char strCoPG[255];
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    char simplifiedstrCoPG[255];
+    #endif
     std::chrono::time_point<std::chrono::high_resolution_clock> start;
 };
 

@@ -12,7 +12,6 @@
 #include "../Epoll.h"
 #include "../../../general/base/GeneralVariable.h"
 #include "../../../general/base/cpp11addition.h"
-#include "../../VariableServer.h"
 #include <chrono>
 #include <ctime>
 #include <thread>
@@ -96,6 +95,21 @@ bool EpollPostgresql::syncConnect(const std::string &host, const std::string &db
         strcat(strCoPG," password=");
         strcat(strCoPG,password.c_str());
     }
+
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    strcpy(simplifiedstrCoPG,"");
+    if(dbname.size()>0)
+    {
+        strcat(simplifiedstrCoPG,"dbname=");
+        strcat(simplifiedstrCoPG,dbname.c_str());
+    }
+    if(host.size()>0 && host!="localhost")
+    {
+        strcat(simplifiedstrCoPG," host=");
+        strcat(simplifiedstrCoPG,host.c_str());
+    }
+    #endif
+
     std::cout << "Connecting to postgresql: " << host << "..." << std::endl;
     return syncConnectInternal();
 }
@@ -253,7 +267,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(con
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << strCoPG << ", query " << query << std::endl;
+    std::cout << simplifiedstrCoPG << ", query " << query << std::endl;
     #endif
     const int &query_id=PQsendQueryPrepared(conn,id,values.size(),paramValues, NULL, NULL, 0);
     if(query_id==0)
@@ -303,7 +317,7 @@ bool EpollPostgresql::asyncPreparedWrite(const std::string &query,char * const i
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << strCoPG << ", query " << query << std::endl;
+    std::cout << simplifiedstrCoPG << ", query " << query << std::endl;
     #endif
     const int &query_id=PQsendQueryPrepared(conn,id,values.size(),paramValues, NULL, NULL, 0);
     if(query_id==0)
@@ -374,7 +388,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << strCoPG << ", query " << query << std::endl;
+    std::cout << simplifiedstrCoPG << ", query " << query << std::endl;
     #endif
     const int &query_id=PQsendQuery(conn,query.c_str());
     if(query_id==0)
@@ -417,7 +431,7 @@ bool EpollPostgresql::asyncWrite(const std::string &query)
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << strCoPG << ", query " << query << std::endl;
+    std::cout << simplifiedstrCoPG << ", query " << query << std::endl;
     #endif
     const int &query_id=PQsendQuery(conn,query.c_str());
     if(query_id==0)
@@ -523,6 +537,15 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                     else
                         std::cerr << queriesList.front().query << ": query too slow, take " << ms << "ms" << std::endl;
                 }
+                #ifdef DEBUG_MESSAGE_CLIENT_SQL
+                else
+                {
+                    if(queriesList.empty())
+                        std::cerr << "query take " << ms << "ms" << std::endl;
+                    else
+                        std::cerr << queriesList.front().query << ": query take " << ms << "ms" << std::endl;
+                }
+                #endif
                 start = std::chrono::high_resolution_clock::now();
                 while(result!=NULL)
                 {
@@ -552,7 +575,7 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                     if(!queriesList.empty())
                     {
                         const PreparedStatement &firstEntry=queriesList.front();
-                        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+                        #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
                         int query_id=0;
                         if(firstEntry.id!=NULL)
                             query_id=PQsendQueryPrepared(conn,firstEntry.id,firstEntry.paramValuesCount,&firstEntry.paramValues, NULL, NULL, 0);
@@ -578,7 +601,7 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                             return false;
                         }
                         #ifdef DEBUG_MESSAGE_CLIENT_SQL
-                        std::cout << strCoPG << ", query " << firstEntry.query << " from queue" << std::endl;
+                        std::cout << simplifiedstrCoPG << ", query " << firstEntry.query << " from queue" << std::endl;
                         #endif
                     }
                     result=PQgetResult(conn);
