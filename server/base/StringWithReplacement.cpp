@@ -234,57 +234,6 @@ uint16_t StringWithReplacement::preparedQuerySize(const unsigned char * const pr
     return pos;
 }
 
-std::string StringWithReplacement::compose(const std::string &arg1) const
-{
-    if(preparedQuery==NULL)
-    {
-        std::cerr << "StringWithReplacement::compose(): preparedQuery==NULL" << std::endl;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        abort();
-        #endif
-        return std::string();
-    }
-    if(preparedQuery[0]!=1)
-    {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        abort();
-        #endif
-        return std::string();
-    }
-    if((*reinterpret_cast<uint16_t *>(preparedQuery+1)+arg1.size()+1)>=sizeof(composeBuffer))
-    {
-        std::cerr << "StringWithReplacement::compose(): (1) argument too big: " << *reinterpret_cast<uint16_t *>(preparedQuery+1) << " + arg: " << arg1 << ">" << sizeof(composeBuffer) << ", query: " << originalQuery() << std::endl;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        abort();
-        #endif
-        return std::string();
-    }
-    //copy the first segments
-    const uint16_t &firstChunkSize=*reinterpret_cast<uint16_t *>(preparedQuery+1+2);
-    memcpy(composeBuffer,preparedQuery+1+2+2,firstChunkSize);
-    uint16_t posComposeBuffer=firstChunkSize;
-    uint16_t pos=1+2+2+firstChunkSize;
-    uint8_t index=0;
-    while(index<preparedQuery[0])
-    {
-        switch(index)
-        {
-            case 0:
-            memcpy(composeBuffer+posComposeBuffer,arg1.data(),arg1.size());
-            posComposeBuffer+=arg1.size();
-            break;
-            default:
-            break;
-        }
-        memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,*reinterpret_cast<uint16_t *>(preparedQuery+pos));
-        posComposeBuffer+=preparedQuery[pos];
-        pos+=2+preparedQuery[pos];
-        ++index;
-    }
-    return std::string(composeBuffer,posComposeBuffer);
-}
-
 std::string StringWithReplacement::compose(const std::vector<std::string> &values) const
 {
     if(preparedQuery==NULL)
@@ -344,4 +293,17 @@ std::string StringWithReplacement::compose(const std::vector<std::string> &value
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
+}
+
+uint8_t StringWithReplacement::argumentsCount() const
+{
+    if(preparedQuery==NULL)
+    {
+        std::cerr << "StringWithReplacement::argumentsCount(): preparedQuery==NULL" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
+        return 0;
+    }
+    return preparedQuery[0];
 }

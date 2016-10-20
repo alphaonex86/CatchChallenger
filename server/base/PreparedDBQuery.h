@@ -14,7 +14,7 @@ namespace CatchChallenger {
 class PreparedDBQueryLogin
 {
 public:
-    static void initDatabaseQueryLogin(const DatabaseBase::DatabaseType &type,void * const database);
+    static void initDatabaseQueryLogin(const DatabaseBase::DatabaseType &type, DatabaseBase * const database);
 public:
     //query
     static PreparedStatementUnit db_query_login;
@@ -26,17 +26,17 @@ public:
 class PreparedDBQueryCommonForLogin
 {
 public:
-    static void initDatabaseQueryCommonForLogin(const DatabaseBase::DatabaseType &type,void * const database);
+    void initDatabaseQueryCommonForLogin(const DatabaseBase::DatabaseType &type,CatchChallenger::DatabaseBase * const database);
 public:
-    static PreparedStatementUnit db_query_characters;//should be already limited at creation (write access), not need limit on read
+    PreparedStatementUnit db_query_characters;//should be already limited at creation (write access), not need limit on read
     //static PreparedStatementUnit db_query_characters_with_monsters;
-    static PreparedStatementUnit db_query_select_server_time;
-    static PreparedStatementUnit db_query_delete_character;
-    static PreparedStatementUnit db_query_delete_monster_by_character;
-    static PreparedStatementUnit db_query_select_character_by_pseudo;
-    static PreparedStatementUnit db_query_get_character_count_by_account;
-    static PreparedStatementUnit db_query_account_time_to_delete_character_by_id;
-    static PreparedStatementUnit db_query_update_character_time_to_delete_by_id;
+    PreparedStatementUnit db_query_select_server_time;
+    PreparedStatementUnit db_query_delete_character;
+    PreparedStatementUnit db_query_delete_monster_by_character;
+    PreparedStatementUnit db_query_select_character_by_pseudo;
+    PreparedStatementUnit db_query_get_character_count_by_account;
+    PreparedStatementUnit db_query_account_time_to_delete_character_by_id;
+    PreparedStatementUnit db_query_update_character_time_to_delete_by_id;
 };
 #endif
 
@@ -44,8 +44,8 @@ public:
 class PreparedDBQueryCommon
 {
 public:
-    void initDatabaseQueryCommonWithoutSP(const DatabaseBase::DatabaseType &type,void * const database);
-    void initDatabaseQueryCommonWithSP(const DatabaseBase::DatabaseType &type,const bool &useSP,void * const database);
+    void initDatabaseQueryCommonWithoutSP(const DatabaseBase::DatabaseType &type,CatchChallenger::DatabaseBase * const database);
+    void initDatabaseQueryCommonWithSP(const DatabaseBase::DatabaseType &type,const bool &useSP,CatchChallenger::DatabaseBase * const database);
 public:
     //login and gameserver alone
     PreparedStatementUnit db_query_delete_monster_by_id;
@@ -150,7 +150,7 @@ public:
 class PreparedDBQueryServer
 {
 public:
-    void initDatabaseQueryServer(const DatabaseBase::DatabaseType &type,void * const database);
+    void initDatabaseQueryServer(const DatabaseBase::DatabaseType &type,CatchChallenger::DatabaseBase * const database);
 public:
     PreparedStatementUnit db_query_update_character_forserver_map;
     PreparedStatementUnit db_query_insert_factory;

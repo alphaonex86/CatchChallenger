@@ -207,7 +207,7 @@ void EpollPostgresql::syncDisconnect()
     conn=NULL;
 }
 
-#if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+#if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
 CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(const std::string &query,char * const id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
 {
     if(conn==NULL)
@@ -312,6 +312,26 @@ bool EpollPostgresql::asyncPreparedWrite(const std::string &query,char * const i
         return false;
     }
     queue.push_back(emptyCallback);
+    return true;
+}
+
+bool EpollPostgresql::queryPrepare(const char *stmtName,
+                                     const char *query, int nParams,
+                                     const Oid *paramTypes)//return NULL if failed
+{
+    if(conn==NULL)
+    {
+        std::cerr << "pg not connected" << std::endl;
+        return false;
+    }
+    PGresult *resprep = PQprepare(conn,stmtName,query,nParams,paramTypes);
+    const auto &ret=PQresultStatus(resprep);
+    if (ret != PGRES_COMMAND_OK)
+    { //if failed quit
+        std::cerr << "Problem to prepare the query: " << query << ", return code: " << ret << ", error message: " << PQerrorMessage(conn) << std::endl;
+        abort();
+        return false;
+    }
     return true;
 }
 #endif

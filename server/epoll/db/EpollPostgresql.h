@@ -22,9 +22,12 @@ public:
     void syncDisconnect();
     void syncReconnect();
 
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     CallBack * asyncPreparedRead(const std::string &query,char * const id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values);
     bool asyncPreparedWrite(const std::string &query,char * const id,const std::vector<std::string> &values);
+    bool queryPrepare(const char *stmtName,
+                        const char *query, int nParams,
+                        const Oid *paramTypes);//return NULL if failed
     #endif
     CallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);
     bool asyncWrite(const std::string &query);
@@ -50,7 +53,7 @@ private:
     struct PreparedStatement
     {
         std::string query;
-        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+        #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
         //null if not prepared
         const char * id;
         char * paramValues;

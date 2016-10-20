@@ -5,6 +5,7 @@
 
 #include "../epoll/EpollGenericServer.h"
 #include "../base/BaseServerLogin.h"
+#include "../base/PreparedStatementUnit.h"
 #include "../base/TinyXMLSettings.h"
 #include "../base/StringWithReplacement.h"
 #include "EpollClientLoginSlave.h"
@@ -53,16 +54,19 @@ public:
             uint32_t quantity;
         };
         std::vector<Item> items;
-        uint16_t databaseId;
+        uint16_t databaseId;/*starter*/
         std::vector<uint8_t> forcedskin;
         uint64_t cash;
         std::vector<Reputation> reputations;
 
         std::vector<std::vector<Monster> > monstergroup;
-        std::vector<std::string> monster_encyclopedia_insert;
-        std::vector<std::vector<StringWithReplacement> > monster_insert;
 
-        StringWithReplacement character_insert;
+        struct PreparedStatementForCreation
+        {
+            std::vector<std::vector<PreparedStatementUnit> > monster_insert;
+            std::vector<PreparedStatementUnit> character_insert;
+        };
+        std::unordered_map<DatabaseBase *,PreparedStatementForCreation> preparedStatementForCreationByCommon;
     };
     std::vector<LoginProfile> loginProfileList;
 

@@ -533,14 +533,11 @@ void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *r
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
     askLoginParam->query_id=query_id;
 
-    const std::string &queryText=PreparedDBQueryLogin::db_query_login.compose(
-                binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)
-                );
-    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText,this,&EpollClientLoginSlave::createAccount_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&EpollClientLoginSlave::createAccount_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)});
     if(callback==NULL)
     {
         stat=EpollClientLoginStat::ProtocolGood;
-        loginIsWrong(askLoginParam->query_id,0x03,"Sql error for: "+queryText+", error: "+databaseBaseLogin.errorMessage());
+        loginIsWrong(askLoginParam->query_id,0x03,"Sql error for: "+PreparedDBQueryLogin::db_query_login.queryText()+", error: "+databaseBaseLogin.errorMessage());
         delete askLoginParam;
         askLoginParam=NULL;
         return;
@@ -640,13 +637,12 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
         account_id=maxAccountIdList.front();
         maxAccountIdList.erase(maxAccountIdList.begin());
         {
-            const std::string &queryText=PreparedDBQueryLogin::db_query_insert_login.compose(
+            PreparedDBQueryLogin::db_query_insert_login.asyncWrite({
                         std::to_string(account_id),
                         binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE),
                         binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE),
                         std::to_string(sFrom1970())
-                        );
-            dbQueryWriteLogin(queryText);
+                        });
         }
         //send the network reply
         removeFromQueryReceived(askLoginParam->query_id);
