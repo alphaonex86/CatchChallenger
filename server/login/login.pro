@@ -51,6 +51,7 @@ SOURCES += \
     ../epoll/db/EpollPostgresql.cpp \
     ../base/DatabaseBase.cpp \
     ../base/PreparedDBQuery.cpp \
+    ../base/PreparedStatementUnit.cpp \
     LinkToMaster.cpp \
     LinkToMasterStaticVar.cpp \
     LinkToMasterProtocolParsing.cpp \
@@ -92,6 +93,7 @@ HEADERS += \
     ../epoll/db/EpollPostgresql.h \
     ../base/DatabaseBase.h \
     ../base/PreparedDBQuery.h \
+    ../base/PreparedStatementUnit.h \
     LinkToMaster.h \
     ../epoll/EpollClientToServer.h \
     ../epoll/EpollSslClientToServer.h \

@@ -30,13 +30,10 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
     askLoginParam->query_id=query_id;
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
 
-    const std::string &queryText=PreparedDBQueryLogin::db_query_login.compose(
-                binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)
-                );
-    CatchChallenger::DatabaseBase::CallBack *callback=databaseBaseLogin.asyncRead(queryText,this,&EpollClientLoginSlave::askLogin_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&EpollClientLoginSlave::askLogin_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)});
     if(callback==NULL)
     {
-        loginIsWrong(askLoginParam->query_id,0x04,"Sql error for: "+queryText+", error: "+databaseBaseLogin.errorMessage());
+        loginIsWrong(askLoginParam->query_id,0x04,"Sql error for: "+PreparedDBQueryLogin::db_query_login.queryText()+", error: "+databaseBaseLogin.errorMessage());
         delete askLoginParam;
         askLoginParam=NULL;
         return;

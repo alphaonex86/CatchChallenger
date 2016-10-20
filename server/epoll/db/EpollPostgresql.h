@@ -23,12 +23,11 @@ public:
     void syncReconnect();
 
     #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
-    CallBack * asyncPreparedRead(const char *id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values);
-    bool asyncPreparedWrite(const char *id,const std::vector<std::string> &values);
-    #else
+    CallBack * asyncPreparedRead(const std::string &query,char * const id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values);
+    bool asyncPreparedWrite(const std::string &query,char * const id,const std::vector<std::string> &values);
+    #endif
     CallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);
     bool asyncWrite(const std::string &query);
-    #endif
     static void noticeReceiver(void *arg, const PGresult *res);
     static void noticeProcessor(void *arg, const char *message);
     bool epollEvent(const uint32_t &events);
@@ -48,18 +47,17 @@ private:
     PGresult *result;
     //vector more fast on small data with less than 1024<entry
     std::vector<CallBack> queue;
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
     struct PreparedStatement
     {
         std::string query;
-        char * id;
-        char *paramValues;
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+        //null if not prepared
+        const char * id;
+        char * paramValues;
         uint8_t paramValuesCount;
+        #endif
     };
     std::vector<PreparedStatement> queriesList;
-    #else
-    std::vector<std::string> queriesList;
-    #endif
     bool started;
     static char emptyString[1];
     static CallBack emptyCallback;
