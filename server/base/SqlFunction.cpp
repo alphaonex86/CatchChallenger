@@ -3,13 +3,18 @@
 
 using namespace CatchChallenger;
 
+#if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+#else
 std::string SqlFunction::text_antislash="\\";
 std::string SqlFunction::text_double_antislash="\\\\";
 std::string SqlFunction::text_antislash_quote="\"";
 std::string SqlFunction::text_double_antislash_quote="\\\"";
 std::string SqlFunction::text_single_quote="'";
 std::string SqlFunction::text_antislash_single_quote="\\'";
+#endif
 
+#if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+#else
 std::string SqlFunction::quoteSqlVariable(const std::string &variable)
 {
     std::string newVariable=variable;
@@ -18,3 +23,4 @@ std::string SqlFunction::quoteSqlVariable(const std::string &variable)
     stringreplaceAll(newVariable,SqlFunction::text_single_quote,SqlFunction::text_antislash_single_quote);
     return newVariable;
 }
+#endif
