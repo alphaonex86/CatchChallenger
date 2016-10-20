@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_SERVER_PREPAREDDBQUERY_H
 
 #include "DatabaseBase.h"
-#include "StringWithReplacement.h"
+#include "PreparedStatementUnit.h"
 #include <string>
 
 #if defined(CATCHCHALLENGER_DB_POSTGRESQL)
@@ -14,11 +14,11 @@ namespace CatchChallenger {
 class PreparedDBQueryLogin
 {
 public:
-    static void initDatabaseQueryLogin(const DatabaseBase::DatabaseType &type);
+    static void initDatabaseQueryLogin(const DatabaseBase::DatabaseType &type,void * const database);
 public:
     //query
-    static StringWithReplacement db_query_login;
-    static StringWithReplacement db_query_insert_login;
+    static PreparedStatementUnit db_query_login;
+    static PreparedStatementUnit db_query_insert_login;
 };
 #endif
 
@@ -26,17 +26,17 @@ public:
 class PreparedDBQueryCommonForLogin
 {
 public:
-    static void initDatabaseQueryCommonForLogin(const DatabaseBase::DatabaseType &type);
+    static void initDatabaseQueryCommonForLogin(const DatabaseBase::DatabaseType &type,void * const database);
 public:
-    static StringWithReplacement db_query_characters;//should be already limited at creation (write access), not need limit on read
-    //static StringWithReplacement db_query_characters_with_monsters;
-    static StringWithReplacement db_query_select_server_time;
-    static StringWithReplacement db_query_delete_character;
-    static StringWithReplacement db_query_delete_monster_by_character;
-    static StringWithReplacement db_query_select_character_by_pseudo;
-    static StringWithReplacement db_query_get_character_count_by_account;
-    static StringWithReplacement db_query_account_time_to_delete_character_by_id;
-    static StringWithReplacement db_query_update_character_time_to_delete_by_id;
+    static PreparedStatementUnit db_query_characters;//should be already limited at creation (write access), not need limit on read
+    //static PreparedStatementUnit db_query_characters_with_monsters;
+    static PreparedStatementUnit db_query_select_server_time;
+    static PreparedStatementUnit db_query_delete_character;
+    static PreparedStatementUnit db_query_delete_monster_by_character;
+    static PreparedStatementUnit db_query_select_character_by_pseudo;
+    static PreparedStatementUnit db_query_get_character_count_by_account;
+    static PreparedStatementUnit db_query_account_time_to_delete_character_by_id;
+    static PreparedStatementUnit db_query_update_character_time_to_delete_by_id;
 };
 #endif
 
@@ -44,104 +44,104 @@ public:
 class PreparedDBQueryCommon
 {
 public:
-    static void initDatabaseQueryCommonWithoutSP(const DatabaseBase::DatabaseType &type);
-    static void initDatabaseQueryCommonWithSP(const DatabaseBase::DatabaseType &type,const bool &useSP);
+    void initDatabaseQueryCommonWithoutSP(const DatabaseBase::DatabaseType &type,void * const database);
+    void initDatabaseQueryCommonWithSP(const DatabaseBase::DatabaseType &type,const bool &useSP,void * const database);
 public:
     //login and gameserver alone
-    static StringWithReplacement db_query_delete_monster_by_id;
+    PreparedStatementUnit db_query_delete_monster_by_id;
     static StringWithReplacement db_query_insert_monster;
-    static StringWithReplacement db_query_insert_monster_full;/*wild catch*/
+    PreparedStatementUnit db_query_insert_monster_full;/*wild catch*/
 
     #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
-    static StringWithReplacement db_query_update_character_item;
-    static StringWithReplacement db_query_update_character_item_and_encyclopedia;
-    static StringWithReplacement db_query_update_character_item_warehouse;
-    /*static StringWithReplacement db_query_update_character_monster;
-    static StringWithReplacement db_query_update_character_monster_and_encyclopedia;
-    static StringWithReplacement db_query_update_character_monster_warehouse;*/
-    static StringWithReplacement db_query_update_character_monster_encyclopedia;
-    static StringWithReplacement db_query_update_cash;
-    static StringWithReplacement db_query_update_warehouse_cash;
-    static StringWithReplacement db_query_update_character_recipe;
-    static StringWithReplacement db_query_update_character_allow;
-    static StringWithReplacement db_query_update_character_reputations;
-    static StringWithReplacement db_query_select_clan_by_name;
-    static StringWithReplacement db_query_update_character_clan_to_reset;
-    static StringWithReplacement db_query_update_character_clan_and_leader;
-    static StringWithReplacement db_query_delete_clan;
-    static StringWithReplacement db_query_update_monster_xp_hp_level;
-    static StringWithReplacement db_query_update_monster_hp_only;
-    static StringWithReplacement db_query_update_monster_sp_only;
-    static StringWithReplacement db_query_update_monster_xp;
-    static StringWithReplacement db_query_insert_clan;
-    static StringWithReplacement db_query_played_time;
-    static StringWithReplacement db_query_monster_update_skill_and_endurance;
-    static StringWithReplacement db_query_monster_update_endurance;
-    static StringWithReplacement db_query_update_monster_buff;
-    static StringWithReplacement db_query_character_by_id;
-    static StringWithReplacement db_query_set_character_time_to_delete_to_zero;
-    static StringWithReplacement db_query_update_character_last_connect;
-    static StringWithReplacement db_query_clan;
-    static StringWithReplacement db_query_change_right;
-    static StringWithReplacement db_query_delete_monster_buff;
-    static StringWithReplacement db_query_insert_warehouse_monster;
-    static StringWithReplacement db_query_update_monster_position;
-    static StringWithReplacement db_query_update_monster_position_and_place;
-    static StringWithReplacement db_query_update_monster_place;
-    static StringWithReplacement db_query_update_monster_and_hp;
-    static StringWithReplacement db_query_update_monster_hp_and_level;
-    static StringWithReplacement db_query_select_monsters_by_player_id;//don't filter by place, dispatched in internal, market volume should be low
-    static StringWithReplacement db_query_update_monster_move_to_new_player;
-    static StringWithReplacement db_query_update_monster_owner;
+    PreparedStatementUnit db_query_update_character_item;
+    PreparedStatementUnit db_query_update_character_item_and_encyclopedia;
+    PreparedStatementUnit db_query_update_character_item_warehouse;
+    /*PreparedStatementUnit db_query_update_character_monster;
+    PreparedStatementUnit db_query_update_character_monster_and_encyclopedia;
+    PreparedStatementUnit db_query_update_character_monster_warehouse;*/
+    PreparedStatementUnit db_query_update_character_monster_encyclopedia;
+    PreparedStatementUnit db_query_update_cash;
+    PreparedStatementUnit db_query_update_warehouse_cash;
+    PreparedStatementUnit db_query_update_character_recipe;
+    PreparedStatementUnit db_query_update_character_allow;
+    PreparedStatementUnit db_query_update_character_reputations;
+    PreparedStatementUnit db_query_select_clan_by_name;
+    PreparedStatementUnit db_query_update_character_clan_to_reset;
+    PreparedStatementUnit db_query_update_character_clan_and_leader;
+    PreparedStatementUnit db_query_delete_clan;
+    PreparedStatementUnit db_query_update_monster_xp_hp_level;
+    PreparedStatementUnit db_query_update_monster_hp_only;
+    PreparedStatementUnit db_query_update_monster_sp_only;
+    PreparedStatementUnit db_query_update_monster_xp;
+    PreparedStatementUnit db_query_insert_clan;
+    PreparedStatementUnit db_query_played_time;
+    PreparedStatementUnit db_query_monster_update_skill_and_endurance;
+    PreparedStatementUnit db_query_monster_update_endurance;
+    PreparedStatementUnit db_query_update_monster_buff;
+    PreparedStatementUnit db_query_character_by_id;
+    PreparedStatementUnit db_query_set_character_time_to_delete_to_zero;
+    PreparedStatementUnit db_query_update_character_last_connect;
+    PreparedStatementUnit db_query_clan;
+    PreparedStatementUnit db_query_change_right;
+    PreparedStatementUnit db_query_delete_monster_buff;
+    PreparedStatementUnit db_query_insert_warehouse_monster;
+    PreparedStatementUnit db_query_update_monster_position;
+    PreparedStatementUnit db_query_update_monster_position_and_place;
+    PreparedStatementUnit db_query_update_monster_place;
+    PreparedStatementUnit db_query_update_monster_and_hp;
+    PreparedStatementUnit db_query_update_monster_hp_and_level;
+    PreparedStatementUnit db_query_select_monsters_by_player_id;//don't filter by place, dispatched in internal, market volume should be low
+    PreparedStatementUnit db_query_update_monster_move_to_new_player;
+    PreparedStatementUnit db_query_update_monster_owner;
 
     #if defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
-    static StringWithReplacement db_query_insert_server_time;
-    static StringWithReplacement db_query_update_server_time_played_time;
-    static StringWithReplacement db_query_update_server_time_last_connect;
+    PreparedStatementUnit db_query_insert_server_time;
+    PreparedStatementUnit db_query_update_server_time_played_time;
+    PreparedStatementUnit db_query_update_server_time_last_connect;
     #endif
     //query
-    /*static StringWithReplacement db_query_select_allow;
+    /*PreparedStatementUnit db_query_select_allow;
 
-    static StringWithReplacement db_query_select_monstersBuff_by_id;
-    static StringWithReplacement db_query_monster_by_character_id;
-    static StringWithReplacement db_query_delete_monster_specific_buff;
-    static StringWithReplacement db_query_delete_monster_skill;
-    static StringWithReplacement db_query_delete_all_item;
-    static StringWithReplacement db_query_delete_all_item_warehouse;
-    static StringWithReplacement db_query_delete_monster_by_character;
-    static StringWithReplacement db_query_delete_monster_warehouse_by_id;
-    static StringWithReplacement db_query_delete_recipes;
-    static StringWithReplacement db_query_delete_reputation;
-    static StringWithReplacement db_query_delete_allow;
-    static StringWithReplacement db_query_update_monster_buff_level;
+    PreparedStatementUnit db_query_select_monstersBuff_by_id;
+    PreparedStatementUnit db_query_monster_by_character_id;
+    PreparedStatementUnit db_query_delete_monster_specific_buff;
+    PreparedStatementUnit db_query_delete_monster_skill;
+    PreparedStatementUnit db_query_delete_all_item;
+    PreparedStatementUnit db_query_delete_all_item_warehouse;
+    PreparedStatementUnit db_query_delete_monster_by_character;
+    PreparedStatementUnit db_query_delete_monster_warehouse_by_id;
+    PreparedStatementUnit db_query_delete_recipes;
+    PreparedStatementUnit db_query_delete_reputation;
+    PreparedStatementUnit db_query_delete_allow;
+    PreparedStatementUnit db_query_update_monster_buff_level;
 
-    static StringWithReplacement db_query_update_monster_move_to_player;
-    static StringWithReplacement db_query_update_monster_move_to_warehouse;
-    static StringWithReplacement db_query_update_monster_move_to_market;
-    static StringWithReplacement db_query_insert_monster_full;
-    static StringWithReplacement db_query_insert_warehouse_monster_full;
-    static StringWithReplacement db_query_insert_monster_skill;
-    static StringWithReplacement db_query_insert_reputation;
-    static StringWithReplacement db_query_select_reputation_by_id;
-    static StringWithReplacement db_query_select_recipes_by_player_id;
-    static StringWithReplacement db_query_select_items_by_player_id;
-    static StringWithReplacement db_query_select_items_warehouse_by_player_id;
-    static StringWithReplacement db_query_select_monsters_warehouse_by_player_id;
-    static StringWithReplacement db_query_select_monstersSkill_by_id;
-    static StringWithReplacement db_query_insert_item;
-    static StringWithReplacement db_query_insert_item_warehouse;
-    static StringWithReplacement db_query_update_item;
-    static StringWithReplacement db_query_update_item_warehouse;
-    static StringWithReplacement db_query_delete_item;
-    static StringWithReplacement db_query_delete_item_warehouse;
-    static StringWithReplacement db_query_insert_recipe;
+    PreparedStatementUnit db_query_update_monster_move_to_player;
+    PreparedStatementUnit db_query_update_monster_move_to_warehouse;
+    PreparedStatementUnit db_query_update_monster_move_to_market;
+    PreparedStatementUnit db_query_insert_monster_full;
+    PreparedStatementUnit db_query_insert_warehouse_monster_full;
+    PreparedStatementUnit db_query_insert_monster_skill;
+    PreparedStatementUnit db_query_insert_reputation;
+    PreparedStatementUnit db_query_select_reputation_by_id;
+    PreparedStatementUnit db_query_select_recipes_by_player_id;
+    PreparedStatementUnit db_query_select_items_by_player_id;
+    PreparedStatementUnit db_query_select_items_warehouse_by_player_id;
+    PreparedStatementUnit db_query_select_monsters_warehouse_by_player_id;
+    PreparedStatementUnit db_query_select_monstersSkill_by_id;
+    PreparedStatementUnit db_query_insert_item;
+    PreparedStatementUnit db_query_insert_item_warehouse;
+    PreparedStatementUnit db_query_update_item;
+    PreparedStatementUnit db_query_update_item_warehouse;
+    PreparedStatementUnit db_query_delete_item;
+    PreparedStatementUnit db_query_delete_item_warehouse;
+    PreparedStatementUnit db_query_insert_recipe;
 
-    static StringWithReplacement db_query_delete_character_allow;
-    static StringWithReplacement db_query_update_reputation;
+    PreparedStatementUnit db_query_delete_character_allow;
+    PreparedStatementUnit db_query_update_reputation;
 
-    static StringWithReplacement db_query_update_monster_skill_level;
-    static StringWithReplacement db_query_insert_monster_buff;
-    static StringWithReplacement db_query_delete_monster_specific_skill;*/
+    PreparedStatementUnit db_query_update_monster_skill_level;
+    PreparedStatementUnit db_query_insert_monster_buff;
+    PreparedStatementUnit db_query_delete_monster_specific_skill;*/
     #endif
 };
 #endif
@@ -150,50 +150,50 @@ public:
 class PreparedDBQueryServer
 {
 public:
-    static void initDatabaseQueryServer(const DatabaseBase::DatabaseType &type);
+    void initDatabaseQueryServer(const DatabaseBase::DatabaseType &type,void * const database);
 public:
-    static StringWithReplacement db_query_update_character_forserver_map;
-    static StringWithReplacement db_query_insert_factory;
-    static StringWithReplacement db_query_update_factory;
+    PreparedStatementUnit db_query_update_character_forserver_map;
+    PreparedStatementUnit db_query_insert_factory;
+    PreparedStatementUnit db_query_update_factory;
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    static StringWithReplacement db_query_delete_city;
-    static StringWithReplacement db_query_update_city_clan;
-    static StringWithReplacement db_query_insert_city;
+    PreparedStatementUnit db_query_delete_city;
+    PreparedStatementUnit db_query_update_city_clan;
+    PreparedStatementUnit db_query_insert_city;
     #endif
-    static StringWithReplacement db_query_insert_monster_market_price;
-    static StringWithReplacement db_query_delete_monster_market_price;
-    static StringWithReplacement db_query_delete_all_item_market;
-    static StringWithReplacement db_query_insert_item_market;
-    static StringWithReplacement db_query_delete_item_market;
-    static StringWithReplacement db_query_update_item_market;
-    static StringWithReplacement db_query_update_item_market_and_price;
-    static StringWithReplacement db_query_update_charaters_market_cash;
-    static StringWithReplacement db_query_get_market_cash;
-    static StringWithReplacement db_query_insert_monster_market;
-    static StringWithReplacement db_query_update_character_quests;
-    static StringWithReplacement db_query_character_server_by_id;
-    static StringWithReplacement db_query_delete_character_server_by_id;
-    static StringWithReplacement db_query_update_plant;
-    static StringWithReplacement db_query_update_itemonmap;
-    static StringWithReplacement db_query_update_character_bot_already_beaten;
+    PreparedStatementUnit db_query_insert_monster_market_price;
+    PreparedStatementUnit db_query_delete_monster_market_price;
+    PreparedStatementUnit db_query_delete_all_item_market;
+    PreparedStatementUnit db_query_insert_item_market;
+    PreparedStatementUnit db_query_delete_item_market;
+    PreparedStatementUnit db_query_update_item_market;
+    PreparedStatementUnit db_query_update_item_market_and_price;
+    PreparedStatementUnit db_query_update_charaters_market_cash;
+    PreparedStatementUnit db_query_get_market_cash;
+    PreparedStatementUnit db_query_insert_monster_market;
+    PreparedStatementUnit db_query_update_character_quests;
+    PreparedStatementUnit db_query_character_server_by_id;
+    PreparedStatementUnit db_query_delete_character_server_by_id;
+    PreparedStatementUnit db_query_update_plant;
+    PreparedStatementUnit db_query_update_itemonmap;
+    PreparedStatementUnit db_query_update_character_bot_already_beaten;
 
     /*
-    static StringWithReplacement db_query_insert_bot_already_beaten;
-    static StringWithReplacement db_query_select_bot_beaten;
-    static StringWithReplacement db_query_select_itemOnMap;
-    static StringWithReplacement db_query_insert_itemonmap;
-    static StringWithReplacement db_query_insert_recipe;
-    static StringWithReplacement db_query_delete_quest;
-    static StringWithReplacement db_query_select_quest_by_id;
-    static StringWithReplacement db_query_update_quest_finish;
-    static StringWithReplacement db_query_update_quest_step;
-    static StringWithReplacement db_query_update_quest_restart;
-    static StringWithReplacement db_query_insert_quest;
-    static StringWithReplacement db_query_select_plant;
-    static StringWithReplacement db_query_delete_plant;
-    static StringWithReplacement db_query_delete_plant_by_index;
-    static StringWithReplacement db_query_insert_plant;
-    static StringWithReplacement db_query_delete_bot_already_beaten;
+    PreparedStatementUnit db_query_insert_bot_already_beaten;
+    PreparedStatementUnit db_query_select_bot_beaten;
+    PreparedStatementUnit db_query_select_itemOnMap;
+    PreparedStatementUnit db_query_insert_itemonmap;
+    PreparedStatementUnit db_query_insert_recipe;
+    PreparedStatementUnit db_query_delete_quest;
+    PreparedStatementUnit db_query_select_quest_by_id;
+    PreparedStatementUnit db_query_update_quest_finish;
+    PreparedStatementUnit db_query_update_quest_step;
+    PreparedStatementUnit db_query_update_quest_restart;
+    PreparedStatementUnit db_query_insert_quest;
+    PreparedStatementUnit db_query_select_plant;
+    PreparedStatementUnit db_query_delete_plant;
+    PreparedStatementUnit db_query_delete_plant_by_index;
+    PreparedStatementUnit db_query_insert_plant;
+    PreparedStatementUnit db_query_delete_bot_already_beaten;
 */
 };
 #endif
