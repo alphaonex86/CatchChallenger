@@ -79,6 +79,7 @@ public:
     static void server_list_static(void *object);
     void server_list_object();
     DatabaseBase::DatabaseType databaseType() const;
+    DatabaseBase * database() const;
 private:
     void load_character_max_id();
     static void load_character_max_id_static(void *object);
@@ -94,6 +95,7 @@ private:
 private:
     EpollPostgresql *databaseBaseCommon;
     PreparedDBQueryCommonForLogin preparedDBQueryCommonForLogin;
+    PreparedDBQueryCommon preparedDBQueryCommon;
     std::unordered_map<uint32_t,InternalGameServer> servers;
     std::vector<void *> clientAddReturnList;
     std::vector<void *> clientRemoveReturnList;
