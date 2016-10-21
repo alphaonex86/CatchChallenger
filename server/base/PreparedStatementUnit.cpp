@@ -9,14 +9,14 @@
 
 using namespace CatchChallenger;
 
-#if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+#if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
 std::unordered_map<CatchChallenger::DatabaseBase *,uint16_t> PreparedStatementUnit::queryCount;
 #endif
 
 PreparedStatementUnit::PreparedStatementUnit() :
     database(NULL)
 {
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     uniqueName[0]=0;
     #endif
 }
@@ -24,7 +24,7 @@ PreparedStatementUnit::PreparedStatementUnit() :
 PreparedStatementUnit::PreparedStatementUnit(const std::string &query, CatchChallenger::DatabaseBase * const database) :
     database(database)
 {
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     uniqueName[0]=0;
     #endif
     if(!query.empty())
@@ -40,7 +40,7 @@ bool PreparedStatementUnit::setQuery(const std::string &query)
     this->query=query;
     if(this->query.empty())
         return false;
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     if(PreparedStatementUnit::queryCount.find(database)==PreparedStatementUnit::queryCount.cend())
         PreparedStatementUnit::queryCount[database]=0;
     strcpy(uniqueName,std::to_string(PreparedStatementUnit::queryCount.at(database)).c_str());
@@ -87,7 +87,7 @@ std::string PreparedStatementUnit::queryText() const
 
 DatabaseBase::CallBack * PreparedStatementUnit::asyncRead(void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
 {
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     return static_cast<EpollPostgresql *>(database)->asyncPreparedRead(queryText(),uniqueName,returnObject,method,values);
     #else
     return database->asyncRead(query.compose(values),returnObject,method);
@@ -96,7 +96,7 @@ DatabaseBase::CallBack * PreparedStatementUnit::asyncRead(void * returnObject,Ca
 
 bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
 {
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     return static_cast<EpollPostgresql *>(database)->asyncPreparedWrite(queryText(),uniqueName,values);
     #else
     return database->asyncWrite(query.compose(values));
@@ -111,10 +111,9 @@ PreparedStatementUnit::PreparedStatementUnit(const PreparedStatementUnit& other)
         return;
     }
     this->database=other.database;
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    query=other.query;
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     memcpy(this->uniqueName,other.uniqueName,sizeof(uniqueName));
-    #else
-    setQuery(other.query);
     #endif
 }
 
@@ -132,10 +131,9 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
         return *this;
     }
     this->database=other.database;
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    query=other.query;
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     memcpy(this->uniqueName,other.uniqueName,sizeof(uniqueName));
-    #else
-    setQuery(other.query);
     #endif
     return *this;
 }
@@ -143,10 +141,9 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
 PreparedStatementUnit& PreparedStatementUnit::operator=(PreparedStatementUnit&& other) // move assignment
 {
     this->database=other.database;
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    query=other.query;
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     memcpy(this->uniqueName,other.uniqueName,sizeof(uniqueName));
-    #else
-    setQuery(other.query);
     #endif
     other.database = nullptr;
     return *this;

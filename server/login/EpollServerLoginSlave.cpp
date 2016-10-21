@@ -668,6 +668,9 @@ void EpollServerLoginSlave::preload_profile()
             DatabaseBase * const database=CharactersGroupForLogin::list.at(indexDatabaseCommon)->database();
             const DatabaseBase::DatabaseType &databaseType=CharactersGroupForLogin::list.at(indexDatabaseCommon)->databaseType();
             LoginProfile::PreparedStatementForCreation &preparedStatementForCreation=profile.preparedStatementForCreationByCommon[database];
+            if(preparedStatementForCreation.type.size()<=index)
+                preparedStatementForCreation.type.resize(index+1);
+            LoginProfile::PreparedStatementForCreationType &preparedStatementForCreationType=preparedStatementForCreation.type[index];
             //assume here all is the same type
             {
                 unsigned int monsterGroupIndex=0;
@@ -675,8 +678,10 @@ void EpollServerLoginSlave::preload_profile()
                 while(monsterGroupIndex<profile.monstergroup.size())
                 {
                     const auto &monsters=profile.monstergroup.at(monsterGroupIndex);
+                    if(preparedStatementForCreationType.monsterGroup.size()<=monsterGroupIndex)
+                        preparedStatementForCreationType.monsterGroup.resize(monsterGroupIndex+1);
+                    LoginProfile::PreparedStatementForCreationMonsterGroup &preparedStatementForCreationMonsterGroup=preparedStatementForCreationType.monsterGroup[monsterGroupIndex];
                     std::vector<uint16_t> monsterForEncyclopedia;
-                    std::vector<PreparedStatementUnit> &monsterGroupQuery=preparedStatementForCreation.monster_insert[monsterGroupIndex];
                     unsigned int monsterIndex=0;
                     while(monsterIndex<monsters.size())
                     {
@@ -723,7 +728,7 @@ void EpollServerLoginSlave::preload_profile()
                                         binarytoHexa(raw_skill,sizeof(raw_skill)),
                                         binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
                                         });
-                                monsterGroupQuery.push_back(PreparedStatementUnit(queryText,database));
+                                preparedStatementForCreationMonsterGroup.monster_insert.push_back(PreparedStatementUnit(queryText,database));
                             }
                             else
                             {
@@ -741,7 +746,7 @@ void EpollServerLoginSlave::preload_profile()
                                         binarytoHexa(raw_skill,sizeof(raw_skill)),
                                         binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
                                         });
-                                monsterGroupQuery.push_back(PreparedStatementUnit(queryText,database));
+                                preparedStatementForCreationMonsterGroup.monster_insert.push_back(PreparedStatementUnit(queryText,database));
                             }
                         }
                         monsterForEncyclopedia.push_back(monster.id);
@@ -764,31 +769,49 @@ void EpollServerLoginSlave::preload_profile()
                     {
                         default:
                         case DatabaseBase::DatabaseType::Mysql:
-                            preparedStatementForCreation.character_insert.push_back(PreparedStatementUnit(std::string("INSERT INTO `character`("
+                            preparedStatementForCreationMonsterGroup.character_insert=PreparedStatementUnit(std::string("INSERT INTO `character`("
                                     "`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,"
                                     "`time_to_delete`,`played_time`,`last_connect`,`starter`,`item`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`"
-                                    ",`blob_version`) VALUES(%1,%2,'%3',%4,0,0,"+
+                                    ",`blob_version`) VALUES(%1,%2,"+
+                                                                                            #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+                                                                                            std::string("%3")+
+                                                                                            #else
+                                                                                            std::string("'%3'")+
+                                                                                            #endif
+                                                                                            ",%4,0,0,"+
                                     std::to_string(profile.cash)+",%5,0,0,"
                                     "0,0,0,"+
-                                    std::to_string(profile.databaseId/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('"+binarytoHexa(bitlist,sizeof(bitlist))+"'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(common_blobversion_datapack)+");"),database));
+                                    std::to_string(profile.databaseId/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('"+binarytoHexa(bitlist,sizeof(bitlist))+"'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(common_blobversion_datapack)+");"),database);
                         break;
                         case DatabaseBase::DatabaseType::SQLite:
-                            preparedStatementForCreation.character_insert.push_back(PreparedStatementUnit(std::string("INSERT INTO character("
+                            preparedStatementForCreationMonsterGroup.character_insert=PreparedStatementUnit(std::string("INSERT INTO character("
                                     "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                                     "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
-                                    ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
+                                    ",blob_version) VALUES(%1,%2,"+
+                                                                                            #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+                                                                                            std::string("%3")+
+                                                                                            #else
+                                                                                            std::string("'%3'")+
+                                                                                            #endif
+                                                                                            ",%4,0,0,"+
                                     std::to_string(profile.cash)+",%5,0,0,"
                                     "0,0,0,"+
-                                    std::to_string(profile.databaseId/*starter*/)+",'"+item+"','"+reputations+"','"+binarytoHexa(bitlist,sizeof(bitlist))+"','"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");"),database));
+                                    std::to_string(profile.databaseId/*starter*/)+",'"+item+"','"+reputations+"','"+binarytoHexa(bitlist,sizeof(bitlist))+"','"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");"),database);
                         break;
                         case DatabaseBase::DatabaseType::PostgreSQL:
-                            preparedStatementForCreation.character_insert.push_back(PreparedStatementUnit(std::string("INSERT INTO character("
+                            preparedStatementForCreationMonsterGroup.character_insert=PreparedStatementUnit(std::string("INSERT INTO character("
                                     "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                                     "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
-                                    ",blob_version) VALUES(%1,%2,'%3',%4,0,0,"+
+                                    ",blob_version) VALUES(%1,%2,"+
+                                                                                            #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+                                                                                            std::string("%3")+
+                                                                                            #else
+                                                                                            std::string("'%3'")+
+                                                                                            #endif
+                                                                                            ",%4,0,0,"+
                                     std::to_string(profile.cash)+",%5,0,FALSE,"
                                     "0,0,0,"+
-                                    std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x"+binarytoHexa(bitlist,sizeof(bitlist))+"','\\x"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");"),database));
+                                    std::to_string(profile.databaseId/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x"+binarytoHexa(bitlist,sizeof(bitlist))+"','\\x"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");"),database);
                         break;
                     }
 
