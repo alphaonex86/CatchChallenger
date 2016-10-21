@@ -240,12 +240,15 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(con
         std::cerr << "pg not connected" << std::endl;
         return NULL;
     }
+    size_t bufferSize=0;
     const char *paramValues[values.size()];
     {
         uint8_t index=0;
         while(index<values.size())
         {
             paramValues[index]=values.at(index).c_str();
+            bufferSize++;
+            bufferSize+=values.at(index).size();
             index++;
         }
     }
@@ -253,7 +256,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(con
     tempCallback.method=method;
     PreparedStatement tempQuery;
     tempQuery.id=id;
-    memcpy(tempQuery.paramValues,paramValues,sizeof(paramValues));
+    tempQuery.paramValuesBuffer=NULL;
     tempQuery.paramValuesCount=values.size();
     tempQuery.query=query;
     if(queue.size()>0 || result!=NULL)
@@ -262,6 +265,19 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(con
         {
             std::cerr << "pg queue full" << std::endl;
             return NULL;
+        }
+        tempQuery.paramValuesBuffer=new char[bufferSize+1];
+        tempQuery.paramValues=(char **)malloc(sizeof(char *)*values.size());
+        {
+            size_t cursor=0;
+            uint8_t index=0;
+            while(index<values.size())
+            {
+                tempQuery.paramValues[index]=tempQuery.paramValuesBuffer+cursor;
+                strcpy(tempQuery.paramValuesBuffer+cursor,values.at(index).c_str());
+                cursor+=values.at(index).size()+1;
+                index++;
+            }
         }
         queue.push_back(tempCallback);
         queriesList.push_back(tempQuery);
@@ -297,22 +313,38 @@ bool EpollPostgresql::asyncPreparedWrite(const std::string &query,char * const i
         std::cerr << "pg not connected" << std::endl;
         return false;
     }
+    size_t bufferSize=0;
     const char *paramValues[values.size()];
     {
         uint8_t index=0;
         while(index<values.size())
         {
             paramValues[index]=values.at(index).c_str();
+            bufferSize++;
+            bufferSize+=values.at(index).size();
             index++;
         }
     }
     PreparedStatement tempQuery;
     tempQuery.id=id;
-    memcpy(tempQuery.paramValues,paramValues,sizeof(paramValues));
     tempQuery.paramValuesCount=values.size();
+    tempQuery.paramValuesBuffer=NULL;
     tempQuery.query=query;
     if(queue.size()>0 || result!=NULL)
     {
+        tempQuery.paramValuesBuffer=new char[bufferSize+1];
+        tempQuery.paramValues=(char **)malloc(sizeof(char *)*values.size());
+        {
+            size_t cursor=0;
+            uint8_t index=0;
+            while(index<values.size())
+            {
+                tempQuery.paramValues[index]=tempQuery.paramValuesBuffer+cursor;
+                strcpy(tempQuery.paramValuesBuffer+cursor,values.at(index).c_str());
+                cursor+=values.at(index).size()+1;
+                index++;
+            }
+        }
         queue.push_back(emptyCallback);
         queriesList.push_back(tempQuery);
         return true;
@@ -374,6 +406,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     tempQuery.id=NULL;
     tempQuery.paramValues=NULL;
+    tempQuery.paramValuesBuffer=NULL;
     tempQuery.paramValuesCount=0;
     #endif
     tempQuery.query=query;
@@ -422,6 +455,7 @@ bool EpollPostgresql::asyncWrite(const std::string &query)
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     tempQuery.id=NULL;
     tempQuery.paramValues=NULL;
+    tempQuery.paramValuesBuffer=NULL;
     tempQuery.paramValuesCount=0;
     #endif
     tempQuery.query=query;
@@ -589,7 +623,7 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                         #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
                         int query_id=0;
                         if(firstEntry.id!=NULL)
-                            query_id=PQsendQueryPrepared(conn,firstEntry.id,firstEntry.paramValuesCount,&firstEntry.paramValues, NULL, NULL, 0);
+                            query_id=PQsendQueryPrepared(conn,firstEntry.id,firstEntry.paramValuesCount,firstEntry.paramValues, NULL, NULL, 0);
                         else
                             query_id=PQsendQuery(conn,firstEntry.query.c_str());
                         #else
