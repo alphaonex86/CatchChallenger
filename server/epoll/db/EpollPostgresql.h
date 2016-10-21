@@ -71,6 +71,7 @@ private:
     char simplifiedstrCoPG[255];
     #endif
     std::chrono::time_point<std::chrono::high_resolution_clock> start;
+    static bool informationDisplayed;
 };
 
 #endif
