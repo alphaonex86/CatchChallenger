@@ -19,6 +19,7 @@
 char EpollPostgresql::emptyString[]={'\0'};
 CatchChallenger::DatabaseBase::CallBack EpollPostgresql::emptyCallback;
 CatchChallenger::DatabaseBase::CallBack EpollPostgresql::tempCallback;
+bool EpollPostgresql::informationDisplayed=false;
 
 void EpollPostgresql::noticeReceiver(void *arg, const PGresult *res)
 {
@@ -46,11 +47,15 @@ EpollPostgresql::EpollPostgresql() :
     queue.reserve(CATCHCHALLENGER_MAXBDQUERIES);
     queriesList.reserve(CATCHCHALLENGER_MAXBDQUERIES);
 
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-    std::cout << "CATCHCHALLENGER_DB_PREPAREDSTATEMENT enabled" << std::endl;
-    #else
-    std::cout << "CATCHCHALLENGER_DB_PREPAREDSTATEMENT disabled" << std::endl;
-    #endif
+    if(EpollPostgresql::informationDisplayed==false)
+    {
+        #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+        std::cout << "CATCHCHALLENGER_DB_PREPAREDSTATEMENT enabled" << std::endl;
+        #else
+        std::cout << "CATCHCHALLENGER_DB_PREPAREDSTATEMENT disabled" << std::endl;
+        #endif
+        EpollPostgresql::informationDisplayed=true;
+    }
 }
 
 EpollPostgresql::~EpollPostgresql()
@@ -366,7 +371,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::
     tempCallback.object=returnObject;
     tempCallback.method=method;
     PreparedStatement tempQuery;
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     tempQuery.id=NULL;
     tempQuery.paramValues=NULL;
     tempQuery.paramValuesCount=0;
@@ -414,7 +419,7 @@ bool EpollPostgresql::asyncWrite(const std::string &query)
         return false;
     }
     PreparedStatement tempQuery;
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     tempQuery.id=NULL;
     tempQuery.paramValues=NULL;
     tempQuery.paramValuesCount=0;

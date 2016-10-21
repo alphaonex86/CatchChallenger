@@ -590,9 +590,32 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
         std::cerr << "At addCharacterStep2_return, prepared query not found" << std::endl;
         abort();
     }
-    EpollServerLoginSlave::LoginProfile::PreparedStatementForCreation &preparedStatementForCreation=profile.preparedStatementForCreationByCommon[databaseBaseCommon];
-    std::vector<PreparedStatementUnit> &monsters=preparedStatementForCreation.monster_insert.at(monsterGroupId);
-    PreparedStatementUnit &character_insert=preparedStatementForCreation.character_insert.at(monsterGroupId);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(profile.preparedStatementForCreationByCommon.find(databaseBaseCommon)==profile.preparedStatementForCreationByCommon.cend())
+    {
+        std::cerr << "At addCharacterStep2_return, database not found" << std::endl;
+        abort();
+    }
+    #endif
+    EpollServerLoginSlave::LoginProfile::PreparedStatementForCreation &preparedStatementForCreation=profile.preparedStatementForCreationByCommon.at(databaseBaseCommon);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(preparedStatementForCreation.type.size()>=profileIndex)
+    {
+        std::cerr << "At addCharacterStep2_return, profileIndex not found" << std::endl;
+        abort();
+    }
+    #endif
+    EpollServerLoginSlave::LoginProfile::PreparedStatementForCreationType &preparedStatementForCreationType=preparedStatementForCreation.type.at(profileIndex);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(preparedStatementForCreationType.monsterGroup.size()>=monsterGroupId)
+    {
+        std::cerr << "At addCharacterStep2_return, monsterGroupId not found" << std::endl;
+        abort();
+    }
+    #endif
+    EpollServerLoginSlave::LoginProfile::PreparedStatementForCreationMonsterGroup &preparedStatementForCreationMonsterGroup=preparedStatementForCreationType.monsterGroup.at(monsterGroupId);
+    PreparedStatementUnit &character_insert=preparedStatementForCreationMonsterGroup.character_insert;
+    std::vector<PreparedStatementUnit> &monsters=preparedStatementForCreationMonsterGroup.monster_insert;
     if(!monsters.empty())
     {
         if(maxMonsterId.size()<monsters.size())

@@ -5,7 +5,7 @@
 #include "StringWithReplacement.h"
 #include <string>
 #include <vector>
-#if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+#if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
 #include <unordered_map>
 #endif
 
@@ -32,7 +32,7 @@ private:
     #else
     QtDatabase *database;
     #endif
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     //prepared statement
     char uniqueName[3];
     static std::unordered_map<CatchChallenger::DatabaseBase *,uint16_t> queryCount;

@@ -61,10 +61,18 @@ public:
 
         std::vector<std::vector<Monster> > monstergroup;
 
+        struct PreparedStatementForCreationMonsterGroup
+        {
+            std::vector<PreparedStatementUnit> monster_insert;
+            PreparedStatementUnit character_insert;
+        };
+        struct PreparedStatementForCreationType
+        {
+            std::vector<PreparedStatementForCreationMonsterGroup> monsterGroup;
+        };
         struct PreparedStatementForCreation
         {
-            std::vector<std::vector<PreparedStatementUnit> > monster_insert;
-            std::vector<PreparedStatementUnit> character_insert;
+            std::vector<PreparedStatementForCreationType> type;
         };
         std::unordered_map<DatabaseBase *,PreparedStatementForCreation> preparedStatementForCreationByCommon;
     };
