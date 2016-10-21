@@ -36,6 +36,7 @@ private:
     //prepared statement
     char uniqueName[3];
     static std::unordered_map<CatchChallenger::DatabaseBase *,uint16_t> queryCount;
+    std::string writeToPrepare(const std::string &query) const;
     #endif
     StringWithReplacement query;
 };

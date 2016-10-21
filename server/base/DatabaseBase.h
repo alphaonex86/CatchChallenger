@@ -7,7 +7,7 @@
 #include "DatabaseFunction.h"
 
 #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
-//#define CATCHCHALLENGER_DB_PREPAREDSTATEMENT
+#define CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 #endif
 
 typedef void (*CallBackDatabase)(void *object);
