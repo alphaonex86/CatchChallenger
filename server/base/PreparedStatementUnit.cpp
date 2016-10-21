@@ -2,6 +2,7 @@
 #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
 #include <postgresql/libpq-fe.h>
 #include "../../general/base/cpp11addition.h"
+#include "../../general/base/GeneralVariable.h"
 #include "../epoll/db/EpollPostgresql.h"
 #include <cstring>
 #include <iostream>
@@ -45,6 +46,18 @@ bool PreparedStatementUnit::setQuery(const std::string &query)
         PreparedStatementUnit::queryCount[database]=0;
     strcpy(uniqueName,std::to_string(PreparedStatementUnit::queryCount.at(database)).c_str());
     PreparedStatementUnit::queryCount[database]++;
+    const std::string &newQuery=PreparedStatementUnit::writeToPrepare(query);
+    if(!static_cast<EpollPostgresql *>(database)->queryPrepare(uniqueName,newQuery.c_str(),this->query.argumentsCount(), NULL/*paramTypes*/))
+    { //if failed quit
+        std::cerr << "Problem to prepare the query: " << newQuery << ", error message: " << database->errorMessage() << std::endl;
+        abort();
+    }
+    #endif
+    return true;
+}
+
+std::string PreparedStatementUnit::writeToPrepare(const std::string &query) const
+{
     std::string newQuery=query;
     stringreplaceAll(newQuery,"\"","");
     {
@@ -61,14 +74,7 @@ bool PreparedStatementUnit::setQuery(const std::string &query)
             index--;
         }
     }
-    //stringreplaceAll(newQuery,"decode('?','hex')","?");
-    if(!static_cast<EpollPostgresql *>(database)->queryPrepare(uniqueName,newQuery.c_str(),this->query.argumentsCount(), NULL/*paramTypes*/))
-    { //if failed quit
-        std::cerr << "Problem to prepare the query: " << newQuery << ", error message: " << database->errorMessage() << std::endl;
-        abort();
-    }
-    #endif
-    return true;
+    return newQuery;
 }
 
 bool PreparedStatementUnit::empty() const
@@ -88,7 +94,11 @@ std::string PreparedStatementUnit::queryText() const
 DatabaseBase::CallBack * PreparedStatementUnit::asyncRead(void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
 {
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-    return static_cast<EpollPostgresql *>(database)->asyncPreparedRead(queryText(),uniqueName,returnObject,method,values);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            return static_cast<EpollPostgresql *>(database)->asyncPreparedRead(PreparedStatementUnit::writeToPrepare(queryText()),uniqueName,returnObject,method,values);
+        #else
+            return static_cast<EpollPostgresql *>(database)->asyncPreparedRead("",uniqueName,returnObject,method,values);
+        #endif
     #else
     return database->asyncRead(query.compose(values),returnObject,method);
     #endif
@@ -97,7 +107,11 @@ DatabaseBase::CallBack * PreparedStatementUnit::asyncRead(void * returnObject,Ca
 bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
 {
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-    return static_cast<EpollPostgresql *>(database)->asyncPreparedWrite(queryText(),uniqueName,values);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            return static_cast<EpollPostgresql *>(database)->asyncPreparedWrite(PreparedStatementUnit::writeToPrepare(queryText()),uniqueName,values);
+        #else
+            return static_cast<EpollPostgresql *>(database)->asyncPreparedWrite("",uniqueName,values);
+        #endif
     #else
     return database->asyncWrite(query.compose(values));
     #endif
