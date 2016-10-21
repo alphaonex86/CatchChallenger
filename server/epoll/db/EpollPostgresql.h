@@ -57,7 +57,8 @@ private:
         #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
         //null if not prepared
         const char * id;
-        char * paramValues;
+        char ** paramValues;
+        char * paramValuesBuffer;
         uint8_t paramValuesCount;
         #endif
     };
