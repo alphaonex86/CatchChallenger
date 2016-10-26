@@ -840,7 +840,7 @@ public:
     std::vector<std::vector<Profile::Monster> > monstergroup;
     std::vector<Reputation> reputations;
     std::vector<Item> items;
-    std::string id;
+    uint8_t databaseId;/*to resolve with the dictionary*/
 };
 
 struct ServerSpecProfile
@@ -851,7 +851,7 @@ struct ServerSpecProfile
     /*COORD_TYPE*/ uint8_t y;
     Orientation orientation;
 
-    std::string id;
+    uint8_t databaseId;/*to resolve with the dictionary*/
 };
 
 enum MonstersCollisionType : uint8_t
