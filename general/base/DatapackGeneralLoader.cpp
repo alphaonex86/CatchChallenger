@@ -1959,7 +1959,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                                                                                   #endif // CATCHCHALLENGER_CLASS_MASTER
                                                                                   const std::unordered_map<uint16_t,Monster> &monsters,const std::vector<Reputation> &reputations)
 {
-    std::unordered_set<uint8_t> idDuplicate;
+    std::unordered_set<std::string> idDuplicate;
     std::unordered_map<std::string,int> reputationNameToId;
     {
         unsigned int index=0;
@@ -2023,9 +2023,8 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
             Profile profile;
             profile.cash=0;
 
-            bool databaseIdConvert=false;
             if(startItem->Attribute("id")!=NULL)
-                profile.databaseId=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(startItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&databaseIdConvert);
+                profile.databaseId=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(startItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id")));
 
             if(idDuplicate.find(profile.databaseId)!=idDuplicate.cend())
             {
@@ -2034,7 +2033,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                 continue;
             }
 
-            if(databaseIdConvert && idDuplicate.find(profile.databaseId)==idDuplicate.cend())
+            if(!profile.databaseId.empty() && idDuplicate.find(profile.databaseId)==idDuplicate.cend())
             {
                 const CATCHCHALLENGER_XMLELEMENT * forcedskin = startItem->FirstChildElement("forcedskin");
 
@@ -2728,7 +2727,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileList(cons
 {
     std::vector<ServerSpecProfile> serverProfile=loadServerProfileListInternal(datapackPath,mainDatapackCode,file);
     //index of base profile
-    std::unordered_set<uint8_t> profileId,serverProfileId;
+    std::unordered_set<std::string> profileId,serverProfileId;
     {
         unsigned int index=0;
         while(index<profileCommon.size())
@@ -2744,15 +2743,15 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileList(cons
         unsigned int index=0;
         while(index<serverProfile.size())
         {
-            const ServerSpecProfile &serverProfileLocal=serverProfile.at(index);
-            if(profileId.find(serverProfileLocal.databaseId)!=profileId.cend())
+            const ServerSpecProfile &serverSpecProfile=serverProfile.at(index);
+            if(profileId.find(serverSpecProfile.databaseId)!=profileId.cend())
             {
-                serverProfileId.insert(serverProfileLocal.databaseId);
+                serverProfileId.insert(serverSpecProfile.databaseId);
                 index++;
             }
             else
             {
-                std::cerr << "Profile xml file: " << file << ", found id \"" << serverProfileLocal.databaseId << "\" but not found in common, drop it" << std::endl;
+                std::cerr << "Profile xml file: " << file << ", found id \"" << serverSpecProfile.databaseId << "\" but not found in common, drop it" << std::endl;
                 serverProfile.erase(serverProfile.begin()+index);
             }
         }
@@ -2782,7 +2781,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileList(cons
 
 std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInternal(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file)
 {
-    std::unordered_set<uint8_t> idDuplicate;
+    std::unordered_set<std::string> idDuplicate;
     std::vector<ServerSpecProfile> serverProfileList;
 
     CATCHCHALLENGER_XMLDOCUMENT *domDocument;
@@ -2865,9 +2864,8 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
                 continue;
             }
 
-            bool databaseIdConvert=false;
             if(startItem->Attribute("id")!=NULL)
-                serverProfile.databaseId=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(startItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&databaseIdConvert);
+                serverProfile.databaseId=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(startItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id")));
 
             if(idDuplicate.find(serverProfile.databaseId)!=idDuplicate.cend())
             {
@@ -2876,7 +2874,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
                 continue;
             }
 
-            if(databaseIdConvert && idDuplicate.find(serverProfile.databaseId)==idDuplicate.cend())
+            if(!serverProfile.databaseId.empty() && idDuplicate.find(serverProfile.databaseId)==idDuplicate.cend())
             {
                 idDuplicate.insert(serverProfile.databaseId);
                 serverProfileList.push_back(serverProfile);
