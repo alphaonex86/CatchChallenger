@@ -21,6 +21,7 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../VariableServer.h"
+#include "../base/PreparedDBQuery.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER
 #include "../epoll/timer/TimerCityCapture.h"
 #include "../epoll/timer/TimerDdos.h"
@@ -275,13 +276,23 @@ struct ServerProfileInternal
     Orientation orientation;
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    std::vector<std::string> monster_encyclopedia_insert;
-    std::vector<std::vector<StringWithReplacement> > monster_insert;
-
-    StringWithReplacement character_insert;
+    struct PreparedStatementForCreationMonsterGroup
+    {
+        std::vector<PreparedStatementUnit> monster_insert;
+        PreparedStatementUnit character_insert;
+    };
+    struct PreparedStatementForCreationType
+    {
+        std::vector<PreparedStatementForCreationMonsterGroup> monsterGroup;
+    };
+    struct PreparedStatementForCreation
+    {
+        std::vector<PreparedStatementForCreationType> type;
+    };
+    PreparedStatementForCreation preparedStatementForCreationByCommon;
     #endif
 
-    StringWithReplacement preparedQueryAddCharacterForServer;
+    PreparedStatementUnit preparedQueryAddCharacterForServer;
     bool valid;
 };
 
@@ -303,6 +314,12 @@ struct ServerPrivateVariables
     QtDatabase *db_server;
     std::vector<QtTimerEvents *> timerEvents;
     #endif
+    PreparedDBQueryCommonForLogin preparedDBQueryCommonForLogin;
+    PreparedDBQueryCommon preparedDBQueryCommon;
+    #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
+    PreparedDBQueryServer preparedDBQueryServer;
+    #endif
+
 
     std::vector<ServerProfileInternal> serverProfileInternalList;
 

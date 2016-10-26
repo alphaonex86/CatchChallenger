@@ -311,7 +311,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
         while(index<CommonDatapack::commonDatapack.profileList.size())
         {
             const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
-            profileNameToId[profile.id]=index;
+            profileNameToId[profile.databaseId]=index;
             index++;
         }
     }
@@ -344,7 +344,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
             const uint8_t &internalValue=profileNameToId.at(starter);
             dictionary_starter_database_to_internal[lastId]=internalValue;
             dictionary_starter_internal_to_database[internalValue]=lastId;
-            foundstarter.insert(CommonDatapack::commonDatapack.profileList.at(internalValue).id);
+            foundstarter.insert(CommonDatapack::commonDatapack.profileList.at(internalValue).databaseId);
         }
     }
     databaseBaseBase->clear();
@@ -352,7 +352,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
     while(index<CommonDatapack::commonDatapack.profileList.size())
     {
         const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
-        if(foundstarter.find(profile.id)==foundstarter.end())
+        if(foundstarter.find(profile.databaseId)==foundstarter.end())
         {
             #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             lastId++;
@@ -361,13 +361,13 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
             {
                 default:
                 case DatabaseBase::DatabaseType::Mysql:
-                    queryText="INSERT INTO `dictionary_starter`(`id`,`starter`) VALUES("+std::to_string(lastId)+",'"+profile.id+"');";
+                    queryText="INSERT INTO `dictionary_starter`(`id`,`starter`) VALUES("+std::to_string(lastId)+",'"+profile.databaseId+"');";
                 break;
                 case DatabaseBase::DatabaseType::SQLite:
-                    queryText="INSERT INTO dictionary_starter(id,starter) VALUES("+std::to_string(lastId)+",'"+profile.id+"');";
+                    queryText="INSERT INTO dictionary_starter(id,starter) VALUES("+std::to_string(lastId)+",'"+profile.databaseId+"');";
                 break;
                 case DatabaseBase::DatabaseType::PostgreSQL:
-                    queryText="INSERT INTO dictionary_starter(id,starter) VALUES("+std::to_string(lastId)+",'"+profile.id+"');";
+                    queryText="INSERT INTO dictionary_starter(id,starter) VALUES("+std::to_string(lastId)+",'"+profile.databaseId+"');";
                 break;
             }
             if(!databaseBaseBase->asyncWrite(queryText))
