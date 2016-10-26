@@ -833,10 +833,11 @@ void BaseServer::preload_market_monsters_sql()
     }
 
     StringWithReplacement finalQuery(queryText);
+    Monster_Semi_Market monster_Semi_Market=monsterSemiMarketList.at(0);
     if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(
-                finalQuery.compose(
-                    std::to_string(monsterSemiMarketList.at(0).id)
-                    )
+                finalQuery.compose({
+                    std::to_string(monster_Semi_Market.id)
+                    })
                 ,this,&BaseServer::preload_market_monsters_static)==NULL)
     {
         monsterSemiMarketList.clear();

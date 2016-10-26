@@ -324,16 +324,16 @@ void BaseServer::preload_profile()
         {
             default:
             case DatabaseBase::DatabaseType::Mysql:
-                serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`,`botfight_id`,`itemonmap`,plants`,`blob_version`,`quest`) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),UNHEX(''),"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",UNHEX(''));");
+                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`,`botfight_id`,`itemonmap`,plants`,`blob_version`,`quest`) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),UNHEX(''),"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",UNHEX(''));"),GlobalServerData::serverPrivateVariables.db_server);
             break;
             case DatabaseBase::DatabaseType::SQLite:
-                serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,blob_version,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'');");
+                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,blob_version,quest) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'');"),GlobalServerData::serverPrivateVariables.db_server);
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
-                serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,blob_version,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'\\x','\\x','\\x',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'\\x');");
+                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,blob_version,quest) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'\\x');"),GlobalServerData::serverPrivateVariables.db_server);
             break;
         }
         #else
@@ -341,16 +341,16 @@ void BaseServer::preload_profile()
         {
             default:
             case DatabaseBase::DatabaseType::Mysql:
-                serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`,`botfight_id`,`itemonmap`,`blob_version`,`quest`) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",UNHEX(''));");
+                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`,`botfight_id`,`itemonmap`,`blob_version`,`quest`) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",UNHEX(''));"),GlobalServerData::serverPrivateVariables.db_server);
             break;
             case DatabaseBase::DatabaseType::SQLite:
-                serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,blob_version,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'');");
+                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,blob_version,quest) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'');"),GlobalServerData::serverPrivateVariables.db_server);
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
-                serverProfileInternal.preparedQueryAddCharacterForServer=std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,blob_version,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'\\x','\\x',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'\\x');");
+                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,blob_version,quest) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'\\x');"),GlobalServerData::serverPrivateVariables.db_server);
             break;
         }
         #endif
