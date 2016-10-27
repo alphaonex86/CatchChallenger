@@ -41,7 +41,7 @@ void Client::addObject(const uint16_t &item, const uint32_t &quantity, bool data
     if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
     {
         public_and_private_informations.items[item]+=quantity;
-        /*std::string queryText=PreparedDBQueryCommon::db_query_update_item;
+        /*std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_item;
         stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
         stringreplaceOne(queryText,"%2",std::to_string(item));
         stringreplaceOne(queryText,"%3",std::to_string(character_id));
@@ -51,7 +51,7 @@ void Client::addObject(const uint16_t &item, const uint32_t &quantity, bool data
     }
     else
     {
-        /*std::string queryText=PreparedDBQueryCommon::db_query_insert_item;
+        /*std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_item;
         stringreplaceOne(queryText,"%1",std::to_string(item));
         stringreplaceOne(queryText,"%2",std::to_string(character_id));
         stringreplaceOne(queryText,"%3",std::to_string(quantity));
@@ -81,7 +81,7 @@ void Client::saveObjectRetention(const uint16_t &item)
     (void)item;
     /*if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
     {
-        std::string queryText=PreparedDBQueryCommon::db_query_update_item;
+        std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_item;
         stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
         stringreplaceOne(queryText,"%2",std::to_string(item));
         stringreplaceOne(queryText,"%3",std::to_string(character_id));
@@ -89,7 +89,7 @@ void Client::saveObjectRetention(const uint16_t &item)
     }
     else
     {
-        std::string queryText=PreparedDBQueryCommon::db_query_delete_item;
+        std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_item;
         stringreplaceOne(queryText,"%1",std::to_string(item));
         stringreplaceOne(queryText,"%2",std::to_string(character_id));
         dbQueryWriteCommon(queryText);
@@ -104,7 +104,7 @@ uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity, bo
         if(public_and_private_informations.items.at(item)>quantity)
         {
             public_and_private_informations.items[item]-=quantity;
-            /*std::string queryText=PreparedDBQueryCommon::db_query_update_item;
+            /*std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_item;
             stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.items.at(item)));
             stringreplaceOne(queryText,"%2",std::to_string(item));
             stringreplaceOne(queryText,"%3",std::to_string(character_id));
@@ -118,7 +118,7 @@ uint32_t Client::removeObject(const uint16_t &item, const uint32_t &quantity, bo
             const uint32_t removed_quantity=public_and_private_informations.items.at(item);
             public_and_private_informations.items.erase(item);
             /*
-            std::string queryText=PreparedDBQueryCommon::db_query_delete_item;
+            std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_item;
             stringreplaceOne(queryText,"%1",std::to_string(item));
             stringreplaceOne(queryText,"%2",std::to_string(character_id));
             dbQueryWriteCommon(queryText);*/
@@ -248,10 +248,10 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         //add into db, bit to save
         {
-            dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_character_recipe.compose(
+            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_recipe.asyncWrite({
                         binarytoHexa(public_and_private_informations.recipes,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1),
                         std::to_string(character_id)
-                        ));
+                        });
         }
     }
     //use trap into fight

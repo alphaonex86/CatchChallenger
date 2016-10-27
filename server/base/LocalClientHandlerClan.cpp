@@ -41,13 +41,18 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             clanActionParam->action=action;
             clanActionParam->text=text;
 
-            const std::string &queryText=PreparedDBQueryCommon::db_query_select_clan_by_name.compose(
-                        SqlFunction::quoteSqlVariable(text)
-                        );
-            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::addClan_static);
+            CatchChallenger::DatabaseBase::CallBack *callback=
+                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_clan_by_name
+                    .asyncRead(this,&Client::addClan_static,{
+                    #ifdef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
+                    text
+                    #else
+                    SqlFunction::quoteSqlVariable(text)
+                    #endif
+                    });
             if(callback==NULL)
             {
-                std::cerr << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
+                std::cerr << "Sql error for: "+GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_clan_by_name.queryText()+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
 
                 removeFromQueryReceived(query_id);
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
@@ -91,10 +96,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             //update the db
-            const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_clan_to_reset.compose(
-                        std::to_string(character_id)
-                        );
-            dbQueryWriteCommon(queryText);
+            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id)});
         }
         break;
         /// \todo: where is the code is resolv when the clan is dissolved but player not connected?
@@ -129,24 +131,15 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             unsigned int index=0;
             while(index<players.size())
             {
-                const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_clan_to_reset.compose(
-                            std::to_string(players.at(index)->getPlayerId())
-                            );
-                dbQueryWriteCommon(queryText);
+                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(players.at(index)->getPlayerId())});
                 index++;
             }
-            {
-                const std::string &queryText=PreparedDBQueryCommon::db_query_delete_clan.compose(
-                            std::to_string(public_and_private_informations.clan)
-                            );
-                dbQueryWriteCommon(queryText);
-            }
+            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_clan.asyncWrite({std::to_string(public_and_private_informations.clan)});
             #ifndef EPOLLCATCHCHALLENGERSERVER
             {
-                const std::string &queryText=PreparedDBQueryServer::db_query_delete_city.compose(
+                GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({
                             clan->capturedCity
-                            );
-                dbQueryWriteServer(queryText);
+                            });
             }
             #endif
             //update the object
@@ -252,10 +245,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
 
             if(!isFound)
             {
-                const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_clan_to_reset.compose(
-                            std::to_string(character_id)
-                            );
-                dbQueryWriteCommon(queryText);
+                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id)});
                 return;
             }
             else if(isIntoTheClan)
@@ -340,12 +330,15 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     posOutput+=4;
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     //add into db
-    const std::string &queryText=PreparedDBQueryCommon::db_query_insert_clan.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_clan.asyncWrite({
                 std::to_string(clanId),
+                #ifdef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
+                text,
+                #else
                 SqlFunction::quoteSqlVariable(text),
+                #endif
                 std::to_string(sFrom1970())
-                );
-    dbQueryWriteCommon(queryText);
+                });
     insertIntoAClan(clanId);
 }
 
@@ -475,12 +468,11 @@ void Client::insertIntoAClan(const uint32_t &clanId)
         else
             clan_leader=StaticText::text_false;
     }
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_clan_and_leader.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_and_leader.asyncWrite({
                 std::to_string(clanId),
                 clan_leader,
                 std::to_string(character_id)
-                );
-    dbQueryWriteCommon(queryText);
+                });
     sendClanInfo();
     clanChangeWithoutDb(public_and_private_informations.clan);
 }
@@ -488,10 +480,9 @@ void Client::insertIntoAClan(const uint32_t &clanId)
 void Client::ejectToClan()
 {
     dissolvedClan();
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_clan_to_reset.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({
                 std::to_string(character_id)
-                );
-    dbQueryWriteCommon(queryText);
+                });
 }
 
 uint32_t Client::getClanId() const
