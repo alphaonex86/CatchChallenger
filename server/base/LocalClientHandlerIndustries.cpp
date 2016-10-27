@@ -32,23 +32,21 @@ void Client::saveIndustryStatus(const uint32_t &factoryId,const IndustryStatus &
     //save in db
     if(GlobalServerData::serverPrivateVariables.industriesStatus.find(factoryId)==GlobalServerData::serverPrivateVariables.industriesStatus.cend())
     {
-        const std::string &queryText=PreparedDBQueryServer::db_query_insert_factory.compose(
+        GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_factory.asyncWrite({
                     std::to_string(factoryId),
                     stringimplode(resourcesStringList,';'),
                     stringimplode(productsStringList,';'),
                     std::to_string(industryStatus.last_update)
-                    );
-        dbQueryWriteServer(queryText);
+                    });
     }
     else
     {
-        const std::string &queryText=PreparedDBQueryServer::db_query_update_factory.compose(
+        GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_factory.asyncWrite({
                     stringimplode(resourcesStringList,';'),
                     stringimplode(productsStringList,';'),
                     std::to_string(industryStatus.last_update),
                     std::to_string(factoryId)
-                    );
-        dbQueryWriteServer(queryText);
+                    });
     }
     GlobalServerData::serverPrivateVariables.industriesStatus[factoryId]=industryStatus;
 }
