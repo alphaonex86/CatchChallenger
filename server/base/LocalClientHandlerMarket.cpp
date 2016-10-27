@@ -175,22 +175,20 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
             //apply the buy
             if(marketItem.quantity==quantity)
             {
-                const std::string &queryText=PreparedDBQueryServer::db_query_delete_item_market.compose(
+                GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_item_market.asyncWrite({
                             std::to_string(marketItem.item),
                             std::to_string(marketItem.player)
-                            );
-                dbQueryWriteServer(queryText);
+                            });
                 GlobalServerData::serverPrivateVariables.marketItemList.erase(GlobalServerData::serverPrivateVariables.marketItemList.begin()+index);
             }
             else
             {
                 GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
-                const std::string &queryText=PreparedDBQueryServer::db_query_update_item_market.compose(
+                GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_item_market.asyncWrite({
                             std::to_string(marketItem.quantity-quantity),
                             std::to_string(marketItem.item),
                             std::to_string(marketItem.player)
-                            );
-                dbQueryWriteServer(queryText);
+                            });
             }
             removeCash(quantity*marketItem.price);
             if(playerById.find(marketItem.player)!=playerById.cend())
@@ -198,11 +196,10 @@ void Client::buyMarketObject(const uint32_t &query_id,const uint32_t &marketObje
                 if(!playerById.at(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.price))
                     normalOutput("Problem at market cash adding");
             }
-            const std::string &queryText=PreparedDBQueryServer::db_query_update_charaters_market_cash.compose(
+            GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_charaters_market_cash.asyncWrite({
                         std::to_string(quantity*marketItem.price),
                         std::to_string(marketItem.player)
-                        );
-            dbQueryWriteServer(queryText);
+                        });
             addObject(marketItem.item,quantity);
 
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
@@ -262,13 +259,10 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &marketMon
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.erase(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.begin()+index);
             removeCash(marketPlayerMonster.price);
             //entry created at first server connexion
-            {
-                const std::string &queryText=PreparedDBQueryServer::db_query_update_charaters_market_cash.compose(
-                            std::to_string(marketPlayerMonster.price),
-                            std::to_string(marketPlayerMonster.player)
-                            );
-                dbQueryWriteServer(queryText);
-            }
+            GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_charaters_market_cash.asyncWrite({
+                        std::to_string(marketPlayerMonster.price),
+                        std::to_string(marketPlayerMonster.player)
+                        });
             if(playerById.find(marketPlayerMonster.player)!=playerById.cend())
             {
                 if(!playerById.at(marketPlayerMonster.player)->addMarketCashWithoutSave(marketPlayerMonster.price))
@@ -276,20 +270,14 @@ void Client::buyMarketMonster(const uint32_t &query_id,const uint32_t &marketMon
             }
             addPlayerMonster(marketPlayerMonster.monster);
 
-            {
-                const std::string &queryText=PreparedDBQueryServer::db_query_delete_monster_market_price.compose(
-                            std::to_string(marketPlayerMonster.monster.id)
-                            );
-                dbQueryWriteServer(queryText);
-            }
-            {
-                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_move_to_new_player.compose(
-                            std::to_string(character_id),
-                            std::to_string(getPlayerMonster().size()),
-                            std::to_string(marketPlayerMonster.monster.id)
-                            );
-                dbQueryWriteCommon(queryText);
-            }
+            GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_monster_market_price.asyncWrite({
+                        std::to_string(marketPlayerMonster.monster.id)
+                        });
+            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_move_to_new_player.asyncWrite({
+                        std::to_string(character_id),
+                        std::to_string(getPlayerMonster().size()),
+                        std::to_string(marketPlayerMonster.monster.id)
+                        });
 
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
@@ -354,13 +342,12 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
-            const std::string &queryText=PreparedDBQueryServer::db_query_update_item_market_and_price.compose(
+            GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_item_market_and_price.asyncWrite({
                         std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity),
                         std::to_string(price),
                         std::to_string(objectId),
                         std::to_string(character_id)
-                        );
-            dbQueryWriteServer(queryText);
+                        });
             return;
         }
         index++;
@@ -377,13 +364,12 @@ void Client::putMarketObject(const uint32_t &query_id,const uint32_t &objectId,c
     }
     //append to the market
     removeObject(objectId,quantity);
-    const std::string &queryText=PreparedDBQueryServer::db_query_insert_item_market.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_item_market.asyncWrite({
                 std::to_string(objectId),
                 std::to_string(character_id),
                 std::to_string(quantity),
                 std::to_string(price)
-                );
-    dbQueryWriteServer(queryText);
+                });
     MarketItem marketItem;
     marketItem.price=price;
     marketItem.item=objectId;
@@ -437,23 +423,19 @@ void Client::putMarketMonster(const uint32_t &query_id, const uint8_t &monsterPo
     marketPlayerMonster.price=price;
     marketPlayerMonster.monster=playerMonster;
     marketPlayerMonster.player=character_id;
-    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_place.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_place.asyncWrite({
                            "3",
                            std::to_string(marketPlayerMonster.monster.id)
-                           )
-                       );
+                       });
     public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.begin()+index);
     GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.push_back(marketPlayerMonster);
     //save the player drop monster
     //updateMonsterInDatabase();
 
-    {
-        const std::string &queryText=PreparedDBQueryServer::db_query_insert_monster_market_price.compose(
-                std::to_string(marketPlayerMonster.monster.id),
-                std::to_string(price)
-                );
-        dbQueryWriteServer(queryText);
-    }
+    GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_monster_market_price.asyncWrite({
+            std::to_string(marketPlayerMonster.monster.id),
+            std::to_string(price)
+            });
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
@@ -485,10 +467,9 @@ void Client::withdrawMarketCash(const uint32_t &query_id)
     {
         addCash(market_cash);
         market_cash=0;
-        const std::string &queryText=PreparedDBQueryServer::db_query_get_market_cash.compose(
+        GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_get_market_cash.asyncWrite({
                     std::to_string(character_id)
-                    );
-        dbQueryWriteServer(queryText);
+                    });
     }
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -550,21 +531,17 @@ void Client::withdrawMarketObject(const uint32_t &query_id,const uint32_t &objec
             {
                 marketObjectIdList.push_back(marketItem.marketObjectUniqueId);
                 GlobalServerData::serverPrivateVariables.marketItemList.erase(GlobalServerData::serverPrivateVariables.marketItemList.begin()+index);
-                const std::string &queryText=PreparedDBQueryServer::db_query_delete_item_market.compose(
+                GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_item_market.asyncWrite({
                                 std::to_string(objectId),
                                 std::to_string(character_id)
-                            );
-                dbQueryWriteServer(queryText);
+                            });
             }
             else
-            {
-                const std::string &queryText=PreparedDBQueryServer::db_query_update_item_market.compose(
+                GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_item_market.asyncWrite({
                                 std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity),
                                 std::to_string(objectId),
                                 std::to_string(character_id)
-                            );
-                dbQueryWriteServer(queryText);
-            }
+                            });
             addObject(objectId,quantity);
 
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
@@ -618,21 +595,10 @@ void Client::withdrawMarketMonster(const uint32_t &query_id,const uint32_t &mons
                 return;
             }
 
-            {
-                const std::string &queryText=PreparedDBQueryServer::db_query_delete_monster_market_price.compose(
-                                std::to_string(marketPlayerMonster.monster.id)
-                            );
-                dbQueryWriteServer(queryText);
-            }
+            GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_monster_market_price.asyncWrite({std::to_string(marketPlayerMonster.monster.id)});
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.erase(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.begin()+index);
             addPlayerMonster(marketPlayerMonster.monster);
-            {
-                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_place.compose(
-                                "1",
-                                std::to_string(marketPlayerMonster.monster.id)
-                            );
-                dbQueryWriteCommon(queryText);
-            }
+            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_place.asyncWrite({"1",std::to_string(marketPlayerMonster.monster.id)});
 
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;

@@ -248,11 +248,10 @@ void Client::syncDatabaseQuest()
             posOutput+=1;
             ++i;
         }
-        const std::string &queryText=PreparedDBQueryServer::db_query_update_character_quests.compose(
+        GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_quests.asyncWrite({
                     binarytoHexa(tempBigBufferForOutput,posOutput),
                     std::to_string(character_id)
-                    );
-        dbQueryWriteServer(queryText);
+                    });
     }
     else
     {
@@ -273,11 +272,10 @@ void Client::syncDatabaseQuest()
             posOutput+=1;
             ++i;
         }
-        const std::string &queryText=PreparedDBQueryServer::db_query_update_character_quests.compose(
+        GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_quests.asyncWrite({
                     binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput),
                     std::to_string(character_id)
-                    );
-        dbQueryWriteServer(queryText);
+                    });
     }
 }
 

@@ -53,11 +53,10 @@ void Client::addWarehouseCash(const uint64_t &cash, const bool &forceSave)
     if(cash==0 && !forceSave)
         return;
     public_and_private_informations.warehouse_cash+=cash;
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_warehouse_cash.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_warehouse_cash.asyncWrite({
                 std::to_string(public_and_private_informations.warehouse_cash),
                 std::to_string(character_id)
-                );
-    dbQueryWriteCommon(queryText);
+                });
 }
 
 void Client::removeWarehouseCash(const uint64_t &cash)
@@ -66,11 +65,10 @@ void Client::removeWarehouseCash(const uint64_t &cash)
         return;
     public_and_private_informations.warehouse_cash-=cash;
     public_and_private_informations.warehouse_cash+=cash;
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_warehouse_cash.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_warehouse_cash.asyncWrite({
                 std::to_string(public_and_private_informations.warehouse_cash),
                 std::to_string(character_id)
-                );
-    dbQueryWriteCommon(queryText);
+                });
 }
 
 void Client::wareHouseStore(const int64_t &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters)
@@ -116,12 +114,11 @@ void Client::wareHouseStore(const int64_t &cash, const std::vector<std::pair<uin
                 const PlayerMonster &playerMonsterinWarehouse=public_and_private_informations.warehouse_playerMonster.at(sub_index);
                 if(playerMonsterinWarehouse.id==withdrawMonsters.at(index))
                 {
-                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_position_and_place.compose(
+                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_position_and_place.asyncWrite({
                                            std::to_string(public_and_private_informations.playerMonster.size()),
                                            "1",
                                            std::to_string(playerMonsterinWarehouse.id)
-                                           )
-                                       );
+                                           });
                     public_and_private_informations.playerMonster.push_back(public_and_private_informations.warehouse_playerMonster.at(sub_index));
                     public_and_private_informations.warehouse_playerMonster.erase(public_and_private_informations.warehouse_playerMonster.cbegin()+sub_index);
                     break;
@@ -141,12 +138,11 @@ void Client::wareHouseStore(const int64_t &cash, const std::vector<std::pair<uin
                 const PlayerMonster &playerMonsterOnPlayer=public_and_private_informations.playerMonster.at(sub_index);
                 if(playerMonsterOnPlayer.id==depositeMonsters.at(index))
                 {
-                    dbQueryWriteCommon(PreparedDBQueryCommon::db_query_update_monster_position_and_place.compose(
+                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_position_and_place.asyncWrite({
                                            std::to_string(public_and_private_informations.warehouse_playerMonster.size()),
                                            "2",
                                            std::to_string(playerMonsterOnPlayer.id)
-                                           )
-                                       );
+                                           });
                     public_and_private_informations.warehouse_playerMonster.push_back(public_and_private_informations.playerMonster.at(sub_index));
                     public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.cbegin()+sub_index);
                     break;

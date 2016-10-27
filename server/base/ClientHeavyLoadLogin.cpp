@@ -54,13 +54,10 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     askLoginParam->query_id=query_id;
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
 
-    const std::string &queryText=PreparedDBQueryLogin::db_query_login.compose(
-                binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)
-                );
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText,this,&Client::askLogin_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&Client::askLogin_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)});
     if(callback==NULL)
     {
-        loginIsWrong(askLoginParam->query_id,0x04,"Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_login->errorMessage());
+        loginIsWrong(askLoginParam->query_id,0x04,"Sql error for: "+PreparedDBQueryLogin::db_query_login.queryText()+", error: "+GlobalServerData::serverPrivateVariables.db_login->errorMessage());
         delete askLoginParam;
         return false;
     }
@@ -253,14 +250,11 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             }
         }
     }
-    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_characters.compose(
-                std::to_string(account_id)
-                );
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::character_list_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_characters.asyncRead(this,&Client::character_list_static,{std::to_string(account_id)});
     if(callback==NULL)
     {
         account_id=0;
-        loginIsWrong(askLoginParam->query_id,0x04,"Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        loginIsWrong(askLoginParam->query_id,0x04,"Sql error for: "+GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_characters.queryText()+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         delete askLoginParam;
         return;
     }
@@ -300,14 +294,11 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
     askLoginParam->query_id=query_id;
 
-    const std::string &queryText=PreparedDBQueryLogin::db_query_login.compose(
-                binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)
-                );
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_login->asyncRead(queryText,this,&Client::createAccount_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&Client::createAccount_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)});
     if(callback==NULL)
     {
         stat=ClientStat::ProtocolGood;
-        loginIsWrong(askLoginParam->query_id,0x03,"Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_login->errorMessage());
+        loginIsWrong(askLoginParam->query_id,0x03,"Sql error for: "+PreparedDBQueryLogin::db_query_login.queryText()+", error: "+GlobalServerData::serverPrivateVariables.db_login->errorMessage());
         delete askLoginParam;
         return false;
     }
@@ -373,13 +364,12 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         #endif
         GlobalServerData::serverPrivateVariables.maxAccountId++;
         account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
-        const std::string &queryText=PreparedDBQueryLogin::db_query_insert_login.compose(
+        PreparedDBQueryLogin::db_query_insert_login.asyncWrite({
                     std::to_string(account_id),
                     binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE),
                     binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE),
                     std::to_string(sFrom1970())
-                    );
-        dbQueryWriteLogin(queryText);
+                    });
 
         //send the network reply
         removeFromQueryReceived(askLoginParam->query_id);
@@ -567,10 +557,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
 
 bool Client::server_list()
 {
-    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_select_server_time.compose(
-                std::to_string(account_id)
-                );
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::server_list_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_select_server_time.asyncRead(this,&Client::server_list_static,{std::to_string(account_id)});
     if(callback==NULL)
     {
         std::cerr << "Sql error, error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
@@ -674,23 +661,17 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
     }
     #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
     if(validServerCount==0)
-    {
-        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_server_time.compose(
+        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_server_time.asyncWrite({
                     "0",
                     std::to_string(account_id),
                     std::to_string(sFrom1970())
-                    );
-        dbQueryWriteCommon(queryText);
-    }
+                    });
     else
-    {
-        const std::string &queryText=PreparedDBQueryCommon::db_query_update_server_time_last_connect.compose(
+        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_server_time_last_connect.asyncWrite({
                     std::to_string(sFrom1970()),
                     "0",
                     std::to_string(account_id)
-                    );
-        dbQueryWriteCommon(queryText);
-    }
+                    });
     #endif
     ProtocolParsingBase::tempBigBufferForOutput[tempRawDataSizeToSetServerCount]=validServerCount;
 
@@ -705,12 +686,12 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
 void Client::deleteCharacterNow(const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommonForLogin::db_query_delete_character.empty())
+    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_delete_character.empty())
     {
         std::cerr << "deleteCharacterNow() Query db_query_delete_character is empty, bug" << std::endl;
         return;
     }
-    if(PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character.empty())
+    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_delete_monster_by_character.empty())
     {
         std::cerr << "deleteCharacterNow() Query db_query_delete_monster_by_id is empty, bug" << std::endl;
         return;
@@ -718,29 +699,19 @@ void Client::deleteCharacterNow(const uint32_t &characterId)
     #endif
 
     const std::string &characterIdString=std::to_string(characterId);
-    {
-        const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_delete_character.compose(
-                    characterIdString
-                    );
-        dbQueryWriteCommon(queryText);
-    }
-    {
-        const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character.compose(
-                    characterIdString
-                    );
-        dbQueryWriteCommon(queryText);
-    }
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_delete_character.asyncWrite({characterIdString});
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_delete_monster_by_character.asyncWrite({characterIdString});
 }
 
 /*void Client::deleteCharacterNow(const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommonForLogin::db_query_delete_character.empty())
+    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_delete_character.empty())
     {
         std::cerr << "deleteCharacterNow() Query db_query_delete_character is empty, bug" << std::endl;
         return;
     }
-    if(PreparedDBQueryCommon::db_query_delete_monster_by_id.empty())
+    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_by_id.empty())
     {
         std::cerr << "deleteCharacterNow() Query db_query_delete_monster_by_id is empty, bug" << std::endl;
         return;
@@ -749,7 +720,7 @@ void Client::deleteCharacterNow(const uint32_t &characterId)
     DeleteCharacterNow *deleteCharacterNow=new DeleteCharacterNow;
     deleteCharacterNow->characterId=characterId;
 
-    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_characters_with_monsters.compose(
+    const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_characters_with_monsters.compose(
                 std::to_string(characterId)
                 );
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::deleteCharacterNow_static);
@@ -813,34 +784,34 @@ void Client::deleteCharacterNow_return(const uint32_t &characterId)
         const uint32_t &monsterId=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
         if(ok)
         {
-            queryText=PreparedDBQueryCommon::db_query_delete_monster_buff;
+            queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_buff;
             stringreplaceOne(queryText,"%1",std::to_string(monsterId));
             dbQueryWriteCommon(queryText);
-            queryText=PreparedDBQueryCommon::db_query_delete_monster_skill;
+            queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_skill;
             stringreplaceOne(queryText,"%1",std::to_string(monsterId));
             dbQueryWriteCommon(queryText);
         }
     }
 
-    queryText=PreparedDBQueryCommon::db_query_delete_character;
+    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_character;
     stringreplaceOne(queryText,"%1",std::to_string(characterId));
     dbQueryWriteCommon(queryText);
-    queryText=PreparedDBQueryCommon::db_query_delete_all_item;
+    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_all_item;
     stringreplaceOne(queryText,"%1",std::to_string(characterId));
     dbQueryWriteCommon(queryText);
-    queryText=PreparedDBQueryCommon::db_query_delete_all_item_warehouse;
+    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_all_item_warehouse;
     stringreplaceOne(queryText,"%1",std::to_string(characterId));
     dbQueryWriteCommon(queryText);
-    queryText=PreparedDBQueryCommon::db_query_delete_monster_by_character;
+    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_by_character;
     stringreplaceOne(queryText,"%1",std::to_string(characterId));
     dbQueryWriteCommon(queryText);
-    queryText=PreparedDBQueryCommon::db_query_delete_recipes;
+    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_recipes;
     stringreplaceOne(queryText,"%1",std::to_string(characterId));
     dbQueryWriteCommon(queryText);
-    queryText=PreparedDBQueryCommon::db_query_delete_reputation;
+    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_reputation;
     stringreplaceOne(queryText,"%1",std::to_string(characterId));
     dbQueryWriteCommon(queryText);
-    queryText=PreparedDBQueryCommon::db_query_delete_allow;
+    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_allow;
     stringreplaceOne(queryText,"%1",std::to_string(characterId));
     dbQueryWriteCommon(queryText);
 
@@ -861,12 +832,12 @@ void Client::deleteCharacterNow_return(const uint32_t &characterId)
 void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo.empty())
+    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_select_character_by_pseudo.empty())
     {
         std::cerr << "addCharacter() Query is empty, bug" << std::endl;
         return;
     }
-    if(PreparedDBQueryCommon::db_query_insert_monster.empty())
+    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster.empty())
     {
         errorOutput("addCharacter() Query db_query_insert_monster is empty, bug");
         return;
@@ -952,13 +923,16 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     addCharacterParam->monsterGroupId=monsterGroupId;
     addCharacterParam->skinId=skinId;
 
-    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo.compose(
-                SqlFunction::quoteSqlVariable(pseudo)
-                );
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::addCharacter_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_select_character_by_pseudo.asyncRead(this,&Client::addCharacter_static,{
+        #ifdef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
+        pseudo
+        #else
+        SqlFunction::quoteSqlVariable(pseudo)
+        #endif
+        });
     if(callback==NULL)
     {
-        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
+        std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_select_character_by_pseudo.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
 
         //send the network reply
         removeFromQueryReceived(query_id);
@@ -1120,7 +1094,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
 void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id.empty())
+    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.empty())
     {
         std::cerr << "removeCharacter() Query is empty, bug" << std::endl;
         return;
@@ -1130,7 +1104,7 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     removeCharacterParam->query_id=query_id;
     removeCharacterParam->characterId=characterId;
 
-    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id.compose(
+    const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.compose(
                 std::to_string(characterId)
                 );
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::removeCharacterLater_static);
@@ -1224,7 +1198,7 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
         return;
     }
     /// \todo don't save and failed if timedrift detected
-    const std::string &queryText=PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id.compose(
+    const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_update_character_time_to_delete_by_id.compose(
                 std::to_string(characterId),
                 std::to_string(
                       sFrom1970()+

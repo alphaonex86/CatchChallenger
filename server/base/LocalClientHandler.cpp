@@ -204,11 +204,10 @@ void Client::addCash(const uint64_t &cash, const bool &forceSave)
     if(cash==0 && !forceSave)
         return;
     public_and_private_informations.cash+=cash;
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_cash.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_cash.asyncWrite({
                 std::to_string(public_and_private_informations.cash),
                 std::to_string(character_id)
-                );
-    dbQueryWriteCommon(queryText);
+                });
 }
 
 void Client::removeCash(const uint64_t &cash)
@@ -216,11 +215,10 @@ void Client::removeCash(const uint64_t &cash)
     if(cash==0)
         return;
     public_and_private_informations.cash-=cash;
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_cash.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_cash.asyncWrite({
                 std::to_string(public_and_private_informations.cash),
                 std::to_string(character_id)
-                );
-    dbQueryWriteCommon(queryText);
+                });
 }
 
 void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
