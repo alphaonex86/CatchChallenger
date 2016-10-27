@@ -12,12 +12,10 @@ void Client::updateObjectInDatabase()
 {
     if(public_and_private_informations.items.empty())
     {
-        dbQueryWriteCommon(
-                    PreparedDBQueryCommon::db_query_update_character_item.compose(
-                        std::string(),
-                        std::to_string(character_id)
-                        )
-                    );
+        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item.asyncWrite({
+            std::string(),
+            std::to_string(character_id)
+            });
     }
     else
     {
@@ -52,12 +50,10 @@ void Client::updateObjectInDatabase()
             pos+=4;
             ++i;
         }
-        dbQueryWriteCommon(
-                    PreparedDBQueryCommon::db_query_update_character_item.compose(
-                        binarytoHexa(item_raw,sizeof(item_raw)),
-                        std::to_string(character_id)
-                        )
-                    );
+        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item.asyncWrite({
+            binarytoHexa(item_raw,sizeof(item_raw)),
+            std::to_string(character_id)
+            });
     }
 }
 
@@ -66,7 +62,7 @@ void Client::updateObjectInDatabase()
     if(public_and_private_informations.playerMonster.empty())
     {
         dbQueryWriteCommon(
-                    PreparedDBQueryCommon::db_query_update_character_monster.compose(
+                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster.compose(
                         std::string(),
                     std::to_string(character_id)
                         )
@@ -86,7 +82,7 @@ void Client::updateObjectInDatabase()
         }
         monster=binarytoHexa(monster_raw,sizeof(monster_raw));
         dbQueryWriteCommon(
-                    PreparedDBQueryCommon::db_query_update_character_monster.compose(
+                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster.compose(
                         binarytoHexa(monster_raw,sizeof(monster_raw)),
                     std::to_string(character_id)
                         )
@@ -98,12 +94,10 @@ void Client::updateObjectInWarehouseDatabase()
 {
     if(public_and_private_informations.items.empty())
     {
-        dbQueryWriteCommon(
-                    PreparedDBQueryCommon::db_query_update_character_item_warehouse.compose(
-                        std::string(),
-                        std::to_string(character_id)
-                        )
-                    );
+        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item_warehouse.asyncWrite({
+            std::string(),
+            std::to_string(character_id)
+            });
     }
     else
     {
@@ -138,12 +132,10 @@ void Client::updateObjectInWarehouseDatabase()
             pos+=4;
             ++i;
         }
-        dbQueryWriteCommon(
-                    PreparedDBQueryCommon::db_query_update_character_item_warehouse.compose(
-                        binarytoHexa(item_raw,sizeof(item_raw)),
-                        std::to_string(character_id)
-                        )
-                    );
+        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item_warehouse.asyncWrite({
+            binarytoHexa(item_raw,sizeof(item_raw)),
+            std::to_string(character_id)
+            });
     }
 }
 
@@ -152,7 +144,7 @@ void Client::updateObjectInWarehouseDatabase()
     if(public_and_private_informations.warehouse_playerMonster.empty())
     {
         dbQueryWriteCommon(
-                    PreparedDBQueryCommon::db_query_update_character_monster_warehouse.compose(
+                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster_warehouse.compose(
                         std::string()
                         )
                     );
@@ -171,7 +163,7 @@ void Client::updateObjectInWarehouseDatabase()
         }
         monster=binarytoHexa(monster_raw,sizeof(monster_raw));
         dbQueryWriteCommon(
-                    PreparedDBQueryCommon::db_query_update_character_monster_warehouse.compose(
+                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster_warehouse.compose(
                         binarytoHexa(monster_raw,sizeof(monster_raw)),
                     std::to_string(character_id)
                         )
@@ -217,23 +209,19 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
         }
         item=binarytoHexa(item_raw,sizeof(item_raw));
     }
-    dbQueryWriteCommon(
-                PreparedDBQueryCommon::db_query_update_character_item_and_encyclopedia.compose(
-                    item,
-                    binarytoHexa(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.items.item.size()/8+1),
-                    std::to_string(character_id)
-                    )
-                );
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item_and_encyclopedia.asyncWrite({
+        item,
+        binarytoHexa(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.items.item.size()/8+1),
+        std::to_string(character_id)
+        });
 }
 
 void Client::updateMonsterInDatabaseEncyclopedia()
 {
-    dbQueryWriteCommon(
-                PreparedDBQueryCommon::db_query_update_character_monster_encyclopedia.compose(
-                    binarytoHexa(public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.monsters.size()/8+1),
-                    std::to_string(character_id)
-                    )
-                );
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster_encyclopedia.asyncWrite({
+        binarytoHexa(public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.monsters.size()/8+1),
+        std::to_string(character_id)
+        });
 }
 
 void Client::syncDatabaseAllow()
@@ -247,11 +235,10 @@ void Client::syncDatabaseAllow()
         index++;
         ++i;
     }
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_allow.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_allow.asyncWrite({
                 binarytoHexa(allowflat,sizeof(allowflat)),
                 std::to_string(character_id)
-                );
-    dbQueryWriteCommon(queryText);
+                });
 }
 
 void Client::syncDatabaseReputation()
@@ -302,11 +289,10 @@ void Client::syncDatabaseReputation()
         posOutput+=1;
         ++i;
     }
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_reputations.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_reputations.asyncWrite({
                 binarytoHexa(buffer,posOutput),
                 std::to_string(character_id)
-                );
-    dbQueryWriteCommon(queryText);
+                });
 
     if(public_and_private_informations.reputation.size()*(4+1+1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
         delete buffer;
@@ -319,11 +305,10 @@ void Client::syncBotAlreadyBeaten()
         std::cerr << "bot_already_beaten==NULL at syncBotAlreadyBeaten()" << std::endl;
         return;
     }
-    const std::string &queryText=PreparedDBQueryServer::db_query_update_character_bot_already_beaten.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_bot_already_beaten.asyncWrite({
                 binarytoHexa(public_and_private_informations.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1),
                 std::to_string(character_id)
-                );
-    dbQueryWriteServer(queryText);
+                });
 }
 
 void Client::savePosition()
@@ -344,7 +329,7 @@ void Client::savePosition()
     const uint32_t &map_file_database_id=static_cast<MapServer *>(map)->reverse_db_id;
     const uint32_t &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
     const uint32_t &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
-    const std::string &updateMapPositionQuery=PreparedDBQueryServer::db_query_update_character_forserver_map.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_forserver_map.asyncWrite({
                 std::to_string(map_file_database_id),
                 std::to_string(x),
                 std::to_string(y),
@@ -359,8 +344,7 @@ void Client::savePosition()
                 std::to_string(unvalidated_rescue.y),
                 std::to_string((uint8_t)unvalidated_rescue.orientation),
                 std::to_string(character_id)
-                );
-    dbQueryWriteServer(updateMapPositionQuery);
+                });
 /* do at moveDownMonster and moveUpMonster
  *     const std::vector<PlayerMonster> &playerMonsterList=getPlayerMonster();
     int index=0;
