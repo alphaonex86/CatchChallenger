@@ -315,7 +315,9 @@ struct ServerPrivateVariables
     QtDatabase *db_server;
     std::vector<QtTimerEvents *> timerEvents;
     #endif
+    #if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     PreparedDBQueryCommonForLogin preparedDBQueryCommonForLogin;
+    #endif
     PreparedDBQueryCommon preparedDBQueryCommon;
     #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
     PreparedDBQueryServer preparedDBQueryServer;
