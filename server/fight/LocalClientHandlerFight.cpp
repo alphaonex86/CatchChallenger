@@ -84,33 +84,27 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
     if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
     {
         if(CommonSettingsServer::commonSettingsServer.useSP)
-        {
-            const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
+            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
                         std::to_string(monster.hp),
                         std::to_string(monster.remaining_xp),
                         std::to_string(monster.level),
                         std::to_string(monster.sp),
                         std::to_string(monster.id)
-                        );
-            dbQueryWriteCommon(queryText);
-        }
+                        });
         else
-        {
-            const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
+            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
                         std::to_string(monster.hp),
                         std::to_string(monster.remaining_xp),
                         std::to_string(monster.level),
                         std::to_string(monster.id)
-                        );
-            dbQueryWriteCommon(queryText);
-        }
+                        });
         /*auto i = deferedEndurance.begin();
         while (i != deferedEndurance.cend())
         {
             auto j = i->second.begin();
             while (j != i->second.cend())
             {
-                std::string queryText=PreparedDBQueryCommon::db_query_monster_skill;
+                std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_monster_skill;
                 stringreplaceOne(queryText,"%1",std::to_string(j->second));
                 stringreplaceOne(queryText,"%2",std::to_string(i->first));
                 stringreplaceOne(queryText,"%3",std::to_string(j->first));
@@ -186,18 +180,14 @@ void Client::healAllMonsters()
             if(public_and_private_informations.playerMonster.at(index).hp!=stat.hp)
             {
                 public_and_private_informations.playerMonster[index].hp=stat.hp;
-                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_hp_only.compose(
+                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_hp_only.asyncWrite({
                             std::to_string(public_and_private_informations.playerMonster.at(index).hp),
                             std::to_string(public_and_private_informations.playerMonster.at(index).id)
-                            );
-                dbQueryWriteCommon(queryText);
+                            });
             }
             if(!public_and_private_informations.playerMonster.at(index).buffs.empty())
             {
-                const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_buff.compose(
-                                std::to_string(public_and_private_informations.playerMonster.at(index).id)
-                            );
-                dbQueryWriteCommon(queryText);
+                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_buff.asyncWrite({std::to_string(public_and_private_informations.playerMonster.at(index).id)});
                 public_and_private_informations.playerMonster[index].buffs.clear();
             }
             bool endurance_have_change=false;
@@ -211,7 +201,7 @@ void Client::healAllMonsters()
                         .level.at(public_and_private_informations.playerMonster.at(index).skills.at(sub_index).level-1).endurance;
                 if(public_and_private_informations.playerMonster.at(index).skills.at(sub_index).endurance!=endurance)
                 {
-                    /*const std::string &queryText=PreparedDBQueryCommon::db_query_monster_skill.compose(
+                    /*const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_monster_skill.compose(
 
                                 );
                     stringreplaceOne(queryText,"%1",std::to_string(endurance));
@@ -380,46 +370,34 @@ bool Client::giveXPSP(int xp,int sp)
         if(CommonSettingsServer::commonSettingsServer.useSP)
         {
             if(haveChangeOfLevel)
-            {
-                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
+                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
                             std::to_string(currentMonster->hp),
                             std::to_string(currentMonster->remaining_xp),
                             std::to_string(currentMonster->level),
                             std::to_string(currentMonster->sp),
                             std::to_string(currentMonster->id)
-                            );
-                dbQueryWriteCommon(queryText);
-            }
+                            });
             else
-            {
-                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp.compose(
+                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp.asyncWrite({
                             std::to_string(currentMonster->remaining_xp),
                             std::to_string(currentMonster->sp),
                             std::to_string(currentMonster->id)
-                            );
-                dbQueryWriteCommon(queryText);
-            }
+                            });
         }
         else
         {
             if(haveChangeOfLevel)
-            {
-                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp_hp_level.compose(
+                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
                             std::to_string(currentMonster->hp),
                             std::to_string(currentMonster->remaining_xp),
                             std::to_string(currentMonster->level),
                             std::to_string(currentMonster->id)
-                            );
-                dbQueryWriteCommon(queryText);
-            }
+                            });
             else
-            {
-                const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_xp.compose(
+                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp.asyncWrite({
                             std::to_string(currentMonster->remaining_xp),
                             std::to_string(currentMonster->id)
-                            );
-                dbQueryWriteCommon(queryText);
-            }
+                            });
         }
     }
     return haveChangeOfLevel;
@@ -449,7 +427,7 @@ bool Client::finishTheTurn(const bool &isBot)
                     if(public_and_private_informations.bot_already_beaten!=NULL)
                     {
                         public_and_private_informations.bot_already_beaten[botFightId/8]|=(1<<(7-botFightId%8));
-                        /*const std::string &queryText=PreparedDBQueryServer::db_query_insert_bot_already_beaten;
+                        /*const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_bot_already_beaten;
                         stringreplaceOne(queryText,"%1",std::to_string(character_id));
                         stringreplaceOne(queryText,"%2",std::to_string(botFightId));
                         dbQueryWriteServer(queryText);*/
@@ -573,11 +551,10 @@ bool Client::moveDownMonster(const uint8_t &number)
 
 void Client::saveMonsterPosition(const uint32_t &monsterId,const uint8_t &monsterPosition)
 {
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_position.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_position.asyncWrite({
                 std::to_string(monsterPosition),
                 std::to_string(monsterId)
-                );
-    dbQueryWriteCommon(queryText);
+                });
 }
 
 bool Client::changeOfMonsterInFight(const uint8_t &monsterPosition)
@@ -726,12 +703,11 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &mo
         }
     #endif
     CommonFightEngine::confirmEvolutionTo(playerMonster,monster);
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_and_hp.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_and_hp.asyncWrite({
                 std::to_string(playerMonster->hp),
                 std::to_string(playerMonster->monster),
                 std::to_string(playerMonster->id)
-                );
-    dbQueryWriteCommon(queryText);
+                });
     if(addToEncyclopedia(playerMonster->monster))
         updateMonsterInDatabaseEncyclopedia();
 }
@@ -842,26 +818,21 @@ void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue
         }
     }
     #endif
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_hp_only.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_hp_only.asyncWrite({
                 std::to_string(newHpValue),
                 std::to_string(currentMonster->id)
-                );
-    dbQueryWriteCommon(queryText);
+                });
 }
 
 bool Client::addLevel(PlayerMonster * monster, const uint8_t &numberOfLevel)
 {
     if(!CommonFightEngine::addLevel(monster,numberOfLevel))
         return false;
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_hp_and_level.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_hp_and_level.asyncWrite({
                 std::to_string(monster->hp),
                 std::to_string(monster->level),
                 std::to_string(monster->id)
-                );
-/*    stringreplaceOne(queryText,"%1",std::to_string(monster->hp));
-    stringreplaceOne(queryText,"%2",std::to_string(monster->level));
-    stringreplaceOne(queryText,"%3",std::to_string(monster->id));*/
-    dbQueryWriteCommon(queryText);
+                });
     return true;
 }
 

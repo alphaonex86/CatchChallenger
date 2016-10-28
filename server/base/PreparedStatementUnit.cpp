@@ -93,6 +93,10 @@ std::string PreparedStatementUnit::queryText() const
 
 DatabaseBase::CallBack * PreparedStatementUnit::asyncRead(void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
 {
+    if(database==NULL)
+        return NULL;
+    if(query.empty())
+        return NULL;
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
             return static_cast<EpollPostgresql *>(database)->asyncPreparedRead(PreparedStatementUnit::writeToPrepare(queryText()),uniqueName,returnObject,method,values);
@@ -106,6 +110,10 @@ DatabaseBase::CallBack * PreparedStatementUnit::asyncRead(void * returnObject,Ca
 
 bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
 {
+    if(database==NULL)
+        return false;
+    if(query.empty())
+        return false;
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
             return static_cast<EpollPostgresql *>(database)->asyncPreparedWrite(PreparedStatementUnit::writeToPrepare(queryText()),uniqueName,values);

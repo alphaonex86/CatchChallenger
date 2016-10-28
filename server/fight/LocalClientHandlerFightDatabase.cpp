@@ -42,18 +42,10 @@ void Client::syncMonsterBuff(const PlayerMonster &monster)
         raw_buff[sub_index*3+2]=buff.remainingNumberOfTurn;
         sub_index++;
     }
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_buff.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_buff.asyncWrite({
                 binarytoHexa(raw_buff,sizeof(raw_buff)),
                 std::to_string(monster.id)
-                );
-    #if defined(CATCHCHALLENGER_EXTRA_CHECK) && defined(CATCHCHALLENGER_DB_POSTGRESQL)
-    if(!monster.buffs.empty() && queryText.find("buffs='\\x'")!=std::string::npos)
-    {
-        std::cerr << "buffs='\\x' when have buff to save" << std::endl;
-        abort();
-    }
-    #endif
-    dbQueryWriteCommon(queryText);
+                });
 }
 
 void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
@@ -100,19 +92,11 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
 
         sub_index++;
     }
-    const std::string &queryText=PreparedDBQueryCommon::db_query_monster_update_skill_and_endurance.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_monster_update_skill_and_endurance.asyncWrite({
                 binarytoHexa(skills,sizeof(skills)),
                 binarytoHexa(skills_endurance,sizeof(skills_endurance)),
                 std::to_string(monster.id)
-                );
-    #if defined(CATCHCHALLENGER_EXTRA_CHECK) && defined(CATCHCHALLENGER_DB_POSTGRESQL)
-    if(queryText.find("skills='\\x'")!=std::string::npos)
-    {
-        std::cerr << "skills='\\x' when have skills to save" << std::endl;
-        abort();
-    }
-    #endif
-    dbQueryWriteCommon(queryText);
+                });
 }
 
 void Client::syncMonsterEndurance(const PlayerMonster &monster)
@@ -135,18 +119,10 @@ void Client::syncMonsterEndurance(const PlayerMonster &monster)
 
         sub_index++;
     }
-    const std::string &queryText=PreparedDBQueryCommon::db_query_monster_update_endurance.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_monster_update_endurance.asyncWrite({
                 binarytoHexa(skills_endurance,sizeof(skills_endurance)),
                 std::to_string(monster.id)
-                );
-    #if defined(CATCHCHALLENGER_EXTRA_CHECK) && defined(CATCHCHALLENGER_DB_POSTGRESQL)
-    if(queryText.find("skills_endurance='\\x'")!=std::string::npos)
-    {
-        std::cerr << "skills_endurance='\\x' when have skills_endurance to save" << std::endl;
-        abort();
-    }
-    #endif
-    dbQueryWriteCommon(queryText);
+                });
 }
 
 void Client::saveAllMonsterPosition()
@@ -196,9 +172,8 @@ void Client::saveStat()
     }
     #endif
     const PlayerMonster * const monster=getCurrentMonster();
-    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_hp_only.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_hp_only.asyncWrite({
                 std::to_string(monster->hp),
                 std::to_string(monster->id)
-                );
-    dbQueryWriteCommon(queryText);
+                });
 }

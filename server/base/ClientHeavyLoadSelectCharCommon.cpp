@@ -25,17 +25,17 @@ using namespace CatchChallenger;
 void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterId)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_character_by_id.empty())
+    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.empty())
     {
         errorOutput("selectCharacter() Query is empty, bug");
         return;
     }
-    /*if(PreparedDBQueryCommon::db_query_update_character_last_connect.empty())
+    /*if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_last_connect.empty())
     {
         errorOutput("selectCharacter() Query db_query_update_character_last_connect is empty, bug");
         return;
     }
-    if(PreparedDBQueryCommon::db_query_update_character_time_to_delete.empty())
+    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_time_to_delete.empty())
     {
         errorOutput("selectCharacter() Query db_query_update_character_time_to_delete is empty, bug");
         return;
@@ -46,14 +46,11 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     selectCharacterParam->characterId=characterId;
     stat=ClientStat::CharacterSelecting;
 
-    const std::string &queryText=PreparedDBQueryCommon::db_query_character_by_id.compose(
-                std::to_string(characterId)
-                );
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::selectCharacter_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.asyncRead(this,&Client::selectCharacter_static,{std::to_string(characterId)});
     if(callback==NULL)
     {
-        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-        characterSelectionIsWrong(query_id,0x02,queryText+": "+GlobalServerData::serverPrivateVariables.db_common->errorMessage());
+        std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
+        characterSelectionIsWrong(query_id,0x02,GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.queryText()+": "+GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         delete selectCharacterParam;
         return;
     }
@@ -169,21 +166,12 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     #endif*/
     const uint32_t &time_to_delete=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(8),&ok);
     if(!ok || time_to_delete>0)
-    {
-        const std::string &queryText=PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero.compose(
-                    std::to_string(characterId)
-                    );
-        dbQueryWriteCommon(queryText);
-    }
+        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_set_character_time_to_delete_to_zero.asyncWrite({std::to_string(characterId)});
 
-
-    {
-        const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_last_connect.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_last_connect.asyncWrite({
                     std::to_string(sFrom1970()),
                     std::to_string(characterId)
-                    );
-        dbQueryWriteCommon(queryText);
-    }
+                    });
 
     const uint32_t &skin_database_id=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
     if(!ok)
