@@ -8,6 +8,9 @@
 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
 #include <unordered_map>
 #endif
+#ifdef CATCHCHALLENGER_CLASS_QT
+#include "QtDatabase.h"
+#endif
 
 namespace CatchChallenger {
 class PreparedStatementUnit
