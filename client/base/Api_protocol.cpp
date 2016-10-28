@@ -337,6 +337,13 @@ bool Api_protocol::tryLogin(const QString &login, const QString &pass)
                  .arg(QString(passHash.toHex())+QString(token.toHex()))
                  ;
     #endif
+    QString peerName=socket->peerName();
+    if(peerName.size()>255)
+    {
+        newError(tr("Hostname too big"),QStringLiteral("Hostname too big"));
+        return false;
+    }
+
     packOutcommingQuery(0xA8,queryNumber(),outputData.constData(),outputData.size());
     return true;
 }
