@@ -14,20 +14,17 @@ using namespace CatchChallenger;
 void Client::loadMonsters()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_select_monsters_by_player_id.empty())
+    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_monsters_by_player_id.empty())
     {
         errorOutput("loadMonsters() Query is empty, bug");
         return;
     }
     #endif
     //don't filter by place, dispatched in internal, market volume should be low
-    const std::string &queryText=PreparedDBQueryCommon::db_query_select_monsters_by_player_id.compose(
-                std::to_string(character_id)
-                );
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::loadMonsters_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_monsters_by_player_id.asyncRead(this,&Client::loadMonsters_static,{std::to_string(character_id)});
     if(callback==NULL)
     {
-        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
+        std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_monsters_by_player_id.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         characterIsRightFinalStep();
         return;
     }

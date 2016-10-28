@@ -25,7 +25,7 @@ using namespace CatchChallenger;
 void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &characterId, const uint64_t &characterCreationDate)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryServer::db_query_character_server_by_id.empty())
+    if(GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_character_server_by_id.empty())
     {
         characterSelectionIsWrong(query_id,0x04,"selectCharacterServer() Query is empty, bug");
         return;
@@ -35,14 +35,11 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     selectCharacterParam->query_id=query_id;
     selectCharacterParam->characterId=characterId;
 
-    const std::string &queryText=PreparedDBQueryServer::db_query_character_server_by_id.compose(
-                std::to_string(characterId)
-                );
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&Client::selectCharacterServer_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_character_server_by_id.asyncRead(this,&Client::selectCharacterServer_static,{std::to_string(characterId)});
     if(callback==NULL)
     {
-        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
-        characterSelectionIsWrong(query_id,0x02,queryText+": "+GlobalServerData::serverPrivateVariables.db_server->errorMessage());
+        std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_character_server_by_id.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
+        characterSelectionIsWrong(query_id,0x02,GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_character_server_by_id.queryText()+": "+GlobalServerData::serverPrivateVariables.db_server->errorMessage());
         delete selectCharacterParam;
         return;
     }
@@ -104,18 +101,16 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     const auto &sFrom1970String=std::to_string(sFrom1970());
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     {
-        const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
+        ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[profileIndex];
 
-        dbQueryWriteServer(serverProfileInternal.preparedQueryAddCharacterForServer.compose(
+        serverProfileInternal.preparedQueryAddCharacterForServer.asyncWrite({
                                characterIdString,
                                sFrom1970String
-                               )
-                           );
-        const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_last_connect.compose(
+                               });
+        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_last_connect.asyncWrite({
                     sFrom1970String,
                     characterIdString
-                    );
-        dbQueryWriteCommon(queryText);
+                    });
 
         characterIsRightWithParsedRescue(query_id,
             characterId,
@@ -144,23 +139,18 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         if(!ok || server_date<characterCreationDateList.at(characterId))
         {
             //drop before re-add
-            dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_character_server_by_id.compose(
-                                   characterIdString
-                                   )
-                               );
+            GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_character_server_by_id.asyncWrite({characterIdString});
 
-            const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
+            ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[profileIndex];
 
-            dbQueryWriteServer(serverProfileInternal.preparedQueryAddCharacterForServer.compose(
+            serverProfileInternal.preparedQueryAddCharacterForServer.asyncWrite({
                                    characterIdString,
                                    sFrom1970String
-                                   )
-                               );
-            const std::string &queryText=PreparedDBQueryCommon::db_query_update_character_last_connect.compose(
+                                   });
+            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_last_connect.asyncWrite({
                         sFrom1970String,
                         characterIdString
-                        );
-            dbQueryWriteCommon(queryText);
+                        });
 
             characterIsRightWithParsedRescue(query_id,
                 characterId,

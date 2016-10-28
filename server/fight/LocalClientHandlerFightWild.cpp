@@ -135,7 +135,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
         public_and_private_informations.warehouse_playerMonster.push_back(newMonster);
         public_and_private_informations.warehouse_playerMonster.back().id=monster_id;
         position=public_and_private_informations.warehouse_playerMonster.size();
-        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_full.compose(
+        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_full.asyncWrite({
                     std::to_string(monster_id),
                     std::to_string(character_id),
                     "2",
@@ -149,22 +149,21 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
                     binarytoHexa(raw_buff,sizeof(raw_buff)),
                     binarytoHexa(raw_skill,sizeof(raw_skill)),
                     binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
-                    );
-        #if defined(CATCHCHALLENGER_EXTRA_CHECK) && defined(CATCHCHALLENGER_DB_POSTGRESQL)
-        if(queryText.find("skills='\\x'")!=std::string::npos)
+                    });
+        #if defined(CATCHCHALLENGER_EXTRA_CHECK)
+        if(sizeof(raw_skill)==0)
         {
             std::cerr << "skills='\\x' when have skills to save" << std::endl;
             abort();
         }
         #endif
-        dbQueryWriteCommon(queryText);
     }
     else
     {
         public_and_private_informations.playerMonster.push_back(newMonster);
         public_and_private_informations.playerMonster.back().id=monster_id;
         position=public_and_private_informations.playerMonster.size();
-        const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_full.compose(
+        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_full.asyncWrite({
                     std::to_string(monster_id),
                     std::to_string(character_id),
                     "1",
@@ -178,21 +177,20 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
                     binarytoHexa(raw_buff,sizeof(raw_buff)),
                     binarytoHexa(raw_skill,sizeof(raw_skill)),
                     binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
-                    );
-        #if defined(CATCHCHALLENGER_EXTRA_CHECK) && defined(CATCHCHALLENGER_DB_POSTGRESQL)
-        if(queryText.find("skills='\\x'")!=std::string::npos)
+                    });
+        #if defined(CATCHCHALLENGER_EXTRA_CHECK)
+        if(sizeof(raw_skill)==0)
         {
             std::cerr << "skills='\\x' when have skills to save" << std::endl;
             abort();
         }
         #endif
-        dbQueryWriteCommon(queryText);
     }
 
     /*unsigned int index=0;
     while(index<newMonster.skills.size())
     {
-        std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
+        std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_skill;
         stringreplaceOne(queryText,"%1",std::to_string(monster_id));
         stringreplaceOne(queryText,"%2",std::to_string(newMonster.skills.at(index).skill));
         stringreplaceOne(queryText,"%3",std::to_string(newMonster.skills.at(index).level));
@@ -205,7 +203,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
     {
         if(CommonDatapack::commonDatapack.monsterBuffs.at(newMonster.buffs.at(index).buff).level.at(newMonster.buffs.at(index).level).duration==Buff::Duration_Always)
         {
-            std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_buff;
+            std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_buff;
             stringreplaceOne(queryText,"%1",std::to_string(monster_id));
             stringreplaceOne(queryText,"%2",std::to_string(newMonster.buffs.at(index).buff));
             stringreplaceOne(queryText,"%3",std::to_string(newMonster.buffs.at(index).level));

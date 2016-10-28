@@ -183,11 +183,10 @@ bool Client::syncDatabasePlant()
 
             ++i;
         }
-        const std::string &queryText=PreparedDBQueryServer::db_query_update_plant.compose(
+        GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_plant.asyncWrite({
                     binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput),
                     std::to_string(character_id)
-                    );
-        dbQueryWriteServer(queryText);
+                    });
         return true;
     }
 }
@@ -255,7 +254,7 @@ void Client::seedValidated()
         static_cast<MapServer *>(plant_list_in_waiting.first().map)->plants[pos]=plantOnMap;
     }
     {
-        const std::string &queryText=PreparedDBQueryServer::db_query_insert_plant;
+        const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_plant;
         stringreplaceOne(queryText,"%1",std::to_string(character_id));
         stringreplaceOne(queryText,"%2",std::to_string(plantOnMap.pointOnMapDbCode));
         stringreplaceOne(queryText,"%3",std::to_string(plant_list_in_waiting.front().plant_id));
@@ -487,7 +486,7 @@ void Client::collectPlant(
             return;
         }
         //remove from db
-        /*std::string queryText=PreparedDBQueryServer::db_query_delete_plant_by_index;
+        /*std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_plant_by_index;
         stringreplaceOne(queryText,"%1",std::to_string(character_id));
         stringreplaceOne(queryText,"%2",std::to_string(plant.pointOnMapDbCode));
         dbQueryWriteServer(queryText);*/
@@ -533,7 +532,7 @@ void Client::collectPlant(
             )
     {
         //remove plant from db
-        dbQueryWriteServer(PreparedDBQueryServer::db_query_delete_plant_by_index.arg(character_id).arg(plant.pointOnMapDbCode));
+        dbQueryWriteServer(GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_plant_by_index.arg(character_id).arg(plant.pointOnMapDbCode));
 
         std::vector<char> finalData;
         {

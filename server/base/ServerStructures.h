@@ -287,7 +287,8 @@ struct ServerProfileInternal
     };
     struct PreparedStatementForCreation
     {
-        std::vector<PreparedStatementForCreationType> type;
+        //not needed std::vector<ServerProfileInternal>
+        PreparedStatementForCreationType type;
     };
     PreparedStatementForCreation preparedStatementForCreationByCommon;
     #endif
