@@ -39,9 +39,9 @@ void BaseServer::preload_profile()
     GlobalServerData::serverPrivateVariables.serverProfileInternalList.resize(CommonDatapack::commonDatapack.profileList.size());
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     const DatabaseBase::DatabaseType &databaseType=GlobalServerData::serverPrivateVariables.db_common->databaseType();
-    #endif
     CatchChallenger::DatabaseBase * const database=GlobalServerData::serverPrivateVariables.db_common;
     const uint8_t &common_blobversion_datapack=GlobalServerData::serverPrivateVariables.common_blobversion_datapack;
+    #endif
 
     unsigned int index=0;
     while(index<CommonDatapack::commonDatapack.profileList.size())
