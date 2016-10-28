@@ -23,7 +23,11 @@ PreparedStatementUnit::PreparedStatementUnit() :
 }
 
 PreparedStatementUnit::PreparedStatementUnit(const std::string &query, CatchChallenger::DatabaseBase * const database) :
+#ifdef CATCHCHALLENGER_CLASS_QT
+    database(static_cast<QtDatabase *>(database))
+#else
     database(database)
+#endif
 {
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     uniqueName[0]=0;
@@ -56,6 +60,7 @@ bool PreparedStatementUnit::setQuery(const std::string &query)
     return true;
 }
 
+#if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
 std::string PreparedStatementUnit::writeToPrepare(const std::string &query) const
 {
     std::string newQuery=query;
@@ -76,6 +81,7 @@ std::string PreparedStatementUnit::writeToPrepare(const std::string &query) cons
     }
     return newQuery;
 }
+#endif
 
 bool PreparedStatementUnit::empty() const
 {

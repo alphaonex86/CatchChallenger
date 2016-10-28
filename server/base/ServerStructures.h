@@ -319,7 +319,7 @@ struct ServerPrivateVariables
     PreparedDBQueryCommonForLogin preparedDBQueryCommonForLogin;
     #endif
     PreparedDBQueryCommon preparedDBQueryCommon;
-    #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
+    #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     PreparedDBQueryServer preparedDBQueryServer;
     #endif
 

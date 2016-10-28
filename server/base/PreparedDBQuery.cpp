@@ -121,8 +121,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         case DatabaseBase::DatabaseType::Mysql:
         //login and gameserver alone
         PreparedDBQueryCommon::db_query_delete_monster_by_id=PreparedStatementUnit("DELETE FROM `monster` WHERE `id`=%1",database);
-        PreparedDBQueryCommon::db_query_insert_monster=PreparedStatementUnit("INSERT INTO `monster`(`id`,`character`,`place`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`,`buffs`,`skills`,`skills_endurance`) "
-                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,'',UNHEX('%11'),UNHEX('%12'))",database);
+        PreparedDBQueryCommon::db_query_insert_monster="INSERT INTO `monster`(`id`,`character`,`place`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`,`buffs`,`skills`,`skills_endurance`) "
+                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,'',UNHEX('%11'),UNHEX('%12'))";
         /*wild catch*/
         PreparedDBQueryCommon::db_query_insert_monster_full=PreparedStatementUnit("INSERT INTO `monster`(`id`,`character`,`place`,`hp`,`monster`,`level`,`xp`,`sp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`,`buffs`,`skills`,`skills_endurance`) "
                                                        "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,UNHEX('%11'),UNHEX('%12'),UNHEX('%13')",database);
@@ -173,8 +173,8 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         case DatabaseBase::DatabaseType::SQLite:
         //login and gameserver alone
         PreparedDBQueryCommon::db_query_delete_monster_by_id=PreparedStatementUnit("DELETE FROM monster WHERE id=%1",database);
-        PreparedDBQueryCommon::db_query_insert_monster=PreparedStatementUnit("INSERT INTO monster(id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,buffs,skills,skills_endurance) "
-                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,'','%11','%12')",database);
+        PreparedDBQueryCommon::db_query_insert_monster="INSERT INTO monster(id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,buffs,skills,skills_endurance) "
+                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,'','%11','%12')";
         /*wild catch*/
         PreparedDBQueryCommon::db_query_insert_monster_full=PreparedStatementUnit("INSERT INTO monster(id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,buffs,skills,skills_endurance) "
                                                        "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,'%11','%12','%13')",database);
@@ -243,7 +243,11 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_character_reputations=PreparedStatementUnit("UPDATE character SET reputations=decode('%1','hex') WHERE id=%2",database);
         PreparedDBQueryCommon::db_query_select_clan_by_name=PreparedStatementUnit("SELECT id FROM clan WHERE name='%1'",database);
 
+        #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+        PreparedDBQueryCommon::db_query_insert_clan=PreparedStatementUnit("INSERT INTO clan(id,name,cash,date) VALUES(%1,%2,0,%3);",database);
+        #else
         PreparedDBQueryCommon::db_query_insert_clan=PreparedStatementUnit("INSERT INTO clan(id,name,cash,date) VALUES(%1,'%2',0,%3);",database);
+        #endif
         PreparedDBQueryCommon::db_query_update_character_clan_to_reset=PreparedStatementUnit("UPDATE character SET clan=0 WHERE id=%1",database);
         PreparedDBQueryCommon::db_query_update_character_clan_and_leader=PreparedStatementUnit("UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;",database);
         PreparedDBQueryCommon::db_query_delete_clan=PreparedStatementUnit("DELETE FROM clan WHERE id=%1",database);
@@ -436,8 +440,13 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         case DatabaseBase::DatabaseType::PostgreSQL:
         PreparedDBQueryServer::db_query_update_character_forserver_map=PreparedStatementUnit("UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,rescue_map=%5,rescue_x=%6,rescue_y=%7,rescue_orientation=%8,unvalidated_rescue_map=%9,unvalidated_rescue_x=%10,unvalidated_rescue_y=%11,unvalidated_rescue_orientation=%12 WHERE character=%13",database);
 
+        #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+        PreparedDBQueryServer::db_query_insert_factory=PreparedStatementUnit("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,%2,%3,%4)",database);
+        PreparedDBQueryServer::db_query_update_factory=PreparedStatementUnit("UPDATE factory SET resources=%1,products=%2,last_update=%3 WHERE id=%4",database);
+        #else
         PreparedDBQueryServer::db_query_insert_factory=PreparedStatementUnit("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4)",database);
         PreparedDBQueryServer::db_query_update_factory=PreparedStatementUnit("UPDATE factory SET resources='%1',products='%2',last_update=%3 WHERE id=%4",database);
+        #endif
         #ifndef EPOLLCATCHCHALLENGERSERVER
         PreparedDBQueryServer::db_query_delete_city=PreparedStatementUnit("DELETE FROM city WHERE city='%1'",database);
         PreparedDBQueryServer::db_query_update_city_clan=PreparedStatementUnit("UPDATE city SET clan=%1 WHERE city='%2';",database);

@@ -513,31 +513,20 @@ void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
                             GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(clan->clanId);
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->capturedCity].clan=0;
                         }
-                        {
-                            const std::string &queryText=PreparedDBQueryServer::db_query_delete_city.compose(
-                                        clan->capturedCity
-                                        );
-                            dbQueryWriteServer(queryText);
-                        }
+                        GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({clan->capturedCity});
                         if(GlobalServerData::serverPrivateVariables.cityStatusList.find(clan->captureCityInProgress)==GlobalServerData::serverPrivateVariables.cityStatusList.cend())
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
 
                         if(GlobalServerData::serverPrivateVariables.cityStatusList.at(clan->captureCityInProgress).clan!=0)
-                        {
-                            const std::string &queryText=PreparedDBQueryServer::db_query_update_city_clan.compose(
+                            GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_city_clan.asyncWrite({
                                         clan->captureCityInProgress,
                                         std::to_string(clan->clanId)
-                                        );
-                            dbQueryWriteServer(queryText);
-                        }
+                                        });
                         else
-                        {
-                            const std::string &queryText=PreparedDBQueryServer::db_query_insert_city.compose(
+                            GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_city.asyncWrite({
                                         std::to_string(clan->clanId),
                                         clan->captureCityInProgress
-                                        );
-                            dbQueryWriteServer(queryText);
-                        }
+                                        });
                         GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId]=clan->captureCityInProgress;
                         GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=clan->clanId;
                         clan->capturedCity=clan->captureCityInProgress;
