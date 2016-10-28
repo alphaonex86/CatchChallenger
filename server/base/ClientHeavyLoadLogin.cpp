@@ -1024,15 +1024,16 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
 
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
-    const ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex);
+    ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[profileIndex];
 
     const uint32_t &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
     const std::string &characterIdString=std::to_string(characterId);
     int monster_position=1;
 
-    const auto &monsterGroup=profile.monstergroup.at(monsterGroupId);
-    const auto &monsters=serverProfileInternal.monster_insert.at(monsterGroupId);
-    const std::string &monster_encyclopedia_insert=serverProfileInternal.monster_encyclopedia_insert.at(monsterGroupId);
+    const std::vector<Profile::Monster> &monsterGroup=profile.monstergroup.at(monsterGroupId);
+    ServerProfileInternal::PreparedStatementForCreationMonsterGroup &monsterGroupInternal=serverProfileInternal.preparedStatementForCreationByCommon.type.monsterGroup[monsterGroupId];
+    PreparedStatementUnit &character_insert=monsterGroupInternal.character_insert;
+    std::vector<PreparedStatementUnit> &monsters=monsterGroupInternal.monster_insert;
     if(!monsters.empty())
     {
         unsigned int index=0;
@@ -1040,7 +1041,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         {
             const auto &monster=monsterGroup.at(index);
             const Monster &monsterDatapack=CommonDatapack::commonDatapack.monsters.at(monster.id);
-            const StringWithReplacement &monsterQuery=monsters.at(index);
+            PreparedStatementUnit &monsterQuery=monsters.at(index);
 
             GlobalServerData::serverPrivateVariables.maxMonsterId++;
             const uint32_t monster_id=GlobalServerData::serverPrivateVariables.maxMonsterId;
@@ -1052,12 +1053,12 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                 if(monsterDatapack.ratio_gender!=-1)
                 {
                     if(rand()%101<monsterDatapack.ratio_gender)
-                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,StaticText::text_2,characterIdString));
+                        monsterQuery.asyncWrite({monster_id_string,characterIdString,StaticText::text_2,characterIdString});
                     else
-                        dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,StaticText::text_1,characterIdString));
+                        monsterQuery.asyncWrite({monster_id_string,characterIdString,StaticText::text_1,characterIdString});
                 }
                 else
-                    dbQueryWriteCommon(monsterQuery.compose(monster_id_string,characterIdString,characterIdString));
+                    monsterQuery.asyncWrite({monster_id_string,characterIdString,characterIdString});
 
                 monster_position++;
             }
@@ -1065,15 +1066,17 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         }
     }
 
-    const std::string &local_character_insert=serverProfileInternal.character_insert.compose(
+    character_insert.asyncWrite({
                 characterIdString,
                 std::to_string(account_id),
+                #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+                pseudo,
+                #else
                 SqlFunction::quoteSqlVariable(pseudo),
+                #endif
                 std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)),
-                std::to_string(sFrom1970()),
-                monster_encyclopedia_insert
-                );
-    dbQueryWriteCommon(local_character_insert);
+                std::to_string(sFrom1970())
+                });
 
     //send the network reply
     removeFromQueryReceived(query_id);
@@ -1104,13 +1107,10 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     removeCharacterParam->query_id=query_id;
     removeCharacterParam->characterId=characterId;
 
-    const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.compose(
-                std::to_string(characterId)
-                );
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::removeCharacterLater_static);
+    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.asyncRead(this,&Client::removeCharacterLater_static,{std::to_string(characterId)});
     if(callback==NULL)
     {
-        std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
+        std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
 
         //send the network reply
         removeFromQueryReceived(query_id);
@@ -1198,14 +1198,13 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
         return;
     }
     /// \todo don't save and failed if timedrift detected
-    const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_update_character_time_to_delete_by_id.compose(
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_update_character_time_to_delete_by_id.asyncWrite({
                 std::to_string(characterId),
                 std::to_string(
                       sFrom1970()+
                       CommonSettingsCommon::commonSettingsCommon.character_delete_time
                   )
-                );
-    dbQueryWriteCommon(queryText);
+                });
 
     //send the network reply
     removeFromQueryReceived(query_id);

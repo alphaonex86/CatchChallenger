@@ -263,7 +263,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
                   )
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(PreparedDBQueryCommon::db_query_clan.empty())
+    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_clan.empty())
     {
         errorOutput("loginIsRightWithParsedRescue() Query is empty, bug");
         return;
@@ -330,13 +330,10 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
         {
             normalOutput("First client of the clan: "+std::to_string(public_and_private_informations.clan)+", get the info");
             //do the query
-            const std::string &queryText=PreparedDBQueryCommon::db_query_clan.compose(
-                        std::to_string(public_and_private_informations.clan)
-                        );
-            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::selectClan_static);
+            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_clan.asyncRead(this,&Client::selectClan_static,{std::to_string(public_and_private_informations.clan)});
             if(callback==NULL)
             {
-                std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
+                std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_clan.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
                 loadMonsters();
                 return;
             }
@@ -574,14 +571,14 @@ void Client::loginIsWrong(const uint8_t &query_id, const uint8_t &returnCode, co
 
 /*void Client::loadPlayerAllow()
 {
-    if(!PreparedDBQueryCommon::db_query_select_allow.empty())
+    if(!GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_allow.empty())
     {
-        std::string queryText=PreparedDBQueryCommon::db_query_select_allow;
+        std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_allow;
         stringreplaceOne(queryText,"%1",std::to_string(character_id));
         CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::loadPlayerAllow_static);
         if(callback==NULL)
         {
-            std::cerr << "Sql error for: " << PreparedDBQueryCommon::db_query_select_allow << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
+            std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_allow << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
             loadItems();
             return;
         }

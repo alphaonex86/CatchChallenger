@@ -44,11 +44,10 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
                         return false;
                     }
                     public_and_private_informations.playerMonster[index].sp-=sp;
-                    const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_sp_only.compose(
+                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_sp_only.asyncWrite({
                                 std::to_string(public_and_private_informations.playerMonster.at(index).sp),
                                 std::to_string(public_and_private_informations.playerMonster.at(index).id)
-                                );
-                    dbQueryWriteCommon(queryText);
+                                });
                 }
                 if(learn.learnSkillLevel==1)
                 {
@@ -57,7 +56,7 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
                     temp.level=1;
                     temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(temp.skill).level.front().endurance;
                     public_and_private_informations.playerMonster[index].skills.push_back(temp);
-                    /*const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
+                    /*const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_skill;
                     stringreplaceOne(queryText,"%1",std::to_string(monsterId));
                     stringreplaceOne(queryText,"%2",std::to_string(temp.skill));
                     stringreplaceOne(queryText,"%3","1");
@@ -67,7 +66,7 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
                 else
                 {
                     public_and_private_informations.playerMonster[index].skills[sub_index2].level++;
-                    /*const std::string &queryText=PreparedDBQueryCommon::db_query_update_monster_skill_level;
+                    /*const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_skill_level;
                     stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.at(index).skills.at(sub_index2).level));
                     stringreplaceOne(queryText,"%2",std::to_string(monsterId));
                     stringreplaceOne(queryText,"%3",std::to_string(skill));
@@ -128,7 +127,7 @@ uint8_t Client::decreaseSkillEndurance(PlayerMonster::PlayerSkill * skill)
         const uint8_t &newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
         if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
         {
-            /*std::string queryText=PreparedDBQueryCommon::db_query_monster_skill;
+            /*std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_monster_skill;
             stringreplaceOne(queryText,"%1",std::to_string(newEndurance));
             stringreplaceOne(queryText,"%2",std::to_string(currentMonster->id));
             stringreplaceOne(queryText,"%3",std::to_string(skill));
@@ -156,7 +155,7 @@ bool Client::addSkill(PlayerMonster * currentMonster,const PlayerMonster::Player
 {
     if(!CommonFightEngine::addSkill(currentMonster,skill))
         return false;
-    /*std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_skill;
+    /*std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_skill;
     stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
     stringreplaceOne(queryText,"%2",std::to_string(skill.skill));
     stringreplaceOne(queryText,"%3",std::to_string(skill.level));
@@ -170,7 +169,7 @@ bool Client::setSkillLevel(PlayerMonster * currentMonster,const unsigned int &in
 {
     if(!CommonFightEngine::setSkillLevel(currentMonster,index,level))
         return false;
-    /*std::string queryText=PreparedDBQueryCommon::db_query_update_monster_skill_level;
+    /*std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_skill_level;
     stringreplaceOne(queryText,"%1",std::to_string(level));
     stringreplaceOne(queryText,"%2",std::to_string(currentMonster->id));
     stringreplaceOne(queryText,"%3",std::to_string(currentMonster->skills.at(index).skill));
@@ -183,7 +182,7 @@ bool Client::removeSkill(PlayerMonster * currentMonster,const unsigned int &inde
 {
     if(!CommonFightEngine::removeSkill(currentMonster,index))
         return false;
-    /*const std::string &queryText=PreparedDBQueryCommon::db_query_delete_monster_specific_skill;
+    /*const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_specific_skill;
     stringreplaceOne(queryText,"%1",std::to_string(currentMonster->id));
     stringreplaceOne(queryText,"%2",std::to_string(currentMonster->skills.at(index).skill));
     dbQueryWriteCommon(queryText);*/

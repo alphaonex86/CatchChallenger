@@ -178,7 +178,7 @@ void Client::takeAnObjectOnMap()
         }
         public_and_private_informations.itemOnMap.insert(item.pointOnMapDbCode);
 
-        /*const std::string &queryText=PreparedDBQueryServer::db_query_update_itemonmap.co;
+        /*const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_itemonmap.co;
         stringreplaceOne(queryText,"%1",std::to_string(character_id));
         stringreplaceOne(queryText,"%2",std::to_string(item.pointOnMapDbCode));
         dbQueryWriteServer(queryText);*/
@@ -225,11 +225,10 @@ bool Client::syncDatabaseItemOnMap()
 
             ++i;
         }
-        const std::string &queryText=PreparedDBQueryServer::db_query_update_itemonmap.compose(
+        GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_itemonmap.asyncWrite({
                     binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput),
                     std::to_string(character_id)
-                    );
-        dbQueryWriteServer(queryText);
+                    });
         return true;
     }
 }
