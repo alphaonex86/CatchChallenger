@@ -162,9 +162,7 @@ void BaseServer::preload_profile()
         }
 
         ServerProfileInternal::PreparedStatementForCreation &preparedStatementForCreation=serverProfileInternal.preparedStatementForCreationByCommon;
-        if(preparedStatementForCreation.type.size()<=index)
-            preparedStatementForCreation.type.resize(index+1);
-        ServerProfileInternal::PreparedStatementForCreationType &preparedStatementForCreationType=preparedStatementForCreation.type[index];
+        ServerProfileInternal::PreparedStatementForCreationType &preparedStatementForCreationType=preparedStatementForCreation.type;
         //assume here all is the same type
         {
             unsigned int monsterGroupIndex=0;
