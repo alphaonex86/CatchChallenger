@@ -895,6 +895,12 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         errorOutput("pseudo is empty, not allowed");
         return;
     }
+    //detect the incorrect char
+    if(std::memchr(pseudo.data(),0x00,pseudo.size())!=NULL)
+    {
+        errorOutput("pseudo contain wrong data, not allowed");
+        return;
+    }
     if(pseudo.size()>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
     {
         errorOutput("pseudo size is too big: "+std::to_string(pseudo.size())+" because is greater than "+std::to_string(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));

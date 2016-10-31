@@ -399,6 +399,12 @@ int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &
         std::cerr << "pseudo is empty, not allowed" << std::endl;
         return -1;
     }
+    //detect the incorrect char
+    if(std::memchr(pseudo.data(),0x00,pseudo.size())!=NULL)
+    {
+        std::cerr << "pseudo contain wrong data, not allowed" << std::endl;
+        return -1;
+    }
     if((uint32_t)pseudo.size()>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
     {
         std::cerr << "pseudo size is too big: " << pseudo.size() << " because is greater than " << CommonSettingsCommon::commonSettingsCommon.max_pseudo_size << std::endl;
