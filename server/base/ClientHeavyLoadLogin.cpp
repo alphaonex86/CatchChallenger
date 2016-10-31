@@ -483,6 +483,12 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
                     else
                         characterEntry.delete_time_left=time_to_delete-current_time;
                     characterEntry.pseudo=GlobalServerData::serverPrivateVariables.db_common->value(1);
+                    if(characterEntry.pseudo.size()==0 || characterEntry.pseudo.size()>255)
+                    {
+                        normalOutput("character pseudo size out of range"+characterEntry.pseudo);
+                        characterEntry.skinId=0;
+                        ok=true;
+                    }
                     const uint32_t &skinIdTemp=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
                     if(!ok)
                     {
