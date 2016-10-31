@@ -235,7 +235,7 @@ bool CommonFightEngine::useSkill(const uint16_t &skill)
             decreaseSkillEndurance(currrentMonsterSkill);
         else
         {
-            errorFightEngine("Try use skill without endurance: "+skill);
+            errorFightEngine("Try use skill without endurance: "+std::to_string(skill));
             return false;
         }
     }

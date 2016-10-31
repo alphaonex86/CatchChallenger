@@ -516,7 +516,7 @@ private:
     virtual bool tryEscape();
     void heal();
     void requestFight(const uint16_t &fightId);
-    bool learnSkill(const uint8_t &monsterPosition,const uint16_t &skill);
+    bool learnSkillByMonsterPosition(const uint8_t &monsterPosition,const uint16_t &skill);
     Client * getLocalClientHandlerFight();
     //clan
     void clanAction(const uint8_t &query_id,const uint8_t &action,const std::string &text);
