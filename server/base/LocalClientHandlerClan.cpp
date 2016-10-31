@@ -357,6 +357,11 @@ uint32_t Client::getPlayerId() const
 
 void Client::haveClanInfo(const uint32_t &clanId,const std::string &clanName,const uint64_t &cash)
 {
+    if(clanName.size()==0 || clanName.size()>255)
+    {
+        normalOutput("Clan: "+clanName+", clanId: "+std::to_string(clanId)+" because the name size is out of range");
+        return;
+    }
     normalOutput("First client of the clan: "+clanName+", clanId: "+std::to_string(clanId)+" to connect");
     createMemoryClan();
     clanList[clanId]->name=clanName;
