@@ -100,7 +100,13 @@ int32_t ProtocolParsing::decompressZlib(const char * const input, const uint32_t
 
         if (ret != Z_OK && ret != Z_STREAM_END)
         {
-            if((strm.next_out-reinterpret_cast<unsigned char * const>(output))>maxOutputSize)
+            unsigned char * const val=reinterpret_cast<unsigned char * const>(output);
+            if(val>strm.next_out)
+            {
+                logZlibError(Z_STREAM_ERROR);
+                return -1;
+            }
+            if(static_cast<uint32_t>(strm.next_out-val)>static_cast<uint32_t>(maxOutputSize))
             {
                 logZlibError(Z_STREAM_ERROR);
                 return -1;

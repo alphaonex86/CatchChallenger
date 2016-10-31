@@ -219,7 +219,7 @@ struct IndustryLink
 
 struct Industry
 {
-    uint32_t time;//should not be too short
+    uint64_t time;//should not be too short
     uint32_t cycletobefull;
     struct Resource
     {
@@ -809,7 +809,7 @@ struct BotFight
 
 struct IndustryStatus
 {
-    uint32_t last_update;
+    uint64_t last_update;
     std::unordered_map<uint32_t,uint32_t> resources;
     std::unordered_map<uint32_t,uint32_t> products;
 };

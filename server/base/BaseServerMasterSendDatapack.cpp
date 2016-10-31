@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <cstring>
 
 using namespace CatchChallenger;
 
@@ -122,7 +123,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                                 BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
                                 cacheFile.mtime=buf.st_mtime;
                                 SHA224_Final(reinterpret_cast<unsigned char *>(tempBigBufferForOutput),&hashFile);
-                                cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(tempBigBufferForOutput);
+                                ::memcpy(&cacheFile.partialHash,tempBigBufferForOutput,sizeof(uint32_t));
                                 datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
                                 #endif
                             }
