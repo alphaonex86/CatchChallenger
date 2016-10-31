@@ -72,7 +72,15 @@ void CharactersGroupForLogin::character_list_object()
                 //can't be empty or have wrong or too large utf8 data
                 //pseudo
                 {
-                    const uint8_t &newSize=FacilityLibGeneral::toUTF8WithHeader(databaseBaseCommon->value(1),tempRawData+tempRawDataSize);
+                    const std::string &normalisedString=databaseBaseCommon->value(1);
+                    if(normalisedString.size()>255)
+                    {
+                        std::cerr << "pseudo too large utf8 data: " << databaseBaseCommon->value(1) << " by hide this char" << std::endl;
+                        tempRawDataSize-=sizeof(uint32_t);
+                        validCharaterCount--;
+                        continue;
+                    }
+                    const uint8_t &newSize=FacilityLibGeneral::toUTF8WithHeader(normalisedString,tempRawData+tempRawDataSize);
                     if(newSize==0)
                     {
                         std::cerr << "can't be empty or have wrong or too large utf8 data: " << databaseBaseCommon->value(1) << " by hide this char" << std::endl;

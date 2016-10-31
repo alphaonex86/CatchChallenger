@@ -809,6 +809,11 @@ void EpollClientLoginSlave::addCharacter(const uint8_t &query_id, const uint8_t 
         errorParsingLayer("EpollClientLoginSlave::addCharacter() charactersGroupIndex is out of range");
         return;
     }
+    if(pseudo.size()>255)
+    {
+        errorParsingLayer("EpollClientLoginSlave::addCharacter() pseudo.size()>255");
+        return;
+    }
     const int8_t &addCharacter=CharactersGroupForLogin::list.at(characterGroupIndex)->addCharacter(this,query_id,profileIndex,pseudo,monsterGroupId,skinId);
     //error case
     if(addCharacter!=0)
