@@ -201,7 +201,14 @@ int main(int argc, char *argv[])
                                 delete client;
                             }
                             else
-                                ::write(infd,encodingBuff,sizeof(encodingBuff));
+                            {
+                                const ssize_t &returnVal=::write(infd,encodingBuff,sizeof(encodingBuff));
+                                if(returnVal!=sizeof(encodingBuff))
+                                {
+                                    std::cerr << "epoll_ctl on socket error, unable to write encodingBuff" << std::endl;
+                                    delete client;
+                                }
+                            }
                         }
                     }
                     continue;

@@ -155,7 +155,7 @@ void BaseServer::preload_the_datapack()
                         SHA224_Update(&hashFile,data.data(),data.size());
                         Client::DatapackCacheFile cacheFile;
                         SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
-                        cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
+                        ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
                         Client::datapack_file_hash_cache_base[datapack_file_temp.at(index)]=cacheFile;
                         #endif
                         #endif
@@ -274,7 +274,7 @@ void BaseServer::preload_the_datapack()
                         SHA224_Update(&hashFile,data.data(),data.size());
                         Client::DatapackCacheFile cacheFile;
                         SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
-                        cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
+                        ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
                         Client::datapack_file_hash_cache_main[datapack_file_temp.at(index)]=cacheFile;
                         #endif
 
@@ -355,7 +355,7 @@ void BaseServer::preload_the_datapack()
                     SHA224_Update(&hashFile,data.data(),data.size());
                     Client::DatapackCacheFile cacheFile;
                     SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
-                    cacheFile.partialHash=*reinterpret_cast<const uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput);
+                    ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
                     Client::datapack_file_hash_cache_sub[datapack_file_temp.at(index)]=cacheFile;
                     #endif
 

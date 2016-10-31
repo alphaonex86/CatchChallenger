@@ -360,7 +360,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             }
             const uint8_t &monsterPosition=data[0x00];
             const uint16_t &skill=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint8_t))));
-            return learnSkill(monsterPosition,skill);
+            return learnSkillByMonsterPosition(monsterPosition,skill);
         }
         break;
         case 0x0A:
