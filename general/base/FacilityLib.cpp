@@ -246,8 +246,8 @@ IndustryStatus FacilityLib::industryStatusWithCurrentTime(const IndustryStatus &
 {
     IndustryStatus industryStatusCopy=industryStatus;
     //do the generated item
-    uint32_t ableToProduceCycleCount=0;
-    if(industryStatus.last_update<(time(0)))
+    uint64_t ableToProduceCycleCount=0;
+    if(industryStatus.last_update<static_cast<uint64_t>(time(0)))
     {
         ableToProduceCycleCount=(time(0)-industryStatus.last_update)/industry.time;
         if(ableToProduceCycleCount>industry.cycletobefull)

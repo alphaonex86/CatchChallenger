@@ -8,7 +8,7 @@
 
 using namespace CatchChallenger;
 
-bool Client::learnSkill(const uint8_t &monsterPosition, const uint16_t &skill)
+bool Client::learnSkillByMonsterPosition(const uint8_t &monsterPosition, const uint16_t &skill)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("learnSkill("+std::to_string(monsterId)+","+std::to_string(skill)+")");

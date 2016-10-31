@@ -52,7 +52,7 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
 
                         const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(file);
                         SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
-                        datapackCacheFile.partialHash=*reinterpret_cast<const int *>(ProtocolParsingBase::tempBigBufferForOutput);
+                        ::memcpy(&datapackCacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
 
                         filesList[fileName]=datapackCacheFile;
                     }
