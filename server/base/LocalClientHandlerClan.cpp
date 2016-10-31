@@ -31,6 +31,12 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 errorOutput("You can't create clan with empty name");
                 return;
             }
+            //detect the incorrect char
+            if(std::memchr(text.data(),0x00,text.size())!=NULL)
+            {
+                errorOutput("text contain wrong data, not allowed");
+                return;
+            }
             if(public_and_private_informations.allow.find(ActionAllow_Clan)==public_and_private_informations.allow.cend())
             {
                 errorOutput("You have not the right to create clan");
