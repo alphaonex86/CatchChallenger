@@ -10,5 +10,6 @@ PlayerUpdaterToLogin::PlayerUpdaterToLogin()
 
 void PlayerUpdaterToLogin::exec()
 {
+    EpollClientLoginMaster::sendServerChange();
     EpollClientLoginMaster::sendCurrentPlayer();
 }

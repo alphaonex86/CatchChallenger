@@ -29,6 +29,7 @@ unsigned int EpollClientLoginMaster::serverLogicalGroupListSize=0;
 char EpollClientLoginMaster::loginPreviousToReplyCache[];
 unsigned int EpollClientLoginMaster::loginPreviousToReplyCacheSize=0;
 std::unordered_map<std::string,int> EpollClientLoginMaster::logicalGroupHash;
+EpollClientLoginMaster::DataForUpdatedServers EpollClientLoginMaster::dataForUpdatedServers;
 
 bool EpollClientLoginMaster::currentPlayerForGameServerToUpdate=false;
 uint32_t EpollClientLoginMaster::lastSizeDisplayLoginServers=0;
