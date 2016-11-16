@@ -675,6 +675,7 @@ void EpollServerLoginMaster::doTheLogicalGroup(TinyXMLSettings &settings)
     }
 }
 
+/// \todo can be optimized by just memory manipulation, and add/remove block and cache the serialisation
 void EpollServerLoginMaster::doTheServerList()
 {
     //do the server list

@@ -1,6 +1,7 @@
 #include "EpollClientLoginMaster.h"
 #include "EpollServerLoginMaster.h"
 #include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/FacilityLibGeneral.h"
 
 #include <iostream>
 #include <string>
@@ -61,6 +62,7 @@ void EpollClientLoginMaster::resetToDisconnect()
     }
     if(stat==EpollClientLoginMasterStat::GameServer)
     {
+        addToRemoveList();
         vectorremoveOne(EpollClientLoginMaster::gameServers,this);
         passUniqueKeyToNextGameServer();
 
@@ -80,7 +82,7 @@ void EpollClientLoginMaster::resetToDisconnect()
         charactersGroupForGameServerInformation=NULL;
         EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
         EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
-        EpollClientLoginMaster::broadcastGameServerChange();
+        //EpollClientLoginMaster::broadcastGameServerChange();
     }
     if(inConflicWithTheMainServer!=NULL)
     {
@@ -406,11 +408,144 @@ bool EpollClientLoginMaster::sendRawBlock(const char * const data,const int &siz
     return internalSendRawSmallPacket(data,size);
 }
 
+void EpollClientLoginMaster::sendServerChange()
+{
+    if(EpollClientLoginMaster::dataForUpdatedServers.addServer.empty() && EpollClientLoginMaster::dataForUpdatedServers.removeServer.empty())
+        return;
+    if(EpollClientLoginMaster::loginServers.size()==0)
+    {
+        EpollClientLoginMaster::dataForUpdatedServers.addServer.clear();
+        EpollClientLoginMaster::dataForUpdatedServers.removeServer.clear();
+        return;
+    }
+    //do the list
+    uint32_t posOutput=0;
+    if(EpollClientLoginMaster::dataForUpdatedServers.removeServer.size()<255 && EpollClientLoginMaster::dataForUpdatedServers.addServer.size()<255)
+    {
+        //send the network message
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x48;
+        posOutput+=1+4;
+
+        //the remove
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=EpollClientLoginMaster::dataForUpdatedServers.removeServer.size();
+        posOutput+=1;
+        unsigned int index=0;
+        while(index<EpollClientLoginMaster::dataForUpdatedServers.removeServer.size())
+        {
+            const uint8_t &flatIndex=EpollClientLoginMaster::dataForUpdatedServers.removeServer.at(index);
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=flatIndex;
+            posOutput+=1;
+            index++;
+        }
+
+        index=0;
+        while(index<EpollClientLoginMaster::dataForUpdatedServers.addServer.size())
+        {
+            //the add
+            const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::dataForUpdatedServers.addServer.at(index);
+            const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
+            if(gameServerOnCharactersGroup==NULL)
+            {
+                std::cerr << "charactersGroup==NULL (abort)" << std::endl;
+                abort();
+            }
+            //charactersGroup
+            {
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=gameServerOnEpollClientLoginMaster->charactersGroupForGameServer->index;
+                posOutput+=1;
+            }
+            //key
+            {
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(gameServerOnCharactersGroup->uniqueKey);
+                posOutput+=sizeof(gameServerOnCharactersGroup->uniqueKey);
+            }
+            //host
+            {
+                int newSize=FacilityLibGeneral::toUTF8WithHeader(gameServerOnCharactersGroup->host,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+                if(newSize==0)
+                {
+                    std::cerr << "host null or unable to translate in utf8 (abort)" << std::endl;
+                    abort();
+                }
+                posOutput+=newSize;
+            }
+            //port
+            {
+                *reinterpret_cast<unsigned short int *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(unsigned short int)htole16((unsigned short int)gameServerOnCharactersGroup->port);
+                posOutput+=sizeof(unsigned short int);
+            }
+            //metaData
+            {
+                if(gameServerOnCharactersGroup->metaData.size()>4*1024)
+                {
+                    std::cerr << "metaData too hurge (abort)" << std::endl;
+                    abort();
+                }
+                {
+                    if(gameServerOnCharactersGroup->metaData.size()>65535)
+                    {
+                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+                        posOutput+=2;
+                    }
+                    else
+                    {
+                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(gameServerOnCharactersGroup->metaData.size());
+                        posOutput+=2;
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,gameServerOnCharactersGroup->metaData.data(),gameServerOnCharactersGroup->metaData.size());
+                        posOutput+=gameServerOnCharactersGroup->metaData.size();
+                    }
+                }
+            }
+            //logicalGroup
+            {
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=gameServerOnCharactersGroup->logicalGroupIndex;
+                posOutput+=1;
+            }
+            //max player
+            *reinterpret_cast<unsigned short int *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(unsigned short int)htole16(gameServerOnCharactersGroup->maxPlayer);
+            posOutput+=sizeof(unsigned short int);
+        }
+
+        //the new connected player
+        index=0;
+        while(index<EpollClientLoginMaster::dataForUpdatedServers.addServer.size())
+        {
+            const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::dataForUpdatedServers.addServer.at(index);
+            const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
+            //connected player
+            *reinterpret_cast<unsigned short int *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(unsigned short int)htole16(gameServerOnCharactersGroup->currentPlayer);
+            posOutput+=sizeof(unsigned short int);
+
+            index++;
+        }
+
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput);//set the dynamic size
+    }
+    //broadcast all
+    {
+        if(EpollClientLoginMaster::serverServerListSize<posOutput || posOutput==0)
+            broadcastGameServerChange();
+        else
+        {
+            unsigned int index=0;
+            while(index<EpollClientLoginMaster::loginServers.size())
+            {
+                EpollClientLoginMaster * const loginServer=EpollClientLoginMaster::loginServers.at(index);
+                loginServer->internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                index++;
+            }
+        }
+    }
+}
+
 void EpollClientLoginMaster::sendCurrentPlayer()
 {
     if(!currentPlayerForGameServerToUpdate)
         return;
     if(EpollClientLoginMaster::gameServers.size()==0)
+        return;
+    if(EpollClientLoginMaster::loginServers.size()==0)
         return;
     //do the list
     uint32_t posOutput=0;
@@ -446,6 +581,93 @@ void EpollClientLoginMaster::disconnectForDuplicateConnexionDetected(const uint3
 {
     *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::duplicateConnexionDetected+0x02)=htole32(characterId);
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::duplicateConnexionDetected),sizeof(EpollClientLoginMaster::duplicateConnexionDetected));
+}
+
+/// \todo check the 255> size
+void EpollClientLoginMaster::addToRemoveList()
+{
+    bool foundIntoAdd=false;
+    {
+        unsigned int index=0;
+        while(index<EpollClientLoginMaster::dataForUpdatedServers.addServer.size())
+        {
+            const EpollClientLoginMaster * const server=EpollClientLoginMaster::dataForUpdatedServers.addServer.at(index);
+            if(server==this)
+            {
+                EpollClientLoginMaster::dataForUpdatedServers.addServer.erase(EpollClientLoginMaster::dataForUpdatedServers.addServer.cbegin()+index);
+                foundIntoAdd=true;
+                break;
+            }
+            index++;
+        }
+    }
+    if(!foundIntoAdd)
+    {
+        bool found=false;
+        unsigned int index=0;
+        while(index<EpollClientLoginMaster::gameServers.size())
+        {
+            const EpollClientLoginMaster * gameServer=EpollClientLoginMaster::gameServers.at(index);
+            if(gameServer==this)
+            {
+                found=true;
+                break;
+            }
+            index++;
+        }
+        if(found)
+        {
+            if(EpollClientLoginMaster::gameServers.size()>EpollClientLoginMaster::dataForUpdatedServers.addServer.size())
+            {
+                if(index<=(EpollClientLoginMaster::gameServers.size()-EpollClientLoginMaster::dataForUpdatedServers.addServer.size()))
+                    EpollClientLoginMaster::dataForUpdatedServers.removeServer.push_back(index);
+                else
+                {
+                    std::cerr << "addToRemoveList() index out of range" << std::endl;
+                    abort();
+                }
+            }
+            else
+            {
+                std::cerr << "addToRemoveList() index out of range into the old value" << std::endl;
+                abort();
+            }
+        }
+        else
+        {
+            std::cerr << "addToRemoveList() server not found to remove" << std::endl;
+            abort();
+        }
+    }
+}
+
+/// \todo check the 255> size
+void EpollClientLoginMaster::addToInserList()
+{
+    bool foundIntoAdd=false;
+    unsigned int index=0;
+    while(index<EpollClientLoginMaster::dataForUpdatedServers.addServer.size())
+    {
+        const EpollClientLoginMaster * const server=EpollClientLoginMaster::dataForUpdatedServers.addServer.at(index);
+        if(server==this)
+        {
+            //to respect the order of connected player. move at the end
+            EpollClientLoginMaster::dataForUpdatedServers.addServer.erase(EpollClientLoginMaster::dataForUpdatedServers.addServer.cbegin()+index);
+            EpollClientLoginMaster::dataForUpdatedServers.addServer.push_back(this);
+            foundIntoAdd=true;
+            break;
+        }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        else
+        {
+            if(server->charactersGroupForGameServer->index==charactersGroupForGameServer->index && server->charactersGroupForGameServerInformation->uniqueKey==charactersGroupForGameServerInformation->uniqueKey)
+                std::cerr << "different object but same content" << std::endl;
+        }
+        #endif
+        index++;
+    }
+    if(!foundIntoAdd)
+        EpollClientLoginMaster::dataForUpdatedServers.addServer.push_back(this);
 }
 
 bool EpollClientLoginMaster::sendGameServerRegistrationReply(const uint8_t queryNumber, bool generateNewUniqueKey)
