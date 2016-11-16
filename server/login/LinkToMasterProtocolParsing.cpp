@@ -125,7 +125,8 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 unsigned int index=0;
                 while(index<CharactersGroupForLogin::list.size())
                 {
-                    CharactersGroupForLogin::list.at(index)->clearServerPair();
+                    CharactersGroupForLogin * const group=CharactersGroupForLogin::list.at(index);
+                    group->clearServerPair();
                     index++;
                 }
             }
@@ -834,6 +835,19 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     index++;
                 }
             }
+        return true;
+        case 0x48:
+            /// \todo broadcast to client before the logged step
+            if(EpollClientLoginSlave::serverServerListCurrentPlayerSize==0)
+            {
+                parseNetworkReadError("EpollClientLoginSlave::serverServerListCurrentPlayerSize==0 main ident: "+std::to_string(mainCodeType));
+                return false;
+            }
+
+            //do the delete
+
+            //do the insert
+
         return true;
         default:
             parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType)+", file:"+__FILE__+":"+std::to_string(__LINE__));

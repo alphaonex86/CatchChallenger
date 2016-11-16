@@ -46,6 +46,13 @@ void CharactersGroupForLogin::setServerUniqueKey(const uint8_t &indexOnFlatList,
     servers[serverUniqueKey]=tempServer;
 }
 
+void CharactersGroupForLogin::removeServerUniqueKey(const uint8_t &indexOnFlatList)
+{
+browse EpollClientLoginSlave::serverServerList to seek and remove
+        maybe split by data block
+    servers[serverUniqueKey]=tempServer;
+}
+
 bool CharactersGroupForLogin::containsServerUniqueKey(const uint32_t &serverUniqueKey) const
 {
     return servers.find(serverUniqueKey)!=servers.cend();
