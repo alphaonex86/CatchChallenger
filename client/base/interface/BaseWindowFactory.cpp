@@ -329,9 +329,9 @@ void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatu
         #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
         QString productionTime;
         uint32_t remainingProductionTime=0;
-        if((industryStatus.last_update+industry.time)>(QDateTime::currentMSecsSinceEpoch()/1000))
+        if((uint64_t)(industryStatus.last_update+industry.time)>(uint64_t)(QDateTime::currentMSecsSinceEpoch()/1000))
             remainingProductionTime=(industryStatus.last_update+industry.time)-(QDateTime::currentMSecsSinceEpoch()/1000);
-        else if((industryStatus.last_update+industry.time)<(QDateTime::currentMSecsSinceEpoch()/1000))
+        else if((uint64_t)(industryStatus.last_update+industry.time)<(uint64_t)(QDateTime::currentMSecsSinceEpoch()/1000))
             remainingProductionTime=((QDateTime::currentMSecsSinceEpoch()/1000)-industryStatus.last_update)%industry.time;
         else
             remainingProductionTime=industry.time;

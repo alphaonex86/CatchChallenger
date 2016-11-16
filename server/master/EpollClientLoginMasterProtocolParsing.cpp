@@ -566,7 +566,9 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
 
                 EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
                 EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
-                EpollClientLoginMaster::broadcastGameServerChange();
+                //EpollClientLoginMaster::broadcastGameServerChange();
+
+                addToInserList();
 
                 updateConsoleCountServer();
             }
@@ -955,7 +957,7 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
 
                     EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
                     EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
-                    EpollClientLoginMaster::broadcastGameServerChange();
+                    addToInserList();
                     updateConsoleCountServer();
                 }
             }

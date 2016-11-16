@@ -32,6 +32,9 @@ public:
     void selectCharacter_ReturnFailed(const uint8_t &query_id, const uint8_t &errorCode);
     void disconnectForDuplicateConnexionDetected(const uint32_t &characterId);
     static void broadcastGameServerChange();
+    static void sendServerChange();
+    void addToRemoveList();
+    void addToInserList();
     bool sendGameServerRegistrationReply(const uint8_t queryNumber,bool generateNewUniqueKey);
     bool sendGameServerPing(const uint64_t &msecondFrom1970);
     bool sendRawBlock(const char * const data,const int &size);
@@ -107,6 +110,13 @@ public:
     BaseClassSwitch::EpollObjectType getType() const;
     static void sendCurrentPlayer();
     static uint32_t maxAccountId;
+
+    struct DataForUpdatedServers
+    {
+        std::vector<EpollClientLoginMaster *> addServer;
+        std::vector<uint8_t> removeServer;//flat index
+    };
+    static DataForUpdatedServers dataForUpdatedServers;
 private:
     void parseNetworkReadError(const std::string &errorString);
 
