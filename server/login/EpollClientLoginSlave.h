@@ -136,10 +136,34 @@ public:
     static unsigned int loginGoodSize;
     static std::vector<EpollClientLoginSlave *> stat_client_list;
 
+    /*  [0x00]: 8Bits: do into EpollServerLoginSlave::EpollServerLoginSlave()
+        [0x01]: 8Bits: serverListSize
+     *  if EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy
+         * Loop (server list size: [0x00]):
+         *  charactersgroup (8Bits)
+         *  serverUniqueKey (32Bits)
+         *  xmlStringSize (16Bits for size + variable size)
+         *  logical group (8Bits)
+         *  Max player (16Bits)
+         * Loop (server list size: [0x00]):
+         *  The current number of player 16Bits
+     * else
+         * Loop (server list size: [0x00]):
+         *  charactersgroup (8Bits)
+         *  serverUniqueKey (32Bits)
+         *  host (8Bits for size + variable size)
+         *  port (16Bits)
+         *  xmlStringSize (16Bits for size + variable size)
+         *  logical group (8Bits)
+         *  Max player (16Bits)
+         * Loop (server list size: [0x00]):
+         *  The current number of player 16Bits
+     *  */
     static char serverServerList[256*1024];
-    static unsigned int serverServerListSize;
-    static unsigned int serverServerListCurrentPlayerSize;
-    static char serverServerListComputedMessage[256*1024];
+    static unsigned int serverServerListSize;//in bytes
+    static unsigned int serverServerListCurrentPlayerSize;//in bytes
+    /// \todo explain why not merged with serverServerList
+    static char serverServerListComputedMessage[256*1024];//serverServerList with 0x40 header, and the rest of the header to have the packet prepared
     static unsigned int serverServerListComputedMessageSize;
     static char serverLogicalGroupList[256*1024];
     static unsigned int serverLogicalGroupListSize;
