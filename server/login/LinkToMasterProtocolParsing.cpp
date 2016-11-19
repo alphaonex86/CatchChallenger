@@ -783,6 +783,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             EpollServerLoginSlave::epollServerLoginSlave->compose04Reply();
         }
         break;
+        //Update the game server current player number on the game server
         case 0x47:
             /// \todo broadcast to client before the logged step
             if(size!=EpollClientLoginSlave::serverServerListCurrentPlayerSize)
@@ -837,17 +838,145 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             }
         return true;
         case 0x48:
+        {
             /// \todo broadcast to client before the logged step
             if(EpollClientLoginSlave::serverServerListCurrentPlayerSize==0)
             {
                 parseNetworkReadError("EpollClientLoginSlave::serverServerListCurrentPlayerSize==0 main ident: "+std::to_string(mainCodeType));
                 return false;
             }
+            const uint8_t &serverListCount=EpollClientLoginSlave::serverServerList[0x01];
+            //unserialise the data from EpollClientLoginSlave::serverServerList
+            struct ServerBlock
+            {
+                char * data;
+                uint16_t size;
+                uint8_t oldIndex;
+                uint16_t rawCurrentPlayerNumber;
+            };
+            std::vector<ServerBlock> serverBlockList;
+            serverBlockList.reserve(serverListCount);
+            {
+                size_t serverServerListPos=2;
+                size_t index=0;
+                ServerBlock newBlock;
+                if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
+                    while(index<serverListCount)
+                    {
+                        newBlock.data=serverServerListPos;
+                        newBlock.oldIndex=index;
+                        serverServerListPos+=5;
+                        const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(EpollClientLoginSlave::serverServerList+serverServerListPos));
+                        serverServerListPos+=2;
+                        serverServerListPos+=xmlStringSize;
+                        serverServerListPos+=3;
+                        serverBlockList.push_back(newBlock);
+                        index++;
+                    }
+                else
+                    while(index<serverListCount)
+                    {
+                        newBlock.data=serverServerListPos;
+                        newBlock.oldIndex=index;
+                        serverServerListPos+=5;
+                        const uint8_t &hostStringSize=EpollClientLoginSlave::serverServerList[serverServerListPos];
+                        serverServerListPos+=1;
+                        serverServerListPos+=hostStringSize;
+                        const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(EpollClientLoginSlave::serverServerList+serverServerListPos));
+                        serverServerListPos+=2;
+                        serverServerListPos+=xmlStringSize;
+                        serverServerListPos+=3;
+                        serverBlockList.push_back(newBlock);
+                        index++;
+                    }
+                index=0;
+                while(index<serverListCount)
+                {
+                    serverBlockList[index].rawCurrentPlayerNumber=*reinterpret_cast<uint16_t *>(EpollClientLoginSlave::serverServerList+serverServerListPos);
+                    serverServerListPos+=2;
+                    index++;
+                }
+            }
 
             //do the delete
+            unsigned int cursor=0;
+            {
+                const uint8_t &deleteSize=rawData[cursor];
+                cursor+=1;
+                size_t index=0;
+                while(index<deleteSize)
+                {
+                    const uint8_t &deleteIndex=rawData[cursor];
+                    cursor+=1;
+                    if(deleteIndex<serverBlockList.size())
+                        serverBlockList.erase(serverBlockList.cbegin()+deleteIndex);
+                    else
+                    {
+                        parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", delete entry is out of range, file:"+__FILE__+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    index++;
+                }
+            }
 
+            //performance boost and null size problem covered with this
+            if(serverBlockList.empty())
+            {
+                EpollClientLoginSlave::serverServerList[0x01]=0;
+                EpollClientLoginSlave::serverServerListSize=2;
+                EpollClientLoginSlave::serverServerListCurrentPlayerSize=0;
+                *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::serverServerListComputedMessage+1)=htole32(EpollClientLoginSlave::serverServerListSize);//set the dynamic size
+                memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
+                EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
+                return true;
+            }
+
+            size_t posTempBuffer=0;
+            //copy into the big buffer
+            {
+                uint8_t previousIndex=0;
+                char * firstBlockToCopy=NULL;
+                char * lastBlockToCopy=NULL;
+                size_t index=0;
+                while(index<serverBlockList.size())
+                {
+                    const ServerBlock &serverBlock=serverBlockList[index];
+                    //if continue
+                    if(firstBlockToCopy==NULL || previousIndex==(serverBlock.oldIndex-1))
+                    {
+                        if(firstBlockToCopy==NULL)
+                            firstBlockToCopy=serverBlock.data;
+                    }
+                    else //if need flush
+                    {
+                        const size_t &mergedSize=lastBlockToCopy-firstBlockToCopy;
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,firstBlockToCopy,mergedSize);
+                        posTempBuffer+=mergedSize;
+                        firstBlockToCopy=serverBlock.data;
+                    }
+                    previousIndex=serverBlock.oldIndex;
+                    lastBlockToCopy=serverBlock.data+serverBlock.size;
+
+                    index++;
+                }
+                //forced flush
+                if(firstBlockToCopy!=NULL && lastBlockToCopy!=NULL)
+                {
+                    const size_t &mergedSize=lastBlockToCopy-firstBlockToCopy;
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,firstBlockToCopy,mergedSize);
+                    posTempBuffer+=mergedSize;
+                }
+            }
+            //copy the current player number into local variable (do above)
+
+            serverBlockList
             //do the insert
 
+            //serialise to EpollClientLoginSlave::serverServerList
+            //merge with EpollClientLoginSlave::serverLogicalGroupAndServerListSize
+            //update the EpollClientLoginSlave::serverServerListComputedMessage
+            //send to stat client
+        }
         return true;
         default:
             parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType)+", file:"+__FILE__+":"+std::to_string(__LINE__));
