@@ -138,6 +138,7 @@ public:
 
     /*  [0x00]: 8Bits: do into EpollServerLoginSlave::EpollServerLoginSlave()
         [0x01]: 8Bits: serverListSize
+        All is stored into little endian to resend quickly
      *  if EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy
          * Loop (server list size: [0x00]):
          *  charactersgroup (8Bits)

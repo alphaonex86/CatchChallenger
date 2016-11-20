@@ -28,7 +28,7 @@ public:
     void setServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey,const char * const hostData,const uint8_t &hostDataSize,const uint16_t &port);
     bool containsServerUniqueKey(const uint32_t &serverUniqueKey) const;
     InternalGameServer getServerInformation(const uint32_t &serverUniqueKey) const;
-    void removeServerUniqueKey(const uint8_t &indexOnFlatList);
+    void removeServerUniqueKey(const uint32_t &serverUniqueKey);
 
     std::vector<EpollClientLoginSlave *> clientQueryForReadReturn;
     std::vector<uint32_t> maxCharacterId;

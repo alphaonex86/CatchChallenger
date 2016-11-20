@@ -46,7 +46,7 @@ void CharactersGroupForLogin::setServerUniqueKey(const uint8_t &indexOnFlatList,
     servers[serverUniqueKey]=tempServer;
 }
 
-void CharactersGroupForLogin::removeServerUniqueKey(const uint8_t &indexOnFlatList)
+void CharactersGroupForLogin::removeServerUniqueKey(const uint32_t &serverUniqueKey)
 {
 browse EpollClientLoginSlave::serverServerList to seek and remove
         maybe split by data block
