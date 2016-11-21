@@ -824,9 +824,10 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 return false;
             }
             if(size==2 && rawData[0x00]==0 && rawData[0x01]==0)
-                return;
+                return true;
             const uint8_t &serverListCount=EpollClientLoginSlave::serverServerList[0x01];
             unsigned int pos=0;
+            size_t posTempBuffer=0;
             const uint8_t &deleteSize=rawData[pos];
             pos+=1;
             std::vector<uint16_t> currentPlayerNumberList;
@@ -878,7 +879,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
                         while(index<serverListCount)
                         {
-                            newBlock.data=serverServerListPos;
+                            newBlock.data=EpollClientLoginSlave::serverServerList+serverServerListPos;
                             newBlock.oldIndex=index;
 
                             //here because minor cost
@@ -897,7 +898,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     else
                         while(index<serverListCount)
                         {
-                            newBlock.data=serverServerListPos;
+                            newBlock.data=EpollClientLoginSlave::serverServerList+serverServerListPos;
                             newBlock.oldIndex=index;
                             serverServerListPos+=5;
                             const uint8_t &hostStringSize=EpollClientLoginSlave::serverServerList[serverServerListPos];
@@ -933,7 +934,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         pos+=1;
                         if(deleteIndex<serverBlockList.size())
                         {
-                            const ServerBlock &serverBlock=serverBlockList.at(serverBlockList.cbegin()+deleteIndex);
+                            const ServerBlock &serverBlock=serverBlockList.at(deleteIndex);
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             if(serverBlock.charactersgroup>=CharactersGroupForLogin::list.size())
                             {
@@ -954,7 +955,6 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 }
                 ProtocolParsingBase::tempBigBufferForOutput[0x01]=serverBlockList.size();
 
-                size_t posTempBuffer=0;
                 //copy into the big buffer
                 {
                     uint8_t previousIndex=0;
@@ -980,6 +980,15 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         previousIndex=serverBlock.oldIndex;
                         lastBlockToCopy=serverBlock.data+serverBlock.size;
                         currentPlayerNumberList.push_back(serverBlock.rawCurrentPlayerNumber);
+
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        if(serverBlock.charactersgroup>=CharactersGroupForLogin::list.size())
+                        {
+                            parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", serverBlock.charactersgroup>=CharactersGroupForLogin::list.size(), file:"+__FILE__+":"+std::to_string(__LINE__));
+                            return false;
+                        }
+                        #endif
+                        CharactersGroupForLogin::list.at(serverBlock.charactersgroup)->setIndexServerUniqueKey(serverBlock.serverUniqueKey,index);
 
                         index++;
                     }
