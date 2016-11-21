@@ -142,7 +142,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             pos+=1;
 
             int serverListIndex=0;
-            uint32_t serverUniqueKey;const char * hostData;uint8_t hostDataSize;uint16_t port;
+            uint32_t serverUniqueKey;const char * hostData;uint8_t hostDataSize;uint16_t port;uint8_t charactersGroupIndex;
 
             if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
             {
@@ -150,7 +150,6 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 EpollClientLoginSlave::serverServerList[0x01]=serverListSize;
                 /// \warning not linked with above
                 EpollClientLoginSlave::serverServerListSize=0x02;
-                uint8_t charactersGroupIndex;
                 while(serverListIndex<serverListSize)
                 {
                     //copy the charactersgroup
@@ -265,7 +264,6 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 EpollClientLoginSlave::serverServerList[0x01]=serverListSize;
                 /// \warning not linked with above
                 EpollClientLoginSlave::serverServerListSize=0x02;
-                uint8_t charactersGroupIndex;
                 while(serverListIndex<serverListSize)
                 {
                     //copy the charactersgroup
@@ -791,37 +789,17 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 parseNetworkReadError("size!=EpollClientLoginSlave::serverServerListCurrentPlayerSize main ident: "+std::to_string(mainCodeType));
                 return false;
             }
-            /// \warning C20E compressed! can't direct alter!
-            if(compressionTypeServer==CompressionType::None)
-            {
-                memcpy(EpollClientLoginSlave::serverServerListComputedMessage+
-                       (EpollClientLoginSlave::serverServerListComputedMessageSize-EpollClientLoginSlave::serverServerListCurrentPlayerSize),
-                        rawData,
-                        EpollClientLoginSlave::serverServerListCurrentPlayerSize);
-                memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+
-                       (EpollClientLoginSlave::serverLogicalGroupAndServerListSize-EpollClientLoginSlave::serverServerListCurrentPlayerSize),
-                        rawData,
-                        EpollClientLoginSlave::serverServerListCurrentPlayerSize);
-            }
-            else
-            {
-                {
-                    memcpy(EpollClientLoginSlave::serverServerList+
-                       (EpollClientLoginSlave::serverServerListSize-EpollClientLoginSlave::serverServerListCurrentPlayerSize),
-                        rawData,
-                        EpollClientLoginSlave::serverServerListCurrentPlayerSize);
+            memcpy(EpollClientLoginSlave::serverServerList+
+               (EpollClientLoginSlave::serverServerListSize-EpollClientLoginSlave::serverServerListCurrentPlayerSize),
+                rawData,
+                EpollClientLoginSlave::serverServerListCurrentPlayerSize);
 
-                    EpollClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;
-                    *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::serverServerListComputedMessage+1)=htole32(EpollClientLoginSlave::serverServerListSize);//set the dynamic size
-                    memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
-                    EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
-                }
-                if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
-                {
-                    EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListComputedMessageSize+EpollClientLoginSlave::serverLogicalGroupListSize;
-                    memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
-                }
-            }
+            EpollClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;
+            *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::serverServerListComputedMessage+1)=htole32(EpollClientLoginSlave::serverServerListSize);//set the dynamic size
+            memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
+            EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
+            EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListComputedMessageSize+EpollClientLoginSlave::serverLogicalGroupListSize;
+            memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
 
             {
                 ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x47;
@@ -845,10 +823,12 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 parseNetworkReadError("EpollClientLoginSlave::serverServerListCurrentPlayerSize==0 main ident: "+std::to_string(mainCodeType));
                 return false;
             }
+            if(size==2 && rawData[0x00]==0 && rawData[0x01]==0)
+                return;
             const uint8_t &serverListCount=EpollClientLoginSlave::serverServerList[0x01];
-            unsigned int cursor=0;
-            const uint8_t &deleteSize=rawData[cursor];
-            cursor+=1;
+            unsigned int pos=0;
+            const uint8_t &deleteSize=rawData[pos];
+            pos+=1;
             std::vector<uint16_t> currentPlayerNumberList;
 
             //performance boost and null size problem covered with this
@@ -875,7 +855,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         index++;
                     }
                 }
-                cursor+=deleteSize;
+                pos+=deleteSize;
             }
             else
             {
@@ -942,10 +922,15 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 //do the delete
                 {
                     size_t index=0;
+                    if((size-pos)<(deleteSize*sizeof(uint16_t)))
+                    {
+                        parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", (size-cursor)<(deleteSize*sizeof(uint16_t)), file:"+__FILE__+":"+std::to_string(__LINE__));
+                        return false;
+                    }
                     while(index<deleteSize)
                     {
-                        const uint8_t &deleteIndex=rawData[cursor];
-                        cursor+=1;
+                        const uint8_t &deleteIndex=rawData[pos];
+                        pos+=1;
                         if(deleteIndex<serverBlockList.size())
                         {
                             const ServerBlock &serverBlock=serverBlockList.at(serverBlockList.cbegin()+deleteIndex);
@@ -967,6 +952,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         index++;
                     }
                 }
+                ProtocolParsingBase::tempBigBufferForOutput[0x01]=serverBlockList.size();
 
                 size_t posTempBuffer=0;
                 //copy into the big buffer
@@ -1008,13 +994,326 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 //copy the current player number into local variable
             }
 
-            serverBlockList
-            //do the insert
+            //do the insert the first part
+            const uint8_t &serverListSize=rawData[pos];
+            pos+=1;
+            {
+                int serverListIndex=0;
+                uint32_t serverUniqueKey;const char * hostData;uint8_t hostDataSize;uint16_t port;uint8_t charactersGroupIndex;
+
+                if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
+                {
+                    while(serverListIndex<serverListSize)
+                    {
+                        //copy the charactersgroup
+                        {
+                            if((size-pos)<1)
+                            {
+                                std::cerr << "C210 size charactersGroupIndex 8Bits too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            charactersGroupIndex=rawData[pos];
+                            ProtocolParsingBase::tempBigBufferForOutput[posTempBuffer]=charactersGroupIndex;
+                            posTempBuffer+=1;
+                            pos+=1;
+                        }
+
+                        //copy the key
+                        {
+                            if((size-pos)<4)
+                            {
+                                std::cerr << "C210 size key 32Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,rawData+pos,4);
+                            if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
+                            {
+                                std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << charactersGroupIndex << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                std::cerr << "CharactersGroupForLogin found:" << std::endl;
+                                auto it=CharactersGroupForLogin::hash.begin();
+                                while(it!=CharactersGroupForLogin::hash.cend())
+                                {
+                                    std::cerr << "- " << it->first << std::endl;
+                                    ++it;
+                                }
+                                std::cerr << "Data:" << binarytoHexa(rawData,pos) << " " << binarytoHexa(rawData+pos,(size-pos)) << std::endl;
+                                abort();
+                            }
+                            serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+pos)));
+                            pos+=4;
+                            posTempBuffer+=4;
+                        }
+
+                        //skip the host + port
+                        {
+                            if((size-pos)<1)
+                            {
+                                std::cerr << "C210 size charactersGroupString 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            const uint8_t &hostStringSize=rawData[pos];
+                            if((size-pos)<static_cast<unsigned int>(1+hostStringSize+2))
+                            {
+                                std::cerr << "C210 size charactersGroupString + size 8Bits header + port too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            hostData=rawData+pos+1;
+                            hostDataSize=hostStringSize;
+                            port=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+pos+1+hostStringSize)));
+                            pos+=1+hostStringSize+2;
+                        }
+
+                        CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
+
+                        //copy the xml string
+                        {
+                            if((size-pos)<2)
+                            {
+                                std::cerr << "C210 size xmlString 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+pos)));
+                            if((size-pos)<static_cast<unsigned int>(xmlStringSize+2))
+                            {
+                                std::cerr << "C210 size xmlString + size 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,rawData+pos,2+xmlStringSize);
+                            pos+=2+xmlStringSize;
+                            posTempBuffer+=2+xmlStringSize;
+                        }
+
+                        //copy the logical group
+                        {
+                            if((size-pos)<1)
+                            {
+                                std::cerr << "C210 size logicalGroupString 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            ProtocolParsingBase::tempBigBufferForOutput[posTempBuffer]=rawData[pos];
+                            pos+=1;
+                            posTempBuffer+=1;
+                        }
+
+                        //copy the max player
+                        {
+                            if((size-pos)<1)
+                            {
+                                std::cerr << "C210 size the max player 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            ProtocolParsingBase::tempBigBufferForOutput[posTempBuffer+0]=rawData[pos+0];
+                            ProtocolParsingBase::tempBigBufferForOutput[posTempBuffer+1]=rawData[pos+1];
+                            pos+=2;
+                            posTempBuffer+=2;
+                        }
+
+                        serverListIndex++;
+                    }
+                }
+                else
+                {
+                    //ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x01;//do into EpollServerLoginSlave::EpollServerLoginSlave()
+                    ProtocolParsingBase::tempBigBufferForOutput[0x01]=serverListSize;
+                    /// \warning not linked with above
+                    posTempBuffer=0x02;
+                    while(serverListIndex<serverListSize)
+                    {
+                        //copy the charactersgroup
+                        {
+                            if((size-pos)<1)
+                            {
+                                std::cerr << "C210 size charactersGroupIndex 8Bits too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            charactersGroupIndex=rawData[pos];
+                            pos+=1;
+                            ProtocolParsingBase::tempBigBufferForOutput[posTempBuffer]=charactersGroupIndex;
+                            posTempBuffer+=1;
+                        }
+
+                        //copy the unique key
+                        {
+                            if((size-pos)<4)
+                            {
+                                std::cerr << "C210 size key 32Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,rawData+pos,4);
+                            if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
+                            {
+                                std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << charactersGroupIndex << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                std::cerr << "CharactersGroupForLogin found:" << std::endl;
+                                auto it=CharactersGroupForLogin::hash.begin();
+                                while(it!=CharactersGroupForLogin::hash.cend())
+                                {
+                                    std::cerr << "- " << it->first << std::endl;
+                                    ++it;
+                                }
+                                std::cerr << "Data:" << binarytoHexa(rawData,pos) << " " << binarytoHexa(rawData+pos,(size-pos)) << std::endl;
+                                abort();
+                            }
+                            serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+pos)));
+                            posTempBuffer+=4;
+                            pos+=4;
+                        }
+
+                        //copy the host + port
+                        {
+                            if((size-pos)<1)
+                            {
+                                std::cerr << "C210 size charactersGroupString 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            const uint8_t &hostStringSize=rawData[pos];
+                            if((size-pos)<static_cast<unsigned int>(1+hostStringSize+2))
+                            {
+                                std::cerr << "C210 size charactersGroupString + size 8Bits header + port too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,rawData+pos,1+hostStringSize+2);
+                            hostData=rawData+pos+1;
+                            hostDataSize=hostStringSize;
+                            port=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+pos+1+hostStringSize)));
+                            if(port<=0)
+                            {
+                                std::cerr << "C210 port can't be <= 0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            if(hostStringSize<=0)
+                            {
+                                std::cerr << "C210 hostStringSize can't be <= 0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            pos+=1+hostStringSize+2;
+                            posTempBuffer+=1+hostStringSize+2;
+                        }
+
+                        CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
+
+                        //copy the xml string
+                        {
+                            if((size-pos)<2)
+                            {
+                                std::cerr << "C210 size xmlString 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(rawData+pos)));
+                            if((size-pos)<static_cast<unsigned int>(xmlStringSize+2))
+                            {
+                                std::cerr << "C210 size xmlString + size 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,rawData+pos,2+xmlStringSize);
+                            pos+=2+xmlStringSize;
+                            posTempBuffer+=2+xmlStringSize;
+                        }
+
+                        //copy the logical group
+                        {
+                            if((size-pos)<1)
+                            {
+                                std::cerr << "C210 size logicalGroupString 8Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            ProtocolParsingBase::tempBigBufferForOutput[posTempBuffer]=rawData[pos];
+                            pos+=1;
+                            posTempBuffer+=1;
+                        }
+
+                        //copy the max player
+                        {
+                            if((size-pos)<1)
+                            {
+                                std::cerr << "C210 size the max player 16Bits header too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                abort();
+                            }
+                            ProtocolParsingBase::tempBigBufferForOutput[posTempBuffer+0]=rawData[pos+0];
+                            ProtocolParsingBase::tempBigBufferForOutput[posTempBuffer+1]=rawData[pos+1];
+                            pos+=2;
+                            posTempBuffer+=2;
+                        }
+
+                        serverListIndex++;
+                    }
+                }
+                ProtocolParsingBase::tempBigBufferForOutput[0x01]+=serverListSize;
+            }
+            //the the remaing size
+            {
+                EpollClientLoginSlave::serverServerListCurrentPlayerSize=serverListSize*sizeof(uint16_t);
+                if((size-pos)!=0)
+                {
+                    std::cerr << "48 remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    std::cerr << "Data: "
+                              << binarytoHexa(rawData,pos)
+                              << " "
+                              << binarytoHexa(rawData+pos,size-pos)
+                              << " "
+                              << __FILE__ << ":" <<__LINE__ << std::endl;
+                    abort();
+                }
+            }
+            //copy the old current player number
+            {
+                size_t index=0;
+                while(index<currentPlayerNumberList.size())
+                {
+                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer)=currentPlayerNumberList.at(index);
+                    posTempBuffer+=2;
+                    index++;
+                }
+            }
+            //copy the new current player number
+            {
+                const size_t blockSize=size-pos;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,rawData+pos,blockSize);
+                posTempBuffer+=blockSize;
+                pos+=blockSize;
+            }
 
             //serialise to EpollClientLoginSlave::serverServerList
-            //merge with EpollClientLoginSlave::serverLogicalGroupAndServerListSize
+            memcpy(EpollClientLoginSlave::serverServerList,ProtocolParsingBase::tempBigBufferForOutput,posTempBuffer);
+            //EpollClientLoginSlave::serverServerList[0x00]=0x02;//do into EpollServerLoginSlave::EpollServerLoginSlave()
+            //EpollClientLoginSlave::serverServerList[0x01]+=serverListSize;do above
+            EpollClientLoginSlave::serverServerListSize=posTempBuffer;
+
             //update the EpollClientLoginSlave::serverServerListComputedMessage
+            EpollClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;
+            *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::serverServerListComputedMessage+1)=htole32(EpollClientLoginSlave::serverServerListSize);//set the dynamic size
+            memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
+            EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
+            if(EpollClientLoginSlave::serverServerListSize==0)
+            {
+                std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                abort();
+            }
+
+            //merge with EpollClientLoginSlave::serverLogicalGroupAndServerListSize
+            if(EpollClientLoginSlave::serverLogicalGroupListSize>0)
+            {
+                EpollClientLoginSlave::serverLogicalGroupAndServerListSize=EpollClientLoginSlave::serverServerListComputedMessageSize+EpollClientLoginSlave::serverLogicalGroupListSize;
+                /* First query already set
+                if(EpollClientLoginSlave::serverLogicalGroupListSize>0)
+                    memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList,EpollClientLoginSlave::serverLogicalGroupList,EpollClientLoginSlave::serverLogicalGroupListSize);*/
+                if(EpollClientLoginSlave::serverServerListComputedMessageSize>0)
+                    memcpy(EpollClientLoginSlave::serverLogicalGroupAndServerList+EpollClientLoginSlave::serverLogicalGroupListSize,EpollClientLoginSlave::serverServerListComputedMessage,EpollClientLoginSlave::serverServerListComputedMessageSize);
+            }
+
             //send to stat client
+            {
+                ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x48;
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,rawData,size);
+
+                unsigned int index=0;
+                while(index<EpollClientLoginSlave::stat_client_list.size())
+                {
+                    EpollClientLoginSlave * const client=EpollClientLoginSlave::stat_client_list.at(index);
+                    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+4+size);
+                    index++;
+                }
+            }
         }
         return true;
         default:
