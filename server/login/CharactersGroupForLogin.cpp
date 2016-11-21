@@ -42,15 +42,18 @@ void CharactersGroupForLogin::setServerUniqueKey(const uint8_t &indexOnFlatList,
     InternalGameServer tempServer;
     tempServer.host=std::string(hostData,hostDataSize);
     tempServer.port=port;
-    tempServer.indexOnFlatList=indexOnFlatList,
+    tempServer.indexOnFlatList=indexOnFlatList;
     servers[serverUniqueKey]=tempServer;
+}
+
+void CharactersGroupForLogin::setIndexServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey)
+{
+    servers[serverUniqueKey].indexOnFlatList=indexOnFlatList;
 }
 
 void CharactersGroupForLogin::removeServerUniqueKey(const uint32_t &serverUniqueKey)
 {
-browse EpollClientLoginSlave::serverServerList to seek and remove
-        maybe split by data block
-    servers[serverUniqueKey]=tempServer;
+    servers.erase(serverUniqueKey);
 }
 
 bool CharactersGroupForLogin::containsServerUniqueKey(const uint32_t &serverUniqueKey) const

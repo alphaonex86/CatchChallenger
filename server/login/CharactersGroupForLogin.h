@@ -26,6 +26,7 @@ public:
 
     void clearServerPair();
     void setServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey,const char * const hostData,const uint8_t &hostDataSize,const uint16_t &port);
+    void setIndexServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey);
     bool containsServerUniqueKey(const uint32_t &serverUniqueKey) const;
     InternalGameServer getServerInformation(const uint32_t &serverUniqueKey) const;
     void removeServerUniqueKey(const uint32_t &serverUniqueKey);
@@ -101,7 +102,6 @@ private:
     std::vector<void *> clientAddReturnList;
     std::vector<void *> clientRemoveReturnList;
     std::vector<uint32_t> deleteCharacterNowCharacterIdList;
-    std::unordered_map<uint32_t,uint8_t> uniqueKeyToIndex;
 
     static const std::string gender_male,gender_female;
     static char tempBuffer[4096];
