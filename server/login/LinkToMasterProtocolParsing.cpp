@@ -831,6 +831,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             const uint8_t &deleteSize=rawData[pos];
             pos+=1;
             std::vector<uint16_t> currentPlayerNumberList;
+            uint8_t serverBlockListSizeBeforeAdd=0;
 
             //performance boost and null size problem covered with this
             if(deleteSize>=serverListCount)//do without control, should be true
@@ -954,6 +955,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     }
                 }
                 ProtocolParsingBase::tempBigBufferForOutput[0x01]=serverBlockList.size();
+                serverBlockListSizeBeforeAdd=serverBlockList.size();
 
                 //copy into the big buffer
                 {
@@ -961,7 +963,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     char * firstBlockToCopy=NULL;
                     char * lastBlockToCopy=NULL;
                     size_t index=0;
-                    while(index<serverBlockList.size())
+                    while(index<serverBlockListSizeBeforeAdd)
                     {
                         const ServerBlock &serverBlock=serverBlockList[index];
                         //if continue
@@ -1072,7 +1074,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             pos+=1+hostStringSize+2;
                         }
 
-                        CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
+                        CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverBlockListSizeBeforeAdd+serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
 
                         //copy the xml string
                         {
@@ -1198,7 +1200,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             posTempBuffer+=1+hostStringSize+2;
                         }
 
-                        CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
+                        CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverBlockListSizeBeforeAdd+serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
 
                         //copy the xml string
                         {
