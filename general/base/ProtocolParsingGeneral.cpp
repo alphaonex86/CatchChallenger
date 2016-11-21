@@ -418,6 +418,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             ProtocolParsingBase::packetFixedSize[0x45]=0xFE;
             ProtocolParsingBase::packetFixedSize[0x46]=0xFE;
             ProtocolParsingBase::packetFixedSize[0x47]=0xFE;
+            ProtocolParsingBase::packetFixedSize[0x48]=0xFE;
             ProtocolParsingBase::packetFixedSize[0x4D]=4;
             ProtocolParsingBase::packetFixedSize[0x50]=0xFE;
             ProtocolParsingBase::packetFixedSize[0x51]=0;
