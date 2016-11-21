@@ -420,8 +420,10 @@ void EpollClientLoginMaster::sendServerChange()
     }
     //do the list
     uint32_t posOutput=0;
+    bool useTheDiff=false;
     if(EpollClientLoginMaster::dataForUpdatedServers.removeServer.size()<255 && EpollClientLoginMaster::dataForUpdatedServers.addServer.size()<255)
     {
+        useTheDiff=true;
         //send the network message
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x48;
@@ -439,6 +441,8 @@ void EpollClientLoginMaster::sendServerChange()
             index++;
         }
 
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=EpollClientLoginMaster::dataForUpdatedServers.addServer.size();
+        posOutput+=1;
         index=0;
         while(index<EpollClientLoginMaster::dataForUpdatedServers.addServer.size())
         {
@@ -505,6 +509,8 @@ void EpollClientLoginMaster::sendServerChange()
             //max player
             *reinterpret_cast<unsigned short int *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(unsigned short int)htole16(gameServerOnCharactersGroup->maxPlayer);
             posOutput+=sizeof(unsigned short int);
+
+            index++;
         }
 
         //the new connected player
@@ -520,11 +526,11 @@ void EpollClientLoginMaster::sendServerChange()
             index++;
         }
 
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput);//set the dynamic size
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
     }
     //broadcast all
     {
-        if(EpollClientLoginMaster::serverServerListSize<posOutput || posOutput==0)
+        if(!useTheDiff)
             broadcastGameServerChange();
         else
         {
