@@ -175,7 +175,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,4);
                         if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
                         {
-                            std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << charactersGroupIndex << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             std::cerr << "CharactersGroupForLogin found:" << std::endl;
                             auto it=CharactersGroupForLogin::hash.begin();
                             while(it!=CharactersGroupForLogin::hash.cend())
@@ -289,7 +289,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         memcpy(EpollClientLoginSlave::serverServerList+EpollClientLoginSlave::serverServerListSize,rawData+pos,4);
                         if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
                         {
-                            std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << charactersGroupIndex << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             std::cerr << "CharactersGroupForLogin found:" << std::endl;
                             auto it=CharactersGroupForLogin::hash.begin();
                             while(it!=CharactersGroupForLogin::hash.cend())
@@ -818,14 +818,14 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
         case 0x48:
         {
             /// \todo broadcast to client before the logged step
-            if(EpollClientLoginSlave::serverServerListCurrentPlayerSize==0)
+            if(EpollClientLoginSlave::serverServerListComputedMessageSize==0)
             {
-                parseNetworkReadError("EpollClientLoginSlave::serverServerListCurrentPlayerSize==0 main ident: "+std::to_string(mainCodeType));
+                parseNetworkReadError("EpollClientLoginSlave::serverServerListComputedMessageSize==0 main ident: "+std::to_string(mainCodeType));
                 return false;
             }
             if(size==2 && rawData[0x00]==0 && rawData[0x01]==0)
                 return true;
-            const uint8_t &serverListCount=EpollClientLoginSlave::serverServerList[0x01];
+            uint8_t serverListCount=EpollClientLoginSlave::serverServerList[0x01];
             unsigned int pos=0;
             size_t posTempBuffer=0;
             const uint8_t &deleteSize=rawData[pos];
@@ -858,6 +858,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     }
                 }
                 pos+=deleteSize;
+                serverListCount=0;
+                posTempBuffer=EpollClientLoginSlave::serverServerListSize;
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
             }
             else
             {
@@ -873,6 +876,12 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 };
                 std::vector<ServerBlock> serverBlockList;
                 serverBlockList.reserve(serverListCount);
+
+                std::cerr << "Data: "
+                          << binarytoHexa(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize)
+                          << " "
+                          << __FILE__ << ":" <<__LINE__ << std::endl;
+
                 {
                     size_t serverServerListPos=2;
                     size_t index=0;
@@ -893,7 +902,10 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             serverServerListPos+=2;
                             serverServerListPos+=xmlStringSize;
                             serverServerListPos+=3;
+
+                            newBlock.size=1+4+2+xmlStringSize+3;
                             serverBlockList.push_back(newBlock);
+
                             index++;
                         }
                     else
@@ -901,15 +913,24 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         {
                             newBlock.data=EpollClientLoginSlave::serverServerList+serverServerListPos;
                             newBlock.oldIndex=index;
-                            serverServerListPos+=5;
+
+                            //here because minor cost
+                            newBlock.charactersgroup=EpollClientLoginSlave::serverServerList[serverServerListPos];
+                            serverServerListPos+=1;
+                            newBlock.serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(EpollClientLoginSlave::serverServerList+serverServerListPos)));
+                            serverServerListPos+=4;
                             const uint8_t &hostStringSize=EpollClientLoginSlave::serverServerList[serverServerListPos];
                             serverServerListPos+=1;
                             serverServerListPos+=hostStringSize;
+
                             const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(EpollClientLoginSlave::serverServerList+serverServerListPos));
                             serverServerListPos+=2;
                             serverServerListPos+=xmlStringSize;
                             serverServerListPos+=3;
+
+                            newBlock.size=1+4+1+hostStringSize+2+xmlStringSize+3;
                             serverBlockList.push_back(newBlock);
+
                             index++;
                         }
                     index=0;
@@ -922,6 +943,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 }
 
                 //do the delete
+                if(deleteSize>0)
                 {
                     size_t index=0;
                     if((size-pos)<(deleteSize*sizeof(uint16_t)))
@@ -1008,6 +1030,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             //do the insert the first part
             const uint8_t &serverListSize=rawData[pos];
             pos+=1;
+            if(serverListSize>0)
             {
                 int serverListIndex=0;
                 uint32_t serverUniqueKey;const char * hostData;uint8_t hostDataSize;uint16_t port;uint8_t charactersGroupIndex;
@@ -1039,7 +1062,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,rawData+pos,4);
                             if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
                             {
-                                std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << charactersGroupIndex << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                 std::cerr << "CharactersGroupForLogin found:" << std::endl;
                                 auto it=CharactersGroupForLogin::hash.begin();
                                 while(it!=CharactersGroupForLogin::hash.cend())
@@ -1053,6 +1076,19 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+pos)));
                             pos+=4;
                             posTempBuffer+=4;
+                            if(CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
+                            {
+                                std::cerr << "CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                std::cerr << "CharactersGroupForLogin found:" << std::endl;
+                                auto it=CharactersGroupForLogin::hash.begin();
+                                while(it!=CharactersGroupForLogin::hash.cend())
+                                {
+                                    std::cerr << "- " << it->first << std::endl;
+                                    ++it;
+                                }
+                                std::cerr << "Data:" << binarytoHexa(rawData,pos) << " " << binarytoHexa(rawData+pos,(size-pos)) << std::endl;
+                                abort();
+                            }
                         }
 
                         //skip the host + port
@@ -1153,7 +1189,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,rawData+pos,4);
                             if(charactersGroupIndex>=CharactersGroupForLogin::list.size())
                             {
-                                std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << charactersGroupIndex << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                std::cerr << "C210 CharactersGroupForLogin not found, charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                 std::cerr << "CharactersGroupForLogin found:" << std::endl;
                                 auto it=CharactersGroupForLogin::hash.begin();
                                 while(it!=CharactersGroupForLogin::hash.cend())
@@ -1167,6 +1203,19 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+pos)));
                             posTempBuffer+=4;
                             pos+=4;
+                            if(CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
+                            {
+                                std::cerr << "CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                std::cerr << "CharactersGroupForLogin found:" << std::endl;
+                                auto it=CharactersGroupForLogin::hash.begin();
+                                while(it!=CharactersGroupForLogin::hash.cend())
+                                {
+                                    std::cerr << "- " << it->first << std::endl;
+                                    ++it;
+                                }
+                                std::cerr << "Data:" << binarytoHexa(rawData,pos) << " " << binarytoHexa(rawData+pos,(size-pos)) << std::endl;
+                                abort();
+                            }
                         }
 
                         //copy the host + port
@@ -1250,10 +1299,21 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 }
                 ProtocolParsingBase::tempBigBufferForOutput[0x01]+=serverListSize;
             }
+            //copy the old current player number
+            if(!currentPlayerNumberList.empty())
+            {
+                size_t index=0;
+                while(index<currentPlayerNumberList.size())
+                {
+                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer)=currentPlayerNumberList.at(index);
+                    posTempBuffer+=2;
+                    index++;
+                }
+            }
             //the the remaing size
             {
-                EpollClientLoginSlave::serverServerListCurrentPlayerSize=serverListSize*sizeof(uint16_t);
-                if((size-pos)!=0)
+                EpollClientLoginSlave::serverServerListCurrentPlayerSize=(ProtocolParsingBase::tempBigBufferForOutput[0x01])*sizeof(uint16_t);
+                if((size-pos)!=(serverListSize*sizeof(uint16_t)))
                 {
                     std::cerr << "48 remaining data (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                     std::cerr << "Data: "
@@ -1265,22 +1325,15 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     abort();
                 }
             }
-            //copy the old current player number
-            {
-                size_t index=0;
-                while(index<currentPlayerNumberList.size())
-                {
-                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer)=currentPlayerNumberList.at(index);
-                    posTempBuffer+=2;
-                    index++;
-                }
-            }
             //copy the new current player number
             {
                 const size_t blockSize=size-pos;
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,rawData+pos,blockSize);
-                posTempBuffer+=blockSize;
-                pos+=blockSize;
+                if(blockSize>0)
+                {
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,rawData+pos,blockSize);
+                    posTempBuffer+=blockSize;
+                    pos+=blockSize;
+                }
             }
 
             //serialise to EpollClientLoginSlave::serverServerList
