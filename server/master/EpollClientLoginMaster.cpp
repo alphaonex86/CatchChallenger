@@ -528,6 +528,8 @@ void EpollClientLoginMaster::sendServerChange()
         }
 
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+        if(posOutput>=EpollClientLoginMaster::serverServerListSize)
+            useTheDiff=false;
     }
     EpollClientLoginMaster::dataForUpdatedServers.addServer.clear();
     EpollClientLoginMaster::dataForUpdatedServers.removeServer.clear();
