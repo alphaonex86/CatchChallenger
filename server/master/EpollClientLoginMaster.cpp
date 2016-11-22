@@ -481,23 +481,24 @@ void EpollClientLoginMaster::sendServerChange()
             }
             //metaData
             {
-                if(gameServerOnCharactersGroup->metaData.size()>4*1024)
+                const std::string &xmlString=gameServerOnCharactersGroup->metaData;
+                if(xmlString.size()>4*1024)
                 {
                     std::cerr << "metaData too hurge (abort)" << std::endl;
                     abort();
                 }
                 {
-                    if(gameServerOnCharactersGroup->metaData.size()>65535)
+                    if(xmlString.size()>65535)
                     {
                         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
                         posOutput+=2;
                     }
                     else
                     {
-                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(gameServerOnCharactersGroup->metaData.size());
+                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(xmlString.size());
                         posOutput+=2;
-                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,gameServerOnCharactersGroup->metaData.data(),gameServerOnCharactersGroup->metaData.size());
-                        posOutput+=gameServerOnCharactersGroup->metaData.size();
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,xmlString.data(),xmlString.size());
+                        posOutput+=xmlString.size();
                     }
                 }
             }
@@ -528,6 +529,8 @@ void EpollClientLoginMaster::sendServerChange()
 
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
     }
+    EpollClientLoginMaster::dataForUpdatedServers.addServer.clear();
+    EpollClientLoginMaster::dataForUpdatedServers.removeServer.clear();
     //broadcast all
     {
         if(!useTheDiff)
