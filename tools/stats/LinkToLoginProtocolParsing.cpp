@@ -45,7 +45,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
             }
             proxyMode=ProxyMode(serverMode);
             uint8_t serverListSize=0;
-            uint8_t serverListIndex;
+            uint8_t serverListIndex=0;
             if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
@@ -53,7 +53,6 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
             }
             serverListSize=data[pos];
             pos+=1;
-            serverListIndex=0;
             serverList.clear();
             while(serverListIndex<serverListSize)
             {
@@ -190,6 +189,174 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
             updateJsonFile();
         }
         break;
+        case 0x48:
+        {
+            if(size==2 && data[0x00]==0 && data[0x01]==0)
+                return true;
+            unsigned int pos=0;
+            uint8_t serverListIndex=0;
+            const uint8_t &deleteSize=data[pos];
+            pos+=1;
+            uint8_t serverBlockListSizeBeforeAdd=0;
+
+            //performance boost and null size problem covered with this
+            if(deleteSize>=serverList.size())//do without control, should be true
+            {
+                if(deleteSize>serverList.size())
+                {
+                    parseNetworkReadError("deleteSize>serverListCount main ident: "+std::to_string(mainCodeType));
+                    return false;
+                }
+                serverList.clear();
+                pos+=deleteSize;
+            }
+            else
+            {
+                //do the delete
+                if(deleteSize>0)
+                {
+                    size_t index=0;
+                    if((size-pos)<(deleteSize*sizeof(uint16_t)))
+                    {
+                        parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", (size-cursor)<(deleteSize*sizeof(uint16_t)), file:"+__FILE__+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    while(index<deleteSize)
+                    {
+                        const uint8_t &deleteIndex=data[pos];
+                        pos+=1;
+                        if(deleteIndex<serverList.size())
+                            serverList.erase(serverList.cbegin()+deleteIndex);
+                        else
+                        {
+                            parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", delete entry is out of range, file:"+__FILE__+":"+std::to_string(__LINE__));
+                            return false;
+                        }
+                        index++;
+                    }
+                }
+                serverBlockListSizeBeforeAdd=serverList.size();
+            }
+
+            const uint8_t &serverListSize=data[pos];
+            pos+=1;
+            //do the insert the first part
+            while(serverListIndex<serverListSize)
+            {
+                ServerFromPoolForDisplay server;
+                server.currentPlayer=0;
+                server.maxPlayer=0;
+                server.uniqueKey=0;
+                //group index
+                {
+                    if((size-pos)<(int)sizeof(uint8_t))
+                    {
+                        errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    server.groupIndex=data[pos];
+                    pos+=1;
+                }
+                //uniquekey
+                {
+                    if((size-pos)<(int)sizeof(uint32_t))
+                    {
+                        errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    server.uniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                    pos+=4;
+                }
+                if(proxyMode==ProxyMode::Reconnect)
+                {
+                    //host
+                    {
+                        if((size-pos)<(int)sizeof(uint8_t))
+                        {
+                            errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                            return false;
+                        }
+                        uint8_t stringSize;
+                        stringSize=data[pos];
+                        pos+=1;
+                        if(stringSize>0)
+                        {
+                            if((size-pos)<(int)stringSize)
+                            {
+                                errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                                return false;
+                            }
+                            pos+=stringSize;
+                        }
+                    }
+                    //port
+                    {
+                        if((size-pos)<(int)sizeof(uint16_t))
+                        {
+                            errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                            return false;
+                        }
+                        pos+=2;
+                    }
+                }
+                //xml (name, description, ...)
+                {
+                    if((size-pos)<(int)sizeof(uint16_t))
+                    {
+                        errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    uint16_t stringSize;
+                    stringSize=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                    pos+=2;
+                    if(stringSize>0)
+                    {
+                        if((size-pos)<(int)stringSize)
+                        {
+                            errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                            return false;
+                        }
+                        server.xml=std::string(data+pos,stringSize);
+                        pos+=stringSize;
+                    }
+                }
+                //logical to contruct the tree
+                {
+                    if((size-pos)<(int)sizeof(uint8_t))
+                    {
+                        errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    pos+=1;
+                }
+                //max player
+                {
+                    if((size-pos)<(int)sizeof(uint16_t))
+                    {
+                        errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    server.maxPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                    pos+=2;
+                }
+                serverList.push_back(server);
+                serverListIndex++;
+            }
+            if(static_cast<ssize_t>(size-pos)!=((int)sizeof(uint16_t)*serverListSize))
+            {
+                errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                return false;
+            }
+            serverListIndex=0;
+            while(serverListIndex<serverListSize)
+            {
+                serverList[serverBlockListSizeBeforeAdd+serverListIndex].currentPlayer=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                pos+=2;
+                serverListIndex++;
+            }
+            updateJsonFile();
+        }
+        return true;
         default:
             parseNetworkReadError("unknown main ident: "+std::to_string(mainCodeType));
             return false;
