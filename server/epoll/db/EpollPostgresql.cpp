@@ -586,9 +586,9 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                 else
                 {
                     if(queriesList.empty())
-                        std::cerr << "query take " << ms << "ms" << std::endl;
+                        std::cout << "query take " << ms << "ms" << std::endl;
                     else
-                        std::cerr << queriesList.front().query << ": query take " << ms << "ms" << std::endl;
+                        std::cout << queriesList.front().query << ": query take " << ms << "ms" << std::endl;
                 }
                 #endif
                 start = std::chrono::high_resolution_clock::now();
