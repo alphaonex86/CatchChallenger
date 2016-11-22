@@ -877,11 +877,6 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 std::vector<ServerBlock> serverBlockList;
                 serverBlockList.reserve(serverListCount);
 
-                std::cerr << "Data: "
-                          << binarytoHexa(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize)
-                          << " "
-                          << __FILE__ << ":" <<__LINE__ << std::endl;
-
                 {
                     size_t serverServerListPos=2;
                     size_t index=0;
