@@ -168,7 +168,6 @@ bool EpollPostgresql::syncConnectInternal(bool infinityTry)
         if(connStatusType==CONNECTION_BAD)
             return false;
     }
-    std::cout << "Connected to postgresql" << std::endl;
     if(PQsetnonblocking(conn,1)!=0)
     {
        std::cerr << "pg no blocking error" << std::endl;
@@ -201,8 +200,7 @@ bool EpollPostgresql::syncConnectInternal(bool infinityTry)
     PQsetNoticeReceiver(conn,noticeReceiver,NULL);
     PQsetNoticeProcessor(conn,noticeProcessor,NULL);
     started=true;
-    std::cout << "Protocol version:" << PQprotocolVersion(conn) << std::endl;
-    std::cout << "Server version:" << PQserverVersion(conn) << std::endl;
+    std::cout << "Connected to postgresql, Protocol version: " << PQprotocolVersion(conn) << ", Server version:" << PQserverVersion(conn) << std::endl;
     return true;
 }
 
