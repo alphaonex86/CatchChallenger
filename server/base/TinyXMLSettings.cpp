@@ -18,11 +18,7 @@ TinyXMLSettings::TinyXMLSettings(const std::string &file) :
     modified(false)
 {
     this->file=file;
-    #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
     const auto loadOkay = document.CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-    #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
-    const auto loadOkay = document.LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-    #endif
     if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
     {
         modified=true;
