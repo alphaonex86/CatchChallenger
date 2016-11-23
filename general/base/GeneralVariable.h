@@ -150,7 +150,7 @@
     #include "tinyXML2/tinyxml2.h"
     #define CATCHCHALLENGER_XMLELEMENT tinyxml2::XMLElement
     #define CATCHCHALLENGER_XMLDOCUMENT tinyxml2::XMLDocument
-    #define CATCHCHALLENGER_XMLDOCUMENTLOAD(a) LoadFile(a.c_str())
+    #define CATCHCHALLENGER_XMLDOCUMENTLOAD(a) LoadFile(a)
     #define CATCHCHALLENGER_XMLDOCUMENTERROR(a) (std::string("Parse error: ")+std::string(a->GetErrorStr1())+" and "+std::string(a->GetErrorStr2())+", error id: "+std::to_string(a->ErrorID()))
     #define CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(a) (a==0)
     #define CATCHCHALLENGER_XMLELENTVALUE() Name()
