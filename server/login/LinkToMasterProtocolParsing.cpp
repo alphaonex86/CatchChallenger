@@ -39,6 +39,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
     }
     switch(mainCodeType)
     {
+        //Logical group
         case 0x44:
         {
             //control it
@@ -118,8 +119,12 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             }
         }
         break;
+        //Raw server list master to login
         case 0x45:
         {
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            std::cout << "set server list by set in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            #endif
             //purge the internal data
             {
                 unsigned int index=0;
@@ -211,6 +216,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     }
 
                     CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
+                    std::cout << "CharactersGroupForLogin::list.at(" << std::to_string(charactersGroupIndex) << ")->setServerUniqueKey(" << std::to_string(serverUniqueKey) << "), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
 
                     //copy the xml string
                     {
@@ -337,6 +343,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     }
 
                     CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
+                    #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                    std::cout << "CharactersGroupForLogin::list.at(" << std::to_string(charactersGroupIndex) << ")->setServerUniqueKey(" << std::to_string(serverUniqueKey) << "), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    #endif
 
                     //copy the xml string
                     {
@@ -412,6 +421,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::serverServerListComputedMessage+1)=htole32(EpollClientLoginSlave::serverServerListSize);//set the dynamic size
             memcpy(EpollClientLoginSlave::serverServerListComputedMessage+1+4,EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize);
             EpollClientLoginSlave::serverServerListComputedMessageSize=EpollClientLoginSlave::serverServerListSize+1+4;
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            #endif
             if(EpollClientLoginSlave::serverServerListSize==0)
             {
                 std::cerr << "EpollClientLoginMaster::serverLogicalGroupListSize==0 (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -438,6 +450,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             }
         }
         break;
+        //Login settings and Characters group
         case 0x46:
         {
             if(size<(1+4+1+1+1+1 +1+2+1+2))
@@ -815,8 +828,12 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 }
             }
         return true;
+        //Update server list master to login
         case 0x48:
         {
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            std::cout << "set server list by diff in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            #endif
             /// \todo broadcast to client before the logged step
             if(EpollClientLoginSlave::serverServerListComputedMessageSize==0)
             {
@@ -827,12 +844,15 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 return true;
             uint8_t serverListCount=EpollClientLoginSlave::serverServerList[0x01];
             unsigned int pos=0;
-            size_t posTempBuffer=0;
+            size_t posTempBuffer=2;
             const uint8_t &deleteSize=rawData[pos];
             pos+=1;
             std::vector<uint16_t> currentPlayerNumberList;
             uint8_t serverBlockListSizeBeforeAdd=0;
 
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            #endif
             //performance boost and null size problem covered with this
             if(deleteSize>=serverListCount)//do without control, should be true
             {
@@ -841,7 +861,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     parseNetworkReadError("deleteSize>serverListCount main ident: "+std::to_string(mainCodeType));
                     return false;
                 }
-                EpollClientLoginSlave::serverServerList[0x01]=0;
+                EpollClientLoginSlave::serverServerList[0x01]=EpollClientLoginSlave::proxyMode;
                 EpollClientLoginSlave::serverServerListSize=2;
                 EpollClientLoginSlave::serverServerListCurrentPlayerSize=0;
                 *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::serverServerListComputedMessage+1)=htole32(EpollClientLoginSlave::serverServerListSize);//set the dynamic size
@@ -882,52 +902,184 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     size_t index=0;
                     ServerBlock newBlock;
                     if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
+                    {
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        std::cout << "serverBlock raw dump EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        #endif
                         while(index<serverListCount)
                         {
                             newBlock.data=EpollClientLoginSlave::serverServerList+serverServerListPos;
                             newBlock.oldIndex=index;
 
                             //here because minor cost
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
                             newBlock.charactersgroup=EpollClientLoginSlave::serverServerList[serverServerListPos];
                             serverServerListPos+=1;
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
                             newBlock.serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(EpollClientLoginSlave::serverServerList+serverServerListPos)));
                             serverServerListPos+=4;
 
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
                             const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(EpollClientLoginSlave::serverServerList+serverServerListPos));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
                             serverServerListPos+=2;
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
                             serverServerListPos+=xmlStringSize;
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
                             serverServerListPos+=3;
 
                             newBlock.size=1+4+2+xmlStringSize+3;
                             serverBlockList.push_back(newBlock);
 
+                            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                            std::cout << std::to_string(newBlock.charactersgroup) << " " << std::to_string(newBlock.serverUniqueKey) << " " << binarytoHexa(newBlock.data,newBlock.size) << std::endl;
+                            #endif
+
                             index++;
                         }
+                    }
                     else
+                    {
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        std::cout << "serverBlock raw dump EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Reconnect at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        #endif
                         while(index<serverListCount)
                         {
                             newBlock.data=EpollClientLoginSlave::serverServerList+serverServerListPos;
                             newBlock.oldIndex=index;
 
                             //here because minor cost
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
                             newBlock.charactersgroup=EpollClientLoginSlave::serverServerList[serverServerListPos];
                             serverServerListPos+=1;
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
                             newBlock.serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(EpollClientLoginSlave::serverServerList+serverServerListPos)));
                             serverServerListPos+=4;
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
                             const uint8_t &hostStringSize=EpollClientLoginSlave::serverServerList[serverServerListPos];
                             serverServerListPos+=1;
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
                             serverServerListPos+=hostStringSize;
-
-                            const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(EpollClientLoginSlave::serverServerList+serverServerListPos));
+                            //port
                             serverServerListPos+=2;
+
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
+                            const uint16_t &xmlStringSize=le16toh(*reinterpret_cast<uint16_t *>(EpollClientLoginSlave::serverServerList+serverServerListPos));
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
+                            serverServerListPos+=2;
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
                             serverServerListPos+=xmlStringSize;
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                            {
+                                std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                abort();
+                            }
+                            #endif
                             serverServerListPos+=3;
 
-                            newBlock.size=1+4+1+hostStringSize+2+xmlStringSize+3;
+                            newBlock.size=1+4+1+hostStringSize+2+xmlStringSize+2+3;
                             serverBlockList.push_back(newBlock);
+
+                            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                            std::cout << std::to_string(newBlock.charactersgroup) << " " << std::to_string(newBlock.serverUniqueKey) << " " << binarytoHexa(newBlock.data,newBlock.size) << std::endl;
+                            #endif
 
                             index++;
                         }
+                    }
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(serverServerListPos>=EpollClientLoginSlave::serverServerListSize)
+                    {
+                        std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        abort();
+                    }
+                    #endif
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if((EpollClientLoginSlave::serverServerListSize-serverServerListPos)!=(serverListCount*sizeof(uint16_t)))
+                    {
+                        std::cout << "EpollClientLoginSlave::serverServerList out of range at file:" << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        abort();
+                    }
+                    #endif
                     index=0;
                     while(index<serverListCount)
                     {
@@ -936,6 +1088,18 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         index++;
                     }
                 }
+                #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                std::cout << "serverBlock dump at file:" << __FILE__ << ":" << std::to_string(__LINE__) << ":" << std::endl;
+                {
+                    size_t index=0;
+                    while(index<serverBlockList.size())
+                    {
+                        const ServerBlock &serverBlock=serverBlockList[index];
+                        std::cout << std::to_string(serverBlock.oldIndex) << ") " << std::to_string(serverBlock.charactersgroup) << " - " << std::to_string(serverBlock.serverUniqueKey) << std::endl;
+                        index++;
+                    }
+                }
+                #endif
 
                 //do the delete
                 if(deleteSize>0)
@@ -959,8 +1123,24 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                                 parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", serverBlock.charactersgroup>=CharactersGroupForLogin::list.size(), file:"+__FILE__+":"+std::to_string(__LINE__));
                                 return false;
                             }
+                            if(!CharactersGroupForLogin::list.at(serverBlock.charactersgroup)->containsServerUniqueKey(serverBlock.serverUniqueKey))
+                            {
+                                std::cerr << "!CharactersGroupForLogin::list.at(" << std::to_string(serverBlock.charactersgroup) << ")->containsServerUniqueKey(" << std::to_string(serverBlock.serverUniqueKey) << ") to remove, pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                std::cerr << "CharactersGroupForLogin found:" << std::endl;
+                                auto it=CharactersGroupForLogin::hash.begin();
+                                while(it!=CharactersGroupForLogin::hash.cend())
+                                {
+                                    std::cerr << "- " << it->first << std::endl;
+                                    ++it;
+                                }
+                                std::cerr << "Data:" << binarytoHexa(rawData,pos) << " " << binarytoHexa(rawData+pos,(size-pos)) << std::endl;
+                                abort();
+                            }
                             #endif
                             CharactersGroupForLogin::list.at(serverBlock.charactersgroup)->removeServerUniqueKey(serverBlock.serverUniqueKey);
+                            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                            std::cout << "CharactersGroupForLogin::list.at(" << std::to_string(serverBlock.charactersgroup) << ")->removeServerUniqueKey(" << std::to_string(serverBlock.serverUniqueKey) << "), pos: " << pos << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            #endif
                             serverBlockList.erase(serverBlockList.cbegin()+deleteIndex);
                         }
                         else
@@ -971,9 +1151,26 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         index++;
                     }
                 }
+                ProtocolParsingBase::tempBigBufferForOutput[0x00]=EpollClientLoginSlave::proxyMode;
                 ProtocolParsingBase::tempBigBufferForOutput[0x01]=serverBlockList.size();
                 serverBlockListSizeBeforeAdd=serverBlockList.size();
 
+                #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                std::cout << "serverBlock dump at file:" << __FILE__ << ":" << std::to_string(__LINE__) << ":" << std::endl;
+                {
+                    size_t index=0;
+                    while(index<serverBlockList.size())
+                    {
+                        const ServerBlock &serverBlock=serverBlockList[index];
+                        std::cout << std::to_string(serverBlock.oldIndex) << ") " << std::to_string(serverBlock.charactersgroup) << " - " << std::to_string(serverBlock.serverUniqueKey) << std::endl;
+                        index++;
+                    }
+                }
+                #endif
+
+                #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                #endif
                 //copy into the big buffer
                 {
                     uint8_t previousIndex=0;
@@ -995,6 +1192,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,firstBlockToCopy,mergedSize);
                             posTempBuffer+=mergedSize;
                             firstBlockToCopy=serverBlock.data;
+                            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            #endif
                         }
                         previousIndex=serverBlock.oldIndex;
                         lastBlockToCopy=serverBlock.data+serverBlock.size;
@@ -1006,8 +1206,24 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", serverBlock.charactersgroup>=CharactersGroupForLogin::list.size(), file:"+__FILE__+":"+std::to_string(__LINE__));
                             return false;
                         }
+                        if(!CharactersGroupForLogin::list.at(serverBlock.charactersgroup)->containsServerUniqueKey(serverBlock.serverUniqueKey))
+                        {
+                            std::cerr << "!CharactersGroupForLogin::list.at(" << std::to_string(serverBlock.charactersgroup) << ")->containsServerUniqueKey(" << std::to_string(serverBlock.serverUniqueKey) << ") to remove, pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                            std::cerr << "CharactersGroupForLogin found:" << std::endl;
+                            auto it=CharactersGroupForLogin::hash.begin();
+                            while(it!=CharactersGroupForLogin::hash.cend())
+                            {
+                                std::cerr << "- " << it->first << std::endl;
+                                ++it;
+                            }
+                            std::cerr << "Data:" << binarytoHexa(rawData,pos) << " " << binarytoHexa(rawData+pos,(size-pos)) << std::endl;
+                            abort();
+                        }
                         #endif
                         CharactersGroupForLogin::list.at(serverBlock.charactersgroup)->setIndexServerUniqueKey(serverBlock.serverUniqueKey,index);
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        std::cout << "CharactersGroupForLogin::list.at(" << std::to_string(serverBlock.charactersgroup) << ")->setIndexServerUniqueKey(" << std::to_string(serverBlock.serverUniqueKey) << "," << std::to_string(index) << "), pos: " << pos << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        #endif
 
                         index++;
                     }
@@ -1018,9 +1234,15 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posTempBuffer,firstBlockToCopy,mergedSize);
                         posTempBuffer+=mergedSize;
                     }
+                    #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                    std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    #endif
                 }
                 //copy the current player number into local variable
             }
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            #endif
 
             //do the insert the first part
             const uint8_t &serverListSize=rawData[pos];
@@ -1034,6 +1256,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 {
                     while(serverListIndex<serverListSize)
                     {
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        #endif
                         //copy the charactersgroup
                         {
                             if((size-pos)<1)
@@ -1073,7 +1298,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             posTempBuffer+=4;
                             if(CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
                             {
-                                std::cerr << "CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                std::cerr << "CharactersGroupForLogin::list.at(" << std::to_string(charactersGroupIndex) << ")->containsServerUniqueKey(" << std::to_string(serverUniqueKey) << "), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                 std::cerr << "CharactersGroupForLogin found:" << std::endl;
                                 auto it=CharactersGroupForLogin::hash.begin();
                                 while(it!=CharactersGroupForLogin::hash.cend())
@@ -1106,6 +1331,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         }
 
                         CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverBlockListSizeBeforeAdd+serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        std::cout << "CharactersGroupForLogin::list.at(" << std::to_string(charactersGroupIndex) << ")->setServerUniqueKey(" << std::to_string(serverUniqueKey) << "), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        #endif
 
                         //copy the xml string
                         {
@@ -1149,18 +1377,23 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             pos+=2;
                             posTempBuffer+=2;
                         }
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        #endif
 
                         serverListIndex++;
                     }
+                    #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                    std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    #endif
                 }
                 else
                 {
-                    //ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x01;//do into EpollServerLoginSlave::EpollServerLoginSlave()
-                    ProtocolParsingBase::tempBigBufferForOutput[0x01]=serverListSize;
-                    /// \warning not linked with above
-                    posTempBuffer=0x02;
                     while(serverListIndex<serverListSize)
                     {
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        #endif
                         //copy the charactersgroup
                         {
                             if((size-pos)<1)
@@ -1200,7 +1433,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             pos+=4;
                             if(CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
                             {
-                                std::cerr << "CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                                std::cerr << "CharactersGroupForLogin::list.at(" << std::to_string(charactersGroupIndex) << ")->containsServerUniqueKey(" << std::to_string(serverUniqueKey) << "), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                 std::cerr << "CharactersGroupForLogin found:" << std::endl;
                                 auto it=CharactersGroupForLogin::hash.begin();
                                 while(it!=CharactersGroupForLogin::hash.cend())
@@ -1245,6 +1478,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         }
 
                         CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverBlockListSizeBeforeAdd+serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        std::cout << "CharactersGroupForLogin::list.at(" << std::to_string(charactersGroupIndex) << ")->setServerUniqueKey(" << std::to_string(serverUniqueKey) << "), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        #endif
 
                         //copy the xml string
                         {
@@ -1288,12 +1524,21 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             pos+=2;
                             posTempBuffer+=2;
                         }
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        #endif
 
                         serverListIndex++;
                     }
+                    #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                    std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    #endif
                 }
                 ProtocolParsingBase::tempBigBufferForOutput[0x01]+=serverListSize;
             }
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            #endif
             //copy the old current player number
             if(!currentPlayerNumberList.empty())
             {
@@ -1305,6 +1550,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     index++;
                 }
             }
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            #endif
             //the the remaing size
             {
                 EpollClientLoginSlave::serverServerListCurrentPlayerSize=(ProtocolParsingBase::tempBigBufferForOutput[0x01])*sizeof(uint16_t);
@@ -1320,6 +1568,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     abort();
                 }
             }
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            #endif
             //copy the new current player number
             {
                 const size_t blockSize=size-pos;
@@ -1330,12 +1581,18 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     pos+=blockSize;
                 }
             }
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            #endif
 
             //serialise to EpollClientLoginSlave::serverServerList
             memcpy(EpollClientLoginSlave::serverServerList,ProtocolParsingBase::tempBigBufferForOutput,posTempBuffer);
             //EpollClientLoginSlave::serverServerList[0x00]=0x02;//do into EpollServerLoginSlave::EpollServerLoginSlave()
             //EpollClientLoginSlave::serverServerList[0x01]+=serverListSize;do above
             EpollClientLoginSlave::serverServerListSize=posTempBuffer;
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(EpollClientLoginSlave::serverServerList,EpollClientLoginSlave::serverServerListSize) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+            #endif
 
             //update the EpollClientLoginSlave::serverServerListComputedMessage
             EpollClientLoginSlave::serverServerListComputedMessage[0x00]=0x40;

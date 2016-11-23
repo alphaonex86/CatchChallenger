@@ -136,7 +136,7 @@ public:
     static unsigned int loginGoodSize;
     static std::vector<EpollClientLoginSlave *> stat_client_list;
 
-    /*  [0x00]: 8Bits: do into EpollServerLoginSlave::EpollServerLoginSlave()
+    /*  [0x00]: 8Bits: do into EpollServerLoginSlave::EpollServerLoginSlave(), login server mode: 0x01 reconnect, 0x02 proxy
         [0x01]: 8Bits: serverListSize
         All is stored into little endian to resend quickly
      *  if EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy
