@@ -148,6 +148,8 @@
     #endif
 #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
     #include "tinyXML2/tinyxml2.h"
+    #include <string.h>
+    #include <string>
     #define CATCHCHALLENGER_XMLELEMENT tinyxml2::XMLElement
     #define CATCHCHALLENGER_XMLDOCUMENT tinyxml2::XMLDocument
     #define CATCHCHALLENGER_XMLDOCUMENTLOAD(a) LoadFile(a)
@@ -156,7 +158,7 @@
     #define CATCHCHALLENGER_XMLELENTVALUE() Name()
     #define CATCHCHALLENGER_XMLELENTISXMLELEMENT(a) (true)
     #define CATCHCHALLENGER_XMLELENTATLINE(a) std::string("???")
-    #define CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(a,b) (strcmp(a,b)==0)
+    #define CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(a,b) (::strcmp(a,b)==0)
     #define CATCHCHALLENGER_XMLERRORID() ErrorID()
     #define CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(a) (a.c_str())
     #define CATCHCHALLENGER_XMLATTRIBUTETOSTRING(a) a

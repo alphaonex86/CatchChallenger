@@ -231,7 +231,7 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, 
         newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Bot trigged but no step found");
         return;
     }
-    if(*actualBot.step.at(step)->Attribute(std::string("type"))=="fight")
+    if(*actualBot.step.at(step)->Attribute(std::string("type"))==std::string("fight"))
     {
         if(actualBot.step.at(step)->Attribute(std::string("fightid"))==NULL)
         {

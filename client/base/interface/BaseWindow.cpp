@@ -27,6 +27,7 @@
 #include <QScriptEngine>
 #include <QtQml>
 #include <QComboBox>
+#include <iostream>
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
 #endif
