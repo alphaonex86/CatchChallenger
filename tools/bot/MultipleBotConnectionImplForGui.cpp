@@ -1,5 +1,7 @@
 #include "MultipleBotConnectionImplForGui.h"
 
+#include <iostream>
+
 MultipleBotConnectionImplForGui::MultipleBotConnectionImplForGui()
 {
     firstCharacterSelected=false;
