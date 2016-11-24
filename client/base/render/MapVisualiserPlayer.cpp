@@ -1135,9 +1135,13 @@ QString MapVisualiserPlayer::currentMapType() const
     if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_type))
         if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_type).isEmpty())
             return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_type);
-    if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("type"))!=NULL)
-        if(!all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("type"))->empty())
+    if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("type")!=NULL)
+        //if(!std::string(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("type")->empty()) if empty return empty or empty?
+        #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
             return QString::fromStdString(*all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("type")));
+        #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+            return QString(*all_map.value(current_map)->logicalMap.xmlRoot->Attribute("type"));
+        #endif
     return QString();
 }
 
@@ -1148,9 +1152,13 @@ QString MapVisualiserPlayer::currentZone() const
     if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_zone))
         if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_zone).isEmpty())
             return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_zone);
-    if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("zone")))
-        if(!all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("zone"))->empty())
+    if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("zone"))
+        //if(!all_map.value(current_map)->logicalMap.xmlRoot->Attribute("zone")->empty()) if empty return empty or empty?
+        #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
             return QString::fromStdString(*all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("zone")));
+        #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+            return QString(*all_map.value(current_map)->logicalMap.xmlRoot->Attribute("zone"));
+        #endif
     return QString();
 }
 
@@ -1161,9 +1169,13 @@ QString MapVisualiserPlayer::currentBackgroundsound() const
     if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_backgroundsound))
         if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_backgroundsound).isEmpty())
             return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_backgroundsound);
-    if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("backgroundsound")))
-        if(!all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("backgroundsound"))->empty())
+    if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("backgroundsound"))
+        //if(!all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("backgroundsound"))->empty()) if empty return empty or empty?
+        #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
             return QString::fromStdString(*all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("backgroundsound")));
+        #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+            return QString(*all_map.value(current_map)->logicalMap.xmlRoot->Attribute("backgroundsound"));
+        #endif
     return QString();
 }
 

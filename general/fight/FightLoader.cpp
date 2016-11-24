@@ -221,7 +221,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             file_index++;
             continue;
         }
-        if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),CACHEDSTRING_monsters))
+        if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),XMLCACHEDSTRING_monsters))
         {
             file_index++;
             continue;
@@ -647,8 +647,8 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                             {
                                                 if(evolutionItem->Attribute(XMLCACHEDSTRING_type)!=NULL && (
                                                        evolutionItem->Attribute(XMLCACHEDSTRING_level)!=NULL ||
-                                                       (CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_type)),CACHEDSTRING_trade) && evolutionItem->Attribute(XMLCACHEDSTRING_evolveTo)!=NULL) ||
-                                                       (CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_type)),CACHEDSTRING_item) && evolutionItem->Attribute(XMLCACHEDSTRING_item)!=NULL)
+                                                       (CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_type)),XMLCACHEDSTRING_trade) && evolutionItem->Attribute(XMLCACHEDSTRING_evolveTo)!=NULL) ||
+                                                       (CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_type)),XMLCACHEDSTRING_item) && evolutionItem->Attribute(XMLCACHEDSTRING_item)!=NULL)
                                                        )
                                                    )
                                                 {
@@ -1597,9 +1597,9 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                         }
                         if(item->Attribute(XMLCACHEDSTRING_duration)!=NULL)
                         {
-                            if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),CACHEDSTRING_Always))
+                            if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),XMLCACHEDSTRING_Always))
                                 general_duration=Buff::Duration_Always;
-                            else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),CACHEDSTRING_NumberOfTurn))
+                            else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),XMLCACHEDSTRING_NumberOfTurn))
                             {
                                 if(item->Attribute(XMLCACHEDSTRING_durationNumberOfTurn)!=NULL)
                                 {
@@ -1619,7 +1619,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                     general_durationNumberOfTurn=3;
                                 general_duration=Buff::Duration_NumberOfTurn;
                             }
-                            else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),CACHEDSTRING_ThisFight))
+                            else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),XMLCACHEDSTRING_ThisFight))
                                 general_duration=Buff::Duration_ThisFight;
                             else
                             {
@@ -1659,9 +1659,9 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                     }
                                                     if(item->Attribute(XMLCACHEDSTRING_duration)!=NULL)
                                                     {
-                                                        if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),CACHEDSTRING_Always))
+                                                        if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),XMLCACHEDSTRING_Always))
                                                             duration=Buff::Duration_Always;
-                                                        else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),CACHEDSTRING_NumberOfTurn))
+                                                        else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),XMLCACHEDSTRING_NumberOfTurn))
                                                         {
                                                             if(item->Attribute(XMLCACHEDSTRING_durationNumberOfTurn)!=NULL)
                                                             {
@@ -1676,7 +1676,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                                                                 durationNumberOfTurn=general_durationNumberOfTurn;
                                                             duration=Buff::Duration_NumberOfTurn;
                                                         }
-                                                        else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),CACHEDSTRING_ThisFight))
+                                                        else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_duration)),XMLCACHEDSTRING_ThisFight))
                                                             duration=Buff::Duration_ThisFight;
                                                         else
                                                         {

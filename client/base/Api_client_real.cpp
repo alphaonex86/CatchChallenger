@@ -1,5 +1,7 @@
 #include "Api_client_real.h"
 
+#include <iostream>
+
 using namespace CatchChallenger;
 
 #ifdef Q_CC_GNU
