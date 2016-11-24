@@ -1,5 +1,7 @@
 #include "GlobalControler.h"
 
+#include <iostream>
+
 GlobalControler::GlobalControler(QObject *parent) :
     QObject(parent),
     settings(QCoreApplication::applicationDirPath()+"/bottest.xml",QSettings::NativeFormat)

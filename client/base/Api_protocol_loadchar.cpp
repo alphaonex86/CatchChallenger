@@ -12,6 +12,8 @@
 #include <QRegularExpression>
 #include <QDataStream>
 
+#include <iostream>
+
 using namespace CatchChallenger;
 
 bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const uint8_t &queryNumber, const QByteArray &data)

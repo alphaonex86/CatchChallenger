@@ -6,6 +6,7 @@
 
 #include <QNetworkProxy>
 #include <QPluginLoader>
+#include <iostream>
 
 MultipleBotConnection::MultipleBotConnection() :
     botInterface(NULL),
