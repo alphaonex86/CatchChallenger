@@ -216,7 +216,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     }
 
                     CharactersGroupForLogin::list.at(charactersGroupIndex)->setServerUniqueKey(serverListIndex,serverUniqueKey,hostData,hostDataSize,port);
-                    std::cout << "CharactersGroupForLogin::list.at(" << std::to_string(charactersGroupIndex) << ")->setServerUniqueKey(" << std::to_string(serverUniqueKey) << "), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                    std::cout << "CharactersGroupForLogin::list.at(" << std::to_string(charactersGroupIndex) << ")->setServerUniqueKey(" << std::to_string(serverUniqueKey) << "), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                    #endif
 
                     //copy the xml string
                     {
