@@ -16,7 +16,7 @@
 #include <ctime>
 #include <thread>
 
-char EpollPostgresql::emptyString[]={'\0'};
+std::string EpollPostgresql::emptyString;
 CatchChallenger::DatabaseBase::CallBack EpollPostgresql::emptyCallback;
 CatchChallenger::DatabaseBase::CallBack EpollPostgresql::tempCallback;
 bool EpollPostgresql::informationDisplayed=false;
