@@ -64,7 +64,7 @@ private:
     };
     std::vector<PreparedStatement> queriesList;
     bool started;
-    static char emptyString[1];
+    static std::string emptyString;
     static CallBack emptyCallback;
     static CallBack tempCallback;
     char strCoPG[255];
