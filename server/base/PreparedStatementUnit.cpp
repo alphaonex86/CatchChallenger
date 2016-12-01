@@ -133,9 +133,25 @@ bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
 
 PreparedStatementUnit::PreparedStatementUnit(const PreparedStatementUnit& other) // copy constructor
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    switch(other.database->databaseType())
+    {
+        default:
+            std::cerr << "out of range or wrong type" << std::endl;
+            abort();
+        break;
+        case DatabaseBase::DatabaseType::Mysql:
+        case DatabaseBase::DatabaseType::SQLite:
+        case DatabaseBase::DatabaseType::PostgreSQL:
+        break;
+    }
+    #endif
     if(other.database==nullptr)
     {
         database=nullptr;
+        #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+        this->uniqueName[0]=0x00;
+        #endif
         return;
     }
     this->database=other.database;
@@ -146,9 +162,26 @@ PreparedStatementUnit::PreparedStatementUnit(const PreparedStatementUnit& other)
 }
 
 PreparedStatementUnit::PreparedStatementUnit(PreparedStatementUnit&& other) // move constructor
-    : query(other.query)
+    : database(other.database),
+      query(other.query)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    switch(other.database->databaseType())
+    {
+        default:
+            std::cerr << "out of range or wrong type" << std::endl;
+            abort();
+        break;
+        case DatabaseBase::DatabaseType::Mysql:
+        case DatabaseBase::DatabaseType::SQLite:
+        case DatabaseBase::DatabaseType::PostgreSQL:
+        break;
+    }
+    #endif
     other.database = nullptr;
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+    strcpy(this->uniqueName,other.uniqueName);
+    #endif
 }
 
 PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementUnit& other) // copy assignment
@@ -156,9 +189,25 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
     if(other.database==nullptr)
     {
         database=nullptr;
+        #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+        this->uniqueName[0]=0x00;
+        #endif
         return *this;
     }
     this->database=other.database;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    switch(other.database->databaseType())
+    {
+        default:
+            std::cerr << "out of range or wrong type" << std::endl;
+            abort();
+        break;
+        case DatabaseBase::DatabaseType::Mysql:
+        case DatabaseBase::DatabaseType::SQLite:
+        case DatabaseBase::DatabaseType::PostgreSQL:
+        break;
+    }
+    #endif
     query=other.query;
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     memcpy(this->uniqueName,other.uniqueName,sizeof(uniqueName));
@@ -168,6 +217,19 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
 
 PreparedStatementUnit& PreparedStatementUnit::operator=(PreparedStatementUnit&& other) // move assignment
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    switch(other.database->databaseType())
+    {
+        default:
+            std::cerr << "out of range or wrong type" << std::endl;
+            abort();
+        break;
+        case DatabaseBase::DatabaseType::Mysql:
+        case DatabaseBase::DatabaseType::SQLite:
+        case DatabaseBase::DatabaseType::PostgreSQL:
+        break;
+    }
+    #endif
     this->database=other.database;
     query=other.query;
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)

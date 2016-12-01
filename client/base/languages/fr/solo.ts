@@ -59,8 +59,10 @@
         <location filename="../../solo/SoloWindow.cpp" line="613"/>
         <location filename="../../solo/SoloWindow.cpp" line="631"/>
         <location filename="../../solo/SoloWindow.cpp" line="656"/>
-        <location filename="../../solo/SoloWindow.cpp" line="662"/>
-        <location filename="../../solo/SoloWindow.cpp" line="669"/>
+        <location filename="../../solo/SoloWindow.cpp" line="672"/>
+        <location filename="../../solo/SoloWindow.cpp" line="677"/>
+        <location filename="../../solo/SoloWindow.cpp" line="691"/>
+        <location filename="../../solo/SoloWindow.cpp" line="696"/>
         <source>Error</source>
         <translation>Erreur</translation>
     </message>
@@ -100,7 +102,19 @@
         <translation>Écrire le nouveau nom</translation>
     </message>
     <message>
-        <location filename="../../solo/SoloWindow.cpp" line="674"/>
+        <location filename="../../solo/SoloWindow.cpp" line="672"/>
+        <location filename="../../solo/SoloWindow.cpp" line="691"/>
+        <source>Unable to open destination file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../solo/SoloWindow.cpp" line="677"/>
+        <location filename="../../solo/SoloWindow.cpp" line="696"/>
+        <source>Unable to open source file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../solo/SoloWindow.cpp" line="700"/>
         <source>Copy of %1</source>
         <translation>Copie de %1</translation>
     </message>
