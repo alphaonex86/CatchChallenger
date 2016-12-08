@@ -25,7 +25,6 @@ CONFIG   += console
 TEMPLATE = app
 
 SOURCES += \
-    main-epoll-login-slave.cpp \
     EpollClientLoginSlave.cpp \
     EpollServerLoginSlave.cpp \
     ../epoll/Epoll.cpp \
@@ -68,7 +67,8 @@ SOURCES += \
     ../../general/base/cpp11additionstringtointc.cpp \
     ../../general/base/cpp11additionstringtointcpp.cpp \
     FacilityLibGateway.cpp \
-    ../base/TinyXMLSettings.cpp
+    ../base/TinyXMLSettings.cpp \
+    main-epoll-gateway.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
