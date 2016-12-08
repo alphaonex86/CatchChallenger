@@ -1,6 +1,7 @@
 #include "BaseServer.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/Version.h"
 
 #include "PreparedDBQuery.h"
 #include "DictionaryLogin.h"
