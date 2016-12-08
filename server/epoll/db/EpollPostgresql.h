@@ -36,6 +36,7 @@ public:
     static void noticeProcessor(void *arg, const char *message);
     bool epollEvent(const uint32_t &events);
     void clear();
+    bool sendNextQuery();
     const std::string errorMessage() const;
     bool next();
     const std::string value(const int &value) const;
