@@ -11,6 +11,7 @@
 #endif
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/Version.h"
 #include "../base/SslCert.h"
 #include <QNetworkProxy>
 #include <QStandardPaths>

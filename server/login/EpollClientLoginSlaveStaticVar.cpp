@@ -1,4 +1,5 @@
 #include "EpollClientLoginSlave.h"
+#include "../../general/base/ProtocolVersion.h"
 
 #include <iostream>
 
