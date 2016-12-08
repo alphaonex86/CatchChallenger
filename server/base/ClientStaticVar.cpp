@@ -1,5 +1,6 @@
 #include "Client.h"
 #include "GameServerVariables.h"
+#include "../../general/base/ProtocolVersion.h"
 
 using namespace CatchChallenger;
 

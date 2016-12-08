@@ -5,6 +5,7 @@
 #include "EpollServerLoginSlave.h"
 #include "DatapackDownloaderBase.h"
 #include "DatapackDownloaderMainSub.h"
+#include "../../general/base/ProtocolVersion.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
