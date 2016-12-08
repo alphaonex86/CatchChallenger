@@ -212,6 +212,7 @@ void EpollPostgresql::syncReconnect()
         return;
     }
     syncConnectInternal(true);
+    sendNextQuery();
 }
 
 void EpollPostgresql::syncDisconnect()
@@ -616,37 +617,8 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                     if(!queriesList.empty())
                         queriesList.erase(queriesList.cbegin());
                     if(!queriesList.empty())
-                    {
-                        const PreparedStatement &firstEntry=queriesList.front();
-                        #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-                        int query_id=0;
-                        if(firstEntry.id!=NULL)
-                            query_id=PQsendQueryPrepared(conn,firstEntry.id,firstEntry.paramValuesCount,firstEntry.paramValues, NULL, NULL, 0);
-                        else
-                            query_id=PQsendQuery(conn,firstEntry.query.c_str());
-                        #else
-                        const int &query_id=PQsendQuery(conn,firstEntry.query.c_str());
-                        #endif
-                        if(query_id==0)
-                        {
-                            std::string tempString;
-                            {
-                                unsigned int index=0;
-                                while(index<queriesList.size())
-                                {
-                                    if(!tempString.empty())
-                                        tempString+=";";
-                                    tempString+=queriesList.at(index).query;
-                                    index++;
-                                }
-                            }
-                            std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << tempString << std::endl;
+                        if(!sendNextQuery())
                             return false;
-                        }
-                        #ifdef DEBUG_MESSAGE_CLIENT_SQL
-                        std::cout << simplifiedstrCoPG << ", query " << firstEntry.query << " from queue" << std::endl;
-                        #endif
-                    }
                     result=PQgetResult(conn);
                 }
             }
@@ -663,6 +635,40 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
             syncReconnect();
         }
     }
+    return true;
+}
+
+bool EpollPostgresql::sendNextQuery()
+{
+    const PreparedStatement &firstEntry=queriesList.front();
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+    int query_id=0;
+    if(firstEntry.id!=NULL)
+        query_id=PQsendQueryPrepared(conn,firstEntry.id,firstEntry.paramValuesCount,firstEntry.paramValues, NULL, NULL, 0);
+    else
+        query_id=PQsendQuery(conn,firstEntry.query.c_str());
+    #else
+    const int &query_id=PQsendQuery(conn,firstEntry.query.c_str());
+    #endif
+    if(query_id==0)
+    {
+        std::string tempString;
+        {
+            unsigned int index=0;
+            while(index<queriesList.size())
+            {
+                if(!tempString.empty())
+                    tempString+=";";
+                tempString+=queriesList.at(index).query;
+                index++;
+            }
+        }
+        std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << tempString << std::endl;
+        return false;
+    }
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    std::cout << simplifiedstrCoPG << ", query " << firstEntry.query << " from queue" << std::endl;
+    #endif
     return true;
 }
 
