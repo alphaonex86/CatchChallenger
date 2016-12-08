@@ -13,6 +13,7 @@
 #include <string>
 
 #include "../../general/base/GeneralVariable.h"
+#include "../../general/base/Version.h"
 #include "../base/PlatformMacro.h"
 #include "../base/ClientVariable.h"
 

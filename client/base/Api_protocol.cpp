@@ -1,4 +1,5 @@
 #include "Api_protocol.h"
+#include "../../general/base/ProtocolVersion.h"
 
 using namespace CatchChallenger;
 

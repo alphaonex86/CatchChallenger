@@ -1,6 +1,7 @@
 #include "FeedNews.h"
 #include "PlatformMacro.h"
 #include "../../general/base/GeneralVariable.h"
+#include "../../general/base/Version.h"
 #include "ClientVariable.h"
 #include "InternetUpdater.h"
 

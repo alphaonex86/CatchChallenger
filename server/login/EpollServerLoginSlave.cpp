@@ -3,6 +3,7 @@
 #include "../epoll/Epoll.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/FacilityLibGeneral.h"
+#include "../../general/base/ProtocolVersion.h"
 #include "../base/PreparedDBQuery.h"
 
 using namespace CatchChallenger;
