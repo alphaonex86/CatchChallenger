@@ -159,6 +159,7 @@ void EpollMySQL::syncReconnect()
         return;
     }
     syncConnectInternal(true);
+    sendNextQuery();
 }
 
 void EpollMySQL::syncDisconnect()
@@ -323,18 +324,8 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
             if(!queriesList.empty())
                 queriesList.erase(queriesList.cbegin());
             if(!queriesList.empty())
-            {
-                const std::string &query=queriesList.front();
-                const int &query_id=mysql_send_query(conn,query.c_str(),query.size());
-                #ifdef DEBUG_MESSAGE_CLIENT_SQL
-                std::cout << strCoPG << ", query " << query << " from queue" << std::endl;
-                #endif
-                if(query_id!=0)
-                {
-                    std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << stringimplode(queriesList,';') << std::endl;
+                if(!sendNextQuery())
                     return false;
-                }
-            }
         }
     }
     if(events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
@@ -347,6 +338,21 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
             conn=NULL;
             syncReconnect();
         }
+    }
+    return true;
+}
+
+bool EpollMySQL::sendNextQuery()
+{
+    const std::string &query=queriesList.front();
+    const int &query_id=mysql_send_query(conn,query.c_str(),query.size());
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    std::cout << strCoPG << ", query " << query << " from queue" << std::endl;
+    #endif
+    if(query_id!=0)
+    {
+        std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << stringimplode(queriesList,';') << std::endl;
+        return false;
     }
     return true;
 }
