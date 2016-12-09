@@ -159,7 +159,8 @@ void EpollMySQL::syncReconnect()
         return;
     }
     syncConnectInternal(true);
-    sendNextQuery();
+    if(!queriesList.empty())
+        sendNextQuery();
 }
 
 void EpollMySQL::syncDisconnect()

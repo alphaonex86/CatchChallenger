@@ -212,7 +212,8 @@ void EpollPostgresql::syncReconnect()
         return;
     }
     syncConnectInternal(true);
-    sendNextQuery();
+    if(!queriesList.empty())
+        sendNextQuery();
 }
 
 void EpollPostgresql::syncDisconnect()

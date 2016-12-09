@@ -69,33 +69,6 @@ HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/lz4/lz4.h \
     $$PWD/base/CachedString.h
 
-#choose one of:
-#DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1
-DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
-
-defined(CATCHCHALLENGER_CLIENT)#not done
-{
-    DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1
-    DEFINES -= CATCHCHALLENGER_XLMPARSER_TINYXML2
-}
-
-defined(CATCHCHALLENGER_XLMPARSER_TINYXML1)
-{
-    DEFINES += TIXML_USE_STL
-    HEADERS += $$PWD/base/tinyXML/tinystr.h \
-        $$PWD/base/tinyXML/tinyxml.h
-
-    SOURCES += $$PWD/base/tinyXML/tinystr.cpp \
-        $$PWD/base/tinyXML/tinyxml.cpp \
-        $$PWD/base/tinyXML/tinyxmlerror.cpp \
-        $$PWD/base/tinyXML/tinyxmlparser.cpp
-}
-defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
-{
-    HEADERS += $$PWD/base/tinyXML2/tinyxml2.h
-    SOURCES += $$PWD/base/tinyXML2/tinyxml2.cpp
-}
-
 #only linux is C only, mac, windows, other is in Qt for compatibility
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
 mac:INCLUDEPATH += /usr/local/include/
