@@ -1,4 +1,5 @@
 #include "SimpleBotInterface.h"
+#include "../../general/base/Version.h"
 
 SimpleBotInterface::SimpleBotInterface() :
     move(false),
@@ -80,5 +81,5 @@ QString SimpleBotInterface::name()
 
 QString SimpleBotInterface::version()
 {
-    return QStringLiteral("2.0.0.1");
+    return QStringLiteral("2.0.0.1 for CatchChallenger " CATCHCHALLENGER_VERSION);
 }
