@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "../../general/base/FacilityLibGeneral.h"
+#include "../../general/base/Version.h"
 #include "../epoll/EpollSocket.h"
 #include "../epoll/Epoll.h"
 #include "EpollServerLoginMaster.h"
@@ -47,6 +48,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    std::cout << "CatchChallenger version: " << CATCHCHALLENGER_VERSION << std::endl;
     if(argc<1)
     {
         std::cerr << "argc<1: wrong arg count" << std::endl;
