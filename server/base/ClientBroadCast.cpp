@@ -14,21 +14,26 @@
 using namespace CatchChallenger;
 
 //without verification of rights
-void Client::sendSystemMessage(const std::string &text,const bool &important)
+void Client::sendSystemMessage(const std::string &text, const bool &important, const bool &playerInclude)
 {
+    if(text.size()>65535)
+    {
+        std::cerr << "sendSystemMessage() text too big (abort): " << text << std::endl;
+        abort();
+    }
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x5F;
     posOutput+=1+4;
 
     if(important)
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x08;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Chat_type_system_important;
     else
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x07;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Chat_type_system;
     posOutput+=1;
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
-        posOutput+=1;
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(text.size());
+        posOutput+=2;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
     }
@@ -37,13 +42,21 @@ void Client::sendSystemMessage(const std::string &text,const bool &important)
 
     const int &size=clientBroadCastList.size();
     int index=0;
-    while(index<size)
-    {
-        Client * const client=clientBroadCastList.at(index);
-        if(client!=this)
+    if(!playerInclude)
+        while(index<size)
+        {
+            Client * const client=clientBroadCastList.at(index);
+            if(client!=this)
+                client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            index++;
+        }
+    else
+        while(index<size)
+        {
+            Client * const client=clientBroadCastList.at(index);
             client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-        index++;
-    }
+            index++;
+        }
 }
 
 void Client::clanChangeWithoutDb(const uint32_t &clanId)
@@ -423,8 +436,9 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
             normalOutput(StaticText::text_unabletofoundtheconnectedplayertokick+extraText);
             return;
         }
-        playerByPseudo.at(extraText)->kick();
-        sendSystemMessage(extraText+StaticText::text_havebeenkickedby+public_and_private_informations.public_informations.pseudo);
+        Client * const player=playerByPseudo.at(extraText);
+        player->kick();
+        sendSystemMessage(extraText+StaticText::text_havebeenkickedby+public_and_private_informations.public_informations.pseudo,false,true);
         return;
     }
     #ifdef CATCHCHALLENGER_SERVER_DEBUG_COMMAND
