@@ -342,7 +342,7 @@ private:
     void sendBroadCastCommand(const std::string &command,const std::string &extraText);
     void setRights(const Player_type& type);
     //normal slots
-    void sendSystemMessage(const std::string &text,const bool &important=false);
+    void sendSystemMessage(const std::string &text,const bool &important=false,const bool &playerInclude=false);
     //clan
     void clanChangeWithoutDb(const uint32_t &clanId);
 
