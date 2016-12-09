@@ -2,6 +2,7 @@
 #include "VariableServer.h"
 #include "base/Client.h"
 #include "../general/base/FacilityLibGeneral.h"
+#include "../general/base/Version.h"
 
 #include <regex>
 
@@ -27,6 +28,7 @@ void NormalServerGlobal::displayInfo()
             #endif
         #endif
     #endif
+    std::cout << "CatchChallenger version: " << CATCHCHALLENGER_VERSION << std::endl;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     std::cout << "Qt version: " << qVersion() << " (" << QT_VERSION << ")" << std::endl;
     #endif
