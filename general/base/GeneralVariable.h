@@ -141,12 +141,13 @@
     #endif
 #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
     #include "tinyXML2/tinyxml2.h"
+    #include "tinyXML2/customtinyxml2.h"
     #include <string.h>
     #include <string>
     #define CATCHCHALLENGER_XMLELEMENT tinyxml2::XMLElement
     #define CATCHCHALLENGER_XMLDOCUMENT tinyxml2::XMLDocument
     #define CATCHCHALLENGER_XMLDOCUMENTLOAD(a) LoadFile(a)
-    #define CATCHCHALLENGER_XMLDOCUMENTERROR(a) (std::string("Parse error: ")+std::string(a->GetErrorStr1())+" and "+std::string(a->GetErrorStr2())+", error id: "+std::to_string(a->ErrorID()))
+    #define CATCHCHALLENGER_XMLDOCUMENTERROR(a) tinyxml2errordoc(a)
     #define CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(a) (a==0)
     #define CATCHCHALLENGER_XMLELENTVALUE() Name()
     #define CATCHCHALLENGER_XMLELENTISXMLELEMENT(a) (true)
