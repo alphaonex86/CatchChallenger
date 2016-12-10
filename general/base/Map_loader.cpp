@@ -1112,7 +1112,7 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
         const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
         if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
         {
-            std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+            std::cerr << file << ", " << CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return false;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER

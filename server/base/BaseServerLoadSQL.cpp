@@ -449,12 +449,14 @@ void BaseServer::preload_dictionary_map_return()
         abort();
     }
     std::unordered_set<std::string> foundMap;
-    unsigned int databaseMapId=0;
+    unsigned int maxDatabaseMapId=0;
     unsigned int obsoleteMap=0;
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         bool ok;
-        databaseMapId=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        const uint32_t &databaseMapId=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        if(databaseMapId>maxDatabaseMapId)
+            maxDatabaseMapId=databaseMapId;
         const std::string &map=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1));
         if(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
         {
@@ -490,7 +492,7 @@ void BaseServer::preload_dictionary_map_return()
         const std::string &map=map_list_flat.at(index);
         if(foundMap.find(map)==foundMap.end())
         {
-            databaseMapId=DictionaryServer::dictionary_map_database_to_internal.size()+1;
+            maxDatabaseMapId=DictionaryServer::dictionary_map_database_to_internal.size()+1;
             std::string queryText;
             switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
             {
@@ -499,17 +501,17 @@ void BaseServer::preload_dictionary_map_return()
                 break;
                 #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
                 case DatabaseBase::DatabaseType::Mysql:
-                    queryText="INSERT INTO `dictionary_map`(`id`,`map`) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
+                    queryText="INSERT INTO `dictionary_map`(`id`,`map`) VALUES("+std::to_string(maxDatabaseMapId)+",'"+map+"');";
                 break;
                 #endif
                 #ifndef EPOLLCATCHCHALLENGERSERVER
                 case DatabaseBase::DatabaseType::SQLite:
-                    queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
+                    queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(maxDatabaseMapId)+",'"+map+"');";
                 break;
                 #endif
                 #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
                 case DatabaseBase::DatabaseType::PostgreSQL:
-                    queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
+                    queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(maxDatabaseMapId)+",'"+map+"');";
                 break;
                 #endif
             }
@@ -518,10 +520,10 @@ void BaseServer::preload_dictionary_map_return()
                 std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                 criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
-            while(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
+            while(DictionaryServer::dictionary_map_database_to_internal.size()<=maxDatabaseMapId)
                 DictionaryServer::dictionary_map_database_to_internal.push_back(NULL);
-            DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map]);
-            static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->reverse_db_id=databaseMapId;
+            DictionaryServer::dictionary_map_database_to_internal[maxDatabaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map]);
+            static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->reverse_db_id=maxDatabaseMapId;
         }
         index++;
     }

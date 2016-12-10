@@ -36,17 +36,17 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation()
         break;
         #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
-            queryText="SELECT `id`,`reputation` FROM `dictionary_reputation` ORDER BY `reputation`";
+            queryText="SELECT `id`,`reputation` FROM `dictionary_reputation` ORDER BY `id`";
         break;
         #endif
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
-            queryText="SELECT id,reputation FROM dictionary_reputation ORDER BY reputation";
+            queryText="SELECT id,reputation FROM dictionary_reputation ORDER BY id";
         break;
         #endif
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText="SELECT id,reputation FROM dictionary_reputation ORDER BY reputation";
+            queryText="SELECT id,reputation FROM dictionary_reputation ORDER BY id";
         break;
         #endif
     }
@@ -78,12 +78,14 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
     while(databaseBaseBase->next())
     {
         bool ok;
-        lastId=stringtouint32(databaseBaseBase->value(0),&ok);
+        const uint32_t &tempId=stringtouint32(databaseBaseBase->value(0),&ok);
+        if(tempId>lastId)
+            lastId=tempId;
         const std::string &reputation=std::string(databaseBaseBase->value(1));
-        if(dictionary_reputation_database_to_internal.size()<=lastId)
+        if(dictionary_reputation_database_to_internal.size()<=tempId)
         {
             unsigned int index=dictionary_reputation_database_to_internal.size();
-            while(index<=lastId)
+            while(index<=tempId)
             {
                 dictionary_reputation_database_to_internal.push_back(-1);
                 index++;
@@ -92,9 +94,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
         if(reputationResolution.find(reputation)!=reputationResolution.end())
         {
             const uint8_t &internalId=reputationResolution.at(reputation);
-            dictionary_reputation_database_to_internal[lastId]=internalId;
+            dictionary_reputation_database_to_internal[tempId]=internalId;
             foundReputation.insert(reputation);
-            CommonDatapack::commonDatapack.reputation[internalId].reverse_database_id=lastId;
+            CommonDatapack::commonDatapack.reputation[internalId].reverse_database_id=tempId;
         }
     }
     databaseBaseBase->clear();
@@ -157,17 +159,17 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin()
         break;
         #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
-            queryText="SELECT `id`,`skin` FROM `dictionary_skin` ORDER BY `skin`";
+            queryText="SELECT `id`,`skin` FROM `dictionary_skin` ORDER BY `id`";
         break;
         #endif
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
-            queryText="SELECT id,skin FROM dictionary_skin ORDER BY skin";
+            queryText="SELECT id,skin FROM dictionary_skin ORDER BY id";
         break;
         #endif
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText="SELECT id,skin FROM dictionary_skin ORDER BY skin";
+            queryText="SELECT id,skin FROM dictionary_skin ORDER BY id";
         break;
         #endif
     }
@@ -198,12 +200,14 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
     while(databaseBaseBase->next())
     {
         bool ok;
-        lastId=stringtouint32(databaseBaseBase->value(0),&ok);
+        const uint32_t &tempId=stringtouint32(databaseBaseBase->value(0),&ok);
+        if(tempId>lastId)
+            lastId=tempId;
         const std::string &skin=databaseBaseBase->value(1);
-        if(dictionary_skin_database_to_internal.size()<=lastId)
+        if(dictionary_skin_database_to_internal.size()<=tempId)
         {
             unsigned int index=dictionary_skin_database_to_internal.size();
-            while(index<=lastId)
+            while(index<=tempId)
             {
                 dictionary_skin_database_to_internal.push_back(0);
                 index++;
@@ -212,8 +216,8 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
         if(BaseServerMasterSendDatapack::skinList.find(skin)!=BaseServerMasterSendDatapack::skinList.end())
         {
             const uint8_t &internalValue=BaseServerMasterSendDatapack::skinList.at(skin);
-            dictionary_skin_database_to_internal[lastId]=internalValue;
-            dictionary_skin_internal_to_database[internalValue]=lastId;
+            dictionary_skin_database_to_internal[tempId]=internalValue;
+            dictionary_skin_internal_to_database[internalValue]=tempId;
             foundSkin.insert(skin);
         }
     }
@@ -277,17 +281,17 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter()
         break;
         #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
         case DatabaseBase::DatabaseType::Mysql:
-            queryText="SELECT `id`,`starter` FROM `dictionary_starter` ORDER BY `starter`";
+            queryText="SELECT `id`,`starter` FROM `dictionary_starter` ORDER BY `id`";
         break;
         #endif
         #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::SQLite:
-            queryText="SELECT id,starter FROM dictionary_starter ORDER BY starter";
+            queryText="SELECT id,starter FROM dictionary_starter ORDER BY id";
         break;
         #endif
         #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
-            queryText="SELECT id,starter FROM dictionary_starter ORDER BY starter";
+            queryText="SELECT id,starter FROM dictionary_starter ORDER BY id";
         break;
         #endif
     }
@@ -328,12 +332,14 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
     while(databaseBaseBase->next())
     {
         bool ok;
-        lastId=stringtouint32(databaseBaseBase->value(0),&ok);
+        const uint32_t &tempId=stringtouint32(databaseBaseBase->value(0),&ok);
+        if(tempId>lastId)
+            lastId=tempId;
         const std::string &starter=std::string(databaseBaseBase->value(1));
-        if(dictionary_starter_database_to_internal.size()<=lastId)
+        if(dictionary_starter_database_to_internal.size()<=tempId)
         {
             unsigned int index=dictionary_starter_database_to_internal.size();
-            while(index<=lastId)
+            while(index<=tempId)
             {
                 dictionary_starter_database_to_internal.push_back(0);
                 index++;
@@ -342,8 +348,8 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
         if(profileNameToId.find(starter)!=profileNameToId.end())
         {
             const uint8_t &internalValue=profileNameToId.at(starter);
-            dictionary_starter_database_to_internal[lastId]=internalValue;
-            dictionary_starter_internal_to_database[internalValue]=lastId;
+            dictionary_starter_database_to_internal[tempId]=internalValue;
+            dictionary_starter_internal_to_database[internalValue]=tempId;
             foundstarter.insert(CommonDatapack::commonDatapack.profileList.at(internalValue).databaseId);
         }
     }
