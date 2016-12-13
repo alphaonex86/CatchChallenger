@@ -46,6 +46,7 @@ class DatabaseBase : public BaseClassSwitch, public CatchChallenger::DatabaseFun
         DatabaseType databaseType() const;
         virtual void clear();
         static const std::string databaseTypeToString(const DatabaseType &type);
+        virtual bool setBlocking(const bool &val);//return true if success
     protected:
         DatabaseType databaseTypeVar;
 };

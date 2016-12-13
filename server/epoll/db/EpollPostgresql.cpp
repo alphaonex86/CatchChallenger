@@ -168,7 +168,18 @@ bool EpollPostgresql::syncConnectInternal(bool infinityTry)
         if(connStatusType==CONNECTION_BAD)
             return false;
     }
-    if(PQsetnonblocking(conn,1)!=0)
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+    {
+        unsigned int index=0;
+        while(index<preparedStatementUnitList.size())
+        {
+            const PreparedStatementStore &preparedStatement=preparedStatementUnitList.at(index);
+            queryPrepare(preparedStatement.name.c_str(),preparedStatement.query.c_str(),preparedStatement.nParams,false);
+            index++;
+        }
+    }
+    #endif
+    if(!setBlocking(1))
     {
        std::cerr << "pg no blocking error" << std::endl;
        return false;
@@ -216,6 +227,12 @@ void EpollPostgresql::syncReconnect()
         sendNextQuery();
 }
 
+//return true if success
+bool EpollPostgresql::setBlocking(const bool &val)
+{
+    return PQsetnonblocking(conn,val)==0;
+}
+
 void EpollPostgresql::syncDisconnect()
 {
     if(conn==NULL)
@@ -223,7 +240,7 @@ void EpollPostgresql::syncDisconnect()
         std::cerr << "pg not connected" << std::endl;
         return;
     }
-    if(PQsetnonblocking(conn,0)!=0)
+    if(!setBlocking(0))
     {
        std::cerr << "pg blocking error" << std::endl;
        return;
@@ -373,21 +390,32 @@ bool EpollPostgresql::asyncPreparedWrite(const std::string &query,char * const i
 }
 
 bool EpollPostgresql::queryPrepare(const char *stmtName,
-                                     const char *query, int nParams,
-                                     const Oid *paramTypes)//return NULL if failed
+                                     const char *query,const int &nParams,const bool &store)//return NULL if failed
 {
     if(conn==NULL)
     {
         std::cerr << "pg not connected" << std::endl;
         return false;
     }
-    PGresult *resprep = PQprepare(conn,stmtName,query,nParams,paramTypes);
+    //std::cout << "Prepare the name: " << stmtName << ", query: " << query << ", database: " << this << std::endl;
+    PGresult *resprep = PQprepare(conn,stmtName,query,nParams,/*,paramTypes*/NULL);
     const auto &ret=PQresultStatus(resprep);
     if (ret != PGRES_COMMAND_OK)
     { //if failed quit
+        #ifdef DEBUG_MESSAGE_CLIENT_SQL
+        std::cerr << simplifiedstrCoPG << ", ";
+        #endif
         std::cerr << "Problem to prepare the query: " << query << ", return code: " << ret << ", error message: " << PQerrorMessage(conn) << std::endl;
         abort();
         return false;
+    }
+    if(store)
+    {
+        PreparedStatementStore preparedStatementStore;
+        preparedStatementStore.name=stmtName;
+        preparedStatementStore.query=query;
+        preparedStatementStore.nParams=nParams;
+        preparedStatementUnitList.push_back(preparedStatementStore);
     }
     return true;
 }
@@ -597,6 +625,9 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                     const ExecStatusType &execStatusType=PQresultStatus(result);
                     if(execStatusType!=PGRES_TUPLES_OK && execStatusType!=PGRES_COMMAND_OK)
                     {
+                        #ifdef DEBUG_MESSAGE_CLIENT_SQL
+                        std::cerr << simplifiedstrCoPG << ", ";
+                        #endif
                         if(queriesList.empty())
                             std::cerr << "Query to database failed: " << errorMessage() << std::endl;
                         else
@@ -664,6 +695,9 @@ bool EpollPostgresql::sendNextQuery()
                 index++;
             }
         }
+        #ifdef DEBUG_MESSAGE_CLIENT_SQL
+        std::cerr << simplifiedstrCoPG << ", ";
+        #endif
         std::cerr << "query async send failed: " << errorMessage() << ", where query list is not empty: " << tempString << std::endl;
         return false;
     }
