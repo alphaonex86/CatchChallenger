@@ -537,12 +537,12 @@
 <context>
     <name>CatchChallenger::Api_protocol</name>
     <message>
-        <location filename="../../Api_protocol.cpp" line="177"/>
+        <location filename="../../Api_protocol.cpp" line="178"/>
         <source>Internal error</source>
         <translation>Erreur interne</translation>
     </message>
     <message>
-        <location filename="../../Api_protocol.cpp" line="343"/>
+        <location filename="../../Api_protocol.cpp" line="344"/>
         <source>Hostname too big</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2712,12 +2712,12 @@ Cout en SP: %3</translation>
 <context>
     <name>FeedNews</name>
     <message>
-        <location filename="../../FeedNews.cpp" line="78"/>
+        <location filename="../../FeedNews.cpp" line="79"/>
         <source>Redirection denied to</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../FeedNews.cpp" line="102"/>
+        <location filename="../../FeedNews.cpp" line="103"/>
         <source>Not Rss or Atom feed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2748,17 +2748,17 @@ Cout en SP: %3</translation>
 <context>
     <name>InternetUpdater</name>
     <message>
-        <location filename="../../InternetUpdater.cpp" line="147"/>
+        <location filename="../../InternetUpdater.cpp" line="148"/>
         <source>New version: %1</source>
         <translation>Nouvelle version: %1</translation>
     </message>
     <message>
-        <location filename="../../InternetUpdater.cpp" line="149"/>
+        <location filename="../../InternetUpdater.cpp" line="150"/>
         <source>Click here to go on download page</source>
         <translation>Cliquez içi pour aller sur la page de téléchargement</translation>
     </message>
     <message>
-        <location filename="../../InternetUpdater.cpp" line="151"/>
+        <location filename="../../InternetUpdater.cpp" line="152"/>
         <source>Click here to &lt;b&gt;go to the shop&lt;/b&gt; and login. Download the new version &lt;b&gt;into the order details&lt;/b&gt;.&lt;br /&gt;The new version have been sended &lt;b&gt;by email too&lt;/b&gt;, look into your spams if needed.</source>
         <translation>Cliquez içi pour &lt;b&gt;aller sur la boutique&lt;/b&gt;. Téléchargé la nouvelle version &lt;b&gt;dans les détails de la commande&lt;/b&gt;.&lt;br /&gt;La nouvelle version à été envoyé &lt;b&gt;par email aussi&lt;/b&gt;, regardez dans vos spams si besoin.</translation>
     </message>
