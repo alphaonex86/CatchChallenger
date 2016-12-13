@@ -18,6 +18,7 @@ class PreparedStatementUnit
 public:
     PreparedStatementUnit();
     PreparedStatementUnit(const std::string &query,CatchChallenger::DatabaseBase * const database);
+    ~PreparedStatementUnit();
 
     PreparedStatementUnit(const PreparedStatementUnit& other);// copy constructor
     PreparedStatementUnit(PreparedStatementUnit&& other);// move constructor
@@ -38,8 +39,9 @@ private:
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     //prepared statement
     char uniqueName[3];
+    static std::string writeToPrepare(const std::string &query);
+
     static std::unordered_map<CatchChallenger::DatabaseBase *,uint16_t> queryCount;
-    std::string writeToPrepare(const std::string &query) const;
     #endif
     StringWithReplacement query;
 };
