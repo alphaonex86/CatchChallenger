@@ -36,6 +36,11 @@ PreparedStatementUnit::PreparedStatementUnit(const std::string &query, CatchChal
         setQuery(query);
 }
 
+PreparedStatementUnit::~PreparedStatementUnit()
+{
+    database=NULL;
+}
+
 bool PreparedStatementUnit::setQuery(const std::string &query)
 {
     if(query.empty())
@@ -51,7 +56,7 @@ bool PreparedStatementUnit::setQuery(const std::string &query)
     strcpy(uniqueName,std::to_string(PreparedStatementUnit::queryCount.at(database)).c_str());
     PreparedStatementUnit::queryCount[database]++;
     const std::string &newQuery=PreparedStatementUnit::writeToPrepare(query);
-    if(!static_cast<EpollPostgresql *>(database)->queryPrepare(uniqueName,newQuery.c_str(),this->query.argumentsCount(), NULL/*paramTypes*/))
+    if(!static_cast<EpollPostgresql *>(database)->queryPrepare(uniqueName,newQuery.c_str(),this->query.argumentsCount()/*, NULL*//*paramTypes*/))
     { //if failed quit
         std::cerr << "Problem to prepare the query: " << newQuery << ", error message: " << database->errorMessage() << std::endl;
         abort();
@@ -61,7 +66,7 @@ bool PreparedStatementUnit::setQuery(const std::string &query)
 }
 
 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-std::string PreparedStatementUnit::writeToPrepare(const std::string &query) const
+std::string PreparedStatementUnit::writeToPrepare(const std::string &query)
 {
     std::string newQuery=query;
     stringreplaceAll(newQuery,"\"","");
