@@ -46,3 +46,9 @@ BaseClassSwitch::EpollObjectType DatabaseBase::getType() const
 {
     return BaseClassSwitch::EpollObjectType::Database;
 }
+
+bool DatabaseBase::setBlocking(const bool &val)//return true if success
+{
+    (void)val;
+    return true;
+}

@@ -22,13 +22,12 @@ public:
     bool syncConnectInternal(bool infinityTry=false);
     void syncDisconnect();
     void syncReconnect();
+    bool setBlocking(const bool &val);
 
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     CallBack * asyncPreparedRead(const std::string &query,char * const id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values);
     bool asyncPreparedWrite(const std::string &query,char * const id,const std::vector<std::string> &values);
-    bool queryPrepare(const char *stmtName,
-                        const char *query, int nParams,
-                        const Oid *paramTypes);//return NULL if failed
+    bool queryPrepare(const char *stmtName,const char *query,const int &nParams,const bool &store=true);//return NULL if failed
     #endif
     CallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);
     bool asyncWrite(const std::string &query);
@@ -71,6 +70,15 @@ private:
     char strCoPG[255];
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
     char simplifiedstrCoPG[255];
+    #endif
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+    struct PreparedStatementStore
+    {
+        std::string name;
+        std::string query;
+        int nParams;
+    };
+    std::vector<PreparedStatementStore> preparedStatementUnitList;//to resend the prepare after a reconnect
     #endif
     std::chrono::time_point<std::chrono::high_resolution_clock> start;
     static bool informationDisplayed;
