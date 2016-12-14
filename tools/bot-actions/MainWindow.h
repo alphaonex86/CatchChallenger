@@ -15,6 +15,7 @@
 
 #include "../bot/MultipleBotConnectionImplForGui.h"
 #include "../../client/base/ClientStructures.h"
+#include "BotTargetList.h"
 
 namespace Ui {
 class MainWindow;
@@ -29,6 +30,7 @@ public:
 private:
     QSettings settings;
     QTimer slowDownTimer;
+    BotTargetList *botTargetList;
 
     MultipleBotConnectionImplForGui multipleBotConnexion;
     QHash<uint8_t/*character group index*/,QPair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
