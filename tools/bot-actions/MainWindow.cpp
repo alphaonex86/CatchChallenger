@@ -5,6 +5,8 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../client/base/FacilityLibClient.h"
 #include "../bot/actions/ActionsAction.h"
+#include "../../client/base/interface/DatapackClientLoader.h"
+#include "../../client/base/LanguagesSelect.h"
 
 #include <QNetworkProxy>
 #include <QMessageBox>
@@ -72,6 +74,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->serverList->header()->resizeSection(0,680);
     ui->groupBox_char->setEnabled(false);
     ui->groupBox_Server->setEnabled(false);
+
+    LanguagesSelect::languagesSelect=new LanguagesSelect();
+    botTargetList=NULL;
 }
 
 MainWindow::~MainWindow()
@@ -428,6 +433,7 @@ void MainWindow::datapackIsReady()
         ui->autoCreateCharacter->setEnabled(true);
         ui->groupBox_char->setEnabled(true);
     }
+    DatapackClientLoader::datapackLoader.parseDatapack(QCoreApplication::applicationDirPath()+"/datapack/");
 }
 
 void MainWindow::datapackMainSubIsReady()
@@ -439,6 +445,10 @@ void MainWindow::datapackMainSubIsReady()
         ui->chatRandomReply->setEnabled(false);
         ui->chatRandomReply->setChecked(false);
     }
+    DatapackClientLoader::datapackLoader.parseDatapackMainSub(
+                QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode),
+                QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)
+                );
 }
 
 void MainWindow::on_autoCreateCharacter_stateChanged(int arg1)
@@ -455,4 +465,7 @@ void MainWindow::all_player_connected()
 void MainWindow::all_player_on_map()
 {
     qDebug() << "MainWindow::all_player_on_map()";
+    botTargetList=new BotTargetList(multipleBotConnexion.apiToCatchChallengerClient,multipleBotConnexion.connectedSocketToCatchChallengerClient,multipleBotConnexion.sslSocketToCatchChallengerClient);
+    botTargetList->show();
+    this->hide();
 }
