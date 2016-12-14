@@ -71,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->serverList->header()->setSectionResizeMode(QHeaderView::Fixed);
     ui->serverList->header()->resizeSection(0,680);
     ui->groupBox_char->setEnabled(false);
+    ui->autoCreateCharacter->setEnabled(false);
     ui->groupBox_Server->setEnabled(false);
 }
 
@@ -297,12 +298,33 @@ void MainWindow::on_serverListSelect_clicked()
     if(!ui->multipleConnexion->isChecked())
     {
         ui->groupBox_char->setEnabled(true);
-        int index=0;
-        while(index<characterEntryList.size())
+        if(characterEntryList.at(charactersGroupIndex).empty())
         {
-            const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).at(index);
-            ui->characterList->addItem(QString::fromStdString(character.pseudo),character.character_id);
-            index++;
+            if(ui->autoCreateCharacter->isChecked())
+            {
+                qDebug() << "MainWindow::on_serverListSelect_clicked(): ui->characterList->count()==0 auto create";
+                //auto create do into multipleBotConnexion.serverSelect()
+                ui->groupBox_char->setEnabled(false);
+            }
+            else
+            {
+                ui->characterList->setStyleSheet("background-color:rgb(255,0,0);");
+                ui->groupBox_char->setEnabled(false);
+                ui->characterList->addItem("No character exists AND auto create disabled");
+                QMessageBox::warning(this,"Error","No character exists AND auto create disabled");
+            }
+            return;
+        }
+        else
+        {
+            int index=0;
+            while(index<characterEntryList.at(charactersGroupIndex).size())
+            {
+                const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).at(index);
+                ui->characterList->addItem(QString::fromStdString(character.pseudo),character.character_id);
+                index++;
+            }
+            ui->characterList->setEnabled(true);
         }
     }
     else
@@ -402,6 +424,11 @@ void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, 
 void MainWindow::datapackIsReady()
 {
     ui->groupBox_Server->setEnabled(true);
+    if(!ui->multipleConnexion->isChecked())
+    {
+        ui->autoCreateCharacter->setEnabled(true);
+        ui->groupBox_char->setEnabled(true);
+    }
 }
 
 void MainWindow::datapackMainSubIsReady()
