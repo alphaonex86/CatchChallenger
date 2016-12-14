@@ -441,7 +441,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
     callbackRegistred.pop();
     //send signals into the server
     #ifndef SERVERBENCHMARK
-    normalOutput("Logged the account "+std::to_string(account_id));
+    //normalOutput("Logged the account "+std::to_string(account_id));
     #endif
     //send the network reply
     uint32_t posOutput=0;
