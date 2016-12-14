@@ -222,6 +222,8 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
 
 bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMonster)
 {
+    if(dataHexa.empty())
+        return true;
     bool ok;
     const std::vector<char> &buffs=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(dataHexa,&ok);
     #ifndef CATCHCHALLENGER_EXTRA_CHECK
@@ -303,6 +305,8 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
 
 bool Client::loadSkillBlock(const std::string &dataHexa,PlayerMonster &playerMonster)
 {
+    if(dataHexa.empty())
+        return true;
     bool ok;
     const std::vector<char> &skills=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(dataHexa,&ok);
     const char * const raw_skills=skills.data();

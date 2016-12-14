@@ -4,7 +4,7 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../client/base/FacilityLibClient.h"
-#include "../bot/simple/SimpleAction.h"
+#include "../bot/actions/ActionsAction.h"
 
 #include <QNetworkProxy>
 #include <QMessageBox>
@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&slowDownTimer,&QTimer::timeout,&multipleBotConnexion,&MultipleBotConnectionImplForGui::detectSlowDown,Qt::QueuedConnection);
     slowDownTimer.start(200);
 
-    multipleBotConnexion.botInterface=new SimpleAction();
+    multipleBotConnexion.botInterface=new ActionsAction();
 
     if(settings.contains("login"))
         ui->login->setText(settings.value("login").toString());
@@ -71,7 +71,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->serverList->header()->setSectionResizeMode(QHeaderView::Fixed);
     ui->serverList->header()->resizeSection(0,680);
     ui->groupBox_char->setEnabled(false);
-    ui->autoCreateCharacter->setEnabled(false);
     ui->groupBox_Server->setEnabled(false);
 }
 

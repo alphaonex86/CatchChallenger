@@ -407,9 +407,9 @@ void Client::characterIsRightFinalStep()
     #ifndef SERVERBENCHMARK
     if(this->map==NULL)
         return;
-    normalOutput("Logged: "+public_and_private_informations.public_informations.pseudo+
+    /*normalOutput("Logged: "+public_and_private_informations.public_informations.pseudo+
                  " on the map: "+map->map_file+
-                 " ("+std::to_string(x)+","+std::to_string(y)+")");
+                 " ("+std::to_string(x)+","+std::to_string(y)+")");*/
     #endif
 
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
