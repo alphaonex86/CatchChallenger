@@ -20,7 +20,6 @@ public:
     ~MultipleBotConnection();
     virtual void createClient();
     BotInterface *botInterface;
-protected:
     struct CatchChallengerClient
     {
         QSslSocket *sslSocket;
@@ -37,10 +36,12 @@ protected:
         bool selectedCharacter;
         //bool haveFirstHeader;->put into Api_protocol
     };
-    BotInterface *pluginLoaderInstance;
     QHash<CatchChallenger::Api_client_real *,CatchChallengerClient *> apiToCatchChallengerClient;
     QHash<CatchChallenger::ConnectedSocket *,CatchChallengerClient *> connectedSocketToCatchChallengerClient;
     QHash<QSslSocket *,CatchChallengerClient *> sslSocketToCatchChallengerClient;
+
+protected:
+    BotInterface *pluginLoaderInstance;
 
     QTimer connectTimer;
 

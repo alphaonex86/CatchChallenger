@@ -339,7 +339,10 @@ void MultipleBotConnection::ifMultipleConnexionStartCreation()
             qDebug() << "MultipleBotConnection::ifMultipleConnexionStartCreation(): connectTimer.isActive()";
     }
     else
+    {
         qDebug() << "MultipleBotConnection::ifMultipleConnexionStartCreation(): !multipleConnexion()";
+        emit emit_all_player_connected();
+    }
 }
 
 void MultipleBotConnection::connectTimerSlot()
@@ -409,12 +412,17 @@ void MultipleBotConnection::have_current_player_info_with_client(CatchChallenger
     numberOfSelectedCharacter++;
     emit emit_numberOfSelectedCharacter(numberOfSelectedCharacter);
 
-    if(numberOfBotConnected>=numberOfSelectedCharacter)
+    if(multipleConnexion())
     {
-        const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
-        if(diff==0 && numberOfSelectedCharacter>=connexionCountTarget())
-            emit emit_all_player_on_map();
+        if(numberOfBotConnected>=numberOfSelectedCharacter)
+        {
+            const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
+            if(diff==0 && numberOfSelectedCharacter>=connexionCountTarget())
+                emit emit_all_player_on_map();
+        }
     }
+    else
+        emit emit_all_player_on_map();
 
     Q_UNUSED(informations);
     std::cout << "MultipleBotConnection::have_current_player_info() pseudo: " << informations.public_informations.pseudo << std::endl;

@@ -11,7 +11,6 @@
 #include <QColor>
 
 #include "../../../general/base/GeneralStructures.h"
-
 #include "../../tiled/tiled_tileset.h"
 
 class DatapackClientLoader : public QThread

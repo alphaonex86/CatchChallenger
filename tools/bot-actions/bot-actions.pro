@@ -13,12 +13,15 @@ TEMPLATE = app
 SOURCES += main.cpp\
         MainWindow.cpp \
     ../bot/MultipleBotConnection.cpp \
-    ../bot/MultipleBotConnectionImplForGui.cpp
+    ../bot/MultipleBotConnectionImplForGui.cpp \
+    BotTargetList.cpp
 HEADERS  += MainWindow.h \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \
-    ../bot/BotInterface.h
+    ../bot/BotInterface.h \
+    BotTargetList.h
 
-FORMS    += MainWindow.ui
+FORMS    += MainWindow.ui \
+    BotTargetList.ui
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
