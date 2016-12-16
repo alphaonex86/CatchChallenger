@@ -23,12 +23,16 @@ public:
     ~BotTargetList();
     void loadAllBotsInformation();
 
+private slots:
+    void on_bots_itemSelectionChanged();
+
 private:
     Ui::BotTargetList *ui;
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient;
     QHash<CatchChallenger::ConnectedSocket *,MultipleBotConnection::CatchChallengerClient *> connectedSocketToCatchChallengerClient;
     QHash<QSslSocket *,MultipleBotConnection::CatchChallengerClient *> sslSocketToCatchChallengerClient;
     ActionsAction *actionsAction;
+    QHash<QString,MultipleBotConnection::CatchChallengerClient *> pseudoToBot;
 
     bool botsInformationLoaded;
 };
