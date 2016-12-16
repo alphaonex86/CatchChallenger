@@ -443,12 +443,12 @@ void MultipleBotConnection::newSocketError_with_client(CatchChallengerClient *cl
     Q_UNUSED(client);
 }
 
-void MultipleBotConnection::createClient()
+MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClient()
 {
     if(haveEnError)
     {
         connectTimer.stop();
-        return;
+        return NULL;
     }
     CatchChallengerClient * client=new CatchChallengerClient;
 
@@ -474,6 +474,7 @@ void MultipleBotConnection::createClient()
         abort();
     sslSocket->connectToHost(host(),port());
     connectTheExternalSocket(client);
+    return client;
 }
 
 void MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * client)

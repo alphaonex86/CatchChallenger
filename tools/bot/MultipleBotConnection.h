@@ -18,7 +18,7 @@ class MultipleBotConnection : public QObject
 public:
     explicit MultipleBotConnection();
     ~MultipleBotConnection();
-    virtual void createClient();
+
     BotInterface *botInterface;
     struct CatchChallengerClient
     {
@@ -40,6 +40,7 @@ public:
     QHash<CatchChallenger::ConnectedSocket *,CatchChallengerClient *> connectedSocketToCatchChallengerClient;
     QHash<QSslSocket *,CatchChallengerClient *> sslSocketToCatchChallengerClient;
 
+    virtual CatchChallengerClient *createClient();
 protected:
     BotInterface *pluginLoaderInstance;
 
