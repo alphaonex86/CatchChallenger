@@ -418,7 +418,7 @@ struct CharacterEntry
     uint32_t last_connect;
 };
 
-/* mpa related */
+/* map related */
 struct Map_semi_border_content_top_bottom
 {
     std::string fileName;
