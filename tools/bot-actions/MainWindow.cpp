@@ -465,7 +465,13 @@ void MainWindow::all_player_connected()
 void MainWindow::all_player_on_map()
 {
     qDebug() << "MainWindow::all_player_on_map()";
-    botTargetList=new BotTargetList(multipleBotConnexion.apiToCatchChallengerClient,multipleBotConnexion.connectedSocketToCatchChallengerClient,multipleBotConnexion.sslSocketToCatchChallengerClient);
+    botTargetList=new BotTargetList(
+                multipleBotConnexion.apiToCatchChallengerClient,
+                multipleBotConnexion.connectedSocketToCatchChallengerClient,
+                multipleBotConnexion.sslSocketToCatchChallengerClient,
+                static_cast<ActionsAction *>(multipleBotConnexion.botInterface)
+                );
     botTargetList->show();
     this->hide();
+    botTargetList->loadAllBotsInformation();
 }

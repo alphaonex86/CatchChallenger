@@ -613,17 +613,17 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
     #endif
     EpollServerLoginSlave::LoginProfile::PreparedStatementForCreation &preparedStatementForCreation=profile.preparedStatementForCreationByCommon.at(databaseBaseCommon);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(preparedStatementForCreation.type.size()>=profileIndex)
+    if(profileIndex>=preparedStatementForCreation.type.size())
     {
-        std::cerr << "At addCharacterStep2_return, profileIndex not found" << std::endl;
+        std::cerr << "At addCharacterStep2_return, profileIndex " << std::to_string(profileIndex) << " not found" << std::endl;
         abort();
     }
     #endif
     EpollServerLoginSlave::LoginProfile::PreparedStatementForCreationType &preparedStatementForCreationType=preparedStatementForCreation.type.at(profileIndex);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(preparedStatementForCreationType.monsterGroup.size()>=monsterGroupId)
+    if(monsterGroupId>=preparedStatementForCreationType.monsterGroup.size())
     {
-        std::cerr << "At addCharacterStep2_return, monsterGroupId not found" << std::endl;
+        std::cerr << "At addCharacterStep2_return, monsterGroupId " << std::to_string(monsterGroupId) << " not found" << std::endl;
         abort();
     }
     #endif
