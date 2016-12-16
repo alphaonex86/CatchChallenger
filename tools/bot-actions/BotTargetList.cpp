@@ -3,11 +3,14 @@
 
 BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient,
                              QHash<CatchChallenger::ConnectedSocket *,MultipleBotConnection::CatchChallengerClient *> connectedSocketToCatchChallengerClient,
-                             QHash<QSslSocket *,MultipleBotConnection::CatchChallengerClient *> sslSocketToCatchChallengerClient) :
+                             QHash<QSslSocket *,MultipleBotConnection::CatchChallengerClient *> sslSocketToCatchChallengerClient,
+                             ActionsAction *actionsAction) :
     ui(new Ui::BotTargetList),
     apiToCatchChallengerClient(apiToCatchChallengerClient),
     connectedSocketToCatchChallengerClient(connectedSocketToCatchChallengerClient),
-    sslSocketToCatchChallengerClient(sslSocketToCatchChallengerClient)
+    sslSocketToCatchChallengerClient(sslSocketToCatchChallengerClient),
+    actionsAction(actionsAction),
+    botsInformationLoaded(false)
 {
     ui->setupUi(this);
 
@@ -26,4 +29,13 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
 BotTargetList::~BotTargetList()
 {
     delete ui;
+}
+
+void BotTargetList::loadAllBotsInformation()
+{
+    if(botsInformationLoaded)
+        return;
+    botsInformationLoaded=true;
+    if(!actionsAction->preload_the_map())
+        return;
 }
