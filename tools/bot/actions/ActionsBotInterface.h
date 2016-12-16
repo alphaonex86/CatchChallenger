@@ -30,12 +30,12 @@ public:
     QString name();
     QString version();
     virtual void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    QHash<CatchChallenger::Api_protocol *,Player> clientList;
 protected:
     bool move;
     bool randomText;
     bool bugInDirection;
     bool globalChatRandomReply;
-    QHash<CatchChallenger::Api_protocol *,Player> clientList;
 };
 
 #endif // ACTIONS_BOT_INTERFACE_H

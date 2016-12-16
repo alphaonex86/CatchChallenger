@@ -29,6 +29,8 @@ public:
 private:
     QTimer moveTimer;
     QTimer textTimer;
+
+public:
     //map
     /* map related */
     struct Map_semi_border_content_top_bottom
@@ -121,6 +123,7 @@ private:
         Map_semi_border border;
         CatchChallenger::Map_to_send old_map;
     };
+
     std::vector<Map_semi> semi_loaded_map;
     std::unordered_map<std::string,CatchChallenger::CommonMap *> map_list;
     CatchChallenger::CommonMap ** flat_map_list;
@@ -129,7 +132,6 @@ private:
     std::unordered_map<std::string/*file name*/,std::unordered_map<uint8_t/*bot id*/,CatchChallenger::Bot> > botFiles;
     std::unordered_set<uint32_t> botIdLoaded;
 private:
-    void purgeCpuCache();
     void doMove();
     void doText();
     void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
