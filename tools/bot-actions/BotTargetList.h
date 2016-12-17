@@ -22,10 +22,10 @@ public:
     ActionsAction *actionsAction);
     ~BotTargetList();
     void loadAllBotsInformation();
-
+    void updateLayerElements();
 private slots:
     void on_bots_itemSelectionChanged();
-
+    void on_comboBox_Layer_activated(int index);
 private:
     Ui::BotTargetList *ui;
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient;
@@ -33,6 +33,8 @@ private:
     QHash<QSslSocket *,MultipleBotConnection::CatchChallengerClient *> sslSocketToCatchChallengerClient;
     ActionsAction *actionsAction;
     QHash<QString,MultipleBotConnection::CatchChallengerClient *> pseudoToBot;
+    QHash<QString,int> zoneHash;
+    QList<QString> layerList;
 
     bool botsInformationLoaded;
 };
