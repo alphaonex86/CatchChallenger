@@ -959,7 +959,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
                         while(y<this->map_to_send.height)
                         {
                             unsigned int value=reinterpret_cast<const unsigned int *>(i->second.data())[x+y*map_to_send_temp.width];
-                            if(value!=0)
+                            if(value!=0 && map_to_send_temp.parsed_layer.walkable!=NULL && map_to_send_temp.parsed_layer.walkable[x+y*this->map_to_send.width])
                             {
                                 if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==0)
                                     this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;

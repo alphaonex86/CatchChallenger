@@ -25,3 +25,6 @@ FORMS    += MainWindow.ui \
     BotTargetList.ui
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
+
+RESOURCES += \
+    localr.qrc
