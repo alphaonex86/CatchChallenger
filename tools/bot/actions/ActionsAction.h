@@ -26,6 +26,8 @@ public:
     ~ActionsAction();
     void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     bool preload_the_map();
+    bool preload_the_map_step1();
+
 private:
     QTimer moveTimer;
     QTimer textTimer;
@@ -131,6 +133,7 @@ public:
     //bot
     std::unordered_map<std::string/*file name*/,std::unordered_map<uint8_t/*bot id*/,CatchChallenger::Bot> > botFiles;
     std::unordered_set<uint32_t> botIdLoaded;
+
 private:
     void doMove();
     void doText();

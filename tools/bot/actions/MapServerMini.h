@@ -12,6 +12,7 @@ class MapServerMini : public CatchChallenger::CommonMap
 {
 public:
     MapServerMini();
+    bool preload_step1();
 
     std::map<std::pair<uint8_t,uint8_t>,CatchChallenger::Orientation/*,pairhash*/> rescue;
     int reverse_db_id;
@@ -30,6 +31,17 @@ public:
         uint16_t pointOnMapDbCode;
     };
     std::map<std::pair<uint8_t,uint8_t>,PlantOnMap> plants;//position, plant id
+
+
+    struct MapParsedForBot{
+        struct Layer{
+            std::string text;
+            std::string name;
+        };
+        uint8_t *map;//0x00 is not accessible, it's why don't have layer for it
+        std::vector<Layer> layers;//layer 1=index 0, layer 2=index 1, ...
+    };
+    MapParsedForBot step1;
 };
 
 #endif // MAPSERVERMINI_H
