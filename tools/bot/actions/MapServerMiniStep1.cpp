@@ -1,0 +1,73 @@
+#include "MapServerMini.h"
+
+#include <QHash>
+#include <QList>
+#include <QString>
+
+bool MapServerMini::preload_step1()
+{
+    if(this->width==0 || this->height==0)
+        return false;
+    QHash<QString,int> zoneHash;
+    QList<QString> layerList;
+    zoneHash.clear();
+    {
+        step1.map=(uint8_t *)malloc(width*height);
+        memset(step1.map,0x00,width*height);//by default: not accessible zone
+        int y=0;
+        while(y<this->height)
+        {
+            int x=0;
+            while(x<this->width)
+            {
+                QString zone;
+                if(this->parsed_layer.walkable!=NULL)
+                    if(this->parsed_layer.walkable[x+y*this->width])
+                        zone+="w";
+                if(this->parsed_layer.monstersCollisionMap!=NULL)
+                    if(this->parsed_layer.monstersCollisionMap[x+y*this->width])
+                        zone+="m"+QString::number(this->parsed_layer.monstersCollisionMap[x+y*this->width]);
+                if(this->parsed_layer.dirt!=NULL)
+                    if(this->parsed_layer.dirt[x+y*this->width])
+                        zone+="d";
+                if(this->parsed_layer.ledges!=NULL)
+                    if(this->parsed_layer.ledges[x+y*this->width])
+                        zone+="l"+QString::number(this->parsed_layer.ledges[x+y*this->width]);
+                if(!zoneHash.contains(zone))
+                {
+                    int size=zoneHash.size();
+                    zoneHash[zone]=size;
+                }
+                //color
+                int codeZone=zoneHash[zone];
+                step1.map[x+y*this->width]=codeZone;
+
+                x++;
+            }
+            y++;
+        }
+    }
+    {
+        layerList.clear();
+        zoneHash.remove(0);
+        while(layerList.size()<(zoneHash.size()+1))
+            layerList << "";
+
+        QHash<QString, int>::const_iterator i = zoneHash.constBegin();
+        while (i != zoneHash.constEnd()) {
+            layerList[i.value()]=i.key();
+            ++i;
+        }
+
+        int index=1;
+        while(index<layerList.size())
+        {
+            MapParsedForBot::Layer layer;
+            layer.name="Layer "+std::to_string(index);
+            layer.text=layerList.at(index).toStdString();
+            step1.layers.push_back(layer);
+            index++;
+        }
+    }
+    return true;
+}
