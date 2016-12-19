@@ -2,5 +2,5 @@
 
 MapServerMini::MapServerMini()
 {
-
+    step1.map=NULL;
 }

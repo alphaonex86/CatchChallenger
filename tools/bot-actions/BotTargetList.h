@@ -33,8 +33,6 @@ private:
     QHash<QSslSocket *,MultipleBotConnection::CatchChallengerClient *> sslSocketToCatchChallengerClient;
     ActionsAction *actionsAction;
     QHash<QString,MultipleBotConnection::CatchChallengerClient *> pseudoToBot;
-    QHash<QString,int> zoneHash;
-    QList<QString> layerList;
 
     bool botsInformationLoaded;
 };
