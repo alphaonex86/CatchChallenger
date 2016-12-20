@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QHash>
+#include <QListWidgetItem>
 
 #include "../bot/MultipleBotConnection.h"
 #include "../bot/actions/ActionsAction.h"
@@ -23,9 +24,12 @@ public:
     ~BotTargetList();
     void loadAllBotsInformation();
     void updateLayerElements();
+    void updateMapInformation();
 private slots:
     void on_bots_itemSelectionChanged();
     void on_comboBox_Layer_activated(int index);
+    void on_localTargets_itemActivated(QListWidgetItem *item);
+
 private:
     Ui::BotTargetList *ui;
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient;
@@ -35,6 +39,7 @@ private:
     QHash<QString,MultipleBotConnection::CatchChallengerClient *> pseudoToBot;
 
     bool botsInformationLoaded;
+    uint32_t mapId;
 };
 
 #endif // BOTTARGETLIST_H

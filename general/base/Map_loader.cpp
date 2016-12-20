@@ -859,7 +859,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
                         std::cerr << "Multiple ledges at the same place, do colision for left" << std::endl;
                         map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
                     }
-                    else
+                    else if(map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width])
                         map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(uint8_t)ParsedLayerLedges_LedgesLeft;
                 }
                 if(ledgesRight)
@@ -869,7 +869,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
                         std::cerr << "Multiple ledges at the same place, do colision for right" << std::endl;
                         map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
                     }
-                    else
+                    else if(map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width])
                         map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(uint8_t)ParsedLayerLedges_LedgesRight;
                 }
                 if(ledgesTop)
@@ -879,7 +879,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
                         std::cerr << "Multiple ledges at the same place, do colision for top" << std::endl;
                         map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
                     }
-                    else
+                    else if(map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width])
                         map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(uint8_t)ParsedLayerLedges_LedgesTop;
                 }
                 if(ledgesBottom)
@@ -889,7 +889,7 @@ bool Map_loader::tryLoadMap(const std::string &file)
                         std::cerr << "Multiple ledges at the same place, do colision for bottom" << std::endl;
                         map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
                     }
-                    else
+                    else if(map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width])
                         map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(uint8_t)ParsedLayerLedges_LedgesBottom;
                 }
             }
