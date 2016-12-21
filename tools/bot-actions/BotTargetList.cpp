@@ -84,13 +84,16 @@ void BotTargetList::updateMapInformation()
     if(!actionsAction->clientList.contains(client->api))
         return;
 
-    QList<QColor> brushList;
-    brushList << QColor(200, 70, 70, 255);
-    brushList << QColor(255, 255, 0, 255);
-    brushList << QColor(70, 187, 70, 255);
-    brushList << QColor(100, 100, 200, 255);
-    brushList << QColor(255, 128, 128, 255);
-    brushList << QColor(180, 70, 180, 255);
+    QList<QColor> colorsList;
+    colorsList << QColor(200, 70, 70, 255);
+    colorsList << QColor(255, 255, 0, 255);
+    colorsList << QColor(70, 187, 70, 255);
+    colorsList << QColor(100, 100, 200, 255);
+    colorsList << QColor(255, 128, 128, 255);
+    colorsList << QColor(180, 70, 180, 255);
+    colorsList << QColor(255, 200, 110, 255);
+    colorsList << QColor(115, 255, 240, 255);
+    colorsList << QColor(115, 255, 120, 255);
 
     const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
 
@@ -104,6 +107,7 @@ void BotTargetList::updateMapInformation()
         MapServerMini::MapParsedForBot &step=mapServer->step.at(ui->comboBoxStep->currentIndex());
         if(step.map==NULL)
             return;
+        QString QtGraphvizText=QString::fromStdString(step.graphvizText);
 
         if(actionsAction->id_map_to_map.find(player.mapId)!=actionsAction->id_map_to_map.cend())
         {
@@ -134,7 +138,8 @@ void BotTargetList::updateMapInformation()
                     int codeZone=step.map[x+y*mapServer->width];
                     if(codeZone>0)
                     {
-                        QBrush brush1(brushList[codeZone%brushList.size()]);
+                        QColor color=colorsList[codeZone%colorsList.size()];
+                        QBrush brush1(color);
                         brush1.setStyle(Qt::SolidPattern);
                         tablewidgetitem->setBackground(brush1);
                         tablewidgetitem->setText(QString::number(codeZone));
@@ -161,6 +166,13 @@ void BotTargetList::updateMapInformation()
             {
                 const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(index);
                 ui->comboBox_Layer->addItem(QString::fromStdString(layer.name),index);
+
+                const unsigned int codeZone=(index+1);
+                QColor color=colorsList[codeZone%colorsList.size()];
+                //replace struct1 [label="<f0> Block 1|<f1> w"]\n -> struct1 [label="<f0> Block 1|<f1> w" style=filled fillcolor="#FFFEE0"]\n
+                QRegularExpression regexcolor("(struct"+QString::number(codeZone)+" [^\n]+).\n",QRegularExpression::InvertedGreedinessOption);
+                QtGraphvizText.replace(regexcolor,"\\1 style=filled fillcolor=\""+color.name(QColor::HexRgb)+"\"]\n");
+
                 index++;
             }
             if(step.graphvizText.empty())
@@ -168,7 +180,7 @@ void BotTargetList::updateMapInformation()
             else
             {
                 ui->graphvizText->setVisible(true);
-                ui->graphvizText->setPlainText(QString::fromStdString(step.graphvizText));
+                ui->graphvizText->setPlainText(QtGraphvizText);
             }
         }
     }
