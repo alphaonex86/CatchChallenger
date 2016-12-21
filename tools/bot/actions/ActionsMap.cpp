@@ -51,7 +51,7 @@ bool ActionsAction::preload_the_map()
             std::string sortFileName=fileName;
             stringreplaceOne(sortFileName,tmxRemove,"");
             map_name_to_do_id.push_back(sortFileName);
-            if(map_temp.tryLoadMap(datapack_mapPath+fileName))
+            if(map_temp.tryLoadMap(datapack_mapPath+fileName,false))
             {
                 flat_map_list_temp.push_back(new MapServerMini);
                 MapServerMini *mapServer=static_cast<MapServerMini *>(flat_map_list_temp.back());

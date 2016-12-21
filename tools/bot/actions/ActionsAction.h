@@ -27,7 +27,7 @@ public:
     void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     bool preload_the_map();
     bool preload_the_map_step1();
-
+    bool preload_the_map_step2();
 private:
     QTimer moveTimer;
     QTimer textTimer;

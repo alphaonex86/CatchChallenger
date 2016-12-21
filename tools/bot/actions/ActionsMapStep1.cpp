@@ -19,3 +19,15 @@ bool ActionsAction::preload_the_map_step1()
     }
     return true;
 }
+
+bool ActionsAction::preload_the_map_step2()
+{
+    unsigned int index=0;
+    while(index<map_list.size())
+    {
+        MapServerMini * const map=static_cast<MapServerMini *>(flat_map_list[index]);
+        map->preload_step2();
+        index++;
+    }
+    return true;
+}

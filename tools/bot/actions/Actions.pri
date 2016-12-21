@@ -4,7 +4,8 @@ SOURCES += $$PWD/ActionsBotInterface.cpp \
     $$PWD/ActionsMapStep1.cpp \
     $$PWD/MapServerMini.cpp \
     $$PWD/ActionsBot.cpp \
-    $$PWD/MapServerMiniStep1.cpp
+    $$PWD/MapServerMiniStep1.cpp \
+    $$PWD/MapServerMiniStep2.cpp
 
 HEADERS  += $$PWD/ActionsBotInterface.h \
     $$PWD/ActionsAction.h \
