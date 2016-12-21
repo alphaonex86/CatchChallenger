@@ -170,7 +170,7 @@ void BotTargetList::updateMapInformation()
                 const unsigned int codeZone=(index+1);
                 QColor color=colorsList[codeZone%colorsList.size()];
                 //replace struct1 [label="<f0> Block 1|<f1> w"]\n -> struct1 [label="<f0> Block 1|<f1> w" style=filled fillcolor="#FFFEE0"]\n
-                QRegularExpression regexcolor("(struct"+QString::number(codeZone)+" [^\n]+).\n",QRegularExpression::InvertedGreedinessOption);
+                QRegularExpression regexcolor("(\nstruct"+QString::number(codeZone)+" [^\n]+)[^\n;]\n",QRegularExpression::InvertedGreedinessOption);
                 QtGraphvizText.replace(regexcolor,"\\1 style=filled fillcolor=\""+color.name(QColor::HexRgb)+"\"]\n");
 
                 index++;
