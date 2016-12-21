@@ -16,6 +16,8 @@ public:
     bool preload_step1();
     bool preload_step2();
     void preload_step2_addNearTileToScanList(std::vector<std::pair<uint8_t,uint8_t> > &scanList, const uint8_t &x, const uint8_t &y);
+    bool preload_step2b();
+    bool preload_step2c();
 
     std::map<std::pair<uint8_t,uint8_t>,CatchChallenger::Orientation/*,pairhash*/> rescue;
     int reverse_db_id;
@@ -58,6 +60,8 @@ public:
             BothDirection
         };
         std::unordered_map<BlockObject *,LinkType> links;
+        MapServerMini * map;
+        uint8_t id;
     };
     std::vector<BlockObject> blockList;
 
