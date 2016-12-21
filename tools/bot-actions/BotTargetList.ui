@@ -125,6 +125,16 @@
            </widget>
           </item>
           <item>
+           <widget class="QPlainTextEdit" name="graphvizText">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QComboBox" name="comboBox_Layer">
             <item>
              <property name="text">

@@ -11,6 +11,8 @@ bool MapServerMini::preload_step1()
     QHash<QString,int> zoneHash;
     QList<QString> layerList;
     zoneHash.clear();
+    step.resize(step.size()+1);
+    MapParsedForBot &step1=step.at(0);
     {
         step1.map=(uint8_t *)malloc(width*height);
         memset(step1.map,0x00,width*height);//by default: not accessible zone
@@ -67,6 +69,79 @@ bool MapServerMini::preload_step1()
             layer.text=layerList.at(index).toStdString();
             step1.layers.push_back(layer);
             index++;
+        }
+    }
+
+    min_x=0;
+    {
+        int x=0;
+        while(x<this->width)
+        {
+            int y=0;
+            while(y<this->height)
+            {
+                if(step1.map[x+y*this->width]!=0)
+                    break;
+                y++;
+            }
+            if(y<this->height)
+                break;
+            x++;
+            min_x=x;
+        }
+    }
+    max_x=this->width;
+    {
+        int x=this->width-1;
+        while(x>=0)
+        {
+            int y=0;
+            while(y<this->height)
+            {
+                if(step1.map[x+y*this->width]!=0)
+                    break;
+                y++;
+            }
+            if(y<this->height)
+                break;
+            max_x=x;
+            x--;
+        }
+    }
+    min_y=0;
+    {
+        int y=0;
+        while(y<this->height)
+        {
+            int x=0;
+            while(x<this->width)
+            {
+                if(step1.map[x+y*this->width]!=0)
+                    break;
+                x++;
+            }
+            if(x<this->width)
+                break;
+            y++;
+            min_y=y;
+        }
+    }
+    max_y=this->height;
+    {
+        int y=this->height-1;
+        while(y>=0)
+        {
+            int x=0;
+            while(x<this->width)
+            {
+                if(step1.map[x+y*this->width]!=0)
+                    break;
+                x++;
+            }
+            if(x<this->width)
+                break;
+            max_y=y;
+            y--;
         }
     }
     return true;
