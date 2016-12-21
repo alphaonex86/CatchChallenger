@@ -2,4 +2,5 @@
 
 MapServerMini::MapServerMini()
 {
+    botLayerMask=NULL;
 }

@@ -48,18 +48,20 @@ public:
     std::vector<MapParsedForBot> step;
     uint8_t min_x,max_x,min_y,max_y;
 
+    uint8_t *botLayerMask;
     struct BlockObject{
         std::string text;
         std::string name;
         enum LinkType
         {
             ToTheTarget,
-            BothDirection,
-            Impossible
+            BothDirection
         };
         std::unordered_map<BlockObject *,LinkType> links;
     };
     std::vector<BlockObject> blockList;
+
+    bool addBlockLink(BlockObject &blockObjectFrom,BlockObject &blockObjectTo);
 };
 
 #endif // MAPSERVERMINI_H
