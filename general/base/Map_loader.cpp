@@ -36,7 +36,7 @@ void Map_loader::removeMapLayer(const ParsedLayer &parsed_layer)
         delete parsed_layer.walkable;
 }
 
-bool Map_loader::tryLoadMap(const std::string &file)
+bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable)
 {
     error.clear();
     Map_to_send map_to_send_temp;
@@ -909,13 +909,16 @@ bool Map_loader::tryLoadMap(const std::string &file)
                 index++;
             }
         }
-        index=0;
+        if(botIsNotWalkable)
         {
-            const int &listsize=map_to_send_temp.bots.size();
-            while(index<listsize)
+            index=0;
             {
-                map_to_send_temp.parsed_layer.walkable[map_to_send_temp.bots.at(index).point.x+map_to_send_temp.bots.at(index).point.y*map_to_send_temp.width]=false;
-                index++;
+                const int &listsize=map_to_send_temp.bots.size();
+                while(index<listsize)
+                {
+                    map_to_send_temp.parsed_layer.walkable[map_to_send_temp.bots.at(index).point.x+map_to_send_temp.bots.at(index).point.y*map_to_send_temp.width]=false;
+                    index++;
+                }
             }
         }
     }
@@ -961,17 +964,20 @@ bool Map_loader::tryLoadMap(const std::string &file)
                             unsigned int value=reinterpret_cast<const unsigned int *>(i->second.data())[x+y*map_to_send_temp.width];
                             if(value!=0 && map_to_send_temp.parsed_layer.walkable!=NULL && map_to_send_temp.parsed_layer.walkable[x+y*this->map_to_send.width])
                             {
-                                if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==0)
-                                    this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;
-                                else if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==zoneId)
-                                {}//ignore, same zone
-                                else
+                                if(map_to_send_temp.parsed_layer.ledges==NULL || map_to_send_temp.parsed_layer.ledges[x+y*this->map_to_send.width]==(uint8_t)ParsedLayerLedges_NoLedges)
                                 {
-                                    std::cerr << "Have already monster at " << std::to_string(x) << "," << std::to_string(y) << " for " << file
-                                              << ", actual zone: " << std::to_string(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width])
-                                              << " (" << CommonDatapack::commonDatapack.monstersCollision.at(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]).layer
-                                              << "), new zone: " << std::to_string(zoneId) << " (" << CommonDatapack::commonDatapack.monstersCollision.at(zoneId).layer << ")" << std::endl;
-                                    this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;//overwrited by above layer
+                                    if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==0)
+                                        this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;
+                                    else if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==zoneId)
+                                    {}//ignore, same zone
+                                    else
+                                    {
+                                        std::cerr << "Have already monster at " << std::to_string(x) << "," << std::to_string(y) << " for " << file
+                                                  << ", actual zone: " << std::to_string(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width])
+                                                  << " (" << CommonDatapack::commonDatapack.monstersCollision.at(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]).layer
+                                                  << "), new zone: " << std::to_string(zoneId) << " (" << CommonDatapack::commonDatapack.monstersCollision.at(zoneId).layer << ")" << std::endl;
+                                        this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;//overwrited by above layer
+                                    }
                                 }
                             }
                             y++;

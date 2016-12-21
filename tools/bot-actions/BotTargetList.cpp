@@ -14,6 +14,7 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
     botsInformationLoaded(false)
 {
     ui->setupUi(this);
+    ui->graphvizText->setVisible(false);
     mapId=0;
 
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *>::const_iterator i = apiToCatchChallengerClient.constBegin();
@@ -43,6 +44,8 @@ void BotTargetList::loadAllBotsInformation()
     if(!actionsAction->preload_the_map())
         return;
     if(!actionsAction->preload_the_map_step1())
+        return;
+    if(!actionsAction->preload_the_map_step2())
         return;
 }
 
@@ -96,6 +99,11 @@ void BotTargetList::updateMapInformation()
         const std::string &mapStdString=actionsAction->id_map_to_map.at(mapId);
         CatchChallenger::CommonMap *map=actionsAction->map_list.at(mapStdString);
         MapServerMini *mapServer=static_cast<MapServerMini *>(map);
+        if((uint32_t)ui->comboBoxStep->currentIndex()>=mapServer->step.size())
+            return;
+        MapServerMini::MapParsedForBot &step=mapServer->step.at(ui->comboBoxStep->currentIndex());
+        if(step.map==NULL)
+            return;
 
         if(actionsAction->id_map_to_map.find(player.mapId)!=actionsAction->id_map_to_map.cend())
         {
@@ -109,41 +117,37 @@ void BotTargetList::updateMapInformation()
 
         ui->mapPreview->setColumnCount(0);
         ui->mapPreview->setRowCount(0);
-        ui->mapPreview->setColumnCount(mapServer->width);
-        ui->mapPreview->setRowCount(mapServer->height);
+        /*ui->mapPreview->setColumnCount(mapServer->max_x-mapServer->min_x);
+        ui->mapPreview->setRowCount(mapServer->max_y-mapServer->min_y);*/
+        ui->mapPreview->setColumnCount(mapServer->max_x-mapServer->min_x);
+        ui->mapPreview->setRowCount(mapServer->max_y-mapServer->min_y);
 
         {
-            int y=0;
-            while(y<mapServer->height)
+            int y=mapServer->min_y;
+            while(y<mapServer->max_y)
             {
-                int x=0;
-                while(x<mapServer->width)
+                int x=mapServer->min_x;
+                while(x<mapServer->max_x)
                 {
+                    QTableWidgetItem *tablewidgetitem = new QTableWidgetItem();
                     //color
-                    int codeZone=mapServer->step1.map[x+y*mapServer->width];
+                    int codeZone=step.map[x+y*mapServer->width];
                     if(codeZone>0)
                     {
                         QBrush brush1(brushList[codeZone%brushList.size()]);
                         brush1.setStyle(Qt::SolidPattern);
-                        QTableWidgetItem *tablewidgetitem = ui->mapPreview->itemAt(y,x);
-                        if(tablewidgetitem==NULL)
-                            tablewidgetitem = new QTableWidgetItem();
                         tablewidgetitem->setBackground(brush1);
                         tablewidgetitem->setText(QString::number(codeZone));
-                        ui->mapPreview->setItem(y,x,tablewidgetitem);
                     }
                     //icon
                     if(x==player.x && y==player.y && player.mapId==mapId)
                     {
                         QIcon icon;
                         icon.addFile(QStringLiteral(":/playerloc.png"), QSize(), QIcon::Normal, QIcon::Off);
-                        QTableWidgetItem *tablewidgetitem = ui->mapPreview->itemAt(y,x);
-                        if(tablewidgetitem==NULL)
-                            tablewidgetitem = new QTableWidgetItem();
                         tablewidgetitem->setText("");
                         tablewidgetitem->setIcon(icon);
-                        ui->mapPreview->setItem(y,x,tablewidgetitem);
                     }
+                    ui->mapPreview->setItem(y-mapServer->min_y,x-mapServer->min_x,tablewidgetitem);
 
                     x++;
                 }
@@ -153,11 +157,18 @@ void BotTargetList::updateMapInformation()
         {
             ui->comboBox_Layer->clear();
             unsigned int index=0;
-            while(index<mapServer->step1.layers.size())
+            while(index<step.layers.size())
             {
-                const MapServerMini::MapParsedForBot::Layer &layer=mapServer->step1.layers.at(index);
+                const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(index);
                 ui->comboBox_Layer->addItem(QString::fromStdString(layer.name),index);
                 index++;
+            }
+            if(step.graphvizText.empty())
+                ui->graphvizText->setVisible(false);
+            else
+            {
+                ui->graphvizText->setVisible(true);
+                ui->graphvizText->setPlainText(QString::fromStdString(step.graphvizText));
             }
         }
     }
@@ -190,11 +201,16 @@ void BotTargetList::updateLayerElements()
     mapString=QString::fromStdString(mapStdString)+QString(" (%1,%2)").arg(player.x).arg(player.y);
     CatchChallenger::CommonMap *map=actionsAction->map_list.at(mapStdString);
     MapServerMini *mapServer=static_cast<MapServerMini *>(map);
+    if((uint32_t)ui->comboBoxStep->currentIndex()>=mapServer->step.size())
+        return;
+    MapServerMini::MapParsedForBot &step=mapServer->step.at(ui->comboBoxStep->currentIndex());
+    if(step.map==NULL)
+        return;
     int index=0;
     while(index<mapServer->teleporter_list_size)
     {
         const CatchChallenger::CommonMap::Teleporter &teleporter=mapServer->teleporter[index];
-        const uint8_t &codeZone=mapServer->step1.map[teleporter.source_x+teleporter.source_y*mapServer->width];
+        const uint8_t &codeZone=step.map[teleporter.source_x+teleporter.source_y*mapServer->width];
 
         if(codeZone>0 && (codeZone-1)==ui->comboBox_Layer->currentIndex())
         {
@@ -254,7 +270,7 @@ void BotTargetList::updateLayerElements()
             ui->localTargets->addItem(item);
         }
     }
-    const MapServerMini::MapParsedForBot::Layer &layer=mapServer->step1.layers.at(ui->comboBox_Layer->currentIndex());
+    const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(ui->comboBox_Layer->currentIndex());
     ui->label_zone->setText(QString::fromStdString(layer.text));
 }
 
@@ -289,12 +305,17 @@ void BotTargetList::on_localTargets_itemActivated(QListWidgetItem *item)
     mapString=QString::fromStdString(mapStdString)+QString(" (%1,%2)").arg(player.x).arg(player.y);
     CatchChallenger::CommonMap *map=actionsAction->map_list.at(mapStdString);
     MapServerMini *mapServer=static_cast<MapServerMini *>(map);
+    if((uint32_t)ui->comboBoxStep->currentIndex()>=mapServer->step.size())
+        return;
+    MapServerMini::MapParsedForBot &step=mapServer->step.at(ui->comboBoxStep->currentIndex());
+    if(step.map==NULL)
+        return;
     int elementCount=0;
     int index=0;
     while(index<mapServer->teleporter_list_size)
     {
         const CatchChallenger::CommonMap::Teleporter &teleporter=mapServer->teleporter[index];
-        const uint8_t &codeZone=mapServer->step1.map[teleporter.source_x+teleporter.source_y*mapServer->width];
+        const uint8_t &codeZone=step.map[teleporter.source_x+teleporter.source_y*mapServer->width];
 
         if(codeZone>0 && (codeZone-1)==ui->comboBox_Layer->currentIndex())
         {
@@ -352,4 +373,10 @@ void BotTargetList::on_localTargets_itemActivated(QListWidgetItem *item)
         }
     }
     abort();
+}
+
+void BotTargetList::on_comboBoxStep_currentIndexChanged(int index)
+{
+    (void)index;
+    updateMapInformation();
 }

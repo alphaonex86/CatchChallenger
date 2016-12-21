@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 #include <stdint.h>
+#include <unordered_map>
 
 #include "../../general/base/CommonMap.h"
 
@@ -13,6 +14,8 @@ class MapServerMini : public CatchChallenger::CommonMap
 public:
     MapServerMini();
     bool preload_step1();
+    bool preload_step2();
+    void preload_step2_addNearTileToScanList(std::vector<std::pair<uint8_t,uint8_t> > &scanList, const uint8_t &x, const uint8_t &y);
 
     std::map<std::pair<uint8_t,uint8_t>,CatchChallenger::Orientation/*,pairhash*/> rescue;
     int reverse_db_id;
@@ -40,8 +43,23 @@ public:
         };
         uint8_t *map;//0x00 is not accessible, it's why don't have layer for it
         std::vector<Layer> layers;//layer 1=index 0, layer 2=index 1, ...
+        std::string graphvizText;
     };
-    MapParsedForBot step1;
+    std::vector<MapParsedForBot> step;
+    uint8_t min_x,max_x,min_y,max_y;
+
+    struct BlockObject{
+        std::string text;
+        std::string name;
+        enum LinkType
+        {
+            ToTheTarget,
+            BothDirection,
+            Impossible
+        };
+        std::unordered_map<BlockObject *,LinkType> links;
+    };
+    std::vector<BlockObject> blockList;
 };
 
 #endif // MAPSERVERMINI_H
