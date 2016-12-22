@@ -197,6 +197,7 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
 
 void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
+    /// \error security problem, no location map control
     if(isInFight())
     {
         errorOutput("Try do inventory action when is in fight");
