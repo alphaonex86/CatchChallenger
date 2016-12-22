@@ -1,5 +1,6 @@
 #include "MapServerMini.h"
 #include <iostream>
+#include "../../client/base/interface/DatapackClientLoader.h"
 
 bool MapServerMini::preload_step2()
 {
@@ -62,6 +63,12 @@ bool MapServerMini::preload_step2()
             }
             y++;
         }
+        {
+            MapParsedForBot::Layer layer;
+            layer.name="Lost layer";
+            layer.text="";
+            step2.layers.push_back(layer);
+        }
     }
 
     //create the object
@@ -75,6 +82,15 @@ bool MapServerMini::preload_step2()
             blockObject.name=layer.name;
             blockObject.map=this;
             blockObject.id=index;
+
+            blockObject.learn=false;
+            blockObject.heal=false;
+            blockObject.market=false;
+            blockObject.zonecapture=false;
+            blockObject.bordertop=NULL;
+            blockObject.borderright=NULL;
+            blockObject.borderbottom=NULL;
+            blockObject.borderleft=NULL;
             blockList.push_back(blockObject);
             index++;
         }
@@ -291,13 +307,16 @@ bool MapServerMini::preload_step2b()
                         MapServerMini &nextMap=*static_cast<MapServerMini *>(this->border.right.map);
                         if(nextMap.step.size()<2)
                             abort();
+                        BlockObject &blockObject=blockList.at(codeZone-1);
+                        blockObject.borderright=&nextMap;
                         MapParsedForBot &step2nextMap=nextMap.step[1];
                         const uint8_t &rightCodeZone=step2nextMap.map[newx+newy*nextMap.width];
                         if(rightCodeZone!=0)
+                        {
+                            BlockObject &rightBlockObject=nextMap.blockList.at(rightCodeZone-1);
+                            rightBlockObject.borderleft=this;
                             if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
                             {
-                                BlockObject &blockObject=blockList.at(codeZone-1);
-                                BlockObject &rightBlockObject=nextMap.blockList.at(rightCodeZone-1);
                                 //if can go to right
                                 if(this->parsed_layer.ledges==NULL ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges ||
@@ -329,6 +348,7 @@ bool MapServerMini::preload_step2b()
                                         addBlockLink(rightBlockObject,blockObject);
                                 }
                             }
+                        }
                     }
                     //check the bottom tile
                     if(this->border.bottom.map!=NULL)
@@ -337,13 +357,16 @@ bool MapServerMini::preload_step2b()
                         MapServerMini &nextMap=*static_cast<MapServerMini *>(this->border.bottom.map);
                         if(nextMap.step.size()<2)
                             abort();
+                        BlockObject &blockObject=blockList.at(codeZone-1);
+                        blockObject.borderbottom=&nextMap;
                         MapParsedForBot &step2nextMap=nextMap.step[1];
                         const uint8_t &bottomCodeZone=step2nextMap.map[newx+newy*nextMap.width];
                         if(bottomCodeZone!=0)
+                        {
+                            BlockObject &bottomBlockObject=nextMap.blockList.at(bottomCodeZone-1);
+                            bottomBlockObject.bordertop=this;
                             if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
                             {
-                                BlockObject &blockObject=blockList.at(codeZone-1);
-                                BlockObject &bottomBlockObject=nextMap.blockList.at(bottomCodeZone-1);
                                 //if can go to bottom
                                 if(this->parsed_layer.ledges==NULL ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges ||
@@ -375,6 +398,7 @@ bool MapServerMini::preload_step2b()
                                         addBlockLink(bottomBlockObject,blockObject);
                                 }
                             }
+                        }
                     }
                 }
 
@@ -393,6 +417,8 @@ bool MapServerMini::preload_step2b()
             const uint8_t &codeZone=step2.map[x+y*this->width];
             if(codeZone!=0 && (this->botLayerMask==NULL || this->botLayerMask[x+y*this->width]==0))
             {
+                BlockObject &blockObject=blockList.at(codeZone-1);
+                blockObject.teleporter_list.push_back(teleporter[index]);
                 const uint8_t newx=teleporterEntry.destination_x,newy=teleporterEntry.destination_y;
                 MapServerMini &nextMap=*static_cast<MapServerMini *>(teleporterEntry.map);
                 if(nextMap.step.size()<2)
@@ -402,9 +428,8 @@ bool MapServerMini::preload_step2b()
                 if(otherCodeZone!=0)
                     if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
                     {
-                        BlockObject &blockObject=blockList.at(codeZone-1);
-                        BlockObject &bottomBlockObject=nextMap.blockList.at(otherCodeZone-1);
-                        addBlockLink(blockObject,bottomBlockObject);
+                        BlockObject &otherBlockObject=nextMap.blockList.at(otherCodeZone-1);
+                        addBlockLink(blockObject,otherBlockObject);
                     }
             }
             index++;
@@ -414,6 +439,253 @@ bool MapServerMini::preload_step2b()
 }
 
 bool MapServerMini::preload_step2c()
+{
+    if(step.size()!=2)
+        return false;
+    MapParsedForBot &step2=step[1];
+    if(step2.map==NULL)
+        return false;
+    MapParsedForBot::Layer &lostLayer=step2.layers[step2.layers.size()-1];
+
+    unsigned int zoneIndex=0;
+    while(zoneIndex<step2.layers.size())
+    {
+        //teleporter
+        {
+            int index=0;
+            while(index<this->teleporter_list_size)
+            {
+                const CatchChallenger::CommonMap::Teleporter &teleporter=this->teleporter[index];
+                const uint8_t &codeZone=step2.map[teleporter.source_x+teleporter.source_y*this->width];
+
+                MapParsedForBot::Layer::Content content;
+                content.mapId=teleporter.map->id;
+                content.text=QString("From (%1,%2) to %3 (%4,%5)")
+                        .arg(teleporter.source_x)
+                        .arg(teleporter.source_y)
+                        .arg(QString::fromStdString(teleporter.map->map_file))
+                        .arg(teleporter.destination_x)
+                        .arg(teleporter.destination_y)
+                        ;
+                content.icon=QIcon(":/7.png");
+
+                if(codeZone>0)
+                {
+                    BlockObject &blockObject=blockList.at(codeZone-1);
+                    blockObject.teleporter_list.push_back(teleporter);
+
+                    MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
+                    layer.contentList.push_back(content);
+                }
+                else
+                    lostLayer.contentList.push_back(content);
+                index++;
+            }
+        }
+        /*if(ui->comboBox_Layer->currentIndex()==0)
+        {
+            if(this->border.top.map!=NULL)
+            {
+                QListWidgetItem *item=new QListWidgetItem();
+                item->setText(QString("Top border %1 (offset: %2)")
+                              .arg(QString::fromStdString(this->border.top.map->map_file))
+                              .arg(this->this->border.top.x_offset)
+                              );
+                item->setIcon(QIcon(":/7.png"));
+                ui->localTargets->addItem(item);
+            }
+            if(this->border.right.map!=NULL)
+            {
+                QListWidgetItem *item=new QListWidgetItem();
+                item->setText(QString("Right border %1 (offset: %2)")
+                              .arg(QString::fromStdString(this->border.right.map->map_file))
+                              .arg(this->border.right.y_offset)
+                              );
+                item->setIcon(QIcon(":/7.png"));
+                ui->localTargets->addItem(item);
+            }
+            if(this->border.bottom.map!=NULL)
+            {
+                QListWidgetItem *item=new QListWidgetItem();
+                item->setText(QString("Botton border %1 (offset: %2)")
+                              .arg(QString::fromStdString(this->border.bottom.map->map_file))
+                              .arg(this->border.bottom.x_offset)
+                              );
+                item->setIcon(QIcon(":/7.png"));
+                ui->localTargets->addItem(item);
+            }
+            if(this->border.left.map!=NULL)
+            {
+                QListWidgetItem *item=new QListWidgetItem();
+                item->setText(QString("Left border %1 (offset: %2)")
+                              .arg(QString::fromStdString(this->border.left.map->map_file))
+                              .arg(this->border.left.y_offset)
+                              );
+                item->setIcon(QIcon(":/7.png"));
+                ui->localTargets->addItem(item);
+            }
+        }
+*/
+        //not clickable item
+        /*
+        std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
+        std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
+        std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
+
+        //insdustry -> skip, no position control on server side
+    wild monster (and their object, day cycle)
+    */
+        //item on map
+        {
+            for (auto it = this->pointOnMap_Item.begin(); it != this->pointOnMap_Item.cend(); ++it) {
+                const std::pair<uint8_t,uint8_t> &point=it->first;
+                const MapServerMini::ItemOnMap &itemEntry=it->second;
+                const uint8_t &codeZone=step2.map[point.first+point.second*this->width];
+                const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemEntry.item);
+
+                MapParsedForBot::Layer::Content content;
+                content.mapId=this->id;
+                if(itemEntry.infinite)
+                    content.text=QString("Item on map %1 (infinite)").arg(itemExtra.name);
+                else
+                    content.text=QString("Item on map %1").arg(itemExtra.name);
+                content.icon=QIcon(itemExtra.image);
+
+                if(codeZone>0)
+                {
+                    BlockObject &blockObject=blockList.at(codeZone-1);
+                    blockObject.pointOnMap_Item.push_back(itemEntry);
+
+                    MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
+                    layer.contentList.push_back(content);
+                }
+                else
+                    lostLayer.contentList.push_back(content);
+            }
+        }
+/*        //fight
+        {
+            for(const auto& n : this->botsFight) {
+                const uint8_t &codeZone=step2.map[n.first.first+n.first.second*this->width];
+                if((codeZone>0 && (codeZone-1)==ui->comboBox_Layer->currentIndex()) || codeZone==0)
+                {
+                    unsigned int index=0;
+                    const std::vector<uint32_t> &fightsList=n.second;
+                    while(index<fightsList.size())
+                    {
+                        const uint32_t &fightId=fightsList.at(index);
+                        const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId);
+
+                        //item
+                        {
+                            unsigned int sub_index=0;
+                            while(sub_index<fight.items.size())
+                            {
+                                const CatchChallenger::BotFight::Item &item=fight.items.at(sub_index);
+                                const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item.id);
+                                const uint32_t &quantity=item.quantity;
+                                {
+                                    QListWidgetItem *item=new QListWidgetItem();
+                                    if(quantity>1)
+                                        item->setText(QString("Fight %1: %2x %3")
+                                                      .arg(fightId)
+                                                      .arg(quantity)
+                                                      .arg(itemExtra.name)
+                                                      );
+                                    else
+                                        item->setText(QString("Fight %1: %2")
+                                                      .arg(fightId)
+                                                      .arg(itemExtra.name)
+                                                      );
+                                    item->setIcon(QIcon(itemExtra.image));
+                                    ui->localTargets->addItem(item);
+                                }
+                                sub_index++;
+                            }
+                        }
+                        //monster
+                        {
+                            unsigned int sub_index=0;
+                            while(sub_index<fight.monsters.size())
+                            {
+                                const CatchChallenger::BotFight::BotFightMonster &monster=fight.monsters.at(sub_index);
+                                const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monster.id);
+                                {
+                                    QListWidgetItem *item=new QListWidgetItem();
+                                    item->setText(QString("Fight %1: %2 level %3")
+                                                  .arg(fightId)
+                                                  .arg(monsterExtra.name)
+                                                  .arg(monster.level)
+                                                  );
+                                    item->setIcon(QIcon(monsterExtra.thumb));
+                                    ui->localTargets->addItem(item);
+                                }
+                                sub_index++;
+                            }
+                        }
+
+                        index++;
+                    }
+                }
+            }
+        }
+        //shop
+        {
+            for(const auto& n : this->shops) {
+                const uint8_t &codeZone=step2.map[n.first.first+n.first.second*this->width];
+                if((codeZone>0 && (codeZone-1)==ui->comboBox_Layer->currentIndex()) || codeZone==0)
+                {
+                    unsigned int index=0;
+                    const std::vector<uint32_t> &shopList=n.second;
+                    while(index<shopList.size())
+                    {
+                        const uint32_t &shopId=shopList.at(index);
+                        const CatchChallenger::Shop &shop=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
+
+                        unsigned int sub_index=0;
+                        while(sub_index<shop.prices.size())
+                        {
+                            const CATCHCHALLENGER_TYPE_ITEM &item=shop.items.at(sub_index);
+                            const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item);
+                            const uint32_t &price=shop.prices.at(sub_index);
+                            {
+                                QListWidgetItem *item=new QListWidgetItem();
+                                item->setText(QString("Shop %1: %2 %3$")
+                                              .arg(shopId)
+                                              .arg(itemExtra.name)
+                                              .arg(price)
+                                              );
+                                item->setIcon(QIcon(itemExtra.image));
+                                ui->localTargets->addItem(item);
+                            }
+                            sub_index++;
+                        }
+
+                        index++;
+                    }
+                }
+            }
+        }
+        //heal
+        {
+            for(const auto& n : this->heal) {
+                const uint8_t &codeZone=step2.map[n.first+n.first*this->width];
+                if((codeZone>0 && (codeZone-1)==ui->comboBox_Layer->currentIndex()) || codeZone==0)
+                {
+                    QListWidgetItem *item=new QListWidgetItem();
+                    item->setText(QString("Heal"));
+                    item->setIcon(QIcon(":/1.png"));
+                    ui->localTargets->addItem(item);
+                }
+            }
+        }*/
+
+        zoneIndex++;
+    }
+    return true;
+}
+
+bool MapServerMini::preload_step2z()
 {
     if(step.size()!=2)
         return false;

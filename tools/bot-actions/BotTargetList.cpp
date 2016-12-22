@@ -218,71 +218,24 @@ void BotTargetList::updateLayerElements()
     MapServerMini::MapParsedForBot &step=mapServer->step.at(ui->comboBoxStep->currentIndex());
     if(step.map==NULL)
         return;
-    int index=0;
-    while(index<mapServer->teleporter_list_size)
-    {
-        const CatchChallenger::CommonMap::Teleporter &teleporter=mapServer->teleporter[index];
-        const uint8_t &codeZone=step.map[teleporter.source_x+teleporter.source_y*mapServer->width];
 
-        if(codeZone>0 && (codeZone-1)==ui->comboBox_Layer->currentIndex())
-        {
-            QListWidgetItem *item=new QListWidgetItem();
-            item->setText(QString("From (%1,%2) to %3 (%4,%5)")
-                          .arg(teleporter.source_x)
-                          .arg(teleporter.source_y)
-                          .arg(QString::fromStdString(teleporter.map->map_file))
-                          .arg(teleporter.destination_x)
-                          .arg(teleporter.destination_y)
-                          );
-            item->setIcon(QIcon(":/7.png"));
-            ui->localTargets->addItem(item);
-        }
-        index++;
-    }
-    if(ui->comboBox_Layer->currentIndex()==0)
-    {
-        if(mapServer->border.top.map!=NULL)
-        {
-            QListWidgetItem *item=new QListWidgetItem();
-            item->setText(QString("Top border %1 (offset: %2)")
-                          .arg(QString::fromStdString(mapServer->border.top.map->map_file))
-                          .arg(mapServer->border.top.x_offset)
-                          );
-            item->setIcon(QIcon(":/7.png"));
-            ui->localTargets->addItem(item);
-        }
-        if(mapServer->border.right.map!=NULL)
-        {
-            QListWidgetItem *item=new QListWidgetItem();
-            item->setText(QString("Right border %1 (offset: %2)")
-                          .arg(QString::fromStdString(mapServer->border.right.map->map_file))
-                          .arg(mapServer->border.right.y_offset)
-                          );
-            item->setIcon(QIcon(":/7.png"));
-            ui->localTargets->addItem(item);
-        }
-        if(mapServer->border.bottom.map!=NULL)
-        {
-            QListWidgetItem *item=new QListWidgetItem();
-            item->setText(QString("Botton border %1 (offset: %2)")
-                          .arg(QString::fromStdString(mapServer->border.bottom.map->map_file))
-                          .arg(mapServer->border.bottom.x_offset)
-                          );
-            item->setIcon(QIcon(":/7.png"));
-            ui->localTargets->addItem(item);
-        }
-        if(mapServer->border.left.map!=NULL)
-        {
-            QListWidgetItem *item=new QListWidgetItem();
-            item->setText(QString("Left border %1 (offset: %2)")
-                          .arg(QString::fromStdString(mapServer->border.left.map->map_file))
-                          .arg(mapServer->border.left.y_offset)
-                          );
-            item->setIcon(QIcon(":/7.png"));
-            ui->localTargets->addItem(item);
-        }
-    }
     const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(ui->comboBox_Layer->currentIndex());
+    {
+        ui->localTargets->clear();
+        unsigned int index=0;
+        while(index<layer.contentList.size())
+        {
+            const MapServerMini::MapParsedForBot::Layer::Content &content=layer.contentList.at(index);
+            QListWidgetItem *item=new QListWidgetItem();
+            item->setText(content.text);
+            item->setIcon(content.icon);
+            item->setData(99,content.mapId);
+            ui->localTargets->addItem(item);
+            index++;
+        }
+    }
+
+
     ui->label_zone->setText(QString::fromStdString(layer.text));
 }
 
@@ -309,82 +262,11 @@ void BotTargetList::on_localTargets_itemActivated(QListWidgetItem *item)
     if(ui->comboBox_Layer->count()==0)
         return;
 
-    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
-    QString mapString="Unknown map ("+QString::number(mapId)+")";
-    if(actionsAction->id_map_to_map.find(mapId)==actionsAction->id_map_to_map.cend())
-        return;
-    const std::string &mapStdString=actionsAction->id_map_to_map.at(mapId);
-    mapString=QString::fromStdString(mapStdString)+QString(" (%1,%2)").arg(player.x).arg(player.y);
-    CatchChallenger::CommonMap *map=actionsAction->map_list.at(mapStdString);
-    MapServerMini *mapServer=static_cast<MapServerMini *>(map);
-    if((uint32_t)ui->comboBoxStep->currentIndex()>=mapServer->step.size())
-        return;
-    MapServerMini::MapParsedForBot &step=mapServer->step.at(ui->comboBoxStep->currentIndex());
-    if(step.map==NULL)
-        return;
-    int elementCount=0;
-    int index=0;
-    while(index<mapServer->teleporter_list_size)
+    if(mapId!=selectedItem->data(99))
     {
-        const CatchChallenger::CommonMap::Teleporter &teleporter=mapServer->teleporter[index];
-        const uint8_t &codeZone=step.map[teleporter.source_x+teleporter.source_y*mapServer->width];
-
-        if(codeZone>0 && (codeZone-1)==ui->comboBox_Layer->currentIndex())
-        {
-            if(ui->localTargets->currentRow()==elementCount)
-            {
-                mapId=teleporter.map->id;
-                updateMapInformation();
-                return;
-            }
-            elementCount++;
-        }
-        index++;
+        mapId=selectedItem->data(99).toUInt();
+        updateMapInformation();
     }
-    if(ui->comboBox_Layer->currentIndex()==0)
-    {
-        if(mapServer->border.top.map!=NULL)
-        {
-            if(ui->localTargets->currentRow()==elementCount)
-            {
-                mapId=mapServer->border.top.map->id;
-                updateMapInformation();
-                return;
-            }
-            elementCount++;
-        }
-        if(mapServer->border.right.map!=NULL)
-        {
-            if(ui->localTargets->currentRow()==elementCount)
-            {
-                mapId=mapServer->border.right.map->id;
-                updateMapInformation();
-                return;
-            }
-            elementCount++;
-        }
-        if(mapServer->border.bottom.map!=NULL)
-        {
-            if(ui->localTargets->currentRow()==elementCount)
-            {
-                mapId=mapServer->border.bottom.map->id;
-                updateMapInformation();
-                return;
-            }
-            elementCount++;
-        }
-        if(mapServer->border.left.map!=NULL)
-        {
-            if(ui->localTargets->currentRow()==elementCount)
-            {
-                mapId=mapServer->border.left.map->id;
-                updateMapInformation();
-                return;
-            }
-            elementCount++;
-        }
-    }
-    abort();
 }
 
 void BotTargetList::on_comboBoxStep_currentIndexChanged(int index)
