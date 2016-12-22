@@ -523,5 +523,30 @@ bool ActionsAction::preload_the_map()
     }
     #endif
     botFiles.clear();*/
+
+    //item on map
+    {
+        unsigned int index=0;
+        while(index<semi_loaded_map.size())
+        {
+            const ActionsAction::Map_semi &map_semi=semi_loaded_map.at(index);
+            unsigned int sub_index=0;
+            while(sub_index<map_semi.old_map.items.size())
+            {
+                const CatchChallenger::Map_to_send::ItemOnMap_Semi &item=map_semi.old_map.items.at(sub_index);
+                MapServerMini * const mapServer=static_cast<MapServerMini *>(map_semi.map);
+
+                const std::pair<uint8_t/*x*/,uint8_t/*y*/> pair(item.point.x,item.point.y);
+                MapServerMini::ItemOnMap itemOnMap;
+                itemOnMap.infinite=item.infinite;
+                itemOnMap.item=item.item;
+                mapServer->pointOnMap_Item[pair]=itemOnMap;
+
+                sub_index++;
+            }
+
+            index++;
+        }
+    }
     return true;
 }

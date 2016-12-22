@@ -7,6 +7,9 @@
 #include <stdint.h>
 #include <unordered_map>
 
+#include <QIcon>
+#include <QString>
+
 #include "../../general/base/CommonMap.h"
 
 class MapServerMini : public CatchChallenger::CommonMap
@@ -18,22 +21,18 @@ public:
     void preload_step2_addNearTileToScanList(std::vector<std::pair<uint8_t,uint8_t> > &scanList, const uint8_t &x, const uint8_t &y);
     bool preload_step2b();
     bool preload_step2c();
+    bool preload_step2z();
 
     std::map<std::pair<uint8_t,uint8_t>,CatchChallenger::Orientation/*,pairhash*/> rescue;
-    int reverse_db_id;
-
     //at last to improve the other variable cache
     struct ItemOnMap
     {
-        uint16_t pointOnMapDbCode;
-
         uint16_t item;
         bool infinite;
     };
     std::map<std::pair<uint8_t,uint8_t>,ItemOnMap/*,pairhash*/> pointOnMap_Item;//first is x,y, second is db code, item
     struct PlantOnMap
     {
-        uint16_t pointOnMapDbCode;
     };
     std::map<std::pair<uint8_t,uint8_t>,PlantOnMap> plants;//position, plant id
 
@@ -42,6 +41,12 @@ public:
         struct Layer{
             std::string text;
             std::string name;
+            struct Content{
+                QIcon icon;
+                QString text;
+                uint32_t mapId;
+            };
+            std::vector<Content> contentList;
         };
         uint8_t *map;//0x00 is not accessible, it's why don't have layer for it
         std::vector<Layer> layers;//layer 1=index 0, layer 2=index 1, ...
@@ -62,6 +67,21 @@ public:
         std::unordered_map<BlockObject *,LinkType> links;
         MapServerMini * map;
         uint8_t id;
+
+        //things into each zone
+        bool rescue;
+        std::vector<ItemOnMap> pointOnMap_Item;
+        std::vector<uint32_t> shops;
+        bool learn;
+        bool heal;
+        bool market;
+        bool zonecapture;
+        std::vector<uint32_t> botsFight;
+        MapServerMini *bordertop;
+        MapServerMini *borderright;
+        MapServerMini *borderbottom;
+        MapServerMini *borderleft;
+        std::vector<Teleporter> teleporter_list;
     };
     std::vector<BlockObject> blockList;
 
