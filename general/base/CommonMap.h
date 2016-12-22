@@ -57,11 +57,6 @@ public:
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
     std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
     std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>,pairhash> botsFight;
-
-    /*std::vector<MapMonster> grassMonster;
-    std::vector<MapMonster> waterMonster;
-    std::vector<MapMonster> caveMonster;*/
-
     std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight
 
     static void removeParsedLayer(const ParsedLayer &parsed_layer);
