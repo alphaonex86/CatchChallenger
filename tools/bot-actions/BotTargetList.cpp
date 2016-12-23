@@ -164,13 +164,17 @@ void BotTargetList::updateMapInformation()
             while(index<step.layers.size())
             {
                 const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(index);
-                ui->comboBox_Layer->addItem(QString::fromStdString(layer.name),index);
 
-                const unsigned int codeZone=(index+1);
-                QColor color=colorsList[codeZone%colorsList.size()];
-                //replace struct1 [label="<f0> Block 1|<f1> w"]\n -> struct1 [label="<f0> Block 1|<f1> w" style=filled fillcolor="#FFFEE0"]\n
-                QRegularExpression regexcolor("(\nstruct"+QString::number(codeZone)+" [^\n]+)[^\n;]\n",QRegularExpression::InvertedGreedinessOption);
-                QtGraphvizText.replace(regexcolor,"\\1 style=filled fillcolor=\""+color.name(QColor::HexRgb)+"\"]\n");
+                if(layer.name!="Lost layer" || !layer.contentList.empty())
+                {
+                    ui->comboBox_Layer->addItem(QString::fromStdString(layer.name),index);
+
+                    const unsigned int codeZone=(index+1);
+                    QColor color=colorsList[codeZone%colorsList.size()];
+                    //replace struct1 [label="<f0> Block 1|<f1> w"]\n -> struct1 [label="<f0> Block 1|<f1> w" style=filled fillcolor="#FFFEE0"]\n
+                    QRegularExpression regexcolor("(\nstruct"+QString::number(codeZone)+" [^\n]+)[^\n;]\n",QRegularExpression::InvertedGreedinessOption);
+                    QtGraphvizText.replace(regexcolor,"\\1 style=filled fillcolor=\""+color.name(QColor::HexRgb)+"\"]\n");
+                }
 
                 index++;
             }

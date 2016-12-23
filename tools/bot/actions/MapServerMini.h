@@ -41,10 +41,16 @@ public:
         struct Layer{
             std::string text;
             std::string name;
+            enum DestinationDisplay
+            {
+                All,
+                OnlyGui
+            };
             struct Content{
                 QIcon icon;
                 QString text;
                 uint32_t mapId;
+                DestinationDisplay destinationDisplay;
             };
             std::vector<Content> contentList;
         };
@@ -77,12 +83,13 @@ public:
         bool market;
         bool zonecapture;
         std::vector<uint32_t> botsFight;
+        const CatchChallenger::MonstersCollisionValue *monstersCollisionValue;
+
         MapServerMini *bordertop;
         MapServerMini *borderright;
         MapServerMini *borderbottom;
         MapServerMini *borderleft;
         std::vector<Teleporter> teleporter_list;
-        const CatchChallenger::MonstersCollisionValue *monstersCollisionValue;
     };
     std::vector<BlockObject> blockList;
 
