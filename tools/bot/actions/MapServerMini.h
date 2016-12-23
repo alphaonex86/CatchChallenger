@@ -82,6 +82,7 @@ public:
         MapServerMini *borderbottom;
         MapServerMini *borderleft;
         std::vector<Teleporter> teleporter_list;
+        const CatchChallenger::MonstersCollisionValue *monstersCollisionValue;
     };
     std::vector<BlockObject> blockList;
 
