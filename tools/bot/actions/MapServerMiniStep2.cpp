@@ -57,6 +57,7 @@ bool MapServerMini::preload_step2()
                     MapParsedForBot::Layer layer;
                     layer.name="Block "+std::to_string(lastCodeZone);
                     layer.text=step1Layer.text;
+                    layer.haveMonsterSet=false;
                     step2.layers.push_back(layer);
 
                     lastCodeZone++;
@@ -69,6 +70,7 @@ bool MapServerMini::preload_step2()
             MapParsedForBot::Layer layer;
             layer.name="Lost layer";
             layer.text="";
+            layer.haveMonsterSet=false;
             step2.layers.push_back(layer);
         }
     }
@@ -886,11 +888,13 @@ bool MapServerMini::preload_step2c()
                                     {
                                         BlockObject &blockObject=blockList.at(codeZone-1);
                                         if(blockObject.monstersCollisionValue==NULL)
-                                        {
                                             blockObject.monstersCollisionValue=&parsedLayer.monstersCollisionList[monsterCode];
 
-                                            MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                                        MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                                        if(!layer.haveMonsterSet)
+                                        {
                                             layer.contentList.insert(layer.contentList.cend(),contentList.cbegin(),contentList.cend());
+                                            layer.haveMonsterSet=true;
                                         }
                                     }
                                     else
