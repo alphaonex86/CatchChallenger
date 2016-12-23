@@ -453,458 +453,468 @@ bool MapServerMini::preload_step2c()
     if(step1.map==NULL)
         return false;
 
-    //teleporter
     {
-        int index=0;
-        while(index<this->teleporter_list_size)
+        unsigned int indexLayer=0;
+        while(indexLayer<step.size())
         {
-            const CatchChallenger::CommonMap::Teleporter &teleporter=this->teleporter[index];
-            const uint8_t &codeZone=step2.map[teleporter.source_x+teleporter.source_y*this->width];
+            MapParsedForBot &currentStep=step[indexLayer];
 
-            MapParsedForBot::Layer::Content content;
-            content.mapId=teleporter.map->id;
-            content.text=QString("From (%1,%2) to %3 (%4,%5)")
-                    .arg(teleporter.source_x)
-                    .arg(teleporter.source_y)
-                    .arg(QString::fromStdString(teleporter.map->map_file))
-                    .arg(teleporter.destination_x)
-                    .arg(teleporter.destination_y)
-                    ;
-            content.icon=QIcon(":/7.png");
-            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
-
-            if(codeZone>0)
+            //teleporter
             {
-                BlockObject &blockObject=blockList.at(codeZone-1);
-                blockObject.teleporter_list.push_back(teleporter);
-
-                MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
-                layer.contentList.push_back(content);
-            }
-            else
-                lostLayer.contentList.push_back(content);
-            index++;
-        }
-    }
-    //border
-    {
-        if(this->border.top.map!=NULL)
-        {
-            MapParsedForBot::Layer::Content content;
-            content.mapId=border.top.map->id;
-            content.text=QString("Top border %1 (offset: %2)")
-                    .arg(QString::fromStdString(this->border.top.map->map_file))
-                    .arg(this->border.top.x_offset)
-                    ;
-            content.icon=QIcon(":/7.png");
-            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
-
-            uint8_t codeZone=0;
-            uint8_t x=0;
-            while(x<this->width)
-            {
-                const uint8_t &codeZoneTemp=step2.map[x+0*this->width];
-                if(codeZoneTemp>0)
+                int index=0;
+                while(index<this->teleporter_list_size)
                 {
-                    codeZone=codeZoneTemp;
-                    break;
-                }
-                x++;
-            }
-            if(codeZone>0)
-            {
-                BlockObject &blockObject=blockList.at(codeZone-1);
-                blockObject.bordertop=static_cast<MapServerMini *>(border.top.map);
+                    const CatchChallenger::CommonMap::Teleporter &teleporter=this->teleporter[index];
+                    const uint8_t &codeZone=currentStep.map[teleporter.source_x+teleporter.source_y*this->width];
 
-                MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
-                layer.contentList.push_back(content);
-            }
-            else
-                lostLayer.contentList.push_back(content);
-        }
-        if(this->border.right.map!=NULL)
-        {
-            MapParsedForBot::Layer::Content content;
-            content.mapId=border.right.map->id;
-            content.text=QString("Right border %1 (offset: %2)")
-                    .arg(QString::fromStdString(this->border.right.map->map_file))
-                    .arg(this->border.right.y_offset)
-                    ;
-            content.icon=QIcon(":/7.png");
-            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
+                    MapParsedForBot::Layer::Content content;
+                    content.mapId=teleporter.map->id;
+                    content.text=QString("From (%1,%2) to %3 (%4,%5)")
+                            .arg(teleporter.source_x)
+                            .arg(teleporter.source_y)
+                            .arg(QString::fromStdString(teleporter.map->map_file))
+                            .arg(teleporter.destination_x)
+                            .arg(teleporter.destination_y)
+                            ;
+                    content.icon=QIcon(":/7.png");
+                    content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
 
-            uint8_t codeZone=0;
-            uint8_t y=0;
-            while(y<this->height)
-            {
-                const uint8_t &codeZoneTemp=step2.map[(this->width-1)+y*this->width];
-                if(codeZoneTemp>0)
-                {
-                    codeZone=codeZoneTemp;
-                    break;
-                }
-                y++;
-            }
-            if(codeZone>0)
-            {
-                BlockObject &blockObject=blockList.at(codeZone-1);
-                blockObject.borderright=static_cast<MapServerMini *>(border.right.map);
-
-                MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
-                layer.contentList.push_back(content);
-            }
-            else
-                lostLayer.contentList.push_back(content);
-        }
-        if(this->border.bottom.map!=NULL)
-        {
-            MapParsedForBot::Layer::Content content;
-            content.mapId=border.bottom.map->id;
-            content.text=QString("Bottom border %1 (offset: %2)")
-                    .arg(QString::fromStdString(this->border.bottom.map->map_file))
-                    .arg(this->border.bottom.x_offset)
-                    ;
-            content.icon=QIcon(":/7.png");
-            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
-
-            uint8_t codeZone=0;
-            uint8_t x=0;
-            while(x<this->width)
-            {
-                const uint8_t &codeZoneTemp=step2.map[x+(this->height-1)*this->width];
-                if(codeZoneTemp>0)
-                {
-                    codeZone=codeZoneTemp;
-                    break;
-                }
-                x++;
-            }
-            if(codeZone>0)
-            {
-                BlockObject &blockObject=blockList.at(codeZone-1);
-                blockObject.borderbottom=static_cast<MapServerMini *>(border.bottom.map);
-
-                MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
-                layer.contentList.push_back(content);
-            }
-            else
-                lostLayer.contentList.push_back(content);
-        }
-        if(this->border.left.map!=NULL)
-        {
-            MapParsedForBot::Layer::Content content;
-            content.mapId=border.left.map->id;
-            content.text=QString("Left border %1 (offset: %2)")
-                    .arg(QString::fromStdString(this->border.left.map->map_file))
-                    .arg(this->border.left.y_offset)
-                    ;
-            content.icon=QIcon(":/7.png");
-            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
-
-            uint8_t codeZone=0;
-            uint8_t y=0;
-            while(y<this->height)
-            {
-                const uint8_t &codeZoneTemp=step2.map[0+y*this->width];
-                if(codeZoneTemp>0)
-                {
-                    codeZone=codeZoneTemp;
-                    break;
-                }
-                y++;
-            }
-            if(codeZone>0)
-            {
-                BlockObject &blockObject=blockList.at(codeZone-1);
-                blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
-
-                MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
-                layer.contentList.push_back(content);
-            }
-            else
-                lostLayer.contentList.push_back(content);
-        }
-    }
-    //not clickable item
-    /*
-    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
-    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
-
-    //insdustry -> skip, no position control on server side
-wild monster (and their object, day cycle)
-*/
-    //item on map
-    {
-        for (auto it = this->pointOnMap_Item.begin(); it != this->pointOnMap_Item.cend(); ++it) {
-            const std::pair<uint8_t,uint8_t> &point=it->first;
-            const MapServerMini::ItemOnMap &itemEntry=it->second;
-            const uint8_t &codeZone=step2.map[point.first+point.second*this->width];
-            const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemEntry.item);
-
-            MapParsedForBot::Layer::Content content;
-            content.mapId=this->id;
-            if(itemEntry.infinite)
-                content.text=QString("Item on map %1 (infinite)").arg(itemExtra.name);
-            else
-                content.text=QString("Item on map %1").arg(itemExtra.name);
-            content.icon=QIcon(itemExtra.image);
-            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
-
-            if(codeZone>0)
-            {
-                BlockObject &blockObject=blockList.at(codeZone-1);
-                blockObject.pointOnMap_Item.push_back(itemEntry);
-
-                MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
-                layer.contentList.push_back(content);
-            }
-            else
-                lostLayer.contentList.push_back(content);
-        }
-    }
-    //fight
-    {
-        for(const auto& n : this->botsFight) {
-            const uint8_t &codeZone=step2.map[n.first.first+n.first.second*this->width];
-            {
-                unsigned int index=0;
-                const std::vector<uint32_t> &fightsList=n.second;
-                while(index<fightsList.size())
-                {
-                    const uint32_t &fightId=fightsList.at(index);
-                    const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId);
-
-                    //item
+                    if(codeZone>0)
                     {
-                        unsigned int sub_index=0;
-                        while(sub_index<fight.items.size())
-                        {
-                            const CatchChallenger::BotFight::Item &item=fight.items.at(sub_index);
-                            const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item.id);
-                            const uint32_t &quantity=item.quantity;
-                            {
-                                MapParsedForBot::Layer::Content content;
-                                content.mapId=this->id;
-                                if(quantity>1)
-                                    content.text=QString("Fight %1: %2x %3")
-                                                  .arg(fightId)
-                                                  .arg(quantity)
-                                                  .arg(itemExtra.name)
-                                                  ;
-                                else
-                                    content.text=QString("Fight %1: %2")
-                                                  .arg(fightId)
-                                                  .arg(itemExtra.name)
-                                                  ;
-                                content.icon=QIcon(itemExtra.image);
-                                content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
+                        BlockObject &blockObject=blockList.at(codeZone-1);
+                        blockObject.teleporter_list.push_back(teleporter);
 
-                                if(codeZone>0)
-                                {
-                                    BlockObject &blockObject=blockList.at(codeZone-1);
-                                    blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
-
-                                    MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
-                                    layer.contentList.push_back(content);
-                                }
-                                else
-                                    lostLayer.contentList.push_back(content);
-                            }
-                            sub_index++;
-                        }
+                        MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                        layer.contentList.push_back(content);
                     }
-                    //monster
-                    {
-                        unsigned int sub_index=0;
-                        while(sub_index<fight.monsters.size())
-                        {
-                            const CatchChallenger::BotFight::BotFightMonster &monster=fight.monsters.at(sub_index);
-                            const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monster.id);
-                            {
-                                MapParsedForBot::Layer::Content content;
-                                content.mapId=this->id;
-                                content.text=QString("Fight %1: %2 level %3")
-                                        .arg(fightId)
-                                        .arg(monsterExtra.name)
-                                        .arg(monster.level)
-                                        ;
-                                content.icon=QIcon(monsterExtra.thumb);
-                                content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
-
-                                if(codeZone>0)
-                                {
-                                    BlockObject &blockObject=blockList.at(codeZone-1);
-                                    blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
-
-                                    MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
-                                    layer.contentList.push_back(content);
-                                }
-                                else
-                                    lostLayer.contentList.push_back(content);
-                            }
-                            sub_index++;
-                        }
-                    }
-
+                    else
+                        lostLayer.contentList.push_back(content);
                     index++;
                 }
             }
-        }
-    }
-    //shop
-    {
-        for(const auto& n : this->shops) {
-            const uint8_t &codeZone=step2.map[n.first.first+n.first.second*this->width];
+            //border
             {
-                unsigned int index=0;
-                const std::vector<uint32_t> &shopList=n.second;
-                while(index<shopList.size())
+                if(this->border.top.map!=NULL)
                 {
-                    const uint32_t &shopId=shopList.at(index);
-                    const CatchChallenger::Shop &shop=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
+                    MapParsedForBot::Layer::Content content;
+                    content.mapId=border.top.map->id;
+                    content.text=QString("Top border %1 (offset: %2)")
+                            .arg(QString::fromStdString(this->border.top.map->map_file))
+                            .arg(this->border.top.x_offset)
+                            ;
+                    content.icon=QIcon(":/7.png");
+                    content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
 
-                    unsigned int sub_index=0;
-                    while(sub_index<shop.prices.size())
+                    uint8_t codeZone=0;
+                    uint8_t x=0;
+                    while(x<this->width)
                     {
-                        const CATCHCHALLENGER_TYPE_ITEM &item=shop.items.at(sub_index);
-                        const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item);
-                        const uint32_t &price=shop.prices.at(sub_index);
+                        const uint8_t &codeZoneTemp=currentStep.map[x+0*this->width];
+                        if(codeZoneTemp>0)
                         {
-                            MapParsedForBot::Layer::Content content;
-                            content.mapId=this->id;
-                            content.text=QString("Shop %1: %2 %3$")
-                                    .arg(shopId)
-                                    .arg(itemExtra.name)
-                                    .arg(price);
-                            content.icon=QIcon(itemExtra.image);
-                            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
-
-                            if(codeZone>0)
-                            {
-                                BlockObject &blockObject=blockList.at(codeZone-1);
-                                blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
-
-                                MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
-                                layer.contentList.push_back(content);
-                            }
-                            else
-                                lostLayer.contentList.push_back(content);
+                            codeZone=codeZoneTemp;
+                            break;
                         }
-                        sub_index++;
+                        x++;
                     }
-
-                    index++;
-                }
-            }
-        }
-    }
-    //heal
-    {
-        for(const auto& n : this->heal) {
-            const uint8_t &codeZone=step2.map[n.first+n.first*this->width];
-            {
-                MapParsedForBot::Layer::Content content;
-                content.mapId=this->id;
-                content.text="Heal";
-                content.icon=QIcon(":/1.png");
-                content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
-
-                if(codeZone>0)
-                {
-                    BlockObject &blockObject=blockList.at(codeZone-1);
-                    blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
-
-                    MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
-                    layer.contentList.push_back(content);
-                }
-                else
-                    lostLayer.contentList.push_back(content);
-            }
-        }
-    }
-
-    //detect the block
-    const CatchChallenger::ParsedLayer &parsedLayer=this->parsed_layer;
-    if(parsedLayer.monstersCollisionMap!=NULL)
-    {
-        std::unordered_set<uint8_t> lostMonster;
-        int y=0;
-        while(y<this->height)
-        {
-            int x=0;
-            while(x<this->width)
-            {
-                if(step2.map[x+y*this->width]!=0 && step1.map[x+y*this->width]!=0)
-                {
-                    const uint8_t &codeZone=step2.map[x+y*this->width];
-                    const uint8_t &monsterCode=parsedLayer.monstersCollisionMap[x+y*this->width];
-                    if(monsterCode<parsedLayer.monstersCollisionList.size())
+                    if(codeZone>0)
                     {
-                        std::vector<MapParsedForBot::Layer::Content> contentList;
-                        const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=parsedLayer.monstersCollisionList.at(monsterCode);
-                        if(!monstersCollisionValue.walkOnMonsters.empty())
-                        {
-                            /// \todo do the real code
-                            //choice the first entry
-                            const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monsterCollisionContent=monstersCollisionValue.walkOnMonsters.at(0);
+                        BlockObject &blockObject=blockList.at(codeZone-1);
+                        blockObject.bordertop=static_cast<MapServerMini *>(border.top.map);
 
-                            //monster
+                        MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                        layer.contentList.push_back(content);
+                    }
+                    else
+                        lostLayer.contentList.push_back(content);
+                }
+                if(this->border.right.map!=NULL)
+                {
+                    MapParsedForBot::Layer::Content content;
+                    content.mapId=border.right.map->id;
+                    content.text=QString("Right border %1 (offset: %2)")
+                            .arg(QString::fromStdString(this->border.right.map->map_file))
+                            .arg(this->border.right.y_offset)
+                            ;
+                    content.icon=QIcon(":/7.png");
+                    content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
+
+                    uint8_t codeZone=0;
+                    uint8_t y=0;
+                    while(y<this->height)
+                    {
+                        const uint8_t &codeZoneTemp=currentStep.map[(this->width-1)+y*this->width];
+                        if(codeZoneTemp>0)
+                        {
+                            codeZone=codeZoneTemp;
+                            break;
+                        }
+                        y++;
+                    }
+                    if(codeZone>0)
+                    {
+                        BlockObject &blockObject=blockList.at(codeZone-1);
+                        blockObject.borderright=static_cast<MapServerMini *>(border.right.map);
+
+                        MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                        layer.contentList.push_back(content);
+                    }
+                    else
+                        lostLayer.contentList.push_back(content);
+                }
+                if(this->border.bottom.map!=NULL)
+                {
+                    MapParsedForBot::Layer::Content content;
+                    content.mapId=border.bottom.map->id;
+                    content.text=QString("Bottom border %1 (offset: %2)")
+                            .arg(QString::fromStdString(this->border.bottom.map->map_file))
+                            .arg(this->border.bottom.x_offset)
+                            ;
+                    content.icon=QIcon(":/7.png");
+                    content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
+
+                    uint8_t codeZone=0;
+                    uint8_t x=0;
+                    while(x<this->width)
+                    {
+                        const uint8_t &codeZoneTemp=currentStep.map[x+(this->height-1)*this->width];
+                        if(codeZoneTemp>0)
+                        {
+                            codeZone=codeZoneTemp;
+                            break;
+                        }
+                        x++;
+                    }
+                    if(codeZone>0)
+                    {
+                        BlockObject &blockObject=blockList.at(codeZone-1);
+                        blockObject.borderbottom=static_cast<MapServerMini *>(border.bottom.map);
+
+                        MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                        layer.contentList.push_back(content);
+                    }
+                    else
+                        lostLayer.contentList.push_back(content);
+                }
+                if(this->border.left.map!=NULL)
+                {
+                    MapParsedForBot::Layer::Content content;
+                    content.mapId=border.left.map->id;
+                    content.text=QString("Left border %1 (offset: %2)")
+                            .arg(QString::fromStdString(this->border.left.map->map_file))
+                            .arg(this->border.left.y_offset)
+                            ;
+                    content.icon=QIcon(":/7.png");
+                    content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
+
+                    uint8_t codeZone=0;
+                    uint8_t y=0;
+                    while(y<this->height)
+                    {
+                        const uint8_t &codeZoneTemp=currentStep.map[0+y*this->width];
+                        if(codeZoneTemp>0)
+                        {
+                            codeZone=codeZoneTemp;
+                            break;
+                        }
+                        y++;
+                    }
+                    if(codeZone>0)
+                    {
+                        BlockObject &blockObject=blockList.at(codeZone-1);
+                        blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
+
+                        MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                        layer.contentList.push_back(content);
+                    }
+                    else
+                        lostLayer.contentList.push_back(content);
+                }
+            }
+            //not clickable item
+            /*
+            std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
+            std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
+            std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
+
+            //insdustry -> skip, no position control on server side
+        wild monster (and their object, day cycle)
+        */
+            //item on map
+            {
+                for (auto it = this->pointOnMap_Item.begin(); it != this->pointOnMap_Item.cend(); ++it) {
+                    const std::pair<uint8_t,uint8_t> &point=it->first;
+                    const MapServerMini::ItemOnMap &itemEntry=it->second;
+                    const uint8_t &codeZone=currentStep.map[point.first+point.second*this->width];
+                    const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemEntry.item);
+
+                    MapParsedForBot::Layer::Content content;
+                    content.mapId=this->id;
+                    if(itemEntry.infinite)
+                        content.text=QString("Item on map %1 (infinite)").arg(itemExtra.name);
+                    else
+                        content.text=QString("Item on map %1").arg(itemExtra.name);
+                    content.icon=QIcon(itemExtra.image);
+                    content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
+
+                    if(codeZone>0)
+                    {
+                        BlockObject &blockObject=blockList.at(codeZone-1);
+                        blockObject.pointOnMap_Item.push_back(itemEntry);
+
+                        MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                        layer.contentList.push_back(content);
+                    }
+                    else
+                        lostLayer.contentList.push_back(content);
+                }
+            }
+            //fight
+            {
+                for(const auto& n : this->botsFight) {
+                    const uint8_t &codeZone=currentStep.map[n.first.first+n.first.second*this->width];
+                    {
+                        unsigned int index=0;
+                        const std::vector<uint32_t> &fightsList=n.second;
+                        while(index<fightsList.size())
+                        {
+                            const uint32_t &fightId=fightsList.at(index);
+                            const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId);
+
+                            //item
                             {
-                                if(monsterCode>=parsedLayer.monstersCollisionList.size())
-                                    abort();
                                 unsigned int sub_index=0;
-                                while(sub_index<monsterCollisionContent.defaultMonsters.size())
+                                while(sub_index<fight.items.size())
                                 {
-                                    const CatchChallenger::MapMonster &mapMonster=monsterCollisionContent.defaultMonsters.at(sub_index);
-                                    const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(mapMonster.id);
+                                    const CatchChallenger::BotFight::Item &item=fight.items.at(sub_index);
+                                    const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item.id);
+                                    const uint32_t &quantity=item.quantity;
                                     {
                                         MapParsedForBot::Layer::Content content;
                                         content.mapId=this->id;
-                                        content.text=QString("Wild %2 level %3-%4, luck: %5")
+                                        if(quantity>1)
+                                            content.text=QString("Fight %1: %2x %3")
+                                                          .arg(fightId)
+                                                          .arg(quantity)
+                                                          .arg(itemExtra.name)
+                                                          ;
+                                        else
+                                            content.text=QString("Fight %1: %2")
+                                                          .arg(fightId)
+                                                          .arg(itemExtra.name)
+                                                          ;
+                                        content.icon=QIcon(itemExtra.image);
+                                        content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
+
+                                        if(codeZone>0)
+                                        {
+                                            BlockObject &blockObject=blockList.at(codeZone-1);
+                                            blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
+
+                                            MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                                            layer.contentList.push_back(content);
+                                        }
+                                        else
+                                            lostLayer.contentList.push_back(content);
+                                    }
+                                    sub_index++;
+                                }
+                            }
+                            //monster
+                            {
+                                unsigned int sub_index=0;
+                                while(sub_index<fight.monsters.size())
+                                {
+                                    const CatchChallenger::BotFight::BotFightMonster &monster=fight.monsters.at(sub_index);
+                                    const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monster.id);
+                                    {
+                                        MapParsedForBot::Layer::Content content;
+                                        content.mapId=this->id;
+                                        content.text=QString("Fight %1: %2 level %3")
+                                                .arg(fightId)
                                                 .arg(monsterExtra.name)
-                                                .arg(mapMonster.minLevel)
-                                                .arg(mapMonster.maxLevel)
-                                                .arg(QString::number(mapMonster.luck)+"%")
+                                                .arg(monster.level)
                                                 ;
                                         content.icon=QIcon(monsterExtra.thumb);
                                         content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
 
-                                        contentList.push_back(content);
+                                        if(codeZone>0)
+                                        {
+                                            BlockObject &blockObject=blockList.at(codeZone-1);
+                                            blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
+
+                                            MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                                            layer.contentList.push_back(content);
+                                        }
+                                        else
+                                            lostLayer.contentList.push_back(content);
                                     }
                                     sub_index++;
                                 }
                             }
 
-                            if(codeZone>0)
-                            {
-                                BlockObject &blockObject=blockList.at(codeZone-1);
-                                if(blockObject.monstersCollisionValue==NULL)
-                                {
-                                    blockObject.monstersCollisionValue=&parsedLayer.monstersCollisionList[monsterCode];
-
-                                    MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
-                                    layer.contentList.insert(layer.contentList.cend(),contentList.cbegin(),contentList.cend());
-                                }
-                            }
-                            else
-                            {
-                                if(lostMonster.find(monsterCode)!=lostMonster.cend())
-                                {
-                                    lostMonster.insert(monsterCode);
-                                    lostLayer.contentList.insert(lostLayer.contentList.cend(),contentList.cbegin(),contentList.cend());
-                                }
-                            }
+                            index++;
                         }
                     }
                 }
-                x++;
             }
-            y++;
+            //shop
+            {
+                for(const auto& n : this->shops) {
+                    const uint8_t &codeZone=currentStep.map[n.first.first+n.first.second*this->width];
+                    {
+                        unsigned int index=0;
+                        const std::vector<uint32_t> &shopList=n.second;
+                        while(index<shopList.size())
+                        {
+                            const uint32_t &shopId=shopList.at(index);
+                            const CatchChallenger::Shop &shop=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
+
+                            unsigned int sub_index=0;
+                            while(sub_index<shop.prices.size())
+                            {
+                                const CATCHCHALLENGER_TYPE_ITEM &item=shop.items.at(sub_index);
+                                const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item);
+                                const uint32_t &price=shop.prices.at(sub_index);
+                                {
+                                    MapParsedForBot::Layer::Content content;
+                                    content.mapId=this->id;
+                                    content.text=QString("Shop %1: %2 %3$")
+                                            .arg(shopId)
+                                            .arg(itemExtra.name)
+                                            .arg(price);
+                                    content.icon=QIcon(itemExtra.image);
+                                    content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
+
+                                    if(codeZone>0)
+                                    {
+                                        BlockObject &blockObject=blockList.at(codeZone-1);
+                                        blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
+
+                                        MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                                        layer.contentList.push_back(content);
+                                    }
+                                    else
+                                        lostLayer.contentList.push_back(content);
+                                }
+                                sub_index++;
+                            }
+
+                            index++;
+                        }
+                    }
+                }
+            }
+            //heal
+            {
+                for(const auto& n : this->heal) {
+                    const uint8_t &codeZone=currentStep.map[n.first+n.first*this->width];
+                    {
+                        MapParsedForBot::Layer::Content content;
+                        content.mapId=this->id;
+                        content.text="Heal";
+                        content.icon=QIcon(":/1.png");
+                        content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
+
+                        if(codeZone>0)
+                        {
+                            BlockObject &blockObject=blockList.at(codeZone-1);
+                            blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
+
+                            MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                            layer.contentList.push_back(content);
+                        }
+                        else
+                            lostLayer.contentList.push_back(content);
+                    }
+                }
+            }
+
+            //detect the block
+            const CatchChallenger::ParsedLayer &parsedLayer=this->parsed_layer;
+            if(parsedLayer.monstersCollisionMap!=NULL)
+            {
+                std::unordered_set<uint8_t> lostMonster;
+                int y=0;
+                while(y<this->height)
+                {
+                    int x=0;
+                    while(x<this->width)
+                    {
+                        if(currentStep.map[x+y*this->width]!=0)
+                        {
+                            const uint8_t &codeZone=currentStep.map[x+y*this->width];
+                            const uint8_t &monsterCode=parsedLayer.monstersCollisionMap[x+y*this->width];
+                            if(monsterCode<parsedLayer.monstersCollisionList.size())
+                            {
+                                std::vector<MapParsedForBot::Layer::Content> contentList;
+                                const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=parsedLayer.monstersCollisionList.at(monsterCode);
+                                if(!monstersCollisionValue.walkOnMonsters.empty())
+                                {
+                                    /// \todo do the real code
+                                    //choice the first entry
+                                    const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monsterCollisionContent=monstersCollisionValue.walkOnMonsters.at(0);
+
+                                    //monster
+                                    {
+                                        if(monsterCode>=parsedLayer.monstersCollisionList.size())
+                                            abort();
+                                        unsigned int sub_index=0;
+                                        while(sub_index<monsterCollisionContent.defaultMonsters.size())
+                                        {
+                                            const CatchChallenger::MapMonster &mapMonster=monsterCollisionContent.defaultMonsters.at(sub_index);
+                                            const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(mapMonster.id);
+                                            {
+                                                MapParsedForBot::Layer::Content content;
+                                                content.mapId=this->id;
+                                                content.text=QString("Wild %2 level %3-%4, luck: %5")
+                                                        .arg(monsterExtra.name)
+                                                        .arg(mapMonster.minLevel)
+                                                        .arg(mapMonster.maxLevel)
+                                                        .arg(QString::number(mapMonster.luck)+"%")
+                                                        ;
+                                                content.icon=QIcon(monsterExtra.thumb);
+                                                content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
+
+                                                contentList.push_back(content);
+                                            }
+                                            sub_index++;
+                                        }
+                                    }
+
+                                    if(codeZone>0)
+                                    {
+                                        BlockObject &blockObject=blockList.at(codeZone-1);
+                                        if(blockObject.monstersCollisionValue==NULL)
+                                        {
+                                            blockObject.monstersCollisionValue=&parsedLayer.monstersCollisionList[monsterCode];
+
+                                            MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
+                                            layer.contentList.insert(layer.contentList.cend(),contentList.cbegin(),contentList.cend());
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if(lostMonster.find(monsterCode)!=lostMonster.cend())
+                                        {
+                                            lostMonster.insert(monsterCode);
+                                            lostLayer.contentList.insert(lostLayer.contentList.cend(),contentList.cbegin(),contentList.cend());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        x++;
+                    }
+                    y++;
+                }
+            }
+
+            indexLayer++;
         }
     }
 
-    //transfer this to lower step
+    /*//transfer this to lower step
     {
         if(!step1.layers.empty())
         {
@@ -948,7 +958,7 @@ wild monster (and their object, day cycle)
                 index++;
             }
         }
-    }
+    }*/
 
     return true;
 }
