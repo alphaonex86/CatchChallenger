@@ -471,6 +471,7 @@ bool MapServerMini::preload_step2c()
                     .arg(teleporter.destination_y)
                     ;
             content.icon=QIcon(":/7.png");
+            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
 
             if(codeZone>0)
             {
@@ -496,6 +497,7 @@ bool MapServerMini::preload_step2c()
                     .arg(this->border.top.x_offset)
                     ;
             content.icon=QIcon(":/7.png");
+            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
 
             uint8_t codeZone=0;
             uint8_t x=0;
@@ -529,6 +531,7 @@ bool MapServerMini::preload_step2c()
                     .arg(this->border.right.y_offset)
                     ;
             content.icon=QIcon(":/7.png");
+            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
 
             uint8_t codeZone=0;
             uint8_t y=0;
@@ -562,6 +565,7 @@ bool MapServerMini::preload_step2c()
                     .arg(this->border.bottom.x_offset)
                     ;
             content.icon=QIcon(":/7.png");
+            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
 
             uint8_t codeZone=0;
             uint8_t x=0;
@@ -595,6 +599,7 @@ bool MapServerMini::preload_step2c()
                     .arg(this->border.left.y_offset)
                     ;
             content.icon=QIcon(":/7.png");
+            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::OnlyGui;
 
             uint8_t codeZone=0;
             uint8_t y=0;
@@ -644,6 +649,7 @@ wild monster (and their object, day cycle)
             else
                 content.text=QString("Item on map %1").arg(itemExtra.name);
             content.icon=QIcon(itemExtra.image);
+            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
 
             if(codeZone>0)
             {
@@ -692,6 +698,7 @@ wild monster (and their object, day cycle)
                                                   .arg(itemExtra.name)
                                                   ;
                                 content.icon=QIcon(itemExtra.image);
+                                content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
 
                                 if(codeZone>0)
                                 {
@@ -723,6 +730,7 @@ wild monster (and their object, day cycle)
                                         .arg(monster.level)
                                         ;
                                 content.icon=QIcon(monsterExtra.thumb);
+                                content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
 
                                 if(codeZone>0)
                                 {
@@ -770,6 +778,7 @@ wild monster (and their object, day cycle)
                                     .arg(itemExtra.name)
                                     .arg(price);
                             content.icon=QIcon(itemExtra.image);
+                            content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
 
                             if(codeZone>0)
                             {
@@ -799,6 +808,7 @@ wild monster (and their object, day cycle)
                 content.mapId=this->id;
                 content.text="Heal";
                 content.icon=QIcon(":/1.png");
+                content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
 
                 if(codeZone>0)
                 {
@@ -829,55 +839,61 @@ wild monster (and their object, day cycle)
                 {
                     const uint8_t &codeZone=step2.map[x+y*this->width];
                     const uint8_t &monsterCode=parsedLayer.monstersCollisionMap[x+y*this->width];
-                    if(monsterCode>0)
+                    if(monsterCode<parsedLayer.monstersCollisionList.size())
                     {
                         std::vector<MapParsedForBot::Layer::Content> contentList;
-                        //monster
+                        const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=parsedLayer.monstersCollisionList.at(monsterCode);
+                        if(!monstersCollisionValue.walkOnMonsters.empty())
                         {
-                            if(monsterCode>=parsedLayer.monstersCollisionList.size())
-                                abort();
-                            const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=parsedLayer.monstersCollisionList.at(monsterCode);
                             /// \todo do the real code
                             //choice the first entry
                             const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monsterCollisionContent=monstersCollisionValue.walkOnMonsters.at(0);
-                            unsigned int sub_index=0;
-                            while(sub_index<monsterCollisionContent.defaultMonsters.size())
+
+                            //monster
                             {
-                                const CatchChallenger::MapMonster &mapMonster=monsterCollisionContent.defaultMonsters.at(sub_index);
-                                const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(mapMonster.id);
+                                if(monsterCode>=parsedLayer.monstersCollisionList.size())
+                                    abort();
+                                unsigned int sub_index=0;
+                                while(sub_index<monsterCollisionContent.defaultMonsters.size())
                                 {
-                                    MapParsedForBot::Layer::Content content;
-                                    content.mapId=this->id;
-                                    content.text=QString("Wild %2 level %3-%4, luck: %5")
-                                            .arg(monsterExtra.name)
-                                            .arg(mapMonster.minLevel)
-                                            .arg(mapMonster.maxLevel)
-                                            .arg(QString::number(mapMonster.luck)+"%")
-                                            ;
-                                    content.icon=QIcon(monsterExtra.thumb);
-                                    contentList.push_back(content);
+                                    const CatchChallenger::MapMonster &mapMonster=monsterCollisionContent.defaultMonsters.at(sub_index);
+                                    const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(mapMonster.id);
+                                    {
+                                        MapParsedForBot::Layer::Content content;
+                                        content.mapId=this->id;
+                                        content.text=QString("Wild %2 level %3-%4, luck: %5")
+                                                .arg(monsterExtra.name)
+                                                .arg(mapMonster.minLevel)
+                                                .arg(mapMonster.maxLevel)
+                                                .arg(QString::number(mapMonster.luck)+"%")
+                                                ;
+                                        content.icon=QIcon(monsterExtra.thumb);
+                                        content.destinationDisplay=MapParsedForBot::Layer::DestinationDisplay::All;
+
+                                        contentList.push_back(content);
+                                    }
+                                    sub_index++;
                                 }
-                                sub_index++;
                             }
-                        }
 
-                        if(codeZone>0)
-                        {
-                            BlockObject &blockObject=blockList.at(codeZone-1);
-                            if(blockObject.monstersCollisionValue==NULL)
+                            if(codeZone>0)
                             {
-                                blockObject.monstersCollisionValue=&parsedLayer.monstersCollisionList[monsterCode];
+                                BlockObject &blockObject=blockList.at(codeZone-1);
+                                if(blockObject.monstersCollisionValue==NULL)
+                                {
+                                    blockObject.monstersCollisionValue=&parsedLayer.monstersCollisionList[monsterCode];
 
-                                MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
-                                layer.contentList.insert(layer.contentList.cend(),contentList.cbegin(),contentList.cend());
+                                    MapParsedForBot::Layer &layer=step2.layers[codeZone-1];
+                                    layer.contentList.insert(layer.contentList.cend(),contentList.cbegin(),contentList.cend());
+                                }
                             }
-                        }
-                        else
-                        {
-                            if(lostMonster.find(monsterCode)!=lostMonster.cend())
+                            else
                             {
-                                lostMonster.insert(monsterCode);
-                                lostLayer.contentList.insert(lostLayer.contentList.cend(),contentList.cbegin(),contentList.cend());
+                                if(lostMonster.find(monsterCode)!=lostMonster.cend())
+                                {
+                                    lostMonster.insert(monsterCode);
+                                    lostLayer.contentList.insert(lostLayer.contentList.cend(),contentList.cbegin(),contentList.cend());
+                                }
                             }
                         }
                     }
@@ -959,7 +975,40 @@ bool MapServerMini::preload_step2z()
             while(blockIndex<blockList.size())
             {
                 const BlockObject &block=blockList.at(blockIndex);
-                step2.graphvizText+="struct"+std::to_string(blockIndex+1)+" [label=\"<f0> "+block.name+"|<f1> "+block.text+"\"]\n";
+                const MapParsedForBot::Layer &layer=step2.layers.at(blockIndex);
+                unsigned int index=0;
+                bool contentEmpty=true;
+                while(index<layer.contentList.size())
+                {
+                    const MapParsedForBot::Layer::Content &itemEntry=layer.contentList.at(index);
+                    if(itemEntry.destinationDisplay==MapParsedForBot::Layer::DestinationDisplay::All)
+                    {
+                        contentEmpty=false;
+                        break;
+                    }
+                    index++;
+                }
+
+                if(block.name!="Lost layer" || !contentEmpty)
+                {
+                    step2.graphvizText+="struct"+std::to_string(blockIndex+1)+" [label=\"";
+                    step2.graphvizText+="<f0> "+block.name;
+                    //step2.graphvizText+="<f1> "+block.text;
+
+                    if(!contentEmpty)
+                    {
+                        step2.graphvizText+="|<f1> ";
+                        unsigned int index=0;
+                        while(index<layer.contentList.size())
+                        {
+                            const MapParsedForBot::Layer::Content &itemEntry=layer.contentList.at(index);
+                            if(itemEntry.destinationDisplay==MapParsedForBot::Layer::DestinationDisplay::All)
+                                step2.graphvizText+=itemEntry.text.toStdString()+"\\n";
+                            index++;
+                        }
+                    }
+                    step2.graphvizText+="\"]\n";
+                }
                 pointerToIndex[&block]=blockIndex;
                 blockIndex++;
             }
