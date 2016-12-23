@@ -42,6 +42,7 @@ private:
 
     bool botsInformationLoaded;
     uint32_t mapId;
+    std::vector<uint32_t> mapIdList;
 };
 
 #endif // BOTTARGETLIST_H
