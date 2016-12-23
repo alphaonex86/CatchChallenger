@@ -144,5 +144,11 @@ bool MapServerMini::preload_step1()
             y--;
         }
     }
+    {
+        MapParsedForBot::Layer layer;
+        layer.name="Lost layer";
+        layer.text="";
+        step1.layers.push_back(layer);
+    }
     return true;
 }

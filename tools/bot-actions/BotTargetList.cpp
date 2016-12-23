@@ -61,7 +61,6 @@ void BotTargetList::on_bots_itemSelectionChanged()
     if(!actionsAction->clientList.contains(client->api))
         return;
 
-    ui->localTargets->clear();
     ui->label_local_target->setEnabled(true);
     ui->comboBoxStep->setEnabled(true);
     ui->globalTargets->setEnabled(true);
@@ -191,7 +190,6 @@ void BotTargetList::updateMapInformation()
 
 void BotTargetList::updateLayerElements()
 {
-    ui->localTargets->clear();
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()!=1)
         return;
@@ -222,6 +220,7 @@ void BotTargetList::updateLayerElements()
     const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(ui->comboBox_Layer->currentIndex());
     {
         ui->localTargets->clear();
+        mapIdList.clear();
         unsigned int index=0;
         while(index<layer.contentList.size())
         {
@@ -229,8 +228,8 @@ void BotTargetList::updateLayerElements()
             QListWidgetItem *item=new QListWidgetItem();
             item->setText(content.text);
             item->setIcon(content.icon);
-            item->setData(99,content.mapId);
             ui->localTargets->addItem(item);
+            mapIdList.push_back(content.mapId);
             index++;
         }
     }
@@ -262,9 +261,10 @@ void BotTargetList::on_localTargets_itemActivated(QListWidgetItem *item)
     if(ui->comboBox_Layer->count()==0)
         return;
 
-    if(mapId!=selectedItem->data(99))
+    const uint32_t &newMapId=mapIdList.at(ui->localTargets->currentRow());
+    if(mapId!=newMapId)
     {
-        mapId=selectedItem->data(99).toUInt();
+        mapId=newMapId;
         updateMapInformation();
     }
 }
