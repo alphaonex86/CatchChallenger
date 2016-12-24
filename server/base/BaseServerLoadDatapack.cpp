@@ -18,6 +18,10 @@ void BaseServer::preload_the_datapack()
     Client::datapack_list_cache_timestamp_base=0;
     Client::datapack_list_cache_timestamp_main=0;
     Client::datapack_list_cache_timestamp_sub=0;
+    const std::unordered_set<std::string> &extensionAllowed=BaseServerMasterSendDatapack::extensionAllowed;
+    #else
+    std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+    std::unordered_set<std::string> extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
     #endif
 
     GlobalServerData::serverPrivateVariables.mainDatapackFolder=
@@ -105,7 +109,7 @@ void BaseServer::preload_the_datapack()
         const std::regex mainDatapackBaseFilter("^map[/\\\\]main[/\\\\]");
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName) && extensionAllowed.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=extensionAllowed.cend())
             {
                 std::string fullPathFileToOpen=GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index);
                 #ifdef Q_OS_WIN32
@@ -222,7 +226,7 @@ void BaseServer::preload_the_datapack()
         const std::regex mainDatapackFolderFilter("^sub[/\\\\]");
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName) && extensionAllowed.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=extensionAllowed.cend())
             {
                 std::string fullPathFileToOpen=GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index);
                 #ifdef Q_OS_WIN32
@@ -308,7 +312,7 @@ void BaseServer::preload_the_datapack()
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+            if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName) && extensionAllowed.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=extensionAllowed.cend())
             {
                 std::string fullPathFileToOpen=GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index);
                 #ifdef Q_OS_WIN32

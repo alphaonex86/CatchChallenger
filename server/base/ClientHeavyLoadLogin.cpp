@@ -626,6 +626,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
 
     //send the network reply
     uint32_t posOutput=0;
+    //std::cout << "protocolReplyCharacterList: " << binarytoHexa(Client::protocolReplyCharacterList,Client::protocolReplyCharacterListSize) << std::endl;
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Client::protocolReplyCharacterList,Client::protocolReplyCharacterListSize);
     posOutput+=Client::protocolReplyCharacterListSize;
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,characterOutputData,characterOutputDataSize);

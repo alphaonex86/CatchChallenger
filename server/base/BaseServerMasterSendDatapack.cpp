@@ -69,12 +69,15 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
     #endif
 
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-    std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-    extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
-    compressedExtension=std::unordered_set<std::string>(compressedExtensionAllowedTemp.begin(),compressedExtensionAllowedTemp.end());
-    #endif
+        std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+        extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+        #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+        std::vector<std::string> compressedExtensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+        compressedExtension=std::unordered_set<std::string>(compressedExtensionAllowedTemp.begin(),compressedExtensionAllowedTemp.end());
+        #endif
+    #else
+        std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+        std::unordered_set<std::string> extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
     #endif
     std::regex datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
 
@@ -92,13 +95,14 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
 
     unsigned int index=0;
     while(index<datapack_file_temp.size()) {
-        if(regex_search(datapack_file_temp.at(index),datapack_rightFileName))
+        if(regex_search(datapack_file_temp.at(index),datapack_rightFileName) && extensionAllowed.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=extensionAllowed.cend())
         {
             if(!stringStartWith(datapack_file_temp.at(index),text_exclude))
             {
                 struct stat buf;
                 if(stat((text_datapack+datapack_file_temp.at(index)).c_str(),&buf)==0)
                 {
+                    std::cout << datapack_file_temp.at(index) << std::endl;
                     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                     if(buf.st_size<=CATCHCHALLENGER_MAX_FILE_SIZE)
                     #endif
@@ -143,7 +147,10 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                     #endif
                 }
                 else
+                {
                     std::cerr << "Unable to stat the file: " << text_datapack+datapack_file_temp.at(index) << std::endl;
+                    abort();
+                }
             }
         }
         else

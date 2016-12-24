@@ -137,6 +137,7 @@ void BaseServer::preload_other()
             delete Client::protocolReplyCharacterList;
         Client::protocolReplyCharacterList=(unsigned char *)malloc(Client::protocolReplyCharacterListSize+16);
         memcpy(Client::protocolReplyCharacterList,ProtocolParsingBase::tempBigBufferForOutput,Client::protocolReplyCharacterListSize);
+        std::cout << "protocolReplyCharacterList: " << binarytoHexa(Client::protocolReplyCharacterList,Client::protocolReplyCharacterListSize) << std::endl;
     }
     #endif
 
