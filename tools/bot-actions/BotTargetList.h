@@ -29,9 +29,8 @@ private slots:
     void on_bots_itemSelectionChanged();
     void on_comboBox_Layer_activated(int index);
     void on_localTargets_itemActivated(QListWidgetItem *item);
-
     void on_comboBoxStep_currentIndexChanged(int index);
-
+    void on_browseMap_clicked();
 private:
     Ui::BotTargetList *ui;
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient;
