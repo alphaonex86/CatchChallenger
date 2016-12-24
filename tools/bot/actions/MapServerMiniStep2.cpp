@@ -471,8 +471,6 @@ bool MapServerMini::preload_step2c()
                     displayConsoleMap(currentStep);
                     abort();
                 }
-                std::cout << "ligne: " << std::to_string(__LINE__) << std::endl;
-                displayConsoleMap(currentStep);
                 //teleporter
                 {
                     int index=0;
@@ -699,7 +697,8 @@ bool MapServerMini::preload_step2c()
                 //fight
                 {
                     for(const auto& n : this->botsFight) {
-                        const uint8_t &codeZone=currentStep.map[n.first.first+n.first.second*this->width];
+                        const uint8_t x=n.first.first,y=n.first.second;
+                        const uint8_t &codeZone=currentStep.map[x+y*this->width];
                         {
                             unsigned int index=0;
                             const std::vector<uint32_t> &fightsList=n.second;
@@ -792,7 +791,8 @@ bool MapServerMini::preload_step2c()
                 //shop
                 {
                     for(const auto& n : this->shops) {
-                        const uint8_t &codeZone=currentStep.map[n.first.first+n.first.second*this->width];
+                        const uint8_t x=n.first.first,y=n.first.second;
+                        const uint8_t &codeZone=currentStep.map[x+y*this->width];
                         {
                             unsigned int index=0;
                             const std::vector<uint32_t> &shopList=n.second;
@@ -840,12 +840,11 @@ bool MapServerMini::preload_step2c()
                 }
                 //heal
                 {
-                    std::cout << "ligne: " << std::to_string(__LINE__) << std::endl;
-                    displayConsoleMap(currentStep);
                     for(const auto& n : this->heal) {
                         if(currentStep.map==NULL)
                             abort();
-                        const uint8_t &codeZone=currentStep.map[n.first+n.first*this->width];
+                        const uint8_t x=n.first,y=n.second;
+                        const uint8_t &codeZone=currentStep.map[x+y*this->width];
                         {
                             MapParsedForBot::Layer::Content content;
                             content.mapId=this->id;
@@ -857,7 +856,6 @@ bool MapServerMini::preload_step2c()
                             {
                                 if((uint8_t)(codeZone-1)>=currentStep.layers.size())
                                 {
-                                    std::cout << "ligne: " << std::to_string(__LINE__) << std::endl;
                                     displayConsoleMap(currentStep);
                                     abort();
                                 }
@@ -1150,7 +1148,7 @@ void MapServerMini::displayConsoleMap(const MapParsedForBot &currentStep)
                     if(codeZone<=25)
                         std::cout << (char)97+codeZone;
                     else
-                        abort();
+                        std::cout << (char)1+codeZone;
                 }
             }
             x++;
@@ -1188,7 +1186,6 @@ bool MapServerMini::mapIsValid(const MapParsedForBot &currentStep)
             x++;
         }
         y++;
-        std::cout << std::endl;
     }
     return true;
 }
