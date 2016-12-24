@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -51,30 +51,42 @@
      </item>
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_2">
-       <property name="sizeConstraint">
-        <enum>QLayout::SetMaximumSize</enum>
-       </property>
        <item>
-        <widget class="QComboBox" name="comboBoxStep">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
+        <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <property name="text">
-           <string>Step: Raw block</string>
-          </property>
+          <widget class="QComboBox" name="comboBoxStep">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <item>
+            <property name="text">
+             <string>Step: Raw block</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Step: Grouped block</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Step: Simplified block</string>
+            </property>
+           </item>
+          </widget>
          </item>
          <item>
-          <property name="text">
-           <string>Step: Grouped block</string>
-          </property>
+          <widget class="QToolButton" name="browseMap">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="icon">
+            <iconset resource="localr.qrc">
+             <normaloff>:/6.png</normaloff>:/6.png</iconset>
+           </property>
+          </widget>
          </item>
-         <item>
-          <property name="text">
-           <string>Step: Simplified block</string>
-          </property>
-         </item>
-        </widget>
+        </layout>
        </item>
        <item>
         <widget class="QGroupBox" name="label_local_target">
@@ -212,6 +224,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="localr.qrc"/>
+ </resources>
  <connections/>
 </ui>

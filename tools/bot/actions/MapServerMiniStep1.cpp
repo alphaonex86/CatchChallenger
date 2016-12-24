@@ -150,5 +150,28 @@ bool MapServerMini::preload_step1()
         layer.text="";
         step1.layers.push_back(layer);
     }
+    //create the object
+    {
+        unsigned int index=0;
+        while(index<step1.layers.size())
+        {
+            MapParsedForBot::Layer layer=step1.layers.at(index);
+            BlockObject blockObject;
+            blockObject.map=this;
+            blockObject.id=index;
+
+            blockObject.learn=false;
+            blockObject.heal=false;
+            blockObject.market=false;
+            blockObject.zonecapture=false;
+            blockObject.bordertop=NULL;
+            blockObject.borderright=NULL;
+            blockObject.borderbottom=NULL;
+            blockObject.borderleft=NULL;
+            blockObject.monstersCollisionValue=NULL;
+            layer.blockObject=blockObject;
+            index++;
+        }
+    }
     return true;
 }
