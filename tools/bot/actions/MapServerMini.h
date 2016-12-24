@@ -36,35 +36,7 @@ public:
     };
     std::map<std::pair<uint8_t,uint8_t>,PlantOnMap> plants;//position, plant id
 
-    struct MapParsedForBot{
-        struct Layer{
-            std::string text;
-            std::string name;
-            enum DestinationDisplay
-            {
-                All,
-                OnlyGui
-            };
-            struct Content{
-                QIcon icon;
-                QString text;
-                uint32_t mapId;
-                DestinationDisplay destinationDisplay;
-            };
-            std::vector<Content> contentList;
-            bool haveMonsterSet;
-        };
-        uint8_t *map;//0x00 is not accessible, it's why don't have layer for it
-        std::vector<Layer> layers;//layer 1=index 0, layer 2=index 1, ...
-        std::string graphvizText;
-    };
-    std::vector<MapParsedForBot> step;
-    uint8_t min_x,max_x,min_y,max_y;
-
-    uint8_t *botLayerMask;
     struct BlockObject{
-        std::string text;
-        std::string name;
         enum LinkType
         {
             ToTheTarget,
@@ -91,9 +63,38 @@ public:
         MapServerMini *borderleft;
         std::vector<Teleporter> teleporter_list;
     };
-    std::vector<BlockObject> blockList;
+    struct MapParsedForBot{
+        struct Layer{
+            std::string text;
+            std::string name;
+            enum DestinationDisplay
+            {
+                All,
+                OnlyGui
+            };
+            struct Content{
+                QIcon icon;
+                QString text;
+                uint32_t mapId;
+                DestinationDisplay destinationDisplay;
+            };
+            std::vector<Content> contentList;
+            bool haveMonsterSet;
+            BlockObject blockObject;
+        };
+        uint8_t *map;//0x00 is not accessible, it's why don't have layer for it
+        std::vector<Layer> layers;//layer 1=index 0, layer 2=index 1, ...
+        std::string graphvizText;
+    };
+    std::vector<MapParsedForBot> step;
+    uint8_t min_x,max_x,min_y,max_y;
+
+    uint8_t *botLayerMask;
 
     bool addBlockLink(BlockObject &blockObjectFrom,BlockObject &blockObjectTo);
+public:
+    void displayConsoleMap(const MapParsedForBot &currentStep);
+    bool mapIsValid(const MapParsedForBot &currentStep);
 };
 
 #endif // MAPSERVERMINI_H

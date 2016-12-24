@@ -102,7 +102,6 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                 struct stat buf;
                 if(stat((text_datapack+datapack_file_temp.at(index)).c_str(),&buf)==0)
                 {
-                    std::cout << datapack_file_temp.at(index) << std::endl;
                     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                     if(buf.st_size<=CATCHCHALLENGER_MAX_FILE_SIZE)
                     #endif

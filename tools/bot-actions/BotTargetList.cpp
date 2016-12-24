@@ -1,6 +1,7 @@
 #include "BotTargetList.h"
 #include "ui_BotTargetList.h"
 #include "../../client/base/interface/DatapackClientLoader.h"
+#include "MapBrowse.h"
 
 BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient,
                              QHash<CatchChallenger::ConnectedSocket *,MultipleBotConnection::CatchChallengerClient *> connectedSocketToCatchChallengerClient,
@@ -64,6 +65,7 @@ void BotTargetList::on_bots_itemSelectionChanged()
     ui->label_local_target->setEnabled(true);
     ui->comboBoxStep->setEnabled(true);
     ui->globalTargets->setEnabled(true);
+    ui->browseMap->setEnabled(true);
 
     const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
     mapId=player.mapId;
@@ -276,5 +278,24 @@ void BotTargetList::on_localTargets_itemActivated(QListWidgetItem *item)
 void BotTargetList::on_comboBoxStep_currentIndexChanged(int index)
 {
     (void)index;
+    updateMapInformation();
+}
+
+void BotTargetList::on_browseMap_clicked()
+{
+    if(!ui->browseMap->isEnabled())
+        return;
+    std::vector<std::string> mapList;
+    for(const auto& n:actionsAction->map_list)
+        mapList.push_back(n.first);
+    MapBrowse mapBrowse(mapList,this);
+    mapBrowse.exec();
+    const std::string &selectedMapString=mapBrowse.mapSelected();
+    if(selectedMapString.empty())
+        return;
+    if(actionsAction->map_list.find(selectedMapString)==actionsAction->map_list.cend())
+        return;
+    const MapServerMini * const mapServer=static_cast<MapServerMini *>(actionsAction->map_list.at(selectedMapString));
+    mapId=mapServer->id;
     updateMapInformation();
 }
