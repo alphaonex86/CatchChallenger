@@ -457,13 +457,13 @@ bool MapServerMini::preload_step2c()
 {
     if(step.size()!=2)
         return false;
-    MapParsedForBot::Layer &lostLayer=step[1].layers[step[1].layers.size()-1];
 
     {
         unsigned int indexLayer=0;
         while(indexLayer<step.size())
         {
             MapParsedForBot &currentStep=step[indexLayer];
+            MapParsedForBot::Layer &lostLayer=currentStep.layers[currentStep.layers.size()-1];
             if(currentStep.map!=NULL)
             {
                 if(!mapIsValid(currentStep))
@@ -1134,13 +1134,25 @@ void MapServerMini::displayConsoleMap(const MapParsedForBot &currentStep)
         int x=0;
         while(x<(this->width-1))
         {
-            const uint8_t codeZone=currentStep.map[x+y*this->width];
+            uint8_t codeZone=currentStep.map[x+y*this->width];
             if(codeZone<=0)
                 std::cout << " ";
             else if(codeZone<=9)
                 std::cout << std::to_string(codeZone);
             else
-                std::cout << (char)65+codeZone-10;
+            {
+                codeZone-=10;
+                if(codeZone<=25)
+                    std::cout << (char)65+codeZone;
+                else
+                {
+                    codeZone-=25;
+                    if(codeZone<=25)
+                        std::cout << (char)97+codeZone;
+                    else
+                        abort();
+                }
+            }
             x++;
         }
         y++;
