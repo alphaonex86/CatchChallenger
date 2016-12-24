@@ -36,7 +36,6 @@ public:
     };
     std::map<std::pair<uint8_t,uint8_t>,PlantOnMap> plants;//position, plant id
 
-
     struct MapParsedForBot{
         struct Layer{
             std::string text;
