@@ -80,7 +80,7 @@ public:
             };
             std::vector<Content> contentList;
             bool haveMonsterSet;
-            BlockObject blockObject;
+            BlockObject *blockObject;
         };
         uint8_t *map;//0x00 is not accessible, it's why don't have layer for it
         std::vector<Layer> layers;//layer 1=index 0, layer 2=index 1, ...
