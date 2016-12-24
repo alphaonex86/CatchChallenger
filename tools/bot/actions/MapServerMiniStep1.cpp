@@ -11,8 +11,7 @@ bool MapServerMini::preload_step1()
     QHash<QString,int> zoneHash;
     QList<QString> layerList;
     zoneHash.clear();
-    step.resize(step.size()+1);
-    MapParsedForBot &step1=step.at(0);
+    MapParsedForBot step1;
     {
         step1.map=(uint8_t *)malloc(width*height);
         memset(step1.map,0x00,width*height);//by default: not accessible zone
@@ -155,7 +154,8 @@ bool MapServerMini::preload_step1()
         unsigned int index=0;
         while(index<step1.layers.size())
         {
-            MapParsedForBot::Layer layer=step1.layers.at(index);
+            MapParsedForBot::Layer &layer=step1.layers[index];
+            layer.blockObject=new BlockObject();
             BlockObject blockObject;
             blockObject.map=this;
             blockObject.id=index;
@@ -169,7 +169,32 @@ bool MapServerMini::preload_step1()
             blockObject.borderbottom=NULL;
             blockObject.borderleft=NULL;
             blockObject.monstersCollisionValue=NULL;
-            layer.blockObject=blockObject;
+            *layer.blockObject=blockObject;
+            if(layer.blockObject==NULL)
+                abort();
+            index++;
+        }
+    }
+    //control the layer 1
+    {
+        unsigned int index=0;
+        while(index<step1.layers.size())
+        {
+            const MapParsedForBot::Layer &layer=step1.layers.at(index);
+            if(layer.blockObject==NULL)
+                abort();
+            index++;
+        }
+    }
+    step.push_back(step1);
+    //control the layer 1
+    {
+        unsigned int index=0;
+        while(index<step1.layers.size())
+        {
+            const MapParsedForBot::Layer &layer=step1.layers.at(index);
+            if(layer.blockObject==NULL)
+                abort();
             index++;
         }
     }

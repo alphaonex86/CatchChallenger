@@ -14,6 +14,17 @@ bool MapServerMini::preload_step2()
     const MapParsedForBot &step1=step.at(0);
     if(step1.map==NULL)
         return false;
+    //control the layer 1
+    {
+        unsigned int index=0;
+        while(index<step1.layers.size())
+        {
+            const MapParsedForBot::Layer &layer=step1.layers.at(index);
+            if(layer.blockObject==NULL)
+                abort();
+            index++;
+        }
+    }
 
     MapParsedForBot step2;
     step2.map=(uint8_t *)malloc(width*height);
@@ -80,7 +91,8 @@ bool MapServerMini::preload_step2()
         unsigned int index=0;
         while(index<step2.layers.size())
         {
-            MapParsedForBot::Layer layer=step2.layers.at(index);
+            MapParsedForBot::Layer &layer=step2.layers.at(index);
+            layer.blockObject=new BlockObject();
             BlockObject blockObject;
             blockObject.map=this;
             blockObject.id=index;
@@ -94,7 +106,7 @@ bool MapServerMini::preload_step2()
             blockObject.borderbottom=NULL;
             blockObject.borderleft=NULL;
             blockObject.monstersCollisionValue=NULL;
-            layer.blockObject=blockObject;
+            *layer.blockObject=blockObject;
             index++;
         }
     }
@@ -117,8 +129,8 @@ bool MapServerMini::preload_step2()
                         if(rightCodeZone!=0 && codeZone!=rightCodeZone)
                             if(this->botLayerMask==NULL || this->botLayerMask[newx+newy*this->width]==0)
                             {
-                                BlockObject &blockObject=step2.layers[codeZone-1].blockObject;
-                                BlockObject &rightBlockObject=step2.layers[rightCodeZone-1].blockObject;
+                                BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
+                                BlockObject &rightBlockObject=*step2.layers[rightCodeZone-1].blockObject;
                                 //if can go to right
                                 if(this->parsed_layer.ledges==NULL ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges ||
@@ -159,8 +171,8 @@ bool MapServerMini::preload_step2()
                         if(bottomCodeZone!=0 && codeZone!=bottomCodeZone)
                             if(this->botLayerMask==NULL || this->botLayerMask[newx+newy*this->width]==0)
                             {
-                                BlockObject &blockObject=step2.layers[codeZone-1].blockObject;
-                                BlockObject &bottomBlockObject=step2.layers[bottomCodeZone-1].blockObject;
+                                BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
+                                BlockObject &bottomBlockObject=*step2.layers[bottomCodeZone-1].blockObject;
                                 //if can go to bottom
                                 if(this->parsed_layer.ledges==NULL ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges ||
@@ -310,13 +322,13 @@ bool MapServerMini::preload_step2b()
                         MapServerMini &nextMap=*static_cast<MapServerMini *>(this->border.right.map);
                         if(nextMap.step.size()<2)
                             abort();
-                        BlockObject &blockObject=step2.layers[codeZone-1].blockObject;
+                        BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
                         blockObject.borderright=&nextMap;
                         MapParsedForBot &step2nextMap=nextMap.step[1];
                         const uint8_t &rightCodeZone=step2nextMap.map[newx+newy*nextMap.width];
                         if(rightCodeZone!=0)
                         {
-                            BlockObject &rightBlockObject=step2nextMap.layers[rightCodeZone-1].blockObject;
+                            BlockObject &rightBlockObject=*step2nextMap.layers[rightCodeZone-1].blockObject;
                             rightBlockObject.borderleft=this;
                             if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
                             {
@@ -360,13 +372,13 @@ bool MapServerMini::preload_step2b()
                         MapServerMini &nextMap=*static_cast<MapServerMini *>(this->border.bottom.map);
                         if(nextMap.step.size()<2)
                             abort();
-                        BlockObject &blockObject=step2.layers[codeZone-1].blockObject;
+                        BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
                         blockObject.borderbottom=&nextMap;
                         MapParsedForBot &step2nextMap=nextMap.step[1];
                         const uint8_t &bottomCodeZone=step2nextMap.map[newx+newy*nextMap.width];
                         if(bottomCodeZone!=0)
                         {
-                            BlockObject &bottomBlockObject=step2nextMap.layers[bottomCodeZone-1].blockObject;
+                            BlockObject &bottomBlockObject=*step2nextMap.layers[bottomCodeZone-1].blockObject;
                             bottomBlockObject.bordertop=this;
                             if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
                             {
@@ -420,7 +432,7 @@ bool MapServerMini::preload_step2b()
             const uint8_t &codeZone=step2.map[x+y*this->width];
             if(codeZone!=0 && (this->botLayerMask==NULL || this->botLayerMask[x+y*this->width]==0))
             {
-                BlockObject &blockObject=step2.layers[codeZone-1].blockObject;
+                BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
                 blockObject.teleporter_list.push_back(teleporter[index]);
                 const uint8_t newx=teleporterEntry.destination_x,newy=teleporterEntry.destination_y;
                 MapServerMini &nextMap=*static_cast<MapServerMini *>(teleporterEntry.map);
@@ -431,7 +443,7 @@ bool MapServerMini::preload_step2b()
                 if(otherCodeZone!=0)
                     if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
                     {
-                        BlockObject &otherBlockObject=step2nextMap.layers[otherCodeZone-1].blockObject;
+                        BlockObject &otherBlockObject=*step2nextMap.layers[otherCodeZone-1].blockObject;
                         addBlockLink(blockObject,otherBlockObject);
                     }
             }
@@ -486,7 +498,7 @@ bool MapServerMini::preload_step2c()
                             if((uint8_t)(codeZone-1)>=currentStep.layers.size())
                                 abort();
 
-                            BlockObject &blockObject=currentStep.layers[codeZone-1].blockObject;
+                            BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
                             blockObject.teleporter_list.push_back(teleporter);
 
                             MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
@@ -526,7 +538,7 @@ bool MapServerMini::preload_step2c()
                         {
                             if((uint8_t)(codeZone-1)>=currentStep.layers.size())
                                 abort();
-                            BlockObject &blockObject=currentStep.layers[codeZone-1].blockObject;
+                            BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
                             blockObject.bordertop=static_cast<MapServerMini *>(border.top.map);
 
                             MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
@@ -562,7 +574,7 @@ bool MapServerMini::preload_step2c()
                         {
                             if((uint8_t)(codeZone-1)>=currentStep.layers.size())
                                 abort();
-                            BlockObject &blockObject=currentStep.layers[codeZone-1].blockObject;
+                            BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
                             blockObject.borderright=static_cast<MapServerMini *>(border.right.map);
 
                             MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
@@ -598,7 +610,7 @@ bool MapServerMini::preload_step2c()
                         {
                             if((uint8_t)(codeZone-1)>=currentStep.layers.size())
                                 abort();
-                            BlockObject &blockObject=currentStep.layers[codeZone-1].blockObject;
+                            BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
                             blockObject.borderbottom=static_cast<MapServerMini *>(border.bottom.map);
 
                             MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
@@ -634,7 +646,7 @@ bool MapServerMini::preload_step2c()
                         {
                             if((uint8_t)(codeZone-1)>=currentStep.layers.size())
                                 abort();
-                            BlockObject &blockObject=currentStep.layers[codeZone-1].blockObject;
+                            BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
                             blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
 
                             MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
@@ -674,7 +686,7 @@ bool MapServerMini::preload_step2c()
                         {
                             if((uint8_t)(codeZone-1)>=currentStep.layers.size())
                                 abort();
-                            BlockObject &blockObject=currentStep.layers[codeZone-1].blockObject;
+                            BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
                             blockObject.pointOnMap_Item.push_back(itemEntry);
 
                             MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
@@ -725,7 +737,7 @@ bool MapServerMini::preload_step2c()
                                             {
                                                 if((uint8_t)(codeZone-1)>=currentStep.layers.size())
                                                     abort();
-                                                BlockObject &blockObject=currentStep.layers[codeZone-1].blockObject;
+                                                BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
                                                 blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
 
                                                 MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
@@ -759,7 +771,7 @@ bool MapServerMini::preload_step2c()
                                             {
                                                 if((uint8_t)(codeZone-1)>=currentStep.layers.size())
                                                     abort();
-                                                BlockObject &blockObject=currentStep.layers[codeZone-1].blockObject;
+                                                BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
                                                 blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
 
                                                 MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
@@ -809,7 +821,7 @@ bool MapServerMini::preload_step2c()
                                         {
                                             if((uint8_t)(codeZone-1)>=currentStep.layers.size())
                                                 abort();
-                                            BlockObject &blockObject=currentStep.layers[codeZone-1].blockObject;
+                                            BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
                                             blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
 
                                             MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
@@ -849,7 +861,7 @@ bool MapServerMini::preload_step2c()
                                     displayConsoleMap(currentStep);
                                     abort();
                                 }
-                                BlockObject &blockObject=currentStep.layers[codeZone-1].blockObject;
+                                BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
                                 blockObject.borderleft=static_cast<MapServerMini *>(border.left.map);
 
                                 MapParsedForBot::Layer &layer=currentStep.layers[codeZone-1];
@@ -917,7 +929,7 @@ bool MapServerMini::preload_step2c()
                                         {
                                             if((uint8_t)(codeZone-1)>=currentStep.layers.size())
                                                 abort();
-                                            BlockObject &blockObject=currentStep.layers[codeZone-1].blockObject;
+                                            BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
                                             if(blockObject.monstersCollisionValue==NULL)
                                                 blockObject.monstersCollisionValue=&parsedLayer.monstersCollisionList[monsterCode];
 
@@ -1023,7 +1035,7 @@ bool MapServerMini::preload_step2z()
             while(blockIndex<step2.layers.size())
             {
                 const MapParsedForBot::Layer &layer=step2.layers.at(blockIndex);
-                const BlockObject &block=layer.blockObject;
+                const BlockObject &block=*layer.blockObject;
                 unsigned int index=0;
                 bool contentEmpty=true;
                 while(index<layer.contentList.size())
@@ -1066,7 +1078,7 @@ bool MapServerMini::preload_step2z()
             unsigned int blockIndex=0;
             while(blockIndex<step2.layers.size())
             {
-                BlockObject &block=step2.layers[blockIndex].blockObject;
+                BlockObject &block=*step2.layers[blockIndex].blockObject;
 
                 std::unordered_map<BlockObject *,BlockObject::LinkType>::iterator it=block.links.begin();
                 while(it!=block.links.cend())
