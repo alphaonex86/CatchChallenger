@@ -42,7 +42,24 @@ public:
             ToTheTarget,
             BothDirection
         };
-        std::unordered_map<BlockObject *,LinkType> links;
+        enum LinkSource
+        {
+            SourceTeleporter,
+            SourceTopMap,
+            SourceRightMap,
+            SourceBottomMap,
+            SourceLeftMap,
+            SourceInternalTopBlock,
+            SourceInternalRightBlock,
+            SourceInternalBottomBlock,
+            SourceInternalLeftBlock
+        };
+        struct LinkInformation
+        {
+            LinkType type;
+            std::vector<LinkSource> sources;
+        };
+        std::unordered_map<BlockObject *,LinkInformation> links;
         MapServerMini * map;
         uint8_t id;
 
@@ -91,7 +108,7 @@ public:
 
     uint8_t *botLayerMask;
 
-    bool addBlockLink(BlockObject &blockObjectFrom,BlockObject &blockObjectTo);
+    bool addBlockLink(BlockObject &blockObjectFrom,BlockObject &blockObjectTo,const BlockObject::LinkSource &linkSourceFrom);
 public:
     void displayConsoleMap(const MapParsedForBot &currentStep);
     bool mapIsValid(const MapParsedForBot &currentStep);
