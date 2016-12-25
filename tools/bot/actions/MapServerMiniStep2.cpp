@@ -442,7 +442,7 @@ bool MapServerMini::preload_step2b()
                     //check the bottom tile
                     if(this->border.bottom.map!=NULL)
                     {
-                        uint16_t newx=0,newy=(y+this->border.bottom.x_offset);
+                        uint16_t newx=(x+this->border.bottom.x_offset),newy=0;
                         MapServerMini &nextMap=*static_cast<MapServerMini *>(this->border.bottom.map);
                         if(nextMap.step.size()<2)
                             abort();
