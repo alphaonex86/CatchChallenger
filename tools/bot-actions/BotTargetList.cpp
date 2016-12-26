@@ -30,6 +30,16 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
         }
         ++i;
     }
+
+    MapServerMini::colorsList << QColor(255, 255, 0, 255);
+    MapServerMini::colorsList << QColor(70, 187, 70, 255);
+    MapServerMini::colorsList << QColor(100, 100, 200, 255);
+    MapServerMini::colorsList << QColor(255, 128, 128, 255);
+    MapServerMini::colorsList << QColor(180, 70, 180, 255);
+    MapServerMini::colorsList << QColor(255, 200, 110, 255);
+    MapServerMini::colorsList << QColor(115, 255, 240, 255);
+    MapServerMini::colorsList << QColor(115, 255, 120, 255);
+    MapServerMini::colorsList << QColor(200, 70, 70, 255);
 }
 
 BotTargetList::~BotTargetList()
@@ -42,12 +52,21 @@ void BotTargetList::loadAllBotsInformation()
     if(botsInformationLoaded)
         return;
     botsInformationLoaded=true;
-    if(!actionsAction->preload_the_map())
-        return;
-    if(!actionsAction->preload_the_map_step1())
-        return;
+    if(!connect(actionsAction,&ActionsAction::preload_the_map_finished,this,&BotTargetList::loadAllBotsInformation2))
+        abort();
+    if(!connect(this,&BotTargetList::start_preload_the_map,actionsAction,&ActionsAction::preload_the_map))
+        abort();
+    emit start_preload_the_map();
+    waitScreen.show();
+    waitScreen.updateWaitScreen();
+}
+
+void BotTargetList::loadAllBotsInformation2()
+{
     if(!actionsAction->preload_the_map_step2())
         return;
+    show();
+    waitScreen.hide();
 }
 
 void BotTargetList::on_bots_itemSelectionChanged()
@@ -85,17 +104,6 @@ void BotTargetList::updateMapInformation()
     if(!actionsAction->clientList.contains(client->api))
         return;
 
-    QList<QColor> colorsList;
-    colorsList << QColor(200, 70, 70, 255);
-    colorsList << QColor(255, 255, 0, 255);
-    colorsList << QColor(70, 187, 70, 255);
-    colorsList << QColor(100, 100, 200, 255);
-    colorsList << QColor(255, 128, 128, 255);
-    colorsList << QColor(180, 70, 180, 255);
-    colorsList << QColor(255, 200, 110, 255);
-    colorsList << QColor(115, 255, 240, 255);
-    colorsList << QColor(115, 255, 120, 255);
-
     const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
 
     if(actionsAction->id_map_to_map.find(mapId)!=actionsAction->id_map_to_map.cend())
@@ -109,6 +117,7 @@ void BotTargetList::updateMapInformation()
         if(step.map==NULL)
             return;
         QString QtGraphvizText=QString::fromStdString(step.graphvizText);
+        QString overall_graphvizText=QString::fromStdString(mapServer->graphStepNearMap());
 
         if(actionsAction->id_map_to_map.find(player.mapId)!=actionsAction->id_map_to_map.cend())
         {
@@ -139,7 +148,8 @@ void BotTargetList::updateMapInformation()
                     int codeZone=step.map[x+y*mapServer->width];
                     if(codeZone>0)
                     {
-                        QColor color=colorsList[codeZone%colorsList.size()];
+                        const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(codeZone-1);
+                        QColor color=layer.blockObject->color;
                         QBrush brush1(color);
                         brush1.setStyle(Qt::SolidPattern);
                         tablewidgetitem->setBackground(brush1);
@@ -168,15 +178,7 @@ void BotTargetList::updateMapInformation()
                 const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(index);
 
                 if(layer.name!="Lost layer" || !layer.contentList.empty())
-                {
                     ui->comboBox_Layer->addItem(QString::fromStdString(layer.name),index);
-
-                    const unsigned int codeZone=(index+1);
-                    QColor color=colorsList[codeZone%colorsList.size()];
-                    //replace struct1 [label="<f0> Block 1|<f1> w"]\n -> struct1 [label="<f0> Block 1|<f1> w" style=filled fillcolor="#FFFEE0"]\n
-                    QRegularExpression regexcolor("(\nstruct"+QString::number(codeZone)+" [^\n]+)[^\n;]\n",QRegularExpression::InvertedGreedinessOption);
-                    QtGraphvizText.replace(regexcolor,"\\1 style=filled fillcolor=\""+color.name(QColor::HexRgb)+"\"]\n");
-                }
 
                 index++;
             }
@@ -186,6 +188,13 @@ void BotTargetList::updateMapInformation()
             {
                 ui->graphvizText->setVisible(true);
                 ui->graphvizText->setPlainText(QtGraphvizText);
+            }
+            if(overall_graphvizText.isEmpty())
+                ui->overall_graphvizText->setVisible(false);
+            else
+            {
+                ui->overall_graphvizText->setVisible(true);
+                ui->overall_graphvizText->setPlainText(overall_graphvizText);
             }
         }
     }

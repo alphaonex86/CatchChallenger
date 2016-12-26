@@ -9,6 +9,8 @@
 
 #include <QIcon>
 #include <QString>
+#include <QList>
+#include <QColor>
 
 #include "../../general/base/CommonMap.h"
 
@@ -22,6 +24,8 @@ public:
     bool preload_step2b();
     bool preload_step2c();
     bool preload_step2z();
+    std::string graphStepNearMap(const unsigned int &depth=2);
+    static QList<QColor> colorsList;
 
     std::map<std::pair<uint8_t,uint8_t>,CatchChallenger::Orientation/*,pairhash*/> rescue;
     //at last to improve the other variable cache
@@ -79,6 +83,7 @@ public:
         MapServerMini *borderbottom;
         MapServerMini *borderleft;
         std::vector<Teleporter> teleporter_list;
+        QColor color;
     };
     struct MapParsedForBot{
         struct Layer{

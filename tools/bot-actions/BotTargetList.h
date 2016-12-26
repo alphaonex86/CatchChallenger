@@ -7,6 +7,7 @@
 
 #include "../bot/MultipleBotConnection.h"
 #include "../bot/actions/ActionsAction.h"
+#include "WaitScreen.h"
 
 namespace Ui {
 class BotTargetList;
@@ -23,8 +24,11 @@ public:
     ActionsAction *actionsAction);
     ~BotTargetList();
     void loadAllBotsInformation();
+    void loadAllBotsInformation2();
     void updateLayerElements();
     void updateMapInformation();
+signals:
+    void start_preload_the_map();
 private slots:
     void on_bots_itemSelectionChanged();
     void on_comboBox_Layer_activated(int index);
@@ -42,6 +46,7 @@ private:
     bool botsInformationLoaded;
     uint32_t mapId;
     std::vector<uint32_t> mapIdList;
+    WaitScreen waitScreen;
 };
 
 #endif // BOTTARGETLIST_H

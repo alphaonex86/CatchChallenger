@@ -169,6 +169,7 @@ bool MapServerMini::preload_step1()
             blockObject.borderbottom=NULL;
             blockObject.borderleft=NULL;
             blockObject.monstersCollisionValue=NULL;
+            blockObject.color=MapServerMini::colorsList.at(index%MapServerMini::colorsList.size());
             *layer.blockObject=blockObject;
             if(layer.blockObject==NULL)
                 abort();
