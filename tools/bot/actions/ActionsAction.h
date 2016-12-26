@@ -13,6 +13,7 @@
 
 #include <QTimer>
 #include <QString>
+#include <QThread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -22,16 +23,23 @@ class ActionsAction : public ActionsBotInterface
 {
     Q_OBJECT
 public:
+    static ActionsAction *actionsAction;
     ActionsAction();
     ~ActionsAction();
     void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
-    bool preload_the_map();
     bool preload_the_map_step1();
     bool preload_the_map_step2();
+    uint64_t elementToLoad() const;
+    uint64_t elementLoaded() const;
+public slots:
+    bool preload_the_map();
+signals:
+    void preload_the_map_finished();
 private:
     QTimer moveTimer;
     QTimer textTimer;
-
+    QThread thread;
+    uint64_t loaded;
 public:
     //map
     /* map related */

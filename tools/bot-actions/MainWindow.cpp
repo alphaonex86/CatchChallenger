@@ -471,7 +471,8 @@ void MainWindow::all_player_on_map()
                 multipleBotConnexion.sslSocketToCatchChallengerClient,
                 static_cast<ActionsAction *>(multipleBotConnexion.botInterface)
                 );
-    botTargetList->show();
+    //botTargetList->show();
     this->hide();
     botTargetList->loadAllBotsInformation();
+    botTargetList->hide();
 }
