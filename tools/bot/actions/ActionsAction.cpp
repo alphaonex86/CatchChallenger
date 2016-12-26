@@ -1,6 +1,8 @@
 #include "ActionsAction.h"
 #include "../../general/base/CommonSettingsServer.h"
 
+ActionsAction *ActionsAction::actionsAction=NULL;
+
 ActionsAction::ActionsAction()
 {
     connect(&moveTimer,&QTimer::timeout,this,&ActionsAction::doMove);
@@ -8,6 +10,10 @@ ActionsAction::ActionsAction()
     moveTimer.start(1000);
     textTimer.start(1000);
     flat_map_list=NULL;
+    moveToThread(&thread);
+    loaded=0;
+    ActionsAction::actionsAction=this;
+    thread.start();
 }
 
 ActionsAction::~ActionsAction()

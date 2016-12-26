@@ -3,6 +3,7 @@
 #include "../../client/base/interface/DatapackClientLoader.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
+#include "ActionsAction.h"
 
 bool MapServerMini::preload_step2()
 {
@@ -106,6 +107,8 @@ bool MapServerMini::preload_step2()
             blockObject.borderbottom=NULL;
             blockObject.borderleft=NULL;
             blockObject.monstersCollisionValue=NULL;
+            blockObject.color=MapServerMini::colorsList.at(index%MapServerMini::colorsList.size());
+
             *layer.blockObject=blockObject;
             index++;
         }
@@ -1027,7 +1030,7 @@ bool MapServerMini::preload_step2z()
 
     // do the GraphViz content
     {
-        step2.graphvizText+="";
+        step2.graphvizText="";
         step2.graphvizText+="digraph G {\n";
         step2.graphvizText+="rankdir=LR\n";
         step2.graphvizText+="node [shape=record]\n";
@@ -1071,7 +1074,7 @@ bool MapServerMini::preload_step2z()
                             index++;
                         }
                     }
-                    step2.graphvizText+="\"]\n";
+                    step2.graphvizText+="\" style=filled fillcolor=\""+block.color.name(QColor::HexRgb).toStdString()+"\"]\n";
                 }
                 pointerToIndex[&block]=blockIndex;
                 blockIndex++;
