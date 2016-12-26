@@ -104,6 +104,7 @@ bool ActionsAction::preload_the_map()
                 map_semi.old_map=map_temp.map_to_send;
 
                 semi_loaded_map.push_back(map_semi);
+                loaded++;
             }
             else
             {
@@ -548,5 +549,9 @@ bool ActionsAction::preload_the_map()
             index++;
         }
     }
+
+    if(!actionsAction->preload_the_map_step1())
+        return false;
+    emit preload_the_map_finished();
     return true;
 }

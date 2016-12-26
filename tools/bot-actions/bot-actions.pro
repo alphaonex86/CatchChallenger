@@ -15,17 +15,20 @@ SOURCES += main.cpp\
     ../bot/MultipleBotConnection.cpp \
     ../bot/MultipleBotConnectionImplForGui.cpp \
     BotTargetList.cpp \
-    MapBrowse.cpp
+    MapBrowse.cpp \
+    WaitScreen.cpp
 HEADERS  += MainWindow.h \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \
     ../bot/BotInterface.h \
     BotTargetList.h \
-    MapBrowse.h
+    MapBrowse.h \
+    WaitScreen.h
 
 FORMS    += MainWindow.ui \
     BotTargetList.ui \
-    MapBrowse.ui
+    MapBrowse.ui \
+    WaitScreen.ui
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
 

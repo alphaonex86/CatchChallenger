@@ -16,6 +16,7 @@ bool ActionsAction::preload_the_map_step1()
         MapServerMini * const map=static_cast<MapServerMini *>(flat_map_list[index]);
         map->preload_step1();
         index++;
+        loaded++;
     }
     return true;
 }
@@ -26,25 +27,43 @@ bool ActionsAction::preload_the_map_step2()
     while(index<map_list.size())
     {
         static_cast<MapServerMini *>(flat_map_list[index])->preload_step2();
+        QCoreApplication::processEvents();
         index++;
+        loaded++;
     }
     index=0;
     while(index<map_list.size())
     {
         static_cast<MapServerMini *>(flat_map_list[index])->preload_step2b();
+        QCoreApplication::processEvents();
         index++;
+        loaded++;
     }
     index=0;
     while(index<map_list.size())
     {
         static_cast<MapServerMini *>(flat_map_list[index])->preload_step2c();
+        QCoreApplication::processEvents();
         index++;
+        loaded++;
     }
     index=0;
     while(index<map_list.size())
     {
         static_cast<MapServerMini *>(flat_map_list[index])->preload_step2z();
+        QCoreApplication::processEvents();
         index++;
+        loaded++;
     }
     return true;
+}
+
+uint64_t ActionsAction::elementToLoad() const
+{
+    return map_list.size()*(1/*server load*/+1/*step1*/+4/*step2*/);
+}
+
+uint64_t ActionsAction::elementLoaded() const
+{
+    return loaded;
 }
