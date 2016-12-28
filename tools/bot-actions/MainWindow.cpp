@@ -23,6 +23,44 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<QList<CatchChallenger::ServerFromPoolForDisplay*> >("QList<CatchChallenger::ServerFromPoolForDisplay*>");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
+
+    qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
+    qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
+    qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
+
+    qRegisterMetaType<CatchChallenger::Chat_type>("Chat_type");
+    qRegisterMetaType<CatchChallenger::Player_type>("Player_type");
+    qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("Player_private_and_public_informations");
+
+    qRegisterMetaType<QHash<uint32_t,uint32_t> >("QHash<uint32_t,uint32_t>");
+    qRegisterMetaType<QHash<uint32_t,uint32_t> >("CatchChallenger::Plant_collect");
+    qRegisterMetaType<QList<CatchChallenger::ItemToSellOrBuy> >("QList<ItemToSell>");
+    qRegisterMetaType<QList<QPair<uint8_t,uint8_t> > >("QList<QPair<uint8_t,uint8_t> >");
+    qRegisterMetaType<CatchChallenger::Skill::AttackReturn>("Skill::AttackReturn");
+    qRegisterMetaType<QList<uint32_t> >("QList<uint32_t>");
+    qRegisterMetaType<QList<QList<CatchChallenger::CharacterEntry> > >("QList<QList<CharacterEntry> >");
+    qRegisterMetaType<std::vector<CatchChallenger::MarketMonster> >("std::vector<MarketMonster>");
+
+    qRegisterMetaType<std::unordered_map<uint16_t,uint16_t> >("std::unordered_map<uint16_t,uint16_t>");
+    qRegisterMetaType<std::unordered_map<uint16_t,uint32_t> >("std::unordered_map<uint16_t,uint32_t>");
+    qRegisterMetaType<std::unordered_map<uint8_t,uint32_t> >("std::unordered_map<uint8_t,uint32_t>");
+    qRegisterMetaType<std::unordered_map<uint8_t,uint16_t> >("std::unordered_map<uint8_t,uint16_t>");
+    qRegisterMetaType<std::unordered_map<uint8_t,uint32_t> >("std::unordered_map<uint8_t,uint32_t>");
+
+    qRegisterMetaType<std::map<uint16_t,uint16_t> >("std::map<uint16_t,uint16_t>");
+    qRegisterMetaType<std::map<uint16_t,uint32_t> >("std::map<uint16_t,uint32_t>");
+    qRegisterMetaType<std::map<uint8_t,uint32_t> >("std::map<uint8_t,uint32_t>");
+    qRegisterMetaType<std::map<uint8_t,uint16_t> >("std::map<uint8_t,uint16_t>");
+    qRegisterMetaType<std::map<uint8_t,uint32_t> >("std::map<uint8_t,uint32_t>");
+    qRegisterMetaType<std::string>("std::string");
+    qRegisterMetaType<uint8_t>("uint8_t");
+    qRegisterMetaType<uint16_t>("uint16_t");
+    qRegisterMetaType<uint32_t>("uint32_t");
+    qRegisterMetaType<uint64_t>("uint64_t");
+    qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
+    qRegisterMetaType<std::vector<char> >("std::vector<char>");
+    qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
+
     ui->setupUi(this);
     CatchChallenger::ProtocolParsing::initialiseTheVariable();
     CatchChallenger::ProtocolParsing::setMaxPlayers(65535);
@@ -103,10 +141,10 @@ void MainWindow::detectSlowDown(uint32_t queryCount,uint32_t worseTime)
         ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));
 }
 
-void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
+void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
 {
     Q_UNUSED(haveTheDatapack);
-    if(senderObject==NULL)
+    if(api==NULL)
     {
         qDebug() << "MainWindow::logged(): qobject_cast<CatchChallenger::Api_client_real *>(sender())==NULL";
         return;
@@ -120,7 +158,28 @@ void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,const QLi
 
     ui->serverList->header()->setSectionResizeMode(QHeaderView::Fixed);
     ui->serverList->header()->resizeSection(0,400);
-    updateServerList(senderObject);
+    updateServerList(api);
+
+    ActionsAction *actionsAction=static_cast<ActionsAction *>(multipleBotConnexion.botInterface);
+    if(!actionsAction->clientList.contains(api))
+    {
+        ActionsBotInterface::Player newPlayer=actionsAction->clientList[api];
+        //newPlayer.player=0;
+        newPlayer.mapId=0;
+        newPlayer.x=0;
+        newPlayer.y=0;
+        newPlayer.direction=CatchChallenger::Direction::Direction_look_at_bottom;
+        actionsAction->clientList[api]=newPlayer;
+
+        if(!connect(api,&CatchChallenger::Api_protocol::have_inventory,     actionsAction,&ActionsAction::have_inventory,Qt::QueuedConnection))
+            abort();
+        if(!connect(api,&CatchChallenger::Api_protocol::add_to_inventory,   actionsAction,&ActionsAction::add_to_inventory_slot,Qt::QueuedConnection))
+            abort();
+        if(!connect(api,&CatchChallenger::Api_protocol::remove_to_inventory,actionsAction,&ActionsAction::remove_to_inventory_slot,Qt::QueuedConnection))
+            abort();
+    }
+    else
+        abort();
 }
 
 void MainWindow::updateServerList(CatchChallenger::Api_client_real *senderObject)
