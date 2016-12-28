@@ -126,6 +126,13 @@ void MapServerMini::resolvBlockPath(const BlockObject * blockToExplore,
     }
 }
 
+void MapServerMini::targetBlockList(const BlockObject * const currentNearBlock,std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock,const unsigned int &depth) const
+{
+    const std::unordered_set<const MapServerMini *> &validMaps=getValidMaps(depth);
+    const std::unordered_set<const BlockObject *> &accessibleBlock=getAccessibleBlock(validMaps,currentNearBlock);
+    resolvBlockPath(currentNearBlock,resolvedBlock,accessibleBlock);
+}
+
 std::string MapServerMini::graphStepNearMap(const BlockObject * const currentNearBlock,const unsigned int &depth) const
 {
     const std::unordered_set<const MapServerMini *> &validMaps=getValidMaps(depth);

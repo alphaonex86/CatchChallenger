@@ -18,6 +18,8 @@
 #include <unordered_set>
 #include <vector>
 #include <string>
+#include <QHash>
+#include <QList>
 
 class ActionsAction : public ActionsBotInterface
 {
@@ -31,6 +33,15 @@ public:
     bool preload_the_map_step2();
     uint64_t elementToLoad() const;
     uint64_t elementLoaded() const;
+
+    void have_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
+    void add_to_inventory(const uint32_t &item,const uint32_t &quantity=1,const bool &showGain=true);
+    void add_to_inventory(const QList<QPair<uint16_t,uint32_t> > &items,const bool &showGain=true);
+    void add_to_inventory(const QHash<uint16_t,uint32_t> &items, const bool &showGain=true);
+    void add_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
+    void remove_to_inventory(const QHash<uint16_t,uint32_t> &items);
+    void remove_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
+    void remove_to_inventory(const uint32_t &itemId,const uint32_t &quantity=1);
 public slots:
     bool preload_the_map();
 signals:
