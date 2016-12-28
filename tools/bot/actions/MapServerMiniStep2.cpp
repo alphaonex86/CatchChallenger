@@ -109,7 +109,8 @@ bool MapServerMini::preload_step2()
             blockObject.monstersCollisionValue=NULL;
             blockObject.color=MapServerMini::colorsList.at(index%MapServerMini::colorsList.size());
 
-            *layer.blockObject=blockObject;
+            blockObject.layer=NULL;
+            *(layer.blockObject)=blockObject;
             index++;
         }
     }
@@ -218,6 +219,16 @@ bool MapServerMini::preload_step2()
     }
 
     step.push_back(step2);
+    //link the object
+    {
+        unsigned int index=0;
+        while(index<step.at(step.size()-1).layers.size())
+        {
+            MapParsedForBot::Layer &layer=step[step.size()-1].layers.at(index);
+            layer.blockObject->layer=&layer;
+            index++;
+        }
+    }
     return true;
 }
 
