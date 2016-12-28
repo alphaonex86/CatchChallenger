@@ -1,6 +1,7 @@
 #include "BotTargetList.h"
 #include "ui_BotTargetList.h"
 #include "../../client/base/interface/DatapackClientLoader.h"
+#include "../../client/fight/interface/ClientFightEngine.h"
 #include "MapBrowse.h"
 
 BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient,
@@ -15,6 +16,7 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
     botsInformationLoaded(false)
 {
     ui->setupUi(this);
+    ui->comboBoxStep->setCurrentIndex(1);
     ui->graphvizText->setVisible(false);
     mapId=0;
 
@@ -90,6 +92,198 @@ void BotTargetList::on_bots_itemSelectionChanged()
     mapId=player.mapId;
 
     updateMapInformation();
+    updatePlayerInformation();
+}
+
+void BotTargetList::updatePlayerInformation()
+{
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    if(!actionsAction->clientList.contains(client->api))
+        return;
+
+    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+
+    if(actionsAction->id_map_to_map.find(player.mapId)!=actionsAction->id_map_to_map.cend())
+    {
+        const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+        const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+        QString mapString=QString::fromStdString(playerMap->map_file)+QString(" (%1,%2)").arg(player.x).arg(player.y);
+        ui->label_local_target->setTitle("Target on the map: "+mapString);
+        if(playerMap->step.size()<2)
+            abort();
+        const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
+        const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
+        if(playerCodeZone>0 && (uint32_t)(playerCodeZone-1)<(uint32_t)stepPlayer.layers.size())
+        {
+            const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
+            QString overall_graphvizText=QString::fromStdString(playerMap->graphStepNearMap(layer.blockObject,ui->searchDeep->value()));
+            if(overall_graphvizText.isEmpty())
+                ui->overall_graphvizText->setVisible(false);
+            else
+            {
+                ui->overall_graphvizText->setVisible(true);
+                ui->overall_graphvizText->setPlainText(overall_graphvizText);
+            }
+
+            {
+                std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
+                playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value());
+                const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
+                if(step.map==NULL)
+                    return;
+
+                ui->globalTargets->clear();
+                for(const auto& n:resolvedBlock) {
+                    const MapServerMini::BlockObject * const nextBlock=n.first;
+                    const MapServerMini::BlockObjectPathFinding &blockObjectPathFinding=n.second;
+
+                    const MapServerMini::MapParsedForBot::Layer &layerNextBlock=*static_cast<MapServerMini::MapParsedForBot::Layer *>(nextBlock->layer);
+                    unsigned int index=0;
+                    while(index<layerNextBlock.contentList.size())
+                    {
+                        const MapServerMini::MapParsedForBot::Layer::Content &content=layerNextBlock.contentList.at(index);
+                        if(content.destinationDisplay==MapServerMini::MapParsedForBot::Layer::DestinationDisplay::All)
+                        {
+                            QListWidgetItem *item=new QListWidgetItem();
+                            //do the path
+                            QString pathString;
+                            {
+                                unsigned int indexBestPath=0;
+                                while(indexBestPath<blockObjectPathFinding.bestPath.size())
+                                {
+                                    const MapServerMini::BlockObject * const block=blockObjectPathFinding.bestPath.at(indexBestPath);
+                                    if(!pathString.isEmpty())
+                                        pathString+=", ";
+                                    pathString+=QString::fromStdString(block->map->map_file)+"/Block "+QString::number(block->id+1);
+                                    indexBestPath++;
+                                }
+                            }
+                            item->setText(content.text+"\n"+pathString);
+                            item->setIcon(content.icon);
+                            ui->globalTargets->addItem(item);
+                        }
+                        index++;
+                    }
+                }
+            }
+        }
+        else
+            ui->label_local_target->setTitle(ui->label_local_target->title()+" (Out of the map)");
+    }
+    else
+        ui->label_local_target->setTitle("Unknown player map ("+QString::number(player.mapId)+")");
+
+    const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=client->api->get_player_informations();
+    ui->label_player_cash->setText(QString("Cash: %1$").arg(player_private_and_public_informations.cash));
+    {
+        ui->inventory->clear();
+        const ActionsBotInterface::Player &bot=actionsAction->clientList.value(client->api);
+        for(const auto& n:bot.items) {
+            const uint32_t &itemId=n.first;
+            const uint32_t &quantity=n.second;
+            QListWidgetItem *item=new QListWidgetItem();
+            if(DatapackClientLoader::datapackLoader.itemsExtra.contains(itemId))
+            {
+                item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).image);
+                if(quantity>1)
+                    item->setText(QString::number(quantity));
+                item->setText(item->text()+" "+DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name);
+                item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name);
+            }
+            else
+            {
+                item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+                if(quantity>1)
+                    item->setText(QStringLiteral("id: %1 (x%2)").arg(itemId).arg(quantity));
+                else
+                    item->setText(QStringLiteral("id: %1").arg(itemId));
+            }
+            ui->inventory->addItem(item);
+        }
+    }
+
+    {
+        const std::vector<CatchChallenger::PlayerMonster> &playerMonsters=player_private_and_public_informations.playerMonster;
+        ui->monsterList->clear();
+        if(playerMonsters.empty())
+            return;
+        unsigned int index=0;
+        while(index<playerMonsters.size())
+        {
+            const CatchChallenger::PlayerMonster &monster=playerMonsters.at(index);
+            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
+            {
+                CatchChallenger::Monster::Stat stat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster),monster.level);
+
+                QListWidgetItem *item=new QListWidgetItem();
+                item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).description);
+                if(!DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).thumb.isNull())
+                    item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).thumb);
+                else
+                    item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front);
+
+                QHash<uint32_t,uint8_t> skillToDisplay;
+                unsigned int sub_index=0;
+                while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size())
+                {
+                    CatchChallenger::Monster::AttackToLearn learn=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.at(sub_index);
+                    if(learn.learnAtLevel<=monster.level)
+                    {
+                        unsigned int sub_index2=0;
+                        while(sub_index2<monster.skills.size())
+                        {
+                            const CatchChallenger::PlayerMonster::PlayerSkill &skill=monster.skills.at(sub_index2);
+                            if(skill.skill==learn.learnSkill)
+                                break;
+                            sub_index2++;
+                        }
+                        if(
+                                //if skill not found
+                                (sub_index2==monster.skills.size() && learn.learnSkillLevel==1)
+                                ||
+                                //if skill already found and need level up
+                                (sub_index2<monster.skills.size() && (monster.skills.at(sub_index2).level+1)==learn.learnSkillLevel)
+                        )
+                        {
+                            if(skillToDisplay.contains(learn.learnSkill))
+                            {
+                                if(skillToDisplay.value(learn.learnSkill)>learn.learnSkillLevel)
+                                    skillToDisplay[learn.learnSkill]=learn.learnSkillLevel;
+                            }
+                            else
+                                skillToDisplay[learn.learnSkill]=learn.learnSkillLevel;
+                        }
+                    }
+                    sub_index++;
+
+                    if(skillToDisplay.isEmpty())
+                        item->setText(tr("%1, level: %2\nHP: %3/%4\n%5")
+                                .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)
+                                .arg(monster.level)
+                                .arg(monster.hp)
+                                .arg(stat.hp)
+                                .arg(tr("No skill to learn"))
+                                );
+                    else
+                        item->setText(tr("%1, level: %2\nHP: %3/%4\n%5")
+                                .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)
+                                .arg(monster.level)
+                                .arg(monster.hp)
+                                .arg(stat.hp)
+                                .arg(tr("%n skill(s) to learn","",skillToDisplay.size()))
+                                );
+                }
+                ui->monsterList->addItem(item);
+            }
+            index++;
+        }
+    }
 }
 
 void BotTargetList::updateMapInformation()
@@ -117,23 +311,6 @@ void BotTargetList::updateMapInformation()
         if(step.map==NULL)
             return;
         QString QtGraphvizText=QString::fromStdString(step.graphvizText);
-        QString overall_graphvizText;
-
-        if(actionsAction->id_map_to_map.find(player.mapId)!=actionsAction->id_map_to_map.cend())
-        {
-            const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
-            const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
-            QString mapString=QString::fromStdString(playerMap->map_file)+QString(" (%1,%2)").arg(player.x).arg(player.y);
-            ui->label_local_target->setTitle("Target on the map: "+mapString+", displayed map: "+QString::fromStdString(mapStdString));
-            if(playerMap->step.size()<2)
-                abort();
-            const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
-            const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
-            const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
-            overall_graphvizText=QString::fromStdString(playerMap->graphStepNearMap(layer.blockObject,ui->searchDeep->value()));
-        }
-        else
-            ui->label_local_target->setTitle("Unknown player map ("+QString::number(player.mapId)+")");
 
         ui->mapPreview->setColumnCount(0);
         ui->mapPreview->setRowCount(0);
@@ -195,13 +372,6 @@ void BotTargetList::updateMapInformation()
                 ui->graphvizText->setVisible(true);
                 ui->graphvizText->setPlainText(QtGraphvizText);
             }
-            if(overall_graphvizText.isEmpty())
-                ui->overall_graphvizText->setVisible(false);
-            else
-            {
-                ui->overall_graphvizText->setVisible(true);
-                ui->overall_graphvizText->setPlainText(overall_graphvizText);
-            }
         }
     }
     else
@@ -237,6 +407,7 @@ void BotTargetList::updateLayerElements()
     MapServerMini::MapParsedForBot &step=mapServer->step.at(ui->comboBoxStep->currentIndex());
     if(step.map==NULL)
         return;
+    ui->label_select_map->setText("Displayed map: "+QString::fromStdString(mapStdString));
 
     const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(ui->comboBox_Layer->currentIndex());
     {
@@ -254,7 +425,6 @@ void BotTargetList::updateLayerElements()
             index++;
         }
     }
-
 
     ui->label_zone->setText(QString::fromStdString(layer.text));
 }

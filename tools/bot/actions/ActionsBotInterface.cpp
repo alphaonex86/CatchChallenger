@@ -60,13 +60,12 @@ QStringList ActionsBotInterface::variablesList()
 
 void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
 {
-    Player newPlayer;
+    Player &newPlayer=clientList[api];
     newPlayer.player=player;
     newPlayer.mapId=mapId;
     newPlayer.x=x;
     newPlayer.y=y;
     newPlayer.direction=direction;
-    clientList[api]=newPlayer;
 }
 
 void ActionsBotInterface::removeClient(CatchChallenger::Api_protocol *api)
@@ -76,10 +75,10 @@ void ActionsBotInterface::removeClient(CatchChallenger::Api_protocol *api)
 
 QString ActionsBotInterface::name()
 {
-    return QStringLiteral("simple");
+    return QStringLiteral("action");
 }
 
 QString ActionsBotInterface::version()
 {
-    return QStringLiteral("2.0.0.1 for CatchChallenger " CATCHCHALLENGER_VERSION);
+    return QStringLiteral("1.0.0.0 for CatchChallenger " CATCHCHALLENGER_VERSION);
 }

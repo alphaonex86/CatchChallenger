@@ -27,6 +27,7 @@ public:
     void loadAllBotsInformation2();
     void updateLayerElements();
     void updateMapInformation();
+    void updatePlayerInformation();
 signals:
     void start_preload_the_map();
 private slots:

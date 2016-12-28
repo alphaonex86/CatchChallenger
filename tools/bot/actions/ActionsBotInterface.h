@@ -7,6 +7,7 @@
 #define ACTIONS_BOT_INTERFACE_H
 
 #include "../BotInterface.h"
+#include <unordered_map>
 
 class ActionsBotInterface : public BotInterface
 {
@@ -19,6 +20,7 @@ public:
         quint16 x;
         quint16 y;
         CatchChallenger::Direction direction;
+        std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
     };
 
     ActionsBotInterface();
