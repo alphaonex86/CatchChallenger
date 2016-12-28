@@ -380,7 +380,7 @@ bool BaseServer::preload_the_map()
     index=0;
     while(index<size)
     {
-        const auto &currentTempMap=GlobalServerData::serverPrivateVariables.map_list.at(map_name.at(index));
+        CommonMap * const currentTempMap=GlobalServerData::serverPrivateVariables.map_list.at(map_name.at(index));
         if(currentTempMap->border.bottom.map!=NULL &&
                 std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
                 ==
@@ -448,7 +448,19 @@ bool BaseServer::preload_the_map()
                 GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.bottom.map);
         }
 
-        GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border_map=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map;
+        GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->linked_map=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map;
+        //the teleporter
+        {
+            unsigned int index=0;
+            while(index<currentTempMap->teleporter_list_size)
+            {
+                const CatchChallenger::CommonMap::Teleporter &teleporter=currentTempMap->teleporter[index];
+                if(!vectorcontainsAtLeastOne(currentTempMap->linked_map,teleporter.map))
+                    currentTempMap->linked_map.push_back(teleporter.map);
+                index++;
+            }
+        }
+
         GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap);
         index++;
     }

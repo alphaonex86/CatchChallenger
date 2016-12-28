@@ -1120,7 +1120,7 @@ bool MapServerMini::preload_step2z()
     return true;
 }
 
-void MapServerMini::displayConsoleMap(const MapParsedForBot &currentStep)
+void MapServerMini::displayConsoleMap(const MapParsedForBot &currentStep) const
 {
     if(currentStep.map==NULL)
         return;
@@ -1174,7 +1174,7 @@ void MapServerMini::displayConsoleMap(const MapParsedForBot &currentStep)
     }
 }
 
-bool MapServerMini::mapIsValid(const MapParsedForBot &currentStep)
+bool MapServerMini::mapIsValid(const MapParsedForBot &currentStep) const
 {
     if(currentStep.map==NULL)
         return false;

@@ -117,14 +117,20 @@ void BotTargetList::updateMapInformation()
         if(step.map==NULL)
             return;
         QString QtGraphvizText=QString::fromStdString(step.graphvizText);
-        QString overall_graphvizText=QString::fromStdString(mapServer->graphStepNearMap());
+        QString overall_graphvizText;
 
         if(actionsAction->id_map_to_map.find(player.mapId)!=actionsAction->id_map_to_map.cend())
         {
-            const std::string &playerMapStdString=actionsAction->id_map_to_map.at(mapId);
-            CatchChallenger::CommonMap *playerMap=actionsAction->map_list.at(playerMapStdString);
+            const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+            const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
             QString mapString=QString::fromStdString(playerMap->map_file)+QString(" (%1,%2)").arg(player.x).arg(player.y);
             ui->label_local_target->setTitle("Target on the map: "+mapString+", displayed map: "+QString::fromStdString(mapStdString));
+            if(playerMap->step.size()<2)
+                abort();
+            const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
+            const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
+            const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
+            overall_graphvizText=QString::fromStdString(playerMap->graphStepNearMap(layer.blockObject,ui->searchDeep->value()));
         }
         else
             ui->label_local_target->setTitle("Unknown player map ("+QString::number(player.mapId)+")");
@@ -307,4 +313,37 @@ void BotTargetList::on_browseMap_clicked()
     const MapServerMini * const mapServer=static_cast<MapServerMini *>(actionsAction->map_list.at(selectedMapString));
     mapId=mapServer->id;
     updateMapInformation();
+}
+
+void BotTargetList::on_searchDeep_editingFinished()
+{
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    if(!actionsAction->clientList.contains(client->api))
+        return;
+    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+
+    if(actionsAction->id_map_to_map.find(player.mapId)!=actionsAction->id_map_to_map.cend())
+    {
+        const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+        const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+        if(playerMap->step.size()<2)
+            abort();
+        const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
+        const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
+        const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
+        QString overall_graphvizText=QString::fromStdString(playerMap->graphStepNearMap(layer.blockObject,ui->searchDeep->value()));
+        if(overall_graphvizText.isEmpty())
+            ui->overall_graphvizText->setVisible(false);
+        else
+        {
+            ui->overall_graphvizText->setVisible(true);
+            ui->overall_graphvizText->setPlainText(overall_graphvizText);
+        }
+    }
 }

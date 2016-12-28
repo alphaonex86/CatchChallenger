@@ -5,7 +5,7 @@
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "ActionsAction.h"
 
-std::string MapServerMini::graphStepNearMap(const unsigned int &depth)
+std::unordered_set<const MapServerMini *> MapServerMini::getValidMaps(const unsigned int &depth) const
 {
     // do the map list
     unsigned int actualDepth=0;
@@ -21,9 +21,9 @@ std::string MapServerMini::graphStepNearMap(const unsigned int &depth)
             const MapServerMini * const currentMap=mapToParse.at(indexMapToParse);
             validMaps.insert(currentMap);
             unsigned int indexNearMap=0;
-            while(indexNearMap<currentMap->near_map.size())
+            while(indexNearMap<currentMap->linked_map.size())
             {
-                const MapServerMini * const nearMap=static_cast<const MapServerMini *>(currentMap->near_map.at(indexNearMap));
+                const MapServerMini * const nearMap=static_cast<const MapServerMini *>(currentMap->linked_map.at(indexNearMap));
                 if(validMaps.find(nearMap)==validMaps.cend())
                     newMapToParse.push_back(nearMap);
                 indexNearMap++;
@@ -33,6 +33,106 @@ std::string MapServerMini::graphStepNearMap(const unsigned int &depth)
         mapToParse=newMapToParse;
         actualDepth++;
     }
+    return validMaps;
+}
+
+std::unordered_set<const MapServerMini::BlockObject *> MapServerMini::getAccessibleBlock(const std::unordered_set<const MapServerMini *> &validMaps,const BlockObject * const currentNearBlock) const
+{
+    // only the accessible block
+    if(currentNearBlock->map!=this)
+        abort();
+    std::unordered_set<const BlockObject *> accessibleBlock;
+    std::vector<const BlockObject *> blockToParse;
+    blockToParse.push_back(currentNearBlock);
+    while(!blockToParse.empty())
+    {
+        std::vector<const BlockObject *> newBlockToParse;
+        unsigned int indexBlockToParse=0;
+        while(indexBlockToParse<blockToParse.size())
+        {
+            const BlockObject * const currentBlock=blockToParse.at(indexBlockToParse);
+            accessibleBlock.insert(currentBlock);
+
+            for(const auto& n:currentBlock->links) {
+                const BlockObject * const nextBlock=n.first;
+                if(accessibleBlock.find(nextBlock)==accessibleBlock.cend() && validMaps.find(nextBlock->map)!=validMaps.cend())
+                    newBlockToParse.push_back(nextBlock);
+            }
+            indexBlockToParse++;
+        }
+        blockToParse=newBlockToParse;
+    }
+    return accessibleBlock;
+}
+
+void MapServerMini::resolvBlockPath(const BlockObject * blockToExplore,
+        std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock,
+        const std::unordered_set<const BlockObject *> &accessibleBlock,
+        const std::vector<const BlockObject *> &previousBlock) const
+{
+    if(resolvedBlock.find(blockToExplore)==resolvedBlock.cend())
+    {
+        BlockObjectPathFinding blockObjectPathFinding;
+        blockObjectPathFinding.weight=0;
+        //blockObjectPathFinding.bestPath;
+        resolvedBlock[blockToExplore]=blockObjectPathFinding;
+    }
+
+    std::vector<const BlockObject *> nextBlockList;
+    for(const auto& n:blockToExplore->links) {
+        const BlockObject * const nextBlock=n.first;
+        if(accessibleBlock.find(nextBlock)!=accessibleBlock.cend())
+        {
+            unsigned int weight=10;
+            if(nextBlock->monstersCollisionValue!=NULL)
+                if(!nextBlock->monstersCollisionValue->walkOnMonsters.empty())
+                    weight+=100;
+            if(!nextBlock->botsFight.empty())
+                weight+=250;
+            //already parsed
+            if(resolvedBlock.find(nextBlock)!=resolvedBlock.cend())
+            {
+                BlockObjectPathFinding &blockObjectPathFinding=resolvedBlock[nextBlock];
+                //if the next block weight>weight
+                if(blockObjectPathFinding.weight>weight)
+                {
+                    blockObjectPathFinding.weight=weight;
+                    std::vector<const BlockObject *> composedBlock=previousBlock;
+                    composedBlock.push_back(nextBlock);
+                    blockObjectPathFinding.bestPath=composedBlock;
+                    nextBlockList.push_back(nextBlock);
+                }
+            }
+            else
+            {
+                BlockObjectPathFinding blockObjectPathFinding;
+                blockObjectPathFinding.weight=weight;
+                std::vector<const BlockObject *> composedBlock=previousBlock;
+                composedBlock.push_back(nextBlock);
+                blockObjectPathFinding.bestPath=composedBlock;
+                nextBlockList.push_back(nextBlock);
+
+                resolvedBlock[nextBlock]=blockObjectPathFinding;
+            }
+        }
+    }
+    unsigned int index=0;
+    while(index<nextBlockList.size())
+    {
+        const BlockObject * const nextBlock=nextBlockList.at(index);
+        BlockObjectPathFinding &blockObjectPathFinding=resolvedBlock[nextBlock];
+        resolvBlockPath(nextBlock,resolvedBlock,accessibleBlock,blockObjectPathFinding.bestPath);
+        index++;
+    }
+}
+
+std::string MapServerMini::graphStepNearMap(const BlockObject * const currentNearBlock,const unsigned int &depth) const
+{
+    const std::unordered_set<const MapServerMini *> &validMaps=getValidMaps(depth);
+    const std::unordered_set<const BlockObject *> &accessibleBlock=getAccessibleBlock(validMaps,currentNearBlock);
+    std::unordered_map<const BlockObject *,BlockObjectPathFinding> resolvedBlock;
+    resolvBlockPath(currentNearBlock,resolvedBlock,accessibleBlock);
+
     // do the GraphViz content
     {
         std::string overall_graphvizText="";
@@ -64,6 +164,7 @@ std::string MapServerMini::graphStepNearMap(const unsigned int &depth)
             }
         }
 
+        std::string stringLinks;
         for(const auto& n : ActionsAction::actionsAction->map_list) {
             const MapServerMini * const mapServer=static_cast<MapServerMini *>(n.second);
             if(mapServer->step.size()>=2 && validMaps.find(mapServer)!=validMaps.cend())
@@ -73,7 +174,7 @@ std::string MapServerMini::graphStepNearMap(const unsigned int &depth)
                 {
                     unsigned int contentDisplayed=0;
                     std::string subgraph;
-                    subgraph+="subgraph "+std::to_string((uint64_t)mapServer)+" {\n";
+                    subgraph+="subgraph cluster_"+std::to_string((uint64_t)mapServer)+" {\n";
                     subgraph+="label=\""+mapServer->map_file+"\";\n";
                     unsigned int indexLayer=0;
                     while(indexLayer<step2.layers.size())
@@ -92,6 +193,7 @@ std::string MapServerMini::graphStepNearMap(const unsigned int &depth)
                             }
                             index++;
                         }
+                        (void)contentEmpty;
                         bool haveValidDestination=false;
                         for(const auto& n:block.links) {
                             const BlockObject * const nextBlock=n.first;
@@ -102,20 +204,39 @@ std::string MapServerMini::graphStepNearMap(const unsigned int &depth)
                             }
                         }
 
-                        if(/*layer.name!="Lost layer" || */!contentEmpty || haveValidDestination || destinationMaps.find(&block)!=destinationMaps.cend())
+                        if(/*layer.name!="Lost layer" || !contentEmpty || */haveValidDestination || destinationMaps.find(&block)!=destinationMaps.cend())
                         {
-                            subgraph+="struct"+std::to_string((uint64_t)&block)+" [label=\"";
-                            subgraph+="<f0> "+mapServer->map_file+" | "+layer.name+" |";
-                            unsigned int index=0;
-                            while(index<layer.contentList.size())
+                            if(accessibleBlock.find(&block)!=accessibleBlock.cend())
                             {
-                                const MapParsedForBot::Layer::Content &itemEntry=layer.contentList.at(index);
-                                if(itemEntry.destinationDisplay==MapParsedForBot::Layer::DestinationDisplay::All)
-                                    subgraph+=itemEntry.text.toStdString()+"\\n";
-                                index++;
+                                subgraph+="struct"+std::to_string((uint64_t)&block)+" [label=\"";
+                                //subgraph+="<f0> "+mapServer->map_file+" | "+layer.name+" |";
+                                subgraph+="<f0> "+layer.name+" |";
+                                subgraph+="<f0> ";
+                                unsigned int index=0;
+                                while(index<layer.contentList.size())
+                                {
+                                    const MapParsedForBot::Layer::Content &itemEntry=layer.contentList.at(index);
+                                    if(itemEntry.destinationDisplay==MapParsedForBot::Layer::DestinationDisplay::All)
+                                        subgraph+=itemEntry.text.toStdString()+"\\n";
+                                    index++;
+                                }
+                                {
+                                    const BlockObjectPathFinding &blockObjectPathFinding=resolvedBlock.at(&block);
+                                    if(!blockObjectPathFinding.bestPath.empty())
+                                    {
+                                        subgraph+="|";
+                                        unsigned int index=0;
+                                        while(index<blockObjectPathFinding.bestPath.size())
+                                        {
+                                            const BlockObject * const block=blockObjectPathFinding.bestPath.at(index);
+                                            subgraph+="Block "+std::to_string(block->id+1)+"("+block->map->map_file+")\\n";
+                                            index++;
+                                        }
+                                    }
+                                }
+                                subgraph+="\" style=filled fillcolor=\""+block.color.name(QColor::HexRgb).toStdString()+"\"]\n";
+                                contentDisplayed++;
                             }
-                            subgraph+="\" style=filled fillcolor=\""+block.color.name(QColor::HexRgb).toStdString()+"\"]\n";
-                            contentDisplayed++;
                         }
 
                         for(const auto& n:block.links) {
@@ -124,19 +245,20 @@ std::string MapServerMini::graphStepNearMap(const unsigned int &depth)
                             if(linkInformation.type!=BlockObject::LinkType::BothDirection || &block<=nextBlock)
                             {
                                 if(validMaps.find(block.map)!=validMaps.cend() && validMaps.find(nextBlock->map)!=validMaps.cend())
-                                {
-                                    contentDisplayed++;
-                                    subgraph+="struct"+std::to_string((uint64_t)&block)+" -> struct"+std::to_string((uint64_t)nextBlock);
-                                    switch(linkInformation.type)
+                                    if(accessibleBlock.find(&block)!=accessibleBlock.cend() && accessibleBlock.find(nextBlock)!=accessibleBlock.cend())
                                     {
-                                        case BlockObject::LinkType::BothDirection:
-                                            subgraph+=" [dir=both];\n";
-                                        break;
-                                        default:
-                                            subgraph+=";\n";
-                                        break;
+                                        contentDisplayed++;
+                                        stringLinks+="struct"+std::to_string((uint64_t)&block)+" -> struct"+std::to_string((uint64_t)nextBlock);
+                                        switch(linkInformation.type)
+                                        {
+                                            case BlockObject::LinkType::BothDirection:
+                                                stringLinks+=" [dir=both];\n";
+                                            break;
+                                            default:
+                                                stringLinks+=";\n";
+                                            break;
+                                        }
                                     }
-                                }
                             }
                         }
 
@@ -149,6 +271,7 @@ std::string MapServerMini::graphStepNearMap(const unsigned int &depth)
             }
         }
 
+        overall_graphvizText+=stringLinks;
         overall_graphvizText+="}";
         return overall_graphvizText;
     }

@@ -1,5 +1,7 @@
 #include "MapServerMini.h"
 
+#include <iostream>
+
 #include <QHash>
 #include <QList>
 #include <QString>
@@ -11,6 +13,7 @@ bool MapServerMini::preload_step1()
     QHash<QString,int> zoneHash;
     QList<QString> layerList;
     zoneHash.clear();
+    zoneHash[""]=0;
     MapParsedForBot step1;
     {
         step1.map=(uint8_t *)malloc(width*height);
@@ -48,6 +51,8 @@ bool MapServerMini::preload_step1()
             y++;
         }
     }
+    /*std::cout << this->map_file << std::endl;
+    displayConsoleMap(step1);*/
     {
         layerList.clear();
         zoneHash.remove(0);

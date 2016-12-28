@@ -33,8 +33,9 @@ public:
         Map_BorderContent_LeftRight right;
     };
     Map_Border border;
+    std::vector<CommonMap *> near_map;//only the border (left, right, top, bottom) AND them self
 
-    std::vector<CommonMap *> near_map,border_map;//not only the border
+    std::vector<CommonMap *> linked_map;//not only the border, with tp, door, ...
     struct Teleporter
     {
         uint8_t source_x,source_y;/*source*/
