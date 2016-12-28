@@ -357,7 +357,7 @@ bool ActionsAction::preload_the_map()
     index=0;
     while(index<size)
     {
-        const auto &currentTempMap=map_list.at(map_name.at(index));
+        CatchChallenger::CommonMap * const currentTempMap=map_list.at(map_name.at(index));
         if(currentTempMap->border.bottom.map!=NULL &&
                 std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
                 ==
@@ -425,7 +425,19 @@ bool ActionsAction::preload_the_map()
                 map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.bottom.map);
         }
 
-        map_list[map_name.at(index)]->border_map=map_list[map_name.at(index)]->near_map;
+        map_list[map_name.at(index)]->linked_map=map_list[map_name.at(index)]->near_map;
+        //the teleporter
+        {
+            unsigned int index=0;
+            while(index<currentTempMap->teleporter_list_size)
+            {
+                const CatchChallenger::CommonMap::Teleporter &teleporter=currentTempMap->teleporter[index];
+                if(!vectorcontainsAtLeastOne(currentTempMap->linked_map,teleporter.map))
+                    currentTempMap->linked_map.push_back(teleporter.map);
+                index++;
+            }
+        }
+
         map_list[map_name.at(index)]->near_map.push_back(currentTempMap);
         index++;
     }

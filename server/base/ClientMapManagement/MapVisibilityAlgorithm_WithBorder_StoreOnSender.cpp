@@ -121,10 +121,10 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
     //border map
     {
         uint8_t border_map_index=0;
-        const uint8_t &border_map_loop_size=map->border_map.size();
+        const uint8_t &border_map_loop_size=map->linked_map.size();
         while(border_map_index<border_map_loop_size)
         {
-            Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->border_map.at(border_map_index));
+            Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->linked_map.at(border_map_index));
             const uint16_t &loop_size=temp_border_map->clients.size();
             //insert border player on current player
             if(temp_map->showWithBorder)
@@ -228,10 +228,10 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveClient(const uint8_t &
     const SIMPLIFIED_PLAYER_ID_TYPE &thisSimplifiedId=public_and_private_informations.public_informations.simplifiedId;
     //border map
     uint8_t border_map_index=0;
-    const uint8_t &border_map_loop_size=map->border_map.size();
+    const uint8_t &border_map_loop_size=map->linked_map.size();
     while(border_map_index<border_map_loop_size)
     {
-        Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->border_map.at(border_map_index));
+        Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->linked_map.at(border_map_index));
         const uint16_t &loop_size=temp_border_map->clients.size();
         if(temp_border_map->showWithBorder)
         {
@@ -376,10 +376,10 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
     //border map
     {
         uint8_t border_map_index=0;
-        const uint8_t &border_map_loop_size=map->border_map.size();
+        const uint8_t &border_map_loop_size=map->linked_map.size();
         while(border_map_index<border_map_loop_size)
         {
-            Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->border_map.at(border_map_index));
+            Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->linked_map.at(border_map_index));
             const uint16_t &loop_size=temp_border_map->clients.size();
             //remove border client on this
             if(Q_LIKELY(temp_map->showWithBorder==true))
@@ -459,10 +459,10 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::reinsertCurrentPlayerOnlyT
     normalOutput("reinsertOnlyTheBorderClients() "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
     #endif
     uint8_t border_map_index=0;
-    const uint8_t &border_map_loop_size=map->border_map.size();
+    const uint8_t &border_map_loop_size=map->linked_map.size();
     while(border_map_index<border_map_loop_size)
     {
-        Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->border_map.at(border_map_index));
+        Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->linked_map.at(border_map_index));
         const uint16_t &loop_size=temp_border_map->clients.size();
         uint16_t index=0;
         while(index<loop_size)
