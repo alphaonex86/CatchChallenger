@@ -140,6 +140,7 @@ void BotTargetList::updatePlayerInformation()
 
                 ui->globalTargets->clear();
                 targetListGlobalTarget.clear();
+                alternateColor=false;
                 for(const auto& n:resolvedBlock) {
                     const MapServerMini::BlockObject * const nextBlock=n.first;
                     const MapServerMini::BlockObjectPathFinding &blockObjectPathFinding=n.second;
@@ -399,6 +400,7 @@ void BotTargetList::updateLayerElements()
     ui->label_select_map->setText("Displayed map: "+QString::fromStdString(mapStdString));
 
     const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(ui->comboBox_Layer->currentIndex());
+    alternateColor=false;
     contentToGUI(layer.blockObject,ui->localTargets);
 
     ui->label_zone->setText(QString::fromStdString(layer.text));

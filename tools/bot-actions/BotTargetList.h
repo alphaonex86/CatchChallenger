@@ -69,6 +69,7 @@ private:
         const MapServerMini::BlockObject * blockObject;
     };
     std::vector<GlobalTarget> targetListGlobalTarget;
+    bool alternateColor;
 };
 
 #endif // BOTTARGETLIST_H
