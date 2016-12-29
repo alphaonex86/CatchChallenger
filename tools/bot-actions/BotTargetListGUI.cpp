@@ -9,10 +9,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
     std::vector<std::string> itemToReturn;
     if(listGUI==ui->localTargets)
         mapIdListLocalTarget.clear();
-    /* need to be done before
-    if(listGUI==ui->globalTargets)
-        targetListGlobalTarget.clear();*/
-    //teleporter
+    QColor alternateColorValue(230,230,230,255);
     if(listGUI==ui->localTargets)
     {
         for(const auto& n:blockObject->links) {
@@ -80,6 +77,12 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
         {
             const MapServerMini::ItemOnMap &itemOnMap=blockObject->pointOnMap_Item.at(index);
             const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemOnMap.item);
+            QListWidgetItem * newItem=new QListWidgetItem();
+            if(itemOnMap.infinite)
+                newItem->setText(QString("Item on map %1 (infinite)").arg(itemExtra.name));
+            else
+                newItem->setText(QString("Item on map %1").arg(itemExtra.name));
+            newItem->setIcon(QIcon(itemExtra.image));
             if(listGUI==ui->globalTargets)
             {
                 GlobalTarget globalTarget;
@@ -87,13 +90,10 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
                 globalTarget.extra=itemOnMap.item;
                 globalTarget.type=GlobalTarget::GlobalTargetType::ItemOnMap;
                 targetListGlobalTarget.push_back(globalTarget);
+                if(alternateColor)
+                    newItem->setBackgroundColor(alternateColorValue);
+                alternateColor=!alternateColor;
             }
-            QListWidgetItem * newItem=new QListWidgetItem();
-            if(itemOnMap.infinite)
-                newItem->setText(QString("Item on map %1 (infinite)").arg(itemExtra.name));
-            else
-                newItem->setText(QString("Item on map %1").arg(itemExtra.name));
-            newItem->setIcon(QIcon(itemExtra.image));
             itemToReturn.push_back(newItem->text().toStdString());
             if(listGUI!=NULL)
                 listGUI->addItem(newItem);
@@ -138,7 +138,11 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
                         newItem->setIcon(QIcon(itemExtra.image));
                         itemToReturn.push_back(newItem->text().toStdString());
                         if(listGUI==ui->globalTargets)
+                        {
                             targetListGlobalTarget.push_back(globalTarget);
+                            if(alternateColor)
+                                newItem->setBackgroundColor(alternateColorValue);
+                        }
                         if(listGUI!=NULL)
                             listGUI->addItem(newItem);
                         else
@@ -164,7 +168,11 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
                         newItem->setIcon(QIcon(monsterExtra.thumb));
                         itemToReturn.push_back(newItem->text().toStdString());
                         if(listGUI==ui->globalTargets)
+                        {
                             targetListGlobalTarget.push_back(globalTarget);
+                            if(alternateColor)
+                                newItem->setBackgroundColor(alternateColorValue);
+                        }
                         if(listGUI!=NULL)
                             listGUI->addItem(newItem);
                         else
@@ -173,6 +181,9 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
                     sub_index++;
                 }
             }
+            if(!fight.items.empty() || !fight.monsters.empty())
+                if(listGUI==ui->globalTargets)
+                    alternateColor=!alternateColor;
             index++;
         }
     }
@@ -205,7 +216,11 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
 
                     itemToReturn.push_back(newItem->text().toStdString());
                     if(listGUI==ui->globalTargets)
+                    {
                         targetListGlobalTarget.push_back(globalTarget);
+                        if(alternateColor)
+                            newItem->setBackgroundColor(alternateColorValue);
+                    }
                     if(listGUI!=NULL)
                         listGUI->addItem(newItem);
                     else
@@ -213,6 +228,9 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
                 }
                 sub_index++;
             }
+            if(!shop.prices.empty())
+                if(listGUI==ui->globalTargets)
+                    alternateColor=!alternateColor;
             index++;
         }
     }
@@ -230,7 +248,12 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
 
         itemToReturn.push_back(newItem->text().toStdString());
         if(listGUI==ui->globalTargets)
+        {
             targetListGlobalTarget.push_back(globalTarget);
+            if(alternateColor)
+                newItem->setBackgroundColor(alternateColorValue);
+            alternateColor=!alternateColor;
+        }
         if(listGUI!=NULL)
             listGUI->addItem(newItem);
         else
@@ -268,7 +291,11 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
 
                     itemToReturn.push_back(newItem->text().toStdString());
                     if(listGUI==ui->globalTargets)
+                    {
                         targetListGlobalTarget.push_back(globalTarget);
+                        if(alternateColor)
+                            newItem->setBackgroundColor(alternateColorValue);
+                    }
                     if(listGUI!=NULL)
                         listGUI->addItem(newItem);
                     else
@@ -276,6 +303,9 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
                 }
                 sub_index++;
             }
+            if(!monsterCollisionContent.defaultMonsters.empty())
+                if(listGUI==ui->globalTargets)
+                    alternateColor=!alternateColor;
         }
     }
     return itemToReturn;
