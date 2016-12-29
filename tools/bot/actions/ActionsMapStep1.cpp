@@ -47,20 +47,12 @@ bool ActionsAction::preload_the_map_step2()
         index++;
         loaded++;
     }
-    index=0;
-    while(index<map_list.size())
-    {
-        static_cast<MapServerMini *>(flat_map_list[index])->preload_step2z();
-        QCoreApplication::processEvents();
-        index++;
-        loaded++;
-    }
     return true;
 }
 
 uint64_t ActionsAction::elementToLoad() const
 {
-    return map_list.size()*(1/*server load*/+1/*step1*/+4/*step2*/);
+    return map_list.size()*(1/*server load*/+1/*step1*/+3/*step2*/);
 }
 
 uint64_t ActionsAction::elementLoaded() const
