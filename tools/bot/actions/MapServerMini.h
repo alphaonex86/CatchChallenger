@@ -40,12 +40,12 @@ public:
     std::map<std::pair<uint8_t,uint8_t>,PlantOnMap> plants;//position, plant id
 
     struct BlockObject{
-        enum LinkType
+        enum LinkDirection
         {
             ToTheTarget,
             BothDirection
         };
-        enum LinkSource
+        enum LinkType
         {
             SourceTeleporter,
             SourceTopMap,
@@ -59,29 +59,25 @@ public:
         };
         struct LinkInformation
         {
-            LinkType type;
-            std::vector<LinkSource> sources;
+            LinkDirection direction;
+            std::vector<LinkType> types;
         };
         std::unordered_map<BlockObject *,LinkInformation> links;
         MapServerMini * map;
         uint8_t id;
 
         //things into each zone
-        bool rescue;
         std::vector<ItemOnMap> pointOnMap_Item;
-        std::vector<uint32_t> shops;
-        bool learn;
-        bool heal;
-        bool market;
-        bool zonecapture;
         std::vector<uint32_t> botsFight;
+        std::vector<uint32_t> shops;
+        bool heal;
         const CatchChallenger::MonstersCollisionValue *monstersCollisionValue;
 
-        MapServerMini *bordertop;
-        MapServerMini *borderright;
-        MapServerMini *borderbottom;
-        MapServerMini *borderleft;
-        std::vector<Teleporter> teleporter_list;
+        bool rescue;
+        bool learn;
+        bool market;
+        bool zonecapture;
+
         QColor color;
         void *layer;
     };
@@ -89,7 +85,7 @@ public:
         struct Layer{
             std::string text;
             std::string name;
-            enum DestinationDisplay
+            /*enum DestinationDisplay
             {
                 All,
                 OnlyGui
@@ -100,8 +96,7 @@ public:
                 uint32_t mapId;
                 DestinationDisplay destinationDisplay;
             };
-            std::vector<Content> contentList;
-            bool haveMonsterSet;
+            std::vector<Content> contentList;*/
             BlockObject *blockObject;
         };
         uint8_t *map;//0x00 is not accessible, it's why don't have layer for it
@@ -118,7 +113,7 @@ public:
 
     uint8_t *botLayerMask;
 
-    bool addBlockLink(BlockObject &blockObjectFrom,BlockObject &blockObjectTo,const BlockObject::LinkSource &linkSourceFrom);
+    bool addBlockLink(BlockObject &blockObjectFrom,BlockObject &blockObjectTo,const BlockObject::LinkType &linkSourceFrom);
 public:
     void displayConsoleMap(const MapParsedForBot &currentStep) const;
     bool mapIsValid(const MapParsedForBot &currentStep) const;
