@@ -122,7 +122,7 @@ void BotTargetList::updatePlayerInformation()
         if(playerCodeZone>0 && (uint32_t)(playerCodeZone-1)<(uint32_t)stepPlayer.layers.size())
         {
             const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
-            QString overall_graphvizText=QString::fromStdString(playerMap->graphStepNearMap(layer.blockObject,ui->searchDeep->value()));
+            QString overall_graphvizText=QString::fromStdString(graphStepNearMap(layer.blockObject,ui->searchDeep->value()));
             if(overall_graphvizText.isEmpty())
                 ui->overall_graphvizText->setVisible(false);
             else
@@ -299,7 +299,7 @@ void BotTargetList::updateMapInformation()
         MapServerMini::MapParsedForBot &step=mapServer->step.at(ui->comboBoxStep->currentIndex());
         if(step.map==NULL)
             return;
-        QString QtGraphvizText=QString::fromStdString(step.graphvizText);
+        QString QtGraphvizText=QString::fromStdString(graphLocalMap());
 
         ui->mapPreview->setColumnCount(0);
         ui->mapPreview->setRowCount(0);
@@ -354,7 +354,7 @@ void BotTargetList::updateMapInformation()
 
                 index++;
             }
-            if(step.graphvizText.empty())
+            if(QtGraphvizText.isEmpty())
                 ui->graphvizText->setVisible(false);
             else
             {
@@ -486,7 +486,7 @@ void BotTargetList::on_searchDeep_editingFinished()
         const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
         const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
         const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
-        QString overall_graphvizText=QString::fromStdString(playerMap->graphStepNearMap(layer.blockObject,ui->searchDeep->value()));
+        QString overall_graphvizText=QString::fromStdString(graphStepNearMap(layer.blockObject,ui->searchDeep->value()));
         if(overall_graphvizText.isEmpty())
             ui->overall_graphvizText->setVisible(false);
         else
