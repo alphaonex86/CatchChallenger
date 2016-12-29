@@ -135,7 +135,7 @@ void MapServerMini::targetBlockList(const BlockObject * const currentNearBlock,s
 
 std::string MapServerMini::graphStepNearMap(const BlockObject * const currentNearBlock,const unsigned int &depth) const
 {
-    const std::unordered_set<const MapServerMini *> &validMaps=getValidMaps(depth);
+/*    const std::unordered_set<const MapServerMini *> &validMaps=getValidMaps(depth);
     const std::unordered_set<const BlockObject *> &accessibleBlock=getAccessibleBlock(validMaps,currentNearBlock);
     std::unordered_map<const BlockObject *,BlockObjectPathFinding> resolvedBlock;
     resolvBlockPath(currentNearBlock,resolvedBlock,accessibleBlock);
@@ -211,7 +211,8 @@ std::string MapServerMini::graphStepNearMap(const BlockObject * const currentNea
                             }
                         }
 
-                        if(/*layer.name!="Lost layer" || !contentEmpty || */haveValidDestination || destinationMaps.find(&block)!=destinationMaps.cend())
+                        //layer.name!="Lost layer" || !contentEmpty ||
+                        if(haveValidDestination || destinationMaps.find(&block)!=destinationMaps.cend())
                         {
                             if(accessibleBlock.find(&block)!=accessibleBlock.cend())
                             {
@@ -249,16 +250,16 @@ std::string MapServerMini::graphStepNearMap(const BlockObject * const currentNea
                         for(const auto& n:block.links) {
                             const BlockObject * const nextBlock=n.first;
                             const BlockObject::LinkInformation &linkInformation=n.second;
-                            if(linkInformation.type!=BlockObject::LinkType::BothDirection || &block<=nextBlock)
+                            if(linkInformation.direction!=BlockObject::LinkDirection::BothDirection || &block<=nextBlock)
                             {
                                 if(validMaps.find(block.map)!=validMaps.cend() && validMaps.find(nextBlock->map)!=validMaps.cend())
                                     if(accessibleBlock.find(&block)!=accessibleBlock.cend() && accessibleBlock.find(nextBlock)!=accessibleBlock.cend())
                                     {
                                         contentDisplayed++;
                                         stringLinks+="struct"+std::to_string((uint64_t)&block)+" -> struct"+std::to_string((uint64_t)nextBlock);
-                                        switch(linkInformation.type)
+                                        switch(linkInformation.direction)
                                         {
-                                            case BlockObject::LinkType::BothDirection:
+                                            case BlockObject::LinkDirection::BothDirection:
                                                 stringLinks+=" [dir=both];\n";
                                             break;
                                             default:
@@ -281,6 +282,6 @@ std::string MapServerMini::graphStepNearMap(const BlockObject * const currentNea
         overall_graphvizText+=stringLinks;
         overall_graphvizText+="}";
         return overall_graphvizText;
-    }
+    }*/
     return "";
 }

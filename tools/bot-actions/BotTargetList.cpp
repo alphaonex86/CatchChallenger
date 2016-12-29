@@ -139,37 +139,26 @@ void BotTargetList::updatePlayerInformation()
                     return;
 
                 ui->globalTargets->clear();
+                targetListGlobalTarget.clear();
                 for(const auto& n:resolvedBlock) {
                     const MapServerMini::BlockObject * const nextBlock=n.first;
                     const MapServerMini::BlockObjectPathFinding &blockObjectPathFinding=n.second;
 
-                    const MapServerMini::MapParsedForBot::Layer &layerNextBlock=*static_cast<MapServerMini::MapParsedForBot::Layer *>(nextBlock->layer);
-                    unsigned int index=0;
-                    while(index<layerNextBlock.contentList.size())
+                    //do the path
+                    QString pathString;
                     {
-                        const MapServerMini::MapParsedForBot::Layer::Content &content=layerNextBlock.contentList.at(index);
-                        if(content.destinationDisplay==MapServerMini::MapParsedForBot::Layer::DestinationDisplay::All)
+                        unsigned int indexBestPath=0;
+                        while(indexBestPath<blockObjectPathFinding.bestPath.size())
                         {
-                            QListWidgetItem *item=new QListWidgetItem();
-                            //do the path
-                            QString pathString;
-                            {
-                                unsigned int indexBestPath=0;
-                                while(indexBestPath<blockObjectPathFinding.bestPath.size())
-                                {
-                                    const MapServerMini::BlockObject * const block=blockObjectPathFinding.bestPath.at(indexBestPath);
-                                    if(!pathString.isEmpty())
-                                        pathString+=", ";
-                                    pathString+=QString::fromStdString(block->map->map_file)+"/Block "+QString::number(block->id+1);
-                                    indexBestPath++;
-                                }
-                            }
-                            item->setText(content.text+"\n"+pathString);
-                            item->setIcon(content.icon);
-                            ui->globalTargets->addItem(item);
+                            const MapServerMini::BlockObject * const block=blockObjectPathFinding.bestPath.at(indexBestPath);
+                            if(!pathString.isEmpty())
+                                pathString+=", ";
+                            pathString+=QString::fromStdString(block->map->map_file)+"/Block "+QString::number(block->id+1);
+                            indexBestPath++;
                         }
-                        index++;
                     }
+
+                    contentToGUI(nextBlock,ui->globalTargets);
                 }
             }
         }
@@ -360,7 +349,7 @@ void BotTargetList::updateMapInformation()
             {
                 const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(index);
 
-                if(layer.name!="Lost layer" || !layer.contentList.empty())
+                //if(layer.name!="Lost layer" || !layer.contentList.empty())
                     ui->comboBox_Layer->addItem(QString::fromStdString(layer.name),index);
 
                 index++;
@@ -410,21 +399,7 @@ void BotTargetList::updateLayerElements()
     ui->label_select_map->setText("Displayed map: "+QString::fromStdString(mapStdString));
 
     const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(ui->comboBox_Layer->currentIndex());
-    {
-        ui->localTargets->clear();
-        mapIdList.clear();
-        unsigned int index=0;
-        while(index<layer.contentList.size())
-        {
-            const MapServerMini::MapParsedForBot::Layer::Content &content=layer.contentList.at(index);
-            QListWidgetItem *item=new QListWidgetItem();
-            item->setText(content.text);
-            item->setIcon(content.icon);
-            ui->localTargets->addItem(item);
-            mapIdList.push_back(content.mapId);
-            index++;
-        }
-    }
+    contentToGUI(layer.blockObject,ui->localTargets);
 
     ui->label_zone->setText(QString::fromStdString(layer.text));
 }
@@ -452,7 +427,11 @@ void BotTargetList::on_localTargets_itemActivated(QListWidgetItem *item)
     if(ui->comboBox_Layer->count()==0)
         return;
 
-    const uint32_t &newMapId=mapIdList.at(ui->localTargets->currentRow());
+    if(ui->localTargets->currentRow()<0)
+        return;
+    if(ui->localTargets->currentRow()>=(int32_t)mapIdListLocalTarget.size())
+        return;
+    const uint32_t &newMapId=mapIdListLocalTarget.at(ui->localTargets->currentRow());
     if(mapId!=newMapId)
     {
         mapId=newMapId;

@@ -69,7 +69,6 @@ bool MapServerMini::preload_step2()
                     MapParsedForBot::Layer layer;
                     layer.name="Block "+std::to_string(lastCodeZone);
                     layer.text=step1Layer.text;
-                    layer.haveMonsterSet=false;
                     step2.layers.push_back(layer);
 
                     lastCodeZone++;
@@ -82,7 +81,6 @@ bool MapServerMini::preload_step2()
             MapParsedForBot::Layer layer;
             layer.name="Lost layer";
             layer.text="";
-            layer.haveMonsterSet=false;
             step2.layers.push_back(layer);
         }
     }
@@ -102,10 +100,6 @@ bool MapServerMini::preload_step2()
             blockObject.heal=false;
             blockObject.market=false;
             blockObject.zonecapture=false;
-            blockObject.bordertop=NULL;
-            blockObject.borderright=NULL;
-            blockObject.borderbottom=NULL;
-            blockObject.borderleft=NULL;
             blockObject.monstersCollisionValue=NULL;
             blockObject.color=MapServerMini::colorsList.at(index%MapServerMini::colorsList.size());
 
@@ -145,10 +139,10 @@ bool MapServerMini::preload_step2()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)this->parsed_layer.ledges[newx+newy*this->width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesRight)
-                                            addBlockLink(blockObject,rightBlockObject,BlockObject::LinkSource::SourceInternalRightBlock);
+                                            addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceInternalRightBlock);
                                     }
                                     else
-                                        addBlockLink(blockObject,rightBlockObject,BlockObject::LinkSource::SourceInternalRightBlock);
+                                        addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceInternalRightBlock);
                                 }
                                 //if can come from to right
                                 if(this->parsed_layer.ledges==NULL ||
@@ -160,10 +154,10 @@ bool MapServerMini::preload_step2()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)this->parsed_layer.ledges[newx+newy*this->width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesLeft)
-                                            addBlockLink(rightBlockObject,blockObject,BlockObject::LinkSource::SourceInternalLeftBlock);
+                                            addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceInternalLeftBlock);
                                     }
                                     else
-                                        addBlockLink(rightBlockObject,blockObject,BlockObject::LinkSource::SourceInternalLeftBlock);
+                                        addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceInternalLeftBlock);
                                 }
                             }
                     }
@@ -187,10 +181,10 @@ bool MapServerMini::preload_step2()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)this->parsed_layer.ledges[newx+newy*this->width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesBottom)
-                                            addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkSource::SourceInternalBottomBlock);
+                                            addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceInternalBottomBlock);
                                     }
                                     else
-                                        addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkSource::SourceInternalBottomBlock);
+                                        addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceInternalBottomBlock);
                                 }
                                 //if can come from to bottom
                                 if(this->parsed_layer.ledges==NULL ||
@@ -202,10 +196,10 @@ bool MapServerMini::preload_step2()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)this->parsed_layer.ledges[newx+newy*this->width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesTop)
-                                            addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkSource::SourceInternalTopBlock);
+                                            addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceInternalTopBlock);
                                     }
                                     else
-                                        addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkSource::SourceInternalTopBlock);
+                                        addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceInternalTopBlock);
                                 }
                             }
                     }
@@ -260,26 +254,26 @@ void MapServerMini::preload_step2_addNearTileToScanList(std::vector<std::pair<ui
     }
 }
 
-bool MapServerMini::addBlockLink(BlockObject &blockObjectFrom, BlockObject &blockObjectTo, const BlockObject::LinkSource &linkSourceFrom)
+bool MapServerMini::addBlockLink(BlockObject &blockObjectFrom, BlockObject &blockObjectTo, const BlockObject::LinkType &linkSourceFrom)
 {
     //search into the destination
     {
         if(blockObjectTo.links.find(&blockObjectFrom)!=blockObjectTo.links.cend())
         {
             BlockObject::LinkInformation &linkInformationTo=blockObjectTo.links[&blockObjectFrom];
-            linkInformationTo.type=BlockObject::LinkType::BothDirection;
+            linkInformationTo.direction=BlockObject::LinkDirection::BothDirection;
             if(blockObjectFrom.links.find(&blockObjectTo)==blockObjectFrom.links.cend())
             {
                 BlockObject::LinkInformation &linkInformationFrom=blockObjectFrom.links[&blockObjectTo];
-                linkInformationFrom.type=BlockObject::LinkType::BothDirection;
-                if(!vectorcontainsAtLeastOne(linkInformationFrom.sources,linkSourceFrom))
-                    linkInformationFrom.sources.push_back(linkSourceFrom);
+                linkInformationFrom.direction=BlockObject::LinkDirection::BothDirection;
+                if(!vectorcontainsAtLeastOne(linkInformationFrom.types,linkSourceFrom))
+                    linkInformationFrom.types.push_back(linkSourceFrom);
             }
             else
             {
                 BlockObject::LinkInformation linkInformationFrom;
-                linkInformationFrom.type=BlockObject::LinkType::BothDirection;
-                linkInformationFrom.sources.push_back(linkSourceFrom);
+                linkInformationFrom.direction=BlockObject::LinkDirection::BothDirection;
+                linkInformationFrom.types.push_back(linkSourceFrom);
                 blockObjectFrom.links[&blockObjectTo]=linkInformationFrom;
             }
         }
@@ -289,15 +283,15 @@ bool MapServerMini::addBlockLink(BlockObject &blockObjectFrom, BlockObject &bloc
             if(blockObjectFrom.links.find(&blockObjectTo)==blockObjectFrom.links.cend())
             {
                 BlockObject::LinkInformation linkInformationFrom;
-                linkInformationFrom.type=BlockObject::LinkType::ToTheTarget;
-                linkInformationFrom.sources.push_back(linkSourceFrom);
+                linkInformationFrom.direction=BlockObject::LinkDirection::ToTheTarget;
+                linkInformationFrom.types.push_back(linkSourceFrom);
                 blockObjectFrom.links[&blockObjectTo]=linkInformationFrom;
             }
             else
             {
                 BlockObject::LinkInformation &linkInformationFrom=blockObjectFrom.links[&blockObjectTo];
-                if(!vectorcontainsAtLeastOne(linkInformationFrom.sources,linkSourceFrom))
-                    linkInformationFrom.sources.push_back(linkSourceFrom);
+                if(!vectorcontainsAtLeastOne(linkInformationFrom.types,linkSourceFrom))
+                    linkInformationFrom.types.push_back(linkSourceFrom);
             }
         }
     }
@@ -362,13 +356,11 @@ bool MapServerMini::preload_step2b()
                         if(nextMap.step.size()<2)
                             abort();
                         BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
-                        blockObject.borderright=&nextMap;
                         MapParsedForBot &step2nextMap=nextMap.step[1];
                         const uint8_t &rightCodeZone=step2nextMap.map[newx+newy*nextMap.width];
                         if(rightCodeZone!=0)
                         {
                             BlockObject &rightBlockObject=*step2nextMap.layers[rightCodeZone-1].blockObject;
-                            rightBlockObject.borderleft=this;
                             if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
                             {
                                 //if can go to right
@@ -381,10 +373,10 @@ bool MapServerMini::preload_step2b()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)nextMap.parsed_layer.ledges[newx+newy*this->width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesRight)
-                                            addBlockLink(blockObject,rightBlockObject,BlockObject::LinkSource::SourceRightMap);
+                                            addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceRightMap);
                                     }
                                     else
-                                        addBlockLink(blockObject,rightBlockObject,BlockObject::LinkSource::SourceRightMap);
+                                        addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceRightMap);
                                 }
                                 //if can come from to right
                                 if(this->parsed_layer.ledges==NULL ||
@@ -396,10 +388,10 @@ bool MapServerMini::preload_step2b()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)nextMap.parsed_layer.ledges[newx+newy*this->width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesLeft)
-                                            addBlockLink(rightBlockObject,blockObject,BlockObject::LinkSource::SourceLeftMap);
+                                            addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceLeftMap);
                                     }
                                     else
-                                        addBlockLink(rightBlockObject,blockObject,BlockObject::LinkSource::SourceLeftMap);
+                                        addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceLeftMap);
                                 }
                             }
                         }
@@ -461,13 +453,11 @@ bool MapServerMini::preload_step2b()
                         if(nextMap.step.size()<2)
                             abort();
                         BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
-                        blockObject.borderbottom=&nextMap;
                         MapParsedForBot &step2nextMap=nextMap.step[1];
                         const uint8_t &bottomCodeZone=step2nextMap.map[newx+newy*nextMap.width];
                         if(bottomCodeZone!=0)
                         {
                             BlockObject &bottomBlockObject=*step2nextMap.layers[bottomCodeZone-1].blockObject;
-                            bottomBlockObject.bordertop=this;
                             if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
                             {
                                 //if can go to bottom
@@ -480,10 +470,10 @@ bool MapServerMini::preload_step2b()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)nextMap.parsed_layer.ledges[newx+newy*this->width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesBottom)
-                                            addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkSource::SourceBottomMap);
+                                            addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceBottomMap);
                                     }
                                     else
-                                        addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkSource::SourceBottomMap);
+                                        addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceBottomMap);
                                 }
                                 //if can come from to bottom
                                 if(this->parsed_layer.ledges==NULL ||
@@ -495,10 +485,10 @@ bool MapServerMini::preload_step2b()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)nextMap.parsed_layer.ledges[newx+newy*this->width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesTop)
-                                            addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkSource::SourceTopMap);
+                                            addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceTopMap);
                                     }
                                     else
-                                        addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkSource::SourceTopMap);
+                                        addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceTopMap);
                                 }
                             }
                         }
@@ -521,7 +511,6 @@ bool MapServerMini::preload_step2b()
             if(codeZone!=0 && (this->botLayerMask==NULL || this->botLayerMask[x+y*this->width]==0))
             {
                 BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
-                blockObject.teleporter_list.push_back(teleporter[index]);
                 const uint8_t newx=teleporterEntry.destination_x,newy=teleporterEntry.destination_y;
                 MapServerMini &nextMap=*static_cast<MapServerMini *>(teleporterEntry.map);
                 if(nextMap.step.size()<2)
@@ -532,7 +521,7 @@ bool MapServerMini::preload_step2b()
                     if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
                     {
                         BlockObject &otherBlockObject=*step2nextMap.layers[otherCodeZone-1].blockObject;
-                        addBlockLink(blockObject,otherBlockObject,BlockObject::LinkSource::SourceTeleporter);
+                        addBlockLink(blockObject,otherBlockObject,BlockObject::LinkType::SourceTeleporter);
                     }
             }
             index++;
@@ -546,7 +535,7 @@ bool MapServerMini::preload_step2c()
     if(step.size()!=2)
         return false;
 
-    {
+/*    {
         unsigned int indexLayer=0;
         while(indexLayer<step.size())
         {
@@ -675,14 +664,12 @@ bool MapServerMini::preload_step2c()
                     }
                 }
                 //not clickable item
-                /*
-                std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
-                std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
-                std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
-
+                //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
+                //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
+                //std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
                 //insdustry -> skip, no position control on server side
-            wild monster (and their object, day cycle)
-            */
+            //wild monster (and their object, day cycle)
+
                 //item on map
                 {
                     for (auto it = this->pointOnMap_Item.begin(); it != this->pointOnMap_Item.cend(); ++it) {
@@ -980,59 +967,159 @@ bool MapServerMini::preload_step2c()
 
             indexLayer++;
         }
-    }
+    }*/
 
-    /*//transfer this to lower step
     {
-        if(!step1.layers.empty())
-        {
-            std::unordered_map<uint32_t,uint32_t> step1to2;
-            //map the x,y zone
-            int y=0;
-            while(y<this->height)
+            unsigned int indexLayer=0;
+            while(indexLayer<step.size())
             {
-                int x=0;
-                while(x<this->width)
+                MapParsedForBot &currentStep=step[indexLayer];
+                if(currentStep.map!=NULL)
                 {
-                    const uint8_t codeZone2=step2.map[x+y*this->width];
-                    if(codeZone2!=0)
-                        if(step1to2.find(codeZone2-1)==step1to2.cend())
-                        {
-                            const uint8_t codeZone1=step1.map[x+y*this->width];
-                            if(codeZone1!=0)
-                                step1to2[codeZone2-1]=codeZone1-1;
+                    if(!mapIsValid(currentStep))
+                    {
+                        displayConsoleMap(currentStep);
+                        abort();
+                    }
+                    //not clickable item
+                    //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
+                    //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
+                    //std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
+                    //insdustry -> skip, no position control on server side
+                    //wild monster (and their object, day cycle)
+
+                    //item on map
+                    {
+                        for (auto it = this->pointOnMap_Item.begin(); it != this->pointOnMap_Item.cend(); ++it) {
+                            const std::pair<uint8_t,uint8_t> &point=it->first;
+                            const MapServerMini::ItemOnMap &itemEntry=it->second;
+                            const uint8_t &codeZone=currentStep.map[point.first+point.second*this->width];
+
+                            if(codeZone>0)
+                            {
+                                BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
+                                blockObject.pointOnMap_Item.push_back(itemEntry);
+                            }
                             else
-                                step1to2[codeZone2-1]=step1.layers.size()-1;
+                            {
+                                BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
+                                blockObject.pointOnMap_Item.push_back(itemEntry);
+                            }
                         }
-                    x++;
+                    }
+                    //fight
+                    {
+                        for(const auto& n : this->botsFight) {
+                            const uint8_t x=n.first.first,y=n.first.second;
+                            const uint8_t &codeZone=currentStep.map[x+y*this->width];
+                            {
+                                const std::vector<uint32_t> &fightsList=n.second;
+                                if(codeZone>0)
+                                {
+                                    BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
+                                    blockObject.botsFight.insert(blockObject.botsFight.cbegin(),fightsList.cbegin(),fightsList.cend());
+                                }
+                                else
+                                {
+                                    BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
+                                    blockObject.botsFight.insert(blockObject.botsFight.cbegin(),fightsList.cbegin(),fightsList.cend());
+                                }
+                            }
+                        }
+                    }
+                    //shop
+                    {
+                        for(const auto& n : this->shops) {
+                            const uint8_t x=n.first.first,y=n.first.second;
+                            const uint8_t &codeZone=currentStep.map[x+y*this->width];
+                            {
+                                const std::vector<uint32_t> &shopList=n.second;
+                                if(codeZone>0)
+                                {
+                                    BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
+                                    blockObject.shops.insert(blockObject.shops.cbegin(),shopList.cbegin(),shopList.cend());
+                                }
+                                else
+                                {
+                                    BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
+                                    blockObject.shops.insert(blockObject.shops.cbegin(),shopList.cbegin(),shopList.cend());
+                                }
+                            }
+                        }
+                    }
+                    //heal
+                    {
+                        for(const auto& n : this->heal) {
+                            if(currentStep.map==NULL)
+                                abort();
+                            const uint8_t x=n.first,y=n.second;
+                            const uint8_t &codeZone=currentStep.map[x+y*this->width];
+                            {
+                                if(codeZone>0)
+                                {
+                                    BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
+                                    blockObject.heal=true;
+                                }
+                                else
+                                {
+                                    BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
+                                    blockObject.heal=true;
+                                }
+                            }
+                        }
+                    }
+
+                    //detect the wild monster
+                    const CatchChallenger::ParsedLayer &parsedLayer=this->parsed_layer;
+                    if(parsedLayer.monstersCollisionMap!=NULL)
+                    {
+                        int y=0;
+                        while(y<this->height)
+                        {
+                            int x=0;
+                            while(x<this->width)
+                            {
+                                if(currentStep.map[x+y*this->width]!=0)
+                                {
+                                    const uint8_t &codeZone=currentStep.map[x+y*this->width];
+                                    const uint8_t &monsterCode=parsedLayer.monstersCollisionMap[x+y*this->width];
+                                    if(monsterCode<parsedLayer.monstersCollisionList.size())
+                                    {
+                                        const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=parsedLayer.monstersCollisionList.at(monsterCode);
+                                        if(!monstersCollisionValue.walkOnMonsters.empty())
+                                        {
+                                            if(codeZone>0)
+                                            {
+                                                BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
+                                                blockObject.monstersCollisionValue=&monstersCollisionValue;
+                                            }
+                                            else
+                                            {
+                                                BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
+                                                blockObject.monstersCollisionValue=&monstersCollisionValue;
+                                            }
+                                        }
+                                    }
+                                }
+                                x++;
+                            }
+                            y++;
+                        }
+                    }
                 }
-                y++;
-            }
-            //link the missing zone
-            unsigned int index=0;
-            while(index<step2.layers.size())
-            {
-                if(step1to2.find(index)==step1to2.cend())
-                    step1to2[index]=step1.layers.size()-1;
-                index++;
-            }
-            //transfer the item
-            index=0;
-            while(index<step2.layers.size())
-            {
-                MapParsedForBot::Layer &layerstep1=step1.layers[step1to2.at(index)];
-                MapParsedForBot::Layer &layerstep2=step2.layers[index];
-                layerstep1.contentList.insert(layerstep1.contentList.end(), layerstep2.contentList.begin(), layerstep2.contentList.end());
-                index++;
+                else
+                    std::cerr << "map with zone code not found: " << map_file << std::endl;
+
+                indexLayer++;
             }
         }
-    }*/
 
     return true;
 }
 
 bool MapServerMini::preload_step2z()
 {
+    /*
     if(step.size()!=2)
         return false;
     MapParsedForBot &step2=step[1];
@@ -1127,7 +1214,7 @@ bool MapServerMini::preload_step2z()
         //step2.graphvizText+="struct2 -> struct3 [dir=both];\n";
 
         step2.graphvizText+="}";
-    }
+    }*/
     return true;
 }
 

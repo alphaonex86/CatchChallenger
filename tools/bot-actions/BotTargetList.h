@@ -28,6 +28,7 @@ public:
     void updateLayerElements();
     void updateMapInformation();
     void updatePlayerInformation();
+    std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject,QListWidget *listGUI);
 signals:
     void start_preload_the_map();
 private slots:
@@ -48,8 +49,24 @@ private:
 
     bool botsInformationLoaded;
     uint32_t mapId;
-    std::vector<uint32_t> mapIdList;
     WaitScreen waitScreen;
+
+    std::vector<uint32_t> mapIdListLocalTarget;
+    struct GlobalTarget
+    {
+        enum GlobalTargetType
+        {
+            ItemOnMap,//x,y
+            Fight,//fight id
+            Shop,//shop id
+            Heal,
+            WildMonster
+        };
+        GlobalTargetType type;
+        uint32_t extra;
+        const MapServerMini::BlockObject * blockObject;
+    };
+    std::vector<GlobalTarget> targetListGlobalTarget;
 };
 
 #endif // BOTTARGETLIST_H
