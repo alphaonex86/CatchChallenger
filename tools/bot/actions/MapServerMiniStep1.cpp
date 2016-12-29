@@ -169,10 +169,6 @@ bool MapServerMini::preload_step1()
             blockObject.heal=false;
             blockObject.market=false;
             blockObject.zonecapture=false;
-            blockObject.bordertop=NULL;
-            blockObject.borderright=NULL;
-            blockObject.borderbottom=NULL;
-            blockObject.borderleft=NULL;
             blockObject.monstersCollisionValue=NULL;
             blockObject.color=MapServerMini::colorsList.at(index%MapServerMini::colorsList.size());
             blockObject.layer=NULL;
