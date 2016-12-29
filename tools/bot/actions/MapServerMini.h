@@ -23,7 +23,6 @@ public:
     void preload_step2_addNearTileToScanList(std::vector<std::pair<uint8_t,uint8_t> > &scanList, const uint8_t &x, const uint8_t &y);
     bool preload_step2b();
     bool preload_step2c();
-    bool preload_step2z();
     static QList<QColor> colorsList;
 
     std::map<std::pair<uint8_t,uint8_t>,CatchChallenger::Orientation/*,pairhash*/> rescue;
@@ -101,7 +100,6 @@ public:
         };
         uint8_t *map;//0x00 is not accessible, it's why don't have layer for it
         std::vector<Layer> layers;//layer 1=index 0, layer 2=index 1, ...
-        std::string graphvizText;
     };
     struct BlockObjectPathFinding{
         std::vector<const BlockObject *> bestPath;
@@ -118,7 +116,6 @@ public:
     void displayConsoleMap(const MapParsedForBot &currentStep) const;
     bool mapIsValid(const MapParsedForBot &currentStep) const;
     void targetBlockList(const BlockObject * const currentNearBlock,std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock,const unsigned int &depth=2) const;
-    std::string graphStepNearMap(const BlockObject * const currentNearBlock, const unsigned int &depth=2) const;
     std::unordered_set<const MapServerMini *> getValidMaps(const unsigned int &depth=2) const;
     std::unordered_set<const BlockObject *> getAccessibleBlock(const std::unordered_set<const MapServerMini *> &validMaps,const BlockObject * const currentNearBlock) const;
     void resolvBlockPath(const BlockObject * blockToExplore,

@@ -16,6 +16,7 @@ SOURCES += main.cpp\
     ../bot/MultipleBotConnectionImplForGui.cpp \
     BotTargetList.cpp \
     BotTargetListGUI.cpp \
+    BotTargetListNear.cpp \
     MapBrowse.cpp \
     WaitScreen.cpp
 HEADERS  += MainWindow.h \

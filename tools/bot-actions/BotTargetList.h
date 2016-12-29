@@ -28,7 +28,9 @@ public:
     void updateLayerElements();
     void updateMapInformation();
     void updatePlayerInformation();
-    std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject,QListWidget *listGUI);
+    std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject,QListWidget *listGUI=NULL);
+    std::string graphStepNearMap(const MapServerMini::BlockObject * const currentNearBlock, const unsigned int &depth=2);
+    std::string graphLocalMap();
 signals:
     void start_preload_the_map();
 private slots:
