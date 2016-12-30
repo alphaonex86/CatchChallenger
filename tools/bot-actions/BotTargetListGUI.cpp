@@ -107,10 +107,10 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
                 newItem->setIcon(QIcon(itemExtra.image));
                 if(listGUI==ui->globalTargets)
                 {
-                    GlobalTarget globalTarget;
+                    ActionsBotInterface::GlobalTarget globalTarget;
                     globalTarget.blockObject=blockObject;
                     globalTarget.extra=itemOnMap.item;
-                    globalTarget.type=GlobalTarget::GlobalTargetType::ItemOnMap;
+                    globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap;
                     targetListGlobalTarget.push_back(globalTarget);
                     if(alternateColor)
                         newItem->setBackgroundColor(alternateColorValue);
@@ -132,10 +132,10 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
             {
                 const uint32_t &fightId=blockObject->botsFight.at(index);
                 const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId);
-                GlobalTarget globalTarget;
+                ActionsBotInterface::GlobalTarget globalTarget;
                 globalTarget.blockObject=blockObject;
                 globalTarget.extra=fightId;
-                globalTarget.type=GlobalTarget::GlobalTargetType::Fight;
+                globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight;
 
                 //item
                 {
@@ -219,10 +219,10 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
             {
                 const uint32_t &shopId=blockObject->shops.at(index);
                 const CatchChallenger::Shop &shop=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
-                GlobalTarget globalTarget;
+                ActionsBotInterface::GlobalTarget globalTarget;
                 globalTarget.blockObject=blockObject;
                 globalTarget.extra=shopId;
-                globalTarget.type=GlobalTarget::GlobalTargetType::Shop;
+                globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Shop;
 
                 unsigned int sub_index=0;
                 while(sub_index<shop.prices.size())
@@ -263,10 +263,10 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
         //heal
         if(blockObject->heal)
         {
-            GlobalTarget globalTarget;
+            ActionsBotInterface::GlobalTarget globalTarget;
             globalTarget.blockObject=blockObject;
             globalTarget.extra=0;
-            globalTarget.type=GlobalTarget::GlobalTargetType::Heal;
+            globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal;
 
             QListWidgetItem * newItem=new QListWidgetItem();
             newItem->setText(QString("Heal"));
@@ -335,10 +335,10 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
             const MapServerMini::BlockObjectPathFinding &resolvedBlock=bufferMonstersCollisionEntry.resolvedBlock;
             const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monsterCollisionContent=bufferMonstersCollisionEntry.bufferMonstersCollisionContent;
 
-            GlobalTarget globalTarget;
+            ActionsBotInterface::GlobalTarget globalTarget;
             globalTarget.blockObject=blockObject;
             globalTarget.extra=0;
-            globalTarget.type=GlobalTarget::GlobalTargetType::WildMonster;
+            globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster;
 
             unsigned int sub_index=0;
             while(sub_index<monsterCollisionContent.defaultMonsters.size())

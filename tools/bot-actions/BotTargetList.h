@@ -41,7 +41,7 @@ private slots:
     void on_comboBoxStep_currentIndexChanged(int index);
     void on_browseMap_clicked();
     void on_searchDeep_editingFinished();
-
+    void on_globalTargets_itemActivated(QListWidgetItem *item);
 private:
     Ui::BotTargetList *ui;
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient;
@@ -55,21 +55,7 @@ private:
     WaitScreen waitScreen;
 
     std::vector<uint32_t> mapIdListLocalTarget;
-    struct GlobalTarget
-    {
-        enum GlobalTargetType
-        {
-            ItemOnMap,//x,y
-            Fight,//fight id
-            Shop,//shop id
-            Heal,
-            WildMonster
-        };
-        GlobalTargetType type;
-        uint32_t extra;
-        const MapServerMini::BlockObject * blockObject;
-    };
-    std::vector<GlobalTarget> targetListGlobalTarget;
+    std::vector<ActionsBotInterface::GlobalTarget> targetListGlobalTarget;
     bool alternateColor;
     static std::string pathFindingToString(const MapServerMini::BlockObjectPathFinding &resolvedBlock);
     static bool isSame(const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentA,const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentB);
