@@ -123,6 +123,7 @@ public:
                          const std::unordered_set<const BlockObject *> &accessibleBlock,
                          const std::vector<const BlockObject *> &previousBlock=std::vector<const BlockObject *>()
                          ) const;
+    static uint32_t resolvBlockWeight(const BlockObject * const blockToExplore);
 };
 
 #endif // MAPSERVERMINI_H

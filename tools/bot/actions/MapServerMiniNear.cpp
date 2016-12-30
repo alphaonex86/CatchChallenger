@@ -65,6 +65,17 @@ std::unordered_set<const MapServerMini::BlockObject *> MapServerMini::getAccessi
     return accessibleBlock;
 }
 
+uint32_t MapServerMini::resolvBlockWeight(const BlockObject * const blockToExplore)
+{
+    unsigned int weight=10;
+    if(blockToExplore->monstersCollisionValue!=NULL)
+        if(!blockToExplore->monstersCollisionValue->walkOnMonsters.empty())
+            weight+=100;
+    if(!blockToExplore->botsFight.empty())
+        weight+=250;
+    return weight;
+}
+
 void MapServerMini::resolvBlockPath(const BlockObject * blockToExplore,
         std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock,
         const std::unordered_set<const BlockObject *> &accessibleBlock,
@@ -77,26 +88,22 @@ void MapServerMini::resolvBlockPath(const BlockObject * blockToExplore,
         //blockObjectPathFinding.bestPath;
         resolvedBlock[blockToExplore]=blockObjectPathFinding;
     }
+    const unsigned int &currentBlockWeight=resolvedBlock.at(blockToExplore).weight;
 
     std::vector<const BlockObject *> nextBlockList;
     for(const auto& n:blockToExplore->links) {
         const BlockObject * const nextBlock=n.first;
         if(accessibleBlock.find(nextBlock)!=accessibleBlock.cend())
         {
-            unsigned int weight=10;
-            if(nextBlock->monstersCollisionValue!=NULL)
-                if(!nextBlock->monstersCollisionValue->walkOnMonsters.empty())
-                    weight+=100;
-            if(!nextBlock->botsFight.empty())
-                weight+=250;
+            unsigned int nextBlockWeight=currentBlockWeight+resolvBlockWeight(nextBlock);
             //already parsed
             if(resolvedBlock.find(nextBlock)!=resolvedBlock.cend())
             {
                 BlockObjectPathFinding &blockObjectPathFinding=resolvedBlock[nextBlock];
                 //if the next block weight>weight
-                if(blockObjectPathFinding.weight>weight)
+                if(blockObjectPathFinding.weight>nextBlockWeight)
                 {
-                    blockObjectPathFinding.weight=weight;
+                    blockObjectPathFinding.weight=nextBlockWeight;
                     std::vector<const BlockObject *> composedBlock=previousBlock;
                     composedBlock.push_back(nextBlock);
                     blockObjectPathFinding.bestPath=composedBlock;
@@ -106,7 +113,7 @@ void MapServerMini::resolvBlockPath(const BlockObject * blockToExplore,
             else
             {
                 BlockObjectPathFinding blockObjectPathFinding;
-                blockObjectPathFinding.weight=weight;
+                blockObjectPathFinding.weight=nextBlockWeight;
                 std::vector<const BlockObject *> composedBlock=previousBlock;
                 composedBlock.push_back(nextBlock);
                 blockObjectPathFinding.bestPath=composedBlock;

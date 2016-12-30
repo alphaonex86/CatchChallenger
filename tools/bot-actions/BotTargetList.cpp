@@ -141,26 +141,7 @@ void BotTargetList::updatePlayerInformation()
                 ui->globalTargets->clear();
                 targetListGlobalTarget.clear();
                 alternateColor=false;
-                for(const auto& n:resolvedBlock) {
-                    const MapServerMini::BlockObject * const nextBlock=n.first;
-                    const MapServerMini::BlockObjectPathFinding &blockObjectPathFinding=n.second;
-
-                    //do the path
-                    QString pathString;
-                    {
-                        unsigned int indexBestPath=0;
-                        while(indexBestPath<blockObjectPathFinding.bestPath.size())
-                        {
-                            const MapServerMini::BlockObject * const block=blockObjectPathFinding.bestPath.at(indexBestPath);
-                            if(!pathString.isEmpty())
-                                pathString+=", ";
-                            pathString+=QString::fromStdString(block->map->map_file)+"/Block "+QString::number(block->id+1);
-                            indexBestPath++;
-                        }
-                    }
-
-                    contentToGUI(nextBlock,ui->globalTargets);
-                }
+                contentToGUI(ui->globalTargets,resolvedBlock);
             }
         }
         else
