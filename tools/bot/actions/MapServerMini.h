@@ -60,6 +60,8 @@ public:
         {
             LinkDirection direction;
             std::vector<LinkType> types;
+            //point to go
+            uint8_t x,y;
         };
         std::unordered_map<BlockObject *,LinkInformation> links;
         MapServerMini * map;
@@ -111,7 +113,7 @@ public:
 
     uint8_t *botLayerMask;
 
-    bool addBlockLink(BlockObject &blockObjectFrom,BlockObject &blockObjectTo,const BlockObject::LinkType &linkSourceFrom);
+    bool addBlockLink(BlockObject &blockObjectFrom,BlockObject &blockObjectTo,const BlockObject::LinkType &linkSourceFrom,/*point to go:*/const uint8_t &x,const uint8_t &y);
 public:
     void displayConsoleMap(const MapParsedForBot &currentStep) const;
     bool mapIsValid(const MapParsedForBot &currentStep) const;

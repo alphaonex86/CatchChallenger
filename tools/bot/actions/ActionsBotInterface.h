@@ -7,12 +7,28 @@
 #define ACTIONS_BOT_INTERFACE_H
 
 #include "../BotInterface.h"
+#include "MapServerMini.h"
 #include <unordered_map>
 
 class ActionsBotInterface : public BotInterface
 {
     Q_OBJECT
 public:
+    struct GlobalTarget
+    {
+        enum GlobalTargetType
+        {
+            ItemOnMap,//x,y
+            Fight,//fight id
+            Shop,//shop id
+            Heal,
+            WildMonster,
+            None
+        };
+        GlobalTargetType type;
+        uint32_t extra;
+        const MapServerMini::BlockObject * blockObject;//NULL if no target
+    };
     struct Player
     {
         CatchChallenger::Player_public_informations player;
@@ -21,6 +37,7 @@ public:
         quint16 y;
         CatchChallenger::Direction direction;
         std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
+        GlobalTarget target;
     };
 
     ActionsBotInterface();

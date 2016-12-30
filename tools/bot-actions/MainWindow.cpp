@@ -169,6 +169,9 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
         newPlayer.x=0;
         newPlayer.y=0;
         newPlayer.direction=CatchChallenger::Direction::Direction_look_at_bottom;
+        newPlayer.target.blockObject=NULL;
+        newPlayer.target.extra=0;
+        newPlayer.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
         actionsAction->clientList[api]=newPlayer;
 
         if(!connect(api,&CatchChallenger::Api_protocol::have_inventory,     actionsAction,&ActionsAction::have_inventory,Qt::QueuedConnection))
