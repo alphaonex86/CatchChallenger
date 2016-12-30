@@ -87,6 +87,7 @@ void BotTargetList::on_bots_itemSelectionChanged()
     ui->comboBoxStep->setEnabled(true);
     ui->globalTargets->setEnabled(true);
     ui->browseMap->setEnabled(true);
+    ui->groupBoxPlayer->setEnabled(true);
 
     const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
     mapId=player.mapId;
@@ -255,6 +256,13 @@ void BotTargetList::updatePlayerInformation()
             index++;
         }
     }
+    //the next target
+    {
+        if(player.target.blockObject==NULL)
+            ui->label_next_local_target->setText("Next local target: None");
+        else
+            ui->label_next_local_target->setText("Next global target: "+QString::fromStdString(player.target.blockObject->map->map_file));
+    }
 }
 
 void BotTargetList::updateMapInformation()
@@ -382,6 +390,7 @@ void BotTargetList::updateLayerElements()
 
     const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(ui->comboBox_Layer->currentIndex());
     alternateColor=false;
+    ui->localTargets->clear();
     contentToGUI(layer.blockObject,ui->localTargets);
 
     ui->label_zone->setText(QString::fromStdString(layer.text));
@@ -478,4 +487,29 @@ void BotTargetList::on_searchDeep_editingFinished()
             ui->overall_graphvizText->setPlainText(overall_graphvizText);
         }
     }
+}
+
+void BotTargetList::on_globalTargets_itemActivated(QListWidgetItem *item)
+{
+    (void)item;
+    const int &currentRow=ui->globalTargets->currentRow();
+    if(currentRow==-1)
+        return;
+    const ActionsBotInterface::GlobalTarget &globalTarget=targetListGlobalTarget.at(currentRow);
+
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    if(!actionsAction->clientList.contains(client->api))
+        return;
+    ActionsBotInterface::Player &player=actionsAction->clientList[client->api];
+
+    if(player.target.blockObject!=NULL || player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
+        return;
+    player.target=globalTarget;
+    updatePlayerInformation();
 }
