@@ -28,7 +28,8 @@ public:
     void updateLayerElements();
     void updateMapInformation();
     void updatePlayerInformation();
-    std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject,QListWidget *listGUI=NULL);
+    std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject, QListWidget *listGUI=NULL);
+    std::vector<std::string> contentToGUI(QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList);
     std::string graphStepNearMap(const MapServerMini::BlockObject * const currentNearBlock, const unsigned int &depth=2);
     std::string graphLocalMap();
 signals:
@@ -70,6 +71,10 @@ private:
     };
     std::vector<GlobalTarget> targetListGlobalTarget;
     bool alternateColor;
+    static std::string pathFindingToString(const MapServerMini::BlockObjectPathFinding &resolvedBlock);
+    static bool isSame(const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentA,const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentB);
+
+    //std::unodered_map<const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent,un> monsterCollisionContentDuplicate;
 };
 
 #endif // BOTTARGETLIST_H
