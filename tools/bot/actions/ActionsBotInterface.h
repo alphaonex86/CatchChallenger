@@ -28,6 +28,7 @@ public:
         GlobalTargetType type;
         uint32_t extra;
         const MapServerMini::BlockObject * blockObject;//NULL if no target
+        std::vector<const MapServerMini::BlockObject *> bestPath;
     };
     struct Player
     {
