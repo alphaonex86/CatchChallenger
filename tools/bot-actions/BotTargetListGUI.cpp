@@ -57,19 +57,19 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
                                 switch(type)
                                 {
                                     case MapServerMini::BlockObject::LinkType::SourceTeleporter:
-                                        newItem->setText(QString("Teleporter to %1").arg(QString::fromStdString(nextBlock->map->map_file)));
+                                        newItem->setText(QString("Teleporter to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkInformation.x).arg(linkInformation.y));
                                     break;
                                     case MapServerMini::BlockObject::LinkType::SourceTopMap:
-                                        newItem->setText(QString("Top border to %1").arg(QString::fromStdString(nextBlock->map->map_file)));
+                                        newItem->setText(QString("Top border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkInformation.x).arg(linkInformation.y));
                                     break;
                                     case MapServerMini::BlockObject::LinkType::SourceRightMap:
-                                        newItem->setText(QString("Right border to %1").arg(QString::fromStdString(nextBlock->map->map_file)));
+                                        newItem->setText(QString("Right border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkInformation.x).arg(linkInformation.y));
                                     break;
                                     case MapServerMini::BlockObject::LinkType::SourceBottomMap:
-                                        newItem->setText(QString("Bottom border to %1").arg(QString::fromStdString(nextBlock->map->map_file)));
+                                        newItem->setText(QString("Bottom border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkInformation.x).arg(linkInformation.y));
                                     break;
                                     case MapServerMini::BlockObject::LinkType::SourceLeftMap:
-                                        newItem->setText(QString("Left border to %1").arg(QString::fromStdString(nextBlock->map->map_file)));
+                                        newItem->setText(QString("Left border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkInformation.x).arg(linkInformation.y));
                                     break;
                                     default:
                                     break;
@@ -110,6 +110,7 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
                     ActionsBotInterface::GlobalTarget globalTarget;
                     globalTarget.blockObject=blockObject;
                     globalTarget.extra=itemOnMap.item;
+                    globalTarget.bestPath=resolvedBlock.bestPath;
                     globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap;
                     targetListGlobalTarget.push_back(globalTarget);
                     if(alternateColor)
@@ -135,6 +136,7 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
                 ActionsBotInterface::GlobalTarget globalTarget;
                 globalTarget.blockObject=blockObject;
                 globalTarget.extra=fightId;
+                globalTarget.bestPath=resolvedBlock.bestPath;
                 globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight;
 
                 //item
@@ -222,6 +224,7 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
                 ActionsBotInterface::GlobalTarget globalTarget;
                 globalTarget.blockObject=blockObject;
                 globalTarget.extra=shopId;
+                globalTarget.bestPath=resolvedBlock.bestPath;
                 globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Shop;
 
                 unsigned int sub_index=0;
@@ -266,6 +269,7 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
             ActionsBotInterface::GlobalTarget globalTarget;
             globalTarget.blockObject=blockObject;
             globalTarget.extra=0;
+            globalTarget.bestPath=resolvedBlock.bestPath;
             globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal;
 
             QListWidgetItem * newItem=new QListWidgetItem();
@@ -338,6 +342,7 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
             ActionsBotInterface::GlobalTarget globalTarget;
             globalTarget.blockObject=blockObject;
             globalTarget.extra=0;
+            globalTarget.bestPath=resolvedBlock.bestPath;
             globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster;
 
             unsigned int sub_index=0;
