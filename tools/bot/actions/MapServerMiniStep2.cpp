@@ -257,6 +257,8 @@ void MapServerMini::preload_step2_addNearTileToScanList(std::vector<std::pair<ui
 bool MapServerMini::addBlockLink(BlockObject &blockObjectFrom, BlockObject &blockObjectTo, const BlockObject::LinkType &linkSourceFrom,
                                  /*point to go:*/const uint8_t &x,const uint8_t &y)
 {
+    if(x==0 && y==0)
+        std::cerr << "Teleporter on 0,0, bug suspected" << std::endl;
     //search into the destination
     {
         if(blockObjectTo.links.find(&blockObjectFrom)!=blockObjectTo.links.cend())
@@ -265,19 +267,19 @@ bool MapServerMini::addBlockLink(BlockObject &blockObjectFrom, BlockObject &bloc
             linkInformationTo.direction=BlockObject::LinkDirection::BothDirection;
             if(blockObjectFrom.links.find(&blockObjectTo)==blockObjectFrom.links.cend())
             {
-                BlockObject::LinkInformation &linkInformationFrom=blockObjectFrom.links[&blockObjectTo];
-                linkInformationFrom.direction=BlockObject::LinkDirection::BothDirection;
-                if(!vectorcontainsAtLeastOne(linkInformationFrom.types,linkSourceFrom))
-                    linkInformationFrom.types.push_back(linkSourceFrom);
-            }
-            else
-            {
                 BlockObject::LinkInformation linkInformationFrom;
                 linkInformationFrom.direction=BlockObject::LinkDirection::BothDirection;
                 linkInformationFrom.types.push_back(linkSourceFrom);
                 linkInformationFrom.x=x;
                 linkInformationFrom.y=y;
                 blockObjectFrom.links[&blockObjectTo]=linkInformationFrom;
+            }
+            else
+            {
+                BlockObject::LinkInformation &linkInformationFrom=blockObjectFrom.links[&blockObjectTo];
+                linkInformationFrom.direction=BlockObject::LinkDirection::BothDirection;
+                if(!vectorcontainsAtLeastOne(linkInformationFrom.types,linkSourceFrom))
+                    linkInformationFrom.types.push_back(linkSourceFrom);
             }
         }
         else
@@ -526,6 +528,8 @@ bool MapServerMini::preload_step2b()
                     if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
                     {
                         BlockObject &otherBlockObject=*step2nextMap.layers[otherCodeZone-1].blockObject;
+                        if(x==0 && y==0)
+                            std::cerr << "Teleporter on 0,0, bug suspected" << std::endl;
                         addBlockLink(blockObject,otherBlockObject,BlockObject::LinkType::SourceTeleporter,x,y);
                     }
             }
