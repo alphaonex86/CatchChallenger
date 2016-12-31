@@ -144,6 +144,32 @@ void BotTargetList::updatePlayerInformation()
                 alternateColor=false;
                 contentToGUI(ui->globalTargets,resolvedBlock);
             }
+            //the next target
+            {
+                if(player.target.blockObject==NULL)
+                    ui->label_next_local_target->setText("Next local target: None");
+                else
+                {
+                    if(player.target.bestPath.empty())
+                        ui->label_next_local_target->setText("Next global target: "+QString::fromStdString(player.target.blockObject->map->map_file));
+                    else
+                    {
+                        const MapServerMini::BlockObject * const nextBlock=player.target.bestPath.at(0);
+                        const MapServerMini::MapParsedForBot::Layer * const nextLlayer=static_cast<const MapServerMini::MapParsedForBot::Layer *>(nextBlock->layer);
+                        ui->label_next_local_target->setText("Next local target: "+QString::fromStdString(nextLlayer->name)+" on "+QString::fromStdString(nextBlock->map->map_file));
+                        //search the next position
+                        for(const auto& n:layer.blockObject->links) {
+                            const MapServerMini::BlockObject * const tempNextBlock=n.first;
+                            const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
+                            if(tempNextBlock==nextBlock)
+                            {
+                                ui->label_next_local_target->setText("Next local target: "+QString::fromStdString(nextLlayer->name)+" on "+QString::fromStdString(nextBlock->map->map_file)+", go to "+QString::number(linkInformation.x)+","+QString::number(linkInformation.y));
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
         else
             ui->label_local_target->setTitle(ui->label_local_target->title()+" (Out of the map)");
@@ -255,13 +281,6 @@ void BotTargetList::updatePlayerInformation()
             }
             index++;
         }
-    }
-    //the next target
-    {
-        if(player.target.blockObject==NULL)
-            ui->label_next_local_target->setText("Next local target: None");
-        else
-            ui->label_next_local_target->setText("Next global target: "+QString::fromStdString(player.target.blockObject->map->map_file));
     }
 }
 
@@ -508,7 +527,7 @@ void BotTargetList::on_globalTargets_itemActivated(QListWidgetItem *item)
         return;
     ActionsBotInterface::Player &player=actionsAction->clientList[client->api];
 
-    if(player.target.blockObject!=NULL || player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
+    if(player.target.blockObject!=NULL || player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
         return;
     player.target=globalTarget;
     updatePlayerInformation();
