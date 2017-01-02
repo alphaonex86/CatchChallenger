@@ -123,7 +123,7 @@ void BotTargetList::updatePlayerInformation()
         if(playerCodeZone>0 && (uint32_t)(playerCodeZone-1)<(uint32_t)stepPlayer.layers.size())
         {
             const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
-            QString overall_graphvizText=QString::fromStdString(graphStepNearMap(layer.blockObject,ui->searchDeep->value()));
+            QString overall_graphvizText=QString::fromStdString(graphStepNearMap(client,layer.blockObject,ui->searchDeep->value()));
             if(overall_graphvizText.isEmpty())
                 ui->overall_graphvizText->setVisible(false);
             else
@@ -142,7 +142,7 @@ void BotTargetList::updatePlayerInformation()
                 ui->globalTargets->clear();
                 targetListGlobalTarget.clear();
                 alternateColor=false;
-                contentToGUI(ui->globalTargets,resolvedBlock);
+                contentToGUI(client,ui->globalTargets,resolvedBlock,!ui->tooHard->isChecked());
             }
             //the next target
             {
@@ -150,8 +150,10 @@ void BotTargetList::updatePlayerInformation()
                     ui->label_next_local_target->setText("Next local target: None");
                 else
                 {
+                    const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target);
+                    const uint8_t x=point.first,y=point.second;
                     if(player.target.bestPath.empty())
-                        ui->label_next_local_target->setText("Next global target: "+QString::fromStdString(player.target.blockObject->map->map_file));
+                        ui->label_next_local_target->setText("Next global target: "+QString::fromStdString(player.target.blockObject->map->map_file)+" at "+QString::number(x)+","+QString::number(y));
                     else
                     {
                         const MapServerMini::BlockObject * const nextBlock=player.target.bestPath.at(0);
@@ -163,7 +165,9 @@ void BotTargetList::updatePlayerInformation()
                             const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
                             if(tempNextBlock==nextBlock)
                             {
-                                ui->label_next_local_target->setText("Next local target: "+QString::fromStdString(nextLlayer->name)+" on "+QString::fromStdString(nextBlock->map->map_file)+", go to "+QString::number(linkInformation.x)+","+QString::number(linkInformation.y));
+                                ui->label_next_local_target->setText("Next local target: "+QString::fromStdString(nextLlayer->name)+" on "+QString::fromStdString(nextBlock->map->map_file)+", go to "+
+                                                                     QString::number(linkInformation.x)+","+QString::number(linkInformation.y)
+                                                                     );
                                 break;
                             }
                         }
@@ -410,7 +414,7 @@ void BotTargetList::updateLayerElements()
     const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(ui->comboBox_Layer->currentIndex());
     alternateColor=false;
     ui->localTargets->clear();
-    contentToGUI(layer.blockObject,ui->localTargets);
+    contentToGUI(layer.blockObject,client,ui->localTargets);
 
     ui->label_zone->setText(QString::fromStdString(layer.text));
 }
@@ -497,7 +501,7 @@ void BotTargetList::on_searchDeep_editingFinished()
         const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
         const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
         const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
-        QString overall_graphvizText=QString::fromStdString(graphStepNearMap(layer.blockObject,ui->searchDeep->value()));
+        QString overall_graphvizText=QString::fromStdString(graphStepNearMap(client,layer.blockObject,ui->searchDeep->value()));
         if(overall_graphvizText.isEmpty())
             ui->overall_graphvizText->setVisible(false);
         else
@@ -531,4 +535,78 @@ void BotTargetList::on_globalTargets_itemActivated(QListWidgetItem *item)
         return;
     player.target=globalTarget;
     updatePlayerInformation();
+}
+
+void BotTargetList::on_tooHard_clicked()
+{
+    updatePlayerInformation();
+}
+
+std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::BlockObject * const blockObject, const ActionsBotInterface::GlobalTarget &target)
+{
+    std::pair<uint8_t,uint8_t> point(0,0);
+    if(target.blockObject==NULL)
+    {
+        std::cerr << "error: target.blockObject==NULL into getNextPosition()" << std::endl;
+        return point;
+    }
+    if(target.bestPath.empty())
+    {
+        switch(target.type)
+        {
+            case ActionsBotInterface::GlobalTarget::ItemOnMap:
+            for(auto it = blockObject->pointOnMap_Item.begin();it!=blockObject->pointOnMap_Item.cend();++it)
+            {
+                const MapServerMini::ItemOnMap &itemOnMap=it->second;
+                if(itemOnMap.item==target.extra)
+                    return it->first;
+            }
+            break;
+            case ActionsBotInterface::GlobalTarget::Fight:
+                for(auto it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
+                {
+                    const std::vector<uint32_t> &botsFightList=it->second;
+                    if(vectorcontainsAtLeastOne(botsFightList,target.extra))
+                        return it->first;
+                }
+            break;
+            case ActionsBotInterface::GlobalTarget::Shop:
+                for(auto it = blockObject->shops.begin();it!=blockObject->shops.cend();++it)
+                {
+                    const std::vector<uint32_t> &shops=it->second;
+                    if(vectorcontainsAtLeastOne(shops,target.extra))
+                        return it->first;
+                }
+            break;
+            case ActionsBotInterface::GlobalTarget::Heal:
+                for(auto it = blockObject->heal.begin();it!=blockObject->heal.cend();++it)
+                    return *it;
+            break;
+            case ActionsBotInterface::GlobalTarget::WildMonster:
+            abort();//not coded
+            break;
+            default:
+            abort();
+            break;
+        }
+    }
+    else
+    {
+        const MapServerMini::BlockObject * const nextBlock=target.bestPath.at(0);
+        if(nextBlock==blockObject)
+            abort();
+        //search the next position
+        for(const auto& n:blockObject->links) {
+            const MapServerMini::BlockObject * const tempNextBlock=n.first;
+            const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
+            if(tempNextBlock==nextBlock)
+            {
+                point.first=linkInformation.x;
+                point.second=linkInformation.y;
+                return point;
+            }
+        }
+        abort();//path def but next hop not found
+    }
+    return point;
 }

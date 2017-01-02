@@ -28,10 +28,11 @@ public:
     void updateLayerElements();
     void updateMapInformation();
     void updatePlayerInformation();
-    std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject, QListWidget *listGUI=NULL);
-    std::vector<std::string> contentToGUI(QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList);
-    std::string graphStepNearMap(const MapServerMini::BlockObject * const currentNearBlock, const unsigned int &depth=2);
+    std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject,const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI=NULL);
+    std::vector<std::string> contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard=true);
+    std::string graphStepNearMap(const MultipleBotConnection::CatchChallengerClient * const client,const MapServerMini::BlockObject * const currentNearBlock, const unsigned int &depth=2);
     std::string graphLocalMap();
+    std::pair<uint8_t,uint8_t> getNextPosition(const MapServerMini::BlockObject * const blockObject, const ActionsBotInterface::GlobalTarget &target);
 signals:
     void start_preload_the_map();
 private slots:
@@ -42,6 +43,8 @@ private slots:
     void on_browseMap_clicked();
     void on_searchDeep_editingFinished();
     void on_globalTargets_itemActivated(QListWidgetItem *item);
+    void on_tooHard_clicked();
+
 private:
     Ui::BotTargetList *ui;
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient;
