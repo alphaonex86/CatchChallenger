@@ -68,16 +68,17 @@ public:
         uint8_t id;
 
         //things into each zone
-        std::vector<ItemOnMap> pointOnMap_Item;
-        std::vector<uint32_t> botsFight;
-        std::vector<uint32_t> shops;
-        bool heal;
+        std::map<std::pair<uint8_t,uint8_t>,ItemOnMap/*,pairhash*/> pointOnMap_Item;
+        std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>,pairhash> botsFight;
+        std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight
+        std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>, pairhash> shops;
+        std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
         const CatchChallenger::MonstersCollisionValue *monstersCollisionValue;
 
-        bool rescue;
-        bool learn;
-        bool market;
-        bool zonecapture;
+        std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> rescue;
+        std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
+        std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
+        std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
 
         QColor color;
         void *layer;

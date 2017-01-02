@@ -4,22 +4,38 @@
 #include "../../client/fight/interface/ClientFightEngine.h"
 #include "MapBrowse.h"
 
-std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockObject * const blockObject, QListWidget *listGUI)
+std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockObject * const blockObject, const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI)
 {
     std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> resolvedBlockList;
     MapServerMini::BlockObjectPathFinding pathFinding;
     pathFinding.weight=0;
     resolvedBlockList[blockObject]=pathFinding;
-    return contentToGUI(listGUI,resolvedBlockList);
+    return contentToGUI(client,listGUI,resolvedBlockList);
 }
 
-std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
-                                                     const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList)
+std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI,
+                                                     const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard)
 {
+    //compute the forbiden direct value
+    const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=client->api->get_player_informations();
+    uint32_t maxMonsterLevel=0;
+    {
+        unsigned int index=0;
+        while(index<player_private_and_public_informations.playerMonster.size())
+        {
+            const CatchChallenger::PlayerMonster &playerMonster=player_private_and_public_informations.playerMonster.at(index);
+            if(playerMonster.level>maxMonsterLevel)
+                maxMonsterLevel=playerMonster.level;
+            index++;
+        }
+    }
+
     if(listGUI==ui->localTargets)
         mapIdListLocalTarget.clear();
     std::vector<std::string> itemToReturn;
     QColor alternateColorValue(230,230,230,255);
+    QColor redColorValue(255,240,240,255);
+    QColor redAlternateColorValue(255,220,220,255);
 
     struct BufferMonstersCollisionEntry
     {
@@ -94,10 +110,9 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
 
         //item on map
         {
-            unsigned int index=0;
-            while(index<blockObject->pointOnMap_Item.size())
+            for(auto it = blockObject->pointOnMap_Item.begin();it!=blockObject->pointOnMap_Item.cend();++it)
             {
-                const MapServerMini::ItemOnMap &itemOnMap=blockObject->pointOnMap_Item.at(index);
+                const MapServerMini::ItemOnMap &itemOnMap=it->second;
                 const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemOnMap.item);
                 QListWidgetItem * newItem=new QListWidgetItem();
                 if(itemOnMap.infinite)
@@ -123,148 +138,204 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
                     listGUI->addItem(newItem);
                 else
                     delete newItem;
-                index++;
             }
         }
         //fight
         {
-            unsigned int index=0;
-            while(index<blockObject->botsFight.size())
+            for(auto it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
             {
-                const uint32_t &fightId=blockObject->botsFight.at(index);
-                const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId);
-                ActionsBotInterface::GlobalTarget globalTarget;
-                globalTarget.blockObject=blockObject;
-                globalTarget.extra=fightId;
-                globalTarget.bestPath=resolvedBlock.bestPath;
-                globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight;
+                const std::vector<uint32_t> &botsFightList=it->second;
+                unsigned int index=0;
+                while(index<botsFightList.size())
+                {
+                    const uint32_t &fightId=botsFightList.at(index);
+                    const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId);
+                    ActionsBotInterface::GlobalTarget globalTarget;
+                    globalTarget.blockObject=blockObject;
+                    globalTarget.extra=fightId;
+                    globalTarget.bestPath=resolvedBlock.bestPath;
+                    globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight;
 
-                //item
-                {
-                    unsigned int sub_index=0;
-                    while(sub_index<fight.items.size())
+                    uint8_t maxFightLevel=0;
                     {
-                        const CatchChallenger::BotFight::Item &item=fight.items.at(sub_index);
-                        const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item.id);
-                        const uint32_t &quantity=item.quantity;
+                        unsigned int sub_index=0;
+                        while(sub_index<fight.monsters.size())
                         {
-                            QListWidgetItem * newItem=new QListWidgetItem();
-                            if(quantity>1)
-                                newItem->setText(QString("Fight %1: %2x %3")
-                                              .arg(fightId)
-                                              .arg(quantity)
-                                              .arg(itemExtra.name)
-                                              );
-                            else
-                                newItem->setText(QString("Fight %1: %2")
-                                              .arg(fightId)
-                                              .arg(itemExtra.name)
-                                              );
-                            newItem->setIcon(QIcon(itemExtra.image));
-                            itemToReturn.push_back(newItem->text().toStdString());
-                            if(listGUI==ui->globalTargets)
-                            {
-                                targetListGlobalTarget.push_back(globalTarget);
-                                if(alternateColor)
-                                    newItem->setBackgroundColor(alternateColorValue);
-                                newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
-                            }
-                            if(listGUI!=NULL)
-                                listGUI->addItem(newItem);
-                            else
-                                delete newItem;
+                            const CatchChallenger::BotFight::BotFightMonster &monster=fight.monsters.at(sub_index);
+                            if(monster.level>maxFightLevel)
+                                maxFightLevel=monster.level;
+                            sub_index++;
                         }
-                        sub_index++;
                     }
-                }
-                //monster
-                {
-                    unsigned int sub_index=0;
-                    while(sub_index<fight.monsters.size())
+
+                    QString tips;
+                    QColor colorValueL;
+                    QColor alternateColorValueL;
+                    const bool tooHard=maxFightLevel>(maxMonsterLevel+2);
+                    if(tooHard)
                     {
-                        const CatchChallenger::BotFight::BotFightMonster &monster=fight.monsters.at(sub_index);
-                        const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monster.id);
-                        {
-                            QListWidgetItem * newItem=new QListWidgetItem();
-                            newItem->setText(QString("Fight %1: %2 level %3")
-                                    .arg(fightId)
-                                    .arg(monsterExtra.name)
-                                    .arg(monster.level)
-                                    );
-                            newItem->setIcon(QIcon(monsterExtra.thumb));
-                            itemToReturn.push_back(newItem->text().toStdString());
-                            if(listGUI==ui->globalTargets)
-                            {
-                                targetListGlobalTarget.push_back(globalTarget);
-                                if(alternateColor)
-                                    newItem->setBackgroundColor(alternateColorValue);
-                                newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
-                            }
-                            if(listGUI!=NULL)
-                                listGUI->addItem(newItem);
-                            else
-                                delete newItem;
-                        }
-                        sub_index++;
+                        colorValueL=redColorValue;
+                        alternateColorValueL=redAlternateColorValue;
+                        tips="Too hard fight";
                     }
+                    else
+                    {
+                        //colorValue=;
+                        alternateColorValueL=alternateColorValue;
+                    }
+
+                    if(displayTooHard || !tooHard)
+                    {
+                        //item
+                        {
+                            unsigned int sub_index=0;
+                            while(sub_index<fight.items.size())
+                            {
+                                const CatchChallenger::BotFight::Item &item=fight.items.at(sub_index);
+                                const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item.id);
+                                const uint32_t &quantity=item.quantity;
+                                {
+                                    QListWidgetItem * newItem=new QListWidgetItem();
+                                    if(quantity>1)
+                                        newItem->setText(QString("Fight %1: %2x %3")
+                                                      .arg(fightId)
+                                                      .arg(quantity)
+                                                      .arg(itemExtra.name)
+                                                      );
+                                    else
+                                        newItem->setText(QString("Fight %1: %2")
+                                                      .arg(fightId)
+                                                      .arg(itemExtra.name)
+                                                      );
+                                    newItem->setIcon(QIcon(itemExtra.image));
+                                    newItem->setToolTip(tips);
+                                    itemToReturn.push_back(newItem->text().toStdString());
+                                    if(listGUI==ui->globalTargets)
+                                    {
+                                        targetListGlobalTarget.push_back(globalTarget);
+                                        if(alternateColor)
+                                            newItem->setBackgroundColor(alternateColorValueL);
+                                        else if(colorValueL.isValid())
+                                            newItem->setBackgroundColor(colorValueL);
+                                        newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                                    }
+                                    if(listGUI!=NULL)
+                                        listGUI->addItem(newItem);
+                                    else
+                                        delete newItem;
+                                }
+                                sub_index++;
+                            }
+                        }
+                        //monster
+                        {
+                            unsigned int sub_index=0;
+                            while(sub_index<fight.monsters.size())
+                            {
+                                const CatchChallenger::BotFight::BotFightMonster &monster=fight.monsters.at(sub_index);
+                                const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monster.id);
+                                {
+                                    QListWidgetItem * newItem=new QListWidgetItem();
+                                    newItem->setText(QString("Fight %1: %2 level %3")
+                                            .arg(fightId)
+                                            .arg(monsterExtra.name)
+                                            .arg(monster.level)
+                                            );
+                                    newItem->setIcon(QIcon(monsterExtra.thumb));
+                                    newItem->setToolTip(tips);
+                                    itemToReturn.push_back(newItem->text().toStdString());
+                                    if(listGUI==ui->globalTargets)
+                                    {
+                                        targetListGlobalTarget.push_back(globalTarget);
+                                        if(alternateColor)
+                                            newItem->setBackgroundColor(alternateColorValueL);
+                                        else if(colorValueL.isValid())
+                                            newItem->setBackgroundColor(colorValueL);
+                                        newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                                    }
+                                    if(listGUI!=NULL)
+                                        listGUI->addItem(newItem);
+                                    else
+                                        delete newItem;
+                                }
+                                sub_index++;
+                            }
+                        }
+                        if(!fight.items.empty() || !fight.monsters.empty())
+                            if(listGUI==ui->globalTargets)
+                                alternateColor=!alternateColor;
+                    }
+                    index++;
                 }
-                if(!fight.items.empty() || !fight.monsters.empty())
-                    if(listGUI==ui->globalTargets)
-                        alternateColor=!alternateColor;
-                index++;
             }
         }
         //shop
         {
-            unsigned int index=0;
-            while(index<blockObject->shops.size())
+            for(auto it = blockObject->shops.begin();it!=blockObject->shops.cend();++it)
             {
-                const uint32_t &shopId=blockObject->shops.at(index);
-                const CatchChallenger::Shop &shop=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
-                ActionsBotInterface::GlobalTarget globalTarget;
-                globalTarget.blockObject=blockObject;
-                globalTarget.extra=shopId;
-                globalTarget.bestPath=resolvedBlock.bestPath;
-                globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Shop;
-
-                unsigned int sub_index=0;
-                while(sub_index<shop.prices.size())
+                const std::vector<uint32_t> &shops=it->second;
+                unsigned int index=0;
+                while(index<shops.size())
                 {
-                    const CATCHCHALLENGER_TYPE_ITEM &item=shop.items.at(sub_index);
-                    const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item);
-                    const uint32_t &price=shop.prices.at(sub_index);
-                    {
-                        QListWidgetItem * newItem=new QListWidgetItem();
-                        newItem->setText(QString("Shop %1: %2 %3$")
-                                .arg(shopId)
-                                .arg(itemExtra.name)
-                                .arg(price)
-                                         );
-                        newItem->setIcon(QIcon(itemExtra.image));
+                    const uint32_t &shopId=shops.at(index);
+                    const CatchChallenger::Shop &shop=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
+                    ActionsBotInterface::GlobalTarget globalTarget;
+                    globalTarget.blockObject=blockObject;
+                    globalTarget.extra=shopId;
+                    globalTarget.bestPath=resolvedBlock.bestPath;
+                    globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Shop;
 
-                        itemToReturn.push_back(newItem->text().toStdString());
-                        if(listGUI==ui->globalTargets)
+                    unsigned int sub_index=0;
+                    while(sub_index<shop.prices.size())
+                    {
+                        const CATCHCHALLENGER_TYPE_ITEM &item=shop.items.at(sub_index);
+                        const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item);
+                        const uint32_t &price=shop.prices.at(sub_index);
                         {
-                            targetListGlobalTarget.push_back(globalTarget);
-                            if(alternateColor)
-                                newItem->setBackgroundColor(alternateColorValue);
-                            newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                            const bool tooHard=price>player_private_and_public_informations.cash;
+                            if(displayTooHard || !tooHard)
+                            {
+                                QListWidgetItem * newItem=new QListWidgetItem();
+                                newItem->setText(QString("Shop %1: %2 %3$")
+                                        .arg(shopId)
+                                        .arg(itemExtra.name)
+                                        .arg(price)
+                                                 );
+                                newItem->setIcon(QIcon(itemExtra.image));
+
+                                itemToReturn.push_back(newItem->text().toStdString());
+                                if(listGUI==ui->globalTargets)
+                                {
+                                    targetListGlobalTarget.push_back(globalTarget);
+                                    if(tooHard)
+                                    {
+                                        if(alternateColor)
+                                            newItem->setBackgroundColor(redAlternateColorValue);
+                                        else
+                                            newItem->setBackgroundColor(redColorValue);
+                                    }
+                                    else
+                                        if(alternateColor)
+                                            newItem->setBackgroundColor(alternateColorValue);
+                                    newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                                }
+                                if(listGUI!=NULL)
+                                    listGUI->addItem(newItem);
+                                else
+                                    delete newItem;
+                            }
                         }
-                        if(listGUI!=NULL)
-                            listGUI->addItem(newItem);
-                        else
-                            delete newItem;
+                        sub_index++;
                     }
-                    sub_index++;
+                    if(!shop.prices.empty())
+                        if(listGUI==ui->globalTargets)
+                            alternateColor=!alternateColor;
+                    index++;
                 }
-                if(!shop.prices.empty())
-                    if(listGUI==ui->globalTargets)
-                        alternateColor=!alternateColor;
-                index++;
             }
         }
         //heal
-        if(blockObject->heal)
+        if(blockObject->heal.size()>0)
         {
             ActionsBotInterface::GlobalTarget globalTarget;
             globalTarget.blockObject=blockObject;
@@ -345,38 +416,72 @@ std::vector<std::string> BotTargetList::contentToGUI(QListWidget *listGUI,
             globalTarget.bestPath=resolvedBlock.bestPath;
             globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster;
 
-            unsigned int sub_index=0;
-            while(sub_index<monsterCollisionContent.defaultMonsters.size())
+            uint8_t maxFightLevel=0;
             {
-                const CatchChallenger::MapMonster &mapMonster=monsterCollisionContent.defaultMonsters.at(sub_index);
-                const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(mapMonster.id);
+                unsigned int sub_index=0;
+                while(sub_index<monsterCollisionContent.defaultMonsters.size())
                 {
-                    QListWidgetItem * newItem=new QListWidgetItem();
-                    newItem->setText(QString("Wild %2 level %3-%4, luck: %5")
-                            .arg(monsterExtra.name)
-                            .arg(mapMonster.minLevel)
-                            .arg(mapMonster.maxLevel)
-                            .arg(QString::number(mapMonster.luck)+"%")
-                            );
-                    newItem->setIcon(QIcon(monsterExtra.thumb));
-
-                    itemToReturn.push_back(newItem->text().toStdString());
-                    if(listGUI==ui->globalTargets)
-                    {
-                        targetListGlobalTarget.push_back(globalTarget);
-                        if(alternateColor)
-                            newItem->setBackgroundColor(alternateColorValue);
-                        newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
-                    }
-                    if(listGUI!=NULL)
-                        listGUI->addItem(newItem);
-                    else
-                        delete newItem;
+                    const CatchChallenger::MapMonster &monster=monsterCollisionContent.defaultMonsters.at(sub_index);
+                    if(monster.maxLevel>maxFightLevel)
+                        maxFightLevel=monster.maxLevel;
+                    sub_index++;
                 }
-                sub_index++;
             }
-            if(listGUI==ui->globalTargets)
-                alternateColor=!alternateColor;
+
+            QString tips;
+            QColor colorValueL;
+            QColor alternateColorValueL;
+            const bool tooHard=maxFightLevel>(maxMonsterLevel+2);
+            if(tooHard)
+            {
+                colorValueL=redColorValue;
+                alternateColorValueL=redAlternateColorValue;
+                tips="Too hard wild fight";
+            }
+            else
+            {
+                //colorValue=;
+                alternateColorValueL=alternateColorValue;
+            }
+
+            if(displayTooHard || !tooHard)
+            {
+                unsigned int sub_index=0;
+                while(sub_index<monsterCollisionContent.defaultMonsters.size())
+                {
+                    const CatchChallenger::MapMonster &mapMonster=monsterCollisionContent.defaultMonsters.at(sub_index);
+                    const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(mapMonster.id);
+                    {
+                        QListWidgetItem * newItem=new QListWidgetItem();
+                        newItem->setText(QString("Wild %2 level %3-%4, luck: %5")
+                                .arg(monsterExtra.name)
+                                .arg(mapMonster.minLevel)
+                                .arg(mapMonster.maxLevel)
+                                .arg(QString::number(mapMonster.luck)+"%")
+                                );
+                        newItem->setIcon(QIcon(monsterExtra.thumb));
+                        newItem->setToolTip(tips);
+
+                        itemToReturn.push_back(newItem->text().toStdString());
+                        if(listGUI==ui->globalTargets)
+                        {
+                            targetListGlobalTarget.push_back(globalTarget);
+                            if(alternateColor)
+                                newItem->setBackgroundColor(alternateColorValueL);
+                            else if(colorValueL.isValid())
+                                newItem->setBackgroundColor(colorValueL);
+                            newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                        }
+                        if(listGUI!=NULL)
+                            listGUI->addItem(newItem);
+                        else
+                            delete newItem;
+                    }
+                    sub_index++;
+                }
+                if(listGUI==ui->globalTargets)
+                    alternateColor=!alternateColor;
+            }
             buffer_index++;
         }
     }

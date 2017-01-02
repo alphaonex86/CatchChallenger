@@ -4,7 +4,7 @@
 #include "../../client/fight/interface/ClientFightEngine.h"
 #include "MapBrowse.h"
 
-std::string BotTargetList::graphStepNearMap(const MapServerMini::BlockObject * const currentNearBlock,const unsigned int &depth)
+std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchChallengerClient * const client,const MapServerMini::BlockObject * const currentNearBlock,const unsigned int &depth)
 {
     const std::unordered_set<const MapServerMini *> &validMaps=currentNearBlock->map->getValidMaps(depth);
     const std::unordered_set<const MapServerMini::BlockObject *> &accessibleBlock=currentNearBlock->map->getAccessibleBlock(validMaps,currentNearBlock);
@@ -100,7 +100,7 @@ std::string BotTargetList::graphStepNearMap(const MapServerMini::BlockObject * c
                                         subgraph+=itemEntry.text.toStdString()+"\\n";
                                     index++;
                                 }*/
-                                std::vector<std::string> stringList=contentToGUI(&block);
+                                std::vector<std::string> stringList=contentToGUI(&block,client);
                                 const std::string &content=stringimplode(stringList,"\\n");
                                 if(!content.empty())
                                     subgraph+="|<f1> "+content;
@@ -207,7 +207,7 @@ std::string BotTargetList::graphLocalMap()
                 const MapServerMini::MapParsedForBot::Layer &layer=step2.layers.at(blockIndex);
                 const MapServerMini::BlockObject &block=*layer.blockObject;
 
-                std::vector<std::string> stringList=contentToGUI(&block);
+                std::vector<std::string> stringList=contentToGUI(&block,client);
                 const std::string &content=stringimplode(stringList,"\\n");
 
                 /*unsigned int index=0;

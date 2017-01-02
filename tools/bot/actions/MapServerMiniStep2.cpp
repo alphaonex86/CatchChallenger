@@ -96,10 +96,6 @@ bool MapServerMini::preload_step2()
             blockObject.map=this;
             blockObject.id=index;
 
-            blockObject.learn=false;
-            blockObject.heal=false;
-            blockObject.market=false;
-            blockObject.zonecapture=false;
             blockObject.monstersCollisionValue=NULL;
             blockObject.color=MapServerMini::colorsList.at(index%MapServerMini::colorsList.size());
 
@@ -257,8 +253,6 @@ void MapServerMini::preload_step2_addNearTileToScanList(std::vector<std::pair<ui
 bool MapServerMini::addBlockLink(BlockObject &blockObjectFrom, BlockObject &blockObjectTo, const BlockObject::LinkType &linkSourceFrom,
                                  /*point to go:*/const uint8_t &x,const uint8_t &y)
 {
-    if(x==0 && y==0)
-        std::cerr << "Teleporter on 0,0, bug suspected" << std::endl;
     //search into the destination
     {
         if(blockObjectTo.links.find(&blockObjectFrom)!=blockObjectTo.links.cend())
@@ -528,8 +522,6 @@ bool MapServerMini::preload_step2b()
                     if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
                     {
                         BlockObject &otherBlockObject=*step2nextMap.layers[otherCodeZone-1].blockObject;
-                        if(x==0 && y==0)
-                            std::cerr << "Teleporter on 0,0, bug suspected" << std::endl;
                         addBlockLink(blockObject,otherBlockObject,BlockObject::LinkType::SourceTeleporter,x,y);
                     }
             }
@@ -1007,18 +999,19 @@ bool MapServerMini::preload_step2c()
                             if(codeZone>0)
                             {
                                 BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
-                                blockObject.pointOnMap_Item.push_back(itemEntry);
+                                blockObject.pointOnMap_Item[point]=itemEntry;
                             }
                             else
                             {
                                 BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
-                                blockObject.pointOnMap_Item.push_back(itemEntry);
+                                blockObject.pointOnMap_Item[point]=itemEntry;
                             }
                         }
                     }
                     //fight
                     {
                         for(const auto& n : this->botsFight) {
+                            const std::pair<uint8_t,uint8_t> &point=n.first;
                             const uint8_t x=n.first.first,y=n.first.second;
                             const uint8_t &codeZone=currentStep.map[x+y*this->width];
                             {
@@ -1026,12 +1019,12 @@ bool MapServerMini::preload_step2c()
                                 if(codeZone>0)
                                 {
                                     BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
-                                    blockObject.botsFight.insert(blockObject.botsFight.cbegin(),fightsList.cbegin(),fightsList.cend());
+                                    blockObject.botsFight[point]=fightsList;
                                 }
                                 else
                                 {
                                     BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
-                                    blockObject.botsFight.insert(blockObject.botsFight.cbegin(),fightsList.cbegin(),fightsList.cend());
+                                    blockObject.botsFight[point]=fightsList;
                                 }
                             }
                         }
@@ -1039,6 +1032,7 @@ bool MapServerMini::preload_step2c()
                     //shop
                     {
                         for(const auto& n : this->shops) {
+                            const std::pair<uint8_t,uint8_t> &point=n.first;
                             const uint8_t x=n.first.first,y=n.first.second;
                             const uint8_t &codeZone=currentStep.map[x+y*this->width];
                             {
@@ -1046,12 +1040,12 @@ bool MapServerMini::preload_step2c()
                                 if(codeZone>0)
                                 {
                                     BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
-                                    blockObject.shops.insert(blockObject.shops.cbegin(),shopList.cbegin(),shopList.cend());
+                                    blockObject.shops[point]=shopList;
                                 }
                                 else
                                 {
                                     BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
-                                    blockObject.shops.insert(blockObject.shops.cbegin(),shopList.cbegin(),shopList.cend());
+                                    blockObject.shops[point]=shopList;
                                 }
                             }
                         }
@@ -1059,20 +1053,19 @@ bool MapServerMini::preload_step2c()
                     //heal
                     {
                         for(const auto& n : this->heal) {
-                            if(currentStep.map==NULL)
-                                abort();
+                            const std::pair<uint8_t,uint8_t> point(n.first,n.second);
                             const uint8_t x=n.first,y=n.second;
                             const uint8_t &codeZone=currentStep.map[x+y*this->width];
                             {
                                 if(codeZone>0)
                                 {
                                     BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
-                                    blockObject.heal=true;
+                                    blockObject.heal.insert(point);
                                 }
                                 else
                                 {
                                     BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
-                                    blockObject.heal=true;
+                                    blockObject.heal.insert(point);
                                 }
                             }
                         }
