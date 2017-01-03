@@ -2,10 +2,6 @@
 
 #include <iostream>
 
-#include <QHash>
-#include <QList>
-#include <QString>
-
 bool MapServerMini::preload_step1()
 {
     if(this->width==0 || this->height==0)
