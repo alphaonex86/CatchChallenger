@@ -40,6 +40,7 @@ public:
         CatchChallenger::Direction direction;
         std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
         GlobalTarget target;
+        uint8_t previousStepWalked;
     };
 
     ActionsBotInterface();
@@ -53,9 +54,7 @@ public:
     virtual void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     QHash<CatchChallenger::Api_protocol *,Player> clientList;
 protected:
-    bool move;
     bool randomText;
-    bool bugInDirection;
     bool globalChatRandomReply;
 };
 
