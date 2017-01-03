@@ -479,7 +479,12 @@ void Client::collectPlant(
     #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     if(public_and_private_informations.plantOnMap.find(plant.pointOnMapDbCode)!=public_and_private_informations.plantOnMap.cend())
     {
-        const PlayerPlant &playerPlant=public_and_private_informations.plantOnMap.at(plant.pointOnMapDbCode);
+        const PlayerPlant /*can't reference because deleted later*/playerPlant=public_and_private_informations.plantOnMap.at(plant.pointOnMapDbCode);
+        if(CommonDatapack::commonDatapack.plants.find(playerPlant.plant)==CommonDatapack::commonDatapack.plants.cend())
+        {
+            errorOutput("plant not found to collect: "+std::to_string(playerPlant.plant));
+            return;
+        }
         if(current_time<playerPlant.mature_at)
         {
             errorOutput("current_time<plant.mature_at");

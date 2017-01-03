@@ -7,7 +7,6 @@ ActionsAction::ActionsAction()
 {
     connect(&moveTimer,&QTimer::timeout,this,&ActionsAction::doMove);
     connect(&textTimer,&QTimer::timeout,this,&ActionsAction::doText);
-    moveTimer.start(1000);
     textTimer.start(1000);
     flat_map_list=NULL;
     moveToThread(&thread);
@@ -30,13 +29,16 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
 
     ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
     connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection);
+
+    if(!moveTimer.isActive())
+    {
+        const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
+        moveTimer.start(player_private_and_public_informations.public_informations.speed);
+    }
 }
 
 void ActionsAction::doMove()
 {
-    if(!move)
-        return;
-
     QHashIterator<CatchChallenger::Api_protocol *,Player> i(clientList);
     while (i.hasNext()) {
         i.next();
@@ -45,34 +47,61 @@ void ActionsAction::doMove()
         //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
         if(api->getCaracterSelected())
         {
-            if(bugInDirection)
-                api->send_player_move(0,player.direction);
-            else
+            if(!player.target.localStep.empty())
             {
-                if(player.direction==CatchChallenger::Direction_look_at_bottom)
+                std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &step=player.target.localStep[0];
+                //need just continue to walk
+                const CatchChallenger::Direction direction=(CatchChallenger::Direction)((uint8_t)step.first+4);
+                if(player.direction==direction)
                 {
-                    player.direction=CatchChallenger::Direction_look_at_left;
-                    api->send_player_move(0,player.direction);
+                    if(true/*cango*/)
+                    {
+                        //api->send_player_move(0,player.direction);
+                        step.second--;
+                        player.previousStepWalked++;
+                        if(step.second==0)
+                            player.target.localStep.erase(player.target.localStep.cbegin());
+                        if(player.target.localStep.empty())
+                        {
+                            //finished the step list, what do?
+                        }
+                    }
+                    else
+                    {
+                        //stop
+                        player.direction=(CatchChallenger::Direction)((uint8_t)player.direction-4);
+                        api->send_player_move(player.previousStepWalked,player.direction);
+                        player.previousStepWalked=0;
+                        //finished the step list
+                    }
                 }
-                else if(player.direction==CatchChallenger::Direction_look_at_left)
-                {
-                    player.direction=CatchChallenger::Direction_look_at_top;
-                    api->send_player_move(0,player.direction);
-                }
-                else if(player.direction==CatchChallenger::Direction_look_at_top)
-                {
-                    player.direction=CatchChallenger::Direction_look_at_right;
-                    api->send_player_move(0,player.direction);
-                }
-                else if(player.direction==CatchChallenger::Direction_look_at_right)
-                {
-                    player.direction=CatchChallenger::Direction_look_at_bottom;
-                    api->send_player_move(0,player.direction);
-                }
+                //need start to walk or direction change
                 else
                 {
-                    qDebug() << "Out of direction scope";
-                    abort();
+                    if(true/*cango*/)
+                    {
+                        player.direction=direction;
+                        api->send_player_move(player.previousStepWalked,player.direction);
+                        player.previousStepWalked=1;
+                    }
+                    else
+                    {
+                        //turn on the new direction
+                        player.direction=(CatchChallenger::Direction)((uint8_t)direction-4);
+                        api->send_player_move(player.previousStepWalked,player.direction);
+                        player.previousStepWalked=0;
+                        //finished the step list
+                    }
+                }
+            }
+            else
+            {
+                //stop the player if is not stopped
+                if(player.direction>4)
+                {
+                    player.direction=(CatchChallenger::Direction)((uint8_t)player.direction-4);
+                    api->send_player_move(player.previousStepWalked,player.direction);
+                    player.previousStepWalked=0;
                 }
             }
         }
