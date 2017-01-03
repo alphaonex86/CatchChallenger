@@ -54,6 +54,7 @@ enum Player_type : uint8_t
 
 enum Orientation : uint8_t
 {
+    Orientation_none = 0,//where the target orientation don't matter
     Orientation_top = 1,
     Orientation_right = 2,
     Orientation_bottom = 3,

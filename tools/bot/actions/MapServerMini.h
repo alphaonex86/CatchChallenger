@@ -61,7 +61,7 @@ public:
             LinkDirection direction;
             std::vector<LinkType> types;
             //point to go
-            uint8_t x,y;
+            uint8_t x,y;/// \todo multiple point to optimise the path finding with less direction change
         };
         std::unordered_map<BlockObject *,LinkInformation> links;
         MapServerMini * map;
@@ -71,7 +71,7 @@ public:
         std::map<std::pair<uint8_t,uint8_t>,ItemOnMap/*,pairhash*/> pointOnMap_Item;
         std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>,pairhash> botsFight;
         std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight
-        std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>, pairhash> shops;
+        std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>,pairhash> shops;
         std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
         const CatchChallenger::MonstersCollisionValue *monstersCollisionValue;
 

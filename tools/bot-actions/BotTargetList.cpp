@@ -4,6 +4,8 @@
 #include "../../client/fight/interface/ClientFightEngine.h"
 #include "MapBrowse.h"
 
+#include <chrono>
+
 BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient,
                              QHash<CatchChallenger::ConnectedSocket *,MultipleBotConnection::CatchChallengerClient *> connectedSocketToCatchChallengerClient,
                              QHash<QSslSocket *,MultipleBotConnection::CatchChallengerClient *> sslSocketToCatchChallengerClient,
@@ -288,6 +290,49 @@ void BotTargetList::updatePlayerInformation()
     }
 }
 
+void BotTargetList::startPlayerMove()
+{
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    if(!actionsAction->clientList.contains(client->api))
+        return;
+
+    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+
+    if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
+        return;
+    const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+    const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+    QString mapString=QString::fromStdString(playerMap->map_file)+QString(" (%1,%2)").arg(player.x).arg(player.y);
+    ui->label_local_target->setTitle("Target on the map: "+mapString);
+    if(playerMap->step.size()<2)
+        abort();
+    const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
+    const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
+    if(playerCodeZone<=0 || (uint32_t)(playerCodeZone-1)>=(uint32_t)stepPlayer.layers.size())
+        return;
+    const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
+    std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
+    playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value());
+    const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
+    if(step.map==NULL)
+        return;
+
+    const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target);
+    uint8_t o=player.direction;
+    while(o>4)
+        o-=4;
+    const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+                static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
+                CatchChallenger::Orientation::Orientation_none,point.first,point.second
+                );
+}
+
 void BotTargetList::updateMapInformation()
 {
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
@@ -534,6 +579,7 @@ void BotTargetList::on_globalTargets_itemActivated(QListWidgetItem *item)
     if(player.target.blockObject!=NULL || player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
         return;
     player.target=globalTarget;
+    startPlayerMove();
     updatePlayerInformation();
 }
 
@@ -609,4 +655,284 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
         abort();//path def but next hop not found
     }
     return point;
+}
+
+std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFinding(
+        const CatchChallenger::Orientation &source_orientation,const uint8_t &source_x,const uint8_t &source_y,
+        const CatchChallenger::Orientation &destination_orientation,const uint8_t &destination_x,const uint8_t &destination_y)
+{
+    /// \todo ignore and not optimised:
+    (void)source_orientation;
+    (void)destination_orientation;
+    auto start = std::chrono::high_resolution_clock::now();
+
+    //resolv the path
+    std::vector<std::pair<uint8_t,uint8_t> > mapPointToParseList;
+    SimplifiedMapForPathFinding simplifiedMap;
+
+    //init the first case
+    {
+        std::pair<uint8_t,uint8_t> tempPoint;
+        tempPoint.first=source_x;
+        tempPoint.second=source_y;
+        mapPointToParseList.push_back(tempPoint);
+
+        std::pair<uint8_t,uint8_t> coord(source_x,source_y);
+        SimplifiedMapForPathFinding::PathToGo &pathToGo=simplifiedMap.pathToGo[coord];
+        pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1));
+        pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
+        pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
+        pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1));
+    }
+
+    std::pair<uint8_t,uint8_t> coord;
+    while(!mapPointToParseList.empty())
+    {
+        const std::pair<uint8_t,uint8_t> &tempPoint=mapPointToParseList.takeFirst();
+        SimplifiedMapForPathFinding::PathToGo pathToGo;
+        if(destination_map==current_map && tempPoint.x==destination_x && tempPoint.y==destination_y)
+            qDebug() << QStringLiteral("final dest");
+        //resolv the own point
+        int index=0;
+        while(index<1)/*2*/
+        {
+            if(tryCancel)
+            {
+                tryCancel=false;
+                return;
+            }
+            {
+                //if the right case have been parsed
+                coord=std::pair<uint8_t,uint8_t>(tempPoint.x+1,tempPoint.y);
+                if(simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                {
+                    const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapList.value(current_map).pathToGo.value(coord);
+                    if(pathToGo.left.isEmpty() || pathToGo.left.size()>nearPathToGo.left.size())
+                    {
+                        pathToGo.left=nearPathToGo.left;
+                        pathToGo.left.last().second++;
+                    }
+                    if(pathToGo.top.isEmpty() || pathToGo.top.size()>(nearPathToGo.left.size()+1))
+                    {
+                        pathToGo.top=nearPathToGo.left;
+                        pathToGo.top << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1);
+                    }
+                    if(pathToGo.bottom.isEmpty() || pathToGo.bottom.size()>(nearPathToGo.left.size()+1))
+                    {
+                        pathToGo.bottom=nearPathToGo.left;
+                        pathToGo.bottom << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1);
+                    }
+                }
+                //if the left case have been parsed
+                coord=std::pair<uint8_t,uint8_t>(tempPoint.x-1,tempPoint.y);
+                if(simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                {
+                    const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapList.value(current_map).pathToGo.value(coord);
+                    if(pathToGo.right.isEmpty() || pathToGo.right.size()>nearPathToGo.right.size())
+                    {
+                        pathToGo.right=nearPathToGo.right;
+                        pathToGo.right.last().second++;
+                    }
+                    if(pathToGo.top.isEmpty() || pathToGo.top.size()>(nearPathToGo.right.size()+1))
+                    {
+                        pathToGo.top=nearPathToGo.right;
+                        pathToGo.top << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1);
+                    }
+                    if(pathToGo.bottom.isEmpty() || pathToGo.bottom.size()>(nearPathToGo.right.size()+1))
+                    {
+                        pathToGo.bottom=nearPathToGo.right;
+                        pathToGo.bottom << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1);
+                    }
+                }
+                //if the top case have been parsed
+                coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y+1);
+                if(simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                {
+                    const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapList.value(current_map).pathToGo.value(coord);
+                    if(pathToGo.top.isEmpty() || pathToGo.top.size()>nearPathToGo.top.size())
+                    {
+                        pathToGo.top=nearPathToGo.top;
+                        pathToGo.top.last().second++;
+                    }
+                    if(pathToGo.left.isEmpty() || pathToGo.left.size()>(nearPathToGo.top.size()+1))
+                    {
+                        pathToGo.left=nearPathToGo.top;
+                        pathToGo.left << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1);
+                    }
+                    if(pathToGo.right.isEmpty() || pathToGo.right.size()>(nearPathToGo.top.size()+1))
+                    {
+                        pathToGo.right=nearPathToGo.top;
+                        pathToGo.right << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1);
+                    }
+                }
+                //if the bottom case have been parsed
+                coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y-1);
+                if(simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                {
+                    const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapList.value(current_map).pathToGo.value(coord);
+                    if(pathToGo.bottom.isEmpty() || pathToGo.bottom.size()>nearPathToGo.bottom.size())
+                    {
+                        pathToGo.bottom=nearPathToGo.bottom;
+                        pathToGo.bottom.last().second++;
+                    }
+                    if(pathToGo.left.isEmpty() || pathToGo.left.size()>(nearPathToGo.bottom.size()+1))
+                    {
+                        pathToGo.left=nearPathToGo.bottom;
+                        pathToGo.left << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1);
+                    }
+                    if(pathToGo.right.isEmpty() || pathToGo.right.size()>(nearPathToGo.bottom.size()+1))
+                    {
+                        pathToGo.right=nearPathToGo.bottom;
+                        pathToGo.right << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1);
+                    }
+                }
+            }
+            index++;
+        }
+        coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y);
+        if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            extraControlOnData(pathToGo.left,CatchChallenger::Orientation_left);
+            extraControlOnData(pathToGo.right,CatchChallenger::Orientation_right);
+            extraControlOnData(pathToGo.top,CatchChallenger::Orientation_top);
+            extraControlOnData(pathToGo.bottom,CatchChallenger::Orientation_bottom);
+            #endif
+            simplifiedMapList[current_map].pathToGo[coord]=pathToGo;
+        }
+        if(destination_map==current_map && tempPoint.x==destination_x && tempPoint.y==destination_y)
+        {
+            tryCancel=false;
+            std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar;
+            if(returnedVar.isEmpty() || pathToGo.bottom.size()<returnedVar.size())
+                if(!pathToGo.bottom.isEmpty())
+                    returnedVar=pathToGo.bottom;
+            if(returnedVar.isEmpty() || pathToGo.top.size()<returnedVar.size())
+                if(!pathToGo.top.isEmpty())
+                    returnedVar=pathToGo.top;
+            if(returnedVar.isEmpty() || pathToGo.right.size()<returnedVar.size())
+                if(!pathToGo.right.isEmpty())
+                    returnedVar=pathToGo.right;
+            if(returnedVar.isEmpty() || pathToGo.left.size()<returnedVar.size())
+                if(!pathToGo.left.isEmpty())
+                    returnedVar=pathToGo.left;
+            if(!returnedVar.isEmpty())
+            {
+                if(returnedVar.last().second<=1)
+                {
+                    qDebug() << "Bug due for last step";
+                    return;
+                }
+                else
+                {
+                    //qDebug() << "Path result into" << time.elapsed() << "ms";
+                    returnedVar.last().second--;
+                    emit result(current_map,x,y,returnedVar);
+                    return;
+                }
+            }
+            else
+            {
+                returnedVar.clear();
+                qDebug() << "Bug due to resolved path is empty";
+                return;
+            }
+        }
+        //revers resolv
+        //add to point to parse
+        {
+            //if the right case have been parsed
+            coord=std::pair<uint8_t,uint8_t>(tempPoint.x+1,tempPoint.y);
+            if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
+            {
+                std::pair<uint8_t,uint8_t> newPoint=tempPoint;
+                newPoint.x++;
+                if(newPoint.x<simplifiedMapList.value(current_map).width)
+                    if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
+                    {
+                        std::pair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
+                        if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
+                        {
+                            simplifiedMapList[current_map].pointQueued << point;
+                            mapPointToParseList <<  newPoint;
+                        }
+                    }
+            }
+            //if the left case have been parsed
+            coord=std::pair<uint8_t,uint8_t>(tempPoint.x-1,tempPoint.y);
+            if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
+            {
+                std::pair<uint8_t,uint8_t> newPoint=tempPoint;
+                if(newPoint.x>0)
+                {
+                    newPoint.x--;
+                    if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
+                    {
+                        std::pair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
+                        if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
+                        {
+                            simplifiedMapList[current_map].pointQueued << point;
+                            mapPointToParseList <<  newPoint;
+                        }
+                    }
+                }
+            }
+            //if the bottom case have been parsed
+            coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y+1);
+            if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
+            {
+                MapPointToParse newPoint=tempPoint;
+                newPoint.y++;
+                if(newPoint.y<simplifiedMapList.value(current_map).height)
+                    if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
+                    {
+                        std::pair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
+                        if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
+                        {
+                            simplifiedMapList[current_map].pointQueued << point;
+                            mapPointToParseList <<  newPoint;
+                        }
+                    }
+            }
+            //if the top case have been parsed
+            coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y-1);
+            if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
+            {
+                std::pair<uint8_t,uint8_t> newPoint=tempPoint;
+                if(newPoint.y>0)
+                {
+                    newPoint.y--;
+                    if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
+                    {
+                        std::pair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
+                        if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
+                        {
+                            simplifiedMapList[current_map].pointQueued << point;
+                            mapPointToParseList <<  newPoint;
+                        }
+                    }
+                }
+            }
+        }
+        /*uint8_t tempX=x,TempY=y;
+        QString tempMap=current_map;
+        SimplifiedMapForPathFinding::PathToGo pathToGoTemp;
+        simplifiedMapList[current_map].pathToGo[std::pair<uint8_t,uint8_t>(x,y)]=pathToGoTemp;*/
+    }
+    //drop the local variable
+    {
+        QHash<QString,SimplifiedMapForPathFinding>::const_iterator k = simplifiedMapList.constBegin();
+        while (k != simplifiedMapList.constEnd()) {
+            delete k.value().dirt;
+            delete k.value().ledges;
+            delete k.value().walkable;
+            delete k.value().monstersCollisionMap;
+            ++k;
+        }
+    }
+    tryCancel=false;
+    emit result(QString(),0,0,QList<std::pair<CatchChallenger::Orientation,uint8_t> >());
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end-start;
+    std::cout << "Path not found into" << elapsed.count() << "ms" << std::endl;
 }
