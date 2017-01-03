@@ -23,16 +23,34 @@ public:
     QHash<QSslSocket *,MultipleBotConnection::CatchChallengerClient *> sslSocketToCatchChallengerClient,
     ActionsAction *actionsAction);
     ~BotTargetList();
+
+    struct SimplifiedMapForPathFinding
+    {
+        struct PathToGo
+        {
+            std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > left;
+            std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > right;
+            std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > top;
+            std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > bottom;
+        };
+        std::unordered_map<std::pair<uint8_t,uint8_t>,PathToGo,pairhash> pathToGo;
+        std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> pointQueued;
+    };
+
     void loadAllBotsInformation();
     void loadAllBotsInformation2();
     void updateLayerElements();
     void updateMapInformation();
     void updatePlayerInformation();
+    void startPlayerMove();
     std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject,const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI=NULL);
     std::vector<std::string> contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard=true);
     std::string graphStepNearMap(const MultipleBotConnection::CatchChallengerClient * const client,const MapServerMini::BlockObject * const currentNearBlock, const unsigned int &depth=2);
     std::string graphLocalMap();
     std::pair<uint8_t,uint8_t> getNextPosition(const MapServerMini::BlockObject * const blockObject, const ActionsBotInterface::GlobalTarget &target);
+    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > pathFinding(
+            const CatchChallenger::Orientation &source_orientation,const uint8_t &source_x,const uint8_t &source_y,
+            const CatchChallenger::Orientation &destination_orientation,const uint8_t &destination_x,const uint8_t &destination_y);
 signals:
     void start_preload_the_map();
 private slots:
