@@ -154,13 +154,16 @@ void BotTargetList::updatePlayerInformation()
                 {
                     const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target);
                     const uint8_t x=point.first,y=point.second;
+                    std::string stepToDo=BotTargetList::stepToString(player.target.localStep);
+                    if(!stepToDo.empty())
+                        stepToDo=", steps: "+stepToDo;
                     if(player.target.bestPath.empty())
-                        ui->label_next_local_target->setText("Next global target: "+QString::fromStdString(player.target.blockObject->map->map_file)+" at "+QString::number(x)+","+QString::number(y));
+                        ui->label_next_local_target->setText("Next global target: "+QString::fromStdString(player.target.blockObject->map->map_file)+" at "+QString::number(x)+","+QString::number(y)+QString::fromStdString(stepToDo));
                     else
                     {
                         const MapServerMini::BlockObject * const nextBlock=player.target.bestPath.at(0);
                         const MapServerMini::MapParsedForBot::Layer * const nextLlayer=static_cast<const MapServerMini::MapParsedForBot::Layer *>(nextBlock->layer);
-                        ui->label_next_local_target->setText("Next local target: "+QString::fromStdString(nextLlayer->name)+" on "+QString::fromStdString(nextBlock->map->map_file));
+                        ui->label_next_local_target->setText("Next local target: "+QString::fromStdString(nextLlayer->name)+" on "+QString::fromStdString(nextBlock->map->map_file)+QString::fromStdString(stepToDo));
                         //search the next position
                         for(const auto& n:layer.blockObject->links) {
                             const MapServerMini::BlockObject * const tempNextBlock=n.first;
@@ -168,7 +171,8 @@ void BotTargetList::updatePlayerInformation()
                             if(tempNextBlock==nextBlock)
                             {
                                 ui->label_next_local_target->setText("Next local target: "+QString::fromStdString(nextLlayer->name)+" on "+QString::fromStdString(nextBlock->map->map_file)+", go to "+
-                                                                     QString::number(linkInformation.x)+","+QString::number(linkInformation.y)
+                                                                     QString::number(linkInformation.x)+","+QString::number(linkInformation.y)+
+                                                                     QString::fromStdString(stepToDo)
                                                                      );
                                 break;
                             }
@@ -302,7 +306,7 @@ void BotTargetList::startPlayerMove()
     if(!actionsAction->clientList.contains(client->api))
         return;
 
-    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    ActionsBotInterface::Player &player=actionsAction->clientList[client->api];
 
     if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
         return;
@@ -332,39 +336,44 @@ void BotTargetList::startPlayerMove()
                 static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
                 CatchChallenger::Orientation::Orientation_none,point.first,point.second
                 );
-    std::string stepToDo;
-    {
-        unsigned int index=0;
-        while(index<returnPath.size())
-        {
-            const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &entry=returnPath.at(index);
-            if(!stepToDo.empty())
-                stepToDo+=", ";
-            stepToDo+=std::to_string(entry.second);
-            switch(entry.first)
-            {
-                case CatchChallenger::Orientation::Orientation_bottom:
-                    stepToDo+=" bottom";
-                break;
-                case CatchChallenger::Orientation::Orientation_top:
-                    stepToDo+=" top";
-                break;
-                case CatchChallenger::Orientation::Orientation_left:
-                    stepToDo+=" left";
-                break;
-                case CatchChallenger::Orientation::Orientation_right:
-                    stepToDo+=" right";
-                break;
-                default:
-                    abort();
-                break;
-            }
+    player.target.localStep=returnPath;
 
-            index++;
-        }
-    }
-    ui->label_action->setText(QString::fromStdString(stepToDo));
+    ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(returnPath)));
     updateMapInformation();
+}
+
+std::string BotTargetList::stepToString(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath)
+{
+    std::string stepToDo;
+    unsigned int index=0;
+    while(index<returnPath.size())
+    {
+        const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &entry=returnPath.at(index);
+        if(!stepToDo.empty())
+            stepToDo+=", ";
+        stepToDo+=std::to_string(entry.second);
+        switch(entry.first)
+        {
+            case CatchChallenger::Orientation::Orientation_bottom:
+                stepToDo+=" bottom";
+            break;
+            case CatchChallenger::Orientation::Orientation_top:
+                stepToDo+=" top";
+            break;
+            case CatchChallenger::Orientation::Orientation_left:
+                stepToDo+=" left";
+            break;
+            case CatchChallenger::Orientation::Orientation_right:
+                stepToDo+=" right";
+            break;
+            default:
+                abort();
+            break;
+        }
+
+        index++;
+    }
+    return stepToDo;
 }
 
 void BotTargetList::updateMapInformation()
