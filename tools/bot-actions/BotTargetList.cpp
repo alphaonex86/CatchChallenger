@@ -328,9 +328,43 @@ void BotTargetList::startPlayerMove()
     while(o>4)
         o-=4;
     const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+                layer.blockObject,
                 static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
                 CatchChallenger::Orientation::Orientation_none,point.first,point.second
                 );
+    std::string stepToDo;
+    {
+        unsigned int index=0;
+        while(index<returnPath.size())
+        {
+            const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &entry=returnPath.at(index);
+            if(!stepToDo.empty())
+                stepToDo+=", ";
+            stepToDo+=std::to_string(entry.second);
+            switch(entry.first)
+            {
+                case CatchChallenger::Orientation::Orientation_bottom:
+                    stepToDo+=" bottom";
+                break;
+                case CatchChallenger::Orientation::Orientation_top:
+                    stepToDo+=" top";
+                break;
+                case CatchChallenger::Orientation::Orientation_left:
+                    stepToDo+=" left";
+                break;
+                case CatchChallenger::Orientation::Orientation_right:
+                    stepToDo+=" right";
+                break;
+                default:
+                    abort();
+                break;
+            }
+
+            index++;
+        }
+    }
+    ui->label_action->setText(QString::fromStdString(stepToDo));
+    updateMapInformation();
 }
 
 void BotTargetList::updateMapInformation()
@@ -366,6 +400,14 @@ void BotTargetList::updateMapInformation()
         ui->mapPreview->setColumnCount(mapServer->max_x-mapServer->min_x);
         ui->mapPreview->setRowCount(mapServer->max_y-mapServer->min_y);
 
+        const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+        const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+        if(playerMap->step.size()<2)
+            abort();
+        const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
+        const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
+        const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
+
         {
             int y=mapServer->min_y;
             while(y<mapServer->max_y)
@@ -392,6 +434,17 @@ void BotTargetList::updateMapInformation()
                         icon.addFile(QStringLiteral(":/playerloc.png"), QSize(), QIcon::Normal, QIcon::Off);
                         tablewidgetitem->setText("");
                         tablewidgetitem->setIcon(icon);
+                    }
+                    else if(player.target.blockObject!=NULL)
+                    {
+                        const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target);
+                        if(x==point.first && y==point.second && player.mapId==mapId)
+                        {
+                            QIcon icon;
+                            icon.addFile(QStringLiteral(":/6.png"), QSize(), QIcon::Normal, QIcon::Off);
+                            tablewidgetitem->setText("");
+                            tablewidgetitem->setIcon(icon);
+                        }
                     }
                     ui->mapPreview->setItem(y-mapServer->min_y,x-mapServer->min_x,tablewidgetitem);
 
@@ -658,6 +711,7 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
 }
 
 std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFinding(
+        const MapServerMini::BlockObject * const blockObject,
         const CatchChallenger::Orientation &source_orientation,const uint8_t &source_x,const uint8_t &source_y,
         const CatchChallenger::Orientation &destination_orientation,const uint8_t &destination_x,const uint8_t &destination_y)
 {
@@ -669,6 +723,14 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     //resolv the path
     std::vector<std::pair<uint8_t,uint8_t> > mapPointToParseList;
     SimplifiedMapForPathFinding simplifiedMap;
+    const uint8_t &currentCodeZone=blockObject->id+1;
+    if(blockObject->map==NULL)
+        abort();
+    if(blockObject->map->step.size()<2)
+        abort();
+    const MapServerMini::MapParsedForBot &step=blockObject->map->step.at(1);
+    if(step.map==NULL)
+        abort();
 
     //init the first case
     {
@@ -839,8 +901,10 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             {
                 std::pair<uint8_t,uint8_t> newPoint=tempPoint;
                 newPoint.first++;
-                if(newPoint.first<simplifiedMap.width)
-                    if(PathFinding::canGoOn(simplifiedMap,newPoint.first,newPoint.second) || (newPoint.first==destination_x && newPoint.second==destination_y))
+                if(newPoint.first<blockObject->map->width)
+                {
+                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
+                    if(currentCodeZone==newCodeZone || (newPoint.first==destination_x && newPoint.second==destination_y))
                     {
                         if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
                         {
@@ -848,6 +912,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             mapPointToParseList.push_back(newPoint);
                         }
                     }
+                }
             }
             //if the left case have been parsed
             coord=std::pair<uint8_t,uint8_t>(x-1,y);
@@ -857,9 +922,10 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                 if(newPoint.first>0)
                 {
                     newPoint.first--;
-                    if(PathFinding::canGoOn(simplifiedMap,newPoint.first,newPoint.second) || (newPoint.first==destination_x && newPoint.second==destination_y))
+                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
+                    if(currentCodeZone==newCodeZone || (newPoint.first==destination_x && newPoint.second==destination_y))
                     {
-                        if(!simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
+                        if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
                         {
                             simplifiedMap.pointQueued.insert(newPoint);
                             mapPointToParseList.push_back(newPoint);
@@ -871,10 +937,12 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             coord=std::pair<uint8_t,uint8_t>(x,y+1);
             if(simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
             {
-                MapPointToParse newPoint=tempPoint;
+                std::pair<uint8_t,uint8_t> newPoint=tempPoint;
                 newPoint.second++;
-                if(newPoint.second<simplifiedMap.height)
-                    if(PathFinding::canGoOn(simplifiedMap,newPoint.first,newPoint.second) || (newPoint.first==destination_x && newPoint.second==destination_y))
+                if(newPoint.second<blockObject->map->height)
+                {
+                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
+                    if(currentCodeZone==newCodeZone || (newPoint.first==destination_x && newPoint.second==destination_y))
                     {
                         if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
                         {
@@ -882,6 +950,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             mapPointToParseList.push_back(newPoint);
                         }
                     }
+                }
             }
             //if the top case have been parsed
             coord=std::pair<uint8_t,uint8_t>(x,y-1);
@@ -891,7 +960,8 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                 if(newPoint.second>0)
                 {
                     newPoint.second--;
-                    if(PathFinding::canGoOn(simplifiedMap,newPoint.first,newPoint.second) || (newPoint.first==destination_x && newPoint.second==destination_y))
+                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
+                    if(currentCodeZone==newCodeZone || (newPoint.first==destination_x && newPoint.second==destination_y))
                     {
                         if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
                         {

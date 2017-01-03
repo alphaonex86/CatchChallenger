@@ -49,6 +49,7 @@ public:
     std::string graphLocalMap();
     std::pair<uint8_t,uint8_t> getNextPosition(const MapServerMini::BlockObject * const blockObject, const ActionsBotInterface::GlobalTarget &target);
     std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > pathFinding(
+            const MapServerMini::BlockObject * const blockObject,
             const CatchChallenger::Orientation &source_orientation,const uint8_t &source_x,const uint8_t &source_y,
             const CatchChallenger::Orientation &destination_orientation,const uint8_t &destination_x,const uint8_t &destination_y);
 signals:
