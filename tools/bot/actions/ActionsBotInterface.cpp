@@ -2,9 +2,7 @@
 #include "../../general/base/Version.h"
 
 ActionsBotInterface::ActionsBotInterface() :
-    move(false),
     randomText(false),
-    bugInDirection(false),
     globalChatRandomReply(false)
 {
 }
@@ -15,12 +13,8 @@ ActionsBotInterface::~ActionsBotInterface()
 
 QVariant ActionsBotInterface::getValue(const QString &variable)
 {
-    if(variable==QStringLiteral("move"))
-        return move;
     if(variable==QStringLiteral("randomText"))
         return randomText;
-    if(variable==QStringLiteral("bugInDirection"))
-        return bugInDirection;
     if(variable==QStringLiteral("globalChatRandomReply"))
         return globalChatRandomReply;
     else
@@ -29,19 +23,9 @@ QVariant ActionsBotInterface::getValue(const QString &variable)
 
 bool ActionsBotInterface::setValue(const QString &variable,const QVariant &value)
 {
-    if(variable==QStringLiteral("move"))
-    {
-        move=value.toBool();
-        return true;
-    }
     if(variable==QStringLiteral("randomText"))
     {
         randomText=value.toBool();
-        return true;
-    }
-    if(variable==QStringLiteral("bugInDirection"))
-    {
-        bugInDirection=value.toBool();
         return true;
     }
     if(variable==QStringLiteral("globalChatRandomReply"))
