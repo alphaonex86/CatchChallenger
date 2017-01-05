@@ -1,8 +1,8 @@
-#QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math"
-#QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math"
+#QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -fno-rtti"
+#QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -fno-rtti"
 
-QMAKE_CFLAGS+="-fstack-protector-all -g"
-QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g"
+QMAKE_CFLAGS+="-fstack-protector-all -g -fno-rtti"
+QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g -fno-rtti"
 
 QT       -= gui widgets sql xml network core
 

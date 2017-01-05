@@ -134,6 +134,8 @@ public:
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
     QString getDatapackPath();
+    QString getMainDatapackPath();
+    QString getSubDatapackPath();
     QImage imagesInterfaceFightLabelBottom,imagesInterfaceFightLabelTop;
 protected:
     void run();

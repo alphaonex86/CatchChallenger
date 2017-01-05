@@ -18,11 +18,13 @@ class MapServerMini : public CatchChallenger::CommonMap
 {
 public:
     MapServerMini();
+    bool preload_other_pre();
     bool preload_step1();
     bool preload_step2();
     void preload_step2_addNearTileToScanList(std::vector<std::pair<uint8_t,uint8_t> > &scanList, const uint8_t &x, const uint8_t &y);
     bool preload_step2b();
     bool preload_step2c();
+    bool preload_post_subdatapack();
     static QList<QColor> colorsList;
 
     std::map<std::pair<uint8_t,uint8_t>,CatchChallenger::Orientation/*,pairhash*/> rescue;
@@ -31,6 +33,8 @@ public:
     {
         uint16_t item;
         bool infinite;
+        bool visible;
+        uint16_t indexOfItemOnMap;//to see if the player have get it
     };
     std::map<std::pair<uint8_t,uint8_t>,ItemOnMap/*,pairhash*/> pointOnMap_Item;//first is x,y, second is db code, item
     struct PlantOnMap
@@ -46,6 +50,7 @@ public:
         };
         enum LinkType
         {
+            SourceNone,
             SourceTeleporter,
             SourceTopMap,
             SourceRightMap,
@@ -56,14 +61,18 @@ public:
             SourceInternalBottomBlock,
             SourceInternalLeftBlock
         };
+        struct LinkPoint
+        {
+            LinkType type;
+            //point to go
+            uint8_t x,y;
+        };
         struct LinkInformation
         {
             LinkDirection direction;
-            std::vector<LinkType> types;
-            //point to go
-            uint8_t x,y;/// \todo multiple point to optimise the path finding with less direction change
+            std::vector<LinkPoint> points;
         };
-        std::unordered_map<BlockObject *,LinkInformation> links;
+        std::unordered_map<BlockObject */*to where*/,LinkInformation/*how, if single way or both way*/> links;
         MapServerMini * map;
         uint8_t id;
 

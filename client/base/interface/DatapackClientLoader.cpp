@@ -157,6 +157,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
 
     this->datapackPath=datapackPath;
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN "na/";
+    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=QString(DATAPACK_BASE_PATH_MAPSUB1)+"na/"+QString(DATAPACK_BASE_PATH_MAPSUB2)+"nabis/";
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
     #ifndef BOTTESTCONNECT
@@ -189,7 +190,7 @@ void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode,
     }
     inProgress=true;
     this->mainDatapackCode=mainDatapackCode;
-    this->subDatapackCode=mainDatapackCode;
+    this->subDatapackCode=subDatapackCode;
 
     if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
     {
@@ -255,6 +256,16 @@ void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode,
 QString DatapackClientLoader::getDatapackPath()
 {
     return datapackPath;
+}
+
+QString DatapackClientLoader::getMainDatapackPath()
+{
+    return DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN;
+}
+
+QString DatapackClientLoader::getSubDatapackPath()
+{
+    return DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB;
 }
 
 void DatapackClientLoader::parseVisualCategory()

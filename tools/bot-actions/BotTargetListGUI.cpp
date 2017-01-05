@@ -56,10 +56,10 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                 if(nextBlock->map!=blockObject->map)
                 {
                     unsigned int index=0;
-                    while(index<linkInformation.types.size())
+                    while(index<linkInformation.points.size())
                     {
-                        const MapServerMini::BlockObject::LinkType &type=linkInformation.types.at(index);
-                        switch(type)
+                        const MapServerMini::BlockObject::LinkPoint &linkPoint=linkInformation.points.at(index);
+                        switch(linkPoint.type)
                         {
                             case MapServerMini::BlockObject::LinkType::SourceTeleporter:
                             case MapServerMini::BlockObject::LinkType::SourceTopMap:
@@ -70,22 +70,22 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                                 QListWidgetItem * newItem=new QListWidgetItem();
                                 mapIdListLocalTarget.push_back(nextBlock->map->id);
                                 newItem->setIcon(QIcon(":/7.png"));
-                                switch(type)
+                                switch(linkPoint.type)
                                 {
                                     case MapServerMini::BlockObject::LinkType::SourceTeleporter:
-                                        newItem->setText(QString("Teleporter to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkInformation.x).arg(linkInformation.y));
+                                        newItem->setText(QString("Teleporter to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
                                     break;
                                     case MapServerMini::BlockObject::LinkType::SourceTopMap:
-                                        newItem->setText(QString("Top border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkInformation.x).arg(linkInformation.y));
+                                        newItem->setText(QString("Top border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
                                     break;
                                     case MapServerMini::BlockObject::LinkType::SourceRightMap:
-                                        newItem->setText(QString("Right border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkInformation.x).arg(linkInformation.y));
+                                        newItem->setText(QString("Right border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
                                     break;
                                     case MapServerMini::BlockObject::LinkType::SourceBottomMap:
-                                        newItem->setText(QString("Bottom border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkInformation.x).arg(linkInformation.y));
+                                        newItem->setText(QString("Bottom border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
                                     break;
                                     case MapServerMini::BlockObject::LinkType::SourceLeftMap:
-                                        newItem->setText(QString("Left border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkInformation.x).arg(linkInformation.y));
+                                        newItem->setText(QString("Left border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
                                     break;
                                     default:
                                     break;

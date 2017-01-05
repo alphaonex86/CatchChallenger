@@ -32,7 +32,7 @@ public:
         Tiled::MapObject* tileObject;
         uint32_t item;
         bool infinite;
-        uint8_t indexOfItemOnMap;
+        uint8_t indexOfItemOnMap;//to see if the player have get it
     };
 
     QList<Map_semi_teleport> teleport_semi;
