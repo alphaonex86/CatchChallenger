@@ -263,18 +263,14 @@ bool MapServerMini::addBlockLink(BlockObject &blockObjectFrom, BlockObject &bloc
             {
                 BlockObject::LinkInformation linkInformationFrom;
                 linkInformationFrom.direction=BlockObject::LinkDirection::BothDirection;
-                linkInformationFrom.types.push_back(linkSourceFrom);
-                linkInformationFrom.x=x;
-                linkInformationFrom.y=y;
                 blockObjectFrom.links[&blockObjectTo]=linkInformationFrom;
             }
-            else
-            {
-                BlockObject::LinkInformation &linkInformationFrom=blockObjectFrom.links[&blockObjectTo];
-                linkInformationFrom.direction=BlockObject::LinkDirection::BothDirection;
-                if(!vectorcontainsAtLeastOne(linkInformationFrom.types,linkSourceFrom))
-                    linkInformationFrom.types.push_back(linkSourceFrom);
-            }
+            BlockObject::LinkInformation &linkInformationFrom=blockObjectFrom.links[&blockObjectTo];
+            BlockObject::LinkPoint linkPoint;
+            linkPoint.type=linkSourceFrom;
+            linkPoint.x=x;
+            linkPoint.y=y;
+            linkInformationFrom.points.push_back(linkPoint);
         }
         else
         {
@@ -283,17 +279,14 @@ bool MapServerMini::addBlockLink(BlockObject &blockObjectFrom, BlockObject &bloc
             {
                 BlockObject::LinkInformation linkInformationFrom;
                 linkInformationFrom.direction=BlockObject::LinkDirection::ToTheTarget;
-                linkInformationFrom.types.push_back(linkSourceFrom);
-                linkInformationFrom.x=x;
-                linkInformationFrom.y=y;
                 blockObjectFrom.links[&blockObjectTo]=linkInformationFrom;
             }
-            else
-            {
-                BlockObject::LinkInformation &linkInformationFrom=blockObjectFrom.links[&blockObjectTo];
-                if(!vectorcontainsAtLeastOne(linkInformationFrom.types,linkSourceFrom))
-                    linkInformationFrom.types.push_back(linkSourceFrom);
-            }
+            BlockObject::LinkInformation &linkInformationFrom=blockObjectFrom.links[&blockObjectTo];
+            BlockObject::LinkPoint linkPoint;
+            linkPoint.type=linkSourceFrom;
+            linkPoint.x=x;
+            linkPoint.y=y;
+            linkInformationFrom.points.push_back(linkPoint);
         }
     }
     return true;

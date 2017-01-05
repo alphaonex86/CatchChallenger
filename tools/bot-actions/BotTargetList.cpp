@@ -44,6 +44,9 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
     MapServerMini::colorsList << QColor(115, 255, 240, 255);
     MapServerMini::colorsList << QColor(115, 255, 120, 255);
     MapServerMini::colorsList << QColor(200, 70, 70, 255);
+
+    connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerStep);
+    connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerMap);
 }
 
 BotTargetList::~BotTargetList()
@@ -56,21 +59,24 @@ void BotTargetList::loadAllBotsInformation()
     if(botsInformationLoaded)
         return;
     botsInformationLoaded=true;
-    if(!connect(actionsAction,&ActionsAction::preload_the_map_finished,this,&BotTargetList::loadAllBotsInformation2))
+
+    /*if(!connect(actionsAction,&ActionsAction::preload_the_map_finished,this,&BotTargetList::loadAllBotsInformation2))
         abort();
     if(!connect(this,&BotTargetList::start_preload_the_map,actionsAction,&ActionsAction::preload_the_map))
         abort();
     emit start_preload_the_map();
     waitScreen.show();
-    waitScreen.updateWaitScreen();
+    waitScreen.updateWaitScreen();*/
+    actionsAction->preload_the_map();
+    loadAllBotsInformation2();
 }
 
 void BotTargetList::loadAllBotsInformation2()
 {
     if(!actionsAction->preload_the_map_step2())
-        return;
+        abort();
     show();
-    waitScreen.hide();
+    //waitScreen.hide();
 }
 
 void BotTargetList::on_bots_itemSelectionChanged()
@@ -170,8 +176,9 @@ void BotTargetList::updatePlayerInformation()
                             const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
                             if(tempNextBlock==nextBlock)
                             {
+                                const MapServerMini::BlockObject::LinkPoint &firstPoint=linkInformation.points.at(0);
                                 ui->label_next_local_target->setText("Next local target: "+QString::fromStdString(nextLlayer->name)+" on "+QString::fromStdString(nextBlock->map->map_file)+", go to "+
-                                                                     QString::number(linkInformation.x)+","+QString::number(linkInformation.y)+
+                                                                     QString::number(firstPoint.x)+","+QString::number(firstPoint.y)+
                                                                      QString::fromStdString(stepToDo)
                                                                      );
                                 break;
@@ -294,6 +301,76 @@ void BotTargetList::updatePlayerInformation()
     }
 }
 
+void BotTargetList::updatePlayerMap()
+{
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    if(!actionsAction->clientList.contains(client->api))
+        return;
+
+    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+
+    if(player.mapId==mapId)
+        updateMapContent();
+}
+
+void BotTargetList::updatePlayerStep()
+{
+    QHashIterator<CatchChallenger::Api_protocol *,ActionsAction::Player> i(actionsAction->clientList);
+    while (i.hasNext()) {
+        i.next();
+        CatchChallenger::Api_protocol *api=i.key();
+        ActionsAction::Player &player=actionsAction->clientList[i.key()];
+        if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
+            abort();
+        if(api->getCaracterSelected())
+        {
+            if(player.target.localStep.empty())
+            {
+                if(!player.target.bestPath.empty())
+                {
+                    switch(player.target.localType)
+                    {
+                        case MapServerMini::BlockObject::LinkType::SourceNone:
+                        break;
+                        default:
+                        break;
+                    }
+
+                    const MapServerMini::BlockObject * const blockObject=player.target.bestPath.at(0);
+                    const std::pair<uint8_t,uint8_t> &point=getNextPosition(blockObject,player.target);
+                    uint8_t o=player.direction;
+                    while(o>4)
+                        o-=4;
+                    const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+                                blockObject,
+                                static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
+                                CatchChallenger::Orientation::Orientation_none,point.first,point.second
+                                );
+                    player.target.localStep=returnPath;
+                }
+                else
+                {
+                    //finish correctly the step
+                    switch(player.target.type)
+                    {
+                        case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
+                            api->heal();
+                        break;
+                        default:
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void BotTargetList::startPlayerMove()
 {
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
@@ -337,6 +414,22 @@ void BotTargetList::startPlayerMove()
                 CatchChallenger::Orientation::Orientation_none,point.first,point.second
                 );
     player.target.localStep=returnPath;
+    player.target.localType=MapServerMini::BlockObject::LinkType::SourceNone;
+    if(!player.target.bestPath.empty())
+    {
+        const MapServerMini::BlockObject * const nextBlock=player.target.bestPath.at(0);
+        //search the next position
+        for(const auto& n:layer.blockObject->links) {
+            const MapServerMini::BlockObject * const tempNextBlock=n.first;
+            const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
+            if(tempNextBlock==nextBlock)
+            {
+                const MapServerMini::BlockObject::LinkPoint &firstPoint=linkInformation.points.at(0);
+                player.target.localType=firstPoint.type;
+                break;
+            }
+        }
+    }
 
     ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(returnPath)));
     updateMapInformation();
@@ -413,6 +506,66 @@ void BotTargetList::updateMapInformation()
         const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
         if(playerMap->step.size()<2)
             abort();
+
+        ui->comboBox_Layer->clear();
+        unsigned int index=0;
+        while(index<step.layers.size())
+        {
+            const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(index);
+
+            //if(layer.name!="Lost layer" || !layer.contentList.empty())
+                ui->comboBox_Layer->addItem(QString::fromStdString(layer.name),index);
+
+            index++;
+        }
+        if(QtGraphvizText.isEmpty())
+            ui->graphvizText->setVisible(false);
+        else
+        {
+            ui->graphvizText->setVisible(true);
+            ui->graphvizText->setPlainText(QtGraphvizText);
+        }
+    }
+    updateMapContent();
+    updateLayerElements();
+}
+
+void BotTargetList::updateMapContent()
+{
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    if(!actionsAction->clientList.contains(client->api))
+        return;
+
+    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+
+    if(actionsAction->id_map_to_map.find(mapId)!=actionsAction->id_map_to_map.cend())
+    {
+        const std::string &mapStdString=actionsAction->id_map_to_map.at(mapId);
+        CatchChallenger::CommonMap *map=actionsAction->map_list.at(mapStdString);
+        MapServerMini *mapServer=static_cast<MapServerMini *>(map);
+        if((uint32_t)ui->comboBoxStep->currentIndex()>=mapServer->step.size())
+            return;
+        MapServerMini::MapParsedForBot &step=mapServer->step.at(ui->comboBoxStep->currentIndex());
+        if(step.map==NULL)
+            return;
+
+        ui->mapPreview->setColumnCount(0);
+        ui->mapPreview->setRowCount(0);
+        /*ui->mapPreview->setColumnCount(mapServer->max_x-mapServer->min_x);
+        ui->mapPreview->setRowCount(mapServer->max_y-mapServer->min_y);*/
+        ui->mapPreview->setColumnCount(mapServer->max_x-mapServer->min_x);
+        ui->mapPreview->setRowCount(mapServer->max_y-mapServer->min_y);
+
+        const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+        const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+        if(playerMap->step.size()<2)
+            abort();
         const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
         const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
         const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
@@ -462,30 +615,9 @@ void BotTargetList::updateMapInformation()
                 y++;
             }
         }
-        {
-            ui->comboBox_Layer->clear();
-            unsigned int index=0;
-            while(index<step.layers.size())
-            {
-                const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(index);
-
-                //if(layer.name!="Lost layer" || !layer.contentList.empty())
-                    ui->comboBox_Layer->addItem(QString::fromStdString(layer.name),index);
-
-                index++;
-            }
-            if(QtGraphvizText.isEmpty())
-                ui->graphvizText->setVisible(false);
-            else
-            {
-                ui->graphvizText->setVisible(true);
-                ui->graphvizText->setPlainText(QtGraphvizText);
-            }
-        }
     }
     else
         ui->label_local_target->setTitle("Unknown map ("+QString::number(mapId)+")");
-    updateLayerElements();
 }
 
 void BotTargetList::updateLayerElements()
@@ -709,8 +841,9 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
             const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
             if(tempNextBlock==nextBlock)
             {
-                point.first=linkInformation.x;
-                point.second=linkInformation.y;
+                const MapServerMini::BlockObject::LinkPoint &firstPoint=linkInformation.points.at(0);
+                point.first=firstPoint.x;
+                point.second=firstPoint.y;
                 return point;
             }
         }
@@ -889,7 +1022,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                     auto end = std::chrono::high_resolution_clock::now();
                     std::chrono::duration<double, std::milli> elapsed = end-start;
 
-                    std::cout << "Path result into" << elapsed.count() << "ms" << std::endl;
+                    std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
                     returnedVar.back().second--;
                     return returnedVar;
                 }
@@ -985,6 +1118,6 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end-start;
-    std::cout << "Path not found into" << elapsed.count() << "ms" << std::endl;
+    std::cout << "Path not found into " << (uint32_t)elapsed.count() << "ms" << std::endl;
     return std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >();
 }

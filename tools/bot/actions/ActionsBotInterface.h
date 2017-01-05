@@ -30,13 +30,14 @@ public:
         const MapServerMini::BlockObject * blockObject;//NULL if no target
         std::vector<const MapServerMini::BlockObject *> bestPath;
         std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > localStep;
+        MapServerMini::BlockObject::LinkType localType;
     };
     struct Player
     {
         CatchChallenger::Player_public_informations player;
-        quint32 mapId;
-        quint16 x;
-        quint16 y;
+        uint32_t mapId;
+        uint8_t x;
+        uint8_t y;
         CatchChallenger::Direction direction;
         std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
         GlobalTarget target;

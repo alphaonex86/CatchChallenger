@@ -3,6 +3,7 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/Map_loader.h"
 #include "../../general/base/FacilityLibGeneral.h"
+#include "../../client/base/interface/DatapackClientLoader.h"
 
 #include <regex>
 #include <string>
@@ -553,6 +554,8 @@ bool ActionsAction::preload_the_map()
                 MapServerMini::ItemOnMap itemOnMap;
                 itemOnMap.infinite=item.infinite;
                 itemOnMap.item=item.item;
+                itemOnMap.visible=item.visible;
+                itemOnMap.indexOfItemOnMap=0;
                 mapServer->pointOnMap_Item[pair]=itemOnMap;
 
                 sub_index++;
@@ -562,6 +565,8 @@ bool ActionsAction::preload_the_map()
         }
     }
 
+    if(!actionsAction->preload_other_pre())
+        return false;
     if(!actionsAction->preload_the_map_step1())
         return false;
     emit preload_the_map_finished();
