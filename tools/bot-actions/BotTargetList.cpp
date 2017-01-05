@@ -341,18 +341,63 @@ void BotTargetList::updatePlayerStep()
                         default:
                         break;
                     }
-
-                    const MapServerMini::BlockObject * const blockObject=player.target.bestPath.at(0);
-                    const std::pair<uint8_t,uint8_t> &point=getNextPosition(blockObject,player.target);
+                    player.target.bestPath.erase(player.target.bestPath.cbegin());
                     uint8_t o=player.direction;
                     while(o>4)
                         o-=4;
-                    const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
-                                blockObject,
-                                static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
-                                CatchChallenger::Orientation::Orientation_none,point.first,point.second
-                                );
-                    player.target.localStep=returnPath;
+
+                    if(!player.target.bestPath.empty())
+                    {
+                        const MapServerMini::BlockObject * const blockObject=player.target.bestPath.at(0);
+                        const std::pair<uint8_t,uint8_t> &point=getNextPosition(blockObject,player.target/*hop list, first is the next hop*/);
+
+                        const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+                                    blockObject,
+                                    static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
+                                    CatchChallenger::Orientation::Orientation_none,point.first,point.second
+                                    );
+                        player.target.localStep=returnPath;
+                        const MapServerMini::BlockObject * const nextBlock=player.target.bestPath.at(0);
+                        //search the next position
+                        for(const auto& n:blockObject->links) {
+                            const MapServerMini::BlockObject * const tempNextBlock=n.first;
+                            const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
+                            if(tempNextBlock==nextBlock)
+                            {
+                                const MapServerMini::BlockObject::LinkPoint &firstPoint=linkInformation.points.at(0);
+                                player.target.localType=firstPoint.type;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+                        const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+                        if(playerMap->step.size()<2)
+                            abort();
+                        const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
+                        const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
+                        const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
+                        const MapServerMini::BlockObject * const blockObject=layer.blockObject;
+                        switch(player.target.type)
+                        {
+                            case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
+                                for(const auto& n:blockObject->heal) {
+                                    const std::pair<uint8_t,uint8_t> &point=n;
+                                    const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+                                                blockObject,
+                                                static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
+                                                CatchChallenger::Orientation::Orientation_none,point.first,point.second
+                                                );
+                                    player.target.localStep=returnPath;
+                                    player.target.localType=MapServerMini::BlockObject::LinkType::SourceNone;
+                                }
+                            break;
+                            default:
+                            break;
+                        }
+                    }
                 }
                 else
                 {
@@ -404,7 +449,7 @@ void BotTargetList::startPlayerMove()
     if(step.map==NULL)
         return;
 
-    const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target);
+    const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target/*hop list, first is the next hop*/);
     uint8_t o=player.direction;
     while(o>4)
         o-=4;
