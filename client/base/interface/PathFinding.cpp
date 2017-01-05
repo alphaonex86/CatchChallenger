@@ -387,7 +387,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                     }
                     else
                     {
-                        //qDebug() << "Path result into" << time.elapsed() << "ms";
+                        qDebug() << "Path result into " << time.elapsed() << "ms";
                         returnedVar.last().second--;
                         emit result(current_map,x,y,returnedVar);
                         return;
@@ -495,7 +495,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
     }
     tryCancel=false;
     emit result(QString(),0,0,QList<QPair<CatchChallenger::Orientation,uint8_t> >());
-    qDebug() << "Path not found into" << time.elapsed() << "ms";
+    qDebug() << "Path not found into " << time.elapsed() << "ms";
 }
 
 void PathFinding::cancel()

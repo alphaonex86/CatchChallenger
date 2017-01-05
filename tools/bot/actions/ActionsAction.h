@@ -29,8 +29,10 @@ public:
     ActionsAction();
     ~ActionsAction();
     void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    bool preload_other_pre();
     bool preload_the_map_step1();
     bool preload_the_map_step2();
+    bool preload_post_subdatapack();
     uint64_t elementToLoad() const;
     uint64_t elementLoaded() const;
 
@@ -42,14 +44,18 @@ public:
     void remove_to_inventory(const QHash<uint16_t,uint32_t> &items);
     void remove_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
     void remove_to_inventory(const uint32_t &itemId,const uint32_t &quantity=1);
+
+    bool canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction, const MapServerMini &map, COORD_TYPE x, COORD_TYPE y);
+    bool move(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y);
+    bool moveWithoutTeleport(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y);
+    bool teleport(const MapServerMini **map, COORD_TYPE *x, COORD_TYPE *y);
 public slots:
     bool preload_the_map();
 signals:
     void preload_the_map_finished();
+    void stepListFinish();
 private:
-    QTimer moveTimer;
     QTimer textTimer;
-    QThread thread;
     uint64_t loaded;
 public:
     //map
@@ -153,12 +159,14 @@ public:
     std::unordered_map<std::string/*file name*/,std::unordered_map<uint8_t/*bot id*/,CatchChallenger::Bot> > botFiles;
     std::unordered_set<uint32_t> botIdLoaded;
 
+    QTimer moveTimer;
 private:
     void doMove();
     void doText();
     void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
     void preload_the_bots(const std::vector<Map_semi> &semi_loaded_map);
     void loadBotFile(const std::string &mapfile,const std::string &file);
+    void checkOnTileEvent(Player &player);
 };
 
 #endif // ACTIONS_ACTION_BOT_INTERFACE_H
