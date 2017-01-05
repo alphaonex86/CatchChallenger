@@ -76,10 +76,62 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
         return false;
     }*/
     const MapServerMini *new_map=&map;
-    if(!moveWithoutTeleport(api,direction,&new_map,&x,&y))
+    switch(direction)
     {
-        qDebug() << "Strange, can go but move failed";
-        return false;
+        case CatchChallenger::Direction_move_at_left:
+            if(x>0)
+                x-=1;
+            else
+            {
+                if(map.border.left.map==NULL)
+                    return false;
+                x=map.border.left.map->width-1;
+                y+=map.border.left.y_offset;
+                new_map=static_cast<const MapServerMini *>(map.border.left.map);
+            }
+            return true;
+        break;
+        case CatchChallenger::Direction_move_at_right:
+            if(x<(map.width-1))
+                x+=1;
+            else
+            {
+                if(map.border.right.map==NULL)
+                    return false;
+                x=0;
+                y+=map.border.right.y_offset;
+                new_map=static_cast<const MapServerMini *>(map.border.right.map);
+            }
+            return true;
+        break;
+        case CatchChallenger::Direction_move_at_top:
+            if(y>0)
+                y-=1;
+            else
+            {
+                if(map.border.top.map==NULL)
+                    return false;
+                y=map.border.top.map->height-1;
+                x+=map.border.top.x_offset;
+                new_map=static_cast<const MapServerMini *>(map.border.top.map);
+            }
+            return true;
+        break;
+        case CatchChallenger::Direction_move_at_bottom:
+            if(y<(map.height-1))
+                y+=1;
+            else
+            {
+                if(map.border.bottom.map==NULL)
+                    return false;
+                y=0;
+                x+=map.border.bottom.x_offset;
+                new_map=static_cast<const MapServerMini *>(map.border.bottom.map);
+            }
+            return true;
+        break;
+        default:
+            return false;
     }
 
     {
@@ -220,6 +272,8 @@ bool ActionsAction::moveWithoutTeleport(CatchChallenger::Api_protocol *api,Catch
 {
     if(*map==NULL)
         return false;
+    if(!canGoTo(api,direction,**map,*x,*y))
+        return false;
     switch(direction)
     {
         case CatchChallenger::Direction_move_at_left:
@@ -316,6 +370,7 @@ void ActionsAction::doMove()
                         api->send_player_move(player.previousStepWalked,player.direction);
                         player.previousStepWalked=0;
                         player.target.localStep.clear();
+                        player.target.bestPath.clear();
                     }
                 }
                 //need start to walk or direction change
@@ -337,6 +392,7 @@ void ActionsAction::doMove()
                         api->send_player_move(player.previousStepWalked,player.direction);
                         player.previousStepWalked=0;
                         player.target.localStep.clear();
+                        player.target.bestPath.clear();
                     }
                 }
             }
