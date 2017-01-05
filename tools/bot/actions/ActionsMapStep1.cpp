@@ -8,6 +8,19 @@
 #include <string>
 #include <vector>
 
+bool ActionsAction::preload_other_pre()
+{
+    unsigned int index=0;
+    while(index<map_list.size())
+    {
+        static_cast<MapServerMini *>(flat_map_list[index])->preload_other_pre();
+        QCoreApplication::processEvents();
+        index++;
+        loaded++;
+    }
+    return true;
+}
+
 bool ActionsAction::preload_the_map_step1()
 {
     unsigned int index=0;
@@ -43,6 +56,19 @@ bool ActionsAction::preload_the_map_step2()
     while(index<map_list.size())
     {
         static_cast<MapServerMini *>(flat_map_list[index])->preload_step2c();
+        QCoreApplication::processEvents();
+        index++;
+        loaded++;
+    }
+    return true;
+}
+
+bool ActionsAction::preload_post_subdatapack()
+{
+    unsigned int index=0;
+    while(index<map_list.size())
+    {
+        static_cast<MapServerMini *>(flat_map_list[index])->preload_post_subdatapack();
         QCoreApplication::processEvents();
         index++;
         loaded++;

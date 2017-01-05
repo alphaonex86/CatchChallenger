@@ -41,7 +41,10 @@ public:
     void loadAllBotsInformation2();
     void updateLayerElements();
     void updateMapInformation();
+    void updateMapContent();
     void updatePlayerInformation();
+    void updatePlayerMap();
+    void updatePlayerStep();
     void startPlayerMove();
     std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject,const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI=NULL);
     std::vector<std::string> contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard=true);
