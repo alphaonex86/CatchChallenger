@@ -89,7 +89,6 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                 y+=map.border.left.y_offset;
                 new_map=static_cast<const MapServerMini *>(map.border.left.map);
             }
-            return true;
         break;
         case CatchChallenger::Direction_move_at_right:
             if(x<(map.width-1))
@@ -102,7 +101,6 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                 y+=map.border.right.y_offset;
                 new_map=static_cast<const MapServerMini *>(map.border.right.map);
             }
-            return true;
         break;
         case CatchChallenger::Direction_move_at_top:
             if(y>0)
@@ -115,7 +113,6 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                 x+=map.border.top.x_offset;
                 new_map=static_cast<const MapServerMini *>(map.border.top.map);
             }
-            return true;
         break;
         case CatchChallenger::Direction_move_at_bottom:
             if(y<(map.height-1))
@@ -128,9 +125,14 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                 x+=map.border.bottom.x_offset;
                 new_map=static_cast<const MapServerMini *>(map.border.bottom.map);
             }
-            return true;
         break;
         default:
+            return false;
+    }
+    if(new_map->botLayerMask!=NULL)
+    {
+        //bot colision
+        if(new_map->botLayerMask[x+y*new_map->width]!=0)
             return false;
     }
 
@@ -348,6 +350,8 @@ void ActionsAction::doMove()
             if(!player.target.localStep.empty())
             {
                 std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &step=player.target.localStep[0];
+                if(step.second==0)
+                    abort();
                 step.second--;
                 //need just continue to walk
                 const CatchChallenger::Direction direction=(CatchChallenger::Direction)((uint8_t)step.first+4);
@@ -381,6 +385,8 @@ void ActionsAction::doMove()
                         player.direction=direction;
                         api->send_player_move(player.previousStepWalked,player.direction);
                         player.previousStepWalked=1;
+                        if(step.second==0)
+                            player.target.localStep.erase(player.target.localStep.cbegin());
                         move(api,direction,&playerMap,&player.x,&player.y);
                         player.mapId=playerMap->id;
                         checkOnTileEvent(player);
@@ -388,9 +394,13 @@ void ActionsAction::doMove()
                     else
                     {
                         //turn on the new direction
-                        player.direction=(CatchChallenger::Direction)((uint8_t)direction-4);
-                        api->send_player_move(player.previousStepWalked,player.direction);
-                        player.previousStepWalked=0;
+                        const CatchChallenger::Direction &newDirection=(CatchChallenger::Direction)((uint8_t)direction-4);
+                        if(newDirection!=player.direction || player.previousStepWalked>0)
+                        {
+                            player.direction=newDirection;
+                            api->send_player_move(player.previousStepWalked,player.direction);
+                            player.previousStepWalked=0;
+                        }
                         player.target.localStep.clear();
                         player.target.bestPath.clear();
                     }

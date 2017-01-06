@@ -399,18 +399,32 @@ void BotTargetList::updatePlayerStep()
                         }
                     }
                 }
-                else
+            }
+            if(player.target.localStep.empty() && player.target.bestPath.empty() && player.target.blockObject!=NULL && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
+            {
+                //finish correctly the step
+                switch(player.target.type)
                 {
-                    //finish correctly the step
-                    switch(player.target.type)
-                    {
-                        case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
-                            api->heal();
-                        break;
-                        default:
-                        break;
-                    }
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
+                        api->heal();
+                    break;
+                    default:
+                    break;
                 }
+                player.target.blockObject=NULL;
+                player.target.extra=0;
+                player.target.localType=MapServerMini::BlockObject::LinkType::SourceNone;
+                player.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
+
+                const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+                if(selectedItems.size()!=1)
+                    return;
+                const QString &pseudo=selectedItems.at(0)->text();
+                if(!pseudoToBot.contains(pseudo))
+                    return;
+                MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+                if(api==client->api)
+                    updatePlayerInformation();
             }
         }
     }
@@ -613,6 +627,11 @@ void BotTargetList::updateMapContent()
             abort();
         const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
         const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
+        if(playerCodeZone==0)
+        {
+            std::cerr << "out of map" << std::endl;
+            abort();
+        }
         const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
 
         {
