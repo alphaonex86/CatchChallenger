@@ -15,12 +15,12 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
     connectedSocketToCatchChallengerClient(connectedSocketToCatchChallengerClient),
     sslSocketToCatchChallengerClient(sslSocketToCatchChallengerClient),
     actionsAction(actionsAction),
-    botsInformationLoaded(false)
+    botsInformationLoaded(false),
+    mapId(0)
 {
     ui->setupUi(this);
     ui->comboBoxStep->setCurrentIndex(1);
     ui->graphvizText->setVisible(false);
-    mapId=0;
 
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *>::const_iterator i = apiToCatchChallengerClient.constBegin();
     while (i != apiToCatchChallengerClient.constEnd()) {
@@ -46,7 +46,7 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
     MapServerMini::colorsList << QColor(200, 70, 70, 255);
 
     connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerStep);
-    connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerMap);
+    connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerMapSlot);
 }
 
 BotTargetList::~BotTargetList()
@@ -99,6 +99,7 @@ void BotTargetList::on_bots_itemSelectionChanged()
 
     const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
     mapId=player.mapId;
+    ui->trackThePlayer->setChecked(true);
 
     updateMapInformation();
     updatePlayerInformation();
@@ -301,7 +302,12 @@ void BotTargetList::updatePlayerInformation()
     }
 }
 
-void BotTargetList::updatePlayerMap()
+void BotTargetList::updatePlayerMapSlot()
+{
+    updatePlayerMap();
+}
+
+void BotTargetList::updatePlayerMap(const bool &force)
 {
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()!=1)
@@ -315,7 +321,7 @@ void BotTargetList::updatePlayerMap()
 
     const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
 
-    if(player.mapId==mapId)
+    if(player.mapId==mapId || force)
         updateMapContent();
 }
 
@@ -330,10 +336,12 @@ void BotTargetList::updatePlayerStep()
             abort();
         if(api->getCaracterSelected())
         {
+            bool haveChange=false;
             if(player.target.localStep.empty())
             {
                 if(!player.target.bestPath.empty())
                 {
+                    haveChange=true;
                     switch(player.target.localType)
                     {
                         case MapServerMini::BlockObject::LinkType::SourceNone:
@@ -400,6 +408,25 @@ void BotTargetList::updatePlayerStep()
                     }
                 }
             }
+
+            const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+            if(selectedItems.size()!=1)
+                return;
+            const QString &pseudo=selectedItems.at(0)->text();
+            if(!pseudoToBot.contains(pseudo))
+                return;
+            MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+            if(haveChange && api==client->api)
+            {
+                if(ui->trackThePlayer->isChecked())
+                {
+                    mapId=player.mapId;
+                    updateMapInformation();
+                    updatePlayerInformation();
+                }
+                updatePlayerMap(true);
+            }
+
             if(player.target.localStep.empty() && player.target.bestPath.empty() && player.target.blockObject!=NULL && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
             {
                 //finish correctly the step
@@ -416,15 +443,11 @@ void BotTargetList::updatePlayerStep()
                 player.target.localType=MapServerMini::BlockObject::LinkType::SourceNone;
                 player.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
 
-                const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
-                if(selectedItems.size()!=1)
-                    return;
-                const QString &pseudo=selectedItems.at(0)->text();
-                if(!pseudoToBot.contains(pseudo))
-                    return;
-                MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
                 if(api==client->api)
+                {
                     updatePlayerInformation();
+                    updatePlayerMap(true);
+                }
             }
         }
     }
@@ -754,6 +777,7 @@ void BotTargetList::on_localTargets_itemActivated(QListWidgetItem *item)
     {
         mapId=newMapId;
         updateMapInformation();
+        ui->trackThePlayer->setChecked(false);
     }
 }
 
@@ -779,6 +803,7 @@ void BotTargetList::on_browseMap_clicked()
         return;
     const MapServerMini * const mapServer=static_cast<MapServerMini *>(actionsAction->map_list.at(selectedMapString));
     mapId=mapServer->id;
+    ui->trackThePlayer->setChecked(false);
     updateMapInformation();
 }
 
@@ -1184,4 +1209,22 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     std::chrono::duration<double, std::milli> elapsed = end-start;
     std::cout << "Path not found into " << (uint32_t)elapsed.count() << "ms" << std::endl;
     return std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >();
+}
+
+void BotTargetList::on_trackThePlayer_clicked()
+{
+    if(!ui->trackThePlayer->isChecked())
+        return;
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    mapId=player.mapId;
+    updateMapInformation();
+    updatePlayerInformation();
+    updatePlayerMap(true);
 }
