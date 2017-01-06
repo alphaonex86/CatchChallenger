@@ -43,7 +43,8 @@ public:
     void updateMapInformation();
     void updateMapContent();
     void updatePlayerInformation();
-    void updatePlayerMap();
+    void updatePlayerMapSlot();
+    void updatePlayerMap(const bool &force=false);
     void updatePlayerStep();
     void startPlayerMove();
     std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject,const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI=NULL);
@@ -67,6 +68,8 @@ private slots:
     void on_searchDeep_editingFinished();
     void on_globalTargets_itemActivated(QListWidgetItem *item);
     void on_tooHard_clicked();
+
+    void on_trackThePlayer_clicked();
 
 private:
     Ui::BotTargetList *ui;
