@@ -20,9 +20,9 @@ class Chat : public QWidget
 public:
     explicit Chat(QWidget *parent);
     ~Chat();
-    static Chat *chat;
     void resetAll();
     void setClan(const bool &haveClan);
+    void setClient(CatchChallenger::Api_protocol *client);
 public slots:
     void new_system_text(CatchChallenger::Chat_type chat_type,QString text);
     void new_chat_text(CatchChallenger::Chat_type chat_type,QString text,QString pseudo,CatchChallenger::Player_type type);
@@ -43,6 +43,7 @@ private:
     QList<CatchChallenger::Player_type> chat_list_player_type;
     QList<CatchChallenger::Chat_type> chat_list_type;
     QList<QString> chat_list_text;
+    CatchChallenger::Api_protocol *client;
 };
 }
 

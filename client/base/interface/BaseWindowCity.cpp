@@ -42,7 +42,7 @@ void BaseWindow::on_zonecaptureCancel_clicked()
 {
     updater_page_zonecatch.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
-    CatchChallenger::Api_client_real::client->waitingForCityCapture(true);
+    client->waitingForCityCapture(true);
     zonecatch=false;
 }
 

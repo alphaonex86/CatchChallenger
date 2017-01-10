@@ -174,6 +174,8 @@ private:
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
     QTimer triggerUltimateCopy;
+    CatchChallenger::BaseWindow *baseWindow;
+    CatchChallenger::Api_protocol *client;
 signals:
     #ifndef CATCHCHALLENGER_NOAUDIO
     void audioLoopRestart(void *vlcPlayer);

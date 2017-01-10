@@ -210,7 +210,7 @@ QList<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
 {
     QList<PlayerMonster> warehouseMonsterOnPlayerList;
     {
-        const std::vector<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
+        const std::vector<PlayerMonster> &playerMonster=fightEngine.getPlayerMonster();
         int index=0;
         int size=playerMonster.size();
         while(index<size)
@@ -253,7 +253,7 @@ void BaseWindow::on_warehouseValidate_clicked()
             change_warehouse_items_list << QPair<uint16_t,int32_t>(i.key(),i.value());
             ++i;
         }
-        CatchChallenger::Api_client_real::client->wareHouseStore(temp_warehouse_cash,change_warehouse_items_list,monster_to_withdraw,monster_to_deposit);
+        client->wareHouseStore(temp_warehouse_cash,change_warehouse_items_list,monster_to_withdraw,monster_to_deposit);
     }
     //validate the change here
     if(temp_warehouse_cash>0)
@@ -307,16 +307,16 @@ void BaseWindow::on_warehouseValidate_clicked()
             }
             index++;
         }
-        CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(playerMonsterToWithdraw);
+        fightEngine.addPlayerMonster(playerMonsterToWithdraw);
     }
     {
         int index=0;
         while(index<monster_to_deposit.size())
         {
-            const std::vector<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
+            const std::vector<PlayerMonster> &playerMonster=fightEngine.getPlayerMonster();
             const uint8_t &monsterPosition=monster_to_deposit.at(index);
             warehouse_playerMonster << playerMonster.at(monsterPosition);
-            CatchChallenger::ClientFightEngine::fightEngine.removeMonsterByPosition(monsterPosition);
+            fightEngine.removeMonsterByPosition(monsterPosition);
             index++;
         }
     }

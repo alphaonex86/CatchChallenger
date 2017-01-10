@@ -30,8 +30,8 @@ void BaseWindow::resetAll()
     ui->frame_main_display_interface_player->hide();
     ui->label_interface_number_of_player->setText("?/?");
     ui->stackedWidget->setCurrentWidget(ui->page_init);
-    Chat::chat->resetAll();
-    MapController::mapController->resetAll();
+    chat.resetAll();
+    mapController->resetAll();
     waitedObjectType=ObjectType_All;
     lastReplyTimeValue=-1;
     protocolIsGood=false;
@@ -128,15 +128,15 @@ void BaseWindow::resetAll()
     add_to_inventoryGainExtraList.clear();
     add_to_inventoryGainExtraTime.clear();
     /*this is only mirror, drop into Api_protocol::resetAll()
-    if(ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_item!=NULL)
+    if(fightEngine.public_and_private_informations.encyclopedia_item!=NULL)
     {
-        delete ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_item;
-        ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_item=NULL;
+        delete fightEngine.public_and_private_informations.encyclopedia_item;
+        fightEngine.public_and_private_informations.encyclopedia_item=NULL;
     }
-    if(ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_monster!=NULL)
+    if(fightEngine.public_and_private_informations.encyclopedia_monster!=NULL)
     {
-        delete ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_monster;
-        ClientFightEngine::fightEngine.public_and_private_informations.encyclopedia_monster=NULL;
+        delete fightEngine.public_and_private_informations.encyclopedia_monster;
+        fightEngine.public_and_private_informations.encyclopedia_monster=NULL;
     }*/
 
     #ifndef CATCHCHALLENGER_NOAUDIO
@@ -161,7 +161,7 @@ void BaseWindow::resetAll()
         newProfile=NULL;
     }
 
-    CatchChallenger::ClientFightEngine::fightEngine.resetAll();
+    fightEngine.resetAll();
 }
 
 void BaseWindow::serverIsLoading()
@@ -175,12 +175,19 @@ void BaseWindow::serverIsReady()
     ui->label_connecting_status->setText(tr("Game data is ready"));
 }
 
-void BaseWindow::setMultiPlayer(bool multiplayer)
+void BaseWindow::setMultiPlayer(bool multiplayer, Api_protocol *client)
 {
-    emit sendsetMultiPlayer(multiplayer);
     this->multiplayer=multiplayer;
+    this->client=client;
+    if(client!=NULL)
+        mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
+    else
+        abort();
+    chat.setClient(client);
+    chat.setMultiPlayer(multiplayer);
+    fightEngine.setClient(client);
     /*if(!multiplayer)
-        MapController::mapController->setOpenGl(true);*/
+        mapController->setOpenGl(true);*/
     //frame_main_display_right->setVisible(multiplayer);
     //ui->frame_main_display_interface_player->setVisible(multiplayer);//displayed when have the player connected (if have)
 }
@@ -207,11 +214,11 @@ void BaseWindow::logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedLi
     this->serverOrdenedList=serverOrdenedList;
     this->characterListForSelection=characterEntryList;
     #ifndef CATCHCHALLENGER_EXTRA_CHECK
-    if(settings.contains("DatapackHashBase-"+CatchChallenger::Api_client_real::client->datapackPathBase()))
-        CatchChallenger::Api_client_real::client->sendDatapackContentBase(settings.value("DatapackHashBase-"+CatchChallenger::Api_client_real::client->datapackPathBase()).toByteArray());
+    if(settings.contains("DatapackHashBase-"+client->datapackPathBase()))
+        client->sendDatapackContentBase(settings.value("DatapackHashBase-"+client->datapackPathBase()).toByteArray());
     else
     #endif
-        CatchChallenger::Api_client_real::client->sendDatapackContentBase();
+        client->sendDatapackContentBase();
     isLogged=true;
     datapackGatewayProgression.clear();
     updateConnectingStatus();
@@ -249,8 +256,8 @@ void BaseWindow::haveCharacter()
     if(haveCharacterInformation)
         return;
 
-    CatchChallenger::ClientFightEngine::fightEngine.public_and_private_informations.playerMonster=CatchChallenger::Api_client_real::client->player_informations.playerMonster;
-    CatchChallenger::ClientFightEngine::fightEngine.setVariableContent(CatchChallenger::Api_client_real::client->get_player_informations());
+    fightEngine.public_and_private_informations.playerMonster=client->player_informations.playerMonster;
+    fightEngine.setVariableContent(client->get_player_informations());
 
     haveCharacterInformation=true;
 
@@ -261,13 +268,13 @@ void BaseWindow::haveCharacter()
 void BaseWindow::sendDatapackContentMainSub()
 {
     #ifndef CATCHCHALLENGER_EXTRA_CHECK
-    if(settings.contains("DatapackHashMain-"+CatchChallenger::Api_client_real::client->datapackPathMain()) &&
-            settings.contains("DatapackHashSub-"+CatchChallenger::Api_client_real::client->datapackPathSub()))
-        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub(settings.value("DatapackHashMain"+CatchChallenger::Api_client_real::client->datapackPathMain()).toByteArray(),
-                                                                             settings.value("DatapackHashSub"+CatchChallenger::Api_client_real::client->datapackPathSub()).toByteArray());
+    if(settings.contains("DatapackHashMain-"+client->datapackPathMain()) &&
+            settings.contains("DatapackHashSub-"+client->datapackPathSub()))
+        client->sendDatapackContentMainSub(settings.value("DatapackHashMain"+client->datapackPathMain()).toByteArray(),
+                                                                             settings.value("DatapackHashSub"+client->datapackPathSub()).toByteArray());
     else
     #endif
-        CatchChallenger::Api_client_real::client->sendDatapackContentMainSub();
+        client->sendDatapackContentMainSub();
 }
 
 void BaseWindow::have_character_position()
@@ -285,13 +292,13 @@ void BaseWindow::have_character_position()
 
 void BaseWindow::have_main_and_sub_datapack_loaded()
 {
-    CatchChallenger::Api_client_real::client->have_main_and_sub_datapack_loaded();
-    if(!CatchChallenger::Api_client_real::client->getCaracterSelected())
+    client->have_main_and_sub_datapack_loaded();
+    if(!client->getCaracterSelected())
     {
         error("BaseWindow::have_main_and_sub_datapack_loaded(): don't have player info, need to code this delay part");
         return;
     }
-    const Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    const Player_private_and_public_informations &informations=client->get_player_informations();
 
     clan=informations.clan;
     allow=informations.allow;
@@ -306,7 +313,7 @@ void BaseWindow::have_main_and_sub_datapack_loaded()
     ui->shopCash->setText(tr("Cash: %1$").arg(informations.cash));
 
     //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
-    MapController::mapController->have_current_player_info(informations);
+    mapController->have_current_player_info(informations);
 
     qDebug() << (QStringLiteral("%1 is logged with id: %2, cash: %3")
                  .arg(QString::fromStdString(informations.public_informations.pseudo))
@@ -320,7 +327,7 @@ void BaseWindow::have_main_and_sub_datapack_loaded()
 
 void BaseWindow::updatePlayerType()
 {
-    const Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    const Player_private_and_public_informations &informations=client->get_player_informations();
     ui->player_informations_type->setText(QString());
     ui->player_informations_type->setPixmap(QPixmap());
     switch(informations.public_informations.type)
@@ -359,15 +366,15 @@ void BaseWindow::haveTheDatapack()
     if(haveDatapack)
         return;
     haveDatapack=true;
-    settings.setValue("DatapackHashBase-"+CatchChallenger::Api_client_real::client->datapackPathBase(),
+    settings.setValue("DatapackHashBase-"+client->datapackPathBase(),
                       QByteArray(
                           CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
                           CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()
                                   )
                       );
 
-    if(CatchChallenger::Api_client_real::client!=NULL)
-        emit parseDatapack(CatchChallenger::Api_client_real::client->datapackPathBase());
+    if(client!=NULL)
+        emit parseDatapack(client->datapackPathBase());
 }
 
 void BaseWindow::haveDatapackMainSubCode()
@@ -384,21 +391,21 @@ void BaseWindow::haveTheDatapackMainSub()
     if(haveDatapackMainSub)
         return;
     haveDatapackMainSub=true;
-    settings.setValue("DatapackHashMain-"+CatchChallenger::Api_client_real::client->datapackPathMain(),
+    settings.setValue("DatapackHashMain-"+client->datapackPathMain(),
                       QByteArray(
                           CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),
                           CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()
                                   )
                       );
-    settings.setValue("DatapackHashSub-"+CatchChallenger::Api_client_real::client->datapackPathSub(),
+    settings.setValue("DatapackHashSub-"+client->datapackPathSub(),
                       QByteArray(
                           CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),
                           CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()
                                   )
                       );
 
-    if(CatchChallenger::Api_client_real::client!=NULL)
-        emit parseDatapackMainSub(CatchChallenger::Api_client_real::client->mainDatapackCode(),CatchChallenger::Api_client_real::client->subDatapackCode());
+    if(client!=NULL)
+        emit parseDatapackMainSub(client->mainDatapackCode(),client->subDatapackCode());
 }
 
 void BaseWindow::datapackSize(const uint32_t &datapackFileNumber,const uint32_t &datapackFileSize)
@@ -468,7 +475,7 @@ void BaseWindow::load_inventory()
                         show=true;
                 break;
                 case ObjectType_UseInFight:
-                    if(CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild() && CommonDatapack::commonDatapack.items.trap.find(i->first)!=CommonDatapack::commonDatapack.items.trap.cend())
+                    if(fightEngine.isInFightWithWild() && CommonDatapack::commonDatapack.items.trap.find(i->first)!=CommonDatapack::commonDatapack.items.trap.cend())
                         show=true;
                     else if(CommonDatapack::commonDatapack.items.monsterItemEffect.find(i->first)!=CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
                         show=true;
@@ -515,12 +522,12 @@ void BaseWindow::datapackParsed()
     updateConnectingStatus();
     loadSettingsWithDatapack();
     {
-        if(QFile(CatchChallenger::Api_client_real::client->datapackPathBase()+QStringLiteral("/images/interface/fight/labelBottom.png")).exists())
-            ui->frameFightBottom->setStyleSheet(QStringLiteral("#frameFightBottom{background-image: url('")+CatchChallenger::Api_client_real::client->datapackPathBase()+QStringLiteral("/images/interface/fight/labelBottom.png');padding:6px 6px 6px 14px;}"));
+        if(QFile(client->datapackPathBase()+QStringLiteral("/images/interface/fight/labelBottom.png")).exists())
+            ui->frameFightBottom->setStyleSheet(QStringLiteral("#frameFightBottom{background-image: url('")+client->datapackPathBase()+QStringLiteral("/images/interface/fight/labelBottom.png');padding:6px 6px 6px 14px;}"));
         else
             ui->frameFightBottom->setStyleSheet(QStringLiteral("#frameFightBottom{background-image: url(:/images/interface/fight/labelBottom.png);padding:6px 6px 6px 14px;}"));
-        if(QFile(CatchChallenger::Api_client_real::client->datapackPathBase()+QStringLiteral("/images/interface/fight/labelTop.png")).exists())
-            ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url('")+CatchChallenger::Api_client_real::client->datapackPathBase()+QStringLiteral("/images/interface/fight/labelTop.png');padding:6px 14px 6px 6px;}"));
+        if(QFile(client->datapackPathBase()+QStringLiteral("/images/interface/fight/labelTop.png")).exists())
+            ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url('")+client->datapackPathBase()+QStringLiteral("/images/interface/fight/labelTop.png');padding:6px 14px 6px 6px;}"));
         else
             ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url(:/images/interface/fight/labelTop.png);padding:6px 14px 6px 6px;}"));
     }
@@ -529,9 +536,9 @@ void BaseWindow::datapackParsed()
 
 void BaseWindow::datapackParsedMainSub()
 {
-    if(CatchChallenger::Api_client_real::client==NULL)
+    if(client==NULL)
         return;
-    if(MapController::mapController==NULL)
+    if(mapController==NULL)
         return;
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::datapackParsedMainSub()";
@@ -539,7 +546,7 @@ void BaseWindow::datapackParsedMainSub()
     mainSubDatapackIsParsed=true;
 
     //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
-    MapController::mapController->setDatapackPath(CatchChallenger::Api_client_real::client->datapackPathBase(),CatchChallenger::Api_client_real::client->mainDatapackCode());
+    mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
 
     have_main_and_sub_datapack_loaded();
 
@@ -555,9 +562,9 @@ void BaseWindow::datapackChecksumError()
     #endif
     datapackIsParsed=false;
     //reset all the cached hash
-    settings.remove("DatapackHashBase-"+CatchChallenger::Api_client_real::client->datapackPathBase());
-    settings.remove("DatapackHashMain-"+CatchChallenger::Api_client_real::client->datapackPathMain());
-    settings.remove("DatapackHashSub-"+CatchChallenger::Api_client_real::client->datapackPathSub());
+    settings.remove("DatapackHashBase-"+client->datapackPathBase());
+    settings.remove("DatapackHashMain-"+client->datapackPathMain());
+    settings.remove("DatapackHashSub-"+client->datapackPathSub());
     emit newError(tr("Datapack on mirror is corrupted"),QStringLiteral("The checksum sended by the server is not the same than have on the mirror"));
 }
 
@@ -666,7 +673,7 @@ void BaseWindow::updateConnectingStatus()
                 return;
             }
         }
-        else if(!haveCharacterPosition && !haveCharacterInformation && !Api_client_real::client->character_select_is_send() && serverSelected<serverOrdenedList.size())
+        else if(!haveCharacterPosition && !haveCharacterInformation && !client->character_select_is_send() && serverSelected<serverOrdenedList.size())
         {
             if(ui->stackedWidget->currentWidget()!=ui->page_character)
             {
@@ -747,13 +754,13 @@ void BaseWindow::updateConnectingStatus()
         waitedData << tr("Opening the datapack");
     if(waitedData.isEmpty())
     {
-        Player_private_and_public_informations player_private_and_public_informations=CatchChallenger::Api_client_real::client->get_player_informations();
+        Player_private_and_public_informations player_private_and_public_informations=client->get_player_informations();
         itemOnMap=player_private_and_public_informations.itemOnMap;
         plantOnMap=player_private_and_public_informations.plantOnMap;
         warehouse_playerMonster=stdvectorToQList(player_private_and_public_informations.warehouse_playerMonster);
-        MapController::mapController->setBotsAlreadyBeaten(player_private_and_public_informations.bot_already_beaten);
-        MapController::mapController->setInformations(&items,&quests,&events,&itemOnMap,&plantOnMap);
-        Api_client_real::client->unloadSelection();
+        mapController->setBotsAlreadyBeaten(player_private_and_public_informations.bot_already_beaten);
+        mapController->setInformations(&items,&quests,&events,&itemOnMap,&plantOnMap);
+        client->unloadSelection();
         load_inventory();
         load_plant_inventory();
         load_crafting_inventory();
@@ -764,9 +771,9 @@ void BaseWindow::updateConnectingStatus()
         show_reputation();
         load_event();
         emit gameIsLoaded();
-        this->setWindowTitle(QStringLiteral("CatchChallenger - %1").arg(CatchChallenger::Api_client_real::client->getPseudo()));
+        this->setWindowTitle(QStringLiteral("CatchChallenger - %1").arg(client->getPseudo()));
         ui->stackedWidget->setCurrentWidget(ui->page_map);
-        showTip(tr("Welcome <b><i>%1</i></b> on <i>CatchChallenger</i>").arg(CatchChallenger::Api_client_real::client->getPseudo()));
+        showTip(tr("Welcome <b><i>%1</i></b> on <i>CatchChallenger</i>").arg(client->getPseudo()));
         return;
     }
     ui->label_connecting_status->setText(tr("Waiting: %1").arg(waitedData.join(", ")));
@@ -778,8 +785,8 @@ bool BaseWindow::check_senddata()
     if(!check_monsters())
         return false;
     //check the reputation here
-    auto i=CatchChallenger::Api_client_real::client->player_informations.reputation.begin();
-    while(i!=CatchChallenger::Api_client_real::client->player_informations.reputation.cend())
+    auto i=client->player_informations.reputation.begin();
+    while(i!=client->player_informations.reputation.cend())
     {
         if(i->second.level<-100 || i->second.level>100)
         {
@@ -841,8 +848,8 @@ bool BaseWindow::check_senddata()
 void BaseWindow::show_reputation()
 {
     QString html="<ul>";
-    auto i=CatchChallenger::Api_client_real::client->player_informations.reputation.begin();
-    while(i!=CatchChallenger::Api_client_real::client->player_informations.reputation.cend())
+    auto i=client->player_informations.reputation.begin();
+    while(i!=client->player_informations.reputation.cend())
     {
         if(i->second.level>=0)
         {
@@ -921,27 +928,27 @@ QPixmap BaseWindow::getBackSkin(const uint32_t &skinId) const
 QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) const
 {
     {
-        QFileInfo pngFile(CatchChallenger::Api_client_real::client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.png").arg(type));
+        QFileInfo pngFile(client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.png").arg(type));
         if(pngFile.exists())
             return pngFile.absoluteFilePath();
     }
     {
-        QFileInfo gifFile(CatchChallenger::Api_client_real::client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.gif").arg(type));
+        QFileInfo gifFile(client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.gif").arg(type));
         if(gifFile.exists())
             return gifFile.absoluteFilePath();
     }
-    QDir folderList(CatchChallenger::Api_client_real::client->datapackPathBase()+DATAPACK_BASE_PATH_SKINBASE);
+    QDir folderList(client->datapackPathBase()+DATAPACK_BASE_PATH_SKINBASE);
     const QStringList &entryList=folderList.entryList(QDir::Dirs|QDir::NoDotAndDotDot);
     int entryListIndex=0;
     while(entryListIndex<entryList.size())
     {
         {
-            QFileInfo pngFile(QStringLiteral("%1/skin/%2/%3/%4.png").arg(CatchChallenger::Api_client_real::client->datapackPathBase()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
+            QFileInfo pngFile(QStringLiteral("%1/skin/%2/%3/%4.png").arg(client->datapackPathBase()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
             if(pngFile.exists())
                 return pngFile.absoluteFilePath();
         }
         {
-            QFileInfo gifFile(QStringLiteral("%1/skin/%2/%3/%4.gif").arg(CatchChallenger::Api_client_real::client->datapackPathBase()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
+            QFileInfo gifFile(QStringLiteral("%1/skin/%2/%3/%4.gif").arg(client->datapackPathBase()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
             if(gifFile.exists())
                 return gifFile.absoluteFilePath();
         }
@@ -981,7 +988,7 @@ void BaseWindow::updatePlayerImage()
 {
     if(haveCharacterPosition && haveDatapack)
     {
-        const Player_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations().public_informations;
+        const Player_public_informations &informations=client->get_player_informations().public_informations;
         playerFrontImage=getFrontSkin(informations.skinId);
         playerBackImage=getBackSkin(informations.skinId);
         playerFrontImagePath=getFrontSkinPath(informations.skinId);
@@ -1274,7 +1281,7 @@ void BaseWindow::updateTheWareHouseContent()
 
     //monster
     {
-        const std::vector<PlayerMonster> &playerMonster=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster();
+        const std::vector<PlayerMonster> &playerMonster=fightEngine.getPlayerMonster();
         int index=0;
         int size=playerMonster.size();
         while(index<size)
@@ -1381,7 +1388,7 @@ void BaseWindow::animationFinished()
             delete targetMonsterEvolution;
             targetMonsterEvolution=NULL;
         }
-        CatchChallenger::ClientFightEngine::fightEngine.confirmEvolutionByPosition(monsterEvolutionPostion);
+        fightEngine.confirmEvolutionByPosition(monsterEvolutionPostion);
         monsterEvolutionPostion=0;
         load_monsters();
     }
@@ -1474,7 +1481,7 @@ void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &
 
 void CatchChallenger::BaseWindow::on_toolButtonEncyclopedia_clicked()
 {
-    const Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    const Player_private_and_public_informations &informations=client->get_player_informations();
     ui->listWidgetEncyclopediaMonster->clear();
     ui->listWidgetEncyclopediaItem->clear();
     ui->labelEncyclopediaMonster->setText("");

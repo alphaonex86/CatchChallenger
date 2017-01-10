@@ -4,14 +4,16 @@
 #include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/GeneralStructures.h"
 
-Quest::Quest(const uint32_t &quest) :
-    quest(quest)
+Quest::Quest(const uint32_t &quest, void *baseWindow) :
+    quest(quest),
+    baseWindow(static_cast<CatchChallenger::BaseWindow *>(baseWindow))
 {
 }
 
 int Quest::currentQuestStep() const
 {
-    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
+    CatchChallenger::BaseWindow *baseWindow=static_cast<CatchChallenger::BaseWindow *>(this->baseWindow);
+    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> quests=baseWindow->getQuests();
     if(quests.find(quest)==quests.cend())
         return 0;
     else
@@ -20,16 +22,18 @@ int Quest::currentQuestStep() const
 
 int Quest::currentBot() const
 {
-    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
+    CatchChallenger::BaseWindow *baseWindow=static_cast<CatchChallenger::BaseWindow *>(this->baseWindow);
+    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> quests=baseWindow->getQuests();
     if(quests.find(quest)==quests.cend())
         return 0;
     else
-        return CatchChallenger::BaseWindow::baseWindow->getActualBotId();
+        return baseWindow->getActualBotId();
 }
 
 bool Quest::finishOneTime() const
 {
-    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
+    CatchChallenger::BaseWindow *baseWindow=static_cast<CatchChallenger::BaseWindow *>(this->baseWindow);
+    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> quests=baseWindow->getQuests();
     if(quests.find(quest)==quests.cend())
         return false;
     else
@@ -38,14 +42,15 @@ bool Quest::finishOneTime() const
 
 bool Quest::haveQuestStepRequirements() const
 {
-    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> quests=CatchChallenger::BaseWindow::baseWindow->getQuests();
+    CatchChallenger::BaseWindow *baseWindow=static_cast<CatchChallenger::BaseWindow *>(this->baseWindow);
+    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> quests=baseWindow->getQuests();
     if(quests.find(quest)==quests.cend())
         return false;
     else
     {
         if(quests.at(quest).step<=0)
             return false;
-        if(CatchChallenger::BaseWindow::baseWindow->haveNextStepQuestRequirements(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(quest)))
+        if(baseWindow->haveNextStepQuestRequirements(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(quest)))
             return true;
         return false;
     }

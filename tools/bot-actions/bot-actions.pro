@@ -9,6 +9,7 @@ QT += widgets
 TARGET = bot-actions
 TEMPLATE = app
 
+DEFINES += BOTACTIONS
 
 SOURCES += main.cpp\
         MainWindow.cpp \

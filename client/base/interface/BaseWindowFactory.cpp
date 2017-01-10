@@ -65,7 +65,7 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
     itemToSellOrBuy.price=quantityToBuy*price;
     itemsToBuy << itemToSellOrBuy;
     removeCash(itemToSellOrBuy.object);
-    CatchChallenger::Api_client_real::client->buyFactoryProduct(factoryId,id,quantityToBuy,price);
+    client->buyFactoryProduct(factoryId,id,quantityToBuy,price);
     appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
 }
 
@@ -129,7 +129,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
     tempItem.price=price;
     itemsToSell << tempItem;
     remove_to_inventory(id,i);
-    CatchChallenger::Api_client_real::client->sellFactoryResource(factoryId,id,i,price);
+    client->sellFactoryResource(factoryId,id,i,price);
     appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
 }
 

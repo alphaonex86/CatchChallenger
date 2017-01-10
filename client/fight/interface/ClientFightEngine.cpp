@@ -11,8 +11,6 @@
 
 using namespace CatchChallenger;
 
-ClientFightEngine ClientFightEngine::fightEngine;
-
 ClientFightEngine::ClientFightEngine()
 {
     resetAll();
@@ -226,7 +224,7 @@ std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const QList<PlayerMonst
 {
     std::vector<uint8_t> positionList;
     const uint8_t basePosition=public_and_private_informations.playerMonster.size();
-    Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    Player_private_and_public_informations &informations=client->get_player_informations();
     std::vector<PlayerMonster> monsterList;
     int index=0;
     while(index<playerMonster.size())
@@ -248,7 +246,7 @@ std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const std::vector<Playe
 {
     std::vector<uint8_t> positionList;
     const uint8_t basePosition=public_and_private_informations.playerMonster.size();
-    Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    Player_private_and_public_informations &informations=client->get_player_informations();
     unsigned int index=0;
     while(index<playerMonster.size())
     {
@@ -267,7 +265,7 @@ std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const std::vector<Playe
 std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
 {
     std::vector<uint8_t> positionList;
-    Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    Player_private_and_public_informations &informations=client->get_player_informations();
     if(informations.encyclopedia_monster!=NULL)
         informations.encyclopedia_monster[playerMonster.monster/8]|=(1<<(7-playerMonster.monster%8));
     else
@@ -280,7 +278,7 @@ std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const PlayerMonster &pl
 bool ClientFightEngine::internalTryEscape()
 {
     emit message("BaseWindow::on_toolButtonFightQuit_clicked(): emit tryEscape()");
-    CatchChallenger::Api_client_real::client->tryEscape();
+    client->tryEscape();
     return CommonFightEngine::internalTryEscape();
 }
 
@@ -292,7 +290,7 @@ void ClientFightEngine::tryCatchClient(const uint32_t &item)
         return;
     }
     emit message("ClientFightEngine::tryCapture(): emit tryCapture()");
-    CatchChallenger::Api_client_real::client->useObject(item);
+    client->useObject(item);
     PlayerMonster newMonster;
     newMonster.buffs=wildMonsters.front().buffs;
     newMonster.catched_with=item;
@@ -575,7 +573,7 @@ bool ClientFightEngine::haveBattleOtherMonster() const
 bool ClientFightEngine::useSkill(const uint16_t &skill)
 {
     mLastGivenXP=0;
-    Api_client_real::client->useSkill(skill);
+    client->useSkill(skill);
     if(isInBattle())
         return true;
     return CommonFightEngine::useSkill(skill);
@@ -635,7 +633,7 @@ uint8_t ClientFightEngine::getPlayerMonsterPosition(const PlayerMonster * const 
 
 void ClientFightEngine::addToEncyclopedia(const uint16_t &monster)
 {
-    Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    Player_private_and_public_informations &informations=client->get_player_informations();
     if(informations.encyclopedia_monster!=NULL)
         informations.encyclopedia_monster[monster/8]|=(1<<(7-monster%8));
     else
@@ -644,7 +642,7 @@ void ClientFightEngine::addToEncyclopedia(const uint16_t &monster)
 
 void ClientFightEngine::confirmEvolutionByPosition(const uint8_t &monterPosition)
 {
-    CatchChallenger::Api_client_real::client->confirmEvolutionByPosition(monterPosition);
+    client->confirmEvolutionByPosition(monterPosition);
     CatchChallenger::PlayerMonster &playerMonster=public_and_private_informations.playerMonster[monterPosition];
     const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters[playerMonster.monster];
     unsigned int sub_index=0;
@@ -706,6 +704,11 @@ uint8_t ClientFightEngine::getOneSeed(const uint8_t &max)
 void ClientFightEngine::newRandomNumber(const QByteArray &data)
 {
     randomSeeds.append(data);
+}
+
+void ClientFightEngine::setClient(Api_protocol * client)
+{
+    this->client=client;
 }
 
 //duplicate to have a return
