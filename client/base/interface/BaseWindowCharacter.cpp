@@ -18,19 +18,19 @@ void BaseWindow::on_character_add_clicked()
     }
     if(newProfile!=NULL)
         delete newProfile;
-    newProfile=new NewProfile(Api_client_real::client->datapackPathBase(),this);
+    newProfile=new NewProfile(client->datapackPathBase(),this);
     connect(newProfile,&NewProfile::finished,this,&BaseWindow::newProfileFinished);
     newProfile->show();
 }
 
 void BaseWindow::newProfileFinished()
 {
-    const QString &datapackPath=Api_client_real::client->datapackPathBase();
+    const QString &datapackPath=client->datapackPathBase();
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
         if(!newProfile->ok())
         {
             if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
-                Api_client_real::client->tryDisconnect();
+                client->tryDisconnect();
             return;
         }
     unsigned int profileIndex=0;
@@ -45,7 +45,7 @@ void BaseWindow::newProfileFinished()
     if(!nameGame.haveSkin())
     {
         if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
-            Api_client_real::client->tryDisconnect();
+            client->tryDisconnect();
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Sorry but no skin found into: %1").arg(QFileInfo(datapackPath+DATAPACK_BASE_PATH_SKIN).absoluteFilePath()));
         return;
     }
@@ -53,7 +53,7 @@ void BaseWindow::newProfileFinished()
     if(!nameGame.haveTheInformation())
     {
         if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
-            Api_client_real::client->tryDisconnect();
+            client->tryDisconnect();
         return;
     }
     CharacterEntry characterEntry;
@@ -65,7 +65,7 @@ void BaseWindow::newProfileFinished()
     characterEntry.pseudo=nameGame.pseudo().toStdString();
     characterEntry.charactersGroupIndex=nameGame.monsterGroupId();
     characterEntry.skinId=nameGame.skinId();
-    Api_client_real::client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,profileIndex,QString::fromStdString(characterEntry.pseudo),characterEntry.charactersGroupIndex,characterEntry.skinId);
+    client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,profileIndex,QString::fromStdString(characterEntry.pseudo),characterEntry.charactersGroupIndex,characterEntry.skinId);
     characterEntryListInWaiting << characterEntry;
     if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
         ui->character_add->setEnabled(false);
@@ -122,7 +122,7 @@ void BaseWindow::updateCharacterList()
             text+="\n"+tr("Map missing, can't play");*/
         item->setText(text);
         if(characterEntry.skinId<DatapackClientLoader::datapackLoader.skins.size())
-            item->setIcon(QIcon(Api_client_real::client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId)+"/front.png"));
+            item->setIcon(QIcon(client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId)+"/front.png"));
         else
             item->setIcon(QIcon(QStringLiteral(":/images/player_default/front.png")));
         ui->characterEntryList->addItem(item);
@@ -135,7 +135,7 @@ void BaseWindow::on_character_back_clicked()
     if(multiplayer)
         ui->stackedWidget->setCurrentWidget(ui->page_serverList);
     else
-        Api_client_real::client->tryDisconnect();
+        client->tryDisconnect();
 }
 
 void BaseWindow::on_character_select_clicked()
@@ -158,7 +158,7 @@ void BaseWindow::on_character_remove_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Deleting already planned"));
         return;
     }
-    Api_client_real::client->removeCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,character_id);
+    client->removeCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,character_id);
     int index=0;
     while(index<characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())
     {
@@ -183,7 +183,7 @@ void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
         QMessageBox::warning(this,tr("Error"),tr("You can't play with this buggy charater"));
         return;
     }*/
-    Api_client_real::client->selectCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,serverOrdenedList.at(serverSelected)->uniqueKey,item->data(99).toUInt(),serverSelected);
+    client->selectCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,serverOrdenedList.at(serverSelected)->uniqueKey,item->data(99).toUInt(),serverSelected);
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     ui->label_connecting_status->setText(tr("Selecting your character"));
 }
@@ -213,7 +213,7 @@ void BaseWindow::updateServerList()
 
     //clear and determine what kind of view
     ui->serverList->clear();
-    LogicialGroup logicialGroup=Api_client_real::client->getLogicialGroup();
+    LogicialGroup logicialGroup=client->getLogicialGroup();
     bool fullView=true;
     if(serverOrdenedList.size()>10)
         fullView=false;
@@ -418,5 +418,5 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
 
 void BaseWindow::on_serverListBack_clicked()
 {
-    Api_client_real::client->tryDisconnect();
+    client->tryDisconnect();
 }

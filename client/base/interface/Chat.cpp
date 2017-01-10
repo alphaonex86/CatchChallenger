@@ -7,8 +7,6 @@
 
 using namespace CatchChallenger;
 
-Chat* Chat::chat=NULL;
-
 Chat::Chat(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Chat)
@@ -21,6 +19,7 @@ Chat::Chat(QWidget *parent) :
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
     numberForFlood=0;
+    client=NULL;
 
     setClan(false);
 }
@@ -40,6 +39,12 @@ void Chat::resetAll()
     ui->comboBox_chat_type->setCurrentIndex(1);
     ui->lineEdit_chat_text->setText("");
     update_chat();
+    client=NULL;
+}
+
+void Chat::setClient(CatchChallenger::Api_protocol *client)
+{
+    this->client=client;
 }
 
 void Chat::setClan(const bool &haveClan)
@@ -123,16 +128,16 @@ void Chat::lineEdit_chat_text_returnPressed()
             chat_type=Chat_type_clan;
         break;
         }
-        CatchChallenger::Api_client_real::client->sendChatText(chat_type,text);
+        client->sendChatText(chat_type,text);
         if(!text.startsWith('/'))
-            new_chat_text(chat_type,text,QString::fromStdString(CatchChallenger::Api_client_real::client->player_informations.public_informations.pseudo),CatchChallenger::Api_client_real::client->player_informations.public_informations.type);
+            new_chat_text(chat_type,text,QString::fromStdString(client->player_informations.public_informations.pseudo),client->player_informations.public_informations.type);
     }
     else if(text.contains(QRegularExpression("^/pm [^ ]+ .+$")))
     {
         QString pseudo=text;
         pseudo.replace(QRegularExpression("^/pm ([^ ]+) .+$"), "\\1");
         text.replace(QRegularExpression("^/pm [^ ]+ (.+)$"), "\\1");
-        CatchChallenger::Api_client_real::client->sendPM(text,pseudo);
+        client->sendPM(text,pseudo);
         new_chat_text(Chat_type_pm,text,tr("To: ")+pseudo,Player_type_normal);
     }
 }

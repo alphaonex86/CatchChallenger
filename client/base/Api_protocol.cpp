@@ -45,7 +45,6 @@ char Api_protocol::hurgeBufferMove[4];
 
 QSet<QString> Api_protocol::extensionAllowed;
 
-Api_protocol* Api_protocol::client=NULL;
 bool Api_protocol::internalVersionDisplayed=false;
 
 QString Api_protocol::text_balise_root_start="<root>";
