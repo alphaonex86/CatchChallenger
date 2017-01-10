@@ -54,6 +54,8 @@ private:
     #ifndef CATCHCHALLENGER_NOAUDIO
     libvlc_media_player_t *vlcPlayer;
     #endif
+    CatchChallenger::BaseWindow *baseWindow;
+    CatchChallenger::Api_protocol *client;
 signals:
     #ifndef CATCHCHALLENGER_NOAUDIO
     void audioLoopRestart(void *vlcPlayer);
