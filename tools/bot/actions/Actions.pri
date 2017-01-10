@@ -6,7 +6,10 @@ SOURCES += $$PWD/ActionsBotInterface.cpp \
     $$PWD/ActionsBot.cpp \
     $$PWD/MapServerMiniStep1.cpp \
     $$PWD/MapServerMiniStep2.cpp \
-    $$PWD/MapServerMiniNear.cpp
+    $$PWD/MapServerMiniNear.cpp \
+    $$PWD/ActionsCheck.cpp \
+    $$PWD/ActionsFight.cpp \
+    $$PWD/ActionsQuests.cpp
 
 HEADERS  += $$PWD/ActionsBotInterface.h \
     $$PWD/ActionsAction.h \

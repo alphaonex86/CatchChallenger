@@ -7,6 +7,7 @@
 #define ACTIONS_BOT_INTERFACE_H
 
 #include "../BotInterface.h"
+#include "../../../client/fight/interface/ClientFightEngine.h"
 #include "MapServerMini.h"
 #include <unordered_map>
 
@@ -42,6 +43,7 @@ public:
         std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
         GlobalTarget target;
         uint8_t previousStepWalked;
+        CatchChallenger::ClientFightEngine *clientFightEngine;
     };
 
     ActionsBotInterface();
