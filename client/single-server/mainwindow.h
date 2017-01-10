@@ -85,6 +85,8 @@ private:
     #ifndef CATCHCHALLENGER_NOAUDIO
     libvlc_media_player_t *vlcPlayer;
     #endif
+    CatchChallenger::BaseWindow *baseWindow;
+    CatchChallenger::Api_protocol *client;
 
     QString server_name;
     QString server_dns_or_ip;
