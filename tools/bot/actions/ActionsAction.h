@@ -28,6 +28,15 @@ public:
     static ActionsAction *actionsAction;
     ActionsAction();
     ~ActionsAction();
+
+    enum BlockedOn
+    {
+        BlockedOn_ZoneItem,
+        BlockedOn_ZoneFight,
+        BlockedOn_RandomNumber,
+        BlockedOn_Fight
+    };
+
     void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     bool preload_other_pre();
     bool preload_the_map_step1();
@@ -35,6 +44,21 @@ public:
     bool preload_post_subdatapack();
     uint64_t elementToLoad() const;
     uint64_t elementLoaded() const;
+    bool haveBeatBot(CatchChallenger::Api_protocol *api,const uint16_t &botFightId) const;
+    bool botHaveQuest(CatchChallenger::Api_protocol *api,const uint32_t &botId);
+    bool tryValidateQuestStep(CatchChallenger::Api_protocol *api, const uint16_t &questId, const uint32_t &botId, bool silent);
+    void addBeatenBotFight(CatchChallenger::Api_protocol *api,const uint16_t &botFightId);
+    bool haveNextStepQuestRequirements(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest) const;
+    bool haveStartQuestRequirement(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest) const;
+    bool startQuest(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest);
+    std::vector<std::pair<uint32_t,std::string> > getQuestList(CatchChallenger::Api_protocol *api,const uint32_t &botId);
+    bool nextStepQuest(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest);
+    void appendReputationPoint(CatchChallenger::Api_protocol *api,const QString &type,const int32_t &point);
+    uint32_t itemQuantity(CatchChallenger::Api_protocol *api,const uint32_t &itemId) const;
+    bool haveReputationRequirements(CatchChallenger::Api_protocol *api,const QList<CatchChallenger::ReputationRequirements> &reputationList) const;
+    bool haveReputationRequirements(CatchChallenger::Api_protocol *api,const std::vector<CatchChallenger::ReputationRequirements> &reputationList) const;
+    void appendReputationRewards(CatchChallenger::Api_protocol *api,const QList<CatchChallenger::ReputationRewards> &reputationList);
+    void appendReputationRewards(CatchChallenger::Api_protocol *api,const std::vector<CatchChallenger::ReputationRewards> &reputationList);
 
     void have_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
     void add_to_inventory(const uint32_t &item,const uint32_t &quantity=1,const bool &showGain=true);
@@ -44,6 +68,8 @@ public:
     void remove_to_inventory(const QHash<uint16_t,uint32_t> &items);
     void remove_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
     void remove_to_inventory(const uint32_t &itemId,const uint32_t &quantity=1);
+
+    void showTip(const QString &text);
 
     bool canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction, const MapServerMini &map, COORD_TYPE x, COORD_TYPE y);
     bool move(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y);
