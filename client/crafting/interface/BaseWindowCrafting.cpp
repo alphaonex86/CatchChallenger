@@ -29,7 +29,7 @@ void BaseWindow::insert_plant(const uint32_t &mapId, const uint8_t &x, const uin
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
-    cancelAllPlantQuery(MapController::mapController->mapIdToString(mapId),x,y);
+    cancelAllPlantQuery(mapController->mapIdToString(mapId),x,y);
 }
 
 void BaseWindow::remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y)
@@ -39,7 +39,7 @@ void BaseWindow::remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
-    cancelAllPlantQuery(MapController::mapController->mapIdToString(mapId),x,y);
+    cancelAllPlantQuery(mapController->mapIdToString(mapId),x,y);
 }
 
 void BaseWindow::cancelAllPlantQuery(const QString map,const uint8_t x,const uint8_t y)
@@ -95,7 +95,7 @@ void BaseWindow::seed_planted(const bool &ok)
     {
         if(!seed_in_waiting.first().map.isEmpty())
         {
-            MapController::mapController->remove_plant_full(seed_in_waiting.first().map,seed_in_waiting.first().x,seed_in_waiting.first().y);
+            mapController->remove_plant_full(seed_in_waiting.first().map,seed_in_waiting.first().x,seed_in_waiting.first().y);
             cancelAllPlantQuery(seed_in_waiting.first().map,seed_in_waiting.first().x,seed_in_waiting.first().y);
         }
         add_to_inventory(seed_in_waiting.first().seedItemId,1,false);
@@ -118,12 +118,12 @@ void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
         break;
         case Plant_collect_owned_by_another_player:
             showTip(tr("This plant had been planted recently by another player"));
-            MapController::mapController->insert_plant_full(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y,plant_collect_in_waiting.first().plant_id,plant_collect_in_waiting.first().seconds_to_mature);
+            mapController->insert_plant_full(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y,plant_collect_in_waiting.first().plant_id,plant_collect_in_waiting.first().seconds_to_mature);
             cancelAllPlantQuery(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y);
         break;
         case Plant_collect_impossible:
             showTip(tr("This plant can't be collected"));
-            MapController::mapController->insert_plant_full(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y,plant_collect_in_waiting.first().plant_id,plant_collect_in_waiting.first().seconds_to_mature);
+            mapController->insert_plant_full(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y,plant_collect_in_waiting.first().plant_id,plant_collect_in_waiting.first().seconds_to_mature);
             cancelAllPlantQuery(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y);
         break;
         default:
@@ -184,7 +184,7 @@ void BaseWindow::load_crafting_inventory()
     ui->listCraftingList->clear();
     crafting_recipes_items_to_graphical.clear();
     crafting_recipes_items_graphical.clear();
-    Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    Player_private_and_public_informations informations=client->get_player_informations();
     if(informations.recipes==NULL)
     {
         qDebug() << "BaseWindow::load_crafting_inventory(), crafting null";
@@ -564,7 +564,7 @@ void BaseWindow::on_craftingUse_clicked()
     load_plant_inventory();
     on_listCraftingList_itemSelectionChanged();
     //send to the network
-    CatchChallenger::Api_client_real::client->useRecipe(crafting_recipes_items_graphical.value(selectedItem));
+    client->useRecipe(crafting_recipes_items_graphical.value(selectedItem));
     appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.at(crafting_recipes_items_graphical.value(selectedItem)).rewards.reputation);
     //create animation widget
     if(animationWidget!=NULL)
@@ -585,7 +585,7 @@ void BaseWindow::on_craftingUse_clicked()
     craftingAnimationObject=new CraftingAnimation(mIngredients,mRecipe,mProduct,QUrl::fromLocalFile(playerBackImagePath).toEncoded());
     animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
     animationWidget->rootContext()->setContextProperty("craftingAnimationObject",craftingAnimationObject);
-    const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPathBase()+"qml/crafting-animation.qml";
+    const QString datapackQmlFile=client->datapackPathBase()+"qml/crafting-animation.qml";
     if(QFile(datapackQmlFile).exists())
         animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
     else

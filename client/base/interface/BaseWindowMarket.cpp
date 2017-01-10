@@ -121,7 +121,7 @@ void BaseWindow::marketBuy(const bool &success)
 void BaseWindow::marketBuyMonster(const PlayerMonster &playerMonster)
 {
     marketBuyInSuspend=false;
-    ClientFightEngine::fightEngine.addPlayerMonster(playerMonster);
+    fightEngine.addPlayerMonster(playerMonster);
     load_monsters();
     marketBuyCashInSuspend=0;
 }
@@ -134,7 +134,7 @@ void BaseWindow::marketPut(const bool &success)
             add_to_inventory(marketPutObjectInSuspendList,false);
         if(!marketPutMonsterList.isEmpty())
         {
-            ClientFightEngine::fightEngine.insertPlayerMonster(marketPutMonsterPlaceList.first(),marketPutMonsterList.first());
+            fightEngine.insertPlayerMonster(marketPutMonsterPlaceList.first(),marketPutMonsterList.first());
             load_monsters();
         }
         QMessageBox::warning(this,tr("Warning"),tr("Unable to put into the market"));
@@ -203,7 +203,7 @@ void BaseWindow::marketWithdrawMonster(const PlayerMonster &playerMonster)
     marketWithdrawInSuspend=false;
     marketWithdrawObjectList.clear();
     marketWithdrawMonsterList.clear();
-    ClientFightEngine::fightEngine.addPlayerMonster(playerMonster);
+    fightEngine.addPlayerMonster(playerMonster);
 }
 
 void BaseWindow::on_marketPutObject_clicked()
@@ -223,7 +223,7 @@ void BaseWindow::on_marketQuit_clicked()
 
 void BaseWindow::on_marketWithdraw_clicked()
 {
-    CatchChallenger::Api_client_real::client->recoverMarketCash();
+    client->recoverMarketCash();
 }
 
 void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &marketObject)
@@ -280,7 +280,7 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
         if(!ok)
             return;
     }
-    CatchChallenger::Api_client_real::client->buyMarketObject(item->data(99).toUInt(),quantity);
+    client->buyMarketObject(item->data(99).toUInt(),quantity);
 
     /*updateMarketObject() define:
     item->setData(99,marketObject.marketObjectUniqueId);
@@ -324,7 +324,7 @@ void BaseWindow::on_marketOwnObject_itemActivated(QListWidgetItem *item)
         if(!ok)
             return;
     }
-    CatchChallenger::Api_client_real::client->withdrawMarketObject(item->data(95).toUInt(),item->data(98).toUInt());
+    client->withdrawMarketObject(item->data(95).toUInt(),item->data(98).toUInt());
     marketWithdrawInSuspend=true;
     MarketObject marketObject;
     marketObject.marketObjectUniqueId=item->data(99).toUInt();
@@ -361,13 +361,13 @@ void BaseWindow::on_marketMonster_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("Error"),tr("Have not cash to buy it"));
         return;
     }
-    CatchChallenger::Api_client_real::client->buyMarketMonster(item->data(99).toUInt());
+    client->buyMarketMonster(item->data(99).toUInt());
     delete item;
 }
 
 void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
 {
-    if(ClientFightEngine::fightEngine.getPlayerMonster().size()>CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
+    if(fightEngine.getPlayerMonster().size()>CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
     {
         QMessageBox::warning(this,tr("Warning"),tr("You can't wear this monster more"));
         return;
@@ -382,7 +382,7 @@ void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
     playerMonster.price=item->data(98).toUInt();
     playerMonster.level=item->data(96).toUInt();
     marketWithdrawMonsterList << playerMonster;
-    CatchChallenger::Api_client_real::client->withdrawMarketMonster(item->data(99).toUInt());
+    client->withdrawMarketMonster(item->data(99).toUInt());
     marketWithdrawInSuspend=true;
     delete item;
 }
@@ -435,7 +435,7 @@ void BaseWindow::tradeCanceledByOther()
     showTip(tr("The other player have canceled your trade request"));
     addCash(ui->tradePlayerCash->value());
     add_to_inventory(tradeCurrentObjects,false);
-    CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(tradeCurrentMonsters);
+    fightEngine.addPlayerMonster(tradeCurrentMonsters);
     load_monsters();
     tradeOtherObjects.clear();
     tradeCurrentObjects.clear();
@@ -460,7 +460,7 @@ void BaseWindow::tradeValidatedByTheServer()
     add_to_inventory(tradeOtherObjects);
     addCash(ui->tradeOtherCash->value());
     removeCash(ui->tradePlayerCash->value());
-    tradeEvolutionMonsters=CatchChallenger::ClientFightEngine::fightEngine.addPlayerMonster(tradeOtherMonsters);
+    tradeEvolutionMonsters=fightEngine.addPlayerMonster(tradeOtherMonsters);
     load_monsters();
     tradeOtherObjects.clear();
     tradeCurrentObjects.clear();

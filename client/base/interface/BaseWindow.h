@@ -28,6 +28,7 @@
 #include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
 #include "../../../general/base/ChatParsing.h"
 #include "../../../general/base/GeneralStructures.h"
+#include "../../fight/interface/ClientFightEngine.h"
 #include "../Api_protocol.h"
 #include "MapController.h"
 #include "Chat.h"
@@ -50,8 +51,7 @@ class BaseWindow : public QWidget
 public:
     explicit BaseWindow();
     ~BaseWindow();
-    static BaseWindow* baseWindow;
-    void setMultiPlayer(bool multiplayer);
+    void setMultiPlayer(bool multiplayer,CatchChallenger::Api_protocol * client);
     void resetAll();
     void serverIsLoading();
     void serverIsReady();
@@ -123,6 +123,7 @@ public:
         uint8_t monsterPlace;
         PublicPlayerMonster publicPlayerMonster;
     };
+    MapController *mapController;
 protected:
     void changeEvent(QEvent *e);
     static void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
@@ -222,7 +223,7 @@ private slots:
 
     #ifndef CATCHCHALLENGER_NOAUDIO
     static void vlceventStatic(const libvlc_event_t *event, void *ptr);
-    void audioLoop(void *player);
+    static void audioLoop(void *player);
     #endif
 
     //datapack
@@ -726,13 +727,16 @@ private:
     QTime lastReplyTimeSince;
     uint32_t worseQueryTime;
     bool multiplayer;
+
+    CatchChallenger::Api_protocol * client;
+    ClientFightEngine fightEngine;
+    Chat chat;
 signals:
     void newError(QString error,QString detailedError);
     //datapack
     void parseDatapack(const QString &datapackPath);
     void parseDatapackMainSub(const QString &mainDatapackCode, const QString &subDatapackCode);
     void datapackParsedMainSubMap();
-    void sendsetMultiPlayer(const bool & multiplayer);
     void teleportDone();
     //plant, can do action only if the previous is finish
     void useSeed(const uint8_t &plant_id);

@@ -16,7 +16,7 @@ void BaseWindow::doNextAction()
         {//the other attack
             escape=false;//need be dropped to have text to escape
             fightTimerFinish=false;
-            if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().empty())
+            if(!fightEngine.getAttackReturnList().empty())
             {
                 qDebug() << "doNextAction(): escape failed: you take damage";
                 displayText(tr("You have failed to escape!"));
@@ -24,7 +24,7 @@ void BaseWindow::doNextAction()
             }
             else
             {
-                PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+                PublicPlayerMonster *otherMonster=fightEngine.getOtherMonster();
                 if(otherMonster==NULL)
                 {
                     emit error("NULL pointer for other monster at doNextAction()");
@@ -43,10 +43,10 @@ void BaseWindow::doNextAction()
         return;//useful to quit correctly
     }
     //apply the effect
-    if(!CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().empty())
+    if(!fightEngine.getAttackReturnList().empty())
     {
-        const Skill::AttackReturn returnAction=CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first();
-        PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+        const Skill::AttackReturn returnAction=fightEngine.getAttackReturnList().first();
+        PublicPlayerMonster * otherMonster=fightEngine.getOtherMonster();
         if(otherMonster)
         {
             qDebug() << "doNextAction(): apply the effect and display it";
@@ -55,9 +55,9 @@ void BaseWindow::doNextAction()
         //do the monster change
         else if(returnAction.publicPlayerMonster.monster!=0)
         {
-            if(!CatchChallenger::ClientFightEngine::fightEngine.addBattleMonster(returnAction.monsterPlace,returnAction.publicPlayerMonster))
+            if(!fightEngine.addBattleMonster(returnAction.monsterPlace,returnAction.publicPlayerMonster))
                 return;
-            //sendBattleReturn(returnAction);:already added because the information is into CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList()
+            //sendBattleReturn(returnAction);:already added because the information is into fightEngine.getAttackReturnList()
             init_other_monster_display();
             updateOtherMonsterInformation();
             resetPosition(true,true,false);
@@ -86,11 +86,11 @@ void BaseWindow::doNextAction()
     if(CatchChallenger::CommonDatapack::commonDatapack.monsters.empty())
         return;
     //if the current monster is KO
-    if(CatchChallenger::ClientFightEngine::fightEngine.currentMonsterIsKO())
+    if(fightEngine.currentMonsterIsKO())
     {
         if(CatchChallenger::CommonDatapack::commonDatapack.monsters.empty())
             return;
-        if(!CatchChallenger::ClientFightEngine::fightEngine.isInFight())
+        if(!fightEngine.isInFight())
         {
             if(CatchChallenger::CommonDatapack::commonDatapack.monsters.empty())
                 return;
@@ -98,7 +98,7 @@ void BaseWindow::doNextAction()
             return;
         }
         qDebug() << "doNextAction(): remplace KO current monster";
-        PublicPlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+        PublicPlayerMonster * currentMonster=fightEngine.getCurrentMonster();
         ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
         ui->labelFightEnter->setText(tr("Your %1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra.value(currentMonster->monster).name));
         doNextActionStep=DoNextActionStep_Start;
@@ -108,9 +108,9 @@ void BaseWindow::doNextAction()
     }
 
     //if the other monster is KO
-    if(CatchChallenger::ClientFightEngine::fightEngine.otherMonsterIsKO())
+    if(fightEngine.otherMonsterIsKO())
     {
-        uint32_t returnedLastGivenXP=CatchChallenger::ClientFightEngine::fightEngine.lastGivenXP();
+        uint32_t returnedLastGivenXP=fightEngine.lastGivenXP();
         if(returnedLastGivenXP>2*1000*1000)
         {
             newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("returnedLastGivenXP is negative"));
@@ -127,17 +127,17 @@ void BaseWindow::doNextAction()
         }
         else
             updateCurrentMonsterInformation();
-        if(!CatchChallenger::ClientFightEngine::fightEngine.isInFight())
+        if(!fightEngine.isInFight())
         {
             win();
             return;
         }
         updateCurrentMonsterInformationXp();
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().isEmpty())
+        if(fightEngine.getAttackReturnList().isEmpty())
         {
-            PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
-            PublicPlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+            PublicPlayerMonster * otherMonster=fightEngine.getOtherMonster();
+            PublicPlayerMonster * currentMonster=fightEngine.getCurrentMonster();
             if(currentMonster!=NULL)
                 if((int)currentMonster->hp!=ui->progressBarFightBottomHP->value())
                 {
@@ -159,7 +159,7 @@ void BaseWindow::doNextAction()
         }
         #endif
         qDebug() << "doNextAction(): remplace KO other monster";
-        PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+        PublicPlayerMonster * otherMonster=fightEngine.getOtherMonster();
         if(otherMonster==NULL)
         {
             emit error("No other monster into doNextAction()");
@@ -181,21 +181,21 @@ void BaseWindow::doNextAction()
     #ifdef CATCHCHALLENGER_SOLO
     /*if(ClientBase::public_and_private_informations_solo!=NULL)
     {
-        if(ClientBase::public_and_private_informations_solo->playerMonster.size()!=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().size())
+        if(ClientBase::public_and_private_informations_solo->playerMonster.size()!=fightEngine.getPlayerMonster().size())
         {
-            emit error(QStringLiteral("both monster list don't have same size: %1!=%2").arg(ClientBase::public_and_private_informations_solo->playerMonster.size()).arg(CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().size()));
+            emit error(QStringLiteral("both monster list don't have same size: %1!=%2").arg(ClientBase::public_and_private_informations_solo->playerMonster.size()).arg(fightEngine.getPlayerMonster().size()));
             return;
         }
         {
             unsigned int index=0;
             while(index<ClientBase::public_and_private_informations_solo->playerMonster.size())
             {
-                if(ClientBase::public_and_private_informations_solo->playerMonster.at(index)!=CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().at(index))
+                if(ClientBase::public_and_private_informations_solo->playerMonster.at(index)!=fightEngine.getPlayerMonster().at(index))
                 {
                     emit error(QStringLiteral("both monster at %1 is not same for monster %2!=%3")
                                .arg(index)
                                .arg(ClientBase::public_and_private_informations_solo->playerMonster.at(index).monster)
-                               .arg(CatchChallenger::ClientFightEngine::fightEngine.getPlayerMonster().at(index).monster)
+                               .arg(fightEngine.getPlayerMonster().at(index).monster)
                                );
                     abort();
                 }
@@ -204,7 +204,7 @@ void BaseWindow::doNextAction()
         }
     }*/
     #endif
-    PublicPlayerMonster *currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    PublicPlayerMonster *currentMonster=fightEngine.getCurrentMonster();
     if(currentMonster!=NULL)
     {
         if(CommonDatapack::commonDatapack.monsters.find(currentMonster->monster)==CommonDatapack::commonDatapack.monsters.cend())
@@ -221,7 +221,7 @@ void BaseWindow::doNextAction()
             return;
         }
     }
-    PublicPlayerMonster *otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
+    PublicPlayerMonster *otherMonster=fightEngine.getOtherMonster();
     if(otherMonster!=NULL)
     {
         if(CommonDatapack::commonDatapack.monsters.find(otherMonster->monster)==CommonDatapack::commonDatapack.monsters.cend())
@@ -244,8 +244,8 @@ void BaseWindow::doNextAction()
 
 bool BaseWindow::displayFirstAttackText(bool firstText)
 {
-    PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
-    PublicPlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    PublicPlayerMonster * otherMonster=fightEngine.getOtherMonster();
+    PublicPlayerMonster * currentMonster=fightEngine.getCurrentMonster();
     if(otherMonster==NULL)
     {
         error("displayAttack(): crash: unable to get the other monster to display an attack");
@@ -258,12 +258,12 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
         doNextAction();
         return false;
     }
-    if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().isEmpty())
+    if(fightEngine.getAttackReturnList().isEmpty())
     {
         emit error("Display text for not existant attack");
         return false;
     }
-    const Skill::AttackReturn currentAttack=CatchChallenger::ClientFightEngine::fightEngine.getFirstAttackReturn();
+    const Skill::AttackReturn currentAttack=fightEngine.getFirstAttackReturn();
 
     if(movie!=NULL)
     {
@@ -277,7 +277,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                 .arg(currentAttack.buffLifeEffectMonster.size())
                 .arg(currentAttack.addBuffEffectMonster.size())
                 .arg(currentAttack.removeBuffEffectMonster.size())
-                .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size());
+                .arg(fightEngine.getAttackReturnList().size());
 
     //in case of failed
     if(!currentAttack.success)
@@ -290,7 +290,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             displayText(tr("The other %1 have failed the attack %2")
                           .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(otherMonster->monster).name)
                           .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(currentAttack.attack).name));
-        CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAttackReturn();
+        fightEngine.removeTheFirstAttackReturn();
         return false;
     }
 
@@ -388,7 +388,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                     .arg(currentAttack.buffLifeEffectMonster.size())
                     .arg(currentAttack.addBuffEffectMonster.size())
                     .arg(currentAttack.removeBuffEffectMonster.size())
-                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size());
+                    .arg(fightEngine.getAttackReturnList().size());
         return true;
     }
 
@@ -492,9 +492,9 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             if(index==listWidget->count())
                 listWidget->addItem(item);
         }
-        CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAddBuffEffectAttackReturn();
-        if(!CatchChallenger::ClientFightEngine::fightEngine.firstAttackReturnHaveMoreEffect())
-            CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAttackReturn();
+        fightEngine.removeTheFirstAddBuffEffectAttackReturn();
+        if(!fightEngine.firstAttackReturnHaveMoreEffect())
+            fightEngine.removeTheFirstAttackReturn();
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!onBuffCurrentMonster && otherMonster!=NULL)
         {
@@ -521,7 +521,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                     .arg(currentAttack.buffLifeEffectMonster.size())
                     .arg(currentAttack.addBuffEffectMonster.size())
                     .arg(currentAttack.removeBuffEffectMonster.size())
-                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size());
+                    .arg(fightEngine.getAttackReturnList().size());
         return false;
     }
 
@@ -569,16 +569,16 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                 delete buffToGraphicalItemTop.value(removeBuffEffectMonster.buff);
             buffToGraphicalItemTop.remove(removeBuffEffectMonster.buff);
         }
-        CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstRemoveBuffEffectAttackReturn();
-        if(!CatchChallenger::ClientFightEngine::fightEngine.firstAttackReturnHaveMoreEffect())
-            CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAttackReturn();
+        fightEngine.removeTheFirstRemoveBuffEffectAttackReturn();
+        if(!fightEngine.firstAttackReturnHaveMoreEffect())
+            fightEngine.removeTheFirstAttackReturn();
         qDebug() << "display the remove buff";
         qDebug() << QStringLiteral("displayFirstAttackText(): after display text, lifeEffectMonster.size(): %1, buffLifeEffectMonster.size(): %2, addBuffEffectMonster.size(): %3, removeBuffEffectMonster.size(): %4, attackReturnList.size(): %5")
                     .arg(currentAttack.lifeEffectMonster.size())
                     .arg(currentAttack.buffLifeEffectMonster.size())
                     .arg(currentAttack.addBuffEffectMonster.size())
                     .arg(currentAttack.removeBuffEffectMonster.size())
-                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size());
+                    .arg(fightEngine.getAttackReturnList().size());
         return false;
     }
 
@@ -654,7 +654,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                     .arg(currentAttack.buffLifeEffectMonster.size())
                     .arg(currentAttack.addBuffEffectMonster.size())
                     .arg(currentAttack.removeBuffEffectMonster.size())
-                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size());
+                    .arg(fightEngine.getAttackReturnList().size());
         return true;
     }
     emit error("Can't display text without effect");
@@ -663,8 +663,8 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
 
 void BaseWindow::displayAttack()
 {
-    PublicPlayerMonster * otherMonster=CatchChallenger::ClientFightEngine::fightEngine.getOtherMonster();
-    PublicPlayerMonster * currentMonster=CatchChallenger::ClientFightEngine::fightEngine.getCurrentMonster();
+    PublicPlayerMonster * otherMonster=fightEngine.getOtherMonster();
+    PublicPlayerMonster * currentMonster=fightEngine.getCurrentMonster();
     if(otherMonster==NULL)
     {
         error("displayAttack(): crash: unable to get the other monster to display an attack");
@@ -677,25 +677,25 @@ void BaseWindow::displayAttack()
         doNextAction();
         return;
     }
-    if(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().isEmpty())
+    if(fightEngine.getAttackReturnList().isEmpty())
     {
         newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"displayAttack(): crash: display an empty attack return");
         doNextAction();
         return;
     }
     if(
-            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().lifeEffectMonster.empty() &&
-            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().buffLifeEffectMonster.empty() &&
-            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().addBuffEffectMonster.empty() &&
-            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().removeBuffEffectMonster.empty() &&
-            CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success
+            fightEngine.getAttackReturnList().first().lifeEffectMonster.empty() &&
+            fightEngine.getAttackReturnList().first().buffLifeEffectMonster.empty() &&
+            fightEngine.getAttackReturnList().first().addBuffEffectMonster.empty() &&
+            fightEngine.getAttackReturnList().first().removeBuffEffectMonster.empty() &&
+            fightEngine.getAttackReturnList().first().success
             )
     {
         qDebug() << QStringLiteral("displayAttack(): strange: display an empty lifeEffect list into attack return, attack: %1, doByTheCurrentMonster: %2, success: %3")
-                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().attack)
-                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
-                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().first().success);
-        CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAttackReturn();
+                    .arg(fightEngine.getAttackReturnList().first().attack)
+                    .arg(fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
+                    .arg(fightEngine.getAttackReturnList().first().success);
+        fightEngine.removeTheFirstAttackReturn();
         doNextAction();
         return;
     }
@@ -708,7 +708,7 @@ void BaseWindow::displayAttack()
             return;
     }
 
-    const Skill::AttackReturn &attackReturn=CatchChallenger::ClientFightEngine::fightEngine.getFirstAttackReturn();
+    const Skill::AttackReturn &attackReturn=fightEngine.getFirstAttackReturn();
     //get the life effect to display
     Skill::LifeEffectReturn lifeEffectReturn;
     if(!attackReturn.lifeEffectMonster.empty())
@@ -722,8 +722,8 @@ void BaseWindow::displayAttack()
                     .arg(attackReturn.buffLifeEffectMonster.size())
                     .arg(attackReturn.addBuffEffectMonster.size())
                     .arg(attackReturn.removeBuffEffectMonster.size())
-                    .arg(CatchChallenger::ClientFightEngine::fightEngine.getAttackReturnList().size()));
-        CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAttackReturn();
+                    .arg(fightEngine.getAttackReturnList().size()));
+        fightEngine.removeTheFirstAttackReturn();
         //doNextAction();
         return;
     }
@@ -830,7 +830,7 @@ void BaseWindow::displayAttack()
                 hp_to_change=0;
             if(hp_to_change!=0)
             {
-                CatchChallenger::ClientFightEngine::fightEngine.firstLifeEffectQuantityChange(-hp_to_change);
+                fightEngine.firstLifeEffectQuantityChange(-hp_to_change);
                 if(applyOnOtherMonster)
                 {
                     ui->progressBarFightTopHP->setValue(ui->progressBarFightTopHP->value()+hp_to_change);
@@ -847,10 +847,10 @@ void BaseWindow::displayAttack()
         displayAttackProgression=0;
         attack_quantity_changed=0;
         if(!attackReturn.lifeEffectMonster.empty())
-            CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstLifeEffectAttackReturn();
+            fightEngine.removeTheFirstLifeEffectAttackReturn();
         else
-            CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstBuffEffectAttackReturn();
-        if(!CatchChallenger::ClientFightEngine::fightEngine.firstAttackReturnHaveMoreEffect())
+            fightEngine.removeTheFirstBuffEffectAttackReturn();
+        if(!fightEngine.firstAttackReturnHaveMoreEffect())
         {
             #ifdef CATCHCHALLENGER_DEBUG_FIGHT
             {
@@ -858,7 +858,7 @@ void BaseWindow::displayAttack()
                 qDebug() << "after display attack: otherMonster have hp" << ui->progressBarFightTopHP->value() << "and buff" << ui->topBuff->count();
             }
             #endif
-            CatchChallenger::ClientFightEngine::fightEngine.removeTheFirstAttackReturn();
+            fightEngine.removeTheFirstAttackReturn();
         }
         //attack is finish
         doNextAction();
@@ -882,7 +882,7 @@ void BaseWindow::displayAttack()
             hp_to_change=0;
         if(hp_to_change!=0)
         {
-            CatchChallenger::ClientFightEngine::fightEngine.firstLifeEffectQuantityChange(-hp_to_change);
+            fightEngine.firstLifeEffectQuantityChange(-hp_to_change);
             if(applyOnOtherMonster)
             {
                 ui->progressBarFightTopHP->setValue(ui->progressBarFightTopHP->value()+hp_to_change);

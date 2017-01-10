@@ -45,17 +45,18 @@ MapControllerMP::~MapControllerMP()
     pathFinding.cancel();
 }
 
-void MapControllerMP::connectAllSignals()
+void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol *client)
 {
+    this->client=client;
     //connect the map controler
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::have_current_player_info,   this,&MapControllerMP::have_current_player_info,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::insert_player,              this,&MapControllerMP::insert_player,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::remove_player,              this,&MapControllerMP::remove_player,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::move_player,                this,&MapControllerMP::move_player,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::reinsert_player,               this,&MapControllerMP::reinsert_player,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::reinsert_player,               this,&MapControllerMP::reinsert_player,Qt::QueuedConnection);
-    connect(this,&MapControllerMP::send_player_direction,CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::send_player_direction);//,Qt::QueuedConnection
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::teleportTo,                 this,&MapControllerMP::teleportTo,Qt::QueuedConnection);
+    connect(client,&CatchChallenger::Api_client_real::have_current_player_info,   this,&MapControllerMP::have_current_player_info,Qt::QueuedConnection);
+    connect(client,&CatchChallenger::Api_client_real::insert_player,              this,&MapControllerMP::insert_player,Qt::QueuedConnection);
+    connect(client,&CatchChallenger::Api_client_real::remove_player,              this,&MapControllerMP::remove_player,Qt::QueuedConnection);
+    connect(client,&CatchChallenger::Api_client_real::move_player,                this,&MapControllerMP::move_player,Qt::QueuedConnection);
+    connect(client,&CatchChallenger::Api_protocol::reinsert_player,               this,&MapControllerMP::reinsert_player,Qt::QueuedConnection);
+    connect(client,&CatchChallenger::Api_protocol::reinsert_player,               this,&MapControllerMP::reinsert_player,Qt::QueuedConnection);
+    connect(this,&MapControllerMP::send_player_direction,client,&CatchChallenger::Api_client_real::send_player_direction);//,Qt::QueuedConnection
+    connect(client,&CatchChallenger::Api_client_real::teleportTo,                 this,&MapControllerMP::teleportTo,Qt::QueuedConnection);
 }
 
 void MapControllerMP::resetAll()
@@ -902,10 +903,10 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
     /// \warning search by loop because otherPlayerList.value(id).current_map is the full path, DatapackClientLoader::datapackLoader.maps relative path
     QString tempCurrentMap=otherPlayerList.value(id).current_map;
     //if not found, search into sub
-    if(!all_map.contains(tempCurrentMap) && !CatchChallenger::Api_client_real::client->subDatapackCode().isEmpty())
+    if(!all_map.contains(tempCurrentMap) && !client->subDatapackCode().isEmpty())
     {
         QString tempCurrentMapSub=tempCurrentMap;
-        tempCurrentMapSub.remove(CatchChallenger::Api_client_real::client->datapackPathSub());
+        tempCurrentMapSub.remove(client->datapackPathSub());
         if(all_map.contains(tempCurrentMapSub))
             tempCurrentMap=tempCurrentMapSub;
     }
@@ -913,7 +914,7 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
     if(!all_map.contains(tempCurrentMap))
     {
         QString tempCurrentMapMain=tempCurrentMap;
-        tempCurrentMapMain.remove(CatchChallenger::Api_client_real::client->datapackPathMain());
+        tempCurrentMapMain.remove(client->datapackPathMain());
         if(all_map.contains(tempCurrentMapMain))
             tempCurrentMap=tempCurrentMapMain;
     }
@@ -1085,7 +1086,7 @@ void MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const u
         return;
     }
 
-    CatchChallenger::Api_client_real::client->teleportDone();
+    client->teleportDone();
 
     //position
     this->x=x;

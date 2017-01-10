@@ -6,8 +6,6 @@
 #include "../../../general/base/CommonSettingsServer.h"
 #include "../../../general/base/GeneralStructures.h"
 
-MapController* MapController::mapController=NULL;
-
 QString MapController::text_random=QLatin1Literal("random");
 QString MapController::text_loop=QLatin1Literal("loop");
 QString MapController::text_move=QLatin1Literal("move");
@@ -187,13 +185,13 @@ void MapController::updateBot()
     }
 }
 
-void MapController::connectAllSignals()
+void MapController::connectAllSignals(CatchChallenger::Api_protocol *client)
 {
-    MapControllerMP::connectAllSignals();
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::insert_plant,this,&MapController::insert_plant);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::remove_plant,this,&MapController::remove_plant);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::seed_planted,this,&MapController::seed_planted);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::plant_collected,this,&MapController::plant_collected);
+    MapControllerMP::connectAllSignals(client);
+    connect(client,&CatchChallenger::Api_client_real::insert_plant,this,&MapController::insert_plant);
+    connect(client,&CatchChallenger::Api_client_real::remove_plant,this,&MapController::remove_plant);
+    connect(client,&CatchChallenger::Api_client_real::seed_planted,this,&MapController::seed_planted);
+    connect(client,&CatchChallenger::Api_client_real::plant_collected,this,&MapController::plant_collected);
 }
 
 void MapController::resetAll()

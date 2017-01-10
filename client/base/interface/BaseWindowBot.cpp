@@ -173,7 +173,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         ui->shopDescription->setText(tr("Waiting the shop content"));
         ui->shopBuy->setVisible(false);
         qDebug() << "goToBotStep(), client->getShopList(shopId): " << shopId;
-        CatchChallenger::Api_client_real::client->getShopList(shopId);
+        client->getShopList(shopId);
         #else
         {
             QList<ItemToSellOrBuy> items;
@@ -234,8 +234,8 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     }
     else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="heal")
     {
-        ClientFightEngine::fightEngine.healAllMonsters();
-        CatchChallenger::Api_client_real::client->heal();
+        fightEngine.healAllMonsters();
+        client->heal();
         load_monsters();
         showTip(tr("You are healed"));
         return;
@@ -343,7 +343,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         ui->marketOwnObject->clear();
         ui->marketWithdraw->setVisible(false);
         ui->marketStat->setText(tr("In waiting of market list"));
-        CatchChallenger::Api_client_real::client->getMarketList();
+        client->getMarketList();
         ui->stackedWidget->setCurrentWidget(ui->page_market);
         return;
     }
@@ -384,7 +384,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         else
             ui->factoryBotImage->setVisible(false);
         ui->stackedWidget->setCurrentWidget(ui->page_factory);
-        CatchChallenger::Api_client_real::client->getFactoryList(factoryId);
+        client->getFactoryList(factoryId);
         return;
     }
     else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="zonecapture")
@@ -419,7 +419,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         nextCatchOnScreen=nextCatch;
         zonecatch=true;
         ui->stackedWidget->setCurrentWidget(ui->page_zonecatch);
-        CatchChallenger::Api_client_real::client->waitingForCityCapture(false);
+        client->waitingForCityCapture(false);
         updatePageZoneCatch();
         return;
     }
@@ -484,7 +484,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             showTip(tr("Bot fight not found"));
             return;
         }
-        if(MapController::mapController->haveBeatBot(fightId))
+        if(mapController->haveBeatBot(fightId))
         {
             if(actualBot.step.find(step+1)!=actualBot.step.cend())
                 goToBotStep(step+1);
@@ -492,7 +492,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
                 showTip(tr("Already beaten!"));
             return;
         }
-        CatchChallenger::Api_client_real::client->requestFight(fightId);
+        client->requestFight(fightId);
         botFight(fightId);
         return;
     }
@@ -520,7 +520,7 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint32_t &b
         if(vectorcontainsAtLeastOne(quest.steps.at(0).bots,botId)
                 && haveStartQuestRequirement(quest))
         {
-            CatchChallenger::Api_client_real::client->startQuest(questId);
+            client->startQuest(questId);
             startQuest(quest);
             updateDisplayedQuests();
             return true;
@@ -539,7 +539,7 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint32_t &b
                 vectorcontainsAtLeastOne(quest.steps.at(0).bots,botId)
                 && haveStartQuestRequirement(quest))
         {
-            CatchChallenger::Api_client_real::client->startQuest(questId);
+            client->startQuest(questId);
             startQuest(quest);
             updateDisplayedQuests();
             return true;
@@ -561,7 +561,7 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint32_t &b
     {
         if(!silent)
             showTip(tr("You have finish the quest <b>%1</b>").arg(DatapackClientLoader::datapackLoader.questsExtra.value(questId).name));
-        CatchChallenger::Api_client_real::client->finishQuest(questId);
+        client->finishQuest(questId);
         nextStepQuest(quest);
         updateDisplayedQuests();
         return true;
@@ -572,7 +572,7 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint32_t &b
             showTip(tr("You need talk to another bot"));
         return false;
     }
-    CatchChallenger::Api_client_real::client->nextQuestStep(questId);
+    client->nextQuestStep(questId);
     nextStepQuest(quest);
     updateDisplayedQuests();
     return true;
@@ -587,7 +587,7 @@ void BaseWindow::getTextEntryPoint()
     }
     QScriptEngine engine;
 
-    const QString &client_logic=CatchChallenger::Api_client_real::client->datapackPathMain()+DATAPACK_BASE_PATH_QUESTS2+"/"+QString::number(questId)+"/client_logic.js";
+    const QString &client_logic=client->datapackPathMain()+DATAPACK_BASE_PATH_QUESTS2+"/"+QString::number(questId)+"/client_logic.js";
     if(!QFile(client_logic).exists())
     {
         showTip(tr("Client file missing"));
@@ -751,7 +751,7 @@ bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &que
     while(index<requirements.fightId.size())
     {
         const uint32_t &fightId=requirements.fightId.at(index);
-        if(!MapController::mapController->haveBeatBot(fightId))
+        if(!mapController->haveBeatBot(fightId))
         {
             #ifdef DEBUG_CLIENT_QUEST
             qDebug() << "quest requirement, have not beat the bot: " << fightId;
@@ -768,7 +768,7 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "check quest requirement for: " << quest.id;
     #endif
-    Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    Player_private_and_public_informations informations=client->get_player_informations();
     if(quests.find(quest.id)!=quests.cend())
     {
         if(informations.quests.at(quest.id).step!=0)
@@ -876,7 +876,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
             if(ok && !text.isEmpty())
             {
                 actionClan << ActionClan_Create;
-                CatchChallenger::Api_client_real::client->createClan(text);
+                client->createClan(text);
             }
             index++;
             continue;

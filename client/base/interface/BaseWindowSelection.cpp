@@ -82,7 +82,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                         add_to_inventory(item,1,false);
                 break;
             }
-            const PlayerMonster * const monster=ClientFightEngine::fightEngine.monsterByPosition(monsterPosition);
+            const PlayerMonster * const monster=fightEngine.monsterByPosition(monsterPosition);
             if(monster==NULL)
             {
                 if(CatchChallenger::CommonDatapack::commonDatapack.items.item.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.item.cend())
@@ -126,15 +126,15 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 animationWidget->rootContext()->setContextProperty("itemEvolution",QUrl::fromLocalFile(DatapackClientLoader::datapackLoader.itemsExtra.value(item).imagePath));
                 animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
                 animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
-                const QString datapackQmlFile=CatchChallenger::Api_client_real::client->datapackPathBase()+"qml/evolution-animation.qml";
+                const QString datapackQmlFile=client->datapackPathBase()+"qml/evolution-animation.qml";
                 if(QFile(datapackQmlFile).exists())
                     animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
                 else
                     animationWidget->setSource(QStringLiteral("qrc:/qml/evolution-animation.qml"));
-                CatchChallenger::Api_client_real::client->useObjectOnMonsterByPosition(item,monsterPosition);
-                if(!ClientFightEngine::fightEngine.useObjectOnMonsterByPosition(item,monsterPosition))
+                client->useObjectOnMonsterByPosition(item,monsterPosition);
+                if(!fightEngine.useObjectOnMonsterByPosition(item,monsterPosition))
                 {
-                    std::cerr << "ClientFightEngine::fightEngine.useObjectOnMonsterByPosition() Bug at " << __FILE__ << ":" << __LINE__ << std::endl;
+                    std::cerr << "fightEngine.useObjectOnMonsterByPosition() Bug at " << __FILE__ << ":" << __LINE__ << std::endl;
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     abort();
                     #endif
@@ -146,10 +146,10 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_inventory);
                 ui->inventoryUse->setText(tr("Select"));
-                if(ClientFightEngine::fightEngine.useObjectOnMonsterByPosition(item,monsterPosition))
+                if(fightEngine.useObjectOnMonsterByPosition(item,monsterPosition))
                 {
                     showTip(tr("Using <b>%1</b> on <b>%2</b>").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item).name).arg(monsterInformationsExtra.name));
-                    CatchChallenger::Api_client_real::client->useObjectOnMonsterByPosition(item,monsterPosition);
+                    client->useObjectOnMonsterByPosition(item,monsterPosition);
                     load_monsters();
                     checkEvolution();
                 }
@@ -185,7 +185,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             tempItem.quantity=quantity;
             tempItem.price=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemId).price/2;
             itemsToSell << tempItem;
-            CatchChallenger::Api_client_real::client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
+            client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
             load_inventory();
             load_plant_inventory();
         }
@@ -213,7 +213,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             getPrice.exec();
             if(!getPrice.isOK())
                 break;
-            CatchChallenger::Api_client_real::client->putMarketObject(itemId,quantity,getPrice.price());
+            client->putMarketObject(itemId,quantity,getPrice.price());
             marketPutCashInSuspend=getPrice.price();
             remove_to_inventory(itemId,quantity);
             QPair<uint16_t,uint32_t> pair;
@@ -239,7 +239,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 qDebug() << "item id have not the quantity";
                 break;
             }
-            CatchChallenger::Api_client_real::client->addObject(itemId,quantity);
+            client->addObject(itemId,quantity);
             items[itemId]-=quantity;
             if(items.at(itemId)==0)
                 items.erase(itemId);
@@ -277,17 +277,17 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 return;
             resetPosition(true,false,true);
             //do copie here because the call of changeOfMonsterInFight apply the skill/buff effect
-            const PlayerMonster *tempMonster=ClientFightEngine::fightEngine.monsterByPosition(itemId);
+            const PlayerMonster *tempMonster=fightEngine.monsterByPosition(itemId);
             if(tempMonster==NULL)
             {
                 qDebug() << "Monster not found";
                 return;
             }
             PlayerMonster copiedMonster=*tempMonster;
-            if(!ClientFightEngine::fightEngine.changeOfMonsterInFight(itemId))
+            if(!fightEngine.changeOfMonsterInFight(itemId))
                 return;
-            CatchChallenger::Api_client_real::client->changeOfMonsterInFightByPosition(itemId);
-            PlayerMonster * playerMonster=ClientFightEngine::fightEngine.getCurrentMonster();
+            client->changeOfMonsterInFightByPosition(itemId);
+            PlayerMonster * playerMonster=fightEngine.getCurrentMonster();
             init_current_monster_display(&copiedMonster);
             ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
             if(DatapackClientLoader::datapackLoader.monsterExtra.contains(playerMonster->monster))
@@ -314,13 +314,13 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             load_monsters();
             if(!ok)
                 break;
-            std::vector<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
+            std::vector<PlayerMonster> playerMonster=fightEngine.getPlayerMonster();
             if(playerMonster.size()<=1)
             {
                 QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
                 break;
             }
-            if(!ClientFightEngine::fightEngine.remainMonstersToFightWithoutThisMonster(itemId))
+            if(!fightEngine.remainMonstersToFightWithoutThisMonster(itemId))
             {
                 QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
                 break;
@@ -333,8 +333,8 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             const uint8_t monsterPosition=itemId;
             marketPutMonsterList << playerMonster.at(monsterPosition);
             marketPutMonsterPlaceList << monsterPosition;
-            ClientFightEngine::fightEngine.removeMonsterByPosition(monsterPosition);
-            CatchChallenger::Api_client_real::client->putMarketMonsterByPosition(monsterPosition,getPrice.price());
+            fightEngine.removeMonsterByPosition(monsterPosition);
+            client->putMarketMonsterByPosition(monsterPosition,getPrice.price());
             marketPutCashInSuspend=getPrice.price();
         }
         break;
@@ -351,13 +351,13 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             ui->stackedWidget->setCurrentWidget(ui->page_trade);
             if(!ok)
                 break;
-            std::vector<PlayerMonster> playerMonster=ClientFightEngine::fightEngine.getPlayerMonster();
+            std::vector<PlayerMonster> playerMonster=fightEngine.getPlayerMonster();
             if(playerMonster.size()<=1)
             {
                 QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
                 break;
             }
-            if(!ClientFightEngine::fightEngine.remainMonstersToFightWithoutThisMonster(itemId))
+            if(!fightEngine.remainMonstersToFightWithoutThisMonster(itemId))
             {
                 QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
                 break;
@@ -366,8 +366,8 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             const uint8_t monsterPosition=itemId;
             tradeCurrentMonstersPosition << monsterPosition;
             tradeCurrentMonsters << playerMonster.at(monsterPosition);
-            ClientFightEngine::fightEngine.removeMonsterByPosition(monsterPosition);
-            CatchChallenger::Api_client_real::client->addMonsterByPosition(monsterPosition);
+            fightEngine.removeMonsterByPosition(monsterPosition);
+            client->addMonsterByPosition(monsterPosition);
             QListWidgetItem *item=new QListWidgetItem();
             item->setText(DatapackClientLoader::datapackLoader.monsterExtra.value(tradeCurrentMonsters.last().monster).name);
             item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.last().level));
@@ -400,7 +400,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 seed_in_waiting.removeLast();
                 return;
             }
-            if(havePlant(&MapController::mapController->getMap(MapController::mapController->current_map)->logicalMap,MapController::mapController->getX(),MapController::mapController->getY())>=0)
+            if(havePlant(&mapController->getMap(mapController->current_map)->logicalMap,mapController->getX(),mapController->getY())>=0)
             {
                 qDebug() << "Too slow to select a seed, have plant now";
                 showTip(tr("Sorry, but now the dirt is not free to plant"));
@@ -417,7 +417,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
 
             const SeedInWaiting seedInWaiting=seed_in_waiting.last();
             seed_in_waiting.last().seedItemId=itemId;
-            insert_plant(MapController::mapController->getMap(seedInWaiting.map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plantId,CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds);
+            insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plantId,CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds);
             addQuery(QueryType_Seed);
             load_plant_inventory();
             load_inventory();
@@ -425,8 +425,8 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             emit useSeed(plantId);
             if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
             {
-                CatchChallenger::Api_client_real::client->seed_planted(true);
-                CatchChallenger::Api_client_real::client->insert_plant(MapController::mapController->getMap(seedInWaiting.map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plantId,CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds);
+                client->seed_planted(true);
+                client->insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plantId,CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds);
             }
         }
         break;
@@ -453,20 +453,20 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 break;
             }
             //it's trap
-            if(CommonDatapack::commonDatapack.items.trap.find(itemId)!=CommonDatapack::commonDatapack.items.trap.cend() && CatchChallenger::ClientFightEngine::fightEngine.isInFightWithWild())
+            if(CommonDatapack::commonDatapack.items.trap.find(itemId)!=CommonDatapack::commonDatapack.items.trap.cend() && fightEngine.isInFightWithWild())
             {
                 remove_to_inventory(itemId);
                 useTrap(itemId);
             }
             else//else it's to use on current monster
             {
-                const uint8_t &monsterPosition=ClientFightEngine::fightEngine.getCurrentSelectedMonsterNumber();
-                if(ClientFightEngine::fightEngine.useObjectOnMonsterByPosition(itemId,monsterPosition))
+                const uint8_t &monsterPosition=fightEngine.getCurrentSelectedMonsterNumber();
+                if(fightEngine.useObjectOnMonsterByPosition(itemId,monsterPosition))
                 {
                     remove_to_inventory(itemId);
                     if(CommonDatapack::commonDatapack.items.monsterItemEffect.find(itemId)!=CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
                     {
-                        CatchChallenger::Api_client_real::client->useObjectOnMonsterByPosition(itemId,monsterPosition);
+                        client->useObjectOnMonsterByPosition(itemId,monsterPosition);
                         updateAttackList();
                         displayAttackProgression=0;
                         attack_quantity_changed=0;
@@ -544,7 +544,7 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     //is crafting recipe
     if(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.cend())
     {
-        Player_private_and_public_informations informations=CatchChallenger::Api_client_real::client->get_player_informations();
+        Player_private_and_public_informations informations=client->get_player_informations();
         const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(itemId);
 
         //check if have the requirements
@@ -570,16 +570,16 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
         objectInUsing << itemId;
         if(CommonDatapack::commonDatapack.items.item.at(objectInUsing.last()).consumeAtUse)
             remove_to_inventory(objectInUsing.last());
-        CatchChallenger::Api_client_real::client->useObject(objectInUsing.last());
+        client->useObject(objectInUsing.last());
     }
     //it's repel
     else if(CatchChallenger::CommonDatapack::commonDatapack.items.repel.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.items.repel.cend())
     {
-        MapController::mapController->addRepelStep(CatchChallenger::CommonDatapack::commonDatapack.items.repel.at(itemId));
+        mapController->addRepelStep(CatchChallenger::CommonDatapack::commonDatapack.items.repel.at(itemId));
         objectInUsing << itemId;
         if(CommonDatapack::commonDatapack.items.item.at(objectInUsing.last()).consumeAtUse)
             remove_to_inventory(objectInUsing.last());
-        CatchChallenger::Api_client_real::client->useObject(objectInUsing.last());
+        client->useObject(objectInUsing.last());
     }
     //it's object with monster effect
     else if(CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
