@@ -31,7 +31,8 @@ void SimpleAction::purgeCpuCache()
     const int size=16*1024*1024;
     char *var=static_cast<char *>(malloc(size));
     memset(var,0,size);
-    memcmp(var,var,size);
+    if(memcmp(var,var,size)!=0)
+        abort();
     delete var;
 }
 

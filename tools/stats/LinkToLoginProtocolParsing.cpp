@@ -94,7 +94,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                         pos+=1;
                         if(stringSize>0)
                         {
-                            if((size-pos)<(int)stringSize)
+                            if((unsigned int)(size-pos)<(unsigned int)stringSize)
                             {
                                 errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                                 return false;
@@ -124,7 +124,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                     pos+=2;
                     if(stringSize>0)
                     {
-                        if((size-pos)<(int)stringSize)
+                        if((unsigned int)(size-pos)<(unsigned int)stringSize)
                         {
                             errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                             return false;
@@ -281,7 +281,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                         pos+=1;
                         if(stringSize>0)
                         {
-                            if((size-pos)<(int)stringSize)
+                            if((unsigned int)(size-pos)<(unsigned int)stringSize)
                             {
                                 errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                                 return false;
@@ -311,7 +311,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                     pos+=2;
                     if(stringSize>0)
                     {
-                        if((size-pos)<(int)stringSize)
+                        if((unsigned int)(size-pos)<(unsigned int)stringSize)
                         {
                             errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                             return false;

@@ -1,5 +1,6 @@
 #include "ActionsAction.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/CommonDatapack.h"
 
 ActionsAction *ActionsAction::actionsAction=NULL;
 
@@ -25,14 +26,14 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
     Q_UNUSED(y);
     Q_UNUSED(direction);
 
+    const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
+    Player &botplayer=clientList[api];
+    botplayer.clientFightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
     ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
     connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection);
 
     if(!moveTimer.isActive())
-    {
-        const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
         moveTimer.start(player_private_and_public_informations.public_informations.speed);
-    }
 }
 
 bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction,const MapServerMini &map,COORD_TYPE x,COORD_TYPE y)
@@ -152,8 +153,8 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                     case CatchChallenger::MapConditionType_FightBot:
                         /*if(!haveBeatBot(teleporter.condition.value))
                         {
-                            if(!map_client.teleport_condition_texts.at(index).isEmpty())
-                                emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
+                            if(!new_map->teleport_condition_texts.at(index).isEmpty())
+                                emit teleportConditionNotRespected(new_map->teleport_condition_texts.at(index));
                             return false;
                         }*/
                     break;
@@ -162,8 +163,8 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                             break;
                         if(items->find(teleporter.condition.value)==items->cend())
                         {
-                            if(!map_client.teleport_condition_texts.at(index).isEmpty())
-                                emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
+                            if(!new_map->teleport_condition_texts.at(index).isEmpty())
+                                emit teleportConditionNotRespected(new_map->teleport_condition_texts.at(index));
                             return false;
                         }*/
                     break;
@@ -172,14 +173,14 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                             break;
                         if(quests->find(teleporter.condition.value)==quests->cend())
                         {
-                            if(!map_client.teleport_condition_texts.at(index).isEmpty())
-                                emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
+                            if(!new_map->teleport_condition_texts.at(index).isEmpty())
+                                emit teleportConditionNotRespected(new_map->teleport_condition_texts.at(index));
                             return false;
                         }
                         if(!quests->at(teleporter.condition.value).finish_one_time)
                         {
-                            if(!map_client.teleport_condition_texts.at(index).isEmpty())
-                                emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
+                            if(!new_map->teleport_condition_texts.at(index).isEmpty())
+                                emit teleportConditionNotRespected(new_map->teleport_condition_texts.at(index));
                             return false;
                         }*/
                     break;
@@ -191,45 +192,45 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
         }
     }
 
-    /*{
+    {
         std::pair<uint8_t,uint8_t> pos(x,y);
-        if(map_client.botsFightTrigger.find(pos)!=map_client.botsFightTrigger.cend())
+        if(new_map->botsFightTrigger.find(pos)!=new_map->botsFightTrigger.cend())
         {
-            std::vector<uint32_t> botFightList=map_client.botsFightTrigger.at(pos);
+            std::vector<uint32_t> botFightList=new_map->botsFightTrigger.at(pos);
             unsigned int index=0;
             while(index<botFightList.size())
             {
-                if(!haveBeatBot(botFightList.at(index)))
+                if(!haveBeatBot(api,botFightList.at(index)))
                 {
                     if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
                     {
-                        emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
+                        //emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
                         return false;
                     }
                 }
                 index++;
             }
         }
-    }*/
-    /*const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(*new_map,x,y);
+    }
+    const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(*new_map,x,y);
     if(!monstersCollisionValue.walkOn.empty())
     {
         unsigned int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
             const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
-            if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
+            if(monstersCollision.item==0 || player.items.find(monstersCollision.item)!=player.items.cend())
             {
                 if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.empty())
                 {
                     if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
                     {
-                        emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneFight);
+                        //emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneFight);
                         return false;
                     }
                     if(!CatchChallenger::ClientFightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
                     {
-                        emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
+                        //emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
                         return false;
                     }
                 }
@@ -237,9 +238,9 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
             }
             index++;
         }
-        emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneItem);
+        //emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneItem);
         return false;
-    }*/
+    }
     return true;
 }
 
@@ -678,4 +679,10 @@ void ActionsAction::remove_to_inventory(const QHash<uint16_t,uint32_t> &items)
     }
 }
 
-
+uint32_t ActionsAction::itemQuantity(CatchChallenger::Api_protocol *api,const uint32_t &itemId) const
+{
+    CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
+    if(player.items.find(itemId)!=player.items.cend())
+        return player.items.at(itemId);
+    return 0;
+}

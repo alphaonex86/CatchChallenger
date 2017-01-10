@@ -83,7 +83,8 @@ private:
     void addXPSP();
     uint8_t getOneSeed(const uint8_t &max);
     uint32_t randomSeedsSize() const;
-private:
+//private:
+public:
     explicit ClientFightEngine();
     ~ClientFightEngine();
 signals:

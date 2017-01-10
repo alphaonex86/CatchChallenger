@@ -503,7 +503,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     }
 }
 
-bool BaseWindow::tryValidateQuestStep(bool silent)
+bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint32_t &botId, bool silent)
 {
     if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
     {
@@ -517,7 +517,7 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
     if(quests.find(questId)==quests.cend())
     {
         //start for the first time the quest
-        if(vectorcontainsAtLeastOne(quest.steps.at(0).bots,actualBot.botId)
+        if(vectorcontainsAtLeastOne(quest.steps.at(0).bots,botId)
                 && haveStartQuestRequirement(quest))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
@@ -536,7 +536,7 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
     {
         //start again the quest if can be repeated
         if(quest.repeatable &&
-                vectorcontainsAtLeastOne(quest.steps.at(0).bots,actualBot.botId)
+                vectorcontainsAtLeastOne(quest.steps.at(0).bots,botId)
                 && haveStartQuestRequirement(quest))
         {
             CatchChallenger::Api_client_real::client->startQuest(questId);
@@ -566,7 +566,7 @@ bool BaseWindow::tryValidateQuestStep(bool silent)
         updateDisplayedQuests();
         return true;
     }
-    if(vectorcontainsAtLeastOne(quest.steps.at(quests.at(questId).step).bots,actualBot.botId))
+    if(vectorcontainsAtLeastOne(quest.steps.at(quests.at(questId).step).bots,botId))
     {
         if(!silent)
             showTip(tr("You need talk to another bot"));
@@ -856,7 +856,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
                     bool ok;
                     do
                     {
-                        ok=tryValidateQuestStep();
+                        ok=tryValidateQuestStep(questId,actualBot.botId);
                         index++;
                     } while(ok && index<99);
                     if(index==99)
@@ -885,7 +885,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
             return;
         else if(link=="next_quest_step" && isInQuest)
         {
-            tryValidateQuestStep();
+            tryValidateQuestStep(questId,actualBot.botId);
             index++;
             continue;
         }
