@@ -36,7 +36,7 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x
         {
             //check bot with border
             CatchChallenger::CommonMap * current_map=map;
-            switch(MapController::mapController->getDirection())
+            switch(mapController->getDirection())
             {
                 case CatchChallenger::Direction_look_at_left:
                 if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
@@ -144,8 +144,8 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
                         return;
                     emit collectMaturePlant();
 
-                    CatchChallenger::Api_client_real::client->remove_plant(MapController::mapController->getMap(QString::fromStdString(map->map_file))->logicalMap.id,x,y);
-                    CatchChallenger::Api_client_real::client->plant_collected(Plant_collect::Plant_collect_correctly_collected);
+                    client->remove_plant(mapController->getMap(QString::fromStdString(map->map_file))->logicalMap.id,x,y);
+                    client->plant_collected(Plant_collect::Plant_collect_correctly_collected);
                 }
             }
             else
@@ -171,14 +171,14 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
             if(!item.infinite)
                 itemOnMap.insert(item.indexOfItemOnMap);
             add_to_inventory(item.item);
-            CatchChallenger::Api_client_real::client->takeAnObjectOnMap();
+            client->takeAnObjectOnMap();
         }
     }
     else
     {
         //check bot with border
         CatchChallenger::CommonMap * current_map=map;
-        switch(MapController::mapController->getDirection())
+        switch(mapController->getDirection())
         {
             case CatchChallenger::Direction_look_at_left:
             if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
@@ -287,10 +287,10 @@ void BaseWindow::pathFindingNotFound()
 
 void BaseWindow::currentMapLoaded()
 {
-    qDebug() << "BaseWindow::currentMapLoaded(): map: " << MapController::mapController->currentMap() << " with type: " << MapController::mapController->currentMapType();
+    qDebug() << "BaseWindow::currentMapLoaded(): map: " << mapController->currentMap() << " with type: " << mapController->currentMapType();
     //name
     {
-        MapVisualiserThread::Map_full *mapFull=MapController::mapController->currentMapFull();
+        MapVisualiserThread::Map_full *mapFull=mapController->currentMapFull();
         QString visualName;
         if(!mapFull->zone.isEmpty())
             if(DatapackClientLoader::datapackLoader.zonesExtra.contains(mapFull->zone))
@@ -306,17 +306,17 @@ void BaseWindow::currentMapLoaded()
             showPlace(tr("You arrive at <b><i>%1</i></b>").arg(visualName));
         }
     }
-    const QString &type=MapController::mapController->currentMapType();
+    const QString &type=mapController->currentMapType();
     #ifndef CATCHCHALLENGER_NOAUDIO
     //sound
     {
         QStringList soundList;
-        const QString &backgroundsound=MapController::mapController->currentBackgroundsound();
+        const QString &backgroundsound=mapController->currentBackgroundsound();
         //map sound
         if(!backgroundsound.isEmpty() && !soundList.contains(backgroundsound))
             soundList << backgroundsound;
         //zone sound
-        MapVisualiserThread::Map_full *mapFull=MapController::mapController->currentMapFull();
+        MapVisualiserThread::Map_full *mapFull=mapController->currentMapFull();
         if(!mapFull->zone.isEmpty())
             if(DatapackClientLoader::datapackLoader.zonesExtra.contains(mapFull->zone))
             {
@@ -341,14 +341,14 @@ void BaseWindow::currentMapLoaded()
         while(index<soundList.size())
         {
             //search into main datapack
-            const QString &fileToSearchMain=QDir::toNativeSeparators(CatchChallenger::Api_client_real::client->datapackPathMain()+soundList.at(index));
+            const QString &fileToSearchMain=QDir::toNativeSeparators(client->datapackPathMain()+soundList.at(index));
             if(QFileInfo(fileToSearchMain).isFile())
             {
                 finalSound=fileToSearchMain;
                 break;
             }
             //search into base datapack
-            const QString &fileToSearchBase=QDir::toNativeSeparators(CatchChallenger::Api_client_real::client->datapackPathBase()+soundList.at(index));
+            const QString &fileToSearchBase=QDir::toNativeSeparators(client->datapackPathBase()+soundList.at(index));
             if(QFileInfo(fileToSearchBase).isFile())
             {
                 finalSound=fileToSearchBase;
@@ -414,7 +414,7 @@ void BaseWindow::currentMapLoaded()
                     {
                         if(events.at(condition.event)==condition.eventValue)
                         {
-                            MapController::mapController->setColor(condition.color);
+                            mapController->setColor(condition.color);
                             break;
                         }
                     }
@@ -423,10 +423,10 @@ void BaseWindow::currentMapLoaded()
                     index++;
                 }
                 if(index==conditions.size())
-                    MapController::mapController->setColor(DatapackClientLoader::datapackLoader.visualCategories.value(type).defaultColor);
+                    mapController->setColor(DatapackClientLoader::datapackLoader.visualCategories.value(type).defaultColor);
             }
             else
-                MapController::mapController->setColor(Qt::transparent);
+                mapController->setColor(Qt::transparent);
         }
     }
 }
@@ -447,7 +447,8 @@ void BaseWindow::vlceventStatic(const libvlc_event_t *event, void *ptr)
         }
         break;
         case libvlc_MediaPlayerEndReached:
-            BaseWindow::baseWindow->audioLoopRestart(player);
+            //BaseWindow::baseWindow->audioLoopRestart(player);
+            //audioLoop(player);
         break;
         default:
             qDebug() << "vlc event: " << event->type;

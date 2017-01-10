@@ -21,7 +21,6 @@ public:
     {
         uint32_t skill;
     };
-    static ClientFightEngine fightEngine;
     virtual void resetAll();
     virtual bool isInFight() const;
     bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition);
@@ -70,12 +69,14 @@ public:
     bool giveXPSP(int xp,int sp);
     uint32_t lastGivenXP();
     void newRandomNumber(const QByteArray &data);
+    void setClient(Api_protocol * client);
 private:
     uint32_t mLastGivenXP;
     QList<int> mEvolutionByLevelUp;
     QList<Skill::AttackReturn> fightEffectList;
     Player_private_and_public_informations player_informations_local;
     QByteArray randomSeeds;
+    Api_protocol * client;
     Skill::AttackReturn doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel);
     bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
     bool internalTryEscape();

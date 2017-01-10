@@ -32,7 +32,7 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
         if(!ok)
             return;
         itemToSellOrBuy.object=shop_items_graphical.value(item);
-        CatchChallenger::Api_client_real::client->buyObject(shopId,itemToSellOrBuy.object,itemToSellOrBuy.quantity,itemsIntoTheShop.value(itemToSellOrBuy.object).price);
+        client->buyObject(shopId,itemToSellOrBuy.object,itemToSellOrBuy.quantity,itemsIntoTheShop.value(itemToSellOrBuy.object).price);
         itemToSellOrBuy.price=itemsIntoTheShop.value(itemToSellOrBuy.object).price*itemToSellOrBuy.quantity;
         itemsToBuy << itemToSellOrBuy;
         removeCash(itemToSellOrBuy.price);

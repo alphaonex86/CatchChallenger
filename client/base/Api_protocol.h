@@ -25,7 +25,6 @@ class Api_protocol : public QObject, public ProtocolParsingInputOutput, public M
 {
     Q_OBJECT
 public:
-    static Api_protocol *client;
     static bool internalVersionDisplayed;
     explicit Api_protocol(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_protocol();

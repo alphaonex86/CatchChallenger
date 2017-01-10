@@ -557,7 +557,8 @@ QString SoloWindow::getMapZone(const QString &file)
 QString SoloWindow::getZoneName(const QString &zone)
 {
     //open and quick check the file
-    QFile xmlFile(datapackPath+DATAPACK_BASE_PATH_ZONE1+CatchChallenger::Api_client_real::client->mainDatapackCode()+DATAPACK_BASE_PATH_ZONE2+zone+".xml");
+    QFile xmlFile(DatapackClientLoader::datapackLoader.getDatapackPath()+DatapackClientLoader::datapackLoader.getMainDatapackPath()+DATAPACK_BASE_PATH_ZONE2+zone+".xml");
+    //QFile xmlFile(datapackPath+DATAPACK_BASE_PATH_ZONE1+CatchChallenger::Api_client_real::client->mainDatapackCode()+DATAPACK_BASE_PATH_ZONE2+zone+".xml");
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
     {
