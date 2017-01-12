@@ -1,5 +1,6 @@
 #include "LinkToLogin.h"
 #include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/cpp11addition.h"
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -204,6 +205,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
             {
                 if(deleteSize>serverList.size())
                 {
+                    std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
                     parseNetworkReadError("deleteSize>serverListCount main ident: "+std::to_string(mainCodeType));
                     return false;
                 }
@@ -218,6 +220,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                     size_t index=0;
                     if((size-pos)<(deleteSize*sizeof(uint16_t)))
                     {
+                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
                         parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", (size-cursor)<(deleteSize*sizeof(uint16_t)), file:"+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
@@ -251,6 +254,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 {
                     if((size-pos)<(int)sizeof(uint8_t))
                     {
+                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
                         errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
@@ -261,6 +265,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 {
                     if((size-pos)<(int)sizeof(uint32_t))
                     {
+                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
                         errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
@@ -273,6 +278,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                     {
                         if((size-pos)<(int)sizeof(uint8_t))
                         {
+                            std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
                             errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                             return false;
                         }
@@ -283,6 +289,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                         {
                             if((unsigned int)(size-pos)<(unsigned int)stringSize)
                             {
+                                std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
                                 errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                                 return false;
                             }
@@ -293,6 +300,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                     {
                         if((size-pos)<(int)sizeof(uint16_t))
                         {
+                            std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
                             errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                             return false;
                         }
@@ -303,6 +311,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 {
                     if((size-pos)<(int)sizeof(uint16_t))
                     {
+                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
                         errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
@@ -313,7 +322,8 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                     {
                         if((unsigned int)(size-pos)<(unsigned int)stringSize)
                         {
-                            errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                            std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
+                            errorParsingLayer(std::string("wrong size: ")+std::to_string(stringSize)+" "+__FILE__+":"+std::to_string(__LINE__));
                             return false;
                         }
                         server.xml=std::string(data+pos,stringSize);
@@ -324,6 +334,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 {
                     if((size-pos)<(int)sizeof(uint8_t))
                     {
+                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
                         errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
@@ -333,6 +344,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 {
                     if((size-pos)<(int)sizeof(uint16_t))
                     {
+                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
                         errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
@@ -344,6 +356,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
             }
             if(static_cast<ssize_t>(size-pos)!=((int)sizeof(uint16_t)*serverListSize))
             {
+                std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
                 errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                 return false;
             }
