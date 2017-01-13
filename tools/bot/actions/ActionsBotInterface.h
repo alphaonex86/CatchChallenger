@@ -43,7 +43,7 @@ public:
         std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
         GlobalTarget target;
         uint8_t previousStepWalked;
-        CatchChallenger::ClientFightEngine *clientFightEngine;
+        CatchChallenger::ClientFightEngine *fightEngine;
     };
 
     ActionsBotInterface();

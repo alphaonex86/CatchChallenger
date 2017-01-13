@@ -28,7 +28,7 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
 
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
     Player &botplayer=clientList[api];
-    botplayer.clientFightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
+    botplayer.fightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
     ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
     connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection);
 
@@ -39,6 +39,7 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
 bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction,const MapServerMini &map,COORD_TYPE x,COORD_TYPE y)
 {
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
+    Player &botplayer=clientList[api];
     CatchChallenger::ParsedLayerLedges ledge;
     const std::pair<uint8_t,uint8_t> point(x,y);
     if(map.pointOnMap_Item.find(point)!=map.pointOnMap_Item.cend())
@@ -202,7 +203,7 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
             {
                 if(!haveBeatBot(api,botFightList.at(index)))
                 {
-                    if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
+                    if(!botplayer.fightEngine->getAbleToFight())
                     {
                         //emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
                         return false;
@@ -223,12 +224,12 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
             {
                 if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.empty())
                 {
-                    if(!CatchChallenger::ClientFightEngine::fightEngine.getAbleToFight())
+                    if(!botplayer.fightEngine->getAbleToFight())
                     {
                         //emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneFight);
                         return false;
                     }
-                    if(!CatchChallenger::ClientFightEngine::fightEngine.canDoRandomFight(*new_map,x,y))
+                    if(!botplayer.fightEngine->canDoRandomFight(*new_map,x,y))
                     {
                         //emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
                         return false;
