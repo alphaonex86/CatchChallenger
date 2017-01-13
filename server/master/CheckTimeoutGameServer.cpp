@@ -39,11 +39,11 @@ void CheckTimeoutGameServer::exec()
                             if(diff>CharactersGroup::gameserverTimeoutms)
                             {
                                 if(gameServerInternal->host.empty())
-                                    gameServer->errorParsingLayer("Game server don't reponds to ping, remove it, not responds into: "+std::to_string(diff)+", max: "+std::to_string(CharactersGroup::gameserverTimeoutms)+", unique key: "+std::to_string(gameServerInternal->uniqueKey));
+                                    gameServer->errorParsingLayer("Game server don't reponds to ping, remove it, not responds into: "+std::to_string(diff)+", max: "+std::to_string(CharactersGroup::gameserverTimeoutms)+", unique key: "+std::to_string(gameServer->uniqueKey));
                                 else if(gameServerInternal->metaData.empty())
-                                    gameServer->errorParsingLayer("Game server don't reponds to ping, remove it, not responds into: "+std::to_string(diff)+", max: "+std::to_string(CharactersGroup::gameserverTimeoutms)+", unique key: "+std::to_string(gameServerInternal->uniqueKey)+", host: "+gameServerInternal->host+":"+std::to_string(gameServerInternal->port));
+                                    gameServer->errorParsingLayer("Game server don't reponds to ping, remove it, not responds into: "+std::to_string(diff)+", max: "+std::to_string(CharactersGroup::gameserverTimeoutms)+", unique key: "+std::to_string(gameServer->uniqueKey)+", host: "+gameServerInternal->host+":"+std::to_string(gameServerInternal->port));
                                 else
-                                    gameServer->errorParsingLayer("Game server don't reponds to ping, remove it, not responds into: "+std::to_string(diff)+", max: "+std::to_string(CharactersGroup::gameserverTimeoutms)+", unique key: "+std::to_string(gameServerInternal->uniqueKey)+", host: "+gameServerInternal->host+":"+std::to_string(gameServerInternal->port)+", meta data: "+gameServerInternal->metaData);
+                                    gameServer->errorParsingLayer("Game server don't reponds to ping, remove it, not responds into: "+std::to_string(diff)+", max: "+std::to_string(CharactersGroup::gameserverTimeoutms)+", unique key: "+std::to_string(gameServer->uniqueKey)+", host: "+gameServerInternal->host+":"+std::to_string(gameServerInternal->port)+", meta data: "+gameServerInternal->metaData);
                                 gameServer->passUniqueKeyToNextGameServer();
                             }
                         }
