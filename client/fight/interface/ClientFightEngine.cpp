@@ -216,6 +216,7 @@ void ClientFightEngine::resetAll()
     battleStat.clear();
     public_and_private_informations.encyclopedia_monster=NULL;
     public_and_private_informations.encyclopedia_item=NULL;
+    client=NULL;
 
     CommonFightEngine::resetAll();
 }
