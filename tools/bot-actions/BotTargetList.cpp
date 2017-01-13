@@ -225,7 +225,7 @@ void BotTargetList::updatePlayerInformation()
     }
 
     {
-        const std::vector<CatchChallenger::PlayerMonster> &playerMonsters=player.clientFightEngine->getPlayerMonster();
+        const std::vector<CatchChallenger::PlayerMonster> &playerMonsters=player.fightEngine->getPlayerMonster();
         ui->monsterList->clear();
         if(playerMonsters.empty())
             return;
