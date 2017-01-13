@@ -193,7 +193,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
         std::cerr << "At this level the host can't be empty, host used by the client or login server if in mode proxy" << std::endl;
         abort();
     }
-    std::cout << "set game server added: " << std::to_string((uint64_t)client) << ", unique key: " << std::to_string(uniqueKey) << ", to: " << host << ":" << std::to_string(port) << ", logicalGroupIndex: " << std::to_string(logicalGroupIndex) << std::endl;
+    //std::cout << "set game server added: " << std::to_string((uint64_t)client) << ", unique key: " << std::to_string(uniqueKey) << ", to: " << host << ":" << std::to_string(port) << ", logicalGroupIndex: " << std::to_string(logicalGroupIndex) << std::endl;
     const auto &now=sFrom1970();
     //old locked account
     if(lockedAccountByDisconnectedServer.find(uniqueKey)!=lockedAccountByDisconnectedServer.cend())

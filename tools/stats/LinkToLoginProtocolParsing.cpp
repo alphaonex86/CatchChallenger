@@ -45,7 +45,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 return false;
             }
             proxyMode=ProxyMode(serverMode);
-            switch(proxyMode)
+            /*switch(proxyMode)
             {
                 case ProxyMode::Proxy:
                     std::cout << "Proxy mode: Proxy" << std::endl;
@@ -56,7 +56,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 default:
                     std::cout << "Proxy mode: ???" << std::endl;
                 break;
-            }
+            }*/
             std::unordered_map<uint8_t/*charactersgroup index*/,std::unordered_set<uint32_t/*unique key*/> > duplicateDetect;
             uint8_t serverListSize=0;
             uint8_t serverListIndex=0;
