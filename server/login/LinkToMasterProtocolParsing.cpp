@@ -1295,6 +1295,8 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             CharactersGroupForLogin::serverDumpCharactersGroup();
             #endif
             //do the insert the first part
+            size_t serverListRawDataAddedFrom=0;
+            size_t serverListRawDataAddedTo=0;
             const uint8_t &serverListSize=rawData[pos];
             pos+=1;
             if(serverListSize>0)
@@ -1304,6 +1306,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
 
                 if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
                 {
+                    serverListRawDataAddedFrom=posTempBuffer;
                     while(serverListIndex<serverListSize)
                     {
                         #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
@@ -1434,6 +1437,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
 
                         serverListIndex++;
                     }
+                    serverListRawDataAddedTo=posTempBuffer;
                     #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
                     std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
                     #endif
@@ -1672,15 +1676,40 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
 
             //send to stat client
             {
+                uint32_t sizeTosend=0;
                 ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x48;
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,rawData,size);
+                if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Reconnect)
+                {
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(size);
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+4,rawData,size);
+                    sizeTosend=1+4+size;
+                }
+                else
+                {
+                    uint32_t pos=1+4;
+                    const uint16_t &sizeOfDelete=1+rawData[0x00];
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,rawData,sizeOfDelete);
+                    pos+=sizeOfDelete;
+                    ProtocolParsingBase::tempBigBufferForOutput[pos]=serverListSize;
+                    pos+=1;
+                    const uint32_t &sizeOfInsert=serverListRawDataAddedTo-serverListRawDataAddedFrom;
+                    if(sizeOfInsert>0)
+                    {
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,EpollClientLoginSlave::serverServerList+serverListRawDataAddedFrom,sizeOfInsert);
+                        pos+=sizeOfInsert;
+                        //copy the current connected player
+                        memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,rawData+(size-serverListSize*sizeof(uint16_t)),serverListSize*sizeof(uint16_t));
+                        pos+=serverListSize*sizeof(uint16_t);
 
+                    }
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(pos-1-4);
+                    sizeTosend=pos;
+                }
                 unsigned int index=0;
                 while(index<EpollClientLoginSlave::stat_client_list.size())
                 {
                     EpollClientLoginSlave * const client=EpollClientLoginSlave::stat_client_list.at(index);
-                    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+4+size);
+                    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,sizeTosend);
                     index++;
                 }
             }
