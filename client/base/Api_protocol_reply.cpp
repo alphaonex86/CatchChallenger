@@ -417,7 +417,18 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         else
                         {
                             std::cerr << "dump data: " << binarytoHexa(data.constData(),data.size()) << std::endl;
-                            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("out of range with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                            parseError(QStringLiteral("Procotol wrong or corrupted"),
+                                       QStringLiteral("out of range serverIndex(")+
+                                       QString::number(serverIndex)+
+                                       ")>=serverOrdenedList.size("+
+                                       QString::number(serverOrdenedList.size())+
+                                       QStringLiteral(") with main ident: %1, line: %2")
+                                       .arg(packetCode)
+                                       .arg(QStringLiteral("%1:%2")
+                                            .arg(__FILE__)
+                                            .arg(__LINE__)
+                                            )
+                                       );
                             return false;
                         }
 
