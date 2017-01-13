@@ -464,6 +464,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     index++;
                 }
             }
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            CharactersGroupForLogin::serverDumpCharactersGroup();
+            #endif
         }
         break;
         //Login settings and Characters group
@@ -1117,6 +1120,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     }
                 }
                 #endif
+                #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                CharactersGroupForLogin::serverDumpCharactersGroup();
+                #endif
 
                 //do the delete
                 if(deleteSize>0)
@@ -1171,6 +1177,10 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 ProtocolParsingBase::tempBigBufferForOutput[0x00]=EpollClientLoginSlave::proxyMode;
                 ProtocolParsingBase::tempBigBufferForOutput[0x01]=serverBlockList.size();
                 serverBlockListSizeBeforeAdd=serverBlockList.size();
+
+                #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                CharactersGroupForLogin::serverDumpCharactersGroup();
+                #endif
 
                 #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
                 std::cout << "serverBlock dump at file:" << __FILE__ << ":" << std::to_string(__LINE__) << ":" << std::endl;
@@ -1262,6 +1272,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
             std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
             #endif
 
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            CharactersGroupForLogin::serverDumpCharactersGroup();
+            #endif
             //do the insert the first part
             const uint8_t &serverListSize=rawData[pos];
             pos+=1;
@@ -1556,6 +1569,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 ProtocolParsingBase::tempBigBufferForOutput[0x01]+=serverListSize;
             }
             #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            CharactersGroupForLogin::serverDumpCharactersGroup();
+            #endif
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
             std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
             #endif
             //copy the old current player number
@@ -1649,6 +1665,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     index++;
                 }
             }
+            #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+            CharactersGroupForLogin::serverDumpCharactersGroup();
+            #endif
         }
         return true;
         default:
