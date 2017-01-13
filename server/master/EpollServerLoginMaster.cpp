@@ -834,7 +834,7 @@ void EpollServerLoginMaster::doTheServerList()
         abort();
     }
 
-    std::cout << "Now the server list is: " << binarytoHexa(EpollClientLoginMaster::serverServerList,EpollClientLoginMaster::serverServerListSize) << std::endl;
+    //std::cout << "Now the server list is: " << binarytoHexa(EpollClientLoginMaster::serverServerList,EpollClientLoginMaster::serverServerListSize) << std::endl;
 }
 
 void EpollServerLoginMaster::doTheReplyCache()
