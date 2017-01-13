@@ -780,7 +780,7 @@ bool EpollClientLoginMaster::sendGameServerRegistrationReply(const uint8_t query
             index++;
         }
     }
-    std::cout << "new game server added: " << std::to_string((uint64_t)this) << std::endl;
+    //std::cout << "new game server added: " << std::to_string((uint64_t)this) << std::endl;
     EpollClientLoginMaster::gameServers.push_back(this);
     stat=EpollClientLoginMasterStat::GameServer;
     currentPlayerForGameServerToUpdate=false;
