@@ -683,19 +683,35 @@ void EpollServerLoginMaster::doTheServerList()
     //memset(EpollClientLoginMaster::serverPartialServerList,0x00,sizeof(EpollClientLoginMaster::serverPartialServerList));//improve the performance
     unsigned int pos=0x00;
 
-    const int &serverListSize=EpollClientLoginMaster::gameServers.size();
-    EpollClientLoginMaster::serverPartialServerList[pos]=serverListSize;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::unordered_map<uint8_t/*charactersgroup index*/,std::unordered_set<uint32_t/*unique key*/> > duplicateDetect;
+    #endif
+    EpollClientLoginMaster::serverPartialServerList[pos]=EpollClientLoginMaster::gameServers.size();
     pos+=1;
-    int serverListIndex=0;
-    while(serverListIndex<serverListSize)
+    unsigned int serverListIndex=0;
+    while(serverListIndex<EpollClientLoginMaster::gameServers.size())
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(serverListIndex>=EpollClientLoginMaster::gameServers.size())
+        {
+            std::cerr << "serverListIndex>=EpollClientLoginMaster::gameServers.size() (abort)" << std::endl;
+            abort();
+        }
+        #endif
         const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::gameServers.at(serverListIndex);
         const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(gameServerOnCharactersGroup==NULL)
         {
             std::cerr << "charactersGroup==NULL (abort)" << std::endl;
             abort();
         }
+        if(gameServerOnEpollClientLoginMaster==NULL)
+        {
+            std::cerr << "charactersGroup==NULL (abort)" << std::endl;
+            abort();
+        }
+        #endif
 
         //charactersGroup
         {
@@ -704,15 +720,32 @@ void EpollServerLoginMaster::doTheServerList()
         }
         //key
         {
-            *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::serverPartialServerList+pos)=htole32(gameServerOnCharactersGroup->uniqueKey);
-            pos+=sizeof(gameServerOnCharactersGroup->uniqueKey);
+            *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::serverPartialServerList+pos)=htole32(gameServerOnEpollClientLoginMaster->uniqueKey);
+            pos+=sizeof(gameServerOnEpollClientLoginMaster->uniqueKey);
         }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        //add more control
+        {
+            const uint8_t &charactersGroupIndex=gameServerOnEpollClientLoginMaster->charactersGroupForGameServer->index;
+            const uint32_t &serverUniqueKey=gameServerOnEpollClientLoginMaster->uniqueKey;
+            if(duplicateDetect.find(charactersGroupIndex)==duplicateDetect.cend())
+                duplicateDetect[charactersGroupIndex]=std::unordered_set<uint32_t/*unique key*/>();
+            std::unordered_set<uint32_t/*unique key*/> &duplicateDetectEntry=duplicateDetect[charactersGroupIndex];
+            if(duplicateDetectEntry.find(serverUniqueKey)!=duplicateDetectEntry.cend())//exists, bug
+            {
+                std::cerr << "Duplicate unique key for packet 45 found: " << std::to_string(serverUniqueKey) << std::endl;
+                abort();
+            }
+            else
+                duplicateDetectEntry.insert(serverUniqueKey);
+        }
+        #endif
         //host
         {
             int newSize=FacilityLibGeneral::toUTF8WithHeader(gameServerOnCharactersGroup->host,EpollClientLoginMaster::serverPartialServerList+pos);
             if(newSize==0)
             {
-                std::cerr << "host null or unable to translate in utf8 (abort)" << std::endl;
+                std::cerr << "host null or unable to translate in utf8 (abort): " << gameServerOnCharactersGroup->host << std::endl;
                 abort();
             }
             pos+=newSize;
@@ -759,10 +792,30 @@ void EpollServerLoginMaster::doTheServerList()
 
     //Second list part with same size
     serverListIndex=0;
-    while(serverListIndex<serverListSize)
+    while(serverListIndex<EpollClientLoginMaster::gameServers.size())
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(serverListIndex>=EpollClientLoginMaster::gameServers.size())
+        {
+            std::cerr << "serverListIndex>=EpollClientLoginMaster::gameServers.size() (abort)" << std::endl;
+            abort();
+        }
+        #endif
         const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::gameServers.at(serverListIndex);
         const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(gameServerOnCharactersGroup==NULL)
+        {
+            std::cerr << "charactersGroup==NULL (abort)" << std::endl;
+            abort();
+        }
+        if(gameServerOnEpollClientLoginMaster==NULL)
+        {
+            std::cerr << "charactersGroup==NULL (abort)" << std::endl;
+            abort();
+        }
+        #endif
+
         //connected player
         *reinterpret_cast<unsigned short int *>(EpollClientLoginMaster::serverPartialServerList+pos)=(unsigned short int)htole16(gameServerOnCharactersGroup->currentPlayer);
         pos+=sizeof(unsigned short int);
@@ -780,6 +833,8 @@ void EpollServerLoginMaster::doTheServerList()
         std::cerr << "EpollClientLoginMaster::serverServerListSize==0 (abort)" << std::endl;
         abort();
     }
+
+    std::cout << "Now the server list is: " << binarytoHexa(EpollClientLoginMaster::serverServerList,EpollClientLoginMaster::serverServerListSize) << std::endl;
 }
 
 void EpollServerLoginMaster::doTheReplyCache()

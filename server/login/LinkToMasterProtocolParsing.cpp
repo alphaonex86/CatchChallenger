@@ -135,6 +135,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     index++;
                 }
             }
+            std::unordered_map<uint8_t/*charactersgroup index*/,std::unordered_set<uint32_t/*unique key*/> > duplicateDetect;
 
             if(size<1)
             {
@@ -194,6 +195,19 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+pos)));
                         pos+=4;
                         EpollClientLoginSlave::serverServerListSize+=4;
+                    }
+                    //add more control
+                    {
+                        if(duplicateDetect.find(charactersGroupIndex)==duplicateDetect.cend())
+                            duplicateDetect[charactersGroupIndex]=std::unordered_set<uint32_t/*unique key*/>();
+                        std::unordered_set<uint32_t/*unique key*/> &duplicateDetectEntry=duplicateDetect[charactersGroupIndex];
+                        if(duplicateDetectEntry.find(serverUniqueKey)!=duplicateDetectEntry.cend())//exists, bug
+                        {
+                            std::cerr << "Duplicate unique key for packet 45 found: " << std::to_string(serverUniqueKey) << std::endl;
+                            abort();
+                        }
+                        else
+                            duplicateDetectEntry.insert(serverUniqueKey);
                     }
 
                     //skip the host + port
@@ -863,7 +877,8 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     parseNetworkReadError("deleteSize>serverListCount main ident: "+std::to_string(mainCodeType));
                     return false;
                 }
-                EpollClientLoginSlave::serverServerList[0x01]=EpollClientLoginSlave::proxyMode;
+                //EpollClientLoginSlave::serverServerList[0x00]=EpollClientLoginSlave::proxyMode;
+                EpollClientLoginSlave::serverServerList[0x01]=0;//server list size
                 EpollClientLoginSlave::serverServerListSize=2;
                 EpollClientLoginSlave::serverServerListCurrentPlayerSize=0;
                 *reinterpret_cast<uint32_t *>(EpollClientLoginSlave::serverServerListComputedMessage+1)=htole32(EpollClientLoginSlave::serverServerListSize);//set the dynamic size
@@ -1208,6 +1223,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", serverBlock.charactersgroup>=CharactersGroupForLogin::list.size(), file:"+__FILE__+":"+std::to_string(__LINE__));
                             return false;
                         }
+                        //removed above at CharactersGroupForLogin::list.at(serverBlock.charactersgroup)->removeServerUniqueKey(serverBlock.serverUniqueKey); line 1145
                         if(!CharactersGroupForLogin::list.at(serverBlock.charactersgroup)->containsServerUniqueKey(serverBlock.serverUniqueKey))
                         {
                             std::cerr << "!CharactersGroupForLogin::list.at(" << std::to_string(serverBlock.charactersgroup) << ")->containsServerUniqueKey(" << std::to_string(serverBlock.serverUniqueKey) << ") to remove, pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -1298,6 +1314,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+pos)));
                             pos+=4;
                             posTempBuffer+=4;
+                            //if same than current mean error: update is with remove before
                             if(CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
                             {
                                 std::cerr << "CharactersGroupForLogin::list.at(" << std::to_string(charactersGroupIndex) << ")->containsServerUniqueKey(" << std::to_string(serverUniqueKey) << "), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -1433,7 +1450,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+pos)));
                             posTempBuffer+=4;
                             pos+=4;
-                            if(CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
+                            /*if same than current mean: update if(CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
                             {
                                 std::cerr << "CharactersGroupForLogin::list.at(" << std::to_string(charactersGroupIndex) << ")->containsServerUniqueKey(" << std::to_string(serverUniqueKey) << "), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                                 std::cerr << "CharactersGroupForLogin found:" << std::endl;
@@ -1445,7 +1462,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                                 }
                                 std::cerr << "Data:" << binarytoHexa(rawData,pos) << " " << binarytoHexa(rawData+pos,(size-pos)) << std::endl;
                                 abort();
-                            }
+                            }*/
                         }
 
                         //copy the host + port

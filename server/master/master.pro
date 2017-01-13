@@ -24,6 +24,8 @@ LIBS    += -lpq
 #LIBS    += -lmysqlclient
 #DEFINES += CATCHCHALLENGER_DB_MYSQL
 
+DEFINES += DEBUG_PROTOCOLPARSING_RAW_NETWORK
+
 CONFIG += c++11
 
 TARGET = catchchallenger-server-master

@@ -24,12 +24,13 @@ public:
 
         //stored into EpollClientLoginMaster
         //CharactersGroup * charactersGroup;
-        uint32_t uniqueKey;
+        //uint32_t uniqueKey;
         std::string metaData;
         uint32_t logicalGroupIndex;
 
         uint16_t currentPlayer;
         uint16_t maxPlayer;
+        bool addSend;
 
         std::unordered_set<uint32_t> lockedAccountByGameserver;
 

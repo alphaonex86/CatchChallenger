@@ -45,6 +45,19 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 return false;
             }
             proxyMode=ProxyMode(serverMode);
+            switch(proxyMode)
+            {
+                case ProxyMode::Proxy:
+                    std::cout << "Proxy mode: Proxy" << std::endl;
+                break;
+                case ProxyMode::Reconnect:
+                    std::cout << "Proxy mode: Reconnect" << std::endl;
+                break;
+                default:
+                    std::cout << "Proxy mode: ???" << std::endl;
+                break;
+            }
+            std::unordered_map<uint8_t/*charactersgroup index*/,std::unordered_set<uint32_t/*unique key*/> > duplicateDetect;
             uint8_t serverListSize=0;
             uint8_t serverListIndex=0;
             if((size-pos)<(int)(sizeof(uint8_t)))
@@ -80,6 +93,19 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                     }
                     server.uniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                     pos+=4;
+                }
+                //add more control
+                {
+                    if(duplicateDetect.find(server.groupIndex)==duplicateDetect.cend())
+                        duplicateDetect[server.groupIndex]=std::unordered_set<uint32_t/*unique key*/>();
+                    std::unordered_set<uint32_t/*unique key*/> &duplicateDetectEntry=duplicateDetect[server.groupIndex];
+                    if(duplicateDetectEntry.find(server.uniqueKey)!=duplicateDetectEntry.cend())//exists, bug
+                    {
+                        std::cerr << "Duplicate unique key for packet 45 found: " << std::to_string(server.uniqueKey) << std::endl;
+                        abort();
+                    }
+                    else
+                        duplicateDetectEntry.insert(server.uniqueKey);
                 }
                 if(proxyMode==ProxyMode::Reconnect)
                 {
@@ -254,7 +280,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 {
                     if((size-pos)<(int)sizeof(uint8_t))
                     {
-                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
+                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << ", proxyMode: " << std::to_string(proxyMode) << std::endl;
                         errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
@@ -265,7 +291,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 {
                     if((size-pos)<(int)sizeof(uint32_t))
                     {
-                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
+                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << ", proxyMode: " << std::to_string(proxyMode) << std::endl;
                         errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
@@ -278,7 +304,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                     {
                         if((size-pos)<(int)sizeof(uint8_t))
                         {
-                            std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
+                            std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << ", proxyMode: " << std::to_string(proxyMode) << std::endl;
                             errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                             return false;
                         }
@@ -289,7 +315,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                         {
                             if((unsigned int)(size-pos)<(unsigned int)stringSize)
                             {
-                                std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
+                                std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << ", proxyMode: " << std::to_string(proxyMode) << std::endl;
                                 errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                                 return false;
                             }
@@ -300,7 +326,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                     {
                         if((size-pos)<(int)sizeof(uint16_t))
                         {
-                            std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
+                            std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << ", proxyMode: " << std::to_string(proxyMode) << std::endl;
                             errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                             return false;
                         }
@@ -311,7 +337,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 {
                     if((size-pos)<(int)sizeof(uint16_t))
                     {
-                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
+                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << ", proxyMode: " << std::to_string(proxyMode) << std::endl;
                         errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
@@ -322,7 +348,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                     {
                         if((unsigned int)(size-pos)<(unsigned int)stringSize)
                         {
-                            std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
+                            std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << ", proxyMode: " << std::to_string(proxyMode) << std::endl;
                             errorParsingLayer(std::string("wrong size: ")+std::to_string(stringSize)+" "+__FILE__+":"+std::to_string(__LINE__));
                             return false;
                         }
@@ -334,7 +360,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 {
                     if((size-pos)<(int)sizeof(uint8_t))
                     {
-                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
+                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << ", proxyMode: " << std::to_string(proxyMode) << std::endl;
                         errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
@@ -344,7 +370,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 {
                     if((size-pos)<(int)sizeof(uint16_t))
                     {
-                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
+                        std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << ", proxyMode: " << std::to_string(proxyMode) << std::endl;
                         errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
@@ -356,7 +382,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
             }
             if(static_cast<ssize_t>(size-pos)!=((int)sizeof(uint16_t)*serverListSize))
             {
-                std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
+                std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << ", proxyMode: " << std::to_string(proxyMode) << std::endl;
                 errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                 return false;
             }
