@@ -1194,6 +1194,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     }
                 }
                 #endif
+                #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                CharactersGroupForLogin::serverDumpCharactersGroup();
+                #endif
 
                 #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
                 std::cout << "EpollClientLoginSlave::serverServerList: " << binarytoHexa(tempBigBufferForOutput,posTempBuffer) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -1206,6 +1209,9 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                     size_t index=0;
                     while(index<serverBlockListSizeBeforeAdd)
                     {
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        CharactersGroupForLogin::serverDumpCharactersGroup();
+                        #endif
                         const ServerBlock &serverBlock=serverBlockList[index];
                         //if continue
                         if(firstBlockToCopy==NULL || previousIndex==(serverBlock.oldIndex-1))
@@ -1226,15 +1232,19 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                         previousIndex=serverBlock.oldIndex;
                         lastBlockToCopy=serverBlock.data+serverBlock.size;
                         currentPlayerNumberList.push_back(serverBlock.rawCurrentPlayerNumber);
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        CharactersGroupForLogin::serverDumpCharactersGroup();
+                        #endif
 
+                        CharactersGroupForLogin * const charactersGroup=CharactersGroupForLogin::list.at(serverBlock.charactersgroup);
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         if(serverBlock.charactersgroup>=CharactersGroupForLogin::list.size())
                         {
                             parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", serverBlock.charactersgroup>=CharactersGroupForLogin::list.size(), file:"+__FILE__+":"+std::to_string(__LINE__));
                             return false;
                         }
-                        //removed above at CharactersGroupForLogin::list.at(serverBlock.charactersgroup)->removeServerUniqueKey(serverBlock.serverUniqueKey); line 1145
-                        if(!CharactersGroupForLogin::list.at(serverBlock.charactersgroup)->containsServerUniqueKey(serverBlock.serverUniqueKey))
+                        //removed above at charactersGroup->removeServerUniqueKey(serverBlock.serverUniqueKey); line 1145
+                        if(!charactersGroup->containsServerUniqueKey(serverBlock.serverUniqueKey))
                         {
                             std::cerr << "!CharactersGroupForLogin::list.at(" << std::to_string(serverBlock.charactersgroup) << ")->containsServerUniqueKey(" << std::to_string(serverBlock.serverUniqueKey) << ") to remove, pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                             std::cerr << "CharactersGroupForLogin found:" << std::endl;
@@ -1248,13 +1258,22 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             abort();
                         }
                         #endif
-                        CharactersGroupForLogin::list.at(serverBlock.charactersgroup)->setIndexServerUniqueKey(serverBlock.serverUniqueKey,index);
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        CharactersGroupForLogin::serverDumpCharactersGroup();
+                        #endif
+                        charactersGroup->setIndexServerUniqueKey(index,serverBlock.serverUniqueKey);
+                        #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                        CharactersGroupForLogin::serverDumpCharactersGroup();
+                        #endif
                         #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
                         std::cout << "CharactersGroupForLogin::list.at(" << std::to_string(serverBlock.charactersgroup) << ")->setIndexServerUniqueKey(" << std::to_string(serverBlock.serverUniqueKey) << "," << std::to_string(index) << "), pos: " << pos << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
                         #endif
 
                         index++;
                     }
+                    #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+                    CharactersGroupForLogin::serverDumpCharactersGroup();
+                    #endif
                     //forced flush
                     if(firstBlockToCopy!=NULL && lastBlockToCopy!=NULL)
                     {
