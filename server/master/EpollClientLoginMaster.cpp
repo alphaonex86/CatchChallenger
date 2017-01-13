@@ -118,6 +118,7 @@ void EpollClientLoginMaster::passUniqueKeyToNextGameServer()
 
         newServerToBeMaster->sendGameServerRegistrationReply(newServerToBeMaster->queryNumberInConflicWithTheMainServer,false);
 
+        /*done after the ping:
         CharactersGroup::InternalGameServer tempData;
         if(newServerToBeMaster->charactersGroupForGameServerInformation!=NULL)
         {
@@ -131,7 +132,7 @@ void EpollClientLoginMaster::passUniqueKeyToNextGameServer()
             abort();
         }
         newServerToBeMaster->charactersGroupForGameServerInformation=newServerToBeMaster->charactersGroupForGameServer->addGameServerUniqueKey(
-                    newServerToBeMaster,tempData.uniqueKey,tempData.host,tempData.port,tempData.metaData,tempData.logicalGroupIndex,tempData.currentPlayer,tempData.maxPlayer,tempData.lockedAccountByGameserver);
+                    newServerToBeMaster,tempData.uniqueKey,tempData.host,tempData.port,tempData.metaData,tempData.logicalGroupIndex,tempData.currentPlayer,tempData.maxPlayer,tempData.lockedAccountByGameserver);*/
 
         if(!secondServerInConflict.empty())
         {
@@ -146,9 +147,8 @@ void EpollClientLoginMaster::passUniqueKeyToNextGameServer()
                 serverToMasterUpdate->inConflicWithTheMainServer=newServerToBeMaster;
                 indexServerToUpdate++;
             }
-
-            newServerToBeMaster->sendGameServerPing(msFrom1970());
         }
+        newServerToBeMaster->sendGameServerPing(msFrom1970());//to enable it into the server list
         secondServerInConflict.clear();
     }
 }
@@ -300,7 +300,7 @@ void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint3
     CharactersGroup::list[charactersGroupIndex]->lockTheCharacter(characterId);
     gameServer->charactersGroupForGameServerInformation->lockedAccountByGameserver.insert(characterId);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    messageParsingLayer("Locked: CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->characterIsLocked("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name+" on server: "+gameServer->charactersGroupForGameServerInformation->host+":"+std::to_string(gameServer->charactersGroupForGameServerInformation->port)+" "+std::to_string(gameServer->charactersGroupForGameServerInformation->uniqueKey));
+    messageParsingLayer("Locked: CharactersGroup::list.at("+std::to_string(charactersGroupIndex)+")->characterIsLocked("+std::to_string(characterId)+"), CharactersGroup name: "+CharactersGroup::list.at(charactersGroupIndex)->name+" on server: "+gameServer->charactersGroupForGameServerInformation->host+":"+std::to_string(gameServer->charactersGroupForGameServerInformation->port)+" "+std::to_string(gameServer->uniqueKey));
     #endif
 
     //reply send at trySelectCharacterGameServer() above
@@ -320,7 +320,7 @@ bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster
     if(EpollClientLoginMaster::getTokenForCharacterSelect[0x00]!=0xF8)
     {
         std::cerr << "EpollClientLoginMaster::getTokenForCharacterSelect[0x00]!=0xF8: "
-                  << charactersGroupForGameServerInformation->uniqueKey
+                  << uniqueKey
                   << ", host: "
                   << charactersGroupForGameServerInformation->host
                   << ":"
@@ -332,7 +332,7 @@ bool EpollClientLoginMaster::trySelectCharacterGameServer(EpollClientLoginMaster
     if(queryNumberList.empty())
     {
         std::cerr << "queryNumberList.empty() on game server to server it: "
-                  << charactersGroupForGameServerInformation->uniqueKey
+                  << uniqueKey
                   << ", host: "
                   << charactersGroupForGameServerInformation->host
                   << ":"
@@ -461,8 +461,8 @@ void EpollClientLoginMaster::sendServerChange()
             }
             //key
             {
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(gameServerOnCharactersGroup->uniqueKey);
-                posOutput+=sizeof(gameServerOnCharactersGroup->uniqueKey);
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(gameServerOnEpollClientLoginMaster->uniqueKey);
+                posOutput+=sizeof(gameServerOnEpollClientLoginMaster->uniqueKey);
             }
             //host
             {
@@ -597,6 +597,8 @@ void EpollClientLoginMaster::disconnectForDuplicateConnexionDetected(const uint3
 /// \todo check the 255> size
 void EpollClientLoginMaster::addToRemoveList()
 {
+    if(!charactersGroupForGameServerInformation->addSend)
+        return;
     bool foundIntoAdd=false;
     {
         unsigned int index=0;
@@ -621,7 +623,8 @@ void EpollClientLoginMaster::addToRemoveList()
             const EpollClientLoginMaster * gameServer=EpollClientLoginMaster::gameServers.at(index);
             if(gameServer==this)
             {
-                found=true;
+                if(gameServer->charactersGroupForGameServerInformation->addSend)
+                    found=true;
                 break;
             }
             index++;
@@ -655,6 +658,7 @@ void EpollClientLoginMaster::addToRemoveList()
 /// \todo check the 255> size
 void EpollClientLoginMaster::addToInserList()
 {
+    charactersGroupForGameServerInformation->addSend=true;
     bool foundIntoAdd=false;
     unsigned int index=0;
     while(index<EpollClientLoginMaster::dataForUpdatedServers.addServer.size())
@@ -671,7 +675,7 @@ void EpollClientLoginMaster::addToInserList()
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         else
         {
-            if(server->charactersGroupForGameServer->index==charactersGroupForGameServer->index && server->charactersGroupForGameServerInformation->uniqueKey==charactersGroupForGameServerInformation->uniqueKey)
+            if(server->charactersGroupForGameServer->index==charactersGroupForGameServer->index && server->uniqueKey==uniqueKey)
                 std::cerr << "different object but same content" << std::endl;
         }
         #endif
@@ -703,7 +707,7 @@ bool EpollClientLoginMaster::sendGameServerRegistrationReply(const uint8_t query
             newUniqueKey = rng();
         } while(Q_UNLIKELY(charactersGroupForGameServer->gameServers.find(newUniqueKey)!=charactersGroupForGameServer->gameServers.cend()));
         uniqueKey=newUniqueKey;
-        std::cerr << "Generate new unique key for a game server" << std::endl;
+        std::cerr << "Generate new unique key for a game server: " << std::to_string(newUniqueKey) << std::endl;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
         posOutput+=1;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint32_t)htole32(newUniqueKey);
@@ -776,6 +780,7 @@ bool EpollClientLoginMaster::sendGameServerRegistrationReply(const uint8_t query
             index++;
         }
     }
+    std::cout << "new game server added: " << std::to_string((uint64_t)this) << std::endl;
     EpollClientLoginMaster::gameServers.push_back(this);
     stat=EpollClientLoginMasterStat::GameServer;
     currentPlayerForGameServerToUpdate=false;

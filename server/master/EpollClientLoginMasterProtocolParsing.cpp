@@ -532,6 +532,12 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
             {
                 if(Q_UNLIKELY(charactersGroupForGameServer->gameServers.find(uniqueKey)!=charactersGroupForGameServer->gameServers.cend()))
                 {
+                    if(host.empty())
+                    {
+                        std::cerr << "host.empty() to compose the reply" << std::endl;
+                        abort();
+                    }
+                    std::cout << "game server conflict: " << std::to_string((uint64_t)this) << ", unique key: " << std::to_string(uniqueKey) << ", to: " << host << ":" << std::to_string(port) << ", logicalGroupIndex: " << std::to_string(logicalGroupIndex) << std::endl;
                     CharactersGroup::InternalGameServer * theMainGameserver=&charactersGroupForGameServer->gameServers[uniqueKey];
                     theMainGameserver->link->sendGameServerPing(msFrom1970());
                     theMainGameserver->link->secondServerInConflict.push_back(this);
@@ -548,12 +554,12 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
 
                     charactersGroupForGameServerInformation->logicalGroupIndex=logicalGroupIndex;
                     charactersGroupForGameServerInformation->metaData=metaData;
-                    charactersGroupForGameServerInformation->uniqueKey=uniqueKey;
 
                     charactersGroupForGameServerInformation->currentPlayer=currentPlayer;
                     charactersGroupForGameServerInformation->maxPlayer=maxPlayer;
 
                     charactersGroupForGameServerInformation->lockedAccountByGameserver=connectedPlayer;
+                    charactersGroupForGameServerInformation->addSend=false;
 
                     queryNumberInConflicWithTheMainServer=queryNumber;
 
@@ -861,7 +867,7 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
                         dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnToken(dataForSelectedCharacterReturn.client_query_id,data);
                     else
                         std::cerr << "EpollClientLoginMaster::parseReplyData(), error reply got on: "
-                                  << charactersGroupForGameServerInformation->uniqueKey
+                                  << uniqueKey
                                   << ", host: "
                                   << charactersGroupForGameServerInformation->host
                                   << ":"
@@ -872,7 +878,7 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
                 else if(size==1)
                 {
                     std::cerr << "EpollClientLoginMaster::parseReplyData(), error reply got on: "
-                              << charactersGroupForGameServerInformation->uniqueKey
+                              << uniqueKey
                               << ", host: "
                               << charactersGroupForGameServerInformation->host
                               << ":"
@@ -895,7 +901,7 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
                         dataForSelectedCharacterReturn.loginServer->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
                     else
                         std::cerr << "EpollClientLoginMaster::parseReplyData(), error reply got on: "
-                                  << charactersGroupForGameServerInformation->uniqueKey
+                                  << uniqueKey
                                   << ", host: "
                                   << charactersGroupForGameServerInformation->host
                                   << ":"
@@ -927,16 +933,24 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
                     charactersGroupForGameServerInformation->lastPingStarted=msFrom1970();/// \note Can be dropped to performance improvement
                 }
 
+                bool haveChange=false;
                 if(!secondServerInConflict.empty())
                 {
+                    haveChange=true;
                     unsigned int index=0;
                     while(index<secondServerInConflict.size())
                     {
                         EpollClientLoginMaster * const gameServer=secondServerInConflict.at(index);
 
+                        //change the key here
                         gameServer->sendGameServerRegistrationReply(gameServer->queryNumberInConflicWithTheMainServer,true);
+                        const CharactersGroup::InternalGameServer &tempData=*gameServer->charactersGroupForGameServerInformation;
+                        gameServer->charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
+                                    gameServer,gameServer->uniqueKey,tempData.host,tempData.port,tempData.metaData,tempData.logicalGroupIndex,tempData.currentPlayer,tempData.maxPlayer,tempData.lockedAccountByGameserver);
+                        gameServer->addToInserList();
 
-                        CharactersGroup::InternalGameServer tempData;
+                        /*why data move? is set at the game server request
+                         * CharactersGroup::InternalGameServer tempData;
                         if(gameServer->charactersGroupForGameServerInformation!=NULL)
                         {
                             tempData=*gameServer->charactersGroupForGameServerInformation;
@@ -949,15 +963,29 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
                             abort();
                         }
                         gameServer->charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
-                                    this,tempData.uniqueKey,tempData.host,tempData.port,tempData.metaData,tempData.logicalGroupIndex,tempData.currentPlayer,tempData.maxPlayer,tempData.lockedAccountByGameserver);
+                                    error:this,tempData.uniqueKey,tempData.host,tempData.port,tempData.metaData,tempData.logicalGroupIndex,tempData.currentPlayer,tempData.maxPlayer,tempData.lockedAccountByGameserver);*/
 
                         index++;
                     }
                     secondServerInConflict.clear();
+                }
 
+                if(!charactersGroupForGameServerInformation->addSend)
+                {
+                    haveChange=true;
+                    CharactersGroup::InternalGameServer tempData;
+                    if(charactersGroupForGameServerInformation==NULL)
+                        abort();
+                    tempData=*charactersGroupForGameServerInformation;
+                    charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
+                                this,uniqueKey,tempData.host,tempData.port,tempData.metaData,tempData.logicalGroupIndex,tempData.currentPlayer,tempData.maxPlayer,tempData.lockedAccountByGameserver);
+                    this->addToInserList();
+                }
+
+                if(haveChange)
+                {
                     EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
                     EpollServerLoginMaster::epollServerLoginMaster->doTheReplyCache();
-                    addToInserList();
                     updateConsoleCountServer();
                 }
             }

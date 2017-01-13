@@ -188,6 +188,12 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
                                                                               const uint16_t &port, const std::string &metaData, const uint32_t &logicalGroupIndex,
                                                                               const uint16_t &currentPlayer, const uint16_t &maxPlayer,const std::unordered_set<uint32_t> &lockedAccount)
 {
+    if(host.empty())
+    {
+        std::cerr << "At this level the host can't be empty, host used by the client or login server if in mode proxy" << std::endl;
+        abort();
+    }
+    std::cout << "set game server added: " << std::to_string((uint64_t)client) << ", unique key: " << std::to_string(uniqueKey) << ", to: " << host << ":" << std::to_string(port) << ", logicalGroupIndex: " << std::to_string(logicalGroupIndex) << std::endl;
     const auto &now=sFrom1970();
     //old locked account
     if(lockedAccountByDisconnectedServer.find(uniqueKey)!=lockedAccountByDisconnectedServer.cend())
@@ -222,10 +228,10 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
 
     tempServer.logicalGroupIndex=logicalGroupIndex;
     tempServer.metaData=metaData;
-    tempServer.uniqueKey=uniqueKey;
 
     tempServer.currentPlayer=currentPlayer;
     tempServer.maxPlayer=maxPlayer;
+    tempServer.addSend=true;
 
     //new key found on game server, mostly when the master server is restarted
     {
@@ -343,7 +349,7 @@ CharactersGroup::CharacterLock CharactersGroup::characterIsLocked(const uint32_t
                 const InternalGameServer &internalGameServer=i->second;
                 if(internalGameServer.lockedAccountByGameserver.find(characterId)!=internalGameServer.lockedAccountByGameserver.cend())
                 {
-                    std::cerr << "lockedAccount: " << characterId << ", on server: " << internalGameServer.uniqueKey << " " << internalGameServer.host << " " << internalGameServer.port << std::endl;
+                    std::cerr << "lockedAccount: " << characterId << ", on server: " << internalGameServer.link->uniqueKey << " " << internalGameServer.host << " " << internalGameServer.port << std::endl;
                     break;
                 }
                 ++i;
