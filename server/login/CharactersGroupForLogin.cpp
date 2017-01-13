@@ -39,6 +39,9 @@ void CharactersGroupForLogin::clearServerPair()
 
 void CharactersGroupForLogin::setServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey,const char * const hostData,const uint8_t &hostDataSize,const uint16_t &port)
 {
+    #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+    std::cout << "setServerUniqueKey(" << std::to_string(indexOnFlatList) << "," << std::to_string(serverUniqueKey) << "," << std::string(hostData,hostDataSize) << "," << std::to_string(hostDataSize) << "," << std::to_string(port) << ") in " << __FILE__ << ":" <<__LINE__ << std::endl;
+    #endif
     InternalGameServer tempServer;
     tempServer.host=std::string(hostData,hostDataSize);
     tempServer.port=port;
@@ -48,6 +51,9 @@ void CharactersGroupForLogin::setServerUniqueKey(const uint8_t &indexOnFlatList,
 
 void CharactersGroupForLogin::setIndexServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey)
 {
+    #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+    std::cout << "setIndexServerUniqueKey(" << std::to_string(indexOnFlatList) << "," << std::to_string(serverUniqueKey) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+    #endif
     servers[serverUniqueKey].indexOnFlatList=indexOnFlatList;
 }
 
@@ -66,6 +72,11 @@ CharactersGroupForLogin::InternalGameServer CharactersGroupForLogin::getServerIn
     return servers.at(serverUniqueKey);
 }
 
+const std::unordered_map<uint32_t,CharactersGroupForLogin::InternalGameServer> &CharactersGroupForLogin::getServerListRO() const
+{
+    return servers;
+}
+
 BaseClassSwitch::EpollObjectType CharactersGroupForLogin::getType() const
 {
     return BaseClassSwitch::EpollObjectType::Client;
@@ -80,3 +91,44 @@ DatabaseBase * CharactersGroupForLogin::database() const
 {
     return databaseBaseCommon;
 }
+
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+uint8_t CharactersGroupForLogin::serverCountForAllCharactersGroup()
+{
+    uint8_t count=0;
+    unsigned int index=0;
+    while(index<list.size())
+    {
+        const CharactersGroupForLogin * const group=list.at(index);
+        count+=group->servers.size();
+        index++;
+    }
+    return count;
+}
+#endif
+
+#ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+void CharactersGroupForLogin::serverDumpCharactersGroup()
+{
+    unsigned int index=0;
+    while(index<list.size())
+    {
+        std::cout << "dump CharactersGroup " << std::to_string(index) << ":" << std::endl;
+        const CharactersGroupForLogin * const group=list.at(index);
+        for(const auto& n:group->getServerListRO())
+        {
+            const uint32_t &uniqueKey=n.first;
+            const InternalGameServer& server=n.second;
+            std::cout << "server " << std::to_string(server.indexOnFlatList) << ", host: " << server.host << ":" << std::to_string(server.port) << ", unique key: " << std::to_string(uniqueKey) << std::endl;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(server.indexOnFlatList>=serverCountForAllCharactersGroup())
+            {
+                std::cerr << "CharactersGroupForLogin::server_list_object(): server.indexOnFlatList(" << std::to_string(server.indexOnFlatList) << ")>=servers.size(" << std::to_string(serverCountForAllCharactersGroup()) << ")" << std::endl;
+                abort();
+            }
+            #endif
+        }
+        index++;
+    }
+}
+#endif

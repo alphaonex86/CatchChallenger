@@ -29,6 +29,7 @@ public:
     void setIndexServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey);
     bool containsServerUniqueKey(const uint32_t &serverUniqueKey) const;
     InternalGameServer getServerInformation(const uint32_t &serverUniqueKey) const;
+    const std::unordered_map<uint32_t,InternalGameServer> &getServerListRO() const;
     void removeServerUniqueKey(const uint32_t &serverUniqueKey);
 
     std::vector<EpollClientLoginSlave *> clientQueryForReadReturn;
@@ -82,6 +83,12 @@ public:
     void server_list_object();
     DatabaseBase::DatabaseType databaseType() const;
     DatabaseBase * database() const;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    static uint8_t serverCountForAllCharactersGroup();
+    #endif
+    #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
+    static void serverDumpCharactersGroup();
+    #endif
 private:
     void load_character_max_id();
     static void load_character_max_id_static(void *object);

@@ -205,7 +205,15 @@ void CharactersGroupForLogin::server_list_object()
             if(servers.find(server_id)!=servers.cend())
             {
                 //server index
-                tempRawData[tempRawDataSize]=servers.at(server_id).indexOnFlatList;
+                const InternalGameServer &server=servers.at(server_id);
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(server.indexOnFlatList>=serverCountForAllCharactersGroup())
+                {
+                    std::cerr << "CharactersGroupForLogin::server_list_object(): server.indexOnFlatList(" << std::to_string(server.indexOnFlatList) << ")>=servers.size(" << std::to_string(serverCountForAllCharactersGroup()) << ")" << std::endl;
+                    abort();
+                }
+                #endif
+                tempRawData[tempRawDataSize]=server.indexOnFlatList;
                 tempRawDataSize+=1;
 
                 //played_time
