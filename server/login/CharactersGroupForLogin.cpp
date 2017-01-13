@@ -51,8 +51,15 @@ void CharactersGroupForLogin::setServerUniqueKey(const uint8_t &indexOnFlatList,
 
 void CharactersGroupForLogin::setIndexServerUniqueKey(const uint8_t &indexOnFlatList,const uint32_t &serverUniqueKey)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(servers.find(serverUniqueKey)==servers.cend())
+    {
+        std::cerr << "setIndexServerUniqueKey(" << std::to_string(indexOnFlatList) << "," << std::to_string(serverUniqueKey) << ") unique key not found (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+        abort();
+    }
+    #endif
     #ifdef CATCHCHALLENGER_DEBUG_SERVERLIST
-    std::cout << "setIndexServerUniqueKey(" << std::to_string(indexOnFlatList) << "," << std::to_string(serverUniqueKey) << " in " << __FILE__ << ":" <<__LINE__ << std::endl;
+    std::cout << "setIndexServerUniqueKey(" << std::to_string(indexOnFlatList) << "," << std::to_string(serverUniqueKey) << ") in " << __FILE__ << ":" <<__LINE__ << std::endl;
     #endif
     servers[serverUniqueKey].indexOnFlatList=indexOnFlatList;
 }
