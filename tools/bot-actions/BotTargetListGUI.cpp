@@ -48,6 +48,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
     for(const auto& n:resolvedBlockList) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
+        const MapServerMini * const map=blockObject->map;
         if(listGUI==ui->localTargets)
         {
             for(const auto& n:blockObject->links) {
@@ -108,11 +109,143 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
         //insdustry -> skip, no position control on server side
     //wild monster (and their object, day cycle)
 
+        //dirt
+        if(!blockObject->dirt.empty())
+        {
+            unsigned int index=0;
+            while(index<blockObject->dirt.size())
+            {
+                const std::pair<uint8_t,uint8_t> &dirtPoint=blockObject->dirt.at(index);
+                if(!DatapackClientLoader.datapackLoader.plantOnMap.contains(QString::fromStdString(map->map_file)))
+                {
+                    std::cerr << "map not found for plant resolution: " << map->map_file << std::endl;
+                    abort();
+                }
+                const QHash<QPair<uint8_t,uint8_t>,uint16_t> &positionsList=DatapackClientLoader.datapackLoader.plantOnMap.value(QString::fromStdString(map->map_file));
+                QPair<uint8_t,uint8_t> pos;
+                pos.first=dirtPoint.first;
+                pos.second=dirtPoint.second;
+                if(!positionsList.contains(pos))
+                {
+                    std::cerr << "map pos not found for plant resolution: " << map->map_file << std::endl;
+                    abort();
+                }
+                const uint16_t &plantOnMapIndex=positionsList.value(pos);
+                const CatchChallenger::PlayerPlant &playerMonster=player_private_and_public_informations.plantOnMap.at(index);
+
+                todo
+                if(CatchChallenger::CommonDatapack::commonDatapack.plants.find(plant_id)==CatchChallenger::CommonDatapack::commonDatapack.plants.cend())
+                {
+                    qDebug() << "plant_id don't exists";
+                    return;
+                }
+                MapVisualiserThread::Map_full * map_full=all_map[map];
+                int index=0;
+                while(index<map_full->logicalMap.plantList.size())
+                {
+                    if(map_full->logicalMap.plantList.at(index)->x==x && map_full->logicalMap.plantList.at(index)->y==y)
+                    {
+                        qDebug() << "map have already an item at this point, remove it";
+                        remove_plant_full(map,x,y);
+                    }
+                    else
+                        index++;
+                }
+                uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+                CatchChallenger::ClientPlantWithTimer *plant=new CatchChallenger::ClientPlantWithTimer();
+                plant->setSingleShot(true);
+                plant->mapObject=new Tiled::MapObject();
+                plant->x=x;
+                plant->y=y;
+                plant->plant_id=plant_id;
+                plant->mature_at=current_time+seconds_to_mature;
+                if(updatePlantGrowing(plant))
+                    connect(plant,&QTimer::timeout,this,&MapController::getPlantTimerEvent);
+                //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+                plant->mapObject->setPosition(QPoint(x,y+1));
+
+                map_full->logicalMap.plantList << plant;
+                #ifdef DEBUG_CLIENT_PLANTS
+                qDebug() << QStringLiteral("insert_plant(), map: %1 at: %2,%3").arg(map).arg(x).arg(y);
+                #endif
+                if(ObjectGroupItem::objectGroupLink.contains(all_map[map]->objectGroup))
+                    ObjectGroupItem::objectGroupLink[all_map[map]->objectGroup]->addObject(plant->mapObject);
+                else
+                    qDebug() << QStringLiteral("insert_plant(), all_map[map]->objectGroup not contains current_map->objectGroup");
+
+                if(have mature plant)
+                {
+
+                }
+                else if(empty dirt)
+                {
+
+                }
+                const MapServerMini::ItemOnMap &itemOnMap=it->second;
+                const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemOnMap.item);
+                QListWidgetItem * newItem=new QListWidgetItem();
+                if(itemOnMap.infinite)
+                    newItem->setText(QString("Item on map %1 (infinite)").arg(itemExtra.name));
+                else
+                    newItem->setText(QString("Item on map %1").arg(itemExtra.name));
+                newItem->setIcon(QIcon(itemExtra.image));
+                if(listGUI==ui->globalTargets)
+                {
+                    ActionsBotInterface::GlobalTarget globalTarget;
+                    globalTarget.blockObject=blockObject;
+                    globalTarget.extra=itemOnMap.item;
+                    globalTarget.bestPath=resolvedBlock.bestPath;
+                    globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap;
+                    targetListGlobalTarget.push_back(globalTarget);
+                    if(alternateColor)
+                        newItem->setBackgroundColor(alternateColorValue);
+                    alternateColor=!alternateColor;
+                    newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                }
+                itemToReturn.push_back(newItem->text().toStdString());
+                if(listGUI!=NULL)
+                    listGUI->addItem(newItem);
+                else
+                    delete newItem;
+                index++;
+            }
+        }
         //item on map
         {
             for(auto it = blockObject->pointOnMap_Item.begin();it!=blockObject->pointOnMap_Item.cend();++it)
             {
                 const MapServerMini::ItemOnMap &itemOnMap=it->second;
+
+                todo
+                const QString tempMap=QString::fromStdString(tempMapObject->logicalMap.map_file);
+                if(DatapackClientLoader::datapackLoader.itemOnMap.contains(tempMap))
+                {
+                    if(DatapackClientLoader::datapackLoader.itemOnMap.value(tempMap).contains(QPair<uint8_t,uint8_t>(x,y)))
+                    {
+                        const uint8_t &itemIndex=DatapackClientLoader::datapackLoader.itemOnMap.value(tempMap).value(QPair<uint8_t,uint8_t>(x,y));
+                        if(itemOnMap->find(itemIndex)!=itemOnMap->cend())
+                        {
+                            ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
+                            objects.removeAt(index2);
+                        }
+                        else
+                        {
+                            tempMapObject->logicalMap.itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=object;
+                            index2++;
+                        }
+                    }
+                    else
+                    {
+                        tempMapObject->logicalMap.itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=object;
+                        index2++;
+                    }
+                }
+                else
+                {
+                    tempMapObject->logicalMap.itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=object;
+                    index2++;
+                }
+
                 const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemOnMap.item);
                 QListWidgetItem * newItem=new QListWidgetItem();
                 if(itemOnMap.infinite)

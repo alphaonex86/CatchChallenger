@@ -982,6 +982,34 @@ bool MapServerMini::preload_step2c()
                     //insdustry -> skip, no position control on server side
                     //wild monster (and their object, day cycle)
 
+                    //dirt
+                    {
+                        int y=0;
+                        while(y<this->height)
+                        {
+                            int x=0;
+                            while(x<this->width)
+                            {
+                                if(currentStep.map[x+y*this->width]!=0)
+                                {
+                                    const uint8_t &codeZone=currentStep.map[x+y*this->width];
+                                    std::pair<uint8_t,uint8_t> newDirtPoint{x,y};
+                                    if(codeZone>0)
+                                    {
+                                        BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
+                                        blockObject.dirt.push_back(newDirtPoint);
+                                    }
+                                    else
+                                    {
+                                        BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
+                                        blockObject.dirt.push_back(newDirtPoint);
+                                    }
+                                }
+                                x++;
+                            }
+                            y++;
+                        }
+                    }
                     //item on map
                     {
                         for (auto it = this->pointOnMap_Item.begin(); it != this->pointOnMap_Item.cend(); ++it) {

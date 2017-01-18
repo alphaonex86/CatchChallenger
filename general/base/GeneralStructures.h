@@ -383,10 +383,10 @@ struct Player_private_and_public_informations
         std::unordered_set<uint16_t> itemOnMap;
         #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
             #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-            std::unordered_map<uint16_t/*pointOnMap*/,PlayerPlant> plantOnMap;
+            std::unordered_map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
             #endif
         #else
-            std::unordered_map<uint16_t/*pointOnMap*/,PlayerPlant> plantOnMap;
+            std::unordered_map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
         #endif
         std::unordered_map<uint16_t, PlayerQuest> quests;
         std::unordered_map<uint8_t,PlayerReputation> reputation;
@@ -397,10 +397,10 @@ struct Player_private_and_public_informations
         std::set<uint16_t> itemOnMap;
         #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
             #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-            std::map<uint16_t/*pointOnMap*/,PlayerPlant> plantOnMap;
+            std::map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
             #endif
         #else
-            std::map<uint16_t/*pointOnMap*/,PlayerPlant> plantOnMap;
+            std::map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
         #endif
         std::map<uint16_t, PlayerQuest> quests;
         std::map<uint8_t/*internal id*/,PlayerReputation> reputation;
