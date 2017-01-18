@@ -127,6 +127,7 @@ void BaseWindow::resetAll()
     add_to_inventoryGainTime.clear();
     add_to_inventoryGainExtraList.clear();
     add_to_inventoryGainExtraTime.clear();
+    client=NULL;
     /*this is only mirror, drop into Api_protocol::resetAll()
     if(fightEngine.public_and_private_informations.encyclopedia_item!=NULL)
     {

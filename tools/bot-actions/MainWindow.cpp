@@ -527,6 +527,11 @@ void MainWindow::on_autoCreateCharacter_stateChanged(int arg1)
 
 void MainWindow::all_player_connected()
 {
+    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
+    {
+        QMessageBox::critical(this,tr("Error"),tr("Only the plant by player is supported for now!"));
+        QCoreApplication::exit(555);
+    }
     qDebug() << "MainWindow::all_player_connected()";
 }
 
