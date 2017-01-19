@@ -174,10 +174,11 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
         newPlayer.target.extra=0;
         newPlayer.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
         newPlayer.fightEngine=new CatchChallenger::ClientFightEngine();
+        newPlayer.api=api;
         actionsAction->clientList[api]=newPlayer;
         newPlayer.fightEngine->setClient(api);
 
-        if(!connect(api,&CatchChallenger::Api_protocol::have_inventory,     actionsAction,&ActionsAction::have_inventory,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol::have_inventory,     actionsAction,&ActionsAction::have_inventory_slot,Qt::QueuedConnection))
             abort();
         if(!connect(api,&CatchChallenger::Api_protocol::add_to_inventory,   actionsAction,&ActionsAction::add_to_inventory_slot,Qt::QueuedConnection))
             abort();

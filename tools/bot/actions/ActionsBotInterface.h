@@ -24,6 +24,8 @@ public:
             Shop,//shop id
             Heal,
             WildMonster,
+            Dirt,
+            Plant,
             None
         };
         GlobalTargetType type;
@@ -35,15 +37,14 @@ public:
     };
     struct Player
     {
-        CatchChallenger::Player_public_informations player;
         uint32_t mapId;
         uint8_t x;
         uint8_t y;
         CatchChallenger::Direction direction;
-        std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
         GlobalTarget target;
         uint8_t previousStepWalked;
         CatchChallenger::ClientFightEngine *fightEngine;
+        CatchChallenger::Api_protocol *api;
     };
 
     ActionsBotInterface();
@@ -55,7 +56,7 @@ public:
     QString name();
     QString version();
     virtual void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
-    QHash<CatchChallenger::Api_protocol *,Player> clientList;
+    static QHash<CatchChallenger::Api_protocol *,Player> clientList;
 protected:
     bool randomText;
     bool globalChatRandomReply;

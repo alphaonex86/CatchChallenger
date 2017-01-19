@@ -472,6 +472,7 @@ void BaseWindow::load_inventory()
             switch(waitedObjectType)
             {
                 case ObjectType_Seed:
+                    //reputation requierement control is into load_plant_inventory() NOT: on_listPlantList_itemSelectionChanged()
                     if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i->first))
                         show=true;
                 break;
