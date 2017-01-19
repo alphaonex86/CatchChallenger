@@ -3,6 +3,7 @@
 #include "../../client/base/interface/DatapackClientLoader.h"
 #include "../../client/fight/interface/ClientFightEngine.h"
 #include "MapBrowse.h"
+#include <chrono>
 
 std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockObject * const blockObject, const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI)
 {
@@ -13,11 +14,38 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
     return contentToGUI(client,listGUI,resolvedBlockList);
 }
 
+uint32_t BotTargetList::getSeedToPlant(CatchChallenger::Api_protocol * api,bool *haveSeedToPlant)
+{
+    const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
+    auto i=player_private_and_public_informations.items.begin();
+    while (i!=player_private_and_public_informations.items.cend())
+    {
+        const uint16_t &itemId=i->first;
+        if(DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
+        {
+            /// \todo check the requirement
+            const uint8_t &plantId=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
+
+            if(ActionsAction::haveReputationRequirements(api,CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId).requirements.reputation))
+            {
+                if(haveSeedToPlant!=NULL)
+                    *haveSeedToPlant=true;
+                return itemId;
+            }
+        }
+        ++i;
+    }
+    if(haveSeedToPlant!=NULL)
+        *haveSeedToPlant=false;
+    return 0;
+}
+
 std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI,
                                                      const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard)
 {
     //compute the forbiden direct value
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=client->api->get_player_informations();
+    CatchChallenger::Api_client_real * api=client->api;
     uint32_t maxMonsterLevel=0;
     {
         unsigned int index=0;
@@ -112,102 +140,109 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
         //dirt
         if(!blockObject->dirt.empty())
         {
-            unsigned int index=0;
-            while(index<blockObject->dirt.size())
+            bool haveSeedToPlant=false;
+            const uint32_t &itemToUse=getSeedToPlant(api,&haveSeedToPlant);
+            if(haveSeedToPlant)
             {
-                const std::pair<uint8_t,uint8_t> &dirtPoint=blockObject->dirt.at(index);
-                if(!DatapackClientLoader.datapackLoader.plantOnMap.contains(QString::fromStdString(map->map_file)))
+                QString tempMapFile=DatapackClientLoader::datapackLoader.getDatapackPath()+DatapackClientLoader::datapackLoader.getMainDatapackPath()+QString::fromStdString(map->map_file);
+                if(!tempMapFile.endsWith(".tmx"))
+                    tempMapFile+=".tmx";
+                if(DatapackClientLoader::datapackLoader.plantOnMap.contains(tempMapFile))
                 {
-                    std::cerr << "map not found for plant resolution: " << map->map_file << std::endl;
-                    abort();
-                }
-                const QHash<QPair<uint8_t,uint8_t>,uint16_t> &positionsList=DatapackClientLoader.datapackLoader.plantOnMap.value(QString::fromStdString(map->map_file));
-                QPair<uint8_t,uint8_t> pos;
-                pos.first=dirtPoint.first;
-                pos.second=dirtPoint.second;
-                if(!positionsList.contains(pos))
-                {
-                    std::cerr << "map pos not found for plant resolution: " << map->map_file << std::endl;
-                    abort();
-                }
-                const uint16_t &plantOnMapIndex=positionsList.value(pos);
-                const CatchChallenger::PlayerPlant &playerMonster=player_private_and_public_informations.plantOnMap.at(index);
-
-                todo
-                if(CatchChallenger::CommonDatapack::commonDatapack.plants.find(plant_id)==CatchChallenger::CommonDatapack::commonDatapack.plants.cend())
-                {
-                    qDebug() << "plant_id don't exists";
-                    return;
-                }
-                MapVisualiserThread::Map_full * map_full=all_map[map];
-                int index=0;
-                while(index<map_full->logicalMap.plantList.size())
-                {
-                    if(map_full->logicalMap.plantList.at(index)->x==x && map_full->logicalMap.plantList.at(index)->y==y)
+                    unsigned int dirtCount=0;
+                    //QListWidgetItem * firstDirtItem=NULL;
+                    unsigned int index=0;
+                    while(index<blockObject->dirt.size())
                     {
-                        qDebug() << "map have already an item at this point, remove it";
-                        remove_plant_full(map,x,y);
-                    }
-                    else
+                        {
+                            const std::pair<uint8_t,uint8_t> &dirtPoint=blockObject->dirt.at(index);
+                            const QHash<QPair<uint8_t,uint8_t>,uint16_t> &positionsList=DatapackClientLoader::datapackLoader.plantOnMap.value(tempMapFile);
+                            QPair<uint8_t,uint8_t> pos;
+                            pos.first=dirtPoint.first;
+                            pos.second=dirtPoint.second;
+                            if(positionsList.contains(pos))
+                            {
+                                const uint16_t &plantOnMapIndex=positionsList.value(pos);
+                                //have plant
+                                if(player_private_and_public_informations.plantOnMap.find(plantOnMapIndex)!=player_private_and_public_informations.plantOnMap.cend())
+                                {
+                                    const CatchChallenger::PlayerPlant &playerMonster=player_private_and_public_informations.plantOnMap.at(plantOnMapIndex);
+                                    //have mature plant
+                                    if(playerMonster.mature_at>(uint64_t)(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000))
+                                    {
+                                        const uint8_t &plantId=playerMonster.plant;
+                                        const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId);
+                                        const uint16_t &itemId=plant.itemUsed;
+                                        const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemId);
+                                        //const CatchChallenger::Plant::Rewards &rewards=plant.rewards;
+                                        QListWidgetItem * newItem=new QListWidgetItem();
+
+                                        newItem->setText(QString("Plant to collect %1").arg(itemExtra.name));
+                                        newItem->setIcon(QIcon(itemExtra.image));
+                                        if(listGUI==ui->globalTargets)
+                                        {
+                                            ActionsBotInterface::GlobalTarget globalTarget;
+                                            globalTarget.blockObject=blockObject;
+                                            globalTarget.extra=plantOnMapIndex;
+                                            globalTarget.bestPath=resolvedBlock.bestPath;
+                                            globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant;
+                                            targetListGlobalTarget.push_back(globalTarget);
+                                            if(alternateColor)
+                                                newItem->setBackgroundColor(alternateColorValue);
+                                            alternateColor=!alternateColor;
+                                            newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                                        }
+                                        itemToReturn.push_back(newItem->text().toStdString());
+                                        if(listGUI!=NULL)
+                                            listGUI->addItem(newItem);
+                                        else
+                                            delete newItem;
+                                    }
+                                }
+                                //empty dirt
+                                else
+                                {
+                                    if(dirtCount==0)
+                                    {
+                                        QListWidgetItem * newItem=new QListWidgetItem();
+                                        const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemToUse);
+                                        newItem->setText(QString("Free dirt (use %1)").arg(itemExtra.name));
+                                        //firstDirtItem=newItem;
+
+                                        newItem->setIcon(QIcon(":/dirt.png"));
+                                        if(listGUI==ui->globalTargets)
+                                        {
+                                            ActionsBotInterface::GlobalTarget globalTarget;
+                                            globalTarget.blockObject=blockObject;
+                                            globalTarget.extra=plantOnMapIndex;
+                                            globalTarget.bestPath=resolvedBlock.bestPath;
+                                            globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Dirt;
+                                            targetListGlobalTarget.push_back(globalTarget);
+                                            if(alternateColor)
+                                                newItem->setBackgroundColor(alternateColorValue);
+                                            alternateColor=!alternateColor;
+                                            newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                                        }
+                                        itemToReturn.push_back(newItem->text().toStdString());
+                                        if(listGUI!=NULL)
+                                            listGUI->addItem(newItem);
+                                        else
+                                            delete newItem;
+
+                                        dirtCount++;
+                                    }
+                                    else
+                                    {
+                                        dirtCount++;
+                                        //firstDirtItem->setText(QString("%1 free dirts").arg(dirtCount));
+                                    }
+                                }
+                            }
+                        }
+
                         index++;
+                    }
                 }
-                uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-                CatchChallenger::ClientPlantWithTimer *plant=new CatchChallenger::ClientPlantWithTimer();
-                plant->setSingleShot(true);
-                plant->mapObject=new Tiled::MapObject();
-                plant->x=x;
-                plant->y=y;
-                plant->plant_id=plant_id;
-                plant->mature_at=current_time+seconds_to_mature;
-                if(updatePlantGrowing(plant))
-                    connect(plant,&QTimer::timeout,this,&MapController::getPlantTimerEvent);
-                //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-                plant->mapObject->setPosition(QPoint(x,y+1));
-
-                map_full->logicalMap.plantList << plant;
-                #ifdef DEBUG_CLIENT_PLANTS
-                qDebug() << QStringLiteral("insert_plant(), map: %1 at: %2,%3").arg(map).arg(x).arg(y);
-                #endif
-                if(ObjectGroupItem::objectGroupLink.contains(all_map[map]->objectGroup))
-                    ObjectGroupItem::objectGroupLink[all_map[map]->objectGroup]->addObject(plant->mapObject);
-                else
-                    qDebug() << QStringLiteral("insert_plant(), all_map[map]->objectGroup not contains current_map->objectGroup");
-
-                if(have mature plant)
-                {
-
-                }
-                else if(empty dirt)
-                {
-
-                }
-                const MapServerMini::ItemOnMap &itemOnMap=it->second;
-                const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemOnMap.item);
-                QListWidgetItem * newItem=new QListWidgetItem();
-                if(itemOnMap.infinite)
-                    newItem->setText(QString("Item on map %1 (infinite)").arg(itemExtra.name));
-                else
-                    newItem->setText(QString("Item on map %1").arg(itemExtra.name));
-                newItem->setIcon(QIcon(itemExtra.image));
-                if(listGUI==ui->globalTargets)
-                {
-                    ActionsBotInterface::GlobalTarget globalTarget;
-                    globalTarget.blockObject=blockObject;
-                    globalTarget.extra=itemOnMap.item;
-                    globalTarget.bestPath=resolvedBlock.bestPath;
-                    globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap;
-                    targetListGlobalTarget.push_back(globalTarget);
-                    if(alternateColor)
-                        newItem->setBackgroundColor(alternateColorValue);
-                    alternateColor=!alternateColor;
-                    newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
-                }
-                itemToReturn.push_back(newItem->text().toStdString());
-                if(listGUI!=NULL)
-                    listGUI->addItem(newItem);
-                else
-                    delete newItem;
-                index++;
             }
         }
         //item on map
@@ -216,61 +251,34 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
             {
                 const MapServerMini::ItemOnMap &itemOnMap=it->second;
 
-                todo
-                const QString tempMap=QString::fromStdString(tempMapObject->logicalMap.map_file);
-                if(DatapackClientLoader::datapackLoader.itemOnMap.contains(tempMap))
+                if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
                 {
-                    if(DatapackClientLoader::datapackLoader.itemOnMap.value(tempMap).contains(QPair<uint8_t,uint8_t>(x,y)))
-                    {
-                        const uint8_t &itemIndex=DatapackClientLoader::datapackLoader.itemOnMap.value(tempMap).value(QPair<uint8_t,uint8_t>(x,y));
-                        if(itemOnMap->find(itemIndex)!=itemOnMap->cend())
-                        {
-                            ObjectGroupItem::objectGroupLink.value(objectGroup)->removeObject(object);
-                            objects.removeAt(index2);
-                        }
-                        else
-                        {
-                            tempMapObject->logicalMap.itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=object;
-                            index2++;
-                        }
-                    }
+                    const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemOnMap.item);
+                    QListWidgetItem * newItem=new QListWidgetItem();
+                    if(itemOnMap.infinite)
+                        newItem->setText(QString("Item on map %1 (infinite)").arg(itemExtra.name));
                     else
+                        newItem->setText(QString("Item on map %1").arg(itemExtra.name));
+                    newItem->setIcon(QIcon(itemExtra.image));
+                    if(listGUI==ui->globalTargets)
                     {
-                        tempMapObject->logicalMap.itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=object;
-                        index2++;
+                        ActionsBotInterface::GlobalTarget globalTarget;
+                        globalTarget.blockObject=blockObject;
+                        globalTarget.extra=itemOnMap.item;
+                        globalTarget.bestPath=resolvedBlock.bestPath;
+                        globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap;
+                        targetListGlobalTarget.push_back(globalTarget);
+                        if(alternateColor)
+                            newItem->setBackgroundColor(alternateColorValue);
+                        alternateColor=!alternateColor;
+                        newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
                     }
+                    itemToReturn.push_back(newItem->text().toStdString());
+                    if(listGUI!=NULL)
+                        listGUI->addItem(newItem);
+                    else
+                        delete newItem;
                 }
-                else
-                {
-                    tempMapObject->logicalMap.itemsOnMap[QPair<uint8_t,uint8_t>(x,y)].tileObject=object;
-                    index2++;
-                }
-
-                const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemOnMap.item);
-                QListWidgetItem * newItem=new QListWidgetItem();
-                if(itemOnMap.infinite)
-                    newItem->setText(QString("Item on map %1 (infinite)").arg(itemExtra.name));
-                else
-                    newItem->setText(QString("Item on map %1").arg(itemExtra.name));
-                newItem->setIcon(QIcon(itemExtra.image));
-                if(listGUI==ui->globalTargets)
-                {
-                    ActionsBotInterface::GlobalTarget globalTarget;
-                    globalTarget.blockObject=blockObject;
-                    globalTarget.extra=itemOnMap.item;
-                    globalTarget.bestPath=resolvedBlock.bestPath;
-                    globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap;
-                    targetListGlobalTarget.push_back(globalTarget);
-                    if(alternateColor)
-                        newItem->setBackgroundColor(alternateColorValue);
-                    alternateColor=!alternateColor;
-                    newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
-                }
-                itemToReturn.push_back(newItem->text().toStdString());
-                if(listGUI!=NULL)
-                    listGUI->addItem(newItem);
-                else
-                    delete newItem;
             }
         }
         //fight

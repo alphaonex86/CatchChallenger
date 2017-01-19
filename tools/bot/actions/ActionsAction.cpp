@@ -527,25 +527,30 @@ void ActionsAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,co
     }
 }
 
-void ActionsAction::have_inventory(const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
+void ActionsAction::have_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
 {
     CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    have_inventory(api,items,warehouse_items);
+}
+
+void ActionsAction::have_inventory(CatchChallenger::Api_protocol *api,const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
+{
     if(api==NULL)
         return;
-    Player &player=clientList[api];
+    CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
 
     player.items=items;
     player.warehouse_items=warehouse_items;
 }
 
-void ActionsAction::add_to_inventory(const uint32_t &item,const uint32_t &quantity,const bool &showGain)
+void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const uint32_t &item,const uint32_t &quantity,const bool &showGain)
 {
     QList<QPair<uint16_t,uint32_t> > items;
     items << QPair<uint16_t,uint32_t>(item,quantity);
-    add_to_inventory(items,showGain);
+    add_to_inventory(api,items,showGain);
 }
 
-void ActionsAction::add_to_inventory(const QList<QPair<uint16_t,uint32_t> > &items,const bool &showGain)
+void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const QList<QPair<uint16_t,uint32_t> > &items,const bool &showGain)
 {
     int index=0;
     QHash<uint16_t,uint32_t> tempHash;
@@ -554,116 +559,59 @@ void ActionsAction::add_to_inventory(const QList<QPair<uint16_t,uint32_t> > &ite
         tempHash[items.at(index).first]=items.at(index).second;
         index++;
     }
-    add_to_inventory(tempHash,showGain);
+    add_to_inventory(api,tempHash,showGain);
 }
 
 void ActionsAction::add_to_inventory_slot(const QHash<uint16_t,uint32_t> &items)
 {
-    add_to_inventory(items);
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    add_to_inventory(api,items);
 }
 
-void ActionsAction::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bool &showGain)
+void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const QHash<uint16_t,uint32_t> &items,const bool &showGain)
 {
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
     if(api==NULL)
         return;
-    Player &player=clientList[api];
 
-/*    Player_private_and_public_informations &informations=CatchChallenger::Api_client_real::client->get_player_informations();
+    CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
     if(items.empty())
         return;
-    if(showGain)
-    {
-        QStringList objects;
-        QHashIterator<uint16_t,uint32_t> i(items);
-        while (i.hasNext()) {
-            i.next();
 
-            const uint16_t &item=i.key();
-            if(informations.encyclopedia_item!=NULL)
-                informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
-            else
-                std::cerr << "encyclopedia_item is null, unable to set" << std::endl;
-            //add really to the list
-            if(this->items.find(item)!=this->items.cend())
-                this->items[item]+=i.value();
-            else
-                this->items[item]=i.value();
+    QHashIterator<uint16_t,uint32_t> i(items);
+    while (i.hasNext()) {
+        i.next();
 
-            QPixmap image;
-            QString name;
-            if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i.key()))
-            {
-                image=DatapackClientLoader::datapackLoader.itemsExtra.value(i.key()).image;
-                name=DatapackClientLoader::datapackLoader.itemsExtra.value(i.key()).name;
-            }
-            else
-            {
-                image=DatapackClientLoader::datapackLoader.defaultInventoryImage();
-                name=QStringLiteral("id: %1").arg(i.key());
-            }
-
-            image=image.scaled(24,24);
-            QByteArray byteArray;
-            QBuffer buffer(&byteArray);
-            image.save(&buffer, "PNG");
-            if(objects.size()<16)
-            {
-                if(i.value()>1)
-                    objects << QStringLiteral("<b>%2x</b> %3 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(i.value()).arg(name);
-                else
-                    objects << QStringLiteral("%2 <img src=\"data:image/png;base64,%1\" />").arg(QString(byteArray.toBase64())).arg(name);
-            }
-        }
-        if(objects.size()==16)
-            objects << "...";
-        add_to_inventoryGainList << objects.join(", ");
-        add_to_inventoryGainTime << QTime::currentTime();
-        ActionsAction::showGain();
+        const uint16_t &item=i.key();
+        if(player.encyclopedia_item!=NULL)
+            player.encyclopedia_item[item/8]|=(1<<(7-item%8));
+        else
+            std::cerr << "encyclopedia_item is null, unable to set" << std::endl;
+        //add really to the list
+        if(player.items.find(item)!=player.items.cend())
+            player.items[item]+=i.value();
+        else
+            player.items[item]=i.value();
     }
-    else
-    {
-        //add without show
-        QHashIterator<uint16_t,uint32_t> i(items);
-        while (i.hasNext()) {
-            i.next();
-
-            const uint16_t &item=i.key();
-            if(informations.encyclopedia_item!=NULL)
-                informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
-            else
-                std::cerr << "encyclopedia_item is null, unable to set" << std::endl;
-            //add really to the list
-            if(this->items.find(item)!=this->items.cend())
-                this->items[item]+=i.value();
-            else
-                this->items[item]=i.value();
-        }
-    }
-
-    load_inventory();
-    load_plant_inventory();
-    on_listCraftingList_itemSelectionChanged();*/
 }
 
-void ActionsAction::remove_to_inventory(const uint32_t &itemId,const uint32_t &quantity)
+void ActionsAction::remove_to_inventory(CatchChallenger::Api_protocol *api,const uint32_t &itemId,const uint32_t &quantity)
 {
     QHash<uint16_t,uint32_t> items;
     items[itemId]=quantity;
-    remove_to_inventory(items);
+    remove_to_inventory(api,items);
 }
 
 void ActionsAction::remove_to_inventory_slot(const QHash<uint16_t,uint32_t> &items)
 {
-    remove_to_inventory(items);
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    remove_to_inventory(api,items);
 }
 
-void ActionsAction::remove_to_inventory(const QHash<uint16_t,uint32_t> &items)
+void ActionsAction::remove_to_inventory(CatchChallenger::Api_protocol *api,const QHash<uint16_t,uint32_t> &items)
 {
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
     if(api==NULL)
         return;
-    Player &player=clientList[api];
+    CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
 
     QHashIterator<uint16_t,uint32_t> i(items);
     while (i.hasNext()) {
@@ -680,9 +628,9 @@ void ActionsAction::remove_to_inventory(const QHash<uint16_t,uint32_t> &items)
     }
 }
 
-uint32_t ActionsAction::itemQuantity(CatchChallenger::Api_protocol *api,const uint32_t &itemId) const
+uint32_t ActionsAction::itemQuantity(CatchChallenger::Api_protocol *api,const uint32_t &itemId)
 {
-    CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
+    const CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
     if(player.items.find(itemId)!=player.items.cend())
         return player.items.at(itemId);
     return 0;
