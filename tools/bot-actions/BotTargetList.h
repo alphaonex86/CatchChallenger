@@ -57,6 +57,7 @@ public:
             const CatchChallenger::Orientation &source_orientation,const uint8_t &source_x,const uint8_t &source_y,
             const CatchChallenger::Orientation &destination_orientation,const uint8_t &destination_x,const uint8_t &destination_y);
     static std::string stepToString(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath);
+    static uint32_t getSeedToPlant(CatchChallenger::Api_protocol * api, bool *haveSeedToPlant=NULL);
 signals:
     void start_preload_the_map();
 private slots:

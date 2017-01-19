@@ -200,7 +200,7 @@ void BotTargetList::updatePlayerInformation()
     {
         ui->inventory->clear();
         const ActionsBotInterface::Player &bot=actionsAction->clientList.value(client->api);
-        for(const auto& n:bot.items) {
+        for(const auto& n:player_private_and_public_informations.items) {
             const uint32_t &itemId=n.first;
             const uint32_t &quantity=n.second;
             QListWidgetItem *item=new QListWidgetItem();

@@ -28,7 +28,7 @@ bool ActionsAction::nextStepQuest(CatchChallenger::Api_protocol *api,const Catch
         const CatchChallenger::Quest::Item &item=requirements.items.at(index);
         QHash<uint16_t,uint32_t> items;
         items[item.item]=item.quantity;
-        remove_to_inventory(items);
+        remove_to_inventory(api,items);
         index++;
     }
     quests[quest.id].step++;
@@ -271,7 +271,7 @@ bool ActionsAction::tryValidateQuestStep(CatchChallenger::Api_protocol *api, con
     return true;
 }
 
-bool ActionsAction::haveNextStepQuestRequirements(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest) const
+bool ActionsAction::haveNextStepQuestRequirements(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest)
 {
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
     const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
@@ -322,7 +322,7 @@ bool ActionsAction::haveNextStepQuestRequirements(CatchChallenger::Api_protocol 
     return true;
 }
 
-bool ActionsAction::haveStartQuestRequirement(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest) const
+bool ActionsAction::haveStartQuestRequirement(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest)
 {
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
     const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
