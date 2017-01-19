@@ -1,6 +1,8 @@
 #include "ActionsBotInterface.h"
 #include "../../general/base/Version.h"
 
+QHash<CatchChallenger::Api_protocol *,ActionsBotInterface::Player> ActionsBotInterface::clientList;
+
 ActionsBotInterface::ActionsBotInterface() :
     randomText(false),
     globalChatRandomReply(false)
@@ -44,8 +46,10 @@ QStringList ActionsBotInterface::variablesList()
 
 void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
 {
+    CatchChallenger::Player_private_and_public_informations &playerApi=api->get_player_informations();
+    playerApi.public_informations=player;
     Player &newPlayer=clientList[api];
-    newPlayer.player=player;
+    //newPlayer.player=player;
     newPlayer.mapId=mapId;
     newPlayer.x=x;
     newPlayer.y=y;

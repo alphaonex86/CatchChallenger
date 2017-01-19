@@ -975,6 +975,7 @@ bool MapServerMini::preload_step2c()
                         displayConsoleMap(currentStep);
                         abort();
                     }
+                    const CatchChallenger::ParsedLayer &parsedLayer=this->parsed_layer;
                     //not clickable item
                     //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
                     //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
@@ -983,6 +984,7 @@ bool MapServerMini::preload_step2c()
                     //wild monster (and their object, day cycle)
 
                     //dirt
+                    if(parsedLayer.dirt!=NULL)
                     {
                         int y=0;
                         while(y<this->height)
@@ -990,7 +992,7 @@ bool MapServerMini::preload_step2c()
                             int x=0;
                             while(x<this->width)
                             {
-                                if(currentStep.map[x+y*this->width]!=0)
+                                if(currentStep.map[x+y*this->width]!=0 && parsedLayer.dirt[x+y*this->width]==true)
                                 {
                                     const uint8_t &codeZone=currentStep.map[x+y*this->width];
                                     std::pair<uint8_t,uint8_t> newDirtPoint{x,y};
@@ -1093,7 +1095,6 @@ bool MapServerMini::preload_step2c()
                     }
 
                     //detect the wild monster
-                    const CatchChallenger::ParsedLayer &parsedLayer=this->parsed_layer;
                     if(parsedLayer.monstersCollisionMap!=NULL)
                     {
                         int y=0;

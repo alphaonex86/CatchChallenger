@@ -10,5 +10,6 @@
         <file>8.png</file>
         <file>9.png</file>
         <file>playerloc.png</file>
+        <file>dirt.png</file>
     </qresource>
 </RCC>
