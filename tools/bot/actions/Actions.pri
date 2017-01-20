@@ -9,7 +9,8 @@ SOURCES += $$PWD/ActionsBotInterface.cpp \
     $$PWD/MapServerMiniNear.cpp \
     $$PWD/ActionsCheck.cpp \
     $$PWD/ActionsFight.cpp \
-    $$PWD/ActionsQuests.cpp
+    $$PWD/ActionsQuests.cpp \
+    $$PWD/ActionsAPIReturn.cpp
 
 HEADERS  += $$PWD/ActionsBotInterface.h \
     $$PWD/ActionsAction.h \
