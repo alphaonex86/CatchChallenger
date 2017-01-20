@@ -5,6 +5,7 @@
 #include "MapBrowse.h"
 
 #include <chrono>
+#include <QMessageBox>
 
 BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient,
                              QHash<CatchChallenger::ConnectedSocket *,MultipleBotConnection::CatchChallengerClient *> connectedSocketToCatchChallengerClient,
@@ -388,19 +389,48 @@ void BotTargetList::updatePlayerStep()
                         const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
                         const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
                         const MapServerMini::BlockObject * const blockObject=layer.blockObject;
+                        std::pair<uint8_t,uint8_t> point;
                         switch(player.target.type)
                         {
                             case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
                                 for(const auto& n:blockObject->heal) {
-                                    const std::pair<uint8_t,uint8_t> &point=n;
-                                    const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
-                                                blockObject,
-                                                static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
-                                                CatchChallenger::Orientation::Orientation_none,point.first,point.second
-                                                );
-                                    player.target.localStep=returnPath;
-                                    player.target.localType=MapServerMini::BlockObject::LinkType::SourceNone;
+                                    point=n;
+                                    break;
                                 }
+                            break;
+                            case ActionsBotInterface::GlobalTarget::Dirt:
+                            {
+                                const DatapackClientLoader::PlantIndexContent &plantOrDirt=DatapackClientLoader::datapackLoader.plantIndexOfOnMap.value(player.target.extra);
+                                point.first=plantOrDirt.x;
+                                point.second=plantOrDirt.y;
+                            }
+                            break;
+                            case ActionsBotInterface::GlobalTarget::Plant:
+                            {
+                                const DatapackClientLoader::PlantIndexContent &plantOrDirt=DatapackClientLoader::datapackLoader.plantIndexOfOnMap.value(player.target.extra);
+                                point.first=plantOrDirt.x;
+                                point.second=plantOrDirt.y;
+                            }
+                            break;
+                            default:
+                                QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded"));
+                                return;
+                            break;
+                        }
+                        switch(player.target.type)
+                        {
+                            case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
+                            case ActionsBotInterface::GlobalTarget::Dirt:
+                            case ActionsBotInterface::GlobalTarget::Plant:
+                            {
+                                const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+                                            blockObject,
+                                            static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
+                                            CatchChallenger::Orientation::Orientation_none,point.first,point.second
+                                            );
+                                player.target.localStep=returnPath;
+                                player.target.localType=MapServerMini::BlockObject::LinkType::SourceNone;
+                            }
                             break;
                             default:
                             break;
@@ -435,7 +465,24 @@ void BotTargetList::updatePlayerStep()
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
                         api->heal();
                     break;
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Dirt:
+                    {
+                        bool haveSeedToPlant=false;
+                        const uint32_t &itemId=BotTargetList::getSeedToPlant(api,&haveSeedToPlant);
+                        if(!DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
+                            abort();
+                        const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
+                        api->useSeed(plant);
+                        add to internal structure
+                    }
+                    break;
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant:
+                        api->collectMaturePlant();
+                        remove to internal structure
+                    break;
                     default:
+                        QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded"));
+                        return;
                     break;
                 }
                 player.target.blockObject=NULL;
@@ -912,10 +959,28 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
                     return *it;
             break;
             case ActionsBotInterface::GlobalTarget::WildMonster:
-            abort();//not coded
+                QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded"));
+                abort();
+            break;
+            case ActionsBotInterface::GlobalTarget::Dirt:
+            {
+                const DatapackClientLoader::PlantIndexContent &plantOrDirt=DatapackClientLoader::datapackLoader.plantIndexOfOnMap.value(target.extra);
+                point.first=plantOrDirt.x;
+                point.second=plantOrDirt.y;
+                return point;
+            }
+            break;
+            case ActionsBotInterface::GlobalTarget::Plant:
+            {
+                const DatapackClientLoader::PlantIndexContent &plantOrDirt=DatapackClientLoader::datapackLoader.plantIndexOfOnMap.value(target.extra);
+                point.first=plantOrDirt.x;
+                point.second=plantOrDirt.y;
+                return point;
+            }
             break;
             default:
-            abort();
+                QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded"));
+                abort();
             break;
         }
     }
