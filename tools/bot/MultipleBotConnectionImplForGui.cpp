@@ -1,6 +1,7 @@
 #include "MultipleBotConnectionImplForGui.h"
 
 #include <iostream>
+#include <QMessageBox>
 
 MultipleBotConnectionImplForGui::MultipleBotConnectionImplForGui()
 {
@@ -420,6 +421,8 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
             MultipleBotConnection::newSocketError_with_client(connectedSocketToCatchChallengerClient[senderObject],error);
         }
     }
+    QMessageBox::critical(NULL,tr("Error"),errorString);
+    QCoreApplication::exit(85);
 }
 
 void MultipleBotConnectionImplForGui::newError(QString error,QString detailedError)
