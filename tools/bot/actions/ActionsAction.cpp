@@ -31,6 +31,8 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
     botplayer.fightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
     ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
     connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection);
+    connect(api,&CatchChallenger::Api_protocol::seed_planted,   actionsAction,&ActionsAction::seed_planted);
+    connect(api,&CatchChallenger::Api_protocol::plant_collected,   actionsAction,&ActionsAction::plant_collected);
 
     if(!moveTimer.isActive())
         moveTimer.start(player_private_and_public_informations.public_informations.speed);
@@ -543,14 +545,14 @@ void ActionsAction::have_inventory(CatchChallenger::Api_protocol *api,const std:
     player.warehouse_items=warehouse_items;
 }
 
-void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const uint32_t &item,const uint32_t &quantity,const bool &showGain)
+void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api, const uint32_t &item, const uint32_t &quantity)
 {
     QList<QPair<uint16_t,uint32_t> > items;
     items << QPair<uint16_t,uint32_t>(item,quantity);
-    add_to_inventory(api,items,showGain);
+    add_to_inventory(api,items);
 }
 
-void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const QList<QPair<uint16_t,uint32_t> > &items,const bool &showGain)
+void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const QList<QPair<uint16_t,uint32_t> > &items)
 {
     int index=0;
     QHash<uint16_t,uint32_t> tempHash;
@@ -559,7 +561,7 @@ void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const QL
         tempHash[items.at(index).first]=items.at(index).second;
         index++;
     }
-    add_to_inventory(api,tempHash,showGain);
+    add_to_inventory(api,tempHash);
 }
 
 void ActionsAction::add_to_inventory_slot(const QHash<uint16_t,uint32_t> &items)
@@ -568,7 +570,7 @@ void ActionsAction::add_to_inventory_slot(const QHash<uint16_t,uint32_t> &items)
     add_to_inventory(api,items);
 }
 
-void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const QHash<uint16_t,uint32_t> &items,const bool &showGain)
+void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const QHash<uint16_t,uint32_t> &items)
 {
     if(api==NULL)
         return;
