@@ -19,7 +19,10 @@ SOURCES += main.cpp\
     BotTargetListGUI.cpp \
     BotTargetListNear.cpp \
     MapBrowse.cpp \
-    WaitScreen.cpp
+    WaitScreen.cpp \
+    BotTargetListPlayerInfo.cpp \
+    BotTargetListUpdateStep.cpp \
+    BotTargetListNextPos.cpp
 HEADERS  += MainWindow.h \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \

@@ -62,9 +62,9 @@ public:
 
     void have_inventory_slot(const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
     static void have_inventory(CatchChallenger::Api_protocol *api,const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
-    static void add_to_inventory(CatchChallenger::Api_protocol *api,const uint32_t &item,const uint32_t &quantity=1,const bool &showGain=true);
-    static void add_to_inventory(CatchChallenger::Api_protocol *api,const QList<QPair<uint16_t,uint32_t> > &items,const bool &showGain=true);
-    static void add_to_inventory(CatchChallenger::Api_protocol *api,const QHash<uint16_t,uint32_t> &items, const bool &showGain=true);
+    static void add_to_inventory(CatchChallenger::Api_protocol *api,const uint32_t &item,const uint32_t &quantity=1);
+    static void add_to_inventory(CatchChallenger::Api_protocol *api,const QList<QPair<uint16_t,uint32_t> > &items);
+    static void add_to_inventory(CatchChallenger::Api_protocol *api, const QHash<uint16_t,uint32_t> &items);
     void add_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
     static void remove_to_inventory(CatchChallenger::Api_protocol *api,const QHash<uint16_t,uint32_t> &items);
     void remove_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
@@ -76,6 +76,9 @@ public:
     bool move(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y);
     bool moveWithoutTeleport(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y);
     bool teleport(const MapServerMini **map, COORD_TYPE *x, COORD_TYPE *y);
+
+    void seed_planted(const bool &ok);
+    void plant_collected(const CatchChallenger::Plant_collect &stat);
 public slots:
     bool preload_the_map();
 signals:
