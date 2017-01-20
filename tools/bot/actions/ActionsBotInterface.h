@@ -45,6 +45,23 @@ public:
         uint8_t previousStepWalked;
         CatchChallenger::ClientFightEngine *fightEngine;
         CatchChallenger::Api_protocol *api;
+
+        //plant seed in waiting
+        struct SeedInWaiting
+        {
+            uint32_t seedItemId;
+            uint8_t x,y;
+            QString map;
+        };
+        QList<SeedInWaiting> seed_in_waiting;
+        struct ClientPlantInCollecting
+        {
+            QString map;
+            uint8_t x,y;
+            uint8_t plant_id;
+            uint16_t seconds_to_mature;
+        };
+        QList<ClientPlantInCollecting> plant_collect_in_waiting;
     };
 
     ActionsBotInterface();
