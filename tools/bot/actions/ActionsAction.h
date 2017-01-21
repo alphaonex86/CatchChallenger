@@ -77,8 +77,10 @@ public:
     static bool moveWithoutTeleport(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y);
     static bool teleport(const MapServerMini **map, COORD_TYPE *x, COORD_TYPE *y);
 
-    void seed_planted(const bool &ok);
-    void plant_collected(const CatchChallenger::Plant_collect &stat);
+    static void seed_planted(CatchChallenger::Api_protocol *api,const bool &ok);
+    void seed_planted_slot(const bool &ok);
+    static void plant_collected(CatchChallenger::Api_protocol *api,const CatchChallenger::Plant_collect &stat);
+    void plant_collected_slot(const CatchChallenger::Plant_collect &stat);
 public slots:
     bool preload_the_map();
 signals:
