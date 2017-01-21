@@ -50,8 +50,7 @@ public:
         struct SeedInWaiting
         {
             uint32_t seedItemId;
-            uint8_t x,y;
-            QString map;
+            uint16_t indexOnMap;
         };
         QList<SeedInWaiting> seed_in_waiting;
         struct ClientPlantInCollecting

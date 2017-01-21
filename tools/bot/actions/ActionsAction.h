@@ -72,10 +72,10 @@ public:
 
     static void showTip(const QString &text);
 
-    bool canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction, const MapServerMini &map, COORD_TYPE x, COORD_TYPE y);
-    bool move(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y);
-    bool moveWithoutTeleport(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y);
-    bool teleport(const MapServerMini **map, COORD_TYPE *x, COORD_TYPE *y);
+    static bool canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction, const MapServerMini &map, COORD_TYPE x, COORD_TYPE y);
+    static bool move(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y);
+    static bool moveWithoutTeleport(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y);
+    static bool teleport(const MapServerMini **map, COORD_TYPE *x, COORD_TYPE *y);
 
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);

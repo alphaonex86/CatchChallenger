@@ -2,6 +2,7 @@
 #include "ui_BotTargetList.h"
 #include "../../client/base/interface/DatapackClientLoader.h"
 #include "../../client/fight/interface/ClientFightEngine.h"
+#include "../../general/base/CommonSettingsServer.h"
 #include "MapBrowse.h"
 
 #include <chrono>
@@ -249,7 +250,7 @@ void BotTargetList::updatePlayerStep()
             if(!pseudoToBot.contains(pseudo))
                 return;
             MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-            if(haveChange && api==client->api)
+            if(haveChange && api==/*current player selected:*/client->api)
             {
                 if(ui->trackThePlayer->isChecked())
                 {
@@ -262,6 +263,19 @@ void BotTargetList::updatePlayerStep()
 
             if(player.target.localStep.empty() && player.target.bestPath.empty() && player.target.blockObject!=NULL && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
             {
+                //get the next tile
+                if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
+                    return;
+                const std::string &mapStdString=actionsAction->id_map_to_map.at(player.mapId);
+                CatchChallenger::CommonMap *map=actionsAction->map_list.at(mapStdString);
+                const MapServerMini *mapServer=static_cast<MapServerMini *>(map);
+                uint8_t x=player.x;
+                uint8_t y=player.y;
+                ActionsAction::moveWithoutTeleport(api,player.direction,&mapServer,&x,&y);
+
+                CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
+                const QPair<uint8_t,uint8_t> QtPoint{x,y};
+                const QString &mapQtString=QString::fromStdString(mapServer->map_file);
                 //finish correctly the step
                 switch(player.target.type)
                 {
@@ -275,16 +289,22 @@ void BotTargetList::updatePlayerStep()
                         if(!DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
                             abort();
                         const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
+                        if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(mapQtString))
+                            abort();
+                        if(!DatapackClientLoader::datapackLoader.plantOnMap.value(mapQtString).contains(QtPoint))
+                            abort();
+                        const uint16_t &indexOnMapPlant=DatapackClientLoader::datapackLoader.plantOnMap.value(mapQtString).value(QtPoint);
+                        if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
+                        {
+                            ActionsAction::remove_to_inventory(api,itemId);
 
-                        remove_to_inventory(itemId);
-
-                        const SeedInWaiting seedInWaiting=seed_in_waiting.last();
-                        seed_in_waiting.last().seedItemId=itemId;
-                        insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plantId,CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds);
-                        addQuery(QueryType_Seed);
-
-                        api->useSeed(plant);
-                        add to internal structure
+                            player.seed_in_waiting.last().seedItemId=itemId;
+                            api->useSeed(plant);
+                            CatchChallenger::PlayerPlant playerPlant;
+                            playerPlant.mature_at=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000+CatchChallenger::CommonDatapack::commonDatapack.plants.at(plant).fruits_seconds;
+                            playerPlant.plant=plant;
+                            playerInformations.plantOnMap[indexOnMapPlant]=playerPlant;
+                        }
                     }
                     break;
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant:
