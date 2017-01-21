@@ -157,7 +157,7 @@ void Client::takeAnObjectOnMap()
             }
         break;
         default:
-        errorOutput("Wrong direction to plant a seed");
+            errorOutput("Wrong direction to take object on map: "+std::to_string(getLastDirection()));
         return;
     }
     std::pair<uint8_t,uint8_t> pos(x,y);

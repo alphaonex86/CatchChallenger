@@ -55,8 +55,7 @@ public:
         QList<SeedInWaiting> seed_in_waiting;
         struct ClientPlantInCollecting
         {
-            QString map;
-            uint8_t x,y;
+            uint16_t indexOnMap;
             uint8_t plant_id;
             uint16_t seconds_to_mature;
         };

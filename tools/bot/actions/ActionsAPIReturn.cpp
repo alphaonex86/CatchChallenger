@@ -54,11 +54,17 @@ void ActionsAction::plant_collected(CatchChallenger::Api_protocol *api,const Cat
 {
     if(!ActionsBotInterface::clientList.contains(api))
         return;
-    ActionsBotInterface::Player &player=ActionsBotInterface::clientList[api];
+    ActionsAction::Player &player=actionsAction->clientList[api];
+    if(player.plant_collect_in_waiting.empty())
+        abort();
+    CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
+    const Player::ClientPlantInCollecting &plantInCollecting=player.plant_collect_in_waiting.at(0);
     switch(stat)
     {
         case CatchChallenger::Plant_collect_correctly_collected:
-            showTip(tr("Plant collected"));
+            //see to optimise CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true and use the internal random number list
+            showTip(tr("Plant collected"));//the item is send by another message with the protocol
+            playerInformations.plantOnMap.erase(plantInCollecting.indexOnMap);
         break;
         case CatchChallenger::Plant_collect_empty_dirt:
             showTip(tr("Try collect an empty dirt"));

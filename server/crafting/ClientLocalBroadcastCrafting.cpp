@@ -95,7 +95,7 @@ void Client::plantSeed(
             }
         break;
         default:
-        errorOutput("Wrong direction to plant a seed");
+        errorOutput("Wrong direction to plant a seed: "+std::to_string(getLastDirection()));
         return;
     }
     //check if is dirt
@@ -464,7 +464,7 @@ void Client::collectPlant(
             }
         break;
         default:
-        errorOutput("Wrong direction to plant a seed");
+        errorOutput("Wrong direction to collect plant: "+std::to_string(getLastDirection()));
         return;
     }
     //check if is dirt
