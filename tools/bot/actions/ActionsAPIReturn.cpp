@@ -6,9 +6,14 @@
 #include <QMessageBox>
 #include <QString>
 
-void ActionsAction::seed_planted(const bool &ok)
+void ActionsAction::seed_planted_slot(const bool &ok)
 {
     CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    seed_planted(api,ok);
+}
+
+void ActionsAction::seed_planted(CatchChallenger::Api_protocol *api,const bool &ok)
+{
     if(!ActionsBotInterface::clientList.contains(api))
         return;
     ActionsBotInterface::Player &player=ActionsBotInterface::clientList[api];
@@ -39,9 +44,14 @@ void ActionsAction::seed_planted(const bool &ok)
     player.seed_in_waiting.removeFirst();
 }
 
-void ActionsAction::plant_collected(const CatchChallenger::Plant_collect &stat)
+void ActionsAction::plant_collected_slot(const CatchChallenger::Plant_collect &stat)
 {
     CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    plant_collected(api,stat);
+}
+
+void ActionsAction::plant_collected(CatchChallenger::Api_protocol *api,const CatchChallenger::Plant_collect &stat)
+{
     if(!ActionsBotInterface::clientList.contains(api))
         return;
     ActionsBotInterface::Player &player=ActionsBotInterface::clientList[api];
