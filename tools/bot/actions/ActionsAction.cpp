@@ -38,8 +38,19 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
         moveTimer.start(player_private_and_public_informations.public_informations.speed);
 }
 
-bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction,const MapServerMini &map,COORD_TYPE x,COORD_TYPE y)
+bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction,const MapServerMini &map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision, const bool &allowTeleport)
 {
+    switch(direction)
+    {
+        case CatchChallenger::Direction_move_at_left:
+        case CatchChallenger::Direction_move_at_right:
+        case CatchChallenger::Direction_move_at_top:
+        case CatchChallenger::Direction_move_at_bottom:
+        break;
+        default:
+            abort();//wrong direction send
+    }
+
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
     Player &botplayer=clientList[api];
     CatchChallenger::ParsedLayerLedges ledge;
@@ -138,6 +149,16 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
         //bot colision
         if(new_map->botLayerMask[x+y*new_map->width]!=0)
             return false;
+        if(checkCollision)
+        {
+            if(!isWalkable(*new_map,x,y))
+                return false;
+            if(isDirt(*new_map,x,y))
+                return false;
+        }
+        if(!allowTeleport)
+            if(needBeTeleported(*new_map,x,y))
+                return false;
     }
 
     {
@@ -247,11 +268,22 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
     return true;
 }
 
-bool ActionsAction::move(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y)
+bool ActionsAction::move(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport)
 {
-    if(!moveWithoutTeleport(api,direction,map,x,y))
+    switch(direction)
+    {
+        case CatchChallenger::Direction_move_at_left:
+        case CatchChallenger::Direction_move_at_right:
+        case CatchChallenger::Direction_move_at_top:
+        case CatchChallenger::Direction_move_at_bottom:
+        break;
+        default:
+            abort();//wrong direction send
+    }
+    if(!moveWithoutTeleport(api,direction,map,x,y,checkCollision,allowTeleport))
         return false;
-    teleport(map,x,y);
+    if(allowTeleport)
+        teleport(map,x,y);
     return true;
 }
 
@@ -274,11 +306,21 @@ bool ActionsAction::teleport(const MapServerMini **map, COORD_TYPE *x, COORD_TYP
     return false;
 }
 
-bool ActionsAction::moveWithoutTeleport(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y)
+bool ActionsAction::moveWithoutTeleport(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport)
 {
+    switch(direction)
+    {
+        case CatchChallenger::Direction_move_at_left:
+        case CatchChallenger::Direction_move_at_right:
+        case CatchChallenger::Direction_move_at_top:
+        case CatchChallenger::Direction_move_at_bottom:
+        break;
+        default:
+            abort();//wrong direction send
+    }
     if(*map==NULL)
         return false;
-    if(!canGoTo(api,direction,**map,*x,*y))
+    if(!canGoTo(api,direction,**map,*x,*y,checkCollision,allowTeleport))
         return false;
     switch(direction)
     {
@@ -361,13 +403,13 @@ void ActionsAction::doMove()
                 const CatchChallenger::Direction direction=(CatchChallenger::Direction)((uint8_t)step.first+4);
                 if(player.direction==direction)
                 {
-                    if(canGoTo(api,direction,*playerMap,player.x,player.y))
+                    if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))
                     {
                         //api->send_player_move(0,player.direction);
                         player.previousStepWalked++;
                         if(step.second==0)
                             player.target.localStep.erase(player.target.localStep.cbegin());
-                        move(api,direction,&playerMap,&player.x,&player.y);
+                        move(api,direction,&playerMap,&player.x,&player.y,true,true);
                         player.mapId=playerMap->id;
                         checkOnTileEvent(player);
                     }
@@ -384,14 +426,14 @@ void ActionsAction::doMove()
                 //need start to walk or direction change
                 else
                 {
-                    if(canGoTo(api,direction,*playerMap,player.x,player.y))
+                    if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))
                     {
                         player.direction=direction;
                         api->send_player_move(player.previousStepWalked,player.direction);
                         player.previousStepWalked=1;
                         if(step.second==0)
                             player.target.localStep.erase(player.target.localStep.cbegin());
-                        move(api,direction,&playerMap,&player.x,&player.y);
+                        move(api,direction,&playerMap,&player.x,&player.y,true,true);
                         player.mapId=playerMap->id;
                         checkOnTileEvent(player);
                     }
@@ -636,4 +678,31 @@ uint32_t ActionsAction::itemQuantity(CatchChallenger::Api_protocol *api,const ui
     if(player.items.find(itemId)!=player.items.cend())
         return player.items.at(itemId);
     return 0;
+}
+
+bool ActionsAction::isWalkable(const MapServerMini &map, const uint8_t &x, const uint8_t &y)
+{
+    if(map.parsed_layer.walkable==NULL)
+        return false;
+    return map.parsed_layer.walkable[x+y*(map.width)];
+}
+
+bool ActionsAction::isDirt(const MapServerMini &map, const uint8_t &x, const uint8_t &y)
+{
+    if(map.parsed_layer.dirt==NULL)
+        return false;
+    return map.parsed_layer.dirt[x+y*(map.width)];
+}
+
+bool ActionsAction::needBeTeleported(const MapServerMini &map, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    const CatchChallenger::CommonMap::Teleporter * const teleporter=map.teleporter;
+    int8_t index=0;
+    while(index<map.teleporter_list_size)
+    {
+        if(teleporter[index].source_x==x && teleporter[index].source_y==y)
+            return true;
+        index++;
+    }
+    return false;
 }

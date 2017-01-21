@@ -72,10 +72,13 @@ public:
 
     static void showTip(const QString &text);
 
-    static bool canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction, const MapServerMini &map, COORD_TYPE x, COORD_TYPE y);
-    static bool move(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y);
-    static bool moveWithoutTeleport(CatchChallenger::Api_protocol *api,CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y);
+    static bool canGoTo(CatchChallenger::Api_protocol *api, const CatchChallenger::Direction &direction, const MapServerMini &map, COORD_TYPE x, COORD_TYPE y, const bool &checkCollision, const bool &allowTeleport);
+    static bool move(CatchChallenger::Api_protocol *api, CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport);
+    static bool moveWithoutTeleport(CatchChallenger::Api_protocol *api, CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport);
     static bool teleport(const MapServerMini **map, COORD_TYPE *x, COORD_TYPE *y);
+    static bool isWalkable(const MapServerMini &map, const uint8_t &x, const uint8_t &y);
+    static bool isDirt(const MapServerMini &map, const uint8_t &x, const uint8_t &y);
+    static bool needBeTeleported(const MapServerMini &map, const COORD_TYPE &x, const COORD_TYPE &y);
 
     static void seed_planted(CatchChallenger::Api_protocol *api,const bool &ok);
     void seed_planted_slot(const bool &ok);

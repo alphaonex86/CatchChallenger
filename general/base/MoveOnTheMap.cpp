@@ -1,5 +1,6 @@
 #include "MoveOnTheMap.h"
 #include "CommonMap.h"
+#include "GeneralVariable.h"
 
 using namespace CatchChallenger;
 
@@ -154,6 +155,18 @@ Direction MoveOnTheMap::directionToDirectionLook(const Direction &direction)
 
 bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision, const bool &allowTeleport)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    switch(direction)
+    {
+        case CatchChallenger::Direction_move_at_left:
+        case CatchChallenger::Direction_move_at_right:
+        case CatchChallenger::Direction_move_at_top:
+        case CatchChallenger::Direction_move_at_bottom:
+        break;
+        default:
+            abort();//wrong direction send
+    }
+    #endif
     switch(direction)
     {
         case Direction_move_at_left:
@@ -342,6 +355,18 @@ MonstersCollisionValue MoveOnTheMap::getZoneCollision(const CommonMap &map, cons
 
 bool MoveOnTheMap::move(Direction direction, CommonMap ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    switch(direction)
+    {
+        case CatchChallenger::Direction_move_at_left:
+        case CatchChallenger::Direction_move_at_right:
+        case CatchChallenger::Direction_move_at_top:
+        case CatchChallenger::Direction_move_at_bottom:
+        break;
+        default:
+            abort();//wrong direction send
+    }
+    #endif
     if(!moveWithoutTeleport(direction,map,x,y,checkCollision,allowTeleport))
         return false;
     teleport(map,x,y);
@@ -350,6 +375,18 @@ bool MoveOnTheMap::move(Direction direction, CommonMap ** map, COORD_TYPE *x, CO
 
 bool MoveOnTheMap::moveWithoutTeleport(Direction direction, CommonMap ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    switch(direction)
+    {
+        case CatchChallenger::Direction_move_at_left:
+        case CatchChallenger::Direction_move_at_right:
+        case CatchChallenger::Direction_move_at_top:
+        case CatchChallenger::Direction_move_at_bottom:
+        break;
+        default:
+            abort();//wrong direction send
+    }
+    #endif
     if(*map==NULL)
         return false;
     if(!canGoTo(direction,**map,*x,*y,checkCollision,allowTeleport))

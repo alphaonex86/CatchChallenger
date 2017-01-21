@@ -126,6 +126,7 @@ public:
     QHash<QString,VisualCategory> visualCategories;
     QString language;
     QStringList maps,skins;
+    ///todo drop the full path and .tmx
     QHash<QString,uint32_t> mapToId;
     QHash<QString,uint32_t> fullMapPathToId;
     QHash<QString,QHash<QPair<uint8_t,uint8_t>,uint16_t> > itemOnMap;
