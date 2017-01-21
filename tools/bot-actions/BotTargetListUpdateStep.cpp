@@ -149,11 +149,32 @@ void BotTargetList::updatePlayerStep()
                 const MapServerMini *mapServer=static_cast<MapServerMini *>(map);
                 uint8_t x=player.x;
                 uint8_t y=player.y;
-                ActionsAction::moveWithoutTeleport(api,player.direction,&mapServer,&x,&y);
+                CatchChallenger::Direction direction;
+                switch(player.direction)
+                {
+                    case CatchChallenger::Direction_look_at_left:
+                        direction=CatchChallenger::Direction_move_at_left;
+                    break;
+                    case CatchChallenger::Direction_look_at_right:
+                        direction=CatchChallenger::Direction_move_at_right;
+                    break;
+                    case CatchChallenger::Direction_look_at_top:
+                        direction=CatchChallenger::Direction_move_at_top;
+                    break;
+                    case CatchChallenger::Direction_look_at_bottom:
+                        direction=CatchChallenger::Direction_move_at_bottom;
+                    break;
+                    default:
+                        direction=player.direction;
+                }
+                if(!ActionsAction::moveWithoutTeleport(api,direction,&mapServer,&x,&y,false,false))
+                    abort();
 
                 CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
                 const QPair<uint8_t,uint8_t> QtPoint{x,y};
-                const QString &mapQtString=QString::fromStdString(mapServer->map_file);
+                QString mapQtString=DatapackClientLoader::datapackLoader.getDatapackPath()+DatapackClientLoader::datapackLoader.getMainDatapackPath()+QString::fromStdString(mapServer->map_file);
+                if(!mapQtString.endsWith(".tmx"))
+                    mapQtString+=".tmx";
                 //finish correctly the step
                 switch(player.target.type)
                 {
@@ -176,7 +197,10 @@ void BotTargetList::updatePlayerStep()
                         {
                             ActionsAction::remove_to_inventory(api,itemId);
 
-                            player.seed_in_waiting.last().seedItemId=itemId;
+                            ActionsBotInterface::Player::SeedInWaiting seedInWaiting;
+                            seedInWaiting.indexOnMap=indexOnMapPlant;
+                            seedInWaiting.seedItemId=itemId;
+                            player.seed_in_waiting << seedInWaiting;
                             api->useSeed(plant);
                             CatchChallenger::PlayerPlant playerPlant;
                             playerPlant.mature_at=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000+CatchChallenger::CommonDatapack::commonDatapack.plants.at(plant).fruits_seconds;
@@ -188,15 +212,18 @@ void BotTargetList::updatePlayerStep()
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant:
                     {
                         const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.value(player.target.extra/*itemUsed*/);
+                        if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(mapQtString))
+                            abort();
+                        if(!DatapackClientLoader::datapackLoader.plantOnMap.value(mapQtString).contains(QtPoint))
+                            abort();
+                        const uint16_t &indexOnMapPlant=DatapackClientLoader::datapackLoader.plantOnMap.value(mapQtString).value(QtPoint);
                         api->collectMaturePlant();
                         if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
                         {
                             ActionsBotInterface::Player::ClientPlantInCollecting clientPlantInCollecting;
-                            clientPlantInCollecting.map=QString::fromStdString(map->map_file);
+                            clientPlantInCollecting.indexOnMap=indexOnMapPlant;
                             clientPlantInCollecting.plant_id=plant;
                             clientPlantInCollecting.seconds_to_mature=0;
-                            clientPlantInCollecting.x=x;
-                            clientPlantInCollecting.y=y;
                             player.plant_collect_in_waiting << clientPlantInCollecting;
                         }
                         else

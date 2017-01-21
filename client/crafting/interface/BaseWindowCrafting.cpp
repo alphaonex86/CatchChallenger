@@ -111,7 +111,8 @@ void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
     switch(stat)
     {
         case Plant_collect_correctly_collected:
-            showTip(tr("Plant collected"));
+            //see to optimise CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true and use the internal random number list
+            showTip(tr("Plant collected"));//the item is send by another message with the protocol
         break;
         case Plant_collect_empty_dirt:
             showTip(tr("Try collect an empty dirt"));
