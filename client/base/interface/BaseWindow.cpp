@@ -58,8 +58,7 @@ QIcon BaseWindow::icon_server_list_stat4;
 QIcon BaseWindow::icon_server_list_bug;
 
 BaseWindow::BaseWindow() :
-    ui(new Ui::BaseWindowUI),
-    chat(this)
+    ui(new Ui::BaseWindowUI)
 {
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
@@ -105,6 +104,7 @@ BaseWindow::BaseWindow() :
     socketState=QAbstractSocket::UnconnectedState;
 
     mapController=new MapController(true,false,true,false);
+    chat=new Chat(mapController);
     mapController->fightEngine=&fightEngine;
     client=NULL;
     ProtocolParsing::initialiseTheVariable();
@@ -275,7 +275,7 @@ BaseWindow::BaseWindow() :
     nextCityCatchTimer.setSingleShot(true);
     updater_page_zonecatch.setSingleShot(false);
 
-    chat.setGeometry(QRect(0, 0, 250, 400));
+    chat->setGeometry(QRect(0, 0, 250, 400));
 
     resetAll();
     loadSettings();
@@ -392,8 +392,8 @@ void BaseWindow::connectAllSignals()
     connect(client,&CatchChallenger::Api_client_real::haveCharacter,     this,&BaseWindow::haveCharacter);
 
     //chat
-    connect(client,&CatchChallenger::Api_client_real::new_chat_text,  &chat,&Chat::new_chat_text);
-    connect(client,&CatchChallenger::Api_client_real::new_system_text,&chat,&Chat::new_system_text);
+    connect(client,&CatchChallenger::Api_client_real::new_chat_text,  chat,&Chat::new_chat_text);
+    connect(client,&CatchChallenger::Api_client_real::new_system_text,chat,&Chat::new_system_text);
 
     //plants
     connect(this,&BaseWindow::useSeed,              client,&CatchChallenger::Api_client_real::useSeed);

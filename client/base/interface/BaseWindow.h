@@ -730,7 +730,7 @@ private:
 
     CatchChallenger::Api_protocol * client;
     ClientFightEngine fightEngine;
-    Chat chat;
+    Chat *chat;
 signals:
     void newError(QString error,QString detailedError);
     //datapack
