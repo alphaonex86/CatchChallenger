@@ -30,7 +30,7 @@ void BaseWindow::resetAll()
     ui->frame_main_display_interface_player->hide();
     ui->label_interface_number_of_player->setText("?/?");
     ui->stackedWidget->setCurrentWidget(ui->page_init);
-    chat.resetAll();
+    chat->resetAll();
     mapController->resetAll();
     waitedObjectType=ObjectType_All;
     lastReplyTimeValue=-1;
@@ -184,8 +184,10 @@ void BaseWindow::setMultiPlayer(bool multiplayer, Api_protocol *client)
         mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
     else
         abort();
-    chat.setClient(client);
-    chat.setMultiPlayer(multiplayer);
+    chat->setClient(client);
+    chat->setMultiPlayer(multiplayer);
+    chat->show();
+    chat->raise();
     fightEngine.setClient(client);
     /*if(!multiplayer)
         mapController->setOpenGl(true);*/

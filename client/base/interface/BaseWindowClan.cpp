@@ -81,7 +81,7 @@ void BaseWindow::updateClanDisplay()
         else
             ui->clanName->setText(clanName);
     }
-    chat.setClan(clan!=0);
+    chat->setClan(clan!=0);
 }
 
 void BaseWindow::on_clanActionLeave_clicked()

@@ -168,7 +168,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                                 {
                                     const CatchChallenger::PlayerPlant &playerMonster=player_private_and_public_informations.plantOnMap.at(plantOnMapIndex);
                                     //have mature plant
-                                    if(playerMonster.mature_at>(uint64_t)(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000))
+                                    if(playerMonster.mature_at<(uint64_t)(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000))
                                     {
                                         const uint8_t &plantId=playerMonster.plant;
                                         const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId);
@@ -177,7 +177,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                                         //const CatchChallenger::Plant::Rewards &rewards=plant.rewards;
                                         QListWidgetItem * newItem=new QListWidgetItem();
 
-                                        newItem->setText(QString("Plant to collect %1").arg(itemExtra.name));
+                                        newItem->setText(QString("Plant to collect %1 at %2,%3").arg(itemExtra.name).arg(dirtPoint.first).arg(dirtPoint.second));
                                         newItem->setIcon(QIcon(itemExtra.image));
                                         if(listGUI==ui->globalTargets)
                                         {
@@ -206,7 +206,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                                     {
                                         QListWidgetItem * newItem=new QListWidgetItem();
                                         const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemToUse);
-                                        newItem->setText(QString("Free dirt (use %1)").arg(itemExtra.name));
+                                        newItem->setText(QString("Free dirt (use %1 at %2,%3)").arg(itemExtra.name).arg(dirtPoint.first).arg(dirtPoint.second));
                                         //firstDirtItem=newItem;
 
                                         newItem->setIcon(QIcon(":/dirt.png"));
