@@ -593,7 +593,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         mapPointToParseList.erase(mapPointToParseList.begin());
         SimplifiedMapForPathFinding::PathToGo pathToGo;
         if(x==destination_x && y==destination_y)
-            std::cout << "final dest" << std::endl;
+            std::cout << "final dest: " << x << "," << y << std::endl;
         //resolv the own point
         int index=0;
         while(index<1)/*2*/
