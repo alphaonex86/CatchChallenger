@@ -201,7 +201,7 @@ void BotTargetList::updatePlayerStep()
                             seedInWaiting.indexOnMap=indexOnMapPlant;
                             seedInWaiting.seedItemId=itemId;
                             player.seed_in_waiting << seedInWaiting;
-                            std::cout << "useSeed(): " << x << "," << y << std::endl;
+                            std::cout << "useSeed(): " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                             api->useSeed(plant);
                             CatchChallenger::PlayerPlant playerPlant;
                             playerPlant.mature_at=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000+CatchChallenger::CommonDatapack::commonDatapack.plants.at(plant).fruits_seconds;
@@ -226,7 +226,7 @@ void BotTargetList::updatePlayerStep()
                         if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
                             if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
                                 abort();
-                        std::cout << "collectMaturePlant(): " << x << "," << y << std::endl;
+                        std::cout << "collectMaturePlant(): " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                         api->collectMaturePlant();
                         if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
                         {
@@ -238,10 +238,10 @@ void BotTargetList::updatePlayerStep()
                         }
                         else
                         {
-                            if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(QString::fromStdString(map->map_file)))
-                                return;
-                            if(!DatapackClientLoader::datapackLoader.plantOnMap.value(QString::fromStdString(map->map_file)).contains(QPair<uint8_t,uint8_t>(x,y)))
-                                return;
+                            if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(mapQtString))
+                                abort();
+                            if(!DatapackClientLoader::datapackLoader.plantOnMap.value(mapQtString).contains(QtPoint))
+                                abort();
                             playerInformations.plantOnMap.erase(indexOnMapPlant);
                         }
                     }
