@@ -52,10 +52,9 @@ public:
     std::string graphStepNearMap(const MultipleBotConnection::CatchChallengerClient * const client,const MapServerMini::BlockObject * const currentNearBlock, const unsigned int &depth=2);
     std::string graphLocalMap();
     std::pair<uint8_t,uint8_t> getNextPosition(const MapServerMini::BlockObject * const blockObject, const ActionsBotInterface::GlobalTarget &target);
-    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > pathFinding(
-            const MapServerMini::BlockObject * const blockObject,
-            const CatchChallenger::Orientation &source_orientation,const uint8_t &source_x,const uint8_t &source_y,
-            const CatchChallenger::Orientation &destination_orientation,const uint8_t &destination_x,const uint8_t &destination_y);
+    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > pathFinding(const MapServerMini::BlockObject * const source_blockObject,
+            const CatchChallenger::Orientation &source_orientation, const uint8_t &source_x, const uint8_t &source_y, const MapServerMini::BlockObject * const destination_blockObject,
+            const CatchChallenger::Orientation &destination_orientation, const uint8_t &destination_x, const uint8_t &destination_y);
     static std::string stepToString(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath);
     static uint32_t getSeedToPlant(CatchChallenger::Api_protocol * api, bool *haveSeedToPlant=NULL);
 signals:

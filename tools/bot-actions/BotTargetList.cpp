@@ -549,8 +549,9 @@ void BotTargetList::on_tooHard_clicked()
 }
 
 std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFinding(
-        const MapServerMini::BlockObject * const blockObject,
+        const MapServerMini::BlockObject * const source_blockObject,
         const CatchChallenger::Orientation &source_orientation,const uint8_t &source_x,const uint8_t &source_y,
+        const MapServerMini::BlockObject * const destination_blockObject,
         const CatchChallenger::Orientation &destination_orientation,const uint8_t &destination_x,const uint8_t &destination_y)
 {
     /// \todo ignore and not optimised:
@@ -593,7 +594,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         mapPointToParseList.erase(mapPointToParseList.begin());
         SimplifiedMapForPathFinding::PathToGo pathToGo;
         if(x==destination_x && y==destination_y)
-            std::cout << "final dest: " << x << "," << y << std::endl;
+            std::cout << "final dest: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
         //resolv the own point
         int index=0;
         while(index<1)/*2*/
