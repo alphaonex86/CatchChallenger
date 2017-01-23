@@ -167,12 +167,14 @@ void BotTargetList::startPlayerMove()
     uint8_t o=player.direction;
     while(o>4)
         o-=4;
+    bool ok=false;
     const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
                 layer.blockObject,
                 static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
-                player.target.bestPath.back(),
-                CatchChallenger::Orientation::Orientation_none,point.first,point.second
-                );
+                CatchChallenger::Orientation::Orientation_none,point.first,point.second,
+                &ok);
+    if(!ok)
+        abort();
     player.target.localStep=returnPath;
     player.target.localType=MapServerMini::BlockObject::LinkType::SourceNone;
     if(!player.target.bestPath.empty())
@@ -550,11 +552,15 @@ void BotTargetList::on_tooHard_clicked()
 }
 
 std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFinding(
-        const MapServerMini::BlockObject * const source_blockObject,
+        const MapServerMini::BlockObject * const blockObject,
         const CatchChallenger::Orientation &source_orientation,const uint8_t &source_x,const uint8_t &source_y,
-        const MapServerMini::BlockObject * const destination_blockObject,
-        const CatchChallenger::Orientation &destination_orientation,const uint8_t &destination_x,const uint8_t &destination_y)
+        /*const MapServerMini::BlockObject * const destination_blockObject,the block link to the multi-map change*/
+        const CatchChallenger::Orientation &destination_orientation,const uint8_t &destination_x,const uint8_t &destination_y,
+        bool *ok)
 {
+    if(ok==NULL)
+        abort();
+    *ok=false;
     /// \todo ignore and not optimised:
     (void)source_orientation;
     (void)destination_orientation;
@@ -563,12 +569,12 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     //resolv the path
     std::vector<std::pair<uint8_t,uint8_t> > mapPointToParseList;
     SimplifiedMapForPathFinding simplifiedMap;
-    const uint8_t &currentCodeZone=source_blockObject->id+1;
-    if(source_blockObject->map==NULL)
+    const uint8_t &currentCodeZone=blockObject->id+1;
+    if(blockObject->map==NULL)
         abort();
-    if(source_blockObject->map->step.size()<2)
+    if(blockObject->map->step.size()<2)
         abort();
-    const MapServerMini::MapParsedForBot &step=source_blockObject->map->step.at(1);
+    const MapServerMini::MapParsedForBot &step=blockObject->map->step.at(1);
     if(step.map==NULL)
         abort();
 
@@ -694,7 +700,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             simplifiedMap.pathToGo[coord]=pathToGo;
         }
         //if good position
-        if(x==destination_x && y==destination_y && destination_blockObject==source_blockObject)
+        if(x==destination_x && y==destination_y/* && destination_blockObject==source_blockObject the block link to the multi-map change*/)
         {
             std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar;
             if(returnedVar.empty() || pathToGo.bottom.size()<returnedVar.size())
@@ -713,7 +719,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             {
                 if(returnedVar.back().second<=1)
                 {
-                    std::cout << "Bug due for last step" << std::endl;
+                    std::cerr << "Bug due for last step" << std::endl;
                     return returnedVar;
                 }
                 else
@@ -723,13 +729,15 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
 
                     std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
                     returnedVar.back().second--;
+                    *ok=true;
                     return returnedVar;
                 }
             }
             else
             {
                 returnedVar.clear();
-                qDebug() << "Bug due to resolved path is empty";
+                std::cout << "Warning: Bug due to resolved path is empty, Already on blockZone border to go on the next zone" << std::endl;
+                *ok=true;
                 return returnedVar;
             }
         }
@@ -742,9 +750,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             {
                 std::pair<uint8_t,uint8_t> newPoint=tempPoint;
                 newPoint.first++;
-                if(newPoint.first<source_blockObject->map->width)
+                if(newPoint.first<blockObject->map->width)
                 {
-                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*source_blockObject->map->width];
+                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
                     if(currentCodeZone==newCodeZone || (newPoint.first==destination_x && newPoint.second==destination_y))
                     {
                         if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
@@ -763,7 +771,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                 if(newPoint.first>0)
                 {
                     newPoint.first--;
-                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*source_blockObject->map->width];
+                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
                     if(currentCodeZone==newCodeZone || (newPoint.first==destination_x && newPoint.second==destination_y))
                     {
                         if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
@@ -780,9 +788,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             {
                 std::pair<uint8_t,uint8_t> newPoint=tempPoint;
                 newPoint.second++;
-                if(newPoint.second<source_blockObject->map->height)
+                if(newPoint.second<blockObject->map->height)
                 {
-                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*source_blockObject->map->width];
+                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
                     if(currentCodeZone==newCodeZone || (newPoint.first==destination_x && newPoint.second==destination_y))
                     {
                         if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
@@ -801,7 +809,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                 if(newPoint.second>0)
                 {
                     newPoint.second--;
-                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*source_blockObject->map->width];
+                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
                     if(currentCodeZone==newCodeZone || (newPoint.first==destination_x && newPoint.second==destination_y))
                     {
                         if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
@@ -818,6 +826,8 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end-start;
     std::cout << "Path not found into " << (uint32_t)elapsed.count() << "ms" << std::endl;
+    std::cout << "From " << blockObject->map << " " << std::to_string(source_x) << "," << std::to_string(source_y) << std::endl;
+    std::cout << "To " << std::to_string(destination_x) << "," << std::to_string(destination_y) << std::endl;
     return std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >();
 }
 
