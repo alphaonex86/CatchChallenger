@@ -42,12 +42,14 @@ void BotTargetList::updatePlayerStep()
                         const MapServerMini::BlockObject * const blockObject=player.target.bestPath.at(0);
                         const std::pair<uint8_t,uint8_t> &point=getNextPosition(blockObject,player.target/*hop list, first is the next hop*/);
 
+                        bool ok=false;
                         const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
                                     blockObject,
                                     static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
-                                    player.target.bestPath.back(),
-                                    CatchChallenger::Orientation::Orientation_none,point.first,point.second
-                                    );
+                                    CatchChallenger::Orientation::Orientation_none,point.first,point.second,
+                                    &ok);
+                        if(!ok)
+                            abort();
                         player.target.localStep=returnPath;
                         const MapServerMini::BlockObject * const nextBlock=player.target.bestPath.at(0);
                         //search the next position
@@ -106,12 +108,14 @@ void BotTargetList::updatePlayerStep()
                             case ActionsBotInterface::GlobalTarget::Dirt:
                             case ActionsBotInterface::GlobalTarget::Plant:
                             {
+                                bool ok=false;
                                 const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
                                             blockObject,
                                             static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
-                                            player.target.bestPath.back(),
-                                            CatchChallenger::Orientation::Orientation_none,point.first,point.second
-                                            );
+                                            CatchChallenger::Orientation::Orientation_none,point.first,point.second,
+                                            &ok);
+                                if(ok==false)
+                                    abort();
                                 player.target.localStep=returnPath;
                                 player.target.localType=MapServerMini::BlockObject::LinkType::SourceNone;
                             }
