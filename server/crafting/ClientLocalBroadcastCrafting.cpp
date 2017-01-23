@@ -511,7 +511,8 @@ void Client::collectPlant(
     }
     else
     {
-        errorOutput("!public_and_private_informations.plantOnMap.contains(plant.indexOfOnMap)");
+        errorOutput("!public_and_private_informations.plantOnMap.contains(plant.indexOfOnMap): "+std::to_string(plant.pointOnMapDbCode)+
+                    " at "+std::to_string(x)+","+std::to_string(y));
         return;
     }
     #else

@@ -201,11 +201,17 @@ void BotTargetList::updatePlayerStep()
                             seedInWaiting.indexOnMap=indexOnMapPlant;
                             seedInWaiting.seedItemId=itemId;
                             player.seed_in_waiting << seedInWaiting;
+                            std::cout << "useSeed(): " << x << "," << y << std::endl;
                             api->useSeed(plant);
                             CatchChallenger::PlayerPlant playerPlant;
                             playerPlant.mature_at=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000+CatchChallenger::CommonDatapack::commonDatapack.plants.at(plant).fruits_seconds;
                             playerPlant.plant=plant;
                             playerInformations.plantOnMap[indexOnMapPlant]=playerPlant;
+                        }
+                        else
+                        {
+                            if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
+                                abort();
                         }
                     }
                     break;
@@ -217,6 +223,10 @@ void BotTargetList::updatePlayerStep()
                         if(!DatapackClientLoader::datapackLoader.plantOnMap.value(mapQtString).contains(QtPoint))
                             abort();
                         const uint16_t &indexOnMapPlant=DatapackClientLoader::datapackLoader.plantOnMap.value(mapQtString).value(QtPoint);
+                        if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
+                            if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
+                                abort();
+                        std::cout << "collectMaturePlant(): " << x << "," << y << std::endl;
                         api->collectMaturePlant();
                         if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
                         {
@@ -232,7 +242,7 @@ void BotTargetList::updatePlayerStep()
                                 return;
                             if(!DatapackClientLoader::datapackLoader.plantOnMap.value(QString::fromStdString(map->map_file)).contains(QPair<uint8_t,uint8_t>(x,y)))
                                 return;
-                            ActionsAction::plant_collected(api,CatchChallenger::Plant_collect::Plant_collect_correctly_collected);
+                            playerInformations.plantOnMap.erase(indexOnMapPlant);
                         }
                     }
                     break;
