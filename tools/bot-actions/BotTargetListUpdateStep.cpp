@@ -45,6 +45,7 @@ void BotTargetList::updatePlayerStep()
                         const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
                                     blockObject,
                                     static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
+                                    player.target.bestPath.back(),
                                     CatchChallenger::Orientation::Orientation_none,point.first,point.second
                                     );
                         player.target.localStep=returnPath;
@@ -108,6 +109,7 @@ void BotTargetList::updatePlayerStep()
                                 const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
                                             blockObject,
                                             static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
+                                            player.target.bestPath.back(),
                                             CatchChallenger::Orientation::Orientation_none,point.first,point.second
                                             );
                                 player.target.localStep=returnPath;
