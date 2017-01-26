@@ -25,7 +25,7 @@ void BotTargetList::updatePlayerStep()
                 if(!player.target.bestPath.empty())
                 {
                     haveChange=true;
-                    switch(player.target.localType)
+                    switch(player.target.linkPoint.type)
                     {
                         case MapServerMini::BlockObject::LinkType::SourceNone:
                         break;
@@ -58,6 +58,7 @@ void BotTargetList::updatePlayerStep()
                             const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
                             if(tempNextBlock==nextBlock)
                             {
+                                search the best next point
                                 const MapServerMini::BlockObject::LinkPoint &firstPoint=linkInformation.points.at(0);
                                 player.target.localType=firstPoint.type;
                                 break;
@@ -117,7 +118,7 @@ void BotTargetList::updatePlayerStep()
                                 if(ok==false)
                                     abort();
                                 player.target.localStep=returnPath;
-                                player.target.localType=MapServerMini::BlockObject::LinkType::SourceNone;
+                                player.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
                             }
                             break;
                             default:
@@ -259,7 +260,9 @@ void BotTargetList::updatePlayerStep()
                 }
                 player.target.blockObject=NULL;
                 player.target.extra=0;
-                player.target.localType=MapServerMini::BlockObject::LinkType::SourceNone;
+                player.target.linkPoint.x=0;
+                player.target.linkPoint.y=0;
+                player.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
                 player.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
 
                 if(api==client->api)

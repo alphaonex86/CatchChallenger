@@ -84,6 +84,7 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
             const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
             if(tempNextBlock==nextBlock)
             {
+                search the best next point
                 const MapServerMini::BlockObject::LinkPoint &firstPoint=linkInformation.points.at(0);
                 point.first=firstPoint.x;
                 point.second=firstPoint.y;

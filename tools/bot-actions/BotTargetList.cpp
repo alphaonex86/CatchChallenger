@@ -163,6 +163,7 @@ void BotTargetList::startPlayerMove()
     if(step.map==NULL)
         return;
 
+    search the best next point
     const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target/*hop list, first is the next hop*/);
     uint8_t o=player.direction;
     while(o>4)
@@ -366,7 +367,7 @@ void BotTargetList::updateMapContent()
                     }
                     else if(player.target.blockObject!=NULL)
                     {
-                        const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target);
+                        const std::pair<uint8_t,uint8_t> &point(player.target.linkPoint.x,player.target.linkPoint.y);
                         if(x==point.first && y==point.second && player.mapId==mapId)
                         {
                             QIcon icon;
