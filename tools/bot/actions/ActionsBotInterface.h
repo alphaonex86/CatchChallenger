@@ -33,7 +33,7 @@ public:
         const MapServerMini::BlockObject * blockObject;//NULL if no target
         std::vector<const MapServerMini::BlockObject *> bestPath;
         std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > localStep;
-        MapServerMini::BlockObject::LinkType localType;
+        MapServerMini::BlockObject::LinkPoint linkPoint;
     };
     struct Player
     {

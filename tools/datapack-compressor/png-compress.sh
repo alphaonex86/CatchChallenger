@@ -49,13 +49,28 @@ then
                     ${ZOPFLI} /tmp/tmp${TEMPRANDOM}2.png "${VARIABLE}" > /tmp/png-compress.log 2>&1
                     # not work for big image size, ehoeks-zopfli-png give: uncompress returned Z_BUF_ERROR
                     #${ZOPFLI} --iterations=50 -c --png /tmp/tmp${TEMPRANDOM}2.png > "${VARIABLE}" 2> /tmp/png-compress.log
-                    actualsize=$(wc -c <"${VARIABLE}")
-                    if [ $actualsize -ge $minimumsize ]
+                    RETVAR=$?
+                    if [ ${RETVAR} -ne 0 ]
                     then
-                        echo size is over $minimumsize bytes, all is ok
+                        echo zopfli have failed
+                        cat /tmp/png-compress.log
+                        cp /tmp/tmp${TEMPRANDOM}2.png "${VARIABLE}"
                     else
-                        echo size is under $minimumsize bytes zopfli seem have failed
-                        mv /tmp/tmp${TEMPRANDOM}2.png "${VARIABLE}"
+                        if [ -f "${VARIABLE}" ]
+                        then
+                            actualsize=$(wc -c <"${VARIABLE}")
+                            if [ $actualsize -ge $minimumsize ]
+                            then
+                                echo size is over $minimumsize bytes, all is ok
+                            else
+                                echo size is under $minimumsize bytes zopfli seem have failed
+                                mv /tmp/tmp${TEMPRANDOM}2.png "${VARIABLE}"
+                            fi
+                        else
+                            echo zopfli have failed or not file
+                            cat /tmp/png-compress.log
+                            cp /tmp/tmp${TEMPRANDOM}2.png "${VARIABLE}"
+                        fi
                     fi
                 else
                     mv /tmp/tmp${TEMPRANDOM}2.png "${VARIABLE}"
@@ -64,12 +79,17 @@ then
                 echo size is under $minimumsize bytes /usr/bin/pngquant seem have failed
             fi
         fi
-        actualsize=$(wc -c <"${VARIABLE}")
-        if [ $actualsize -le $minimumsize ]
+        if [ -f "${VARIABLE}" ]
         then
-            echo size is under $minimumsize bytes something wrong file ${VARIABLE} step 2
-            tail /tmp/png-compress.log
-            exit
+            actualsize=$(wc -c <"${VARIABLE}")
+            if [ $actualsize -le $minimumsize ]
+            then
+                echo size is under $minimumsize bytes something wrong file ${VARIABLE} step 2
+                tail /tmp/png-compress.log
+                exit
+            fi
+        else
+            echo error ${VARIABLE} is not a file
         fi
     done
 else

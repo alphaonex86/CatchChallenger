@@ -62,8 +62,7 @@ void BotTargetList::updatePlayerInformation()
                     ui->label_next_local_target->setText("Next local target: None");
                 else
                 {
-                    const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target);
-                    const uint8_t x=point.first,y=point.second;
+                    const uint8_t x=player.target.linkPoint.x,y=player.target.linkPoint.y;
                     std::string stepToDo=BotTargetList::stepToString(player.target.localStep);
                     if(!stepToDo.empty())
                         stepToDo=", steps: "+stepToDo;
