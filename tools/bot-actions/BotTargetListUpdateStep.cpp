@@ -27,104 +27,85 @@ void BotTargetList::updatePlayerStep()
                     haveChange=true;
                     switch(player.target.linkPoint.type)
                     {
+                    /// \todo the last step zone
                         case MapServerMini::BlockObject::LinkType::SourceNone:
                         break;
                         default:
                         break;
                     }
                     player.target.bestPath.erase(player.target.bestPath.cbegin());
+
+                    std::vector<DestinationForPath> destinations;
+                    std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
                     uint8_t o=player.direction;
                     while(o>4)
                         o-=4;
-
+                    //if the target is on the same block
+                    const MapServerMini::BlockObject * nextBlock=player.target.bestPath.front();
                     if(!player.target.bestPath.empty())
                     {
-                        const MapServerMini::BlockObject * const blockObject=player.target.bestPath.at(0);
-                        const std::pair<uint8_t,uint8_t> &point=getNextPosition(blockObject,player.target/*hop list, first is the next hop*/);
-
-                        bool ok=false;
-                        const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
-                                    blockObject,
-                                    static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
-                                    CatchChallenger::Orientation::Orientation_none,point.first,point.second,
-                                    &ok);
-                        if(!ok)
+                        const std::pair<uint8_t,uint8_t> &point=getNextPosition(nextBlock,player.target/*hop list, first is the next hop*/);
+                        DestinationForPath destinationForPath;
+                        destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
+                        destinationForPath.destination_x=point.first;
+                        destinationForPath.destination_y=point.second;
+                        destinations.push_back(destinationForPath);
+                    }
+                    else //search the best path to the next block
+                    {
+                        if(layer.blockObject->links.find(nextBlock)==layer.blockObject->links.cend())
                             abort();
-                        player.target.localStep=returnPath;
-                        const MapServerMini::BlockObject * const nextBlock=player.target.bestPath.at(0);
-                        //search the next position
-                        for(const auto& n:blockObject->links) {
-                            const MapServerMini::BlockObject * const tempNextBlock=n.first;
-                            const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
-                            if(tempNextBlock==nextBlock)
+                        pointsList=layer.blockObject->links.at(nextBlock).points;
+                        if(pointsList.empty())
+                            abort();
+                        unsigned int index=0;
+                        while(index<pointsList.size())
+                        {
+                            const MapServerMini::BlockObject::LinkPoint &point=pointsList.at(index);
+                            DestinationForPath destinationForPath;
+                            destinationForPath.destination_x=point.first;
+                            destinationForPath.destination_y=point.second;
+                            switch(point.type)
                             {
-                                search the best next point
-                                const MapServerMini::BlockObject::LinkPoint &firstPoint=linkInformation.points.at(0);
-                                player.target.localType=firstPoint.type;
+                                case MapServerMini::BlockObject::LinkType::SourceTopMap:
+                                case MapServerMini::BlockObject::LinkType::SourceInternalTopBlock:
+                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_top;
+                                break;
+                                case MapServerMini::BlockObject::LinkType::SourceRightMap:
+                                case MapServerMini::BlockObject::LinkType::SourceInternalRightBlock:
+                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_right;
+                                break;
+                                case MapServerMini::BlockObject::LinkType::SourceBottomMap:
+                                case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
+                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_bottom;
+                                break;
+                                case MapServerMini::BlockObject::LinkType::SourceLeftMap:
+                                case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
+                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_left;
+                                break;
+                                default:
+                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
                                 break;
                             }
+                            destinations.push_back(destinationForPath);
+                            linkInformationList.push_back(linkInformation);
+
+                            index++;
                         }
                     }
-                    else
-                    {
-                        const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
-                        const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
-                        if(playerMap->step.size()<2)
-                            abort();
-                        const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
-                        const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
-                        const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
-                        const MapServerMini::BlockObject * const blockObject=layer.blockObject;
-                        std::pair<uint8_t,uint8_t> point;
-                        switch(player.target.type)
-                        {
-                            case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
-                                for(const auto& n:blockObject->heal) {
-                                    point=n;
-                                    break;
-                                }
-                            break;
-                            case ActionsBotInterface::GlobalTarget::Dirt:
-                            {
-                                const DatapackClientLoader::PlantIndexContent &plantOrDirt=DatapackClientLoader::datapackLoader.plantIndexOfOnMap.value(player.target.extra);
-                                point.first=plantOrDirt.x;
-                                point.second=plantOrDirt.y;
-                            }
-                            break;
-                            case ActionsBotInterface::GlobalTarget::Plant:
-                            {
-                                const DatapackClientLoader::PlantIndexContent &plantOrDirt=DatapackClientLoader::datapackLoader.plantIndexOfOnMap.value(player.target.extra);
-                                point.first=plantOrDirt.x;
-                                point.second=plantOrDirt.y;
-                            }
-                            break;
-                            default:
-                                QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded"));
-                                return;
-                            break;
-                        }
-                        switch(player.target.type)
-                        {
-                            case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
-                            case ActionsBotInterface::GlobalTarget::Dirt:
-                            case ActionsBotInterface::GlobalTarget::Plant:
-                            {
-                                bool ok=false;
-                                const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
-                                            blockObject,
-                                            static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
-                                            CatchChallenger::Orientation::Orientation_none,point.first,point.second,
-                                            &ok);
-                                if(ok==false)
-                                    abort();
-                                player.target.localStep=returnPath;
-                                player.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
-                            }
-                            break;
-                            default:
-                            break;
-                        }
-                    }
+                    bool ok=false;
+                    unsigned int destinationIndexSelected=0;
+                    const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+                                layer.blockObject,
+                                static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
+                                destinations,
+                                destinationIndexSelected,
+                                layer.blockObject,
+                                &ok);
+                    if(!ok)
+                        abort();
+                    player.target.linkPoint=pointsList.at(destinationIndexSelected);
+                    player.target.localStep=returnPath;
                 }
             }
 
