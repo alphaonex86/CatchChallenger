@@ -7,6 +7,7 @@
 #include <chrono>
 #include <QMessageBox>
 
+//if(target.bestPath.empty()) return real target, else near search the next block
 std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::BlockObject * const blockObject, const ActionsBotInterface::GlobalTarget &target)
 {
     std::pair<uint8_t,uint8_t> point(0,0);
@@ -74,24 +75,6 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
         }
     }
     else
-    {
-        const MapServerMini::BlockObject * const nextBlock=target.bestPath.at(0);
-        if(nextBlock==blockObject)
-            abort();
-        //search the next position
-        for(const auto& n:blockObject->links) {
-            const MapServerMini::BlockObject * const tempNextBlock=n.first;
-            const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
-            if(tempNextBlock==nextBlock)
-            {
-                search the best next point
-                const MapServerMini::BlockObject::LinkPoint &firstPoint=linkInformation.points.at(0);
-                point.first=firstPoint.x;
-                point.second=firstPoint.y;
-                return point;
-            }
-        }
-        abort();//path def but next hop not found
-    }
+        abort();
     return point;
 }
