@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <QMessageBox>
+#include <unordered_map>
 
 BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient,
                              QHash<CatchChallenger::ConnectedSocket *,MultipleBotConnection::CatchChallengerClient *> connectedSocketToCatchChallengerClient,
@@ -163,36 +164,75 @@ void BotTargetList::startPlayerMove()
     if(step.map==NULL)
         return;
 
-    search the best next point
-    const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target/*hop list, first is the next hop*/);
+    std::vector<DestinationForPath> destinations;
+    std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
     uint8_t o=player.direction;
     while(o>4)
         o-=4;
+    //if the target is on the same block
+    if(!player.target.bestPath.empty())
+    {
+        const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target/*hop list, first is the next hop*/);
+        DestinationForPath destinationForPath;
+        destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
+        destinationForPath.destination_x=point.first;
+        destinationForPath.destination_y=point.second;
+        destinations.push_back(destinationForPath);
+    }
+    else //search the best path to the next block
+    {
+        if(layer.blockObject->links.find(layer.blockObject)==layer.blockObject->links.cend())
+            abort();
+        pointsList=layer.blockObject->links.at(layer.blockObject).points;
+        if(pointsList.empty())
+            abort();
+        unsigned int index=0;
+        while(index<pointsList.size())
+        {
+            const MapServerMini::BlockObject::LinkPoint &point=pointsList.at(index);
+            DestinationForPath destinationForPath;
+            destinationForPath.destination_x=point.x;
+            destinationForPath.destination_y=point.y;
+            switch(point.type)
+            {
+                case MapServerMini::BlockObject::LinkType::SourceTopMap:
+                case MapServerMini::BlockObject::LinkType::SourceInternalTopBlock:
+                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_top;
+                break;
+                case MapServerMini::BlockObject::LinkType::SourceRightMap:
+                case MapServerMini::BlockObject::LinkType::SourceInternalRightBlock:
+                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_right;
+                break;
+                case MapServerMini::BlockObject::LinkType::SourceBottomMap:
+                case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
+                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_bottom;
+                break;
+                case MapServerMini::BlockObject::LinkType::SourceLeftMap:
+                case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
+                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_left;
+                break;
+                default:
+                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
+                break;
+            }
+            destinations.push_back(destinationForPath);
+
+            index++;
+        }
+    }
     bool ok=false;
+    unsigned int destinationIndexSelected=0;
     const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
                 layer.blockObject,
                 static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
-                CatchChallenger::Orientation::Orientation_none,point.first,point.second,
+                destinations,
+                layer.blockObject,
+                destinationIndexSelected,
                 &ok);
     if(!ok)
         abort();
+    player.target.linkPoint=pointsList.at(destinationIndexSelected);
     player.target.localStep=returnPath;
-    player.target.localType=MapServerMini::BlockObject::LinkType::SourceNone;
-    if(!player.target.bestPath.empty())
-    {
-        const MapServerMini::BlockObject * const nextBlock=player.target.bestPath.at(0);
-        //search the next position
-        for(const auto& n:layer.blockObject->links) {
-            const MapServerMini::BlockObject * const tempNextBlock=n.first;
-            const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
-            if(tempNextBlock==nextBlock)
-            {
-                const MapServerMini::BlockObject::LinkPoint &firstPoint=linkInformation.points.at(0);
-                player.target.localType=firstPoint.type;
-                break;
-            }
-        }
-    }
 
     ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(returnPath)));
     updateMapInformation();
@@ -336,7 +376,6 @@ void BotTargetList::updateMapContent()
             std::cerr << "out of map" << std::endl;
             abort();
         }
-        const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
 
         {
             int y=mapServer->min_y;
@@ -367,7 +406,7 @@ void BotTargetList::updateMapContent()
                     }
                     else if(player.target.blockObject!=NULL)
                     {
-                        const std::pair<uint8_t,uint8_t> &point(player.target.linkPoint.x,player.target.linkPoint.y);
+                        const std::pair<uint8_t,uint8_t> point(player.target.linkPoint.x,player.target.linkPoint.y);
                         if(x==point.first && y==point.second && player.mapId==mapId)
                         {
                             QIcon icon;
@@ -552,11 +591,11 @@ void BotTargetList::on_tooHard_clicked()
     updatePlayerInformation();
 }
 
-std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFinding(
-        const MapServerMini::BlockObject * const blockObject,
-        const CatchChallenger::Orientation &source_orientation,const uint8_t &source_x,const uint8_t &source_y,
+std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFinding(const MapServerMini::BlockObject * const source_blockObject,
+        const CatchChallenger::Orientation &source_orientation, const uint8_t &source_x, const uint8_t &source_y,
         /*const MapServerMini::BlockObject * const destination_blockObject,the block link to the multi-map change*/
-        const CatchChallenger::Orientation &destination_orientation,const uint8_t &destination_x,const uint8_t &destination_y,
+        const std::vector<DestinationForPath> &destinations,
+        unsigned int &destinationIndexSelected,
         bool *ok)
 {
     if(ok==NULL)
@@ -564,20 +603,23 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     *ok=false;
     /// \todo ignore and not optimised:
     (void)source_orientation;
-    (void)destination_orientation;
     auto start = std::chrono::high_resolution_clock::now();
 
     //resolv the path
     std::vector<std::pair<uint8_t,uint8_t> > mapPointToParseList;
     SimplifiedMapForPathFinding simplifiedMap;
-    const uint8_t &currentCodeZone=blockObject->id+1;
-    if(blockObject->map==NULL)
+    const uint16_t &sourceCodeZone=source_blockObject->id+1;
+    const uint16_t &destinationCodeZone=destination_blockObject->id+1;
+    if(source_blockObject->map==NULL)
         abort();
-    if(blockObject->map->step.size()<2)
+    if(source_blockObject->map->step.size()<2)
         abort();
-    const MapServerMini::MapParsedForBot &step=blockObject->map->step.at(1);
+    const MapServerMini::MapParsedForBot &step=source_blockObject->map->step.at(1);
     if(step.map==NULL)
         abort();
+    std::unordered_map<unsigned int,
+            std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> >
+            > pathToEachDestinations;
 
     //init the first case
     {
@@ -601,8 +643,6 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         const uint8_t x=tempPoint.first,y=tempPoint.second;
         mapPointToParseList.erase(mapPointToParseList.begin());
         SimplifiedMapForPathFinding::PathToGo pathToGo;
-        if(x==destination_x && y==destination_y)
-            std::cout << "final dest: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
         //resolv the own point
         int index=0;
         while(index<1)/*2*/
@@ -700,61 +740,95 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         {
             simplifiedMap.pathToGo[coord]=pathToGo;
         }
-        //if good position
-        if(x==destination_x && y==destination_y/* && destination_blockObject==source_blockObject the block link to the multi-map change*/)
         {
-            std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar;
-            if(returnedVar.empty() || pathToGo.bottom.size()<returnedVar.size())
-                if(!pathToGo.bottom.empty())
-                    returnedVar=pathToGo.bottom;
-            if(returnedVar.empty() || pathToGo.top.size()<returnedVar.size())
-                if(!pathToGo.top.empty())
-                    returnedVar=pathToGo.top;
-            if(returnedVar.empty() || pathToGo.right.size()<returnedVar.size())
-                if(!pathToGo.right.empty())
-                    returnedVar=pathToGo.right;
-            if(returnedVar.empty() || pathToGo.left.size()<returnedVar.size())
-                if(!pathToGo.left.empty())
-                    returnedVar=pathToGo.left;
-            if(!returnedVar.empty())
+            unsigned int index=0;
+            while(index<destinations.size())
             {
-                if(returnedVar.back().second<=1)
+                const DestinationForPath &destination=destinations.at(index);
+                //if good position
+                if(x==destination.destination_x && y==destination.destination_y/* && destination_blockObject==source_blockObject the block link to the multi-map change*/)
                 {
-                    std::cerr << "Bug due for last step" << std::endl;
-                    return returnedVar;
-                }
-                else
-                {
-                    auto end = std::chrono::high_resolution_clock::now();
-                    std::chrono::duration<double, std::milli> elapsed = end-start;
+                    std::cout << "new destination resolved: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
+                    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar;
+                    if(returnedVar.empty() || pathToGo.bottom.size()<returnedVar.size())
+                        if(!pathToGo.bottom.empty())
+                            returnedVar=pathToGo.bottom;
+                    if(returnedVar.empty() || pathToGo.top.size()<returnedVar.size())
+                        if(!pathToGo.top.empty())
+                            returnedVar=pathToGo.top;
+                    if(returnedVar.empty() || pathToGo.right.size()<returnedVar.size())
+                        if(!pathToGo.right.empty())
+                            returnedVar=pathToGo.right;
+                    if(returnedVar.empty() || pathToGo.left.size()<returnedVar.size())
+                        if(!pathToGo.left.empty())
+                            returnedVar=pathToGo.left;
+                    if(!returnedVar.empty())
+                    {
+                        if(returnedVar.back().second<=1)
+                        {
+                            std::cerr << "Bug due for last step" << std::endl;
+                            return returnedVar;
+                        }
+                        else
+                        {
+                            auto end = std::chrono::high_resolution_clock::now();
+                            std::chrono::duration<double, std::milli> elapsed = end-start;
 
-                    std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
-                    returnedVar.back().second--;
-                    *ok=true;
-                    return returnedVar;
+                            std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+                            returnedVar.back().second--;
+                            pathToEachDestinations. add to it
+                            *ok=true;
+                            return returnedVar;
+                        }
+                    }
+                    else
+                    {
+                        returnedVar.clear();
+                        std::cout << "Warning: Bug due to resolved path is empty, Already on blockZone border to go on the next zone" << std::endl;
+                        *ok=true;
+                        return returnedVar;
+                    }
                 }
-            }
-            else
-            {
-                returnedVar.clear();
-                std::cout << "Warning: Bug due to resolved path is empty, Already on blockZone border to go on the next zone" << std::endl;
-                *ok=true;
-                return returnedVar;
+                index++;
             }
         }
+
         //revers resolv
         //add to point to parse
         {
             //if the right case have been parsed
+            if(ActionsAction::move(api,direction,&playerMap,&player.x,&player.y,false,true))
+            {
+                if(playerMap==source || playerMap==destination/*limit to source and destination block exploration*/)
+                {
+                    bool canBeMove=false;
+                    if(newPoint.first==destination_x || newPoint.second==destination_y || playerMap==destinationMap)
+                        canBeMove=true;
+                    else
+                    {
+                        if(isWalkable(*new_map,x,y) && !isDirt(*new_map,x,y))
+                            canBeMove=true;
+                    }
+                    if(canBeMove)
+                    {
+                        if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
+                        {
+                            do multimap point queue
+                            simplifiedMap.pointQueued.insert(newPoint);
+                            mapPointToParseList.push_back(newPoint);
+                        }
+                    }
+                }
+            }
             coord=std::pair<uint8_t,uint8_t>(x+1,y);
             if(simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
             {
-                std::pair<uint8_t,uint8_t> newPoint=tempPoint;
+                std::pair<uint8_t,uint8_t> newPoint=coord;
                 newPoint.first++;
                 if(newPoint.first<blockObject->map->width)
                 {
-                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
-                    if(currentCodeZone==newCodeZone || (newPoint.first==destination_x && newPoint.second==destination_y))
+                    const uint16_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
+                    if((currentCodeZone==newCodeZone || currentCodeZone==destinationCodeZone) || ())
                     {
                         if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
                         {
@@ -772,8 +846,8 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                 if(newPoint.first>0)
                 {
                     newPoint.first--;
-                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
-                    if(currentCodeZone==newCodeZone || (newPoint.first==destination_x && newPoint.second==destination_y))
+                    const uint16_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
+                    if((currentCodeZone==newCodeZone || source_orientation!=destination_blockObject) || (newPoint.first==destination_x && newPoint.second==destination_y))
                     {
                         if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
                         {
@@ -791,8 +865,8 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                 newPoint.second++;
                 if(newPoint.second<blockObject->map->height)
                 {
-                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
-                    if(currentCodeZone==newCodeZone || (newPoint.first==destination_x && newPoint.second==destination_y))
+                    const uint16_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
+                    if((currentCodeZone==newCodeZone || source_orientation!=destination_blockObject) || (newPoint.first==destination_x && newPoint.second==destination_y))
                     {
                         if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
                         {
@@ -810,8 +884,8 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                 if(newPoint.second>0)
                 {
                     newPoint.second--;
-                    const uint8_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
-                    if(currentCodeZone==newCodeZone || (newPoint.first==destination_x && newPoint.second==destination_y))
+                    const uint16_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
+                    if((currentCodeZone==newCodeZone || source_orientation!=destination_blockObject) || (newPoint.first==destination_x && newPoint.second==destination_y))
                     {
                         if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
                         {

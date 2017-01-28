@@ -31,7 +31,7 @@ void BotTargetList::updatePlayerInformation()
         if(playerMap->step.size()<2)
             abort();
         const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
-        const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
+        const uint16_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
         if(playerCodeZone>0 && (uint32_t)(playerCodeZone-1)<(uint32_t)stepPlayer.layers.size())
         {
             const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
