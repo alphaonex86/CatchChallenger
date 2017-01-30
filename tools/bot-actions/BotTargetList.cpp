@@ -57,6 +57,102 @@ BotTargetList::~BotTargetList()
     delete ui;
 }
 
+bool BotTargetList::newPathIsBetterPath(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &oldPath,const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &newPath)
+{
+    if(oldPath.size()>=newPath.size())
+    {
+        if(oldPath.size()==newPath.size())
+        {
+            unsigned int oldPathTile=0;
+            {
+                unsigned int index=0;
+                while(index<oldPath.size())
+                {
+                    const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &step=oldPath.at(index);
+                    oldPathTile+=step.second;
+                    index++;
+                }
+            }
+            unsigned int newPathTile=0;
+            {
+                unsigned int index=0;
+                while(index<oldPath.size())
+                {
+                    const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &step=newPath.at(index);
+                    newPathTile+=step.second;
+                    index++;
+                }
+            }
+            return newPathTile<oldPathTile;
+        }
+        else
+            return false;
+    }
+    else
+        return true;
+}
+
+uint16_t BotTargetList::pathTileCount(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &path)
+{
+    unsigned int pathTile=0;
+    {
+        unsigned int index=0;
+        while(index<path.size())
+        {
+            const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &step=path.at(index);
+            pathTile+=step.second;
+            index++;
+        }
+    }
+    return pathTile;
+}
+
+std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::selectTheBetterPathToDestination(std::unordered_map<unsigned int,
+                                             std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> >
+                                             > pathToEachDestinations,unsigned int &destinationIndexSelected)
+{
+    destinationIndexSelected=0;
+    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnVar;
+    for(const auto& n:pathToEachDestinations)
+    {
+        const unsigned int &key=n.first;
+        const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &value=n.second;
+        if(returnVar.empty())
+        {
+            destinationIndexSelected=key;
+            return returnVar;
+        }
+        if(returnVar.empty())
+        {
+            destinationIndexSelected=key;
+            returnVar=value;
+        }
+        else if(newPathIsBetterPath(returnVar,value))
+        {
+            destinationIndexSelected=key;
+            returnVar=value;
+        }
+    }
+    //group the 2 first action if is look into differente direction
+    if(returnVar.size()>1)
+    {
+        const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &firstValue=returnVar.front();
+        if(firstValue.second==0)
+            returnVar.erase(returnVar.cbegin());
+    }
+    //group the 2 last action if is look into differente direction
+    if(returnVar.size()>1)
+    {
+        const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &lastValue=returnVar.back();
+        if(lastValue.second==0)
+        {
+            returnVar[returnVar.size()-2].first=lastValue.first;
+            returnVar.erase(returnVar.cbegin()+returnVar.size()-1);
+        }
+    }
+    return returnVar;
+}
+
 void BotTargetList::loadAllBotsInformation()
 {
     if(botsInformationLoaded)
@@ -226,7 +322,6 @@ void BotTargetList::startPlayerMove()
                 layer.blockObject,
                 static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
                 destinations,
-                layer.blockObject,
                 destinationIndexSelected,
                 &ok);
     if(!ok)
@@ -591,7 +686,7 @@ void BotTargetList::on_tooHard_clicked()
     updatePlayerInformation();
 }
 
-std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFinding(const MapServerMini::BlockObject * const source_blockObject,
+std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFinding(const MapServerMini::BlockObject * const blockObject,
         const CatchChallenger::Orientation &source_orientation, const uint8_t &source_x, const uint8_t &source_y,
         /*const MapServerMini::BlockObject * const destination_blockObject,the block link to the multi-map change*/
         const std::vector<DestinationForPath> &destinations,
@@ -608,13 +703,13 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     //resolv the path
     std::vector<std::pair<uint8_t,uint8_t> > mapPointToParseList;
     SimplifiedMapForPathFinding simplifiedMap;
-    const uint16_t &sourceCodeZone=source_blockObject->id+1;
-    const uint16_t &destinationCodeZone=destination_blockObject->id+1;
-    if(source_blockObject->map==NULL)
+    if(blockObject->map==NULL)
         abort();
-    if(source_blockObject->map->step.size()<2)
+    if(blockObject->map->step.size()<2)
         abort();
-    const MapServerMini::MapParsedForBot &step=source_blockObject->map->step.at(1);
+    if(destinations.empty())
+        abort();
+    const MapServerMini::MapParsedForBot &step=blockObject->map->step.at(1);
     if(step.map==NULL)
         abort();
     std::unordered_map<unsigned int,
@@ -630,6 +725,31 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
 
         std::pair<uint8_t,uint8_t> coord(source_x,source_y);
         SimplifiedMapForPathFinding::PathToGo &pathToGo=simplifiedMap.pathToGo[coord];
+        switch(source_orientation)
+        {
+            case CatchChallenger::Orientation::Orientation_top:
+                pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,0));
+                pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,0));
+                pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,0));
+            break;
+            case CatchChallenger::Orientation::Orientation_bottom:
+                pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,0));
+                pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,0));
+                pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,0));
+            break;
+            case CatchChallenger::Orientation::Orientation_left:
+                pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,0));
+                pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,0));
+                pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,0));
+            break;
+            case CatchChallenger::Orientation::Orientation_right:
+                pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,0));
+                pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,0));
+                pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,0));
+            break;
+            default:
+            break;
+        }
         pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1));
         pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
         pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
@@ -750,18 +870,62 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                 {
                     std::cout << "new destination resolved: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                     std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar;
-                    if(returnedVar.empty() || pathToGo.bottom.size()<returnedVar.size())
-                        if(!pathToGo.bottom.empty())
-                            returnedVar=pathToGo.bottom;
-                    if(returnedVar.empty() || pathToGo.top.size()<returnedVar.size())
-                        if(!pathToGo.top.empty())
-                            returnedVar=pathToGo.top;
-                    if(returnedVar.empty() || pathToGo.right.size()<returnedVar.size())
-                        if(!pathToGo.right.empty())
-                            returnedVar=pathToGo.right;
-                    if(returnedVar.empty() || pathToGo.left.size()<returnedVar.size())
-                        if(!pathToGo.left.empty())
+
+                    //add one hop if direction change
+                    std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> toAdd(destination.destination_orientation,0);
+                    switch(destination.destination_orientation)
+                    {
+                        case CatchChallenger::Orientation::Orientation_top:
+                            pathToGo.left.push_back(toAdd);
+                            pathToGo.right.push_back(toAdd);
+                            pathToGo.bottom.push_back(toAdd);
+                        break;
+                        case CatchChallenger::Orientation::Orientation_bottom:
+                            pathToGo.left.push_back(toAdd);
+                            pathToGo.right.push_back(toAdd);
+                            pathToGo.top.push_back(toAdd);
+                        break;
+                        case CatchChallenger::Orientation::Orientation_left:
+                            pathToGo.top.push_back(toAdd);
+                            pathToGo.right.push_back(toAdd);
+                            pathToGo.bottom.push_back(toAdd);
+                        break;
+                        case CatchChallenger::Orientation::Orientation_right:
+                            pathToGo.left.push_back(toAdd);
+                            pathToGo.top.push_back(toAdd);
+                            pathToGo.bottom.push_back(toAdd);
+                        break;
+                        default:
+                        break;
+                    }
+
+                    if(pathToGo.left.size()<pathToGo.right.size() && pathToGo.left.size()<pathToGo.top.size() && pathToGo.left.size()<pathToGo.bottom.size())
+                        returnedVar=pathToGo.left;
+                    if(pathToGo.right.size()<pathToGo.left.size() && pathToGo.right.size()<pathToGo.top.size() && pathToGo.right.size()<pathToGo.bottom.size())
+                        returnedVar=pathToGo.right;
+                    if(pathToGo.top.size()<pathToGo.right.size() && pathToGo.top.size()<pathToGo.left.size() && pathToGo.top.size()<pathToGo.bottom.size())
+                        returnedVar=pathToGo.top;
+                    if(pathToGo.bottom.size()<pathToGo.right.size() && pathToGo.bottom.size()<pathToGo.top.size() && pathToGo.bottom.size()<pathToGo.left.size())
+                        returnedVar=pathToGo.bottom;
+                    else//by tile count based
+                    {
+                        const uint16_t &leftadd=pathTileCount(pathToGo.left);
+                        const uint16_t &rightadd=pathTileCount(pathToGo.right);
+                        const uint16_t &topadd=pathTileCount(pathToGo.top);
+                        const uint16_t &bottomadd=pathTileCount(pathToGo.bottom);
+
+                        if(leftadd<rightadd && leftadd<topadd && leftadd<bottomadd)
                             returnedVar=pathToGo.left;
+                        if(rightadd<leftadd && rightadd<topadd && rightadd<bottomadd)
+                            returnedVar=pathToGo.right;
+                        if(topadd<rightadd && topadd<leftadd && topadd<bottomadd)
+                            returnedVar=pathToGo.top;
+                        if(bottomadd<rightadd && bottomadd<topadd && bottomadd<leftadd)
+                            returnedVar=pathToGo.bottom;
+                        else //default path
+                            returnedVar=pathToGo.bottom;
+                    }
+
                     if(!returnedVar.empty())
                     {
                         if(returnedVar.back().second<=1)
@@ -776,17 +940,30 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
 
                             std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
                             returnedVar.back().second--;
-                            pathToEachDestinations. add to it
-                            *ok=true;
-                            return returnedVar;
+                            if(pathToEachDestinations.find(index)==pathToEachDestinations.cend())
+                                pathToEachDestinations[index]=returnedVar;
+                            else
+                            {
+                                if(newPathIsBetterPath(pathToEachDestinations.at(index),returnedVar))
+                                    pathToEachDestinations[index]=returnedVar;
+                            }
+                            if(pathToEachDestinations.size()==destinations.size())
+                            {
+                                *ok=true;
+                                return selectTheBetterPathToDestination(pathToEachDestinations,destinationIndexSelected);
+                            }
                         }
                     }
                     else
                     {
+                        pathToEachDestinations[index]=returnedVar;
                         returnedVar.clear();
                         std::cout << "Warning: Bug due to resolved path is empty, Already on blockZone border to go on the next zone" << std::endl;
-                        *ok=true;
-                        return returnedVar;
+                        if(pathToEachDestinations.size()==destinations.size())
+                        {
+                            *ok=true;
+                            return selectTheBetterPathToDestination(pathToEachDestinations,destinationIndexSelected);
+                        }
                     }
                 }
                 index++;
@@ -797,101 +974,62 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         //add to point to parse
         {
             //if the right case have been parsed
-            if(ActionsAction::move(api,direction,&playerMap,&player.x,&player.y,false,true))
-            {
-                if(playerMap==source || playerMap==destination/*limit to source and destination block exploration*/)
-                {
-                    bool canBeMove=false;
-                    if(newPoint.first==destination_x || newPoint.second==destination_y || playerMap==destinationMap)
-                        canBeMove=true;
-                    else
-                    {
-                        if(isWalkable(*new_map,x,y) && !isDirt(*new_map,x,y))
-                            canBeMove=true;
-                    }
-                    if(canBeMove)
-                    {
-                        if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
-                        {
-                            do multimap point queue
-                            simplifiedMap.pointQueued.insert(newPoint);
-                            mapPointToParseList.push_back(newPoint);
-                        }
-                    }
-                }
-            }
             coord=std::pair<uint8_t,uint8_t>(x+1,y);
-            if(simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
+            if(coord.first<blockObject->map->width)
             {
-                std::pair<uint8_t,uint8_t> newPoint=coord;
-                newPoint.first++;
-                if(newPoint.first<blockObject->map->width)
+                if(simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
                 {
-                    const uint16_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
-                    if((currentCodeZone==newCodeZone || currentCodeZone==destinationCodeZone) || ())
+                    std::pair<uint8_t,uint8_t> newPoint=tempPoint;
+                    newPoint.first--;
+                    if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
                     {
-                        if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
-                        {
-                            simplifiedMap.pointQueued.insert(newPoint);
-                            mapPointToParseList.push_back(newPoint);
-                        }
+                        simplifiedMap.pointQueued.insert(newPoint);
+                        mapPointToParseList.push_back(newPoint);
                     }
                 }
             }
             //if the left case have been parsed
-            coord=std::pair<uint8_t,uint8_t>(x-1,y);
-            if(simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
+            if(x>0)
             {
-                std::pair<uint8_t,uint8_t> newPoint=tempPoint;
-                if(newPoint.first>0)
+                coord=std::pair<uint8_t,uint8_t>(x-1,y);
+                if(simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
                 {
+                    std::pair<uint8_t,uint8_t> newPoint=tempPoint;
                     newPoint.first--;
-                    const uint16_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
-                    if((currentCodeZone==newCodeZone || source_orientation!=destination_blockObject) || (newPoint.first==destination_x && newPoint.second==destination_y))
+                    if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
                     {
-                        if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
-                        {
-                            simplifiedMap.pointQueued.insert(newPoint);
-                            mapPointToParseList.push_back(newPoint);
-                        }
+                        simplifiedMap.pointQueued.insert(newPoint);
+                        mapPointToParseList.push_back(newPoint);
                     }
                 }
             }
             //if the bottom case have been parsed
             coord=std::pair<uint8_t,uint8_t>(x,y+1);
-            if(simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
+            if(coord.second<blockObject->map->height)
             {
-                std::pair<uint8_t,uint8_t> newPoint=tempPoint;
-                newPoint.second++;
-                if(newPoint.second<blockObject->map->height)
+                if(simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
                 {
-                    const uint16_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
-                    if((currentCodeZone==newCodeZone || source_orientation!=destination_blockObject) || (newPoint.first==destination_x && newPoint.second==destination_y))
+                    std::pair<uint8_t,uint8_t> newPoint=tempPoint;
+                    newPoint.first--;
+                    if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
                     {
-                        if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
-                        {
-                            simplifiedMap.pointQueued.insert(newPoint);
-                            mapPointToParseList.push_back(newPoint);
-                        }
+                        simplifiedMap.pointQueued.insert(newPoint);
+                        mapPointToParseList.push_back(newPoint);
                     }
                 }
             }
             //if the top case have been parsed
-            coord=std::pair<uint8_t,uint8_t>(x,y-1);
-            if(simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
+            if(y>0)
             {
-                std::pair<uint8_t,uint8_t> newPoint=tempPoint;
-                if(newPoint.second>0)
+                coord=std::pair<uint8_t,uint8_t>(x,y-1);
+                if(simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
                 {
-                    newPoint.second--;
-                    const uint16_t &newCodeZone=step.map[newPoint.first+newPoint.second*blockObject->map->width];
-                    if((currentCodeZone==newCodeZone || source_orientation!=destination_blockObject) || (newPoint.first==destination_x && newPoint.second==destination_y))
+                    std::pair<uint8_t,uint8_t> newPoint=tempPoint;
+                    newPoint.first--;
+                    if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
                     {
-                        if(simplifiedMap.pointQueued.find(newPoint)==simplifiedMap.pointQueued.cend())
-                        {
-                            simplifiedMap.pointQueued.insert(newPoint);
-                            mapPointToParseList.push_back(newPoint);
-                        }
+                        simplifiedMap.pointQueued.insert(newPoint);
+                        mapPointToParseList.push_back(newPoint);
                     }
                 }
             }
@@ -902,7 +1040,18 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     std::chrono::duration<double, std::milli> elapsed = end-start;
     std::cout << "Path not found into " << (uint32_t)elapsed.count() << "ms" << std::endl;
     std::cout << "From " << blockObject->map << " " << std::to_string(source_x) << "," << std::to_string(source_y) << std::endl;
-    std::cout << "To " << std::to_string(destination_x) << "," << std::to_string(destination_y) << std::endl;
+    {
+        unsigned int index=0;
+        while(index<destinations.size())
+        {
+            if(pathToEachDestinations.find(index)==pathToEachDestinations.cend())
+            {
+                const DestinationForPath &destination=destinations.at(index);
+                std::cout << "To " << std::to_string(destination.destination_x) << "," << std::to_string(destination.destination_y) << std::endl;
+            }
+            index++;
+        }
+    }
     return std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >();
 }
 

@@ -307,6 +307,7 @@
 #define CACHEDSTRING_bot CachedString::cachedString->bot
 #define CACHEDSTRING_skin CachedString::cachedString->skin
 #define CACHEDSTRING_lookAt CachedString::cachedString->lookAt
+#define CACHEDSTRING_move CachedString::cachedString->move
 #define CACHEDSTRING_file CachedString::cachedString->file
 #define CACHEDSTRING_infinite CachedString::cachedString->infinite
 #define CACHEDSTRING_true CachedString::cachedString->text_true
@@ -445,6 +446,7 @@ public:
     std::string bot;
     std::string skin;
     std::string lookAt;
+    std::string move;
     std::string file;
     std::string infinite;
     std::string text_true;
@@ -690,6 +692,7 @@ public:
 #define CACHEDSTRING_bot "bot"
 #define CACHEDSTRING_skin "skin"
 #define CACHEDSTRING_lookAt "lookAt"
+#define CACHEDSTRING_move "move"
 #define CACHEDSTRING_file "file"
 #define CACHEDSTRING_infinite "infinite"
 #define CACHEDSTRING_true "true"

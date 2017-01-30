@@ -28,8 +28,8 @@ bool MapServerMini::preload_step2()
     }
 
     MapParsedForBot step2;
-    step2.map=(uint8_t *)malloc(width*height);
-    memset(step2.map,0x00,width*height);//by default: not accessible zone
+    step2.map=(uint16_t *)malloc(width*height*sizeof(uint16_t));
+    memset(step2.map,0x00,width*height*sizeof(uint16_t));//by default: not accessible zone
     uint16_t lastCodeZone=1;
     uint16_t currentCodeZoneStep1=0;
 
@@ -46,7 +46,7 @@ bool MapServerMini::preload_step2()
                     currentCodeZoneStep1=step1.map[x+y*this->width];
                     step2.map[x+y*this->width]=lastCodeZone;
                     const MapParsedForBot::Layer &step1Layer=step1.layers.at(step1.map[x+y*this->width]-1);
-                    if(step1Layer.text!="d")
+                    if(parsed_layer.walkable!=NULL && parsed_layer.walkable[x+y*this->width]!=false)
                     {
                         preload_step2_addNearTileToScanList(scanList,x,y);
                         while(!scanList.empty())
@@ -117,19 +117,20 @@ bool MapServerMini::preload_step2()
             while(x<(this->width-1))
             {
                 const uint16_t codeZone=step2.map[x+y*this->width];
-                if(codeZone!=0 && (this->botLayerMask==NULL || this->botLayerMask[x+y*this->width]==0))
+                if(codeZone!=0)
                 {
                     //check the right tile
                     {
                         uint8_t newx=(x+1),newy=y;
                         const uint16_t &rightCodeZone=step2.map[newx+newy*this->width];
                         if(rightCodeZone!=0 && codeZone!=rightCodeZone)
-                            if(this->botLayerMask==NULL || this->botLayerMask[newx+newy*this->width]==0)
+                        {
+                            BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
+                            BlockObject &rightBlockObject=*step2.layers[rightCodeZone-1].blockObject;
+                            //if current not dirt or other not walkable layer
+                            if(parsed_layer.walkable!=NULL && parsed_layer.walkable[newx+newy*this->width]!=false)
                             {
-                                BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
-                                BlockObject &rightBlockObject=*step2.layers[rightCodeZone-1].blockObject;
                                 //if can go to right
-                                and current not dirt
                                 if(this->parsed_layer.ledges==NULL ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesRight
@@ -144,8 +145,11 @@ bool MapServerMini::preload_step2()
                                     else
                                         addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceInternalRightBlock,x,y);
                                 }
+                            }
+                            //if the other not dirt or other not walkable layer
+                            if(parsed_layer.walkable!=NULL && parsed_layer.walkable[newx+newy*this->width]!=false)
+                            {
                                 //if can come from to right
-                                and right not dirt
                                 if(this->parsed_layer.ledges==NULL ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesLeft
@@ -161,6 +165,7 @@ bool MapServerMini::preload_step2()
                                         addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceInternalLeftBlock,newx,newy);
                                 }
                             }
+                        }
                     }
 
                     //check the bottom tile
@@ -168,12 +173,13 @@ bool MapServerMini::preload_step2()
                         uint8_t newx=x,newy=(y+1);
                         const uint16_t &bottomCodeZone=step2.map[newx+newy*this->width];
                         if(bottomCodeZone!=0 && codeZone!=bottomCodeZone)
-                            if(this->botLayerMask==NULL || this->botLayerMask[newx+newy*this->width]==0)
+                        {
+                            BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
+                            BlockObject &bottomBlockObject=*step2.layers[bottomCodeZone-1].blockObject;
+                            //if current not dirt or other not walkable layer
+                            if(parsed_layer.walkable!=NULL && parsed_layer.walkable[newx+newy*this->width]!=false)
                             {
-                                BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
-                                BlockObject &bottomBlockObject=*step2.layers[bottomCodeZone-1].blockObject;
                                 //if can go to bottom
-                                and current not dirt
                                 if(this->parsed_layer.ledges==NULL ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesBottom
@@ -188,8 +194,11 @@ bool MapServerMini::preload_step2()
                                     else
                                         addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceInternalBottomBlock,x,y);
                                 }
+                            }
+                            //if the other not dirt or other not walkable layer
+                            if(parsed_layer.walkable!=NULL && parsed_layer.walkable[newx+newy*this->width]!=false)
+                            {
                                 //if can come from to bottom
-                                and right not dirt
                                 if(this->parsed_layer.ledges==NULL ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesTop
@@ -205,6 +214,7 @@ bool MapServerMini::preload_step2()
                                         addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceInternalTopBlock,newx,newy);
                                 }
                             }
+                        }
                     }
 
                     lastCodeZone++;
@@ -347,7 +357,7 @@ bool MapServerMini::preload_step2b()
             while(y<y_stop)
             {
                 const uint16_t codeZone=step2.map[x+y*this->width];
-                if(codeZone!=0 && (this->botLayerMask==NULL || this->botLayerMask[x+y*this->width]==0))
+                if(codeZone!=0)
                 {
                     //check the right tile
                     if(this->border.right.map!=NULL)
@@ -362,7 +372,8 @@ bool MapServerMini::preload_step2b()
                         if(rightCodeZone!=0)
                         {
                             BlockObject &rightBlockObject=*step2nextMap.layers[rightCodeZone-1].blockObject;
-                            if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
+                            //if current not dirt or other not walkable layer
+                            if(parsed_layer.walkable!=NULL && parsed_layer.walkable[newx+newy*this->width]!=false)
                             {
                                 //if can go to right
                                 if(this->parsed_layer.ledges==NULL ||
@@ -379,6 +390,10 @@ bool MapServerMini::preload_step2b()
                                     else
                                         addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceRightMap,x,y);
                                 }
+                            }
+                            //if the other not dirt or other not walkable layer
+                            if(parsed_layer.walkable!=NULL && parsed_layer.walkable[newx+newy*this->width]!=false)
+                            {
                                 //if can come from to right
                                 if(this->parsed_layer.ledges==NULL ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges ||
@@ -398,7 +413,6 @@ bool MapServerMini::preload_step2b()
                         }
                     }
                 }
-
                 y++;
             }
         }
@@ -444,7 +458,7 @@ bool MapServerMini::preload_step2b()
             while(x<x_stop)
             {
                 const uint16_t codeZone=step2.map[x+y*this->width];
-                if(codeZone!=0 && (this->botLayerMask==NULL || this->botLayerMask[x+y*this->width]==0))
+                if(codeZone!=0)
                 {
                     //check the bottom tile
                     if(this->border.bottom.map!=NULL)
@@ -459,7 +473,8 @@ bool MapServerMini::preload_step2b()
                         if(bottomCodeZone!=0)
                         {
                             BlockObject &bottomBlockObject=*step2nextMap.layers[bottomCodeZone-1].blockObject;
-                            if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
+                            //if current not dirt or other not walkable layer
+                            if(parsed_layer.walkable!=NULL && parsed_layer.walkable[newx+newy*this->width]!=false)
                             {
                                 //if can go to bottom
                                 if(this->parsed_layer.ledges==NULL ||
@@ -476,6 +491,10 @@ bool MapServerMini::preload_step2b()
                                     else
                                         addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceBottomMap,x,y);
                                 }
+                            }
+                            //if the other not dirt or other not walkable layer
+                            if(parsed_layer.walkable!=NULL && parsed_layer.walkable[newx+newy*this->width]!=false)
+                            {
                                 //if can come from to bottom
                                 if(this->parsed_layer.ledges==NULL ||
                                         this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges ||
@@ -509,21 +528,26 @@ bool MapServerMini::preload_step2b()
             const Teleporter &teleporterEntry=teleporter[index];//for very small list < 20 teleporter, it's this structure the more fast, code not ready for more than 127
             const uint8_t x=teleporterEntry.source_x,y=teleporterEntry.source_y;
             const uint16_t &codeZone=step2.map[x+y*this->width];
-            if(codeZone!=0 && (this->botLayerMask==NULL || this->botLayerMask[x+y*this->width]==0))
+            //if current not dirt or other not walkable layer
+            if(parsed_layer.walkable!=NULL && parsed_layer.walkable[x+y*this->width]!=false)
             {
-                BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
-                const uint8_t newx=teleporterEntry.destination_x,newy=teleporterEntry.destination_y;
-                MapServerMini &nextMap=*static_cast<MapServerMini *>(teleporterEntry.map);
-                if(nextMap.step.size()<2)
-                    abort();
-                MapParsedForBot &step2nextMap=nextMap.step[1];
-                const uint8_t &otherCodeZone=step2nextMap.map[newx+newy*nextMap.width];
-                if(otherCodeZone!=0)
-                    if(nextMap.botLayerMask==NULL || nextMap.botLayerMask[newx+newy*nextMap.width]==0)
-                    {
-                        BlockObject &otherBlockObject=*step2nextMap.layers[otherCodeZone-1].blockObject;
-                        addBlockLink(blockObject,otherBlockObject,BlockObject::LinkType::SourceTeleporter,x,y);
-                    }
+                if(codeZone!=0)
+                {
+                    BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
+                    const uint8_t newx=teleporterEntry.destination_x,newy=teleporterEntry.destination_y;
+                    MapServerMini &nextMap=*static_cast<MapServerMini *>(teleporterEntry.map);
+                    if(nextMap.step.size()<2)
+                        abort();
+                    MapParsedForBot &step2nextMap=nextMap.step[1];
+                    const uint8_t &otherCodeZone=step2nextMap.map[newx+newy*nextMap.width];
+                    if(otherCodeZone!=0)
+                        //if the other not dirt or other not walkable layer
+                        if(nextMap.parsed_layer.walkable!=NULL && nextMap.parsed_layer.walkable[newx+newy*this->width]!=false)
+                        {
+                            BlockObject &otherBlockObject=*step2nextMap.layers[otherCodeZone-1].blockObject;
+                            addBlockLink(blockObject,otherBlockObject,BlockObject::LinkType::SourceTeleporter,x,y);
+                        }
+                }
             }
             index++;
         }

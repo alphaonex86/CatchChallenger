@@ -144,11 +144,8 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
         default:
             return false;
     }
-    if(new_map->botLayerMask!=NULL)
     {
         //bot colision
-        if(new_map->botLayerMask[x+y*new_map->width]!=0)
-            return false;
         if(checkCollision)
         {
             if(!isWalkable(*new_map,x,y))
