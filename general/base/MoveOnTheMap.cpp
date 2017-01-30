@@ -6,26 +6,32 @@ using namespace CatchChallenger;
 
 MoveOnTheMap::MoveOnTheMap()
 {
-    setLastDirection(Direction_look_at_bottom);
+    last_step=255;
+    last_direction=Direction_look_at_bottom;
+    last_direction_is_set=false;
 }
 
 void MoveOnTheMap::setLastDirection(const Direction &the_direction)
 {
+    if(last_direction_is_set!=false)
+        abort();
     last_direction=the_direction;
     last_step=0;
 }
 
 void MoveOnTheMap::newDirection(const Direction &the_new_direction)
 {
+    if(last_direction_is_set==false)
+        abort();
     #ifdef DEBUG_MESSAGE_MOVEONTHEMAP
     qDebug() << std::stringLiteral("newDirection(%1)").arg(directionToString(the_new_direction));
     #endif
     if(last_direction!=the_new_direction)
     {
         #ifdef DEBUG_MESSAGE_MOVEONTHEMAP
-        qDebug() << std::stringLiteral("send_player_move(%1,%2)").arg(last_step).arg(directionToString(the_new_direction));
+        qDebug() << std::stringLiteral("send_player_move_internal((%1,%2)").arg(last_step).arg(directionToString(the_new_direction));
         #endif
-        send_player_move(last_step,the_new_direction);
+        send_player_move_internal(last_step,the_new_direction);
         last_step=0;
         last_direction=the_new_direction;
     }
@@ -38,6 +44,11 @@ void MoveOnTheMap::newDirection(const Direction &the_new_direction)
             case Direction_look_at_bottom:
             case Direction_look_at_left:
             //to drop the dual same trame
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(last_step>0)
+                abort();
+            #endif
+            last_step=0;
             return;
             break;
             default:

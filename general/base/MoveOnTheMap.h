@@ -37,9 +37,10 @@ public:
     static bool isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     static MonstersCollisionValue getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y);
 protected:
-    virtual void send_player_move(const uint8_t &moved_unit,const Direction &the_new_direction) = 0;
+    virtual void send_player_move_internal(const uint8_t &moved_unit,const Direction &the_new_direction) = 0;
     Direction last_direction;
     uint8_t last_step;
+    bool last_direction_is_set;
 };
 
 }
