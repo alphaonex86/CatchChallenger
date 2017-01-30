@@ -406,7 +406,59 @@ void Api_protocol::send_player_move(const uint8_t &moved_unit,const Direction &d
     if(directionInt<1 || directionInt>8)
     {
         std::cerr << "direction given wrong: " << directionInt << std::endl;
-        return;
+        abort();
+    }
+    if(last_direction_is_set==false)
+        abort();
+    //correct integration with MoveOnTheMap::newDirection()
+    if(last_direction!=direction)
+    {
+        send_player_move_internal(last_step,last_direction);
+        send_player_move_internal(moved_unit,direction);
+    }
+    else
+    {
+        bool isAMove=false;
+        switch(direction)
+        {
+            case Direction_move_at_top:
+            case Direction_move_at_right:
+            case Direction_move_at_bottom:
+            case Direction_move_at_left:
+                isAMove=true;
+            return;
+            break;
+            default:
+            break;
+        }
+        if(isAMove)
+        {
+            last_step+=moved_unit;
+            return;
+        }
+        else // if look
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(moved_unit>0)
+                abort();
+            if(last_step>0)
+                abort();
+            #endif
+            last_step=0;
+            return;//2x time look on smae direction, drop
+        }
+    }
+    last_step=0;
+    last_direction=direction;
+}
+
+void Api_protocol::send_player_move_internal(const uint8_t &moved_unit,const CatchChallenger::Direction &direction)
+{
+    uint8_t directionInt=static_cast<uint8_t>(direction);
+    if(directionInt<1 || directionInt>8)
+    {
+        std::cerr << "direction given wrong: " << directionInt << std::endl;
+        abort();
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -1784,6 +1836,11 @@ void Api_protocol::resetAll()
     player_informations.itemOnMap.clear();
     player_informations.plantOnMap.clear();
     tokenForGameServer.clear();
+    //to move by unit
+    last_step=255;
+    last_direction=Direction_look_at_bottom;
+    last_direction_is_set=false;
+
     unloadSelection();
     isInTrade=false;
     tradeRequestId.clear();

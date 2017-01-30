@@ -158,6 +158,8 @@ protected:
     bool packOutcommingQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size);
     //send reply
     bool postReplyData(const uint8_t &queryNumber, const char * const data,const int &size);
+    //the internal serialiser
+    void send_player_move_internal(const uint8_t &moved_unit,const CatchChallenger::Direction &direction);
 protected:
     //have message without reply
     virtual bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size);
@@ -351,6 +353,7 @@ signals:
 public:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const uint8_t &moved_unit,const CatchChallenger::Direction &direction);
+    //void send_move_unit(const CatchChallenger::Direction &direction);->do by MoveOnTheMap::newDirection()
     void sendChatText(const CatchChallenger::Chat_type &chatType,const QString &text);
     void sendPM(const QString &text,const QString &pseudo);
     void teleportDone();
