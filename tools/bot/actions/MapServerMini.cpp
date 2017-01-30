@@ -6,7 +6,6 @@ QList<QColor> MapServerMini::colorsList;
 
 MapServerMini::MapServerMini()
 {
-    botLayerMask=NULL;
 }
 
 bool MapServerMini::preload_other_pre()

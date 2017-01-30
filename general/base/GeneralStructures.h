@@ -495,7 +495,7 @@ struct MonstersCollisionValue
 
 struct ParsedLayer
 {
-    bool *walkable;
+    bool *walkable;//walkable if !=false mean !=0
     uint8_t *monstersCollisionMap;
     std::vector<MonstersCollisionValue> monstersCollisionList;
     //bool *grass;
