@@ -96,6 +96,7 @@ CachedString::CachedString()
     bot="bot";
     skin="skin";
     lookAt="lookAt";
+    move="move";
     file="file";
     infinite="infinite";
     text_true="true";

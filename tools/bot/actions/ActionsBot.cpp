@@ -25,13 +25,6 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
             bots_number++;
             CatchChallenger::Map_to_send::Bot_Semi bot_Semi=semi_loaded_map.at(index).old_map.bots.at(sub_index);
 
-            if(mapServer->botLayerMask==NULL)
-            {
-                mapServer->botLayerMask=(uint8_t *)malloc(mapServer->width*mapServer->height);
-                memset(mapServer->botLayerMask,0,mapServer->width*mapServer->height);
-            }
-            mapServer->botLayerMask[bot_Semi.point.x+bot_Semi.point.y*mapServer->width]=1;
-
             if(!stringEndsWith(bot_Semi.file,".xml"))
                 bot_Semi.file+=".xml";
             loadBotFile(semi_loaded_map.at(index).map->map_file,bot_Semi.file);

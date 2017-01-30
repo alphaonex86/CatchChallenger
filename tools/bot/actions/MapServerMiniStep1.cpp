@@ -12,8 +12,8 @@ bool MapServerMini::preload_step1()
     zoneHash[""]=0;
     MapParsedForBot step1;
     {
-        step1.map=(uint8_t *)malloc(width*height);
-        memset(step1.map,0x00,width*height);//by default: not accessible zone
+        step1.map=(uint16_t *)malloc(width*height*sizeof(uint16_t));
+        memset(step1.map,0x00,width*height*sizeof(uint16_t));//by default: not accessible zone
         int y=0;
         while(y<this->height)
         {

@@ -122,7 +122,7 @@ public:
     std::vector<MapParsedForBot> step;
     uint8_t min_x,max_x,min_y,max_y;
 
-    uint8_t *botLayerMask;
+    //uint8_t *botLayerMask;->directly mark as not walkable into the map loader
 
     bool addBlockLink(BlockObject &blockObjectFrom,BlockObject &blockObjectTo,const BlockObject::LinkType &linkSourceFrom,/*point to go:*/const uint8_t &x,const uint8_t &y);
 public:
