@@ -42,7 +42,7 @@ public:
         uint8_t y;
         CatchChallenger::Direction direction;
         GlobalTarget target;
-        uint8_t previousStepWalked;
+        //uint8_t previousStepWalked;do into the api, see MoveOnTheMap::newDirection()
         CatchChallenger::ClientFightEngine *fightEngine;
         CatchChallenger::Api_protocol *api;
 

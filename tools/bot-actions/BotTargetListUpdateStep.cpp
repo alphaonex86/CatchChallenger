@@ -27,8 +27,35 @@ void BotTargetList::updatePlayerStep()
                     haveChange=true;
                     switch(player.target.linkPoint.type)
                     {
-                    /// \todo the last step zone
-                        case MapServerMini::BlockObject::LinkType::SourceNone:
+                        /// \todo the last step zone
+                        case MapServerMini::BlockObject::LinkType::SourceTopMap:
+                        case MapServerMini::BlockObject::LinkType::SourceInternalTopBlock:
+                            if(canGoTo(api,CatchChallenger::Direction::Direction_move_at_top,&mapServer,&x,&y,true,true))
+                            {
+                                moveGoTo(api,CatchChallenger::Direction::Direction_move_at_top,&mapServer,&x,&y,true,true);
+                                player.direction=CatchChallenger::Direction::Direction_move_at_top;
+                                api->newDirection(direction);
+                            }
+                            else
+                            {
+                                player.target.bestPath.clear();
+                                player.target.localStep.clear();
+                            }
+                        break;
+                        case MapServerMini::BlockObject::LinkType::SourceRightMap:
+                        case MapServerMini::BlockObject::LinkType::SourceInternalRightBlock:
+                            destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_right;
+                        break;
+                        case MapServerMini::BlockObject::LinkType::SourceBottomMap:
+                        case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
+                            destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_bottom;
+                        break;
+                        case MapServerMini::BlockObject::LinkType::SourceLeftMap:
+                        case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
+                            destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_left;
+                        break;
+                        default:
+                            destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
                         break;
                         default:
                         break;
@@ -42,56 +69,44 @@ void BotTargetList::updatePlayerStep()
                         o-=4;
                     //if the target is on the same block
                     const MapServerMini::BlockObject * nextBlock=player.target.bestPath.front();
-                    if(!player.target.bestPath.empty())
+                    if(layer.blockObject->links.find(nextBlock)==layer.blockObject->links.cend())
+                        abort();
+                    pointsList=layer.blockObject->links.at(nextBlock).points;
+                    if(pointsList.empty())
+                        abort();
+                    unsigned int index=0;
+                    while(index<pointsList.size())
                     {
-                        const std::pair<uint8_t,uint8_t> &point=getNextPosition(nextBlock,player.target/*hop list, first is the next hop*/);
+                        const MapServerMini::BlockObject::LinkPoint &point=pointsList.at(index);
                         DestinationForPath destinationForPath;
-                        destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
                         destinationForPath.destination_x=point.first;
                         destinationForPath.destination_y=point.second;
-                        destinations.push_back(destinationForPath);
-                    }
-                    else //search the best path to the next block
-                    {
-                        if(layer.blockObject->links.find(nextBlock)==layer.blockObject->links.cend())
-                            abort();
-                        pointsList=layer.blockObject->links.at(nextBlock).points;
-                        if(pointsList.empty())
-                            abort();
-                        unsigned int index=0;
-                        while(index<pointsList.size())
+                        switch(point.type)
                         {
-                            const MapServerMini::BlockObject::LinkPoint &point=pointsList.at(index);
-                            DestinationForPath destinationForPath;
-                            destinationForPath.destination_x=point.first;
-                            destinationForPath.destination_y=point.second;
-                            switch(point.type)
-                            {
-                                case MapServerMini::BlockObject::LinkType::SourceTopMap:
-                                case MapServerMini::BlockObject::LinkType::SourceInternalTopBlock:
-                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_top;
-                                break;
-                                case MapServerMini::BlockObject::LinkType::SourceRightMap:
-                                case MapServerMini::BlockObject::LinkType::SourceInternalRightBlock:
-                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_right;
-                                break;
-                                case MapServerMini::BlockObject::LinkType::SourceBottomMap:
-                                case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
-                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_bottom;
-                                break;
-                                case MapServerMini::BlockObject::LinkType::SourceLeftMap:
-                                case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
-                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_left;
-                                break;
-                                default:
-                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
-                                break;
-                            }
-                            destinations.push_back(destinationForPath);
-                            linkInformationList.push_back(linkInformation);
-
-                            index++;
+                            case MapServerMini::BlockObject::LinkType::SourceTopMap:
+                            case MapServerMini::BlockObject::LinkType::SourceInternalTopBlock:
+                                destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_top;
+                            break;
+                            case MapServerMini::BlockObject::LinkType::SourceRightMap:
+                            case MapServerMini::BlockObject::LinkType::SourceInternalRightBlock:
+                                destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_right;
+                            break;
+                            case MapServerMini::BlockObject::LinkType::SourceBottomMap:
+                            case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
+                                destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_bottom;
+                            break;
+                            case MapServerMini::BlockObject::LinkType::SourceLeftMap:
+                            case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
+                                destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_left;
+                            break;
+                            default:
+                                destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
+                            break;
                         }
+                        destinations.push_back(destinationForPath);
+                        linkInformationList.push_back(linkInformation);
+
+                        index++;
                     }
                     bool ok=false;
                     unsigned int destinationIndexSelected=0;

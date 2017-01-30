@@ -402,8 +402,7 @@ void ActionsAction::doMove()
                 {
                     if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))
                     {
-                        //api->send_player_move(0,player.direction);
-                        player.previousStepWalked++;
+                        api->newDirection(player.direction);
                         if(step.second==0)
                             player.target.localStep.erase(player.target.localStep.cbegin());
                         move(api,direction,&playerMap,&player.x,&player.y,true,true);
@@ -414,8 +413,7 @@ void ActionsAction::doMove()
                     {
                         //stop
                         player.direction=(CatchChallenger::Direction)((uint8_t)player.direction-4);
-                        api->send_player_move(player.previousStepWalked,player.direction);
-                        player.previousStepWalked=0;
+                        api->newDirection(player.direction);
                         player.target.localStep.clear();
                         player.target.bestPath.clear();
                     }
@@ -426,8 +424,7 @@ void ActionsAction::doMove()
                     if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))
                     {
                         player.direction=direction;
-                        api->send_player_move(player.previousStepWalked,player.direction);
-                        player.previousStepWalked=1;
+                        api->newDirection(player.direction);
                         if(step.second==0)
                             player.target.localStep.erase(player.target.localStep.cbegin());
                         move(api,direction,&playerMap,&player.x,&player.y,true,true);
@@ -438,11 +435,10 @@ void ActionsAction::doMove()
                     {
                         //turn on the new direction
                         const CatchChallenger::Direction &newDirection=(CatchChallenger::Direction)((uint8_t)direction-4);
-                        if(newDirection!=player.direction || player.previousStepWalked>0)
+                        if(newDirection!=player.direction)
                         {
                             player.direction=newDirection;
-                            api->send_player_move(player.previousStepWalked,player.direction);
-                            player.previousStepWalked=0;
+                            api->newDirection(player.direction);
                         }
                         player.target.localStep.clear();
                         player.target.bestPath.clear();
@@ -455,8 +451,7 @@ void ActionsAction::doMove()
                 if(player.direction>4)
                 {
                     player.direction=(CatchChallenger::Direction)((uint8_t)player.direction-4);
-                    api->send_player_move(player.previousStepWalked,player.direction);
-                    player.previousStepWalked=0;
+                    api->newDirection(player.direction);
                 }
             }
         }

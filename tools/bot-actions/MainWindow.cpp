@@ -166,7 +166,6 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
         ActionsBotInterface::Player newPlayer=actionsAction->clientList[api];
         //newPlayer.player=0;
         newPlayer.mapId=0;
-        newPlayer.previousStepWalked=0;
         newPlayer.x=0;
         newPlayer.y=0;
         newPlayer.direction=CatchChallenger::Direction::Direction_look_at_bottom;
