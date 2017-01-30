@@ -262,7 +262,7 @@ void BotTargetList::startPlayerMove()
 
     std::vector<DestinationForPath> destinations;
     std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
-    uint8_t o=player.direction;
+    uint8_t o=client->api->getDirection();
     while(o>4)
         o-=4;
     //if the target is on the same block

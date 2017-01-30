@@ -20,6 +20,13 @@ void MoveOnTheMap::setLastDirection(const Direction &the_direction)
     last_step=0;
 }
 
+Direction MoveOnTheMap::getDirection() const
+{
+    if(last_direction_is_set!=false)
+        abort();
+    return last_direction;
+}
+
 void MoveOnTheMap::newDirection(const Direction &the_new_direction)
 {
     if(last_direction_is_set==false)
