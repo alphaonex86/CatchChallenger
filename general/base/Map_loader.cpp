@@ -917,7 +917,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 while(index<listsize)
                 {
                     const Map_to_send::Bot_Semi &bot=map_to_send_temp.bots.at(index);
-                    if(bot.property_text.at(CACHEDSTRING_lookAt)!=CACHEDSTRING_move)
+                    if(bot.property_text.find(CACHEDSTRING_lookAt)==bot.property_text.cend() || bot.property_text.at(CACHEDSTRING_lookAt)!=CACHEDSTRING_move)
                         map_to_send_temp.parsed_layer.walkable[bot.point.x+bot.point.y*map_to_send_temp.width]=false;
                     index++;
                 }

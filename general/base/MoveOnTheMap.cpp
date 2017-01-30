@@ -15,6 +15,7 @@ void MoveOnTheMap::setLastDirection(const Direction &the_direction)
 {
     if(last_direction_is_set!=false)
         abort();
+    last_direction_is_set=true;
     last_direction=the_direction;
     last_step=0;
 }
