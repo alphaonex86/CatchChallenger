@@ -446,7 +446,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                 {
                                     if(property_text.find(CACHEDSTRING_skin)!=property_text.cend() && !property_text.at(CACHEDSTRING_skin).empty() && property_text.find(CACHEDSTRING_lookAt)==property_text.cend())
                                     {
-                                        property_text["lookAt"]="bottom";
+                                        property_text[CACHEDSTRING_lookAt]="bottom";
                                         std::cerr << "skin but not lookAt, fixed by bottom: " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " (" << file << " at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << ")" << std::endl;
                                     }
                                     if(property_text.find(CACHEDSTRING_file)!=property_text.cend() && property_text.find(CACHEDSTRING_id)!=property_text.cend())
@@ -916,7 +916,9 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 const int &listsize=map_to_send_temp.bots.size();
                 while(index<listsize)
                 {
-                    map_to_send_temp.parsed_layer.walkable[map_to_send_temp.bots.at(index).point.x+map_to_send_temp.bots.at(index).point.y*map_to_send_temp.width]=false;
+                    const Map_to_send::Bot_Semi &bot=map_to_send_temp.bots.at(index);
+                    if(bot.property_text.at(CACHEDSTRING_lookAt)!=CACHEDSTRING_move)
+                        map_to_send_temp.parsed_layer.walkable[bot.point.x+bot.point.y*map_to_send_temp.width]=false;
                     index++;
                 }
             }

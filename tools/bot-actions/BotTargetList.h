@@ -33,8 +33,8 @@ public:
             std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > top;
             std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > bottom;
         };
-        std::unordered_map<std::unordered_map<std::pair<uint8_t,uint8_t>,PathToGo,pairhash> > pathToGo;
-        std::unordered_map<std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> > pointQueued;
+        std::unordered_map<std::pair<uint8_t,uint8_t>,PathToGo,pairhash> pathToGo;
+        std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> pointQueued;
     };
     struct DestinationForPath
     {
@@ -99,6 +99,11 @@ private:
     bool alternateColor;
     static std::string pathFindingToString(const MapServerMini::BlockObjectPathFinding &resolvedBlock);
     static bool isSame(const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentA,const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentB);
+    static bool newPathIsBetterPath(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &oldPath,const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &newPath);
+    static uint16_t pathTileCount(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &path);
+    static std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > selectTheBetterPathToDestination(std::unordered_map<unsigned int,
+                                                 std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> >
+                                                 > pathToEachDestinations,unsigned int &destinationIndexSelected);
 
     //std::unodered_map<const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent,un> monsterCollisionContentDuplicate;
 };
