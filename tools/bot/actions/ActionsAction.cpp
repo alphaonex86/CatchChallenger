@@ -397,62 +397,32 @@ void ActionsAction::doMove()
                     abort();
                 step.second--;
                 //need just continue to walk
+                if(step.first<1 || step.first>4)
+                    abort();
                 const CatchChallenger::Direction direction=(CatchChallenger::Direction)((uint8_t)step.first+4);
-                if(player.direction==direction)
+                if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))
                 {
-                    if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))
-                    {
-                        api->newDirection(player.direction);
-                        if(step.second==0)
-                            player.target.localStep.erase(player.target.localStep.cbegin());
-                        move(api,direction,&playerMap,&player.x,&player.y,true,true);
-                        player.mapId=playerMap->id;
-                        checkOnTileEvent(player);
-                    }
-                    else
-                    {
-                        //stop
-                        player.direction=(CatchChallenger::Direction)((uint8_t)player.direction-4);
-                        api->newDirection(player.direction);
-                        player.target.localStep.clear();
-                        player.target.bestPath.clear();
-                    }
+                    api->newDirection(direction);
+                    if(step.second==0)
+                        player.target.localStep.erase(player.target.localStep.cbegin());
+                    move(api,direction,&playerMap,&player.x,&player.y,true,true);
+                    player.mapId=playerMap->id;
+                    checkOnTileEvent(player);
                 }
-                //need start to walk or direction change
                 else
                 {
-                    if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))
-                    {
-                        player.direction=direction;
-                        api->newDirection(player.direction);
-                        if(step.second==0)
-                            player.target.localStep.erase(player.target.localStep.cbegin());
-                        move(api,direction,&playerMap,&player.x,&player.y,true,true);
-                        player.mapId=playerMap->id;
-                        checkOnTileEvent(player);
-                    }
-                    else
-                    {
-                        //turn on the new direction
-                        const CatchChallenger::Direction &newDirection=(CatchChallenger::Direction)((uint8_t)direction-4);
-                        if(newDirection!=player.direction)
-                        {
-                            player.direction=newDirection;
-                            api->newDirection(player.direction);
-                        }
-                        player.target.localStep.clear();
-                        player.target.bestPath.clear();
-                    }
+                    //turn on the new direction
+                    const CatchChallenger::Direction &newDirection=(CatchChallenger::Direction)((uint8_t)direction-4);
+                    api->newDirection(newDirection);
+                    player.target.localStep.clear();
+                    player.target.bestPath.clear();
                 }
             }
             else
             {
                 //stop the player if is not stopped
-                if(player.direction>4)
-                {
-                    player.direction=(CatchChallenger::Direction)((uint8_t)player.direction-4);
-                    api->newDirection(player.direction);
-                }
+                if(api->getDirection()>4)
+                    api->newDirection((CatchChallenger::Direction)((uint8_t)api->getDirection()-4));
             }
         }
     }

@@ -36,6 +36,7 @@ public:
     static bool isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     static bool isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     static MonstersCollisionValue getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y);
+    Direction getDirection() const;
 protected:
     virtual void send_player_move_internal(const uint8_t &moved_unit,const Direction &the_new_direction) = 0;
     Direction last_direction;
