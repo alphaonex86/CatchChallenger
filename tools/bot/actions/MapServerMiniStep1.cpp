@@ -33,6 +33,19 @@ bool MapServerMini::preload_step1()
                 if(this->parsed_layer.ledges!=NULL)
                     if(this->parsed_layer.ledges[x+y*this->width])
                         zone+="l"+QString::number(this->parsed_layer.ledges[x+y*this->width]);
+                const std::pair<uint8_t,uint8_t> p(x,y);
+                if(botOnMap.find(p)!=botOnMap.cend())
+                {
+                    const std::vector<uint16_t> &botsList=botOnMap.at(p);
+                    unsigned int index=0;
+                    while(index<botsList.size())
+                    {
+                        zone+="bot"+QString::number(botsList.at(index));
+                        index++;
+                    }
+                }
+                if(pointOnMap_Item.find(p)!=pointOnMap_Item.cend())
+                    zone+="itemonmap"+QString::number(x)+","+QString::number(y);
                 if(!zoneHash.contains(zone))
                 {
                     int size=zoneHash.size();

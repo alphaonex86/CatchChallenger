@@ -62,6 +62,16 @@ bool ActionsAction::preload_the_map()
                 mapServer->height			= map_temp.map_to_send.height;
                 mapServer->parsed_layer	= map_temp.map_to_send.parsed_layer;
                 mapServer->map_file		= sortFileName;
+                {
+                    unsigned int index=0;
+                    while(index<map_temp.map_to_send.bots.size())
+                    {
+                        const CatchChallenger::Map_to_send::Bot_Semi &bot=map_temp.map_to_send.bots.at(index);
+                        std::pair<uint8_t,uint8_t> p(bot.point.x,bot.point.y);
+                        mapServer->botOnMap[p].push_back(bot.id);
+                        index++;
+                    }
+                }
 
                 map_name.push_back(sortFileName);
 
