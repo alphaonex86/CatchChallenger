@@ -535,18 +535,23 @@ bool MapServerMini::preload_step2b()
                 {
                     BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
                     const uint8_t newx=teleporterEntry.destination_x,newy=teleporterEntry.destination_y;
-                    MapServerMini &nextMap=*static_cast<MapServerMini *>(teleporterEntry.map);
-                    if(nextMap.step.size()<2)
-                        abort();
-                    MapParsedForBot &step2nextMap=nextMap.step[1];
-                    const uint8_t &otherCodeZone=step2nextMap.map[newx+newy*nextMap.width];
-                    if(otherCodeZone!=0)
-                        //if the other not dirt or other not walkable layer
-                        if(nextMap.parsed_layer.walkable!=NULL && nextMap.parsed_layer.walkable[newx+newy*this->width]!=false)
-                        {
-                            BlockObject &otherBlockObject=*step2nextMap.layers[otherCodeZone-1].blockObject;
-                            addBlockLink(blockObject,otherBlockObject,BlockObject::LinkType::SourceTeleporter,x,y);
-                        }
+                    const MapServerMini *nextMap=static_cast<MapServerMini *>(teleporterEntry.map);
+                    if(newx<nextMap->width && newy<nextMap->height)
+                    {
+                        if(nextMap->step.size()<2)
+                            abort();
+                        const MapParsedForBot &step2nextMap=nextMap->step.at(1);
+                        const uint8_t &otherCodeZone=step2nextMap.map[newx+newy*nextMap->width];
+                        if(otherCodeZone!=0)
+                            //if the other not dirt or other not walkable layer
+                            if(nextMap->parsed_layer.walkable!=NULL && nextMap->parsed_layer.walkable[newx+newy*nextMap->width]!=false)
+                            {
+                                BlockObject &otherBlockObject=*step2nextMap.layers[otherCodeZone-1].blockObject;
+                                addBlockLink(blockObject,otherBlockObject,BlockObject::LinkType::SourceTeleporter,x,y);
+                            }
+                    }
+                    else
+                        std::cerr << "tp from: " << map_file << ", next map load: " << nextMap->map_file << " on " << std::to_string(newx) << "," << std::to_string(newy) << " is out of range (" << std::to_string(nextMap->width) << "," << std::to_string(nextMap->height) << ")" << std::endl;
                 }
             }
             index++;
