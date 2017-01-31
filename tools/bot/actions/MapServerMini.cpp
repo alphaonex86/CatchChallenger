@@ -6,6 +6,11 @@ QList<QColor> MapServerMini::colorsList;
 
 MapServerMini::MapServerMini()
 {
+    parsed_layer.walkable=NULL;
+    parsed_layer.monstersCollisionMap=NULL;
+    parsed_layer.dirt=NULL;
+    parsed_layer.ledges=NULL;
+    teleporter=NULL;
 }
 
 bool MapServerMini::preload_other_pre()
