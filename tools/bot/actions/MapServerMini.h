@@ -27,6 +27,7 @@ public:
     bool preload_post_subdatapack();
     static QList<QColor> colorsList;
 
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>,pairhash> botOnMap;
     std::map<std::pair<uint8_t,uint8_t>,CatchChallenger::Orientation/*,pairhash*/> rescue;
     //at last to improve the other variable cache
     struct ItemOnMap
@@ -72,7 +73,7 @@ public:
             LinkDirection direction;
             std::vector<LinkPoint> points;
         };
-        std::unordered_map<BlockObject */*to where*/,LinkInformation/*how, if single way or both way*/> links;
+        std::unordered_map<const BlockObject */*to where*/,LinkInformation/*how, if single way or both way*/> links;
         MapServerMini * map;
         uint8_t id;
 

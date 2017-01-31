@@ -31,7 +31,7 @@ public:
         GlobalTargetType type;
         uint32_t extra;
         const MapServerMini::BlockObject * blockObject;//NULL if no target
-        std::vector<const MapServerMini::BlockObject *> bestPath;
+        std::vector<const MapServerMini::BlockObject *> bestPath;//without the current path
         std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > localStep;
         MapServerMini::BlockObject::LinkPoint linkPoint;
     };
