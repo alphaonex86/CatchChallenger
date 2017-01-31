@@ -22,7 +22,7 @@ void MoveOnTheMap::setLastDirection(const Direction &the_direction)
 
 Direction MoveOnTheMap::getDirection() const
 {
-    if(last_direction_is_set!=false)
+    if(last_direction_is_set==false)
         abort();
     return last_direction;
 }

@@ -146,18 +146,16 @@ void BotTargetList::updatePlayerStep()
                                 break;
                             }
                             destinations.push_back(destinationForPath);
-                            linkInformationList.push_back(linkInformation);
 
                             index++;
                         }
                         bool ok=false;
                         unsigned int destinationIndexSelected=0;
                         const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
-                                    layer.blockObject,
+                                    blockObject,
                                     static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
                                     destinations,
                                     destinationIndexSelected,
-                                    layer.blockObject,
                                     &ok);
                         if(!ok)
                             abort();
@@ -196,7 +194,7 @@ void BotTargetList::updatePlayerStep()
                 uint8_t x=player.x;
                 uint8_t y=player.y;
                 CatchChallenger::Direction direction;
-                switch(player.direction)
+                switch(api->getDirection())
                 {
                     case CatchChallenger::Direction_look_at_left:
                         direction=CatchChallenger::Direction_move_at_left;
@@ -211,7 +209,7 @@ void BotTargetList::updatePlayerStep()
                         direction=CatchChallenger::Direction_move_at_bottom;
                     break;
                     default:
-                        direction=player.direction;
+                        direction=api->getDirection();
                 }
                 if(!ActionsAction::moveWithoutTeleport(api,direction,&mapServer,&x,&y,false,false))
                     abort();
