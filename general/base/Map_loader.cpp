@@ -13,6 +13,7 @@
 using namespace CatchChallenger;
 
 std::unordered_map<std::string/*file*/, std::unordered_map<uint32_t/*id*/,CATCHCHALLENGER_XMLELEMENT *> > Map_loader::teleportConditionsUnparsed;
+//std::regex e("[^A-Za-z0-9+/=]+",std::regex::ECMAScript|std::regex::optimize);
 
 /// \todo put at walkable the tp on push
 
@@ -574,18 +575,21 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             }
             else
             {
-                const std::string &base64text=data->GetText();
-                std::regex e("[^A-Za-z0-9+/=]+");
+                std::string base64text=data->GetText();
 
                 // using string/c-string (3) version:
-                const std::string &base64textClean=std::regex_replace(base64text,e,"");
-                const std::vector<char> compressedData=base64toBinary(base64textClean);
+                //std::cout << "base64: \"" << base64text << "\"" << std::endl;
+                remove_if(base64text.begin(),base64text.end(),isspace);
+                if(!base64text.empty() && base64text[base64text.length()-1]=='\n')
+                    base64text.erase(base64text.length()-1);
+                //const std::string &base64textClean=base64text;//std::regex_replace(base64text,e,"");
+                const std::vector<char> &compressedData=base64toBinary(base64text);
                 if(!compressedData.empty())
                 {
                     std::vector<char> dataRaw;
                     dataRaw.resize(map_to_send_temp.height*map_to_send_temp.width*4);
-                    dataRaw.resize(ProtocolParsing::decompressZlib(compressedData.data(),compressedData.size(),dataRaw.data(),dataRaw.size()));
-                    if((uint32_t)dataRaw.size()!=map_to_send_temp.height*map_to_send_temp.width*4)
+                    const uint32_t &decompressedSize=ProtocolParsing::decompressZlib(compressedData.data(),compressedData.size(),dataRaw.data(),dataRaw.size());
+                    if((uint32_t)decompressedSize!=map_to_send_temp.height*map_to_send_temp.width*4)
                     {
                         error=std::string("map binary size (")+std::to_string(dataRaw.size())+") != "+std::to_string(map_to_send_temp.height)+"x"+std::to_string(map_to_send_temp.width)+"x4";
                         return false;
