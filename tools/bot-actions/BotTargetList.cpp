@@ -872,42 +872,15 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                     std::cout << "new destination resolved: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                     std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar;
 
-                    //add one hop if direction change
-                    std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> toAdd(destination.destination_orientation,0);
-                    switch(destination.destination_orientation)
-                    {
-                        case CatchChallenger::Orientation::Orientation_top:
-                            pathToGo.left.push_back(toAdd);
-                            pathToGo.right.push_back(toAdd);
-                            pathToGo.bottom.push_back(toAdd);
-                        break;
-                        case CatchChallenger::Orientation::Orientation_bottom:
-                            pathToGo.left.push_back(toAdd);
-                            pathToGo.right.push_back(toAdd);
-                            pathToGo.top.push_back(toAdd);
-                        break;
-                        case CatchChallenger::Orientation::Orientation_left:
-                            pathToGo.top.push_back(toAdd);
-                            pathToGo.right.push_back(toAdd);
-                            pathToGo.bottom.push_back(toAdd);
-                        break;
-                        case CatchChallenger::Orientation::Orientation_right:
-                            pathToGo.left.push_back(toAdd);
-                            pathToGo.top.push_back(toAdd);
-                            pathToGo.bottom.push_back(toAdd);
-                        break;
-                        default:
-                        break;
-                    }
-
+                    CatchChallenger::Orientation set_orientation=CatchChallenger::Orientation::Orientation_none;
                     if(pathToGo.left.size()<pathToGo.right.size() && pathToGo.left.size()<pathToGo.top.size() && pathToGo.left.size()<pathToGo.bottom.size())
-                        returnedVar=pathToGo.left;
+                        set_orientation=CatchChallenger::Orientation::Orientation_left;
                     if(pathToGo.right.size()<pathToGo.left.size() && pathToGo.right.size()<pathToGo.top.size() && pathToGo.right.size()<pathToGo.bottom.size())
-                        returnedVar=pathToGo.right;
+                        set_orientation=CatchChallenger::Orientation::Orientation_right;
                     if(pathToGo.top.size()<pathToGo.right.size() && pathToGo.top.size()<pathToGo.left.size() && pathToGo.top.size()<pathToGo.bottom.size())
-                        returnedVar=pathToGo.top;
+                        set_orientation=CatchChallenger::Orientation::Orientation_top;
                     if(pathToGo.bottom.size()<pathToGo.right.size() && pathToGo.bottom.size()<pathToGo.top.size() && pathToGo.bottom.size()<pathToGo.left.size())
-                        returnedVar=pathToGo.bottom;
+                        set_orientation=CatchChallenger::Orientation::Orientation_bottom;
                     else//by tile count based
                     {
                         const uint16_t &leftadd=pathTileCount(pathToGo.left);
@@ -916,15 +889,32 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                         const uint16_t &bottomadd=pathTileCount(pathToGo.bottom);
 
                         if(leftadd<rightadd && leftadd<topadd && leftadd<bottomadd)
-                            returnedVar=pathToGo.left;
+                            set_orientation=CatchChallenger::Orientation::Orientation_left;
                         if(rightadd<leftadd && rightadd<topadd && rightadd<bottomadd)
-                            returnedVar=pathToGo.right;
+                            set_orientation=CatchChallenger::Orientation::Orientation_right;
                         if(topadd<rightadd && topadd<leftadd && topadd<bottomadd)
-                            returnedVar=pathToGo.top;
+                            set_orientation=CatchChallenger::Orientation::Orientation_top;
                         if(bottomadd<rightadd && bottomadd<topadd && bottomadd<leftadd)
-                            returnedVar=pathToGo.bottom;
+                            set_orientation=CatchChallenger::Orientation::Orientation_bottom;
                         else //default path
+                            set_orientation=CatchChallenger::Orientation::Orientation_bottom;
+                    }
+                    switch(set_orientation)
+                    {
+                        case CatchChallenger::Orientation::Orientation_top:
+                            returnedVar=pathToGo.top;
+                        break;
+                        case CatchChallenger::Orientation::Orientation_bottom:
                             returnedVar=pathToGo.bottom;
+                        break;
+                        case CatchChallenger::Orientation::Orientation_left:
+                            returnedVar=pathToGo.left;
+                        break;
+                        case CatchChallenger::Orientation::Orientation_right:
+                            returnedVar=pathToGo.right;
+                        break;
+                        default:
+                        break;
                     }
 
                     if(!returnedVar.empty())
@@ -935,24 +925,30 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             return returnedVar;
                         }
                         else
+                            returnedVar.back().second--;
+                    }
+                    //add one hop if direction change
+                    std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> toAdd(destination.destination_orientation,0);
+                    if(destination.destination_orientation!=set_orientation)
+                        returnedVar.push_back(toAdd);
+
+                    if(!returnedVar.empty())
+                    {
+                        if(pathToEachDestinations.find(index)==pathToEachDestinations.cend())
+                            pathToEachDestinations[index]=returnedVar;
+                        else
+                        {
+                            if(newPathIsBetterPath(pathToEachDestinations.at(index),returnedVar))
+                                pathToEachDestinations[index]=returnedVar;
+                        }
+                        if(pathToEachDestinations.size()>=destinations.size())
                         {
                             auto end = std::chrono::high_resolution_clock::now();
                             std::chrono::duration<double, std::milli> elapsed = end-start;
-
                             std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
-                            returnedVar.back().second--;
-                            if(pathToEachDestinations.find(index)==pathToEachDestinations.cend())
-                                pathToEachDestinations[index]=returnedVar;
-                            else
-                            {
-                                if(newPathIsBetterPath(pathToEachDestinations.at(index),returnedVar))
-                                    pathToEachDestinations[index]=returnedVar;
-                            }
-                            if(pathToEachDestinations.size()==destinations.size())
-                            {
-                                *ok=true;
-                                return selectTheBetterPathToDestination(pathToEachDestinations,destinationIndexSelected);
-                            }
+
+                            *ok=true;
+                            return selectTheBetterPathToDestination(pathToEachDestinations,destinationIndexSelected);
                         }
                     }
                     else
@@ -960,8 +956,12 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                         pathToEachDestinations[index]=returnedVar;
                         returnedVar.clear();
                         std::cout << "Warning: Bug due to resolved path is empty, Already on blockZone border to go on the next zone" << std::endl;
-                        if(pathToEachDestinations.size()==destinations.size())
+                        if(pathToEachDestinations.size()>=destinations.size())
                         {
+                            auto end = std::chrono::high_resolution_clock::now();
+                            std::chrono::duration<double, std::milli> elapsed = end-start;
+                            std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+
                             *ok=true;
                             return selectTheBetterPathToDestination(pathToEachDestinations,destinationIndexSelected);
                         }
