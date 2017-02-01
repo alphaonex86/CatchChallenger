@@ -20,10 +20,19 @@ bool MapServerMini::preload_step1()
             int x=0;
             while(x<this->width)
             {
+                const std::pair<uint8_t,uint8_t> p(x,y);
                 QString zone;
+                bool walkable=false;
                 if(this->parsed_layer.walkable!=NULL)
                     if(this->parsed_layer.walkable[x+y*this->width])
-                        zone+="w";
+                        walkable=true;
+                if(pointOnMap_Item.find(p)!=pointOnMap_Item.cend())
+                {
+                    zone+="itemonmap"+QString::number(x)+","+QString::number(y);
+                    //walkable=true;
+                }
+                if(walkable)
+                    zone+="w";
                 if(this->parsed_layer.monstersCollisionMap!=NULL)
                     if(this->parsed_layer.monstersCollisionMap[x+y*this->width])
                         zone+="m"+QString::number(this->parsed_layer.monstersCollisionMap[x+y*this->width]);
@@ -33,7 +42,7 @@ bool MapServerMini::preload_step1()
                 if(this->parsed_layer.ledges!=NULL)
                     if(this->parsed_layer.ledges[x+y*this->width])
                         zone+="l"+QString::number(this->parsed_layer.ledges[x+y*this->width]);
-                const std::pair<uint8_t,uint8_t> p(x,y);
+
                 if(botOnMap.find(p)!=botOnMap.cend())
                 {
                     const std::vector<uint16_t> &botsList=botOnMap.at(p);
@@ -44,8 +53,6 @@ bool MapServerMini::preload_step1()
                         index++;
                     }
                 }
-                if(pointOnMap_Item.find(p)!=pointOnMap_Item.cend())
-                    zone+="itemonmap"+QString::number(x)+","+QString::number(y);
                 if(!zoneHash.contains(zone))
                 {
                     int size=zoneHash.size();

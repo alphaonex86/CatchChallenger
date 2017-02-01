@@ -266,7 +266,8 @@ void BotTargetList::startPlayerMove()
     while(o>4)
         o-=4;
     //if the target is on the same block
-    if(!player.target.bestPath.empty())
+    fix that's
+    if(player.target.bestPath.empty())
     {
         const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target/*hop list, first is the next hop*/);
         DestinationForPath destinationForPath;
