@@ -111,15 +111,16 @@ bool MapServerMini::preload_step2()
     //link the internal block
     {
         int y=0;
-        while(y<(this->height-1))
+        while(y<this->height)
         {
             int x=0;
-            while(x<(this->width-1))
+            while(x<this->width)
             {
                 const uint16_t codeZone=step2.map[x+y*this->width];
                 if(codeZone!=0)
                 {
                     //check the right tile
+                    if(x<(this->width-1))
                     {
                         uint8_t newx=(x+1),newy=y;
                         const uint16_t &rightCodeZone=step2.map[newx+newy*this->width];
@@ -169,6 +170,7 @@ bool MapServerMini::preload_step2()
                     }
 
                     //check the bottom tile
+                    if(y<(this->height-1))
                     {
                         uint8_t newx=x,newy=(y+1);
                         const uint16_t &bottomCodeZone=step2.map[newx+newy*this->width];
