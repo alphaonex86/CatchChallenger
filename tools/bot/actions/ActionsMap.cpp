@@ -67,8 +67,12 @@ bool ActionsAction::preload_the_map()
                     while(index<map_temp.map_to_send.bots.size())
                     {
                         const CatchChallenger::Map_to_send::Bot_Semi &bot=map_temp.map_to_send.bots.at(index);
-                        std::pair<uint8_t,uint8_t> p(bot.point.x,bot.point.y);
-                        mapServer->botOnMap[p].push_back(bot.id);
+                        //it's moving bot consider it into all the current zone, not on the tile
+                        if(bot.property_text.find("skin")!=bot.property_text.cend() && (bot.property_text.find("lookAt")==bot.property_text.cend() || bot.property_text.at("lookAt")!="move"))
+                        {
+                            std::pair<uint8_t,uint8_t> p(bot.point.x,bot.point.y);
+                            mapServer->botOnMap[p].push_back(bot.id);
+                        }
                         index++;
                     }
                 }
