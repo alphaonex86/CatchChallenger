@@ -421,8 +421,7 @@ void ActionsAction::doMove()
             else
             {
                 //stop the player if is not stopped
-                if(api->getDirection()>4)
-                    api->newDirection((CatchChallenger::Direction)((uint8_t)api->getDirection()-4));
+                api->stopMove();
             }
         }
     }

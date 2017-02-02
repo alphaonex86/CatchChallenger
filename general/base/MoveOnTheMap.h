@@ -20,6 +20,7 @@ public:
     MoveOnTheMap();
     virtual void newDirection(const Direction &the_direction);
     virtual void setLastDirection(const Direction &the_direction);
+    void stopMove();
     //debug function
     static std::string directionToString(const Direction &direction);
     static Orientation directionToOrientation(const Direction &direction);

@@ -76,6 +76,25 @@ void MoveOnTheMap::newDirection(const Direction &the_new_direction)
     }
 }
 
+void MoveOnTheMap::stopMove()
+{
+    if(last_direction_is_set==false)
+        abort();
+    switch(last_direction)
+    {
+        case Direction_move_at_top:
+        case Direction_move_at_right:
+        case Direction_move_at_bottom:
+        case Direction_move_at_left:
+            last_direction=(CatchChallenger::Direction)((uint8_t)last_direction-4);
+            send_player_move_internal(last_step,last_direction);
+            last_step=0;
+        break;
+        default:
+        break;
+    }
+}
+
 std::string MoveOnTheMap::directionToString(const Direction &direction)
 {
     switch(direction)
