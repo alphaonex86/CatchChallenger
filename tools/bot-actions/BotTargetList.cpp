@@ -59,37 +59,34 @@ BotTargetList::~BotTargetList()
 
 bool BotTargetList::newPathIsBetterPath(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &oldPath,const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &newPath)
 {
-    if(oldPath.size()>=newPath.size())
-    {
-        if(oldPath.size()==newPath.size())
-        {
-            unsigned int oldPathTile=0;
-            {
-                unsigned int index=0;
-                while(index<oldPath.size())
-                {
-                    const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &step=oldPath.at(index);
-                    oldPathTile+=step.second;
-                    index++;
-                }
-            }
-            unsigned int newPathTile=0;
-            {
-                unsigned int index=0;
-                while(index<oldPath.size())
-                {
-                    const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &step=newPath.at(index);
-                    newPathTile+=step.second;
-                    index++;
-                }
-            }
-            return newPathTile<oldPathTile;
-        }
-        else
-            return false;
-    }
-    else
+    if(oldPath.size()>newPath.size())
         return true;
+    else if(oldPath.size()==newPath.size())
+    {
+        unsigned int oldPathTile=0;
+        {
+            unsigned int index=0;
+            while(index<oldPath.size())
+            {
+                const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &step=oldPath.at(index);
+                oldPathTile+=step.second;
+                index++;
+            }
+        }
+        unsigned int newPathTile=0;
+        {
+            unsigned int index=0;
+            while(index<oldPath.size())
+            {
+                const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &step=newPath.at(index);
+                newPathTile+=step.second;
+                index++;
+            }
+        }
+        return newPathTile<oldPathTile;
+    }
+    else//if(oldPath.size()<newPath.size())
+        return false;
 }
 
 uint16_t BotTargetList::pathTileCount(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &path)
