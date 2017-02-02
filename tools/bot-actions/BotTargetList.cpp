@@ -728,6 +728,21 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         abort();
     if(destinations.empty())
         abort();
+    {
+        unsigned int index=0;
+        while(index<destinations.size())
+        {
+            const DestinationForPath &destination=destinations.at(index);
+            //if good position (no more shorter than the current position)
+            if(source_x==destination.destination_x && source_y==destination.destination_y/* && destination_blockObject==source_blockObject the block link to the multi-map change*/)
+            {
+                *ok=true;
+                destinationIndexSelected=index;
+                return std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> >();
+            }
+            index++;
+        }
+    }
     const MapServerMini::MapParsedForBot &step=blockObject->map->step.at(1);
     if(step.map==NULL)
         abort();
