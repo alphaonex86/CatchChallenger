@@ -464,7 +464,7 @@ void Client::collectPlant(
             }
         break;
         default:
-        errorOutput("Wrong direction to collect plant: "+std::to_string(getLastDirection()));
+            errorOutput("Wrong direction to collect plant (not look): "+MoveOnTheMap::directionToString(getLastDirection()));
         return;
     }
     //check if is dirt

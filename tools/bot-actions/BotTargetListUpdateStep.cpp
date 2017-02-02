@@ -220,6 +220,7 @@ void BotTargetList::updatePlayerStep()
                 if(!mapQtString.endsWith(".tmx"))
                     mapQtString+=".tmx";
                 //finish correctly the step
+                api->stopMove();
                 switch(player.target.type)
                 {
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
