@@ -120,6 +120,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         if(returnVar.empty())
         {
             destinationIndexSelected=key;
+            std::cout << "Path to return is empty" << std::endl;
             return returnVar;
         }
         if(returnVar.empty())
@@ -137,19 +138,35 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     if(returnVar.size()>1)
     {
         const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &firstValue=returnVar.front();
-        if(firstValue.second==0)
-            returnVar.erase(returnVar.cbegin());
+        if(firstValue.first==CatchChallenger::Orientation::Orientation_none)
+        {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(firstValue.second==0)
+        #endif
+                returnVar.erase(returnVar.cbegin());
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            else
+                abort();
+        #endif
+        }
     }
     //group the 2 last action if is look into differente direction
     if(returnVar.size()>1)
     {
         const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &lastValue=returnVar.back();
-        if(lastValue.second==0)
+        if(lastValue.first==CatchChallenger::Orientation::Orientation_none)
         {
-            returnVar[returnVar.size()-2].first=lastValue.first;
-            returnVar.erase(returnVar.cbegin()+returnVar.size()-1);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(lastValue.second==0)
+        #endif
+                returnVar.erase(returnVar.cbegin()+returnVar.size()-1);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            else
+                abort();
+        #endif
         }
     }
+    std::cout << "Path to return: " << BotTargetList::stepToString(returnVar) << std::endl;
     return returnVar;
 }
 
@@ -729,32 +746,32 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         switch(source_orientation)
         {
             case CatchChallenger::Orientation::Orientation_top:
-                pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,0));
-                pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,0));
-                pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,0));
+                pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
             break;
             case CatchChallenger::Orientation::Orientation_bottom:
-                pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,0));
-                pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,0));
-                pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,0));
+                pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
             break;
             case CatchChallenger::Orientation::Orientation_left:
-                pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,0));
-                pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,0));
-                pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,0));
+                pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
             break;
             case CatchChallenger::Orientation::Orientation_right:
-                pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,0));
-                pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,0));
-                pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,0));
+                pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
             break;
             default:
             break;
         }
-        pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1));
-        pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
-        pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
-        pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1));
+        pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,1));
+        pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,1));
+        pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,1));
+        pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,1));
     }
 
     std::pair<uint8_t,uint8_t> coord;
@@ -869,24 +886,53 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                 //if good position
                 if(x==destination.destination_x && y==destination.destination_y/* && destination_blockObject==source_blockObject the block link to the multi-map change*/)
                 {
-                    std::cout << "new destination resolved: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
+                    std::cout << "new destination resolved: " << std::to_string(source_x) << "," << std::to_string(source_y) << " -> " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                     std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar;
 
+                    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > left=pathToGo.left;
+                    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > right=pathToGo.right;
+                    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > top=pathToGo.top;
+                    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > bottom=pathToGo.bottom;
+                    switch(destination.destination_orientation)
+                    {
+                        case CatchChallenger::Orientation::Orientation_top:
+                            left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                            right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                            bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                        break;
+                        case CatchChallenger::Orientation::Orientation_bottom:
+                            left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                            right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                            top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                        break;
+                        case CatchChallenger::Orientation::Orientation_left:
+                            right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                            top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                            bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                        break;
+                        case CatchChallenger::Orientation::Orientation_right:
+                            left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                            top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                            bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_none,0));
+                        break;
+                        default:
+                        break;
+                    }
                     CatchChallenger::Orientation set_orientation=CatchChallenger::Orientation::Orientation_none;
-                    if(pathToGo.left.size()<pathToGo.right.size() && pathToGo.left.size()<pathToGo.top.size() && pathToGo.left.size()<pathToGo.bottom.size())
+                    if(left.size()<right.size() && left.size()<top.size() && left.size()<bottom.size())
                         set_orientation=CatchChallenger::Orientation::Orientation_left;
-                    if(pathToGo.right.size()<pathToGo.left.size() && pathToGo.right.size()<pathToGo.top.size() && pathToGo.right.size()<pathToGo.bottom.size())
+                    if(right.size()<left.size() && right.size()<top.size() && right.size()<bottom.size())
                         set_orientation=CatchChallenger::Orientation::Orientation_right;
-                    if(pathToGo.top.size()<pathToGo.right.size() && pathToGo.top.size()<pathToGo.left.size() && pathToGo.top.size()<pathToGo.bottom.size())
+                    if(top.size()<right.size() && top.size()<left.size() && top.size()<bottom.size())
                         set_orientation=CatchChallenger::Orientation::Orientation_top;
-                    if(pathToGo.bottom.size()<pathToGo.right.size() && pathToGo.bottom.size()<pathToGo.top.size() && pathToGo.bottom.size()<pathToGo.left.size())
+                    if(bottom.size()<right.size() && bottom.size()<top.size() && bottom.size()<left.size())
                         set_orientation=CatchChallenger::Orientation::Orientation_bottom;
                     else//by tile count based
                     {
-                        const uint16_t &leftadd=pathTileCount(pathToGo.left);
-                        const uint16_t &rightadd=pathTileCount(pathToGo.right);
-                        const uint16_t &topadd=pathTileCount(pathToGo.top);
-                        const uint16_t &bottomadd=pathTileCount(pathToGo.bottom);
+                        const uint16_t &leftadd=pathTileCount(left);
+                        const uint16_t &rightadd=pathTileCount(right);
+                        const uint16_t &topadd=pathTileCount(top);
+                        const uint16_t &bottomadd=pathTileCount(bottom);
 
                         if(leftadd<rightadd && leftadd<topadd && leftadd<bottomadd)
                             set_orientation=CatchChallenger::Orientation::Orientation_left;
@@ -921,14 +967,19 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                     {
                         if(returnedVar.back().second<=1)
                         {
-                            std::cerr << "Bug due for last step" << std::endl;
-                            return returnedVar;
+                            if(returnedVar.size()>1)
+                                returnedVar[returnedVar.size()-2].second--;
+                            else
+                            {
+                                std::cerr << "Bug from " << std::to_string(source_x) << "," << std::to_string(source_y) << " due for last step: dump: " << BotTargetList::stepToString(returnedVar) << std::endl;
+                                return returnedVar;
+                            }
                         }
                         else
                             returnedVar.back().second--;
                     }
                     //add one hop if direction change
-                    std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> toAdd(destination.destination_orientation,0);
+                    std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> toAdd(CatchChallenger::Orientation::Orientation_none,0);
                     if(destination.destination_orientation!=set_orientation)
                         returnedVar.push_back(toAdd);
 
