@@ -423,6 +423,7 @@ void ActionsAction::doMove()
                                     player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
                                     api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
                                     api->takeAnObjectOnMap();
+                                    add_to_inventory(api,itemOnMap.item);
                                 }
                         }
                     }
