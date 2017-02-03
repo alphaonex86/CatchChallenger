@@ -19,6 +19,7 @@ void BotTargetList::updatePlayerStep()
             abort();
         if(api->getCaracterSelected())
         {
+            CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
             bool haveChange=false;
             if(player.target.localStep.empty())
             {
@@ -29,71 +30,68 @@ void BotTargetList::updatePlayerStep()
                         abort();
                     const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
                     const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+                    CatchChallenger::Direction newDirection=CatchChallenger::Direction::Direction_look_at_bottom;
                     switch(player.target.linkPoint.type)
                     {
                         case MapServerMini::BlockObject::LinkType::SourceTopMap:
                         case MapServerMini::BlockObject::LinkType::SourceInternalTopBlock:
-                            if(ActionsAction::canGoTo(api,CatchChallenger::Direction::Direction_move_at_top,*playerMap,player.x,player.y,true,true))
-                            {
-                                ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_top,&playerMap,&player.x,&player.y,true,true);
-                                api->newDirection(CatchChallenger::Direction::Direction_move_at_top);
-                            }
-                            else
-                            {
-                                if(player.target.bestPath.size()>2)
-                                    abort();
-                                player.target.bestPath.clear();
-                                //change the look below
-                            }
+                            newDirection=CatchChallenger::Direction::Direction_move_at_top;
                         break;
                         case MapServerMini::BlockObject::LinkType::SourceRightMap:
                         case MapServerMini::BlockObject::LinkType::SourceInternalRightBlock:
-                            if(ActionsAction::canGoTo(api,CatchChallenger::Direction::Direction_move_at_right,*playerMap,player.x,player.y,true,true))
-                            {
-                                ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_right,&playerMap,&player.x,&player.y,true,true);
-                                api->newDirection(CatchChallenger::Direction::Direction_move_at_right);
-                            }
-                            else
-                            {
-                                if(player.target.bestPath.size()>2)
-                                    abort();
-                                player.target.bestPath.clear();
-                                //change the look below
-                            }
+                            newDirection=CatchChallenger::Direction::Direction_move_at_right;
                         break;
                         case MapServerMini::BlockObject::LinkType::SourceBottomMap:
                         case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
-                            if(ActionsAction::canGoTo(api,CatchChallenger::Direction::Direction_move_at_bottom,*playerMap,player.x,player.y,true,true))
-                            {
-                                ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_bottom,&playerMap,&player.x,&player.y,true,true);
-                                api->newDirection(CatchChallenger::Direction::Direction_move_at_bottom);
-                            }
-                            else
-                            {
-                                if(player.target.bestPath.size()>2)
-                                    abort();
-                                player.target.bestPath.clear();
-                                //change the look below
-                            }
+                            newDirection=CatchChallenger::Direction::Direction_move_at_bottom;
                         break;
                         case MapServerMini::BlockObject::LinkType::SourceLeftMap:
                         case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
-                            if(ActionsAction::canGoTo(api,CatchChallenger::Direction::Direction_move_at_left,*playerMap,player.x,player.y,true,true))
-                            {
-                                ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_left,&playerMap,&player.x,&player.y,true,true);
-                                api->newDirection(CatchChallenger::Direction::Direction_move_at_left);
-                            }
-                            else
-                            {
-                                if(player.target.bestPath.size()>2)
-                                    abort();
-                                player.target.bestPath.clear();
-                                //change the look below
-                            }
+                            newDirection=CatchChallenger::Direction::Direction_move_at_left;
                         break;
                         default:
                         break;
                     }
+
+                    //get the item in front of to continue the progression
+                    {
+                        const MapServerMini * destMap=playerMap;
+                        uint8_t x=player.x,y=player.y;
+                        if(ActionsAction::move(api,newDirection,&destMap,&x,&y,false,false))
+                        {
+                            //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
+                            std::pair<uint8_t,uint8_t> p(x,y);
+                            if(playerMap->pointOnMap_Item.find(p)!=playerMap->pointOnMap_Item.cend())
+                            {
+                                //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", have item on it" << std::endl;
+                                const MapServerMini::ItemOnMap &itemOnMap=playerMap->pointOnMap_Item.at(p);
+                                if(!itemOnMap.infinite && itemOnMap.visible)
+                                    if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
+                                    {
+                                        std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", take the item" << std::endl;
+                                        player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                        api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
+                                        api->takeAnObjectOnMap();
+                                    }
+                            }
+                        }
+                        else
+                            std::cerr << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << "can't move" << std::endl;
+                    }
+
+                    if(ActionsAction::canGoTo(api,newDirection,*playerMap,player.x,player.y,true,true))
+                    {
+                        ActionsAction::move(api,newDirection,&playerMap,&player.x,&player.y,true,true);
+                        api->newDirection(newDirection);
+                    }
+                    else
+                    {
+                        if(player.target.bestPath.size()>2)
+                            abort();
+                        player.target.bestPath.clear();
+                        //change the look below
+                    }
+
                     if(!player.target.bestPath.empty())
                     {
                         player.target.bestPath.erase(player.target.bestPath.cbegin());
@@ -223,8 +221,14 @@ void BotTargetList::updatePlayerStep()
                 api->stopMove();
                 switch(player.target.type)
                 {
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap:
+                        player_private_and_public_informations.itemOnMap.insert(player.target.extra/*indexOfItemOnMap*/);
+                        api->stopMove();
+                        api->takeAnObjectOnMap();
+                    break;
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
                         api->heal();
+                        player.fightEngine->healAllMonsters();
                     break;
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::Dirt:
                     {
@@ -292,7 +296,13 @@ void BotTargetList::updatePlayerStep()
                     }
                     break;
                     default:
-                        QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded"));
+                        QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded (1): %1").arg(player.target.type));
+                        player.target.blockObject=NULL;
+                        player.target.extra=0;
+                        player.target.linkPoint.x=0;
+                        player.target.linkPoint.y=0;
+                        player.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+                        player.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
                         return;
                     break;
                 }

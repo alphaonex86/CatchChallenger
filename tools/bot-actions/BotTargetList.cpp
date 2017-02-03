@@ -514,7 +514,36 @@ void BotTargetList::updateMapContent()
                     if(x==player.x && y==player.y && player.mapId==mapId)
                     {
                         QIcon icon;
-                        icon.addFile(QStringLiteral(":/playerloc.png"), QSize(), QIcon::Normal, QIcon::Off);
+                        switch(player.api->getDirection())
+                        {
+                            case CatchChallenger::Direction::Direction_move_at_top:
+                                icon.addFile(QStringLiteral(":/playerloctm.png"), QSize(), QIcon::Normal, QIcon::Off);
+                            break;
+                            case CatchChallenger::Direction::Direction_look_at_top:
+                                icon.addFile(QStringLiteral(":/playerloct.png"), QSize(), QIcon::Normal, QIcon::Off);
+                            break;
+                            case CatchChallenger::Direction::Direction_move_at_right:
+                                icon.addFile(QStringLiteral(":/playerlocrm.png"), QSize(), QIcon::Normal, QIcon::Off);
+                            break;
+                            case CatchChallenger::Direction::Direction_look_at_right:
+                                icon.addFile(QStringLiteral(":/playerlocr.png"), QSize(), QIcon::Normal, QIcon::Off);
+                            break;
+                            case CatchChallenger::Direction::Direction_move_at_bottom:
+                                icon.addFile(QStringLiteral(":/playerlocbm.png"), QSize(), QIcon::Normal, QIcon::Off);
+                            break;
+                            case CatchChallenger::Direction::Direction_look_at_bottom:
+                                icon.addFile(QStringLiteral(":/playerlocb.png"), QSize(), QIcon::Normal, QIcon::Off);
+                            break;
+                            case CatchChallenger::Direction::Direction_move_at_left:
+                                icon.addFile(QStringLiteral(":/playerloclm.png"), QSize(), QIcon::Normal, QIcon::Off);
+                            break;
+                            case CatchChallenger::Direction::Direction_look_at_left:
+                                icon.addFile(QStringLiteral(":/playerlocl.png"), QSize(), QIcon::Normal, QIcon::Off);
+                            break;
+                            default:
+                                icon.addFile(QStringLiteral(":/playerloc.png"), QSize(), QIcon::Normal, QIcon::Off);
+                            break;
+                        }
                         tablewidgetitem->setText("");
                         tablewidgetitem->setIcon(icon);
                     }

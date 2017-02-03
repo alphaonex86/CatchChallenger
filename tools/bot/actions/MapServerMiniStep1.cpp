@@ -28,7 +28,9 @@ bool MapServerMini::preload_step1()
                         walkable=true;
                 if(pointOnMap_Item.find(p)!=pointOnMap_Item.cend())
                 {
-                    zone+="itemonmap"+QString::number(x)+","+QString::number(y);
+                    const MapServerMini::ItemOnMap &itemOnMap=pointOnMap_Item.at(p);
+                    if((itemOnMap.infinite && itemOnMap.visible) || (itemOnMap.visible && !walkable))
+                        zone+="itemonmap"+QString::number(x)+","+QString::number(y);
                     //walkable=true;
                 }
                 if(walkable)

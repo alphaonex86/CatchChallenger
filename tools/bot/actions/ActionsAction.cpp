@@ -54,14 +54,6 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
     Player &botplayer=clientList[api];
     CatchChallenger::ParsedLayerLedges ledge;
-    const std::pair<uint8_t,uint8_t> point(x,y);
-    if(map.pointOnMap_Item.find(point)!=map.pointOnMap_Item.cend())
-    {
-        const MapServerMini::ItemOnMap &item=map.pointOnMap_Item.at(point);
-        if(item.visible)
-            if(item.infinite || player.itemOnMap.find(item.indexOfItemOnMap)==player.itemOnMap.cend())
-                return false;
-    }
     ledge=CatchChallenger::MoveOnTheMap::getLedge(map,x,y);
     if(ledge!=CatchChallenger::ParsedLayerLedges_NoLedges)
         switch(direction)
@@ -152,6 +144,14 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                 return false;
             if(isDirt(*new_map,x,y))
                 return false;
+            const std::pair<uint8_t,uint8_t> point(x,y);
+            if(new_map->pointOnMap_Item.find(point)!=new_map->pointOnMap_Item.cend())
+            {
+                const MapServerMini::ItemOnMap &item=new_map->pointOnMap_Item.at(point);
+                if(item.visible)
+                    if(item.infinite || player.itemOnMap.find(item.indexOfItemOnMap)==player.itemOnMap.cend())
+                        return false;
+            }
         }
         if(!allowTeleport)
             if(needBeTeleported(*new_map,x,y))
@@ -390,6 +390,8 @@ void ActionsAction::doMove()
         //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
         if(api->getCaracterSelected())
         {
+            CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
+            //get item if in front of
             if(!player.target.localStep.empty())
             {
                 std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &step=player.target.localStep[0];
@@ -400,6 +402,34 @@ void ActionsAction::doMove()
                 if(step.first<1 || step.first>4)
                     abort();
                 const CatchChallenger::Direction direction=(CatchChallenger::Direction)((uint8_t)step.first+4);
+
+                //get the item in front of to continue the progression
+                {
+                    const CatchChallenger::Direction &newDirection=direction;
+                    const MapServerMini * destMap=playerMap;
+                    uint8_t x=player.x,y=player.y;
+                    if(ActionsAction::move(api,newDirection,&destMap,&x,&y,false,false))
+                    {
+                        //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
+                        std::pair<uint8_t,uint8_t> p(x,y);
+                        if(playerMap->pointOnMap_Item.find(p)!=playerMap->pointOnMap_Item.cend())
+                        {
+                            //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", have item on it" << std::endl;
+                            const MapServerMini::ItemOnMap &itemOnMap=playerMap->pointOnMap_Item.at(p);
+                            if(!itemOnMap.infinite && itemOnMap.visible)
+                                if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
+                                {
+                                    std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", take the item" << std::endl;
+                                    player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                    api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
+                                    api->takeAnObjectOnMap();
+                                }
+                        }
+                    }
+                    else
+                        std::cerr << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << "can't move" << std::endl;
+                }
+
                 if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))
                 {
                     api->newDirection(direction);
@@ -411,6 +441,23 @@ void ActionsAction::doMove()
                 }
                 else
                 {
+                    std::cerr << "Blocked on: " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << std::endl;
+                    if(player.target.bestPath.size()>1)
+                    {
+                        std::cerr << "Something is wrong  to go to the destination, path finding buggy? block not walkable?" << std::endl;
+                        abort();
+                    }
+                    if(player.target.localStep.size()>1)
+                    {
+                        std::cerr << "Something is wrong  to go to the destination, path finding buggy? block not walkable?" << std::endl;
+                        abort();
+                    }
+                    if(player.target.localStep.size()==1)
+                        if(player.target.localStep.at(0).second>1)
+                        {
+                            std::cerr << "Something is wrong  to go to the destination, path finding buggy? block not walkable?" << std::endl;
+                            abort();
+                        }
                     //turn on the new direction
                     const CatchChallenger::Direction &newDirection=(CatchChallenger::Direction)((uint8_t)direction-4);
                     api->newDirection(newDirection);
