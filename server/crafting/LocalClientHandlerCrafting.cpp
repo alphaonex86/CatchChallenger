@@ -161,10 +161,10 @@ void Client::takeAnObjectOnMap()
         return;
     }
     std::pair<uint8_t,uint8_t> pos(x,y);
-    //check if is dirt
+    //check if is item
     if(static_cast<MapServer *>(map)->pointOnMap_Item.find(pos)==static_cast<MapServer *>(map)->pointOnMap_Item.cend())
     {
-        errorOutput("Not on map item on this place");
+        errorOutput("Not on map item on this place: "+static_cast<MapServer *>(map)->map_file+" ("+std::to_string(pos.first)+","+std::to_string(pos.second)+")");
         return;
     }
     const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->pointOnMap_Item.at(pos);

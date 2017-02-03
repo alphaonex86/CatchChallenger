@@ -264,7 +264,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                     {
                         ActionsBotInterface::GlobalTarget globalTarget;
                         globalTarget.blockObject=blockObject;
-                        globalTarget.extra=itemOnMap.item;
+                        globalTarget.extra=itemOnMap.indexOfItemOnMap;
                         globalTarget.bestPath=resolvedBlock.bestPath;
                         globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap;
                         targetListGlobalTarget.push_back(globalTarget);

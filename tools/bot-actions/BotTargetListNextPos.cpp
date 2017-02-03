@@ -8,7 +8,7 @@
 #include <QMessageBox>
 
 //if(target.bestPath.empty()) return real target, else near search the next block
-std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::BlockObject * const blockObject, const ActionsBotInterface::GlobalTarget &target)
+std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::BlockObject * const blockObject,ActionsBotInterface::GlobalTarget &target)
 {
     std::pair<uint8_t,uint8_t> point(0,0);
     if(target.blockObject==NULL)
@@ -49,7 +49,13 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
                     return *it;
             break;
             case ActionsBotInterface::GlobalTarget::WildMonster:
-                QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded"));
+                QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded (2): %1").arg(target.type));
+                target.blockObject=NULL;
+                target.extra=0;
+                target.linkPoint.x=0;
+                target.linkPoint.y=0;
+                target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+                target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
                 abort();
             break;
             case ActionsBotInterface::GlobalTarget::Dirt:
@@ -69,7 +75,13 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
             }
             break;
             default:
-                QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded"));
+                QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded (3): %1").arg(target.type));
+                target.blockObject=NULL;
+                target.extra=0;
+                target.linkPoint.x=0;
+                target.linkPoint.y=0;
+                target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+                target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
                 abort();
             break;
         }

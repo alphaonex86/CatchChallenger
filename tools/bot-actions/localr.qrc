@@ -11,5 +11,13 @@
         <file>9.png</file>
         <file>playerloc.png</file>
         <file>dirt.png</file>
+        <file>playerlocb.png</file>
+        <file>playerlocl.png</file>
+        <file>playerlocr.png</file>
+        <file>playerloct.png</file>
+        <file>playerlocbm.png</file>
+        <file>playerloclm.png</file>
+        <file>playerlocrm.png</file>
+        <file>playerloctm.png</file>
     </qresource>
 </RCC>

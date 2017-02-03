@@ -57,7 +57,7 @@ public:
     std::vector<std::string> contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard=true);
     std::string graphStepNearMap(const MultipleBotConnection::CatchChallengerClient * const client,const MapServerMini::BlockObject * const currentNearBlock, const unsigned int &depth=2);
     std::string graphLocalMap();
-    std::pair<uint8_t,uint8_t> getNextPosition(const MapServerMini::BlockObject * const blockObject, const ActionsBotInterface::GlobalTarget &target);
+    std::pair<uint8_t,uint8_t> getNextPosition(const MapServerMini::BlockObject * const blockObject,ActionsBotInterface::GlobalTarget &target);
     /*if normal, then just go
      * else if dirt like: is linked as idenpendant tile */
     std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > pathFinding(const MapServerMini::BlockObject * const source_blockObject,
