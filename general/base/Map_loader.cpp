@@ -910,15 +910,20 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
         if(botIsNotWalkable)
         {
             index=0;
+            while(index<map_to_send_temp.bots.size())
             {
-                const int &listsize=map_to_send_temp.bots.size();
-                while(index<listsize)
-                {
-                    const Map_to_send::Bot_Semi &bot=map_to_send_temp.bots.at(index);
-                    if(bot.property_text.find(CACHEDSTRING_skin)!=bot.property_text.cend() && (bot.property_text.find(CACHEDSTRING_lookAt)==bot.property_text.cend() || bot.property_text.at(CACHEDSTRING_lookAt)!=CACHEDSTRING_move))
-                        map_to_send_temp.parsed_layer.walkable[bot.point.x+bot.point.y*map_to_send_temp.width]=false;
-                    index++;
-                }
+                const Map_to_send::Bot_Semi &bot=map_to_send_temp.bots.at(index);
+                if(bot.property_text.find(CACHEDSTRING_skin)!=bot.property_text.cend() && (bot.property_text.find(CACHEDSTRING_lookAt)==bot.property_text.cend() || bot.property_text.at(CACHEDSTRING_lookAt)!=CACHEDSTRING_move))
+                    map_to_send_temp.parsed_layer.walkable[bot.point.x+bot.point.y*map_to_send_temp.width]=false;
+                index++;
+            }
+            index=0;
+            while(index<map_to_send_temp.items.size())
+            {
+                const Map_to_send::ItemOnMap_Semi &item_semi=map_to_send_temp.items.at(index);
+                if(item_semi.visible && item_semi.infinite)
+                    map_to_send_temp.parsed_layer.walkable[item_semi.point.x+item_semi.point.y*map_to_send_temp.width]=false;
+                index++;
             }
         }
     }
@@ -933,19 +938,6 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     {
         this->map_to_send.parsed_layer.monstersCollisionMap=new uint8_t[this->map_to_send.width*this->map_to_send.height];
         memset(this->map_to_send.parsed_layer.monstersCollisionMap,0,this->map_to_send.width*this->map_to_send.height);
-        /*{
-            uint8_t x=0;
-            while(x<this->map_to_send.width)
-            {
-                uint8_t y=0;
-                while(y<this->map_to_send.height)
-                {
-                    this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=0;
-                    y++;
-                }
-                x++;
-            }
-        }*/
 
         {
             auto i=mapLayerContentForMonsterCollision.begin();
