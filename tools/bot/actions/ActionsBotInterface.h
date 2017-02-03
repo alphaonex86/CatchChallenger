@@ -19,7 +19,7 @@ public:
     {
         enum GlobalTargetType
         {
-            ItemOnMap,//x,y
+            ItemOnMap,//indexOfItemOnMap
             Fight,//fight id
             Shop,//shop id
             Heal,
