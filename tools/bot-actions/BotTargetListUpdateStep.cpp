@@ -72,6 +72,7 @@ void BotTargetList::updatePlayerStep()
                                         player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
                                         api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
                                         api->takeAnObjectOnMap();
+                                        ActionsAction::add_to_inventory(api,itemOnMap.item);
                                     }
                             }
                         }
@@ -213,7 +214,8 @@ void BotTargetList::updatePlayerStep()
                     abort();
 
                 CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
-                const QPair<uint8_t,uint8_t> QtPoint{x,y};
+                const QPair<uint8_t,uint8_t> QtPoint(x,y);
+                std::pair<uint8_t,uint8_t> p(x,y);
                 QString mapQtString=DatapackClientLoader::datapackLoader.getDatapackPath()+DatapackClientLoader::datapackLoader.getMainDatapackPath()+QString::fromStdString(mapServer->map_file);
                 if(!mapQtString.endsWith(".tmx"))
                     mapQtString+=".tmx";
@@ -222,9 +224,28 @@ void BotTargetList::updatePlayerStep()
                 switch(player.target.type)
                 {
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap:
-                        player_private_and_public_informations.itemOnMap.insert(player.target.extra/*indexOfItemOnMap*/);
-                        api->stopMove();
-                        api->takeAnObjectOnMap();
+                    {
+                        bool found=false;
+                        for(auto&entry:mapServer->pointOnMap_Item)
+                        {
+                            const MapServerMini::ItemOnMap &itemOnMap=entry.second;
+                            if(itemOnMap.indexOfItemOnMap==player.target.extra)
+                            {
+                                if(!itemOnMap.infinite)
+                                    player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                api->stopMove();
+                                api->takeAnObjectOnMap();
+                                ActionsAction::add_to_inventory(api,itemOnMap.item);
+                                found=true;
+                                break;
+                            }
+                        }
+                        if(!found)
+                        {
+                            std::cerr << "On the next tile don't found the montioned item on map" << std::endl;
+                            abort();
+                        }
+                    }
                     break;
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
                         api->heal();
