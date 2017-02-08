@@ -248,6 +248,9 @@
       <layout class="QVBoxLayout" name="verticalLayout_8">
        <item>
         <widget class="QTreeWidget" name="serverList">
+         <property name="rootIsDecorated">
+          <bool>false</bool>
+         </property>
          <column>
           <property name="text">
            <string>Server</string>

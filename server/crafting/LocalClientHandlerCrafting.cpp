@@ -164,7 +164,7 @@ void Client::takeAnObjectOnMap()
     //check if is item
     if(static_cast<MapServer *>(map)->pointOnMap_Item.find(pos)==static_cast<MapServer *>(map)->pointOnMap_Item.cend())
     {
-        errorOutput("Not on map item on this place: "+static_cast<MapServer *>(map)->map_file+" ("+std::to_string(pos.first)+","+std::to_string(pos.second)+")");
+        errorOutput("Not on map item on this place: "+static_cast<MapServer *>(map)->map_file+" ("+std::to_string(pos.first)+","+std::to_string(pos.second)+") from "+std::to_string(this->x)+","+std::to_string(this->y)+" "+MoveOnTheMap::directionToString(getLastDirection()));
         return;
     }
     const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->pointOnMap_Item.at(pos);
