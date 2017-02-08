@@ -2148,7 +2148,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                 {
                     Profile::Reputation reputationTemp;
                     reputationTemp.internalIndex=255;
-                    reputationTemp.level=255;
+                    reputationTemp.level=-1;
                     reputationTemp.point=0xFFFFFFFF;
                     if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(reputationElement) && reputationElement->Attribute("type")!=NULL && reputationElement->Attribute("level")!=NULL)
                     {
