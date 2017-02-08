@@ -896,12 +896,11 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
         x++;
     }
 
-    const int &teleportlistsize=map_to_send_temp.teleport.size();
     if(Walkable.size()>0)
     {
-        int index=0;
+        size_t index=0;
         {
-            while(index<teleportlistsize)
+            while(index<map_to_send_temp.teleport.size())
             {
                 map_to_send_temp.parsed_layer.walkable[map_to_send_temp.teleport.at(index).source_x+map_to_send_temp.teleport.at(index).source_y*map_to_send_temp.width]=true;
                 index++;
