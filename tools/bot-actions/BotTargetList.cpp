@@ -50,6 +50,9 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
 
     connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerStep);
     connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerMapSlot);
+
+    if(ui->bots->count()==1)
+        ui->groupBoxBot->setVisible(false);
 }
 
 BotTargetList::~BotTargetList()
@@ -443,6 +446,8 @@ void BotTargetList::updateMapInformation()
             ui->graphvizText->setPlainText(QtGraphvizText);
         }
     }
+    else
+        std::cerr << "updateMapInformation(): map id not found for the current player: " << mapId << std::endl;
     updateMapContent();
     updateLayerElements();
 }
@@ -1070,26 +1075,46 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
 
                     if(!returnedVar.empty())
                     {
-                        if(returnedVar.back().second<=1)
+                        if(returnedVar.back().second<1)
                         {
                             if(returnedVar.size()>1)
                             {
-                                if(returnedVar.at(returnedVar.size()-2).second<=1)
+                                if(returnedVar.at(returnedVar.size()-2).second<1)
                                 {
-                                    std::cerr << "Bug from " << std::to_string(source_x) << "," << std::to_string(source_y) << " due for last step: dump: " << BotTargetList::stepToString(returnedVar) << std::endl;
+                                    auto end = std::chrono::high_resolution_clock::now();
+                                    std::chrono::duration<double, std::milli> elapsed = end-start;
+                                    std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+                                    std::cerr << "Bug from " << std::to_string(source_x) << "," << std::to_string(source_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)source_orientation) << " due for last step (1)" << std::endl;
+                                    std::cerr << "To " << std::to_string(destination.destination_x) << "," << std::to_string(destination.destination_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)destination.destination_orientation) << std::endl;
+                                    std::cerr << "Dump: " << BotTargetList::stepToString(returnedVar) << std::endl;
+                                    std::cerr << "Last path choose: " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)set_orientation) << std::endl;
                                     return returnedVar;
                                 }
                                 else
+                                {
                                     returnedVar[returnedVar.size()-2].second--;
+                                    if(returnedVar[returnedVar.size()-2].second==0)
+                                        returnedVar.erase(returnedVar.cbegin()+returnedVar.size()-2);
+                                }
                             }
                             else
                             {
-                                std::cerr << "Bug from " << std::to_string(source_x) << "," << std::to_string(source_y) << " due for last step: dump: " << BotTargetList::stepToString(returnedVar) << std::endl;
+                                auto end = std::chrono::high_resolution_clock::now();
+                                std::chrono::duration<double, std::milli> elapsed = end-start;
+                                std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+                                std::cerr << "Bug from " << std::to_string(source_x) << "," << std::to_string(source_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)source_orientation) << " due for last step (2)" << std::endl;
+                                std::cerr << "To " << std::to_string(destination.destination_x) << "," << std::to_string(destination.destination_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)destination.destination_orientation) << std::endl;
+                                std::cerr << "Dump: " << BotTargetList::stepToString(returnedVar) << std::endl;
+                                std::cerr << "Last path choose: " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)set_orientation) << std::endl;
                                 return returnedVar;
                             }
                         }
                         else
+                        {
                             returnedVar.back().second--;
+                            if(returnedVar.back().second==0)
+                                returnedVar.erase(returnedVar.cbegin()+returnedVar.size()-1);
+                        }
                     }
                     //add one hop if direction change
                     std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> toAdd(CatchChallenger::Orientation::Orientation_none,0);

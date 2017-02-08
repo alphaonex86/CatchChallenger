@@ -19,6 +19,15 @@ void BotTargetList::updatePlayerStep()
             abort();
         if(api->getCaracterSelected())
         {
+            if(ui->bots->count()==1)
+            {
+                QListWidgetItem * item=ui->bots->itemAt(0,0);
+                if(!item->isSelected())
+                {
+                    item->setSelected(true);
+                    on_bots_itemSelectionChanged();
+                }
+            }
             CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
             bool haveChange=false;
             if(player.target.localStep.empty())
@@ -91,6 +100,28 @@ void BotTargetList::updatePlayerStep()
                             abort();
                         player.target.bestPath.clear();
                         //change the look below
+                        switch(newDirection)
+                        {
+                            case CatchChallenger::Direction::Direction_move_at_top:
+                            case CatchChallenger::Direction::Direction_look_at_top:
+                                api->newDirection(CatchChallenger::Direction::Direction_look_at_top);
+                            break;
+                            case CatchChallenger::Direction::Direction_move_at_bottom:
+                            case CatchChallenger::Direction::Direction_look_at_bottom:
+                                api->newDirection(CatchChallenger::Direction::Direction_look_at_bottom);
+                            break;
+                            case CatchChallenger::Direction::Direction_move_at_right:
+                            case CatchChallenger::Direction::Direction_look_at_right:
+                                api->newDirection(CatchChallenger::Direction::Direction_look_at_right);
+                            break;
+                            case CatchChallenger::Direction::Direction_move_at_left:
+                            case CatchChallenger::Direction::Direction_look_at_left:
+                                api->newDirection(CatchChallenger::Direction::Direction_look_at_left);
+                            break;
+                            default:
+                            abort();
+                            break;
+                        }
                     }
 
                     if(!player.target.bestPath.empty())
