@@ -22,19 +22,22 @@ SOURCES += main.cpp\
     WaitScreen.cpp \
     BotTargetListPlayerInfo.cpp \
     BotTargetListUpdateStep.cpp \
-    BotTargetListNextPos.cpp
+    BotTargetListNextPos.cpp \
+    SocialChat.cpp
 HEADERS  += MainWindow.h \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \
     ../bot/BotInterface.h \
     BotTargetList.h \
     MapBrowse.h \
-    WaitScreen.h
+    WaitScreen.h \
+    SocialChat.h
 
 FORMS    += MainWindow.ui \
     BotTargetList.ui \
     MapBrowse.ui \
-    WaitScreen.ui
+    WaitScreen.ui \
+    SocialChat.ui
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
 

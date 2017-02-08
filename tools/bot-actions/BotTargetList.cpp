@@ -1,4 +1,5 @@
 #include "BotTargetList.h"
+#include "SocialChat.h"
 #include "ui_BotTargetList.h"
 #include "../../client/base/interface/DatapackClientLoader.h"
 #include "../../client/fight/interface/ClientFightEngine.h"
@@ -194,6 +195,7 @@ void BotTargetList::loadAllBotsInformation2()
     if(!actionsAction->preload_the_map_step2())
         abort();
     show();
+    SocialChat::socialChat->show();
     //waitScreen.hide();
 }
 

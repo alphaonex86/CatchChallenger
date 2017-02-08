@@ -543,6 +543,7 @@ void MainWindow::all_player_on_map()
                 multipleBotConnexion.sslSocketToCatchChallengerClient,
                 static_cast<ActionsAction *>(multipleBotConnexion.botInterface)
                 );
+    SocialChat::socialChat=new SocialChat();
     //botTargetList->show();
     this->hide();
     botTargetList->hide();
