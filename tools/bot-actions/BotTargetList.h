@@ -79,9 +79,7 @@ private slots:
     void on_searchDeep_editingFinished();
     void on_globalTargets_itemActivated(QListWidgetItem *item);
     void on_tooHard_clicked();
-
     void on_trackThePlayer_clicked();
-
 private:
     Ui::BotTargetList *ui;
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient;
