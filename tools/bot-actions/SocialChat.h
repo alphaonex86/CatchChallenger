@@ -2,6 +2,10 @@
 #define SOCIALCHAT_H
 
 #include <QMainWindow>
+#include <QSqlDatabase>
+#include <QHash>
+#include <QString>
+#include <QPixmap>
 #include "../bot/actions/ActionsAction.h"
 
 namespace Ui {
@@ -29,10 +33,13 @@ private slots:
     QPixmap getTrainerSkin(const uint32_t &skinId);
     QString getTrainerSkinPath(const QString &skin);
     QString getSkinPath(const QString &skinName,const QString &type);
+    void on_note_textChanged();
+
 private:
     void showEvent(QShowEvent * event);
     Ui::SocialChat *ui;
     QHash<QString,ActionsBotInterface::Player *> pseudoToBot;
+    QSqlDatabase database;
 
     //skin
     QHash<QString,QPixmap> frontSkinCacheString;
