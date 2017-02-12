@@ -25,7 +25,6 @@ public:
     static SocialChat *socialChat;
 private slots:
     void on_bots_itemSelectionChanged();
-    void lineEdit_globalChatText_returnPressed();
     void loadPlayerInformation();
     QPixmap getFrontSkin(const QString &skinName);
     QPixmap getFrontSkin(const uint32_t &skinId);
@@ -40,9 +39,11 @@ private slots:
     void on_note_textChanged();
     //chat
     void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &player_type);
+    void new_chat_text_internal(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &player_type);
     void new_system_text(const CatchChallenger::Chat_type &chat_type,const QString &text);
     void update_chat();
     void removeNumberForFlood();
+    void on_globalChatText_returnPressed();
 private:
     void showEvent(QShowEvent * event);
     Ui::SocialChat *ui;
