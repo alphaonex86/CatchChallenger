@@ -92,6 +92,11 @@ private:
     uint32_t mapId;
     WaitScreen waitScreen;
 
+    uint8_t updateMapContentX;
+    uint8_t updateMapContentY;
+    uint32_t updateMapContentMapId;
+    CatchChallenger::Direction updateMapContentDirection;
+
     std::vector<uint32_t> mapIdListLocalTarget;
     std::vector<ActionsBotInterface::GlobalTarget> targetListGlobalTarget;
     bool alternateColor;

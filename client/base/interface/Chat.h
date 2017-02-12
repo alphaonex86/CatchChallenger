@@ -25,7 +25,7 @@ public:
     void setClient(CatchChallenger::Api_protocol *client);
 public slots:
     void new_system_text(CatchChallenger::Chat_type chat_type,QString text);
-    void new_chat_text(CatchChallenger::Chat_type chat_type,QString text,QString pseudo,CatchChallenger::Player_type type);
+    void new_chat_text(CatchChallenger::Chat_type chat_type, QString text, QString pseudo, CatchChallenger::Player_type player_type);
     void setMultiPlayer(const bool & multiplayer);
 private slots:
     void on_pushButtonChat_toggled(bool checked);
