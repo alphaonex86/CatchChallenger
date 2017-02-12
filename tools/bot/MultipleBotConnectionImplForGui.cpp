@@ -1,7 +1,9 @@
 #include "MultipleBotConnectionImplForGui.h"
 
 #include <iostream>
+#ifdef QT_GUI_LIB
 #include <QMessageBox>
+#endif
 
 MultipleBotConnectionImplForGui::MultipleBotConnectionImplForGui()
 {
@@ -315,7 +317,8 @@ void MultipleBotConnectionImplForGui::sslErrors(const QList<QSslError> &errors)
         sslErrors << errors.at(index).errorString();
         index++;
     }
-    /*QMessageBox::warning(this,tr("Ssl error"),sslErrors.join("\n"));
+    /*#ifdef QT_GUI_LIB
+    QMessageBox::warning(this,tr("Ssl error"),sslErrors.join("\n"));
     realSocket->disconnectFromHost();*/
 }
 
@@ -421,7 +424,11 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
             MultipleBotConnection::newSocketError_with_client(connectedSocketToCatchChallengerClient[senderObject],error);
         }
     }
+    #ifdef QT_GUI_LIB
     QMessageBox::critical(NULL,tr("Error"),errorString);
+    #else
+    std::cerr << errorString.toStdString() << std::endl;
+    #endif
     QCoreApplication::exit(85);
 }
 

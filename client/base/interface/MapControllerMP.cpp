@@ -181,6 +181,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             qDebug() << "Current player already loaded on the map";
             return true;
         }
+        /// \todo do a player cache here
         //the player skin
         if(player.skinId<skinFolderList.size())
         {
@@ -291,6 +292,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             }
             return false;
         }
+        /// \todo do a player cache here
         //the player skin
         if(player.skinId<skinFolderList.size())
         {
