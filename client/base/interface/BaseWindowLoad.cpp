@@ -128,6 +128,7 @@ void BaseWindow::resetAll()
     add_to_inventoryGainExtraList.clear();
     add_to_inventoryGainExtraTime.clear();
     client=NULL;
+    frontSkinCacheString.clear();
     /*this is only mirror, drop into Api_protocol::resetAll()
     if(fightEngine.public_and_private_informations.encyclopedia_item!=NULL)
     {
@@ -905,20 +906,24 @@ void BaseWindow::show_reputation()
     ui->labelReputation->setText(html);
 }
 
-QPixmap BaseWindow::getFrontSkin(const QString &skinName) const
+QPixmap BaseWindow::getFrontSkin(const QString &skinName)
 {
+    if(frontSkinCacheString.contains(skinName))
+        return frontSkinCacheString.value(skinName);
     const QPixmap skin(getFrontSkinPath(skinName));
     if(!skin.isNull())
-        return skin;
-    return QPixmap(":/images/player_default/front.png");
+        frontSkinCacheString[skinName]=skin;
+    else
+        frontSkinCacheString[skinName]=QPixmap(":/images/player_default/front.png");
+    return frontSkinCacheString.value(skinName);
 }
 
-QPixmap BaseWindow::getFrontSkin(const uint32_t &skinId) const
+QPixmap BaseWindow::getFrontSkin(const uint32_t &skinId)
 {
-    const QPixmap skin(getFrontSkinPath(skinId));
-    if(!skin.isNull())
-        return skin;
-    return QPixmap(":/images/player_default/front.png");
+    if(skinId<DatapackClientLoader::datapackLoader.skins.size())
+        return getFrontSkin(DatapackClientLoader::datapackLoader.skins.at(skinId));
+    else
+        return getFrontSkin(QString());
 }
 
 QPixmap BaseWindow::getBackSkin(const uint32_t &skinId) const
@@ -961,8 +966,9 @@ QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) con
     return QString();
 }
 
-QString BaseWindow::getFrontSkinPath(const uint32_t &skinId) const
+QString BaseWindow::getFrontSkinPath(const uint32_t &skinId)
 {
+    /// \todo merge it cache string + id
     const QStringList &skinFolderList=DatapackClientLoader::datapackLoader.skins;
     //front image
     if(skinId<(uint32_t)skinFolderList.size())
@@ -972,7 +978,7 @@ QString BaseWindow::getFrontSkinPath(const uint32_t &skinId) const
     return ":/images/player_default/front.png";
 }
 
-QString BaseWindow::getFrontSkinPath(const QString &skin) const
+QString BaseWindow::getFrontSkinPath(const QString &skin)
 {
     return getSkinPath(skin,"front");
 }

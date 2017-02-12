@@ -327,6 +327,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
             entryListIndex++;
         }
     }
+    //do a cache here?
     if(!QFile(skinPath).exists())
     {
         qDebug() << "Unable the load the bot tileset (not found):" << skinPath;

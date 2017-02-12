@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1267</width>
-    <height>747</height>
+    <width>1322</width>
+    <height>766</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Social chat</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -19,7 +19,7 @@
      <widget class="QGroupBox" name="groupBoxBot">
       <property name="maximumSize">
        <size>
-        <width>250</width>
+        <width>200</width>
         <height>16777215</height>
        </size>
       </property>
@@ -54,48 +54,69 @@
       <item>
        <widget class="QGroupBox" name="groupBoxChat">
         <property name="title">
-         <string>Chat</string>
+         <string>Local and specific chat</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_4">
-           <item>
-            <widget class="QLabel" name="label_3">
-             <property name="text">
-              <string>Type</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QListView" name="listViewChatType"/>
-           </item>
-          </layout>
+          <widget class="QGroupBox" name="groupBox_2">
+           <property name="maximumSize">
+            <size>
+             <width>200</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="title">
+            <string>Type</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QListView" name="listViewChatType"/>
+            </item>
+           </layout>
+          </widget>
          </item>
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_3">
-           <item>
-            <widget class="QLabel" name="label_4">
-             <property name="text">
-              <string>History and content</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QListView" name="listViewHistory"/>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="chat">
-             <property name="placeholderText">
-              <string>Your text</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <widget class="QGroupBox" name="groupBox_3">
+           <property name="title">
+            <string>History and content</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <item>
+             <widget class="QListView" name="chatSpec"/>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="chatSpecText">
+              <property name="placeholderText">
+               <string>Your text as XXXXX</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
          </item>
         </layout>
        </widget>
       </item>
      </layout>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="groupBox">
+      <property name="title">
+       <string>Global Chat</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QTextEdit" name="globalChat"/>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="globalChatText">
+         <property name="placeholderText">
+          <string>Your text as XXXXX</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </item>
     <item>
      <widget class="QGroupBox" name="groupBoxInformations">
@@ -123,6 +144,9 @@
         <widget class="QLabel" name="labelPseudo">
          <property name="text">
           <string>Pseudo</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>

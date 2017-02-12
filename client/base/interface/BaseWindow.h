@@ -193,13 +193,13 @@ private slots:
     void addCash(const uint32_t &cash);
     void removeCash(const uint32_t &cash);
     void updatePlayerType();
-    QPixmap getFrontSkin(const QString &skinName) const;
-    QPixmap getFrontSkin(const uint32_t &skinId) const;
+    QPixmap getFrontSkin(const QString &skinName);
+    QPixmap getFrontSkin(const uint32_t &skinId);
+    QString getFrontSkinPath(const QString &skin);
+    QString getFrontSkinPath(const uint32_t &skinId);
     QPixmap getBackSkin(const uint32_t &skinId) const;
-    QString getSkinPath(const QString &skinName, const QString &type) const;
-    QString getFrontSkinPath(const uint32_t &skinId) const;
-    QString getFrontSkinPath(const QString &skin) const;
     QString getBackSkinPath(const uint32_t &skinId) const;
+    QString getSkinPath(const QString &skinName, const QString &type) const;
     void monsterCatch(const bool &success);
     //render
     void stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
@@ -731,6 +731,9 @@ private:
     CatchChallenger::Api_protocol * client;
     ClientFightEngine fightEngine;
     Chat *chat;
+
+    //skin
+    QHash<QString,QPixmap> frontSkinCacheString;
 signals:
     void newError(QString error,QString detailedError);
     //datapack
