@@ -168,12 +168,12 @@ void Chat::new_system_text(CatchChallenger::Chat_type chat_type,QString text)
     update_chat();
 }
 
-void Chat::new_chat_text(CatchChallenger::Chat_type chat_type,QString text,QString pseudo,CatchChallenger::Player_type type)
+void Chat::new_chat_text(CatchChallenger::Chat_type chat_type,QString text,QString pseudo,CatchChallenger::Player_type player_type)
 {
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << QStringLiteral("new_chat_text: %1 by %2").arg(text).arg(pseudo);
     #endif
-    chat_list_player_type << type;
+    chat_list_player_type << player_type;
     chat_list_player_pseudo << pseudo;
     chat_list_type << chat_type;
     chat_list_text << text;

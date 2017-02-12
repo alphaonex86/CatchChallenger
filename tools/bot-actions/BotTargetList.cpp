@@ -48,6 +48,10 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
     MapServerMini::colorsList << QColor(115, 255, 240, 255);
     MapServerMini::colorsList << QColor(115, 255, 120, 255);
     MapServerMini::colorsList << QColor(200, 70, 70, 255);
+    updateMapContentX=0;
+    updateMapContentY=0;
+    updateMapContentMapId=0;
+    updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
 
     connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerStep);
     connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerMapSlot);
@@ -220,6 +224,11 @@ void BotTargetList::on_bots_itemSelectionChanged()
     const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
     mapId=player.mapId;
     ui->trackThePlayer->setChecked(true);
+
+    updateMapContentX=0;
+    updateMapContentY=0;
+    updateMapContentMapId=0;
+    updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
 
     updateMapInformation();
     updatePlayerInformation();
@@ -467,6 +476,12 @@ void BotTargetList::updateMapContent()
         return;
 
     const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    if(updateMapContentX==player.x && updateMapContentY==player.y && updateMapContentMapId==player.mapId && updateMapContentDirection==player.api->getDirection())
+        return;
+    updateMapContentX=player.x;
+    updateMapContentY=player.y;
+    updateMapContentMapId=player.mapId;
+    updateMapContentDirection=player.api->getDirection();
 
     if(actionsAction->id_map_to_map.find(mapId)!=actionsAction->id_map_to_map.cend())
     {
