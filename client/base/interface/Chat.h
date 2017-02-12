@@ -39,10 +39,14 @@ private:
     QTimer stopFlood;
     int numberForFlood;
 
-    QStringList chat_list_player_pseudo;
-    QList<CatchChallenger::Player_type> chat_list_player_type;
-    QList<CatchChallenger::Chat_type> chat_list_type;
-    QList<QString> chat_list_text;
+    struct ChatEntry
+    {
+        std::string player_pseudo;
+        CatchChallenger::Player_type player_type;
+        CatchChallenger::Chat_type type;
+        std::string text;
+    };
+    QList<ChatEntry> chat_list;
     CatchChallenger::Api_protocol *client;
 };
 }
