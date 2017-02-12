@@ -31,10 +31,7 @@ Chat::~Chat()
 
 void Chat::resetAll()
 {
-    chat_list_player_pseudo.clear();
-    chat_list_player_type.clear();
-    chat_list_type.clear();
-    chat_list_text.clear();
+    chat_list.clear();
     ui->textBrowser_chat->clear();
     ui->comboBox_chat_type->setCurrentIndex(1);
     ui->lineEdit_chat_text->setText("");
@@ -154,17 +151,14 @@ void Chat::new_system_text(CatchChallenger::Chat_type chat_type,QString text)
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << QStringLiteral("new_system_text: %1").arg(text);
     #endif
-    chat_list_player_type << Player_type_normal;
-    chat_list_player_pseudo << QString();
-    chat_list_type << chat_type;
-    chat_list_text << text;
-    while(chat_list_player_type.size()>64)
-    {
-        chat_list_player_type.removeFirst();
-        chat_list_player_pseudo.removeFirst();
-        chat_list_type.removeFirst();
-        chat_list_text.removeFirst();
-    }
+    ChatEntry newEntry;
+    newEntry.player_type=Player_type_normal;
+    //newEntry.player_pseudo=QString();
+    newEntry.type=chat_type;
+    newEntry.text=text.toStdString();
+    chat_list << newEntry;
+    while(chat_list.size()>64)
+        chat_list.removeFirst();
     update_chat();
 }
 
@@ -173,17 +167,14 @@ void Chat::new_chat_text(CatchChallenger::Chat_type chat_type,QString text,QStri
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << QStringLiteral("new_chat_text: %1 by %2").arg(text).arg(pseudo);
     #endif
-    chat_list_player_type << player_type;
-    chat_list_player_pseudo << pseudo;
-    chat_list_type << chat_type;
-    chat_list_text << text;
-    while(chat_list_player_type.size()>64)
-    {
-        chat_list_player_type.removeFirst();
-        chat_list_player_pseudo.removeFirst();
-        chat_list_type.removeFirst();
-        chat_list_text.removeFirst();
-    }
+    ChatEntry newEntry;
+    newEntry.player_type=player_type;
+    newEntry.player_pseudo=pseudo.toStdString();
+    newEntry.type=chat_type;
+    newEntry.text=text.toStdString();
+    chat_list << newEntry;
+    while(chat_list.size()>64)
+        chat_list.removeFirst();
     update_chat();
 }
 
@@ -196,15 +187,16 @@ void Chat::update_chat()
 {
     QString nameHtml;
     int index=0;
-    while(index<chat_list_player_pseudo.size())
+    while(index<chat_list.size())
     {
+        const ChatEntry &entry=chat_list.at(index);
         bool addPlayerInfo=true;
-        if(chat_list_type.at(index)==Chat_type_system || chat_list_type.at(index)==Chat_type_system_important)
+        if(entry.type==Chat_type_system || entry.type==Chat_type_system_important)
             addPlayerInfo=false;
         if(!addPlayerInfo)
-            nameHtml+=QString::fromStdString(ChatParsing::new_chat_message(std::string(),Player_type_normal,chat_list_type.at(index),chat_list_text.at(index).toStdString()));
+            nameHtml+=QString::fromStdString(ChatParsing::new_chat_message(std::string(),Player_type_normal,entry.type,entry.text));
         else
-            nameHtml+=QString::fromStdString(ChatParsing::new_chat_message(chat_list_player_pseudo.at(index).toStdString(),chat_list_player_type.at(index),chat_list_type.at(index),chat_list_text.at(index).toStdString()));
+            nameHtml+=QString::fromStdString(ChatParsing::new_chat_message(entry.player_pseudo,entry.player_type,entry.type,entry.text));
         index++;
     }
     ui->textBrowser_chat->setHtml(nameHtml);

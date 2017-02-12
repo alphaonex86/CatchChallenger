@@ -270,7 +270,7 @@ signals:
     void monsterCatch(const bool &success) const;
 
     //chat
-    void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type) const;
+    void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &player_type) const;
     void new_system_text(const CatchChallenger::Chat_type &chat_type,const QString &text) const;
 
     //player info
