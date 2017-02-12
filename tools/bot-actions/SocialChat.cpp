@@ -7,6 +7,7 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QSqlError>
+#include <QScrollBar>
 
 SocialChat * SocialChat::socialChat=NULL;
 
@@ -34,7 +35,7 @@ SocialChat::SocialChat() :
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
     numberForFlood=0;
-    lastText[0];
+    lastText.push_back(std::unordered_set<std::string>());
 }
 
 void SocialChat::showEvent(QShowEvent * event)
@@ -103,6 +104,23 @@ void SocialChat::loadPlayerInformation()
     ui->labelPseudo->setText(pseudo);
     ui->chatSpecText->setPlaceholderText(tr("Your text as %1").arg(pseudo));
     ui->globalChatText->setPlaceholderText(tr("Your text as %1").arg(pseudo));
+
+    switch(playerInformations.public_informations.type)
+    {
+        default:
+    case CatchChallenger::Player_type_normal:
+            ui->player_informations_type->setText(tr("Normal player"));
+        break;
+        case CatchChallenger::Player_type_premium:
+            ui->player_informations_type->setPixmap(QPixmap(":/images/chat/premium.png"));
+        break;
+        case CatchChallenger::Player_type_dev:
+            ui->player_informations_type->setPixmap(QPixmap(":/images/chat/developer.png"));
+        break;
+        case CatchChallenger::Player_type_gm:
+            ui->player_informations_type->setPixmap(QPixmap(":/images/chat/admin.png"));
+        break;
+    }
 
     //front image
     if(playerInformations.public_informations.skinId<DatapackClientLoader::datapackLoader.skins.size())
@@ -254,6 +272,11 @@ void SocialChat::new_chat_text(const CatchChallenger::Chat_type &chat_type,const
     if(pseudoToBot.contains(pseudo))
         return;
 
+    new_chat_text_internal(chat_type,text,pseudo,player_type);
+}
+
+void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &player_type)
+{
     ChatEntry newEntry;
     newEntry.player_type=player_type;
     newEntry.player_pseudo=pseudo.toStdString();
@@ -337,9 +360,9 @@ void SocialChat::removeNumberForFlood()
         lastText.erase(lastText.cbegin()+lastText.size()-1);
 }
 
-void SocialChat::lineEdit_globalChatText_returnPressed()
+void SocialChat::on_globalChatText_returnPressed()
 {
-    QString text=ui->lineEdit_chat_text->text();
+    QString text=ui->globalChatText->text();
     text.remove("\n");
     text.remove("\r");
     text.remove("\t");
@@ -347,60 +370,54 @@ void SocialChat::lineEdit_globalChatText_returnPressed()
         return;
     if(text.contains(QRegularExpression("^ +$")))
     {
-        ui->lineEdit_chat_text->clear();
-        new_system_text(Chat_type_system,"Space text not allowed");
+        ui->globalChatText->clear();
+        new_system_text(CatchChallenger::Chat_type_system,"Space text not allowed");
         return;
     }
     if(text.size()>256)
     {
-        ui->lineEdit_chat_text->clear();
-        new_system_text(Chat_type_system,"Message too long");
+        ui->globalChatText->clear();
+        new_system_text(CatchChallenger::Chat_type_system,"Message too long");
         return;
     }
     if(!text.startsWith('/'))
     {
         if(text==lastMessageSend)
         {
-            ui->lineEdit_chat_text->clear();
-            new_system_text(Chat_type_system,"Send message like as previous");
+            ui->globalChatText->clear();
+            new_system_text(CatchChallenger::Chat_type_system,"Send message like as previous");
             return;
         }
         if(numberForFlood>2)
         {
-            ui->lineEdit_chat_text->clear();
-            new_system_text(Chat_type_system,"Stop flood");
+            ui->globalChatText->clear();
+            new_system_text(CatchChallenger::Chat_type_system,"Stop flood");
             return;
         }
     }
     numberForFlood++;
     lastMessageSend=text;
-    ui->lineEdit_chat_text->setText(QString());
+    ui->globalChat->setText(QString());
     if(!text.startsWith("/pm "))
     {
-        Chat_type chat_type;
-        switch(ui->comboBox_chat_type->itemData(ui->comboBox_chat_type->currentIndex(),99).toUInt())
-        {
-        default:
-        case 0:
-            chat_type=Chat_type_all;
-        break;
-        case 1:
-            chat_type=Chat_type_local;
-        break;
-        case 2:
-            chat_type=Chat_type_clan;
-        break;
-        }
-        client->sendChatText(chat_type,text);
+        const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+        if(selectedItems.size()!=1)
+            return;
+        const QString &pseudo=selectedItems.at(0)->text();
+        if(!pseudoToBot.contains(pseudo))
+            return;
+        ActionsBotInterface::Player * client=pseudoToBot.value(pseudo);
+        const CatchChallenger::Player_private_and_public_informations &player_informations=client->api->get_player_informations();
+
+        client->api->sendChatText(CatchChallenger::Chat_type_all,text);
         if(!text.startsWith('/'))
-            new_chat_text(chat_type,text,QString::fromStdString(client->player_informations.public_informations.pseudo),client->player_informations.public_informations.type);
+            new_chat_text_internal(CatchChallenger::Chat_type_all,text,pseudo,player_informations.public_informations.type);
+        ui->globalChatText->clear();
     }
     else if(text.contains(QRegularExpression("^/pm [^ ]+ .+$")))
     {
-        QString pseudo=text;
-        pseudo.replace(QRegularExpression("^/pm ([^ ]+) .+$"), "\\1");
-        text.replace(QRegularExpression("^/pm [^ ]+ (.+)$"), "\\1");
-        client->sendPM(text,pseudo);
-        new_chat_text(Chat_type_pm,text,tr("To: ")+pseudo,Player_type_normal);
+        ui->globalChatText->clear();
+        new_system_text(CatchChallenger::Chat_type_system,"Not the section for private message, look at left");
+        return;
     }
 }
