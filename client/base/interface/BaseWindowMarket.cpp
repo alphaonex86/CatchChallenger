@@ -403,7 +403,7 @@ void BaseWindow::tradeAcceptedByOther(const QString &pseudo,const uint8_t &skinI
     ui->tradeAddMonster->setEnabled(true);
     ui->tradeValidate->setEnabled(true);
 
-    const QPixmap skin(getFrontSkinPath(skinInt));
+    const QPixmap skin(getFrontSkin(skinInt));
     if(!skin.isNull())
     {
         //reset the other player info
