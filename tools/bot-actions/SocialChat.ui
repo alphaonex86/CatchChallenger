@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Social chat</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="localr.qrc">
+    <normaloff>:/8.png</normaloff>:/8.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout_3">
     <item>
@@ -175,6 +179,7 @@
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources>
+  <include location="localr.qrc"/>
   <include location="../../client/base/resources/client-resources.qrc"/>
  </resources>
  <connections/>
