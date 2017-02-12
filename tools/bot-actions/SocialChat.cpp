@@ -153,27 +153,27 @@ QString SocialChat::getTrainerSkinPath(const QString &skin)
 QString SocialChat::getSkinPath(const QString &skinName,const QString &type)
 {
     {
-        QFileInfo pngFile(client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.png").arg(type));
+        QFileInfo pngFile(DatapackClientLoader::datapackLoader.getDatapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.png").arg(type));
         if(pngFile.exists())
             return pngFile.absoluteFilePath();
     }
     {
-        QFileInfo gifFile(client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.gif").arg(type));
+        QFileInfo gifFile(DatapackClientLoader::datapackLoader.getDatapackPath()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.gif").arg(type));
         if(gifFile.exists())
             return gifFile.absoluteFilePath();
     }
-    QDir folderList(client->datapackPathBase()+DATAPACK_BASE_PATH_SKINBASE);
+    QDir folderList(DatapackClientLoader::datapackLoader.getDatapackPath()+DATAPACK_BASE_PATH_SKINBASE);
     const QStringList &entryList=folderList.entryList(QDir::Dirs|QDir::NoDotAndDotDot);
     int entryListIndex=0;
     while(entryListIndex<entryList.size())
     {
         {
-            QFileInfo pngFile(QStringLiteral("%1/skin/%2/%3/%4.png").arg(client->datapackPathBase()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
+            QFileInfo pngFile(QStringLiteral("%1/skin/%2/%3/%4.png").arg(DatapackClientLoader::datapackLoader.getDatapackPath()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
             if(pngFile.exists())
                 return pngFile.absoluteFilePath();
         }
         {
-            QFileInfo gifFile(QStringLiteral("%1/skin/%2/%3/%4.gif").arg(client->datapackPathBase()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
+            QFileInfo gifFile(QStringLiteral("%1/skin/%2/%3/%4.gif").arg(DatapackClientLoader::datapackLoader.getDatapackPath()).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
             if(gifFile.exists())
                 return gifFile.absoluteFilePath();
         }
