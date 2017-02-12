@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Bot and target</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="localr.qrc">
+    <normaloff>:/6.png</normaloff>:/6.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
