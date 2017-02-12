@@ -63,7 +63,7 @@ void BaseWindow::newProfileFinished()
     //characterEntry.mapId=DatapackClientLoader::datapackLoader.mapToId.value(profile.map);
     characterEntry.played_time=0;
     characterEntry.pseudo=nameGame.pseudo().toStdString();
-    if(characterEntry.pseudo.contains(" "))
+    if(characterEntry.pseudo.find(" ")==std::string::npos)
     {
         QMessageBox::warning(this,tr("Error"),tr("Your psuedo can't contains space"));
         client->tryDisconnect();
