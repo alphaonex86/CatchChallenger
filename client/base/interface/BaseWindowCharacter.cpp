@@ -63,6 +63,12 @@ void BaseWindow::newProfileFinished()
     //characterEntry.mapId=DatapackClientLoader::datapackLoader.mapToId.value(profile.map);
     characterEntry.played_time=0;
     characterEntry.pseudo=nameGame.pseudo().toStdString();
+    if(characterEntry.pseudo.contains(" "))
+    {
+        QMessageBox::warning(this,tr("Error"),tr("Your psuedo can't contains space"));
+        client->tryDisconnect();
+        return;
+    }
     characterEntry.charactersGroupIndex=nameGame.monsterGroupId();
     characterEntry.skinId=nameGame.skinId();
     client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,profileIndex,QString::fromStdString(characterEntry.pseudo),characterEntry.charactersGroupIndex,characterEntry.skinId);
