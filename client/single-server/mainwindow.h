@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <QSslError>
 #include <QSslSocket>
+#include <QCompleter>
 #include "../base/ClientVariableAudio.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
@@ -87,6 +88,7 @@ private:
     #endif
     CatchChallenger::BaseWindow *baseWindow;
     CatchChallenger::Api_protocol *client;
+    QCompleter *completer;
 
     QString server_name;
     QString server_dns_or_ip;

@@ -35,7 +35,31 @@ SocialChat::SocialChat() :
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
     numberForFlood=0;
+    completer=NULL;
     lastText.push_back(std::unordered_set<std::string>());
+
+    {
+        QSqlQuery query;
+        query.prepare("SELECT * FROM globalchat");
+        if(!query.exec())
+            qDebug() << "note load error: " << query.lastError();
+        else while(query.next())
+        {
+            ChatEntry newEntry;
+            newEntry.player_type=(CatchChallenger::Player_type)query.value("player_type").toUInt();
+            const QString &pseudo=query.value("pseudo").toString();
+            newEntry.player_pseudo=pseudo.toStdString();
+            if(!pseudo.isEmpty())
+                knownGlobalChatPlayers << pseudo;
+            newEntry.chat_type=(CatchChallenger::Chat_type)query.value("chat_type").toUInt();
+            newEntry.text=query.value("text").toString().toStdString();
+            chat_list << newEntry;
+        }
+
+        while(chat_list.size()>64)
+            chat_list.removeFirst();
+        //update_chat();
+    }
 }
 
 void SocialChat::showEvent(QShowEvent * event)
@@ -43,6 +67,7 @@ void SocialChat::showEvent(QShowEvent * event)
     bool first=true;
     QHash<CatchChallenger::Api_protocol *,ActionsBotInterface::Player>::const_iterator i = ActionsBotInterface::clientList.constBegin();
     while (i != ActionsBotInterface::clientList.constEnd()) {
+        CatchChallenger::Api_protocol * const api=i.key();
         ActionsBotInterface::Player &client=const_cast<ActionsBotInterface::Player &>(i.value());
         if(client.api->getCaracterSelected())
         {
@@ -55,7 +80,20 @@ void SocialChat::showEvent(QShowEvent * event)
             const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=client.api->get_player_informations();
             const QString &qtpseudo=QString::fromStdString(player_private_and_public_informations.public_informations.pseudo);
             ui->bots->addItem(qtpseudo);
-            pseudoToBot[qtpseudo]=&client;
+            pseudoToBot[qtpseudo]=api;
+            client.regexMatchPseudo=QRegularExpression("^(.*[ @])?"+QRegularExpression::escape(qtpseudo)+"([ @].*)?$");
+            if(!client.regexMatchPseudo.isValid())
+            {
+                qDebug() << client.regexMatchPseudo.errorString();
+                abort();
+            }
+
+            if(!connect(api,&CatchChallenger::Api_protocol::insert_player,            this,&SocialChat::insert_player))
+                abort();
+            /* keep in memory all the player seeif(!connect(api,&CatchChallenger::Api_protocol::dropAllPlayerOnTheMap,            this,&ActionsAction::dropAllPlayerOnTheMap))
+                abort();
+            if(!connect(api,&CatchChallenger::Api_protocol::remove_player,            this,&ActionsAction::remove_player))
+                abort();*/
         }
         ++i;
     }
@@ -77,9 +115,24 @@ void SocialChat::showEvent(QShowEvent * event)
     QWidget::showEvent(event);
 }
 
+void SocialChat::focusInEvent(QFocusEvent * event)
+{
+    if(windowTitle().endsWith("*"))
+    {
+        QString title=windowTitle();
+        title.remove("*");
+        setWindowTitle(title);
+    }
+}
+
 SocialChat::~SocialChat()
 {
     delete ui;
+    if(completer!=NULL)
+    {
+        delete completer;
+        completer=NULL;
+    }
 }
 
 void SocialChat::on_bots_itemSelectionChanged()
@@ -99,8 +152,19 @@ void SocialChat::loadPlayerInformation()
     const QString &pseudo=selectedItems.at(0)->text();
     if(!pseudoToBot.contains(pseudo))
         return;
-    ActionsBotInterface::Player * client=pseudoToBot.value(pseudo);
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->api->get_player_informations();
+    CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
+    if(!ActionsBotInterface::clientList.contains(api))
+        return;
+
+    selectedItems.at(0)->setBackground(Qt::NoBrush);
+    if(windowTitle().endsWith("*"))
+    {
+        QString title=windowTitle();
+        title.remove("*");
+        setWindowTitle(title);
+    }
+
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
     ui->labelPseudo->setText(pseudo);
     ui->chatSpecText->setPlaceholderText(tr("Your text as %1").arg(pseudo));
     ui->globalChatText->setPlaceholderText(tr("Your text as %1").arg(pseudo));
@@ -133,6 +197,8 @@ void SocialChat::loadPlayerInformation()
         qDebug() << "note load error: " << query.lastError();
     else if(query.next())
         ui->note->setPlainText(query.value("text").toString());
+    updatePlayerKnownList(api);
+    update_chat();
 }
 
 QPixmap SocialChat::getFrontSkin(const QString &skinName)
@@ -277,11 +343,51 @@ void SocialChat::new_chat_text(const CatchChallenger::Chat_type &chat_type,const
 
 void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &player_type)
 {
+    knownGlobalChatPlayers << pseudo;
+
     ChatEntry newEntry;
     newEntry.player_type=player_type;
     newEntry.player_pseudo=pseudo.toStdString();
-    newEntry.type=chat_type;
+    newEntry.chat_type=chat_type;
     newEntry.text=text.toStdString();
+
+    QHash<CatchChallenger::Api_protocol *,ActionsBotInterface::Player>::const_iterator i = ActionsBotInterface::clientList.constBegin();
+    while (i != ActionsBotInterface::clientList.constEnd()) {
+        const ActionsBotInterface::Player &client=i.value();
+        bool found=text.contains(client.regexMatchPseudo);
+        if(found)
+        {
+            if(!hasFocus())
+            {
+                if(!windowTitle().endsWith("*"))
+                    setWindowTitle(windowTitle()+"*");
+            }
+            else
+            {
+                const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+                if(selectedItems.size()!=1)
+                    return;
+                const QString &pseudo=selectedItems.at(0)->text();
+                if(!pseudoToBot.contains(pseudo))
+                    return;
+
+                if(pseudo!=client.api->getPseudo())
+                {
+                    if(!windowTitle().endsWith("*"))
+                        setWindowTitle(windowTitle()+"*");
+                }
+            }
+            unsigned int index=0;
+            while(index<(uint32_t)ui->bots->count())
+            {
+                QListWidgetItem * const item=ui->bots->item(index);
+                if(item->text()==client.api->getPseudo() && (!hasFocus() || !item->isSelected()))
+                    item->setBackground(QBrush(QColor("#DDDDFF"),Qt::SolidPattern));
+                index++;
+            }
+        }
+        ++i;
+    }
 
     const std::string tempContent=newEntry.player_pseudo+newEntry.text;
     {
@@ -296,6 +402,24 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
     }
     lastText.back().insert(tempContent);
 
+    {
+        QSqlQuery query;
+        query.prepare("INSERT INTO globalchat (chat_type,text,pseudo,player_type) VALUES (:chat_type,:text,:pseudo,:player_type)");
+        query.bindValue(":chat_type", (uint8_t)newEntry.chat_type);
+        query.bindValue(":text", QString::fromStdString(newEntry.text));
+        query.bindValue(":pseudo", QString::fromStdString(newEntry.player_pseudo));
+        query.bindValue(":player_type", (uint8_t)newEntry.player_type);
+        if(!query.exec())
+            qDebug() << "on_note_textChanged add error:  " << query.lastError();
+    }
+    /*{
+        QSqlQuery query;
+        query.prepare("DELETE FROM globalchat WHERE player = (:player)");
+        query.bindValue(":player", pseudo);
+        if(!query.exec())
+            qDebug() << "on_note_textChanged del error:  " << query.lastError();
+    }*/
+
     chat_list << newEntry;
     while(chat_list.size()>64)
         chat_list.removeFirst();
@@ -307,7 +431,7 @@ void SocialChat::new_system_text(const CatchChallenger::Chat_type &chat_type,con
     ChatEntry newEntry;
     newEntry.player_type=CatchChallenger::Player_type_normal;
     //newEntry.player_pseudo=QString();
-    newEntry.type=chat_type;
+    newEntry.chat_type=chat_type;
     newEntry.text=text.toStdString();
 
     const std::string tempContent=newEntry.text;
@@ -331,18 +455,37 @@ void SocialChat::new_system_text(const CatchChallenger::Chat_type &chat_type,con
 
 void SocialChat::update_chat()
 {
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
+    if(!ActionsBotInterface::clientList.contains(api))
+        return;
+    const ActionsBotInterface::Player &client=ActionsBotInterface::clientList.value(api);
+
     QString nameHtml;
     int index=0;
     while(index<chat_list.size())
     {
         const ChatEntry &entry=chat_list.at(index);
         bool addPlayerInfo=true;
-        if(entry.type==CatchChallenger::Chat_type_system || entry.type==CatchChallenger::Chat_type_system_important)
+        if(entry.chat_type==CatchChallenger::Chat_type_system || entry.chat_type==CatchChallenger::Chat_type_system_important)
             addPlayerInfo=false;
         if(!addPlayerInfo)
-            nameHtml+=QString::fromStdString(CatchChallenger::ChatParsing::new_chat_message(std::string(),CatchChallenger::Player_type_normal,entry.type,entry.text));
+            nameHtml+=QString::fromStdString(CatchChallenger::ChatParsing::new_chat_message(std::string(),CatchChallenger::Player_type_normal,entry.chat_type,entry.text));
         else
-            nameHtml+=QString::fromStdString(CatchChallenger::ChatParsing::new_chat_message(entry.player_pseudo,entry.player_type,entry.type,entry.text));
+        {
+            const QString &QtText=QString::fromStdString(entry.text);
+            bool found=QtText.contains(client.regexMatchPseudo);
+            if(found)
+                nameHtml+="<div style=\"background-color:#DDDDFF;\">";
+            nameHtml+=QString::fromStdString(CatchChallenger::ChatParsing::new_chat_message(entry.player_pseudo,entry.player_type,entry.chat_type,entry.text,true));
+            if(found)
+                nameHtml+="</div>";
+        }
         index++;
     }
     ui->globalChat->setHtml(nameHtml);
@@ -366,6 +509,23 @@ void SocialChat::on_globalChatText_returnPressed()
     text.remove("\n");
     text.remove("\r");
     text.remove("\t");
+    if(windowTitle().endsWith("*"))
+    {
+        QString title=windowTitle();
+        title.remove("*");
+        setWindowTitle(title);
+    }
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
+    if(!ActionsBotInterface::clientList.contains(api))
+        return;
+
+    selectedItems.at(0)->setBackground(Qt::NoBrush);
     if(text.isEmpty())
         return;
     if(text.contains(QRegularExpression("^ +$")))
@@ -400,16 +560,11 @@ void SocialChat::on_globalChatText_returnPressed()
     ui->globalChat->setText(QString());
     if(!text.startsWith("/pm "))
     {
-        const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
-        if(selectedItems.size()!=1)
+        if(!ActionsBotInterface::clientList.contains(api))
             return;
-        const QString &pseudo=selectedItems.at(0)->text();
-        if(!pseudoToBot.contains(pseudo))
-            return;
-        ActionsBotInterface::Player * client=pseudoToBot.value(pseudo);
-        const CatchChallenger::Player_private_and_public_informations &player_informations=client->api->get_player_informations();
+        const CatchChallenger::Player_private_and_public_informations &player_informations=api->get_player_informations();
 
-        client->api->sendChatText(CatchChallenger::Chat_type_all,text);
+        api->sendChatText(CatchChallenger::Chat_type_all,text);
         if(!text.startsWith('/'))
             new_chat_text_internal(CatchChallenger::Chat_type_all,text,pseudo,player_informations.public_informations.type);
         ui->globalChatText->clear();
@@ -420,4 +575,48 @@ void SocialChat::on_globalChatText_returnPressed()
         new_system_text(CatchChallenger::Chat_type_system,"Not the section for private message, look at left");
         return;
     }
+}
+
+void SocialChat::insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
+{
+    (void)player;
+    (void)mapId;
+    (void)x;
+    (void)y;
+    (void)direction;
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(QObject::sender());
+    if(api==NULL)
+        return;
+    updatePlayerKnownList(api);
+}
+
+void SocialChat::updatePlayerKnownList(CatchChallenger::Api_protocol *api)
+{
+    if(!ActionsBotInterface::clientList.contains(api))
+        return;
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    if(api->getPseudo()==pseudo)
+    {
+        QList<QString> wordList=QSet<QString>(knownGlobalChatPlayers+ActionsBotInterface::clientList[api].visiblePlayers.values().toSet()).toList();
+        if(completer!=NULL)
+        {
+            delete completer;
+            completer=NULL;
+        }
+        completer = new QCompleter(wordList);
+        //completer->setCaseSensitivity(Qt::CaseInsensitive);
+        //completer->setCompletionMode(QCompleter::InlineCompletion);
+        ui->globalChatText->setCompleter(completer);
+    }
+}
+
+void SocialChat::on_globalChat_anchorClicked(const QUrl &arg1)
+{
+    ui->globalChatText->insert(" @"+arg1.toString()+" ");//ui->globalChatText->cursorPosition(),
+    ui->globalChatText->setFocus();
 }

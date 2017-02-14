@@ -107,7 +107,18 @@ MainWindow::MainWindow(QWidget *parent) :
                 index++;
             }
             if(!loginList.isEmpty())
+            {
+                if(completer!=NULL)
+                {
+                    delete completer;
+                    completer=NULL;
+                }
+                completer = new QCompleter(loginList);
+                completer->setCaseSensitivity(Qt::CaseInsensitive);
+                ui->lineEditLogin->setCompleter(completer);
+
                 ui->lineEditLogin->setText(loginList.first());
+            }
             else
                 ui->lineEditLogin->setText(QString());
         }
@@ -127,6 +138,7 @@ MainWindow::MainWindow(QWidget *parent) :
     updateTheOkButtonTimer.start(1000);
     numberForFlood=0;
     haveShowDisconnectionReason=false;
+    completer=NULL;
     ui->stackedWidget->addWidget(baseWindow);
     connect(baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection);
 
@@ -216,6 +228,11 @@ MainWindow::~MainWindow()
         client->tryDisconnect();
         delete client;
     }
+    if(completer!=NULL)
+    {
+        delete completer;
+        completer=NULL;
+    }
     delete baseWindow;
     delete ui;
     if(socket!=NULL)
@@ -229,6 +246,11 @@ void MainWindow::resetAll()
         client->resetAll();
         client->deleteLater();
         client=NULL;
+    }
+    if(completer!=NULL)
+    {
+        delete completer;
+        completer=NULL;
     }
     if(baseWindow!=NULL)
         baseWindow->resetAll();
@@ -347,6 +369,11 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     }
     loginList.insert(0,ui->lineEditLogin->text());
     settings.setValue("login",loginList);
+    if(completer!=NULL)
+    {
+        delete completer;
+        completer=NULL;
+    }
 
     if(socket!=NULL)
     {

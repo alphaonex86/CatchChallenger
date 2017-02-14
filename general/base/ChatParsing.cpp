@@ -2,7 +2,7 @@
 
 using namespace CatchChallenger;
 
-std::string ChatParsing::new_chat_message(const std::string &pseudo, const Player_type &player_type, const Chat_type &chat_type, const std::string &text)
+std::string ChatParsing::new_chat_message(const std::string &pseudo, const Player_type &player_type, const Chat_type &chat_type, const std::string &text, const bool withLink)
 {
     std::string returned_html;
     returned_html+="<div style=\"";
@@ -69,6 +69,8 @@ std::string ChatParsing::new_chat_message(const std::string &pseudo, const Playe
     {
         if(pseudo.empty())
             returned_html+=toSmilies(toHtmlEntities(text));
+        else if(withLink)
+            returned_html+="<a href=\""+pseudo+"\" style=\"color:inherit;text-decoration:none;font-weight:inherit;\">"+pseudo+"</a>: "+toSmilies(toHtmlEntities(text));
         else
             returned_html+=pseudo+": "+toSmilies(toHtmlEntities(text));
     }

@@ -10,6 +10,7 @@
 #include "../../../client/fight/interface/ClientFightEngine.h"
 #include "MapServerMini.h"
 #include <unordered_map>
+#include <QRegularExpression>
 
 class ActionsBotInterface : public BotInterface
 {
@@ -45,6 +46,7 @@ public:
         //uint8_t previousStepWalked;do into the api, see MoveOnTheMap::newDirection()
         CatchChallenger::ClientFightEngine *fightEngine;
         CatchChallenger::Api_protocol *api;
+        QHash<uint16_t,QString> visiblePlayers;
 
         //plant seed in waiting
         struct SeedInWaiting
@@ -60,6 +62,7 @@ public:
             uint16_t seconds_to_mature;
         };
         QList<ClientPlantInCollecting> plant_collect_in_waiting;
+        QRegularExpression regexMatchPseudo;
     };
 
     ActionsBotInterface();

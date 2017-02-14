@@ -28,14 +28,27 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
 
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
     Player &botplayer=clientList[api];
-    botplayer.fightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
-    ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
-    connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection);
-    connect(api,&CatchChallenger::Api_protocol::seed_planted,   actionsAction,&ActionsAction::seed_planted_slot);
-    connect(api,&CatchChallenger::Api_protocol::plant_collected,   actionsAction,&ActionsAction::plant_collected_slot);
+    if(player_private_and_public_informations.public_informations.simplifiedId==player.simplifiedId)
+    {
+        botplayer.fightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
+        ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
+        connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection);
+        connect(api,&CatchChallenger::Api_protocol::seed_planted,   actionsAction,&ActionsAction::seed_planted_slot);
+        connect(api,&CatchChallenger::Api_protocol::plant_collected,   actionsAction,&ActionsAction::plant_collected_slot);
 
-    if(!moveTimer.isActive())
-        moveTimer.start(player_private_and_public_informations.public_informations.speed);
+        if(!moveTimer.isActive())
+            moveTimer.start(player_private_and_public_informations.public_informations.speed);
+    }
+}
+
+void ActionsAction::insert_player_all(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+{
+    (void)mapId;
+    (void)x;
+    (void)y;
+    (void)direction;
+    Player &botplayer=clientList[api];
+    botplayer.visiblePlayers[player.simplifiedId]=QString::fromStdString(player.pseudo);
 }
 
 bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction,const MapServerMini &map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision, const bool &allowTeleport)
