@@ -29,7 +29,7 @@ void BotTargetList::updatePlayerInformation()
         QString mapString=QString::fromStdString(playerMap->map_file)+QString(" (%1,%2)").arg(player.x).arg(player.y);
         ui->label_local_target->setTitle("Target on the map: "+mapString);
         if(playerMap->step.size()<2)
-            abort();
+            return;
         const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
         const uint16_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
         if(playerCodeZone>0 && (uint32_t)(playerCodeZone-1)<(uint32_t)stepPlayer.layers.size())
@@ -101,7 +101,6 @@ void BotTargetList::updatePlayerInformation()
     ui->label_player_cash->setText(QString("Cash: %1$").arg(player_private_and_public_informations.cash));
     {
         ui->inventory->clear();
-        const ActionsBotInterface::Player &bot=actionsAction->clientList.value(client->api);
         for(const auto& n:player_private_and_public_informations.items) {
             const uint32_t &itemId=n.first;
             const uint32_t &quantity=n.second;

@@ -110,7 +110,11 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
-        <widget class="QTextBrowser" name="globalChat"/>
+        <widget class="QTextBrowser" name="globalChat">
+         <property name="openLinks">
+          <bool>false</bool>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QLineEdit" name="globalChatText">
