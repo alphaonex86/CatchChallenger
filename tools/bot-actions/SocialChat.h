@@ -47,7 +47,10 @@ private slots:
     void on_globalChatText_returnPressed();
     //map view
     void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
+    void remove_player(const uint16_t &id);
+    void dropAllPlayerOnTheMap();
     void updatePlayerKnownList(CatchChallenger::Api_protocol *api);
+    void updateVisiblePlayers(CatchChallenger::Api_protocol *api);
     void on_globalChat_anchorClicked(const QUrl &arg1);
 
 private:

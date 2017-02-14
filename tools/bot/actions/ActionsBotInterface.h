@@ -46,7 +46,8 @@ public:
         //uint8_t previousStepWalked;do into the api, see MoveOnTheMap::newDirection()
         CatchChallenger::ClientFightEngine *fightEngine;
         CatchChallenger::Api_protocol *api;
-        QHash<uint16_t,QString> visiblePlayers;
+        QHash<uint16_t,CatchChallenger::Player_public_informations> visiblePlayers;
+        QSet<QString> viewedPlayers;
 
         //plant seed in waiting
         struct SeedInWaiting
