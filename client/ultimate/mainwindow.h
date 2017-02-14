@@ -11,6 +11,7 @@
 #include <QNetworkReply>
 #include <QDateTime>
 #include <QSet>
+#include <QCompleter>
 #include "../base/ClientVariableAudio.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <vlc/vlc.h>
@@ -176,6 +177,7 @@ private:
     QTimer triggerUltimateCopy;
     CatchChallenger::BaseWindow *baseWindow;
     CatchChallenger::Api_protocol *client;
+    QCompleter *completer;
 signals:
     #ifndef CATCHCHALLENGER_NOAUDIO
     void audioLoopRestart(void *vlcPlayer);
