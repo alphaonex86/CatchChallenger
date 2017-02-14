@@ -15,6 +15,7 @@ SOURCES += main.cpp\
         MainWindow.cpp \
     ../bot/MultipleBotConnection.cpp \
     ../bot/MultipleBotConnectionImplForGui.cpp \
+    ../bot/BotInterface.cpp \
     BotTargetList.cpp \
     BotTargetListGUI.cpp \
     BotTargetListNear.cpp \

@@ -90,10 +90,10 @@ void SocialChat::showEvent(QShowEvent * event)
 
             if(!connect(api,&CatchChallenger::Api_protocol::insert_player,            this,&SocialChat::insert_player))
                 abort();
-            /* keep in memory all the player seeif(!connect(api,&CatchChallenger::Api_protocol::dropAllPlayerOnTheMap,            this,&ActionsAction::dropAllPlayerOnTheMap))
+            if(!connect(api,&CatchChallenger::Api_protocol::dropAllPlayerOnTheMap,    this,&SocialChat::dropAllPlayerOnTheMap))
                 abort();
-            if(!connect(api,&CatchChallenger::Api_protocol::remove_player,            this,&ActionsAction::remove_player))
-                abort();*/
+            if(!connect(api,&CatchChallenger::Api_protocol::remove_player,            this,&SocialChat::remove_player))
+                abort();
         }
         ++i;
     }
@@ -117,6 +117,7 @@ void SocialChat::showEvent(QShowEvent * event)
 
 void SocialChat::focusInEvent(QFocusEvent * event)
 {
+    (void)event;
     if(windowTitle().endsWith("*"))
     {
         QString title=windowTitle();
@@ -198,6 +199,7 @@ void SocialChat::loadPlayerInformation()
     else if(query.next())
         ui->note->setPlainText(query.value("text").toString());
     updatePlayerKnownList(api);
+    updateVisiblePlayers(api);
     update_chat();
 }
 
@@ -588,6 +590,24 @@ void SocialChat::insert_player(const CatchChallenger::Player_public_informations
     if(api==NULL)
         return;
     updatePlayerKnownList(api);
+    updateVisiblePlayers(api);
+}
+
+void SocialChat::remove_player(const uint16_t &id)
+{
+    (void)id;
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(QObject::sender());
+    if(api==NULL)
+        return;
+    updateVisiblePlayers(api);
+}
+
+void SocialChat::dropAllPlayerOnTheMap()
+{
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(QObject::sender());
+    if(api==NULL)
+        return;
+    updateVisiblePlayers(api);
 }
 
 void SocialChat::updatePlayerKnownList(CatchChallenger::Api_protocol *api)
@@ -602,7 +622,7 @@ void SocialChat::updatePlayerKnownList(CatchChallenger::Api_protocol *api)
         return;
     if(api->getPseudo()==pseudo)
     {
-        QList<QString> wordList=QSet<QString>(knownGlobalChatPlayers+ActionsBotInterface::clientList[api].visiblePlayers.values().toSet()).toList();
+        QList<QString> wordList=QSet<QString>(knownGlobalChatPlayers+ActionsBotInterface::clientList[api].viewedPlayers).toList();
         if(completer!=NULL)
         {
             delete completer;
@@ -612,6 +632,69 @@ void SocialChat::updatePlayerKnownList(CatchChallenger::Api_protocol *api)
         //completer->setCaseSensitivity(Qt::CaseInsensitive);
         //completer->setCompletionMode(QCompleter::InlineCompletion);
         ui->globalChatText->setCompleter(completer);
+    }
+}
+
+void SocialChat::updateVisiblePlayers(CatchChallenger::Api_protocol *api)
+{
+    if(!ActionsBotInterface::clientList.contains(api))
+        return;
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    if(api->getPseudo()==pseudo)
+    {
+        QString newHtml;
+        const QHash<uint16_t,CatchChallenger::Player_public_informations> &visiblePlayers=ActionsBotInterface::clientList[api].visiblePlayers;
+        QHash<uint16_t,CatchChallenger::Player_public_informations>::const_iterator i = visiblePlayers.constBegin();
+        while (i != visiblePlayers.constEnd()) {
+            const CatchChallenger::Player_public_informations &playerInformations=i.value();
+            if(!newHtml.isEmpty())
+                newHtml+=", ";
+
+            newHtml+="<div style=\"";
+            switch(playerInformations.type)
+            {
+                case CatchChallenger::Player_type_normal://normal player
+                break;
+                case CatchChallenger::Player_type_premium://premium player
+                break;
+                case CatchChallenger::Player_type_gm://gm
+                    newHtml+="font-weight:bold;";
+                break;
+                case CatchChallenger::Player_type_dev://dev
+                    newHtml+="font-weight:bold;";
+                break;
+                default:
+                break;
+            }
+            newHtml+="\">";
+            switch(playerInformations.type)
+            {
+                case CatchChallenger::Player_type_normal://normal player
+                break;
+                case CatchChallenger::Player_type_premium://premium player
+                    newHtml+="<img src=\":/images/chat/premium.png\" alt\"\" />";
+                break;
+                case CatchChallenger::Player_type_gm://gm
+                    newHtml+="<img src=\":/images/chat/admin.png\" alt\"\" />";
+                break;
+                case CatchChallenger::Player_type_dev://dev
+                    newHtml+="<img src=\":/images/chat/developer.png\" alt\"\" />";
+                break;
+                default:
+                break;
+            }
+
+            newHtml+=QString::fromStdString(playerInformations.pseudo);
+
+            newHtml+="</div>";
+            ++i;
+        }
+        ui->labelVisiblePlayer->setText(newHtml);
     }
 }
 

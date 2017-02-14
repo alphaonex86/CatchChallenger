@@ -478,6 +478,6 @@ void Client::setRights(const Player_type& type)
 
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_change_right.asyncWrite({
                 std::to_string(newType),
-                std::to_string(account_id)
+                std::to_string(character_id)
                 });
 }
