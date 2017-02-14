@@ -188,6 +188,22 @@ void MultipleBotConnectionImplForGui::insert_player(const CatchChallenger::Playe
     }
 }
 
+void MultipleBotConnectionImplForGui::remove_player(const uint16_t &id)
+{
+    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(QObject::sender());
+    if(senderObject==NULL)
+        return;
+    botInterface->remove_player(senderObject,id);
+}
+
+void MultipleBotConnectionImplForGui::dropAllPlayerOnTheMap()
+{
+    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(QObject::sender());
+    if(senderObject==NULL)
+        return;
+    botInterface->dropAllPlayerOnTheMap(senderObject);
+}
+
 void MultipleBotConnectionImplForGui::logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList)
 {
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());

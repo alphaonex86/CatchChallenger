@@ -48,7 +48,23 @@ void ActionsAction::insert_player_all(CatchChallenger::Api_protocol *api,const C
     (void)y;
     (void)direction;
     Player &botplayer=clientList[api];
-    botplayer.visiblePlayers[player.simplifiedId]=QString::fromStdString(player.pseudo);
+    if(player.simplifiedId!=botplayer.api->get_player_informations().public_informations.simplifiedId)
+    {
+        botplayer.visiblePlayers[player.simplifiedId]=player;
+        botplayer.viewedPlayers << QString::fromStdString(player.pseudo);
+    }
+}
+
+void ActionsAction::dropAllPlayerOnTheMap(CatchChallenger::Api_protocol *api)
+{
+    Player &botplayer=clientList[api];
+    botplayer.visiblePlayers.clear();
+}
+
+void ActionsAction::remove_player(CatchChallenger::Api_protocol *api, const uint16_t &id)
+{
+    Player &botplayer=clientList[api];
+    botplayer.visiblePlayers.remove(id);
 }
 
 bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction,const MapServerMini &map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision, const bool &allowTeleport)

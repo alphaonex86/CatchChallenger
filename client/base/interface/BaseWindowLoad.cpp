@@ -920,7 +920,7 @@ QPixmap BaseWindow::getFrontSkin(const QString &skinName)
 
 QPixmap BaseWindow::getFrontSkin(const uint32_t &skinId)
 {
-    if(skinId<DatapackClientLoader::datapackLoader.skins.size())
+    if(skinId<(uint32_t)DatapackClientLoader::datapackLoader.skins.size())
         return getFrontSkin(DatapackClientLoader::datapackLoader.skins.at(skinId));
     else
         return getFrontSkin(QString());

@@ -46,6 +46,7 @@ QStringList ActionsBotInterface::variablesList()
 
 void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
 {
+    (void)direction;
     CatchChallenger::Player_private_and_public_informations &playerApi=api->get_player_informations();
     playerApi.public_informations=player;
     Player &newPlayer=clientList[api];

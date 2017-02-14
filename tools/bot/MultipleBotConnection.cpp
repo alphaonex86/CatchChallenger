@@ -482,6 +482,10 @@ void MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * cli
     client->api->setDatapackPath(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/"));
     if(!connect(client->api,&CatchChallenger::Api_client_real::insert_player,            this,&MultipleBotConnection::insert_player))
         abort();
+    if(!connect(client->api,&CatchChallenger::Api_client_real::remove_player,            this,&MultipleBotConnection::remove_player))
+        abort();
+    if(!connect(client->api,&CatchChallenger::Api_client_real::dropAllPlayerOnTheMap,    this,&MultipleBotConnection::dropAllPlayerOnTheMap))
+        abort();
     if(!connect(client->api,&CatchChallenger::Api_client_real::haveCharacter,            this,&MultipleBotConnection::haveCharacter))
         abort();
     if(!connect(client->api,&CatchChallenger::Api_client_real::logged,                   this,&MultipleBotConnection::logged))
