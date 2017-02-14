@@ -44,7 +44,7 @@ win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugi
 RESOURCES += \
     localr.qrc
 
-#QMAKE_CXXFLAGS+="-std=c++0x -Wall -Wextra -fno-omit-frame-pointer -fsanitize=address"
-#QMAKE_CFLAGS+="-Wall -Wextra -fno-omit-frame-pointer -fsanitize=address"
-#QMAKE_LFLAGS+="-fno-omit-frame-pointer -Wl,--no-undefined -fsanitize=address -stdlib=libc++"
+QMAKE_CXXFLAGS+="-std=c++0x -Wall -Wextra -fno-omit-frame-pointer -fsanitize=address"
+QMAKE_CFLAGS+="-Wall -Wextra -fno-omit-frame-pointer -fsanitize=address"
+QMAKE_LFLAGS+="-fno-omit-frame-pointer -Wl,--no-undefined -fsanitize=address -stdlib=libc++"
 #/usr/lib64/qt5/bin/qmake -spec linux-clang

@@ -180,9 +180,12 @@ void MultipleBotConnectionImplForGui::insert_player(const CatchChallenger::Playe
 
     MultipleBotConnection::insert_player_with_client(apiToCatchChallengerClient.value(senderObject),player,mapId,x,y,direction);
 
-    if(player.simplifiedId==apiToCatchChallengerClient.value(senderObject)->api->getId())
-        if(botInterface!=NULL)
+    if(botInterface!=NULL)
+    {
+        botInterface->insert_player_all(apiToCatchChallengerClient.value(senderObject)->api,player,mapId,x,y,direction);
+        if(player.simplifiedId==apiToCatchChallengerClient.value(senderObject)->api->getId())
             botInterface->insert_player(apiToCatchChallengerClient.value(senderObject)->api,player,mapId,x,y,direction);
+    }
 }
 
 void MultipleBotConnectionImplForGui::logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList)

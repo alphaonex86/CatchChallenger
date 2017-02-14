@@ -154,7 +154,7 @@ void Chat::new_system_text(CatchChallenger::Chat_type chat_type,QString text)
     ChatEntry newEntry;
     newEntry.player_type=Player_type_normal;
     //newEntry.player_pseudo=QString();
-    newEntry.type=chat_type;
+    newEntry.chat_type=chat_type;
     newEntry.text=text.toStdString();
     chat_list << newEntry;
     while(chat_list.size()>64)
@@ -170,7 +170,7 @@ void Chat::new_chat_text(CatchChallenger::Chat_type chat_type,QString text,QStri
     ChatEntry newEntry;
     newEntry.player_type=player_type;
     newEntry.player_pseudo=pseudo.toStdString();
-    newEntry.type=chat_type;
+    newEntry.chat_type=chat_type;
     newEntry.text=text.toStdString();
     chat_list << newEntry;
     while(chat_list.size()>64)
@@ -191,12 +191,12 @@ void Chat::update_chat()
     {
         const ChatEntry &entry=chat_list.at(index);
         bool addPlayerInfo=true;
-        if(entry.type==Chat_type_system || entry.type==Chat_type_system_important)
+        if(entry.chat_type==Chat_type_system || entry.chat_type==Chat_type_system_important)
             addPlayerInfo=false;
         if(!addPlayerInfo)
-            nameHtml+=QString::fromStdString(ChatParsing::new_chat_message(std::string(),Player_type_normal,entry.type,entry.text));
+            nameHtml+=QString::fromStdString(ChatParsing::new_chat_message(std::string(),Player_type_normal,entry.chat_type,entry.text));
         else
-            nameHtml+=QString::fromStdString(ChatParsing::new_chat_message(entry.player_pseudo,entry.player_type,entry.type,entry.text));
+            nameHtml+=QString::fromStdString(ChatParsing::new_chat_message(entry.player_pseudo,entry.player_type,entry.chat_type,entry.text));
         index++;
     }
     ui->textBrowser_chat->setHtml(nameHtml);

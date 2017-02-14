@@ -43,7 +43,7 @@ private:
     {
         std::string player_pseudo;
         CatchChallenger::Player_type player_type;
-        CatchChallenger::Chat_type type;
+        CatchChallenger::Chat_type chat_type;
         std::string text;
     };
     QList<ChatEntry> chat_list;

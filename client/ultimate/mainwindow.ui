@@ -52,7 +52,7 @@
        <string notr="true">#datapack{background-image: url(:/images/background.png);}</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="mode">
        <property name="styleSheet">
@@ -325,8 +325,8 @@ QLabel { padding:2px; }</string>
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>740</width>
-                     <height>258</height>
+                     <width>746</width>
+                     <height>245</height>
                     </rect>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -631,8 +631,8 @@ QLabel { padding:2px; }</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>740</width>
-                   <height>280</height>
+                   <width>746</width>
+                   <height>268</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_6">

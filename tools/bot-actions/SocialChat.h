@@ -10,6 +10,7 @@
 #include <vector>
 #include <unordered_set>
 #include <string>
+#include <QCompleter>
 
 namespace Ui {
 class SocialChat;
@@ -44,10 +45,16 @@ private slots:
     void update_chat();
     void removeNumberForFlood();
     void on_globalChatText_returnPressed();
+    //map view
+    void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
+    void updatePlayerKnownList(CatchChallenger::Api_protocol *api);
+    void on_globalChat_anchorClicked(const QUrl &arg1);
+
 private:
     void showEvent(QShowEvent * event);
+    void focusInEvent(QFocusEvent * event);
     Ui::SocialChat *ui;
-    QHash<QString,ActionsBotInterface::Player *> pseudoToBot;
+    QHash<QString,CatchChallenger::Api_protocol *> pseudoToBot;
     QSqlDatabase database;
 
     //skin
@@ -64,10 +71,12 @@ private:
     {
         std::string player_pseudo;
         CatchChallenger::Player_type player_type;
-        CatchChallenger::Chat_type type;
+        CatchChallenger::Chat_type chat_type;
         std::string text;
     };
     QList<ChatEntry> chat_list;
+    QSet<QString> knownGlobalChatPlayers;
+    QCompleter *completer;
 };
 
 #endif // SOCIALCHAT_H

@@ -163,7 +163,7 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
     ActionsAction *actionsAction=static_cast<ActionsAction *>(multipleBotConnexion.botInterface);
     if(!actionsAction->clientList.contains(api))
     {
-        ActionsBotInterface::Player newPlayer=actionsAction->clientList[api];
+        ActionsBotInterface::Player newPlayer;
         //newPlayer.player=0;
         newPlayer.mapId=0;
         newPlayer.x=0;
