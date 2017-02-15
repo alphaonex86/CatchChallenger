@@ -37,6 +37,8 @@ SocialChat::SocialChat() :
     numberForFlood=0;
     completer=NULL;
     lastText.push_back(std::unordered_set<std::string>());
+    connect(ui->globalChatText,&QLineEdit::textChanged,this,&SocialChat::globalChatText_updateCompleter,Qt::QueuedConnection);
+    connect(ui->globalChatText,&QLineEdit::cursorPositionChanged,this,&SocialChat::globalChatText_updateCompleter,Qt::QueuedConnection);
 
     {
         QSqlQuery query;
@@ -621,18 +623,7 @@ void SocialChat::updatePlayerKnownList(CatchChallenger::Api_protocol *api)
     if(!pseudoToBot.contains(pseudo))
         return;
     if(api->getPseudo()==pseudo)
-    {
-        QList<QString> wordList=QSet<QString>(knownGlobalChatPlayers+ActionsBotInterface::clientList[api].viewedPlayers).toList();
-        if(completer!=NULL)
-        {
-            delete completer;
-            completer=NULL;
-        }
-        completer = new QCompleter(wordList);
-        //completer->setCaseSensitivity(Qt::CaseInsensitive);
-        //completer->setCompletionMode(QCompleter::InlineCompletion);
-        ui->globalChatText->setCompleter(completer);
-    }
+        globalChatText_updateCompleter();
 }
 
 void SocialChat::updateVisiblePlayers(CatchChallenger::Api_protocol *api)
@@ -702,4 +693,69 @@ void SocialChat::on_globalChat_anchorClicked(const QUrl &arg1)
 {
     ui->globalChatText->insert(" @"+arg1.toString()+" ");//ui->globalChatText->cursorPosition(),
     ui->globalChatText->setFocus();
+}
+
+void SocialChat::globalChatText_updateCompleter()
+{
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    CatchChallenger::Api_protocol * const api=pseudoToBot.value(pseudo);
+
+    QList<QString> wordList=QSet<QString>(knownGlobalChatPlayers+ActionsBotInterface::clientList[api].viewedPlayers).toList();
+    if(completer!=NULL)
+    {
+        delete completer;
+        completer=NULL;
+    }
+    const int cursorPosition=ui->globalChatText->cursorPosition();
+    if(cursorPosition<0)
+        completer = new QCompleter(wordList);
+    else
+    {
+        const QString &fullText=ui->globalChatText->text();
+        const QString &beforeTheCursor=fullText.mid(0,cursorPosition);
+        const int &spliterPos=beforeTheCursor.lastIndexOf("@");
+        if(spliterPos<0)
+            completer = new QCompleter(wordList);
+        else
+        {
+            QList<QString> finalWordList;
+            const QString &pos1=beforeTheCursor.mid(0,spliterPos+1);
+            const QString &pos2=beforeTheCursor.mid(spliterPos+1);
+            const QString &pos3=fullText.mid(cursorPosition);
+            if(!pos2.isEmpty())
+            {
+                unsigned int index=0;
+                while(index<(uint32_t)wordList.size())
+                {
+                    const QString &pseudo=wordList.at(index);
+                    if(pseudo.startsWith(pos2,Qt::CaseInsensitive))
+                        finalWordList << pos1+pseudo+pos3;
+                    index++;
+                }
+            }
+            else
+            {
+                unsigned int index=0;
+                while(index<(uint32_t)wordList.size())
+                {
+                    finalWordList << pos1+wordList.at(index)+pos3;
+                    index++;
+                }
+            }
+            completer = new QCompleter(wordList);
+            completer->setCaseSensitivity(Qt::CaseInsensitive);
+            completer->setCompletionMode(QCompleter::UnfilteredPopupCompletion);
+            qDebug() << "finalWordList: " << finalWordList.join("\n") << completer->completionPrefix() << " end";
+        }
+    }
+
+
+    //completer->setCaseSensitivity(Qt::CaseInsensitive);
+    //completer->setCompletionMode(QCompleter::InlineCompletion);
+    ui->globalChatText->setCompleter(completer);
 }
