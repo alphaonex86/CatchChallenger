@@ -504,10 +504,6 @@ void MainWindow::datapackMainSubIsReady()
 {
     if(!CommonSettingsServer::commonSettingsServer.chat_allow_all && !CommonSettingsServer::commonSettingsServer.chat_allow_local)
     {
-        ui->randomText->setEnabled(false);
-        ui->randomText->setChecked(false);
-        ui->chatRandomReply->setEnabled(false);
-        ui->chatRandomReply->setChecked(false);
     }
     DatapackClientLoader::datapackLoader.parseDatapackMainSub(
                 QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode),
