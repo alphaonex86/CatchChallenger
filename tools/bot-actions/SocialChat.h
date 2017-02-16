@@ -53,6 +53,9 @@ private slots:
     void updateVisiblePlayers(CatchChallenger::Api_protocol *api);
     void on_globalChat_anchorClicked(const QUrl &arg1);
     void globalChatText_updateCompleter();
+    void on_chatSpecText_returnPressed();
+    void on_listWidgetChatType_itemSelectionChanged();
+
 private:
     void showEvent(QShowEvent * event);
     void focusInEvent(QFocusEvent * event);
