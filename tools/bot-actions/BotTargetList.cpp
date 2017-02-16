@@ -254,7 +254,16 @@ void BotTargetList::updatePlayerMap(const bool &force)
     const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
 
     if(player.mapId==mapId || force)
+    {
+        if(force)
+        {
+            updateMapContentX=0;
+            updateMapContentY=0;
+            updateMapContentMapId=0;
+            updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
+        }
         updateMapContent();
+    }
 }
 
 void BotTargetList::startPlayerMove()
@@ -360,6 +369,10 @@ void BotTargetList::startPlayerMove()
     player.target.localStep=returnPath;
 
     ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(returnPath)));
+    updateMapContentX=0;
+    updateMapContentY=0;
+    updateMapContentMapId=0;
+    updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
     updateMapInformation();
 }
 
@@ -459,6 +472,10 @@ void BotTargetList::updateMapInformation()
     }
     else
         std::cerr << "updateMapInformation(): map id not found for the current player: " << mapId << std::endl;
+    updateMapContentX=0;
+    updateMapContentY=0;
+    updateMapContentMapId=0;
+    updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
     updateMapContent();
     updateLayerElements();
 }
@@ -661,6 +678,10 @@ void BotTargetList::on_localTargets_itemActivated(QListWidgetItem *item)
     if(mapId!=newMapId)
     {
         mapId=newMapId;
+        updateMapContentX=0;
+        updateMapContentY=0;
+        updateMapContentMapId=0;
+        updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
         updateMapInformation();
         ui->trackThePlayer->setChecked(false);
     }
@@ -669,6 +690,10 @@ void BotTargetList::on_localTargets_itemActivated(QListWidgetItem *item)
 void BotTargetList::on_comboBoxStep_currentIndexChanged(int index)
 {
     (void)index;
+    updateMapContentX=0;
+    updateMapContentY=0;
+    updateMapContentMapId=0;
+    updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
     updateMapInformation();
 }
 
@@ -689,6 +714,10 @@ void BotTargetList::on_browseMap_clicked()
     const MapServerMini * const mapServer=static_cast<MapServerMini *>(actionsAction->map_list.at(selectedMapString));
     mapId=mapServer->id;
     ui->trackThePlayer->setChecked(false);
+    updateMapContentX=0;
+    updateMapContentY=0;
+    updateMapContentMapId=0;
+    updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
     updateMapInformation();
 }
 
@@ -1274,6 +1303,10 @@ void BotTargetList::on_trackThePlayer_clicked()
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
     const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
     mapId=player.mapId;
+    updateMapContentX=0;
+    updateMapContentY=0;
+    updateMapContentMapId=0;
+    updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
     updateMapInformation();
     updatePlayerInformation();
     updatePlayerMap(true);
