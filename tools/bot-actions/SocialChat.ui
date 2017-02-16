@@ -74,7 +74,18 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
-             <widget class="QListView" name="listViewChatType"/>
+             <widget class="QListWidget" name="listWidgetChatType">
+              <item>
+               <property name="text">
+                <string>local</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>clan</string>
+               </property>
+              </item>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -86,7 +97,7 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
-             <widget class="QListView" name="chatSpec"/>
+             <widget class="QTextBrowser" name="chatSpec"/>
             </item>
             <item>
              <widget class="QLineEdit" name="chatSpecText">
@@ -190,8 +201,8 @@
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources>
-  <include location="../../client/base/resources/client-resources.qrc"/>
   <include location="localr.qrc"/>
+  <include location="../../client/base/resources/client-resources.qrc"/>
  </resources>
  <connections/>
 </ui>

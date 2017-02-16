@@ -36,6 +36,13 @@ public:
         std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > localStep;
         MapServerMini::BlockObject::LinkPoint linkPoint;
     };
+    struct ChatEntry
+    {
+        std::string player_pseudo;
+        CatchChallenger::Player_type player_type;
+        CatchChallenger::Chat_type chat_type;
+        std::string text;
+    };
     struct Player
     {
         uint32_t mapId;
