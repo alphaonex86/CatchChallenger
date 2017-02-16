@@ -60,7 +60,7 @@ SocialChat::SocialChat() :
 
         while(chat_list.size()>64)
             chat_list.removeFirst();
-        //update_chat();
+        update_chat();
     }
 }
 
@@ -384,8 +384,8 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
             found=text.contains(client.regexMatchPseudo);
         else
         {
-            unsigned int index=0;
-            while(index<ui->listWidgetChatType->count())
+            unsigned int index=2;
+            while(index<(unsigned int)ui->listWidgetChatType->count())
             {
                 QListWidgetItem * item=ui->listWidgetChatType->item(index);
                 QString text=item->text();
@@ -400,7 +400,7 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
                 index++;
             }
             //new entry
-            if(index>=ui->listWidgetChatType->count())
+            if(index>=(unsigned int)ui->listWidgetChatType->count())
             {
                 ui->listWidgetChatType->addItem("* "+pseudo);
                 QListWidgetItem * item=ui->listWidgetChatType->item(ui->listWidgetChatType->count()-1);
@@ -410,7 +410,8 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
         }
         if(found)
         {
-            if(item->text()==client.api->getPseudo())
+            //mark the local or clan as unread
+/*            if(item->text()==client.api->getPseudo())
             {
                 client.viewedPlayers << pseudo;
                 if(item->isElect() && ui->listWidgetChatType->count()>1)
@@ -420,7 +421,7 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
                     if(chat_type==CatchChallenger::Chat_type::Chat_type_clan)
                         ui->listWidgetChatType->item(1)->setBackground(QBrush(QColor("#DDDDFF"),Qt::SolidPattern));
                 }
-            }
+            }*/
             if(!hasFocus())
             {
                 if(!windowTitle().endsWith("*"))
@@ -521,7 +522,7 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
                 query.bindValue(":player", api->getPseudo());
                 query.bindValue(":theotherplayer", QString::fromStdString(newEntry.player_pseudo));
                 query.bindValue(":player_type", (uint8_t)newEntry.player_type);
-                query.bindValue(":fromplayer",1);
+                query.bindValue(":fromplayer",0);
                 const QList<QListWidgetItem*> &selectedItemsType=ui->listWidgetChatType->selectedItems();
                 if(selectedItemsType.size()!=1)
                     return;
@@ -568,7 +569,7 @@ void SocialChat::new_system_text(const CatchChallenger::Chat_type &chat_type,con
     chat_list << newEntry;
     while(chat_list.size()>64)
         chat_list.removeFirst();
-    update_chat();
+    //update_chat();
 }
 
 void SocialChat::update_chat()
@@ -696,13 +697,13 @@ void SocialChat::on_globalChatText_returnPressed()
         message.replace(QRegularExpression("^/pm [^ ]+ (.+)$"), "\\1");
         ui->globalChatText->clear();
         unsigned int index=0;
-        while(index<ui->listWidgetChatType->count())
+        while(index<(unsigned int)ui->listWidgetChatType->count())
         {
             ui->listWidgetChatType->item(index)->setSelected(false);
             index++;
         }
-        index=0;
-        while(index<ui->listWidgetChatType->count())
+        index=2;
+        while(index<(unsigned int)ui->listWidgetChatType->count())
         {
             QListWidgetItem * item=ui->listWidgetChatType->item(index);
             QString text=item->text();
@@ -914,8 +915,7 @@ void SocialChat::globalChatText_updateCompleter()
 
 void SocialChat::on_chatSpecText_returnPressed()
 {
-    to do
-    QString text=ui->globalChatText->text();
+    QString text=ui->chatSpecText->text();
     text.remove("\n");
     text.remove("\r");
     text.remove("\t");
@@ -1003,7 +1003,18 @@ void SocialChat::on_chatSpecText_returnPressed()
                 textSelectionChatType.remove(0,2);
                 api->sendPM(text,textSelectionChatType);
                 if(!text.startsWith('/'))
-                    new_chat_text_internal(CatchChallenger::Chat_type_all,text,pseudo,player_informations.public_informations.type);
+                {
+                    QSqlQuery query;
+                    query.prepare("INSERT INTO privatechat (text,player_type,player,theotherplayer,fromplayer) VALUES (:text,:player_type,:player,:theotherplayer,:fromplayer)");
+                    query.bindValue(":text", text);
+                    query.bindValue(":player", api->getPseudo());
+                    query.bindValue(":theotherplayer", textSelectionChatType);
+                    query.bindValue(":player_type", (uint8_t) api->get_player_informations().public_informations.type);
+                    query.bindValue(":fromplayer",1);
+                    if(!query.exec())
+                        qDebug() << "note load error: " << query.lastError();
+                    on_listWidgetChatType_itemSelectionChanged();
+                }
                 ui->chatSpecText->clear();
             }
             break;
@@ -1017,13 +1028,13 @@ void SocialChat::on_chatSpecText_returnPressed()
         message.replace(QRegularExpression("^/pm [^ ]+ (.+)$"), "\\1");
         ui->chatSpecText->clear();
         unsigned int index=0;
-        while(index<ui->listWidgetChatType->count())
+        while(index<(unsigned int)ui->listWidgetChatType->count())
         {
             ui->listWidgetChatType->item(index)->setSelected(false);
             index++;
         }
         index=0;
-        while(index<ui->listWidgetChatType->count())
+        while(index<(unsigned int)ui->listWidgetChatType->count())
         {
             QListWidgetItem * item=ui->listWidgetChatType->item(index);
             QString text=item->text();
@@ -1056,5 +1067,123 @@ void SocialChat::on_chatSpecText_returnPressed()
 
 void SocialChat::on_listWidgetChatType_itemSelectionChanged()
 {
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
+    if(!ActionsBotInterface::clientList.contains(api))
+        return;
+    const ActionsBotInterface::Player &client=ActionsBotInterface::clientList.value(api);
 
+    if(ui->listWidgetChatType->count()<=1)
+        return;
+    if(ui->listWidgetChatType->item(0)->isSelected())
+    {
+        ui->listWidgetChatType->item(1)->setBackground(Qt::NoBrush);
+        QSqlQuery query;
+        query.prepare("SELECT * FROM otherchat WHERE player = (:player) AND chat_type = (:chat_type)");
+        query.bindValue(":player",pseudo);
+        query.bindValue(":chat_type",CatchChallenger::Chat_type_local);
+        if(!query.exec())
+            qDebug() << "note load error: " << query.lastError();
+        else
+        {
+            QString nameHtml;
+            while(query.next())
+            {
+                const QString &QtText=query.value("text").toString();
+                bool found=QtText.contains(client.regexMatchPseudo);
+                if(found)
+                    nameHtml+="<div style=\"background-color:#DDDDFF;\">";
+                nameHtml+=QString::fromStdString(CatchChallenger::ChatParsing::new_chat_message(
+                                                     query.value("theotherplayer").toString().toStdString(),
+                                                     (CatchChallenger::Player_type)query.value("player_type").toUInt(),
+                                                     CatchChallenger::Chat_type_local,
+                                                     QtText.toStdString(),
+                                                     true));
+                if(found)
+                    nameHtml+="</div>";
+            }
+            ui->chatSpec->setHtml(nameHtml);
+            ui->chatSpec->verticalScrollBar()->setValue(ui->chatSpec->verticalScrollBar()->maximum());
+        }
+    }
+    else if(ui->listWidgetChatType->item(1)->isSelected())
+    {
+        ui->listWidgetChatType->item(1)->setBackground(Qt::NoBrush);
+        QSqlQuery query;
+        query.prepare("SELECT * FROM otherchat WHERE player = (:player) AND chat_type = (:chat_type)");
+        query.bindValue(":player",pseudo);
+        query.bindValue(":chat_type",CatchChallenger::Chat_type_clan);
+        if(!query.exec())
+            qDebug() << "note load error: " << query.lastError();
+        else
+        {
+            QString nameHtml;
+            while(query.next())
+            {
+                const QString &QtText=query.value("text").toString();
+                bool found=QtText.contains(client.regexMatchPseudo);
+                if(found)
+                    nameHtml+="<div style=\"background-color:#DDDDFF;\">";
+                nameHtml+=QString::fromStdString(CatchChallenger::ChatParsing::new_chat_message(
+                                                     query.value("theotherplayer").toString().toStdString(),
+                                                     (CatchChallenger::Player_type)query.value("player_type").toUInt(),
+                                                     CatchChallenger::Chat_type_clan,
+                                                     QtText.toStdString(),
+                                                     true));
+                if(found)
+                    nameHtml+="</div>";
+            }
+            ui->chatSpec->setHtml(nameHtml);
+            ui->chatSpec->verticalScrollBar()->setValue(ui->chatSpec->verticalScrollBar()->maximum());
+        }
+    }
+    else
+    {
+        unsigned int index=2;
+        while(index<(unsigned int)ui->listWidgetChatType->count())
+        {
+            QListWidgetItem * item=ui->listWidgetChatType->item(index);
+            QString text=item->text();
+            if(!text.startsWith("* "))
+                abort();
+            text.remove(0,2);
+            if(text==pseudo)
+            {
+                QSqlQuery query;
+                query.prepare("SELECT * FROM privatechat WHERE player = (:player) AND chat_type = (:chat_type)");
+                query.bindValue(":player",pseudo);
+                query.bindValue(":chat_type",CatchChallenger::Chat_type_clan);
+                if(!query.exec())
+                    qDebug() << "note load error: " << query.lastError();
+                else
+                {
+                    QString nameHtml;
+                    while(query.next())
+                    {
+                        const QString &QtText=query.value("text").toString();
+                        if(query.value("theotherplayer").toUInt()==1)
+                            nameHtml+="&lt;";
+                        else
+                            nameHtml+="&gt;";
+                        nameHtml+=QString::fromStdString(CatchChallenger::ChatParsing::new_chat_message(
+                                                             query.value("theotherplayer").toString().toStdString(),
+                                                             (CatchChallenger::Player_type)query.value("player_type").toUInt(),
+                                                             CatchChallenger::Chat_type_clan,
+                                                             QtText.toStdString(),
+                                                             true));
+                    }
+                    ui->chatSpec->setHtml(nameHtml);
+                    ui->chatSpec->verticalScrollBar()->setValue(ui->chatSpec->verticalScrollBar()->maximum());
+                }
+                item->setBackground(Qt::NoBrush);
+                break;
+            }
+            index++;
+        }
+    }
 }
