@@ -69,40 +69,72 @@ void BroadCastWithoutSender::receive_instant_player_number(const int16_t &connec
 
 void BroadCastWithoutSender::doDDOSChat()
 {
+    /*int index=0;while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
     {
+        Client::generalChatDrop[index]=Client::generalChatDrop[index+1];
+        index++;
+    }*/
+    {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(Client::generalChatDropTotalCache<Client::generalChatDrop[0])
+        {
+            std::cerr << "doDDOSChat() general int overflow error" << Client::generalChatDropTotalCache << "<" << Client::generalChatDrop[0] << std::endl;
+            abort();
+        }
+        #endif
         Client::generalChatDropTotalCache-=Client::generalChatDrop[0];
         memmove(Client::generalChatDrop,Client::generalChatDrop+2,sizeof(Client::generalChatDrop)-2);
-        /*int index=0;while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
-        {
-            Client::generalChatDrop[index]=Client::generalChatDrop[index+1];
-            index++;
-        }*/
         Client::generalChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=Client::generalChatDropNewValue;
         Client::generalChatDropTotalCache+=Client::generalChatDropNewValue;
         Client::generalChatDropNewValue=0;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(Client::generalChatDropTotalCache>GlobalServerData::serverSettings.ddos.dropGlobalChatMessageGeneral)
+        {
+            std::cerr << "doDDOSChat() private 2 int overflow error" << Client::generalChatDropTotalCache << ">" << GlobalServerData::serverSettings.ddos.dropGlobalChatMessageGeneral << std::endl;
+            abort();
+        }
+        #endif
     }
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(Client::clanChatDropTotalCache<Client::clanChatDrop[0])
+        {
+            std::cerr << "doDDOSChat() clan int overflow error" << Client::clanChatDropTotalCache << "<" << Client::clanChatDrop[0] << std::endl;
+            abort();
+        }
+        #endif
         Client::clanChatDropTotalCache-=Client::clanChatDrop[0];
         memmove(Client::clanChatDrop,Client::clanChatDrop+2,sizeof(Client::clanChatDrop)-2);
-        /*int index=0;while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
-        {
-            Client::clanChatDrop[index]=Client::clanChatDrop[index+1];
-            index++;
-        }*/
         Client::clanChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=Client::clanChatDropNewValue;
         Client::clanChatDropTotalCache+=Client::clanChatDropNewValue;
         Client::clanChatDropNewValue=0;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(Client::clanChatDropTotalCache>GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
+        {
+            std::cerr << "doDDOSChat() private 2 int overflow error" << Client::clanChatDropTotalCache << ">" << GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan << std::endl;
+            abort();
+        }
+        #endif
     }
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(Client::privateChatDropTotalCache<Client::privateChatDrop[0])
+        {
+            std::cerr << "doDDOSChat() private int overflow error" << Client::privateChatDropTotalCache << "<" << Client::privateChatDrop[0] << std::endl;
+            abort();
+        }
+        #endif
         Client::privateChatDropTotalCache-=Client::privateChatDrop[0];
         memmove(Client::privateChatDrop,Client::privateChatDrop+2,sizeof(Client::privateChatDrop)-2);
-        /*int index=0;while(index<(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1))
-        {
-            Client::privateChatDrop[index]=Client::privateChatDrop[index+1];
-            index++;
-        }*/
         Client::privateChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE-1]=Client::privateChatDropNewValue;
         Client::privateChatDropTotalCache+=Client::privateChatDropNewValue;
         Client::privateChatDropNewValue=0;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(Client::privateChatDropTotalCache>GlobalServerData::serverSettings.ddos.dropGlobalChatMessagePrivate)
+        {
+            std::cerr << "doDDOSChat() private 2 int overflow error" << Client::privateChatDropTotalCache << ">" << GlobalServerData::serverSettings.ddos.dropGlobalChatMessagePrivate << std::endl;
+            abort();
+        }
+        #endif
     }
 }

@@ -126,3 +126,8 @@ defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
     HEADERS += $$PWD/../../general/base/tinyXML2/tinyxml2.h
     SOURCES += $$PWD/../../general/base/tinyXML2/tinyxml2.cpp
 }
+
+QMAKE_CXXFLAGS+="-std=c++0x -Wall -Wextra -fno-omit-frame-pointer -fsanitize=address"
+QMAKE_CFLAGS+="-Wall -Wextra -fno-omit-frame-pointer -fsanitize=address"
+QMAKE_LFLAGS+="-fno-omit-frame-pointer -Wl,--no-undefined -fsanitize=address -stdlib=libc++"
+#/usr/lib64/qt5/bin/qmake -spec linux-clang
