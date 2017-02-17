@@ -654,6 +654,13 @@ bool BaseServer::initialize_the_database()
 void BaseServer::initialize_the_database_prepared_query()
 {
     #if ! defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT)
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        //test memory leak around prepared string
+        StringWithReplacement test;
+        test="SELECT id,encode(password,'hex') FROM account WHERE login=decode('%1','hex')";
+    }
+    #endif
     PreparedDBQueryLogin::initDatabaseQueryLogin(GlobalServerData::serverPrivateVariables.db_login->databaseType(),GlobalServerData::serverPrivateVariables.db_login);
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.initDatabaseQueryCommonForLogin(GlobalServerData::serverPrivateVariables.db_common->databaseType(),GlobalServerData::serverPrivateVariables.db_common);
     #endif

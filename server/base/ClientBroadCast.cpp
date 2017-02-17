@@ -201,6 +201,7 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
     {
         if((clanChatDropTotalCache+clanChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
             return false;
+        clanChatDropNewValue++;
         if(clan==0)
             errorOutput("Unable to chat with clan, you have not clan");
         else
@@ -255,6 +256,7 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
     {
         if((generalChatDropTotalCache+generalChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageGeneral)
             return false;
+        generalChatDropNewValue++;
         if(!GlobalServerData::serverSettings.anonymous)
             normalOutput("[chat all] "+public_and_private_informations.public_informations.pseudo+": "+text);
         #ifndef EPOLLCATCHCHALLENGERSERVER

@@ -47,7 +47,10 @@ void StringWithReplacement::set(const std::string &query)
         const auto &found = query.find("%"+std::to_string(numberOfReplace));
         if(found!=std::string::npos)
         {
-            const uint16_t &arraysize=1+numberOfReplace+query.size()+2;
+            /* [0]: occurence to replace
+             * [1,2]: total size of the String
+             * List of: 16Bit header + string content */
+            const uint16_t &arraysize=1+2+(numberOfReplace+1/*if one %1 mean 2 string, if  %1,%2 mean 3 string*/)*sizeof(uint16_t)+query.size();
             char preparedQueryTemp[arraysize];
             preparedQueryTemp[0]=numberOfReplace;
             preparedQueryTemp[1]=0;
@@ -105,6 +108,10 @@ void StringWithReplacement::set(const std::string &query)
             if(size>0)
             {
                 const std::string extractedPart(query.substr(previousStringPos,size));
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(sizeof(preparedQueryTemp)<(pos+size+1))
+                    abort();
+                #endif
                 memcpy(preparedQueryTemp+pos,extractedPart.data(),size);
                 pos+=size;
             }
