@@ -142,7 +142,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                         }
                     }
 
-                    normalOutput(StaticText::text_slashpmspace+pseudo+StaticText::text_space+text);
+                    //normalOutput(StaticText::text_slashpmspace+pseudo+StaticText::text_space+text);
                     sendPM(text,pseudo);
                 }
                 else
