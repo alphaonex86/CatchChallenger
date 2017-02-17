@@ -572,7 +572,7 @@ void ActionsAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,co
     if(api==NULL)
         return;
 
-    Q_UNUSED(type);
+    /*Q_UNUSED(type);
     switch(chat_type)
     {
         case CatchChallenger::Chat_type_all:
@@ -606,7 +606,7 @@ void ActionsAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,co
         break;
         default:
         break;
-    }
+    }*/
 }
 
 void ActionsAction::have_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
