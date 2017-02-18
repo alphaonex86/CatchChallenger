@@ -902,7 +902,7 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         errorOutput("pseudo is empty, not allowed");
         return;
     }
-    if(pseudo.find(" ")==std::string::npos)
+    if(pseudo.find(" ")!=std::string::npos)
     {
         errorOutput("Your pseudo can't contains space");
         return;
