@@ -124,6 +124,11 @@ bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,con
 bool ProtocolParsingBase::removeFromQueryReceived(const uint8_t &queryNumber)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(queryNumber>(CATCHCHALLENGER_MAXPROTOCOLQUERY-1))
+    {
+        std::cerr << "queryNumber: " << queryNumber << " < CATCHCHALLENGER_MAXPROTOCOLQUERY: " << CATCHCHALLENGER_MAXPROTOCOLQUERY << std::endl;
+        abort();
+    }
     if(inputQueryNumberToPacketCode[queryNumber]==0x00)
     {
         errorParsingLayer("ProtocolParsingBase::removeFromQueryReceived already replied");
