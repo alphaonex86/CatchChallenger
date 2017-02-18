@@ -92,9 +92,9 @@ bool Client::sendPM(const std::string &text,const std::string &pseudo)
         errorOutput("Client::sendPM() chat text dropped because is too big for the 8Bits header");
         return false;
     }
-    if((privateChatDropTotalCache+privateChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessagePrivate)
+    if(privateChatDrop.total()>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessagePrivate)
         return false;
-    privateChatDropNewValue++;
+    privateChatDrop.incrementLastValue();
     if(this->public_and_private_informations.public_informations.pseudo==pseudo)
     {
         errorOutput("Can't send them self the PM");
@@ -199,9 +199,9 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
 
     if(chatType==Chat_type_clan)
     {
-        if((clanChatDropTotalCache+clanChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
+        if(clanChatDrop.total()>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
             return false;
-        clanChatDropNewValue++;
+        clanChatDrop.incrementLastValue();
         if(clan==0)
             errorOutput("Unable to chat with clan, you have not clan");
         else
@@ -254,9 +254,9 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
  *	else if(chatType==Chat_type_system || chatType==Chat_type_system_important)*/
     else
     {
-        if((generalChatDropTotalCache+generalChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageGeneral)
+        if(generalChatDrop.total()>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageGeneral)
             return false;
-        generalChatDropNewValue++;
+        generalChatDrop.incrementLastValue();
         if(!GlobalServerData::serverSettings.anonymous)
             normalOutput("[chat all] "+public_and_private_informations.public_informations.pseudo+": "+text);
         #ifndef EPOLLCATCHCHALLENGERSERVER

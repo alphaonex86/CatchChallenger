@@ -15,6 +15,7 @@
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/ProtocolParsing.h"
+#include "DdosBuffer.h"
 #ifdef EPOLLCATCHCHALLENGERSERVER
 #include "../epoll/BaseClassSwitch.h"
 #else
@@ -104,15 +105,9 @@ public:
 
     bool sendRawBlock(const char * const data,const unsigned int &size);
 
-    static uint16_t generalChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
-    static uint16_t generalChatDropTotalCache;
-    static uint16_t generalChatDropNewValue;
-    static uint16_t clanChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
-    static uint16_t clanChatDropTotalCache;
-    static uint16_t clanChatDropNewValue;
-    static uint16_t privateChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
-    static uint16_t privateChatDropTotalCache;
-    static uint16_t privateChatDropNewValue;
+    static DdosBuffer<uint16_t,3> generalChatDrop;
+    static DdosBuffer<uint16_t,3> clanChatDrop;
+    static DdosBuffer<uint16_t,3> privateChatDrop;
     static std::vector<uint16_t> marketObjectIdList;
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     static uint64_t datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;

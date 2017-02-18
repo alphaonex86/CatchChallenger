@@ -158,15 +158,9 @@ void BaseServer::unload_the_visibility_algorithm()
 
 void BaseServer::unload_the_ddos()
 {
-    memset(Client::generalChatDrop,0x00,sizeof(Client::generalChatDrop));
-    memset(Client::clanChatDrop,0x00,sizeof(Client::clanChatDrop));
-    memset(Client::privateChatDrop,0x00,sizeof(Client::privateChatDrop));
-    Client::generalChatDropTotalCache=0;
-    Client::generalChatDropNewValue=0;
-    Client::clanChatDropTotalCache=0;
-    Client::clanChatDropNewValue=0;
-    Client::privateChatDropTotalCache=0;
-    Client::privateChatDropNewValue=0;
+    Client::generalChatDrop.reset();
+    Client::clanChatDrop.reset();
+    Client::privateChatDrop.reset();
 }
 
 void BaseServer::unload_the_events()
