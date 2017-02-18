@@ -36,7 +36,11 @@ void Client::characterIsRightFinalStep()
     stat=ClientStat::CharacterSelected;
     checkLoose(false);
 
-    const uint8_t &query_id=selectCharacterQueryId.front();
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(selectCharacterQueryId.empty())
+        abort();
+    #endif
+    const uint8_t /*do ASAN crash/bug if ref enabled here*/query_id=selectCharacterQueryId.front();
     selectCharacterQueryId.erase(selectCharacterQueryId.begin());
 
     //send the network reply
