@@ -222,7 +222,13 @@ StringWithReplacement& StringWithReplacement::operator=(StringWithReplacement&& 
 {
     if(preparedQuery!=NULL)
         delete preparedQuery;
+
     preparedQuery = other.preparedQuery;
+    /*if you don't care about these errors you may set ASAN_OPTIONS=alloc_dealloc_mismatch=0
+    const uint16_t &size=StringWithReplacement::preparedQuerySize(other.preparedQuery);
+    preparedQuery = new unsigned char[size + 1];
+    memcpy(preparedQuery,other.preparedQuery,size);*/
+
     other.preparedQuery = nullptr;
     return *this;
 }

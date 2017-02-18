@@ -72,7 +72,8 @@ HEADERS += $$PWD/epoll/EpollSocket.h \
     $$PWD/epoll/timer/TimerEvents.h \
     $$PWD/NormalServerGlobal.h \
     $$PWD/epoll/EpollGenericServer.h \
-    $$PWD/epoll/EpollGenericSslServer.h
+    $$PWD/epoll/EpollGenericSslServer.h \
+    base/DdosBuffer.h
 
 #choose one of:
 #DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1
