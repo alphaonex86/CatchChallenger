@@ -349,6 +349,8 @@ BaseWindow::~BaseWindow()
 
 void BaseWindow::connectAllSignals()
 {
+    if(client==NULL)
+        return;
     mapController->connectAllSignals(client);
 
     connect(client,&CatchChallenger::Api_client_real::lastReplyTime,      this,&BaseWindow::lastReplyTime,    Qt::QueuedConnection);
