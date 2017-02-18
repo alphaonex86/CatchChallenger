@@ -415,7 +415,7 @@ int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &
         std::cerr << "pseudo is empty, not allowed" << std::endl;
         return -1;
     }
-    if(pseudo.find(" ")==std::string::npos)
+    if(pseudo.find(" ")!=std::string::npos)
     {
         std::cerr << "Your pseudo can't contains space" << std::endl;
         return -1;
