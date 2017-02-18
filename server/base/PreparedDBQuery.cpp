@@ -81,7 +81,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         PreparedDBQueryCommonForLogin::db_query_select_server_time=PreparedStatementUnit("SELECT server,played_time,last_connect FROM server_time WHERE account=%1",database);//not by characters to prevent too hurge datas to store
         PreparedDBQueryCommonForLogin::db_query_delete_character=PreparedStatementUnit("DELETE FROM character WHERE id=%1",database);
         PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character=PreparedStatementUnit("DELETE FROM monster WHERE character=%1",database);
-        PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo=PreparedStatementUnit("SELECT id FROM character WHERE pseudo=%1",database);
+        PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo=PreparedStatementUnit("SELECT id FROM character WHERE pseudo='%1'",database);
         PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account=PreparedStatementUnit("SELECT COUNT(*) FROM character WHERE account=%1",database);
         PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id=PreparedStatementUnit("SELECT account,time_to_delete FROM character WHERE id=%1",database);
         PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id=PreparedStatementUnit("UPDATE character SET time_to_delete=%1 WHERE id=%2",database);
@@ -94,7 +94,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
         PreparedDBQueryCommonForLogin::db_query_select_server_time=PreparedStatementUnit("SELECT server,played_time,last_connect FROM server_time WHERE account=%1",database);//not by characters to prevent too hurge datas to store
         PreparedDBQueryCommonForLogin::db_query_delete_character=PreparedStatementUnit("DELETE FROM character WHERE id=%1",database);
         PreparedDBQueryCommonForLogin::db_query_delete_monster_by_character=PreparedStatementUnit("DELETE FROM monster WHERE character=%1",database);
-        PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo=PreparedStatementUnit("SELECT id FROM character WHERE pseudo=%1",database);
+        PreparedDBQueryCommonForLogin::db_query_select_character_by_pseudo=PreparedStatementUnit("SELECT id FROM character WHERE pseudo='%1'",database);
         PreparedDBQueryCommonForLogin::db_query_get_character_count_by_account=PreparedStatementUnit("SELECT COUNT(*) FROM character WHERE account=%1",database);
         PreparedDBQueryCommonForLogin::db_query_account_time_to_delete_character_by_id=PreparedStatementUnit("SELECT account,time_to_delete FROM character WHERE id=%1",database);
         PreparedDBQueryCommonForLogin::db_query_update_character_time_to_delete_by_id=PreparedStatementUnit("UPDATE character SET time_to_delete=%1 WHERE id=%2",database);
