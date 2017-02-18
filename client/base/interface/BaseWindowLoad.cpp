@@ -169,7 +169,7 @@ void BaseWindow::resetAll()
 void BaseWindow::serverIsLoading()
 {
     ui->label_connecting_status->setText(tr("Preparing the game data"));
-    resetAll();
+    //resetAll();->do bug because it reset this->client
 }
 
 void BaseWindow::serverIsReady()
@@ -222,7 +222,12 @@ void BaseWindow::logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedLi
         client->sendDatapackContentBase(settings.value("DatapackHashBase-"+client->datapackPathBase()).toByteArray());
     else
     #endif
-        client->sendDatapackContentBase();
+    if(client==NULL)
+    {
+        std::cerr << "BaseWindow::logged() client==NULL" << std::endl;
+        abort();
+    }
+    client->sendDatapackContentBase();
     isLogged=true;
     datapackGatewayProgression.clear();
     updateConnectingStatus();
