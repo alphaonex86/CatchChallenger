@@ -425,8 +425,8 @@ void MainWindow::connectTheExternalSocket()
     connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
     connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message,Qt::QueuedConnection);
     connect(client,               &CatchChallenger::Api_protocol::logged,             this,&MainWindow::logged,Qt::QueuedConnection);
-    baseWindow->connectAllSignals();
     baseWindow->setMultiPlayer(true,client);
+    baseWindow->connectAllSignals();
     QDir datapack(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/datapack/"));
     if(!datapack.exists())
         if(!datapack.mkpath(datapack.absolutePath()))

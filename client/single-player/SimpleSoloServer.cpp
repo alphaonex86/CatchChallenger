@@ -23,8 +23,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
     connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
     baseWindow=new CatchChallenger::BaseWindow();
-    baseWindow->connectAllSignals();
     baseWindow->setMultiPlayer(false,client);
+    baseWindow->connectAllSignals();
     connect(baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection);
     baseWindow->setMinimumSize(800,600);
     ui->stackedWidget->addWidget(baseWindow);
