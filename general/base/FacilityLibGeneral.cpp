@@ -158,6 +158,23 @@ std::vector<std::string> FacilityLibGeneral::skinIdList(const std::string& skinP
     return skinFolderList;
 }
 
+std::string FacilityLibGeneral::dropPrefixAndSuffixLowerThen33(const std::string &str)
+{
+    unsigned int start=0;
+    while(start<str.size())
+    {
+        if(str.at(start)>33)
+            break;
+        start++;
+    }
+    if(start>=str.size())
+        return std::string();
+    unsigned int stop=str.size()-1;
+    while(str.at(stop)<33)
+        stop--;
+    return str.substr(start,stop-start+1);
+}
+
 bool FacilityLibGeneral::isFile(const std::string& file)
 {
     #ifdef Q_OS_WIN32

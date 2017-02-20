@@ -2,6 +2,7 @@
 #include "GeneralVariable.h"
 #include "CommonDatapackServerSpec.h"
 #include "ProtocolParsing.h"
+#include "FacilityLibGeneral.h"
 
 #include "CommonDatapack.h"
 #include "CachedString.h"
@@ -13,7 +14,7 @@
 using namespace CatchChallenger;
 
 std::unordered_map<std::string/*file*/, std::unordered_map<uint32_t/*id*/,CATCHCHALLENGER_XMLELEMENT *> > Map_loader::teleportConditionsUnparsed;
-std::regex e("[^A-Za-z0-9+/=]+",std::regex::ECMAScript|std::regex::optimize);
+//std::regex e("[^A-Za-z0-9+/=]+",std::regex::ECMAScript|std::regex::optimize);->very slow, 1000x more slow than dropPrefixAndSuffixLowerThen33(
 
 /// \todo put at walkable the tp on push
 
@@ -575,7 +576,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             }
             else
             {
-                std::string base64text=std::regex_replace(data->GetText(),e,"");
+                //std::string base64text=std::regex_replace(data->GetText(),e,"");->very slow, 1000x more slow than dropPrefixAndSuffixLowerThen33(
+                std::string base64text=FacilityLibGeneral::dropPrefixAndSuffixLowerThen33(data->GetText());
                 const std::vector<char> &compressedData=base64toBinary(base64text);
                 if(!compressedData.empty())
                 {
