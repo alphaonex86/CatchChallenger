@@ -14,6 +14,7 @@ public:
     static std::vector<std::string> listFolderWithExclude(const std::string& folder,const std::string &exclude,const std::string& suffix=std::string());
     static std::string randomPassword(const std::string& string,const uint8_t& length);
     static std::vector<std::string> skinIdList(const std::string& skinPath);
+    static std::string dropPrefixAndSuffixLowerThen33(const std::string &str);
     //static std::string secondsToString(const uint64_t &seconds);
     static bool rmpath(const std::string &dirPath);
     //static std::string timeToString(const uint32_t &time);
