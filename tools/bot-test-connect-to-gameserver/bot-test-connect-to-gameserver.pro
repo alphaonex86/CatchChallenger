@@ -32,7 +32,8 @@ SOURCES += main.cpp\
     ../../client/base/qt-tar-xz/xz_dec_bcj.c \
     ../../client/base/qt-tar-xz/xz_dec_lzma2.c \
     ../../client/base/qt-tar-xz/xz_dec_stream.c \
-    ../../client/base/DatapackChecksum.cpp
+    ../../client/base/DatapackChecksum.cpp \
+    ../bot/BotInterface.cpp
 HEADERS  += \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \
