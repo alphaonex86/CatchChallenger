@@ -109,7 +109,7 @@ void StringWithReplacement::set(const std::string &query)
             {
                 const std::string extractedPart(query.substr(previousStringPos,size));
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if((uint32)sizeof(preparedQueryTemp)<(pos+size+1))
+                if((uint32_t)sizeof(preparedQueryTemp)<(pos+size+1))
                     abort();
                 #endif
                 memcpy(preparedQueryTemp+pos,extractedPart.data(),size);
