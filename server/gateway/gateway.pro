@@ -2,7 +2,7 @@
 #QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -fno-rtti"
 
 QMAKE_CFLAGS+="-fstack-protector-all -g -fno-rtti"
-QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g -fno-rtti"
+QMAKE_CXXFLAGS+="-fstack-protector-all -g -fno-rtti"
 
 QT       -= gui widgets sql xml network core
 
