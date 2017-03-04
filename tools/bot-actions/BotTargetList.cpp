@@ -1311,3 +1311,11 @@ void BotTargetList::on_trackThePlayer_clicked()
     updatePlayerInformation();
     updatePlayerMap(true);
 }
+
+void BotTargetList::on_autoSelectTarget_toggled(bool checked)
+{
+}
+
+void BotTargetList::on_autoSelectFilter_clicked()
+{
+}
