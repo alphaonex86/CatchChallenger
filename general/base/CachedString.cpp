@@ -91,8 +91,8 @@ CachedString::CachedString()
     bordertop="border-top";
     borderbottom="border-bottom";
     map="map";
-    condition_file="condition_file";
-    condition_id="condition_id";
+    condition_file="condition-file";
+    condition_id="condition-id";
     bot="bot";
     skin="skin";
     lookAt="lookAt";

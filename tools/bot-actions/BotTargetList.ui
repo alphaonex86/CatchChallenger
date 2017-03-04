@@ -222,6 +222,24 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QCheckBox" name="autoSelectTarget">
+            <property name="text">
+             <string>Auto-select</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="autoSelectFilter">
+            <property name="text">
+             <string>Filter</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
          <widget class="QListWidget" name="globalTargets">
           <property name="enabled">
            <bool>false</bool>

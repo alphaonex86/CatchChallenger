@@ -13,7 +13,8 @@ TEMPLATE = app
 SOURCES += main.cpp\
         MainWindow.cpp \
     ../bot/MultipleBotConnection.cpp \
-    ../bot/MultipleBotConnectionImplForGui.cpp
+    ../bot/MultipleBotConnectionImplForGui.cpp \
+    ../bot/BotInterface.cpp
 HEADERS  += MainWindow.h \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \

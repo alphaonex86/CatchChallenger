@@ -342,6 +342,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                             new_tp.destination_y = stringtouint8(property_text.at(CACHEDSTRING_y),&ok);
                                             if(ok)
                                             {
+                                                std::cerr << "CACHEDSTRING_condition_file: " << CACHEDSTRING_condition_file << std::endl;
+                                                std::cerr << "CACHEDSTRING_condition_id: " << CACHEDSTRING_condition_id << std::endl;
                                                 if(property_text.find(CACHEDSTRING_condition_file)!=property_text.cend() && property_text.find(CACHEDSTRING_condition_id)!=property_text.cend())
                                                 {
                                                     uint32_t conditionId=stringtouint32(property_text.at(CACHEDSTRING_condition_id),&ok);
