@@ -21,6 +21,14 @@
 #define MAXEVENTS 512
 #define MAXCLIENTSINSUSPEND 16
 
+#if defined(__has_feature)
+#  if __has_feature(address_sanitizer)
+extern "C" {
+const char* __asan_default_options() { return "alloc_dealloc_mismatch=0"; }
+}  // extern "C"
+#  endif
+#endif
+
 using namespace CatchChallenger;
 
 //list of char connected
