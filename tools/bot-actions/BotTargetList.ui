@@ -236,9 +236,6 @@
            </item>
            <item>
             <widget class="QPushButton" name="autoSelectFilter">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
              <property name="text">
               <string>Filter</string>
              </property>
@@ -384,22 +381,5 @@
  <resources>
   <include location="localr.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>autoSelectTarget</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>autoSelectFilter</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>752</x>
-     <y>86</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>876</x>
-     <y>88</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>
