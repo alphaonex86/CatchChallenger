@@ -108,6 +108,9 @@ bool MapServerMini::preload_step2()
         }
     }
 
+    CatchChallenger::MapCondition mapConditionEmpty;
+    mapConditionEmpty.type=CatchChallenger::MapConditionType_None;
+    mapConditionEmpty.value=0;
     //link the internal block
     {
         int y=0;
@@ -141,10 +144,10 @@ bool MapServerMini::preload_step2()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)this->parsed_layer.ledges[newx+newy*this->width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesRight)
-                                            addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceInternalRightBlock,x,y);
+                                            addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceInternalRightBlock,x,y,mapConditionEmpty);
                                     }
                                     else
-                                        addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceInternalRightBlock,x,y);
+                                        addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceInternalRightBlock,x,y,mapConditionEmpty);
                                 }
                             }
                             //if the other not dirt or other not walkable layer
@@ -160,10 +163,10 @@ bool MapServerMini::preload_step2()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)this->parsed_layer.ledges[newx+newy*this->width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesLeft)
-                                            addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceInternalLeftBlock,newx,newy);
+                                            addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceInternalLeftBlock,newx,newy,mapConditionEmpty);
                                     }
                                     else
-                                        addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceInternalLeftBlock,newx,newy);
+                                        addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceInternalLeftBlock,newx,newy,mapConditionEmpty);
                                 }
                             }
                         }
@@ -191,10 +194,10 @@ bool MapServerMini::preload_step2()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)this->parsed_layer.ledges[newx+newy*this->width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesBottom)
-                                            addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceInternalBottomBlock,x,y);
+                                            addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceInternalBottomBlock,x,y,mapConditionEmpty);
                                     }
                                     else
-                                        addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceInternalBottomBlock,x,y);
+                                        addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceInternalBottomBlock,x,y,mapConditionEmpty);
                                 }
                             }
                             //if the other not dirt or other not walkable layer
@@ -210,10 +213,10 @@ bool MapServerMini::preload_step2()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)this->parsed_layer.ledges[newx+newy*this->width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesTop)
-                                            addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceInternalTopBlock,newx,newy);
+                                            addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceInternalTopBlock,newx,newy,mapConditionEmpty);
                                     }
                                     else
-                                        addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceInternalTopBlock,newx,newy);
+                                        addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceInternalTopBlock,newx,newy,mapConditionEmpty);
                                 }
                             }
                         }
@@ -270,44 +273,17 @@ void MapServerMini::preload_step2_addNearTileToScanList(std::vector<std::pair<ui
 }
 
 bool MapServerMini::addBlockLink(BlockObject &blockObjectFrom, BlockObject &blockObjectTo, const BlockObject::LinkType &linkSourceFrom,
-                                 /*point to go:*/const uint8_t &x,const uint8_t &y)
+                                 /*point to go:*/const uint8_t &x,const uint8_t &y,
+                                 const CatchChallenger::MapCondition &condition)
 {
     //search into the destination
-    {
-        if(blockObjectTo.links.find(&blockObjectFrom)!=blockObjectTo.links.cend())
-        {
-            BlockObject::LinkInformation &linkInformationTo=blockObjectTo.links[&blockObjectFrom];
-            linkInformationTo.direction=BlockObject::LinkDirection::BothDirection;
-            if(blockObjectFrom.links.find(&blockObjectTo)==blockObjectFrom.links.cend())
-            {
-                BlockObject::LinkInformation linkInformationFrom;
-                linkInformationFrom.direction=BlockObject::LinkDirection::BothDirection;
-                blockObjectFrom.links[&blockObjectTo]=linkInformationFrom;
-            }
-            BlockObject::LinkInformation &linkInformationFrom=blockObjectFrom.links[&blockObjectTo];
-            BlockObject::LinkPoint linkPoint;
-            linkPoint.type=linkSourceFrom;
-            linkPoint.x=x;
-            linkPoint.y=y;
-            linkInformationFrom.points.push_back(linkPoint);
-        }
-        else
-        {
-            //search into the source
-            if(blockObjectFrom.links.find(&blockObjectTo)==blockObjectFrom.links.cend())
-            {
-                BlockObject::LinkInformation linkInformationFrom;
-                linkInformationFrom.direction=BlockObject::LinkDirection::ToTheTarget;
-                blockObjectFrom.links[&blockObjectTo]=linkInformationFrom;
-            }
-            BlockObject::LinkInformation &linkInformationFrom=blockObjectFrom.links[&blockObjectTo];
-            BlockObject::LinkPoint linkPoint;
-            linkPoint.type=linkSourceFrom;
-            linkPoint.x=x;
-            linkPoint.y=y;
-            linkInformationFrom.points.push_back(linkPoint);
-        }
-    }
+    BlockObject::LinkInformation &linkInformationFrom=blockObjectFrom.links[&blockObjectTo];
+    BlockObject::LinkPoint linkPoint;
+    linkPoint.type=linkSourceFrom;
+    linkPoint.x=x;
+    linkPoint.y=y;
+    linkPoint.condition=condition;
+    linkInformationFrom.points.push_back(linkPoint);
     return true;
 }
 
@@ -318,6 +294,10 @@ bool MapServerMini::preload_step2b()
     MapParsedForBot &step2=step[1];
     if(step2.map==NULL)
         return false;
+
+    CatchChallenger::MapCondition mapConditionEmpty;
+    mapConditionEmpty.type=CatchChallenger::MapConditionType_None;
+    mapConditionEmpty.value=0;
 
     //connect the right border
     if(this->border.right.map!=NULL)
@@ -387,10 +367,10 @@ bool MapServerMini::preload_step2b()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)nextMap.parsed_layer.ledges[newx+newy*nextMap.width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesRight)
-                                            addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceRightMap,x,y);
+                                            addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceRightMap,x,y,mapConditionEmpty);
                                     }
                                     else
-                                        addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceRightMap,x,y);
+                                        addBlockLink(blockObject,rightBlockObject,BlockObject::LinkType::SourceRightMap,x,y,mapConditionEmpty);
                                 }
                             }
                             //if the other not dirt or other not walkable layer
@@ -406,10 +386,10 @@ bool MapServerMini::preload_step2b()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)nextMap.parsed_layer.ledges[newx+newy*nextMap.width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesLeft)
-                                            addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceLeftMap,newx,newy);
+                                            addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceLeftMap,newx,newy,mapConditionEmpty);
                                     }
                                     else
-                                        addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceLeftMap,newx,newy);
+                                        addBlockLink(rightBlockObject,blockObject,BlockObject::LinkType::SourceLeftMap,newx,newy,mapConditionEmpty);
                                 }
                             }
                         }
@@ -488,10 +468,10 @@ bool MapServerMini::preload_step2b()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)nextMap.parsed_layer.ledges[newx+newy*nextMap.width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesBottom)
-                                            addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceBottomMap,x,y);
+                                            addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceBottomMap,x,y,mapConditionEmpty);
                                     }
                                     else
-                                        addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceBottomMap,x,y);
+                                        addBlockLink(blockObject,bottomBlockObject,BlockObject::LinkType::SourceBottomMap,x,y,mapConditionEmpty);
                                 }
                             }
                             //if the other not dirt or other not walkable layer
@@ -507,10 +487,10 @@ bool MapServerMini::preload_step2b()
                                     {
                                         const CatchChallenger::ParsedLayerLedges &ledge=(CatchChallenger::ParsedLayerLedges)nextMap.parsed_layer.ledges[newx+newy*nextMap.width];
                                         if(ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges || ledge==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesTop)
-                                            addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceTopMap,newx,newy);
+                                            addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceTopMap,newx,newy,mapConditionEmpty);
                                     }
                                     else
-                                        addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceTopMap,newx,newy);
+                                        addBlockLink(bottomBlockObject,blockObject,BlockObject::LinkType::SourceTopMap,newx,newy,mapConditionEmpty);
                                 }
                             }
                         }
@@ -549,7 +529,7 @@ bool MapServerMini::preload_step2b()
                             if(nextMap->parsed_layer.walkable!=NULL && nextMap->parsed_layer.walkable[newx+newy*nextMap->width]!=false)
                             {
                                 BlockObject &otherBlockObject=*step2nextMap.layers[otherCodeZone-1].blockObject;
-                                addBlockLink(blockObject,otherBlockObject,BlockObject::LinkType::SourceTeleporter,x,y);
+                                addBlockLink(blockObject,otherBlockObject,BlockObject::LinkType::SourceTeleporter,x,y,teleporterEntry.condition);
                             }
                     }
                     else

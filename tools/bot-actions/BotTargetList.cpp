@@ -5,6 +5,7 @@
 #include "../../client/fight/interface/ClientFightEngine.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "MapBrowse.h"
+#include "TargetFilter.h"
 
 #include <chrono>
 #include <QMessageBox>
@@ -58,6 +59,8 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
 
     if(ui->bots->count()==1)
         ui->groupBoxBot->setVisible(false);
+
+    dirt=true,itemOnMap=true,fight=true,shop=true,heal=true,wildMonster=true;
 }
 
 BotTargetList::~BotTargetList()
@@ -1318,4 +1321,13 @@ void BotTargetList::on_autoSelectTarget_toggled(bool checked)
 
 void BotTargetList::on_autoSelectFilter_clicked()
 {
+    TargetFilter targetFilter(this,dirt,itemOnMap,fight,shop,heal,wildMonster);
+    targetFilter.exec();
+    dirt=targetFilter.get_dirt();
+    itemOnMap=targetFilter.get_itemOnMap();
+    fight=targetFilter.get_fight();
+    shop=targetFilter.get_shop();
+    heal=targetFilter.get_heal();
+    wildMonster=targetFilter.get_wildMonster();
+    updatePlayerInformation();
 }
