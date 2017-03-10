@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     BotTargetListPlayerInfo.cpp \
     BotTargetListUpdateStep.cpp \
     BotTargetListNextPos.cpp \
-    SocialChat.cpp
+    SocialChat.cpp \
+    TargetFilter.cpp
 HEADERS  += MainWindow.h \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \
@@ -32,13 +33,15 @@ HEADERS  += MainWindow.h \
     BotTargetList.h \
     MapBrowse.h \
     WaitScreen.h \
-    SocialChat.h
+    SocialChat.h \
+    TargetFilter.h
 
 FORMS    += MainWindow.ui \
     BotTargetList.ui \
     MapBrowse.ui \
     WaitScreen.ui \
-    SocialChat.ui
+    SocialChat.ui \
+    TargetFilter.ui
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
 

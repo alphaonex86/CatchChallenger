@@ -44,11 +44,11 @@ public:
     std::map<std::pair<uint8_t,uint8_t>,PlantOnMap> plants;//position, plant id
 
     struct BlockObject{
-        enum LinkDirection
+        /*enum LinkDirection
         {
             ToTheTarget,
             BothDirection
-        };
+        }; control by access to the other zone: link can have condition (teleporter with condition)*/
         enum LinkType
         {
             SourceNone,
@@ -68,12 +68,12 @@ public:
             //point to go
             uint8_t x,y;
         };
-        struct LinkInformation
+        struct LinkCondition
         {
-            LinkDirection direction;
             std::vector<LinkPoint> points;
+            CatchChallenger::MapCondition condition;
         };
-        std::unordered_map<const BlockObject */*to where*/,LinkInformation/*how, if single way or both way*/> links;
+        std::unordered_map<const BlockObject */*to where*/,LinkCondition/*how, if single way or both way*/> links;
         MapServerMini * map;
         uint8_t id;
 
@@ -125,7 +125,7 @@ public:
 
     //uint8_t *botLayerMask;->directly mark as not walkable into the map loader
 
-    bool addBlockLink(BlockObject &blockObjectFrom,BlockObject &blockObjectTo,const BlockObject::LinkType &linkSourceFrom,/*point to go:*/const uint8_t &x,const uint8_t &y);
+    bool addBlockLink(BlockObject &blockObjectFrom, BlockObject &blockObjectTo, const BlockObject::LinkType &linkSourceFrom, /*point to go:*/const uint8_t &x, const uint8_t &y, const CatchChallenger::MapCondition &condition);
 public:
     void displayConsoleMap(const MapParsedForBot &currentStep) const;
     bool mapIsValid(const MapParsedForBot &currentStep) const;
@@ -138,6 +138,7 @@ public:
                          const std::vector<const BlockObject *> &previousBlock=std::vector<const BlockObject *>()
                          ) const;
     static uint32_t resolvBlockWeight(const BlockObject * const blockToExplore);
+    static bool haveDirectReturnWithoutCondition(const BlockObject &source, const BlockObject &destination);
 };
 
 #endif // MAPSERVERMINI_H

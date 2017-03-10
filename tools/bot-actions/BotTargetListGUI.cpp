@@ -11,7 +11,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
     MapServerMini::BlockObjectPathFinding pathFinding;
     pathFinding.weight=0;
     resolvedBlockList[blockObject]=pathFinding;
-    return contentToGUI(client,listGUI,resolvedBlockList);
+    return contentToGUI(client,listGUI,resolvedBlockList,true,true,true,true,true,true,true);
 }
 
 uint32_t BotTargetList::getSeedToPlant(CatchChallenger::Api_protocol * api,bool *haveSeedToPlant)
@@ -41,7 +41,8 @@ uint32_t BotTargetList::getSeedToPlant(CatchChallenger::Api_protocol * api,bool 
 }
 
 std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI,
-                                                     const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard)
+                                                     const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard,
+                                                     bool dirt,bool itemOnMap,bool fight,bool shop,bool heal,bool wildMonster)
 {
     //compute the forbiden direct value
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=client->api->get_player_informations();
@@ -65,6 +66,9 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
     QColor redColorValue(255,240,240,255);
     QColor redAlternateColorValue(255,220,220,255);
 
+    QList<QListWidgetItem *> bestItems;
+    unsigned int bestPoint=0;
+
     struct BufferMonstersCollisionEntry
     {
         CatchChallenger::MonstersCollisionValue::MonstersCollisionContent bufferMonstersCollisionContent;
@@ -75,8 +79,6 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
 
     for(const auto& n:resolvedBlockList) {
         const MapServerMini::BlockObject * const blockObject=n.first;
-        const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
-        const MapServerMini * const map=blockObject->map;
         if(listGUI==ui->localTargets)
         {
             for(const auto& n:blockObject->links) {
@@ -130,6 +132,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                 }
             }
         }
+    }
         //not clickable item
         //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
         //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
@@ -137,7 +140,12 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
         //insdustry -> skip, no position control on server side
     //wild monster (and their object, day cycle)
 
+    for(const auto& n:resolvedBlockList) {
+        const MapServerMini::BlockObject * const blockObject=n.first;
+        const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
+        const MapServerMini * const map=blockObject->map;
         //dirt
+        if(dirt)
         if(!blockObject->dirt.empty())
         {
             bool haveSeedToPlant=false;
@@ -168,7 +176,8 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                                 {
                                     const CatchChallenger::PlayerPlant &playerMonster=player_private_and_public_informations.plantOnMap.at(plantOnMapIndex);
                                     //have mature plant
-                                    if(playerMonster.mature_at<(uint64_t)(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000))
+                                    const uint64_t &currentTime=(uint64_t)(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000);
+                                    bool isMature=playerMonster.mature_at<=currentTime;
                                     {
                                         const uint8_t &plantId=playerMonster.plant;
                                         const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId);
@@ -179,6 +188,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
 
                                         newItem->setText(QString("Plant to collect %1 at %2,%3").arg(itemExtra.name).arg(dirtPoint.first).arg(dirtPoint.second));
                                         newItem->setIcon(QIcon(itemExtra.image));
+
                                         if(listGUI==ui->globalTargets)
                                         {
                                             ActionsBotInterface::GlobalTarget globalTarget;
@@ -187,10 +197,39 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                                             globalTarget.bestPath=resolvedBlock.bestPath;
                                             globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant;
                                             targetListGlobalTarget.push_back(globalTarget);
-                                            if(alternateColor)
-                                                newItem->setBackgroundColor(alternateColorValue);
+                                            unsigned int points=0;
+                                            if(isMature)
+                                            {
+                                                if(alternateColor)
+                                                    newItem->setBackgroundColor(alternateColorValue);
+                                                points=2000;//2000 is for mature plant, never be less than 1000
+                                                {
+                                                    //remove the distance point
+                                                    points-=resolvedBlock.weight;
+                                                    //add plant value
+                                                    const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemId);
+                                                    points+=item.price;
+                                                    //if not consumable and player don't have it
+                                                    if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemId)==player_private_and_public_informations.items.cend())
+                                                        points=points*14/10;//+40%
+
+                                                    if(bestPoint<points)
+                                                    {
+                                                        bestPoint=points;
+                                                        bestItems=QList<QListWidgetItem *>() << newItem;
+                                                    }
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if(alternateColor)
+                                                    newItem->setBackgroundColor(redAlternateColorValue);
+                                                else
+                                                    newItem->setBackgroundColor(redColorValue);
+                                                newItem->setText(newItem->text()+" "+QString::number(playerMonster.mature_at)+">"+QString::number(currentTime));
+                                            }
                                             alternateColor=!alternateColor;
-                                            newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                                            newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                                         }
                                         itemToReturn.push_back(newItem->text().toStdString());
                                         if(listGUI!=NULL)
@@ -245,7 +284,12 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                 }
             }
         }
+    }
+    for(const auto& n:resolvedBlockList) {
+        const MapServerMini::BlockObject * const blockObject=n.first;
+        const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //item on map
+        if(itemOnMap)
         {
             for(auto it = blockObject->pointOnMap_Item.begin();it!=blockObject->pointOnMap_Item.cend();++it)
             {
@@ -253,15 +297,34 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
 
                 if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
                 {
+                    const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemOnMap.item);
                     const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemOnMap.item);
                     QListWidgetItem * newItem=new QListWidgetItem();
                     if(itemOnMap.infinite)
-                        newItem->setText(QString("Item on map %1 (infinite)").arg(itemExtra.name));
+                        newItem->setText(QString("Item on map %1 %2$ (infinite)").arg(itemExtra.name).arg(item.price));
                     else
-                        newItem->setText(QString("Item on map %1").arg(itemExtra.name));
+                        newItem->setText(QString("Item on map %1 %2$").arg(itemExtra.name).arg(item.price));
                     newItem->setIcon(QIcon(itemExtra.image));
                     if(listGUI==ui->globalTargets)
                     {
+                        unsigned int points=2000;//2000 is for mature plant, never be less than 1000
+                        if(itemOnMap.infinite)
+                            points=1500;
+                        {
+                            //remove the distance point
+                            points-=resolvedBlock.weight;
+                            //add plant value
+                            points+=item.price;
+                            //if not consumable and player don't have it
+                            if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemOnMap.item)==player_private_and_public_informations.items.cend())
+                                points=points*14/10;//+40%
+
+                            if(bestPoint<points)
+                            {
+                                bestPoint=points;
+                                bestItems=QList<QListWidgetItem *>() << newItem;
+                            }
+                        }
                         ActionsBotInterface::GlobalTarget globalTarget;
                         globalTarget.blockObject=blockObject;
                         globalTarget.extra=itemOnMap.indexOfItemOnMap;
@@ -271,7 +334,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                         if(alternateColor)
                             newItem->setBackgroundColor(alternateColorValue);
                         alternateColor=!alternateColor;
-                        newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                        newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                     }
                     itemToReturn.push_back(newItem->text().toStdString());
                     if(listGUI!=NULL)
@@ -281,7 +344,12 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                 }
             }
         }
+    }
+    for(const auto& n:resolvedBlockList) {
+        const MapServerMini::BlockObject * const blockObject=n.first;
+        const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //fight
+        if(fight)
         {
             for(auto it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
             {
@@ -410,7 +478,12 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                 }
             }
         }
+    }
+    for(const auto& n:resolvedBlockList) {
+        const MapServerMini::BlockObject * const blockObject=n.first;
+        const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //shop
+        if(shop)
         {
             for(auto it = blockObject->shops.begin();it!=blockObject->shops.cend();++it)
             {
@@ -475,7 +548,12 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                 }
             }
         }
+    }
+    for(const auto& n:resolvedBlockList) {
+        const MapServerMini::BlockObject * const blockObject=n.first;
+        const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //heal
+        if(heal)
         if(blockObject->heal.size()>0)
         {
             ActionsBotInterface::GlobalTarget globalTarget;
@@ -502,8 +580,12 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
             else
                 delete newItem;
         }
-
+    }
+    for(const auto& n:resolvedBlockList) {
+        const MapServerMini::BlockObject * const blockObject=n.first;
+        const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //the wild monster
+        if(wildMonster)
         if(blockObject->monstersCollisionValue!=NULL)
         {
             const CatchChallenger::MonstersCollisionValue &monsterCollisionValue=*blockObject->monstersCollisionValue;
@@ -626,10 +708,21 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
             buffer_index++;
         }
     }
+
+    if(listGUI==ui->globalTargets)
+    {
+        unsigned int index=0;
+        while(index<(unsigned int)bestItems.size())
+        {
+            bestItems.at(index)->setBackgroundColor(QColor(180,255,180,255));
+            index++;
+        }
+    }
+
     return itemToReturn;
 }
 
-std::string BotTargetList::pathFindingToString(const MapServerMini::BlockObjectPathFinding &resolvedBlock)
+std::string BotTargetList::pathFindingToString(const MapServerMini::BlockObjectPathFinding &resolvedBlock, unsigned int points)
 {
     if(resolvedBlock.bestPath.empty())
         return "";
@@ -644,7 +737,11 @@ std::string BotTargetList::pathFindingToString(const MapServerMini::BlockObjectP
         str+=blockObject->map->map_file+"/"+layer->name;
         index++;
     }
-    str+=" ("+std::to_string(resolvedBlock.weight)+")";
+    str+="\n";
+    str+="distance: "+std::to_string(resolvedBlock.weight);
+    if(points>0)
+        str+=", points: "+std::to_string(points);
+    str+="";
     return "\n"+str;
 }
 

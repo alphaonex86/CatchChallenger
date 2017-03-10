@@ -76,6 +76,37 @@ uint32_t MapServerMini::resolvBlockWeight(const BlockObject * const blockToExplo
     return weight;
 }
 
+bool MapServerMini::haveDirectReturnWithoutCondition(const BlockObject &source,const BlockObject &destination)
+{
+    {
+        const std::vector<BlockObject::LinkPoint> &points=source.links.at(&destination).points;
+        unsigned int index=0;
+        while(index<points.size())
+        {
+            const BlockObject::LinkPoint &point=points.at(index);
+            if(point.condition.type==CatchChallenger::MapConditionType::MapConditionType_None)
+                break;
+            index++;
+        }
+        if(index>=points.size())
+            return false;
+    }
+    {
+        const std::vector<BlockObject::LinkPoint> &points=destination.links.at(&source).points;
+        unsigned int index=0;
+        while(index<points.size())
+        {
+            const BlockObject::LinkPoint &point=points.at(index);
+            if(point.condition.type==CatchChallenger::MapConditionType::MapConditionType_None)
+                break;
+            index++;
+        }
+        if(index>=points.size())
+            return false;
+    }
+    return true;
+}
+
 void MapServerMini::resolvBlockPath(const BlockObject * blockToExplore,
         std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock,
         const std::unordered_set<const BlockObject *> &accessibleBlock,
