@@ -126,23 +126,74 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                         for(const auto& n:block.links) {
                             const MapServerMini::BlockObject * const nextBlock=n.first;
                             const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
-                            if(linkInformation.direction!=MapServerMini::BlockObject::LinkDirection::BothDirection || &block<=nextBlock)
+                            const std::vector<MapServerMini::BlockObject::LinkPoint> &points=linkInformation.points;
+                            std::vector<CatchChallenger::MapCondition> uniqueCondition;
                             {
-                                if(validMaps.find(block.map)!=validMaps.cend() && validMaps.find(nextBlock->map)!=validMaps.cend())
-                                    if(accessibleBlock.find(&block)!=accessibleBlock.cend() && accessibleBlock.find(nextBlock)!=accessibleBlock.cend())
+                                unsigned int index=0;
+                                while(index<points.size())
+                                {
+                                    const MapServerMini::BlockObject::LinkPoint &point=points.at(index);
+                                    const CatchChallenger::MapCondition &condition=point.condition;
+                                    unsigned int search=0;
+                                    while(search<uniqueCondition.size())
                                     {
-                                        contentDisplayed++;
-                                        stringLinks+="struct"+std::to_string((uint64_t)&block)+" -> struct"+std::to_string((uint64_t)nextBlock);
-                                        switch(linkInformation.direction)
-                                        {
-                                            case MapServerMini::BlockObject::LinkDirection::BothDirection:
-                                                stringLinks+=" [dir=both];\n";
+                                        if(uniqueCondition.at(search)==condition)
                                             break;
-                                            default:
-                                                stringLinks+=";\n";
-                                            break;
-                                        }
+                                        search++;
                                     }
+                                    if(search>=uniqueCondition.size())
+                                        uniqueCondition.push_back(point.condition);
+                                    index++;
+                                }
+                            }
+                            unsigned int conditionIndex=0;
+                            while(conditionIndex<uniqueCondition.size())
+                            {
+                                bool directionBoth=false;
+                                const CatchChallenger::MapCondition &condition=uniqueCondition.at(conditionIndex);
+                                if(condition.type==CatchChallenger::MapConditionType_None)
+                                    directionBoth=MapServerMini::haveDirectReturnWithoutCondition(block,*nextBlock);
+                                if(directionBoth || &block<=nextBlock)
+                                {
+                                    if(validMaps.find(block.map)!=validMaps.cend() && validMaps.find(nextBlock->map)!=validMaps.cend())
+                                        if(accessibleBlock.find(&block)!=accessibleBlock.cend() && accessibleBlock.find(nextBlock)!=accessibleBlock.cend())
+                                        {
+                                            contentDisplayed++;
+                                            stringLinks+="struct"+std::to_string((uint64_t)&block)+" -> struct"+std::to_string((uint64_t)nextBlock);
+                                            std::vector<std::string> attrs;
+                                            if(directionBoth)
+                                                attrs.push_back("dir=both");
+                                            switch(condition.type)
+                                            {
+                                                case CatchChallenger::MapConditionType_Clan:
+                                                    attrs.push_back("constraint=false");
+                                                    attrs.push_back("label=\"Need be owner clan\"");
+                                                break;
+                                                case CatchChallenger::MapConditionType_Quest:
+                                                    attrs.push_back("constraint=false");
+                                                    attrs.push_back("label=\"Quest "+std::to_string(condition.value)+"\"");
+                                                break;
+                                                case CatchChallenger::MapConditionType_Item:
+                                                    attrs.push_back("constraint=false");
+                                                    attrs.push_back("label=\"Item "+std::to_string(condition.value)+"\"");
+                                                break;
+                                                case CatchChallenger::MapConditionType_FightBot:
+                                                    attrs.push_back("constraint=false");
+                                                    attrs.push_back("label=\"Fight "+std::to_string(condition.value)+"\"");
+                                                break;
+                                                default:
+                                                break;
+                                            }
+                                            if(!attrs.empty())
+                                            {
+                                                stringLinks+=" [";
+                                                stringLinks+=stringimplode(attrs," ");
+                                                stringLinks+="];\n";
+                                            }
+                                            stringLinks+=";\n";
+                                        }
+                                }
+                                conditionIndex++;
                             }
                         }
 
@@ -250,13 +301,78 @@ std::string BotTargetList::graphLocalMap()
                 for(const auto& n:block.links) {
                     const MapServerMini::BlockObject * const nextBlock=n.first;
                     const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
-//                    const std::vector<BlockObject::LinkSource> &sources=linkInformation.sources;
-                    if(linkInformation.direction!=MapServerMini::BlockObject::LinkDirection::BothDirection || &block<=nextBlock || block.map!=nextBlock->map)
+                    const std::vector<MapServerMini::BlockObject::LinkPoint> &points=linkInformation.points;
+                    std::vector<CatchChallenger::MapCondition> uniqueCondition;
                     {
-                        if(pointerToIndex.find(nextBlock)!=pointerToIndex.cend())
-                            graphvizText+="struct"+std::to_string(blockIndex+1)+" -> struct"+std::to_string(pointerToIndex.at(nextBlock)+1);
-                        else
-                            graphvizText+="struct"+std::to_string(blockIndex+1)+" -> \""+nextBlock->map->map_file+", block "+std::to_string(nextBlock->id+1)+"\"";
+                        unsigned int index=0;
+                        while(index<points.size())
+                        {
+                            const MapServerMini::BlockObject::LinkPoint &point=points.at(index);
+                            const CatchChallenger::MapCondition &condition=point.condition;
+                            unsigned int search=0;
+                            while(search<uniqueCondition.size())
+                            {
+                                if(uniqueCondition.at(search)==condition)
+                                    break;
+                                search++;
+                            }
+                            if(search>=uniqueCondition.size())
+                                uniqueCondition.push_back(point.condition);
+                            index++;
+                        }
+                    }
+                    unsigned int conditionIndex=0;
+                    while(conditionIndex<uniqueCondition.size())
+                    {
+                        bool directionBoth=false;
+                        const CatchChallenger::MapCondition &condition=uniqueCondition.at(conditionIndex);
+                        if(condition.type==CatchChallenger::MapConditionType_None)
+                            directionBoth=MapServerMini::haveDirectReturnWithoutCondition(block,*nextBlock);
+                        if(directionBoth || &block<=nextBlock || block.map!=nextBlock->map)
+                        {
+                            if(pointerToIndex.find(nextBlock)!=pointerToIndex.cend())
+                                graphvizText+="struct"+std::to_string(blockIndex+1)+" -> struct"+std::to_string(pointerToIndex.at(nextBlock)+1);
+                            else
+                                graphvizText+="struct"+std::to_string(blockIndex+1)+" -> \""+nextBlock->map->map_file+", block "+std::to_string(nextBlock->id+1)+"\"";
+                            std::vector<std::string> attrs;
+                            if(directionBoth)
+                                attrs.push_back("dir=both");
+                            switch(condition.type)
+                            {
+                                case CatchChallenger::MapConditionType_Clan:
+                                    attrs.push_back("constraint=false");
+                                    attrs.push_back("label=\"Need be owner clan\"");
+                                break;
+                                case CatchChallenger::MapConditionType_Quest:
+                                    attrs.push_back("constraint=false");
+                                    attrs.push_back("label=\"Quest "+std::to_string(condition.value)+"\"");
+                                break;
+                                case CatchChallenger::MapConditionType_Item:
+                                    attrs.push_back("constraint=false");
+                                    attrs.push_back("label=\"Item "+std::to_string(condition.value)+"\"");
+                                break;
+                                case CatchChallenger::MapConditionType_FightBot:
+                                    attrs.push_back("constraint=false");
+                                    attrs.push_back("label=\"Fight "+std::to_string(condition.value)+"\"");
+                                break;
+                                default:
+                                break;
+                            }
+                            if(!attrs.empty())
+                            {
+                                graphvizText+=" [";
+                                graphvizText+=stringimplode(attrs," ");
+                                graphvizText+="];\n";
+                            }
+                            graphvizText+=";\n";
+                        }
+                        conditionIndex++;
+                    }
+                }
+//                    const std::vector<BlockObject::LinkSource> &sources=linkInformation.sources;
+                    /*if(linkInformation.direction!=MapServerMini::BlockObject::LinkDirection::BothDirection || &block<=nextBlock || block.map!=nextBlock->map)
+                    {
+
                         switch(linkInformation.direction)
                         {
                             case MapServerMini::BlockObject::LinkDirection::BothDirection:
@@ -267,7 +383,7 @@ std::string BotTargetList::graphLocalMap()
                             break;
                         }
                     }
-                }
+                }*/
 
                 blockIndex++;
             }
@@ -278,4 +394,9 @@ std::string BotTargetList::graphLocalMap()
         graphvizText+="}";
     }
     return graphvizText;
+}
+
+bool operator==(const CatchChallenger::MapCondition& lhs, const CatchChallenger::MapCondition& rhs)
+{
+    return std::memcmp(&lhs,&rhs,sizeof(CatchChallenger::MapCondition))==0;
 }

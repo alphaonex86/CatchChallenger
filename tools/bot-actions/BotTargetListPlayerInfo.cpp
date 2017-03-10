@@ -54,7 +54,7 @@ void BotTargetList::updatePlayerInformation()
                 ui->globalTargets->clear();
                 targetListGlobalTarget.clear();
                 alternateColor=false;
-                contentToGUI(client,ui->globalTargets,resolvedBlock,!ui->tooHard->isChecked());
+                contentToGUI(client,ui->globalTargets,resolvedBlock,!ui->tooHard->isChecked(),dirt,itemOnMap,fight,shop,heal,wildMonster);
             }
             //the next target
             {

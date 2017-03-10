@@ -13,6 +13,8 @@ namespace Ui {
 class BotTargetList;
 }
 
+bool operator==(const CatchChallenger::MapCondition& lhs, const CatchChallenger::MapCondition& rhs);
+
 class BotTargetList : public QDialog
 {
     Q_OBJECT
@@ -54,7 +56,7 @@ public:
     void updatePlayerStep();
     void startPlayerMove();
     std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject,const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI=NULL);
-    std::vector<std::string> contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard=true);
+    std::vector<std::string> contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster);
     std::string graphStepNearMap(const MultipleBotConnection::CatchChallengerClient * const client,const MapServerMini::BlockObject * const currentNearBlock, const unsigned int &depth=2);
     std::string graphLocalMap();
     std::pair<uint8_t,uint8_t> getNextPosition(const MapServerMini::BlockObject * const blockObject,ActionsBotInterface::GlobalTarget &target);
@@ -99,10 +101,12 @@ private:
     uint32_t updateMapContentMapId;
     CatchChallenger::Direction updateMapContentDirection;
 
+    bool dirt,itemOnMap,fight,shop,heal,wildMonster;
+
     std::vector<uint32_t> mapIdListLocalTarget;
     std::vector<ActionsBotInterface::GlobalTarget> targetListGlobalTarget;
     bool alternateColor;
-    static std::string pathFindingToString(const MapServerMini::BlockObjectPathFinding &resolvedBlock);
+    static std::string pathFindingToString(const MapServerMini::BlockObjectPathFinding &resolvedBlock, unsigned int points=0);
     static bool isSame(const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentA,const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentB);
     static bool newPathIsBetterPath(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &oldPath,const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &newPath);
     static uint16_t pathTileCount(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &path);
