@@ -126,23 +126,25 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                         for(const auto& n:block.links) {
                             const MapServerMini::BlockObject * const nextBlock=n.first;
                             const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
-                            const std::vector<MapServerMini::BlockObject::LinkPoint> &points=linkInformation.points;
                             std::vector<CatchChallenger::MapCondition> uniqueCondition;
+                            const std::vector<MapServerMini::BlockObject::LinkCondition> &linkConditions=linkInformation.linkConditions;
+                            unsigned int indexCondition=0;
+                            while(indexCondition<linkConditions.size())
                             {
+                                const MapServerMini::BlockObject::LinkCondition &condition=linkConditions.at(indexCondition);
                                 unsigned int index=0;
-                                while(index<points.size())
+                                while(index<condition.points.size())
                                 {
-                                    const MapServerMini::BlockObject::LinkPoint &point=points.at(index);
-                                    const CatchChallenger::MapCondition &condition=point.condition;
+                                    //const MapServerMini::BlockObject::LinkPoint &point=condition.points.at(index);
                                     unsigned int search=0;
                                     while(search<uniqueCondition.size())
                                     {
-                                        if(uniqueCondition.at(search)==condition)
+                                        if(uniqueCondition.at(search)==condition.condition)
                                             break;
                                         search++;
                                     }
                                     if(search>=uniqueCondition.size())
-                                        uniqueCondition.push_back(point.condition);
+                                        uniqueCondition.push_back(condition.condition);
                                     index++;
                                 }
                             }
@@ -301,23 +303,25 @@ std::string BotTargetList::graphLocalMap()
                 for(const auto& n:block.links) {
                     const MapServerMini::BlockObject * const nextBlock=n.first;
                     const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
-                    const std::vector<MapServerMini::BlockObject::LinkPoint> &points=linkInformation.points;
                     std::vector<CatchChallenger::MapCondition> uniqueCondition;
+                    const std::vector<MapServerMini::BlockObject::LinkCondition> &linkConditions=linkInformation.linkConditions;
+                    unsigned int indexCondition=0;
+                    while(indexCondition<linkConditions.size())
                     {
+                        const MapServerMini::BlockObject::LinkCondition &condition=linkConditions.at(indexCondition);
                         unsigned int index=0;
-                        while(index<points.size())
+                        while(index<condition.points.size())
                         {
-                            const MapServerMini::BlockObject::LinkPoint &point=points.at(index);
-                            const CatchChallenger::MapCondition &condition=point.condition;
+                            //const MapServerMini::BlockObject::LinkPoint &point=condition.points.at(index);
                             unsigned int search=0;
                             while(search<uniqueCondition.size())
                             {
-                                if(uniqueCondition.at(search)==condition)
+                                if(uniqueCondition.at(search)==condition.condition)
                                     break;
                                 search++;
                             }
                             if(search>=uniqueCondition.size())
-                                uniqueCondition.push_back(point.condition);
+                                uniqueCondition.push_back(condition.condition);
                             index++;
                         }
                     }
