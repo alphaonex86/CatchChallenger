@@ -40,6 +40,7 @@ public:
     void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     void insert_player_all(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     void remove_player(CatchChallenger::Api_protocol *api,const uint16_t &id);
+    static bool mapConditionIsRepected(const CatchChallenger::Api_protocol *api,const CatchChallenger::MapCondition &condition);
     void dropAllPlayerOnTheMap(CatchChallenger::Api_protocol *api);
     bool preload_other_pre();
     bool preload_the_map_step1();
@@ -47,7 +48,7 @@ public:
     bool preload_post_subdatapack();
     uint64_t elementToLoad() const;
     uint64_t elementLoaded() const;
-    static bool haveBeatBot(CatchChallenger::Api_protocol *api,const uint16_t &botFightId);
+    static bool haveBeatBot(const CatchChallenger::Api_protocol *api, const uint16_t &botFightId);
     static bool botHaveQuest(CatchChallenger::Api_protocol *api,const uint32_t &botId);
     static bool tryValidateQuestStep(CatchChallenger::Api_protocol *api, const uint16_t &questId, const uint32_t &botId, bool silent);
     static void addBeatenBotFight(CatchChallenger::Api_protocol *api,const uint16_t &botFightId);

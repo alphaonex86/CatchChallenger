@@ -78,30 +78,34 @@ uint32_t MapServerMini::resolvBlockWeight(const BlockObject * const blockToExplo
 
 bool MapServerMini::haveDirectReturnWithoutCondition(const BlockObject &source,const BlockObject &destination)
 {
+    if(source.links.find(&destination)==source.links.cend())
+        return false;
     {
-        const std::vector<BlockObject::LinkPoint> &points=source.links.at(&destination).points;
+        const std::vector<BlockObject::LinkCondition> &linkConditions=source.links.at(&destination).linkConditions;
         unsigned int index=0;
-        while(index<points.size())
+        while(index<linkConditions.size())
         {
-            const BlockObject::LinkPoint &point=points.at(index);
-            if(point.condition.type==CatchChallenger::MapConditionType::MapConditionType_None)
+            const BlockObject::LinkCondition &linkCondition=linkConditions.at(index);
+            if(linkCondition.condition.type==CatchChallenger::MapConditionType::MapConditionType_None)
                 break;
             index++;
         }
-        if(index>=points.size())
+        if(index>=linkConditions.size())
             return false;
     }
+    if(destination.links.find(&source)==destination.links.cend())
+        return false;
     {
-        const std::vector<BlockObject::LinkPoint> &points=destination.links.at(&source).points;
+        const std::vector<BlockObject::LinkCondition> &linkConditions=destination.links.at(&source).linkConditions;
         unsigned int index=0;
-        while(index<points.size())
+        while(index<linkConditions.size())
         {
-            const BlockObject::LinkPoint &point=points.at(index);
-            if(point.condition.type==CatchChallenger::MapConditionType::MapConditionType_None)
+            const BlockObject::LinkCondition &linkCondition=linkConditions.at(index);
+            if(linkCondition.condition.type==CatchChallenger::MapConditionType::MapConditionType_None)
                 break;
             index++;
         }
-        if(index>=points.size())
+        if(index>=linkConditions.size())
             return false;
     }
     return true;

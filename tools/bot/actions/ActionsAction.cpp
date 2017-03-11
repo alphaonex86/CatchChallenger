@@ -67,6 +67,39 @@ void ActionsAction::remove_player(CatchChallenger::Api_protocol *api, const uint
     botplayer.visiblePlayers.remove(id);
 }
 
+bool ActionsAction::mapConditionIsRepected(const CatchChallenger::Api_protocol *api,const CatchChallenger::MapCondition &condition)
+{
+    switch(condition.type)
+    {
+        case CatchChallenger::MapConditionType_None:
+        case CatchChallenger::MapConditionType_Clan://not do for now
+        break;
+        case CatchChallenger::MapConditionType_FightBot:
+            if(!haveBeatBot(api,condition.value))
+                return false;
+        break;
+        case CatchChallenger::MapConditionType_Item:
+        {
+            const CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations_ro();
+            if(playerInformations.items.find(condition.value)==playerInformations.items.cend())
+                return false;
+        }
+        break;
+        case CatchChallenger::MapConditionType_Quest:
+        {
+            const CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations_ro();
+             if(playerInformations.quests.find(condition.value)==playerInformations.quests.cend())
+                return false;
+            if(!playerInformations.quests.at(condition.value).finish_one_time)
+                return false;
+        }
+        break;
+        default:
+        break;
+    }
+    return true;
+}
+
 bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction,const MapServerMini &map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision, const bool &allowTeleport)
 {
     switch(direction)
@@ -195,48 +228,8 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
             const CatchChallenger::CommonMap::Teleporter &teleporter=new_map->teleporter[index];
             if(teleporter.source_x==x && teleporter.source_y==y)
             {
-                switch(teleporter.condition.type)
-                {
-                    case CatchChallenger::MapConditionType_None:
-                    case CatchChallenger::MapConditionType_Clan://not do for now
-                    break;
-                    case CatchChallenger::MapConditionType_FightBot:
-                        /*if(!haveBeatBot(teleporter.condition.value))
-                        {
-                            if(!new_map->teleport_condition_texts.at(index).isEmpty())
-                                emit teleportConditionNotRespected(new_map->teleport_condition_texts.at(index));
-                            return false;
-                        }*/
-                    break;
-                    case CatchChallenger::MapConditionType_Item:
-                        /*if(items==NULL)
-                            break;
-                        if(items->find(teleporter.condition.value)==items->cend())
-                        {
-                            if(!new_map->teleport_condition_texts.at(index).isEmpty())
-                                emit teleportConditionNotRespected(new_map->teleport_condition_texts.at(index));
-                            return false;
-                        }*/
-                    break;
-                    case CatchChallenger::MapConditionType_Quest:
-                        /*if(quests==NULL)
-                            break;
-                        if(quests->find(teleporter.condition.value)==quests->cend())
-                        {
-                            if(!new_map->teleport_condition_texts.at(index).isEmpty())
-                                emit teleportConditionNotRespected(new_map->teleport_condition_texts.at(index));
-                            return false;
-                        }
-                        if(!quests->at(teleporter.condition.value).finish_one_time)
-                        {
-                            if(!new_map->teleport_condition_texts.at(index).isEmpty())
-                                emit teleportConditionNotRespected(new_map->teleport_condition_texts.at(index));
-                            return false;
-                        }*/
-                    break;
-                    default:
-                    break;
-                }
+                if(!mapConditionIsRepected(api,teleporter.condition))
+                    return false;
             }
             index++;
         }

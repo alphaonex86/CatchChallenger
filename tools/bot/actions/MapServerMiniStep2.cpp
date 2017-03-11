@@ -272,18 +272,33 @@ void MapServerMini::preload_step2_addNearTileToScanList(std::vector<std::pair<ui
     }
 }
 
+MapServerMini::BlockObject::LinkCondition &MapServerMini::searchConditionOrCreate(BlockObject::LinkInformation &linkInformationFrom,const CatchChallenger::MapCondition &condition)
+{
+    unsigned int index=0;
+    while(index<linkInformationFrom.linkConditions.size())
+    {
+        BlockObject::LinkCondition &linkCondition=linkInformationFrom.linkConditions[index];
+        if(linkCondition.condition.type==condition.type && linkCondition.condition.value==condition.value)
+            return linkCondition;
+        index++;
+    }
+    BlockObject::LinkCondition newLinkCondition;
+    newLinkCondition.condition=condition;
+    linkInformationFrom.linkConditions.push_back(newLinkCondition);
+    return linkInformationFrom.linkConditions.back();
+}
+
 bool MapServerMini::addBlockLink(BlockObject &blockObjectFrom, BlockObject &blockObjectTo, const BlockObject::LinkType &linkSourceFrom,
                                  /*point to go:*/const uint8_t &x,const uint8_t &y,
                                  const CatchChallenger::MapCondition &condition)
 {
     //search into the destination
-    BlockObject::LinkInformation &linkInformationFrom=blockObjectFrom.links[&blockObjectTo];
     BlockObject::LinkPoint linkPoint;
     linkPoint.type=linkSourceFrom;
     linkPoint.x=x;
     linkPoint.y=y;
-    linkPoint.condition=condition;
-    linkInformationFrom.points.push_back(linkPoint);
+    MapServerMini::BlockObject::LinkCondition &linkCondition=MapServerMini::searchConditionOrCreate(blockObjectFrom.links[&blockObjectTo],condition);
+    linkCondition.points.push_back(linkPoint);
     return true;
 }
 

@@ -42,6 +42,7 @@ public:
 
     //get the stored data
     Player_private_and_public_informations &get_player_informations();
+    const Player_private_and_public_informations &get_player_informations_ro() const;
     QString getPseudo();
     uint16_t getId();
 
