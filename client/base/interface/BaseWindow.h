@@ -478,6 +478,8 @@ private slots:
     void on_listWidgetEncyclopediaItem_itemChanged(QListWidgetItem *item);
     void on_listWidgetEncyclopediaItem_itemSelectionChanged();
     void on_listWidgetEncyclopediaMonster_itemSelectionChanged();
+    void on_checkBoxEncyclopediaMonsterKnown_toggled(bool checked);
+    void on_checkBoxEncyclopediaItemKnown_toggled(bool checked);
 protected slots:
     //datapack
     void datapackParsed();

@@ -1496,67 +1496,8 @@ void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &
 
 void CatchChallenger::BaseWindow::on_toolButtonEncyclopedia_clicked()
 {
-    const Player_private_and_public_informations &informations=client->get_player_informations();
-    ui->listWidgetEncyclopediaMonster->clear();
-    ui->listWidgetEncyclopediaItem->clear();
-    ui->labelEncyclopediaMonster->setText("");
-    ui->labelEncyclopediaItem->setText("");
-    if(informations.encyclopedia_monster!=NULL)
-    {
-        QList<uint32_t> keys=DatapackClientLoader::datapackLoader.monsterExtra.keys();
-        qSort(keys.begin(),keys.end());
-        int32_t i=0;
-        while (i<keys.size())
-        {
-            const uint32_t &monsterId=keys.value(i);
-            const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monsterId);
-            QListWidgetItem *item=new QListWidgetItem();
-            const uint16_t &bitgetUp=monsterId;
-            if(informations.encyclopedia_monster[bitgetUp/8] & (1<<(7-bitgetUp%8)))
-            {
-                item->setText(monsterExtra.name);
-                item->setData(99,monsterId);
-                item->setIcon(QIcon(monsterExtra.thumb));
-            }
-            else
-            {
-                item->setTextColor(QColor(100,100,100));
-                item->setText(tr("Unknown"));
-                item->setData(99,0);
-                item->setIcon(QIcon(":/images/monsters/default/small.png"));
-            }
-            ui->listWidgetEncyclopediaMonster->addItem(item);
-            ++i;
-        }
-    }
-    if(informations.encyclopedia_item!=NULL)
-    {
-        QList<uint32_t> keys=DatapackClientLoader::datapackLoader.itemsExtra.keys();
-        qSort(keys.begin(),keys.end());
-        int32_t i=0;
-        while (i<keys.size())
-        {
-            const uint32_t &itemId=keys.value(i);
-            const DatapackClientLoader::ItemExtra &itemsExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemId);
-            QListWidgetItem *item=new QListWidgetItem();
-            const uint16_t &bitgetUp=itemId;
-            if(informations.encyclopedia_item[bitgetUp/8] & (1<<(7-bitgetUp%8)))
-            {
-                item->setText(itemsExtra.name);
-                item->setData(99,itemId);
-                item->setIcon(QIcon(itemsExtra.image));
-            }
-            else
-            {
-                item->setTextColor(QColor(100,100,100));
-                item->setText(tr("Unknown"));
-                item->setData(99,0);
-                //item->setIcon(QIcon(":/images/monsters/default/small.png"));
-            }
-            ui->listWidgetEncyclopediaItem->addItem(item);
-            ++i;
-        }
-}
+    on_checkBoxEncyclopediaItemKnown_toggled(ui->checkBoxEncyclopediaItemKnown->isChecked());
+    on_checkBoxEncyclopediaMonsterKnown_toggled(ui->checkBoxEncyclopediaMonsterKnown->isChecked());
 
     ui->tabWidgetEncyclopedia->setCurrentIndex(0);
     ui->stackedWidget->setCurrentWidget(ui->page_encyclopedia);
