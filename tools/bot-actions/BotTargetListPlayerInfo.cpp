@@ -76,12 +76,11 @@ void BotTargetList::updatePlayerInformation()
                         //search the next position
                         for(const auto& n:layer.blockObject->links) {
                             const MapServerMini::BlockObject * const tempNextBlock=n.first;
-                            const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
+                            //const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
                             if(tempNextBlock==nextBlock)
                             {
-                                const MapServerMini::BlockObject::LinkPoint &firstPoint=linkInformation.points.at(0);
-                                ui->label_next_local_target->setText("Next local target: "+QString::fromStdString(nextLlayer->name)+" on "+QString::fromStdString(nextBlock->map->map_file)+", go to "+
-                                                                     QString::number(firstPoint.x)+","+QString::number(firstPoint.y)+
+                                ui->label_next_local_target->setText("Next local target: "+QString::fromStdString(nextLlayer->name)+" on "+QString::fromStdString(nextBlock->map->map_file)+/*", go to "+
+                                                                     QString::number(player.target.x)+","+QString::number(player.target.y)+*/
                                                                      QString::fromStdString(stepToDo)
                                                                      );
                                 break;
