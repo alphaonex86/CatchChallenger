@@ -26,7 +26,7 @@
    <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../../server/all-server-resources.qrc">
+   <iconset resource="../resources/client-resources.qrc">
     <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -65,7 +65,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>4</number>
+        <number>20</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -7153,28 +7153,48 @@ padding-bottom:3px;
             <attribute name="title">
              <string>Monster</string>
             </attribute>
-            <layout class="QHBoxLayout" name="horizontalLayout_60">
+            <layout class="QHBoxLayout" name="horizontalLayout_61">
              <item>
-              <widget class="QListWidget" name="listWidgetEncyclopediaMonster">
-               <property name="minimumSize">
-                <size>
-                 <width>200</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>200</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="iconSize">
-                <size>
-                 <width>32</width>
-                 <height>32</height>
-                </size>
-               </property>
-              </widget>
+              <layout class="QVBoxLayout" name="verticalLayout_38">
+               <item>
+                <widget class="QListWidget" name="listWidgetEncyclopediaMonster">
+                 <property name="minimumSize">
+                  <size>
+                   <width>200</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>200</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>32</width>
+                   <height>32</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkBoxEncyclopediaMonsterKnown">
+                 <property name="maximumSize">
+                  <size>
+                   <width>200</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Only the known</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
              <item>
               <widget class="QLabel" name="labelEncyclopediaMonster">
@@ -7196,28 +7216,48 @@ padding-bottom:3px;
             <attribute name="title">
              <string>Item</string>
             </attribute>
-            <layout class="QHBoxLayout" name="horizontalLayout_61">
+            <layout class="QHBoxLayout" name="horizontalLayout_60">
              <item>
-              <widget class="QListWidget" name="listWidgetEncyclopediaItem">
-               <property name="minimumSize">
-                <size>
-                 <width>200</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>200</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="iconSize">
-                <size>
-                 <width>24</width>
-                 <height>24</height>
-                </size>
-               </property>
-              </widget>
+              <layout class="QVBoxLayout" name="verticalLayout_39">
+               <item>
+                <widget class="QListWidget" name="listWidgetEncyclopediaItem">
+                 <property name="minimumSize">
+                  <size>
+                   <width>200</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>200</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="iconSize">
+                  <size>
+                   <width>24</width>
+                   <height>24</height>
+                  </size>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="checkBoxEncyclopediaItemKnown">
+                 <property name="maximumSize">
+                  <size>
+                   <width>200</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Only the known</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
              </item>
              <item>
               <widget class="QLabel" name="labelEncyclopediaItem">
@@ -7285,10 +7325,9 @@ border-image: url(:/images/empty.png);
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../resources/client-resources-multi.qrc"/>
-  <include location="../../../server/all-server-resources.qrc"/>
   <include location="../resources/client-resources.qrc"/>
   <include location="../../fight/resources/client-resources-fight.qrc"/>
+  <include location="../resources/client-resources-multi.qrc"/>
  </resources>
  <connections>
   <connection>
