@@ -73,7 +73,11 @@ public:
             std::vector<LinkPoint> points;
             CatchChallenger::MapCondition condition;
         };
-        std::unordered_map<const BlockObject */*to where*/,LinkCondition/*how, if single way or both way*/> links;
+        struct LinkInformation
+        {
+            std::vector<LinkCondition> linkConditions;
+        };
+        std::unordered_map<const BlockObject */*to where*/,LinkInformation/*how, if single way or both way*/> links;
         MapServerMini * map;
         uint8_t id;
 
@@ -126,6 +130,7 @@ public:
     //uint8_t *botLayerMask;->directly mark as not walkable into the map loader
 
     bool addBlockLink(BlockObject &blockObjectFrom, BlockObject &blockObjectTo, const BlockObject::LinkType &linkSourceFrom, /*point to go:*/const uint8_t &x, const uint8_t &y, const CatchChallenger::MapCondition &condition);
+    BlockObject::LinkCondition &searchConditionOrCreate(BlockObject::LinkInformation &links, const CatchChallenger::MapCondition &condition);
 public:
     void displayConsoleMap(const MapParsedForBot &currentStep) const;
     bool mapIsValid(const MapParsedForBot &currentStep) const;
