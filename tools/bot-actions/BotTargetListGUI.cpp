@@ -86,48 +86,73 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                 const MapServerMini::BlockObject::LinkInformation &linkInformation=n.second;
                 if(nextBlock->map!=blockObject->map)
                 {
-                    unsigned int index=0;
-                    while(index<linkInformation.points.size())
+                    const std::vector<MapServerMini::BlockObject::LinkCondition> &linkConditions=linkInformation.linkConditions;
+                    unsigned int indexCondition=0;
+                    while(indexCondition<linkConditions.size())
                     {
-                        const MapServerMini::BlockObject::LinkPoint &linkPoint=linkInformation.points.at(index);
-                        switch(linkPoint.type)
+                        const MapServerMini::BlockObject::LinkCondition &condition=linkConditions.at(indexCondition);
+                        unsigned int index=0;
+                        while(index<condition.points.size())
                         {
-                            case MapServerMini::BlockObject::LinkType::SourceTeleporter:
-                            case MapServerMini::BlockObject::LinkType::SourceTopMap:
-                            case MapServerMini::BlockObject::LinkType::SourceRightMap:
-                            case MapServerMini::BlockObject::LinkType::SourceBottomMap:
-                            case MapServerMini::BlockObject::LinkType::SourceLeftMap:
+                            const MapServerMini::BlockObject::LinkPoint &linkPoint=condition.points.at(index);
+                            switch(linkPoint.type)
                             {
-                                QListWidgetItem * newItem=new QListWidgetItem();
-                                mapIdListLocalTarget.push_back(nextBlock->map->id);
-                                newItem->setIcon(QIcon(":/7.png"));
-                                switch(linkPoint.type)
+                                case MapServerMini::BlockObject::LinkType::SourceTeleporter:
+                                case MapServerMini::BlockObject::LinkType::SourceTopMap:
+                                case MapServerMini::BlockObject::LinkType::SourceRightMap:
+                                case MapServerMini::BlockObject::LinkType::SourceBottomMap:
+                                case MapServerMini::BlockObject::LinkType::SourceLeftMap:
                                 {
-                                    case MapServerMini::BlockObject::LinkType::SourceTeleporter:
-                                        newItem->setText(QString("Teleporter to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
-                                    break;
-                                    case MapServerMini::BlockObject::LinkType::SourceTopMap:
-                                        newItem->setText(QString("Top border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
-                                    break;
-                                    case MapServerMini::BlockObject::LinkType::SourceRightMap:
-                                        newItem->setText(QString("Right border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
-                                    break;
-                                    case MapServerMini::BlockObject::LinkType::SourceBottomMap:
-                                        newItem->setText(QString("Bottom border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
-                                    break;
-                                    case MapServerMini::BlockObject::LinkType::SourceLeftMap:
-                                        newItem->setText(QString("Left border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
-                                    break;
-                                    default:
-                                    break;
+                                    QListWidgetItem * newItem=new QListWidgetItem();
+                                    mapIdListLocalTarget.push_back(nextBlock->map->id);
+                                    newItem->setIcon(QIcon(":/7.png"));
+                                    switch(linkPoint.type)
+                                    {
+                                        case MapServerMini::BlockObject::LinkType::SourceTeleporter:
+                                            newItem->setText(QString("Teleporter to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
+                                        break;
+                                        case MapServerMini::BlockObject::LinkType::SourceTopMap:
+                                            newItem->setText(QString("Top border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
+                                        break;
+                                        case MapServerMini::BlockObject::LinkType::SourceRightMap:
+                                            newItem->setText(QString("Right border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
+                                        break;
+                                        case MapServerMini::BlockObject::LinkType::SourceBottomMap:
+                                            newItem->setText(QString("Bottom border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
+                                        break;
+                                        case MapServerMini::BlockObject::LinkType::SourceLeftMap:
+                                            newItem->setText(QString("Left border to %1, go to %2,%3").arg(QString::fromStdString(nextBlock->map->map_file)).arg(linkPoint.x).arg(linkPoint.y));
+                                        break;
+                                        default:
+                                        break;
+                                    }
+                                    switch(condition.condition.value)
+                                    {
+                                        case CatchChallenger::MapConditionType::MapConditionType_Clan:
+                                            newItem->setText(newItem->text()+"\nIf zone owned by clan");
+                                        break;
+                                        case CatchChallenger::MapConditionType::MapConditionType_FightBot:
+                                            newItem->setText(newItem->text()+"\nIf win fight "+QString::number(condition.condition.value));
+                                        break;
+                                        case CatchChallenger::MapConditionType::MapConditionType_Item:
+                                            newItem->setText(newItem->text()+"\nIf have item "+QString::number(condition.condition.value));
+                                        break;
+                                        case CatchChallenger::MapConditionType::MapConditionType_Quest:
+                                            newItem->setText(newItem->text()+"\nIf finish the quest "+QString::number(condition.condition.value));
+                                        break;
+                                        default:
+                                        break;
+                                    }
+
+                                    listGUI->addItem(newItem);
                                 }
-                                listGUI->addItem(newItem);
+                                break;
+                                default:
+                                break;
                             }
-                            break;
-                            default:
-                            break;
+                            index++;
                         }
-                        index++;
+                        indexCondition++;
                     }
                 }
             }
