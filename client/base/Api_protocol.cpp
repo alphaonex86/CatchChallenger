@@ -201,6 +201,11 @@ Player_private_and_public_informations &Api_protocol::get_player_informations()
     return player_informations;
 }
 
+const Player_private_and_public_informations &Api_protocol::get_player_informations_ro() const
+{
+    return player_informations;
+}
+
 QString Api_protocol::getPseudo()
 {
     return QString::fromUtf8(player_informations.public_informations.pseudo.data(),player_informations.public_informations.pseudo.size());
