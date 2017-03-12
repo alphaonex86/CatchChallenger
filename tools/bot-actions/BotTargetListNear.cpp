@@ -156,7 +156,7 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                                 const CatchChallenger::MapCondition &condition=uniqueCondition.at(conditionIndex);
                                 if(condition.type==CatchChallenger::MapConditionType_None)
                                     directionBoth=MapServerMini::haveDirectReturnWithoutCondition(block,*nextBlock);
-                                if(directionBoth || &block<=nextBlock)
+                                if(!directionBoth || &block<=nextBlock)
                                 {
                                     if(validMaps.find(block.map)!=validMaps.cend() && validMaps.find(nextBlock->map)!=validMaps.cend())
                                         if(accessibleBlock.find(&block)!=accessibleBlock.cend() && accessibleBlock.find(nextBlock)!=accessibleBlock.cend())
@@ -166,32 +166,36 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                                             std::vector<std::string> attrs;
                                             if(directionBoth)
                                                 attrs.push_back("dir=both");
-                                            switch(condition.type)
+                                            if(condition.type!=CatchChallenger::MapConditionType_None)
                                             {
-                                                case CatchChallenger::MapConditionType_Clan:
-                                                    attrs.push_back("constraint=false");
-                                                    attrs.push_back("label=\"Need be owner clan\"");
-                                                break;
-                                                case CatchChallenger::MapConditionType_Quest:
-                                                    attrs.push_back("constraint=false");
-                                                    attrs.push_back("label=\"Quest "+std::to_string(condition.value)+"\"");
-                                                break;
-                                                case CatchChallenger::MapConditionType_Item:
-                                                    attrs.push_back("constraint=false");
-                                                    attrs.push_back("label=\"Item "+std::to_string(condition.value)+"\"");
-                                                break;
-                                                case CatchChallenger::MapConditionType_FightBot:
-                                                    attrs.push_back("constraint=false");
-                                                    attrs.push_back("label=\"Fight "+std::to_string(condition.value)+"\"");
-                                                break;
-                                                default:
-                                                break;
+                                                attrs.push_back("style=\"dashed\"");
+                                                if(ActionsAction::mapConditionIsRepected(client->api,condition))
+                                                     attrs.push_back("color=\"green\"");
+                                                else
+                                                    attrs.push_back("color=\"red\"");
+                                                switch(condition.type)
+                                                {
+                                                    case CatchChallenger::MapConditionType_Clan:
+                                                        attrs.push_back("label=\"Need be owner clan\"");
+                                                    break;
+                                                    case CatchChallenger::MapConditionType_Quest:
+                                                        attrs.push_back("label=\"Quest "+std::to_string(condition.value)+"\"");
+                                                    break;
+                                                    case CatchChallenger::MapConditionType_Item:
+                                                        attrs.push_back("label=\"Item "+std::to_string(condition.value)+"\"");
+                                                    break;
+                                                    case CatchChallenger::MapConditionType_FightBot:
+                                                        attrs.push_back("label=\"Fight "+std::to_string(condition.value)+"\"");
+                                                    break;
+                                                    default:
+                                                    break;
+                                                }
                                             }
                                             if(!attrs.empty())
                                             {
                                                 stringLinks+=" [";
                                                 stringLinks+=stringimplode(attrs," ");
-                                                stringLinks+="];\n";
+                                                stringLinks+="]";
                                             }
                                             stringLinks+=";\n";
                                         }
@@ -334,7 +338,7 @@ std::string BotTargetList::graphLocalMap()
                         const CatchChallenger::MapCondition &condition=uniqueCondition.at(conditionIndex);
                         if(condition.type==CatchChallenger::MapConditionType_None)
                             directionBoth=MapServerMini::haveDirectReturnWithoutCondition(block,*nextBlock);
-                        if(directionBoth || &block<=nextBlock || block.map!=nextBlock->map)
+                        if(!directionBoth || &block<=nextBlock || block.map!=nextBlock->map)
                         {
                             if(pointerToIndex.find(nextBlock)!=pointerToIndex.cend())
                                 graphvizText+="struct"+std::to_string(blockIndex+1)+" -> struct"+std::to_string(pointerToIndex.at(nextBlock)+1);
@@ -343,32 +347,36 @@ std::string BotTargetList::graphLocalMap()
                             std::vector<std::string> attrs;
                             if(directionBoth)
                                 attrs.push_back("dir=both");
-                            switch(condition.type)
+                            if(condition.type!=CatchChallenger::MapConditionType_None)
                             {
-                                case CatchChallenger::MapConditionType_Clan:
-                                    attrs.push_back("constraint=false");
-                                    attrs.push_back("label=\"Need be owner clan\"");
-                                break;
-                                case CatchChallenger::MapConditionType_Quest:
-                                    attrs.push_back("constraint=false");
-                                    attrs.push_back("label=\"Quest "+std::to_string(condition.value)+"\"");
-                                break;
-                                case CatchChallenger::MapConditionType_Item:
-                                    attrs.push_back("constraint=false");
-                                    attrs.push_back("label=\"Item "+std::to_string(condition.value)+"\"");
-                                break;
-                                case CatchChallenger::MapConditionType_FightBot:
-                                    attrs.push_back("constraint=false");
-                                    attrs.push_back("label=\"Fight "+std::to_string(condition.value)+"\"");
-                                break;
-                                default:
-                                break;
+                                attrs.push_back("style=\"dashed\"");
+                                if(ActionsAction::mapConditionIsRepected(client->api,condition))
+                                     attrs.push_back("color=\"green\"");
+                                else
+                                    attrs.push_back("color=\"red\"");
+                                switch(condition.type)
+                                {
+                                    case CatchChallenger::MapConditionType_Clan:
+                                        attrs.push_back("label=\"Need be owner clan\"");
+                                    break;
+                                    case CatchChallenger::MapConditionType_Quest:
+                                        attrs.push_back("label=\"Quest "+std::to_string(condition.value)+"\"");
+                                    break;
+                                    case CatchChallenger::MapConditionType_Item:
+                                        attrs.push_back("label=\"Item "+std::to_string(condition.value)+"\"");
+                                    break;
+                                    case CatchChallenger::MapConditionType_FightBot:
+                                        attrs.push_back("label=\"Fight "+std::to_string(condition.value)+"\"");
+                                    break;
+                                    default:
+                                    break;
+                                }
                             }
                             if(!attrs.empty())
                             {
                                 graphvizText+=" [";
                                 graphvizText+=stringimplode(attrs," ");
-                                graphvizText+="];\n";
+                                graphvizText+="]";
                             }
                             graphvizText+=";\n";
                         }
