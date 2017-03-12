@@ -147,6 +147,7 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                                         uniqueCondition.push_back(condition.condition);
                                     index++;
                                 }
+                                indexCondition++;
                             }
                             unsigned int conditionIndex=0;
                             while(conditionIndex<uniqueCondition.size())
@@ -324,6 +325,7 @@ std::string BotTargetList::graphLocalMap()
                                 uniqueCondition.push_back(condition.condition);
                             index++;
                         }
+                        indexCondition++;
                     }
                     unsigned int conditionIndex=0;
                     while(conditionIndex<uniqueCondition.size())
