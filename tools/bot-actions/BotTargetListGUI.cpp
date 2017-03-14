@@ -126,7 +126,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                                         default:
                                         break;
                                     }
-                                    switch(condition.condition.value)
+                                    switch(condition.condition.type)
                                     {
                                         case CatchChallenger::MapConditionType::MapConditionType_Clan:
                                             newItem->setText(newItem->text()+"\nIf zone owned by clan");

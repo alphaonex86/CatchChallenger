@@ -170,6 +170,7 @@ void MapServerMini::resolvBlockPath(const BlockObject * blockToExplore,
 
 void MapServerMini::targetBlockList(const BlockObject * const currentNearBlock,std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock,const unsigned int &depth) const
 {
+    do the link and zone filter here
     const std::unordered_set<const MapServerMini *> &validMaps=getValidMaps(depth);
     const std::unordered_set<const BlockObject *> &accessibleBlock=getAccessibleBlock(validMaps,currentNearBlock);
     resolvBlockPath(currentNearBlock,resolvedBlock,accessibleBlock);
