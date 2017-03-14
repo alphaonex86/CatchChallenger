@@ -55,6 +55,7 @@ public:
     void updatePlayerMap(const bool &force=false);
     void updatePlayerStep();
     void startPlayerMove();
+    static bool nextZoneIsAccessible(const CatchChallenger::Api_protocol *api, const MapServerMini::BlockObject * const blockObject);
     std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject,const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI=NULL);
     std::vector<std::string> contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster);
     std::string graphStepNearMap(const MultipleBotConnection::CatchChallengerClient * const client,const MapServerMini::BlockObject * const currentNearBlock, const unsigned int &depth=2);
@@ -84,6 +85,8 @@ private slots:
     void on_trackThePlayer_clicked();
     void on_autoSelectTarget_toggled(bool checked);
     void on_autoSelectFilter_clicked();
+    void on_hideTooHard_toggled(bool checked);
+
 private:
     Ui::BotTargetList *ui;
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient;

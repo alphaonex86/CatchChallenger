@@ -89,9 +89,12 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                         {
                             if(accessibleBlock.find(&block)!=accessibleBlock.cend())
                             {
+                                const bool &zoneIsAccessible=nextZoneIsAccessible(client->api,&block);
                                 subgraph+="struct"+std::to_string((uint64_t)&block)+" [label=\"";
                                 //subgraph+="<f0> "+mapServer->map_file+" | "+layer.name+" |";
                                 subgraph+="<f0> "+layer.name;
+                                if(!zoneIsAccessible)
+                                    subgraph+=" (Not accessible)";
                                 /*unsigned int index=0;
                                 while(index<layer.contentList.size())
                                 {
@@ -118,7 +121,15 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                                         }
                                     }
                                 }
-                                subgraph+="\" style=filled fillcolor=\""+block.color.name(QColor::HexRgb).toStdString()+"\"]\n";
+                                subgraph+="\" style=filled fillcolor=\"";
+                                if(zoneIsAccessible)
+                                    subgraph+=block.color.name(QColor::HexRgb).toStdString();
+                                else
+                                    subgraph+="red";
+                                subgraph+="\"";
+                                if(!zoneIsAccessible)
+                                    subgraph+=" fontcolor=\"#999999\"";
+                                subgraph+="]\n";
                                 contentDisplayed++;
                             }
                         }
@@ -413,4 +424,74 @@ std::string BotTargetList::graphLocalMap()
 bool operator==(const CatchChallenger::MapCondition& lhs, const CatchChallenger::MapCondition& rhs)
 {
     return std::memcmp(&lhs,&rhs,sizeof(CatchChallenger::MapCondition))==0;
+}
+
+bool BotTargetList::nextZoneIsAccessible(const CatchChallenger::Api_protocol *api,const MapServerMini::BlockObject * const blockObject)
+{
+    const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations_ro();
+    uint32_t maxMonsterLevel=0;
+    {
+        unsigned int index=0;
+        while(index<player_private_and_public_informations.playerMonster.size())
+        {
+            const CatchChallenger::PlayerMonster &playerMonster=player_private_and_public_informations.playerMonster.at(index);
+            if(playerMonster.level>maxMonsterLevel)
+                maxMonsterLevel=playerMonster.level;
+            index++;
+        }
+    }
+
+    for(auto it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
+    {
+        const std::vector<uint32_t> &botsFightList=it->second;
+        unsigned int index=0;
+        while(index<botsFightList.size())
+        {
+            const uint32_t &fightId=botsFightList.at(index);
+            const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId);
+            uint8_t maxFightLevel=0;
+            {
+                unsigned int sub_index=0;
+                while(sub_index<fight.monsters.size())
+                {
+                    const CatchChallenger::BotFight::BotFightMonster &monster=fight.monsters.at(sub_index);
+                    if(monster.level>maxFightLevel)
+                        maxFightLevel=monster.level;
+                    sub_index++;
+                }
+            }
+            const bool tooHard=maxFightLevel>(maxMonsterLevel+2);
+            if(tooHard)
+                return false;
+            index++;
+        }
+    }
+
+    if(blockObject->monstersCollisionValue!=NULL)
+    {
+        const CatchChallenger::MonstersCollisionValue &monsterCollisionValue=*blockObject->monstersCollisionValue;
+        if(!monsterCollisionValue.walkOnMonsters.empty())
+        {
+            /// \todo do the real code
+            const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monsterCollisionContent=monsterCollisionValue.walkOnMonsters.at(0);
+            if(!monsterCollisionContent.defaultMonsters.empty())
+            {
+                uint8_t maxFightLevel=0;
+                unsigned int sub_index=0;
+                while(sub_index<monsterCollisionContent.defaultMonsters.size())
+                {
+                    const CatchChallenger::MapMonster &monster=monsterCollisionContent.defaultMonsters.at(sub_index);
+                    if(monster.maxLevel>maxFightLevel)
+                        maxFightLevel=monster.maxLevel;
+                    sub_index++;
+                }
+
+                const bool tooHard=maxFightLevel>(maxMonsterLevel+2);
+                if(tooHard)
+                    return false;
+            }
+        }
+    }
+
+    return true;
 }
