@@ -39,7 +39,7 @@ void BotTargetList::updatePlayerStep()
                         abort();
                     const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
                     const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
-                    CatchChallenger::Direction newDirection=CatchChallenger::Direction::Direction_look_at_bottom;
+                    CatchChallenger::Direction newDirection=player.api->getDirection();/*=CatchChallenger::Direction::Direction_look_at_bottom no continue on same direction*/
                     switch(player.target.linkPoint.type)
                     {
                         case MapServerMini::BlockObject::LinkType::SourceTopMap:
@@ -86,47 +86,78 @@ void BotTargetList::updatePlayerStep()
                             }
                         }
                         else
-                            std::cerr << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << "can't move" << std::endl;
-                    }
-
-                    if(ActionsAction::canGoTo(api,newDirection,*playerMap,player.x,player.y,true,true))
-                    {
-                        ActionsAction::move(api,newDirection,&playerMap,&player.x,&player.y,true,true);
-                        api->newDirection(newDirection);
-                    }
-                    else
-                    {
-                        if(player.target.bestPath.size()>2)
-                            abort();
-                        player.target.bestPath.clear();
-                        //change the look below
-                        switch(newDirection)
-                        {
-                            case CatchChallenger::Direction::Direction_move_at_top:
-                            case CatchChallenger::Direction::Direction_look_at_top:
-                                api->newDirection(CatchChallenger::Direction::Direction_look_at_top);
-                            break;
-                            case CatchChallenger::Direction::Direction_move_at_bottom:
-                            case CatchChallenger::Direction::Direction_look_at_bottom:
-                                api->newDirection(CatchChallenger::Direction::Direction_look_at_bottom);
-                            break;
-                            case CatchChallenger::Direction::Direction_move_at_right:
-                            case CatchChallenger::Direction::Direction_look_at_right:
-                                api->newDirection(CatchChallenger::Direction::Direction_look_at_right);
-                            break;
-                            case CatchChallenger::Direction::Direction_move_at_left:
-                            case CatchChallenger::Direction::Direction_look_at_left:
-                                api->newDirection(CatchChallenger::Direction::Direction_look_at_left);
-                            break;
-                            default:
-                            abort();
-                            break;
-                        }
+                            std::cerr << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << " can't move" << std::endl;
                     }
 
                     if(!player.target.bestPath.empty())
                     {
-                        player.target.bestPath.erase(player.target.bestPath.cbegin());
+                        const uint16_t &currentCodeZone=playerMap->step.at(1).map[player.x+player.y*playerMap->width];
+                        if(currentCodeZone==0)
+                            abort();
+                        const MapServerMini::BlockObject * blockObject=playerMap->step.at(1).layers.at(currentCodeZone-1).blockObject;
+
+                        std::cout << "The player is into the zone: " << playerMap->map_file << " Block " << std::to_string(blockObject->id+1) << std::endl;
+                        const MapServerMini::BlockObject * front=player.target.bestPath.front();
+                        std::cout << "The next zone to remove is: " << front->map->map_file << " Block " << std::to_string(front->id+1) << std::endl;
+
+                        if(blockObject==front)
+                            player.target.bestPath.erase(player.target.bestPath.cbegin());
+                    }
+
+                    //do the final move
+                    switch(player.target.linkPoint.type)
+                    {
+                        case MapServerMini::BlockObject::LinkType::SourceTopMap:
+                        case MapServerMini::BlockObject::LinkType::SourceInternalTopBlock:
+                        case MapServerMini::BlockObject::LinkType::SourceRightMap:
+                        case MapServerMini::BlockObject::LinkType::SourceInternalRightBlock:
+                        case MapServerMini::BlockObject::LinkType::SourceBottomMap:
+                        case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
+                        case MapServerMini::BlockObject::LinkType::SourceLeftMap:
+                        case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
+                            if(ActionsAction::canGoTo(api,newDirection,*playerMap,player.x,player.y,true,true))
+                            {
+                                ActionsAction::move(api,newDirection,&playerMap,&player.x,&player.y,true,true);
+                                api->newDirection(newDirection);
+                            }
+                            else
+                            {
+                                if(player.target.bestPath.size()>2)
+                                    abort();
+                                std::cerr << "The current case is: " << std::to_string(player.x) << "," << std::to_string(player.y) << " can't do the next step for internal block change" << std::endl;
+                                player.target.bestPath.clear();
+                            }
+                        break;
+                        default:
+                        break;
+                    }
+
+                    //change the look below
+                    switch(newDirection)
+                    {
+                        case CatchChallenger::Direction::Direction_move_at_top:
+                        case CatchChallenger::Direction::Direction_look_at_top:
+                            api->newDirection(CatchChallenger::Direction::Direction_look_at_top);
+                        break;
+                        case CatchChallenger::Direction::Direction_move_at_bottom:
+                        case CatchChallenger::Direction::Direction_look_at_bottom:
+                            api->newDirection(CatchChallenger::Direction::Direction_look_at_bottom);
+                        break;
+                        case CatchChallenger::Direction::Direction_move_at_right:
+                        case CatchChallenger::Direction::Direction_look_at_right:
+                            api->newDirection(CatchChallenger::Direction::Direction_look_at_right);
+                        break;
+                        case CatchChallenger::Direction::Direction_move_at_left:
+                        case CatchChallenger::Direction::Direction_look_at_left:
+                            api->newDirection(CatchChallenger::Direction::Direction_look_at_left);
+                        break;
+                        default:
+                        abort();
+                        break;
+                    }
+
+                    if(!player.target.bestPath.empty())
+                    {
                         if(playerMap->step.size()<2)
                             abort();
                         const uint16_t &currentCodeZone=playerMap->step.at(1).map[player.x+player.y*playerMap->width];
@@ -139,67 +170,72 @@ void BotTargetList::updatePlayerStep()
                         uint8_t o=api->getDirection();
                         while(o>4)
                             o-=4;
-                        //if the target is on the same block
-                        const MapServerMini::BlockObject * nextBlock=player.target.bestPath.front();
-                        if(blockObject->links.find(nextBlock)==blockObject->links.cend())
-                            abort();
-                        const std::vector<MapServerMini::BlockObject::LinkCondition> &linkConditions=blockObject->links.at(nextBlock).linkConditions;
-                        unsigned int conditionIndex=0;
-                        while(conditionIndex<linkConditions.size())
+                        if(!player.target.bestPath.empty())
                         {
-                            const MapServerMini::BlockObject::LinkCondition &condition=linkConditions.at(conditionIndex);
-                            if(ActionsAction::mapConditionIsRepected(api,condition.condition))
+                            //if the target is on the same block
+                            const MapServerMini::BlockObject * nextBlock=player.target.bestPath.front();
+                            if(blockObject->links.find(nextBlock)==blockObject->links.cend())
+                                abort();
+                            const std::vector<MapServerMini::BlockObject::LinkCondition> &linkConditions=blockObject->links.at(nextBlock).linkConditions;
+                            unsigned int conditionIndex=0;
+                            while(conditionIndex<linkConditions.size())
                             {
-                                pointsList=condition.points;
-                                if(pointsList.empty())
-                                    abort();
-                                unsigned int index=0;
-                                while(index<pointsList.size())
+                                const MapServerMini::BlockObject::LinkCondition &condition=linkConditions.at(conditionIndex);
+                                if(ActionsAction::mapConditionIsRepected(api,condition.condition))
                                 {
-                                    const MapServerMini::BlockObject::LinkPoint &point=pointsList.at(index);
-                                    DestinationForPath destinationForPath;
-                                    destinationForPath.destination_x=point.x;
-                                    destinationForPath.destination_y=point.y;
-                                    switch(point.type)
+                                    pointsList=condition.points;
+                                    if(pointsList.empty())
+                                        abort();
+                                    unsigned int index=0;
+                                    while(index<pointsList.size())
                                     {
-                                        case MapServerMini::BlockObject::LinkType::SourceTopMap:
-                                        case MapServerMini::BlockObject::LinkType::SourceInternalTopBlock:
-                                            destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_top;
-                                        break;
-                                        case MapServerMini::BlockObject::LinkType::SourceRightMap:
-                                        case MapServerMini::BlockObject::LinkType::SourceInternalRightBlock:
-                                            destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_right;
-                                        break;
-                                        case MapServerMini::BlockObject::LinkType::SourceBottomMap:
-                                        case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
-                                            destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_bottom;
-                                        break;
-                                        case MapServerMini::BlockObject::LinkType::SourceLeftMap:
-                                        case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
-                                            destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_left;
-                                        break;
-                                        default:
-                                            destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
-                                        break;
-                                    }
-                                    destinations.push_back(destinationForPath);
+                                        const MapServerMini::BlockObject::LinkPoint &point=pointsList.at(index);
+                                        DestinationForPath destinationForPath;
+                                        destinationForPath.destination_x=point.x;
+                                        destinationForPath.destination_y=point.y;
+                                        switch(point.type)
+                                        {
+                                            case MapServerMini::BlockObject::LinkType::SourceTopMap:
+                                            case MapServerMini::BlockObject::LinkType::SourceInternalTopBlock:
+                                                destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_top;
+                                            break;
+                                            case MapServerMini::BlockObject::LinkType::SourceRightMap:
+                                            case MapServerMini::BlockObject::LinkType::SourceInternalRightBlock:
+                                                destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_right;
+                                            break;
+                                            case MapServerMini::BlockObject::LinkType::SourceBottomMap:
+                                            case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
+                                                destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_bottom;
+                                            break;
+                                            case MapServerMini::BlockObject::LinkType::SourceLeftMap:
+                                            case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
+                                                destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_left;
+                                            break;
+                                            default:
+                                                destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
+                                            break;
+                                        }
+                                        destinations.push_back(destinationForPath);
 
-                                    index++;
+                                        index++;
+                                    }
                                 }
                             }
+                            bool ok=false;
+                            unsigned int destinationIndexSelected=0;
+                            const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+                                        blockObject,
+                                        static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
+                                        destinations,
+                                        destinationIndexSelected,
+                                        &ok);
+                            if(!ok)
+                                abort();
+                            player.target.linkPoint=pointsList.at(destinationIndexSelected);
+                            player.target.localStep=returnPath;
                         }
-                        bool ok=false;
-                        unsigned int destinationIndexSelected=0;
-                        const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
-                                    blockObject,
-                                    static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
-                                    destinations,
-                                    destinationIndexSelected,
-                                    &ok);
-                        if(!ok)
-                            abort();
-                        player.target.linkPoint=pointsList.at(destinationIndexSelected);
-                        player.target.localStep=returnPath;
+                        else
+                            std::cerr << "Unable to search the next path, the target should be into the current block and map" << std::endl;
                     }
                 }
             }
