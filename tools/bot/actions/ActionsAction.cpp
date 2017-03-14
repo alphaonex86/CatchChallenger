@@ -72,6 +72,7 @@ bool ActionsAction::mapConditionIsRepected(const CatchChallenger::Api_protocol *
     switch(condition.type)
     {
         case CatchChallenger::MapConditionType_None:
+        return true;
         case CatchChallenger::MapConditionType_Clan://not do for now
         break;
         case CatchChallenger::MapConditionType_FightBot:

@@ -36,7 +36,7 @@ std::unordered_set<const MapServerMini *> MapServerMini::getValidMaps(const unsi
     return validMaps;
 }
 
-std::unordered_set<const MapServerMini::BlockObject *> MapServerMini::getAccessibleBlock(const std::unordered_set<const MapServerMini *> &validMaps,const BlockObject * const currentNearBlock) const
+std::unordered_set<const MapServerMini::BlockObject *> MapServerMini::getAccessibleBlock(const std::unordered_set<const MapServerMini *> &validMaps,const BlockObject * const currentNearBlock,const CatchChallenger::Api_protocol *api) const
 {
     // only the accessible block
     if(currentNearBlock->map!=this)
@@ -55,8 +55,28 @@ std::unordered_set<const MapServerMini::BlockObject *> MapServerMini::getAccessi
 
             for(const auto& n:currentBlock->links) {
                 const BlockObject * const nextBlock=n.first;
-                if(accessibleBlock.find(nextBlock)==accessibleBlock.cend() && validMaps.find(nextBlock->map)!=validMaps.cend())
-                    newBlockToParse.push_back(nextBlock);
+                const std::vector<BlockObject::LinkCondition> &linkConditions=n.second.linkConditions;
+                bool searchNext=true;
+                if(api!=NULL)
+                {
+                    unsigned int indexCondition=0;
+                    while(indexCondition<linkConditions.size())
+                    {
+                        const BlockObject::LinkCondition &condition=linkConditions.at(indexCondition);
+                        if(condition.condition.type!=CatchChallenger::MapConditionType_None)
+                        {
+                            if(ActionsAction::mapConditionIsRepected(api,condition.condition))
+                                break;
+                        }
+                        else
+                            break;
+                        indexCondition++;
+                    }
+                    searchNext=(indexCondition<linkConditions.size());
+                }
+                if(searchNext)
+                    if(accessibleBlock.find(nextBlock)==accessibleBlock.cend() && validMaps.find(nextBlock->map)!=validMaps.cend())
+                        newBlockToParse.push_back(nextBlock);
             }
             indexBlockToParse++;
         }
@@ -168,10 +188,9 @@ void MapServerMini::resolvBlockPath(const BlockObject * blockToExplore,
     }
 }
 
-void MapServerMini::targetBlockList(const BlockObject * const currentNearBlock,std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock,const unsigned int &depth) const
+void MapServerMini::targetBlockList(const BlockObject * const currentNearBlock, std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock, const unsigned int &depth,const CatchChallenger::Api_protocol *api) const
 {
-    do the link and zone filter here
     const std::unordered_set<const MapServerMini *> &validMaps=getValidMaps(depth);
-    const std::unordered_set<const BlockObject *> &accessibleBlock=getAccessibleBlock(validMaps,currentNearBlock);
+    const std::unordered_set<const BlockObject *> &accessibleBlock=getAccessibleBlock(validMaps,currentNearBlock,api);
     resolvBlockPath(currentNearBlock,resolvedBlock,accessibleBlock);
 }

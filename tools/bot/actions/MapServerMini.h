@@ -13,6 +13,7 @@
 #include <QColor>
 
 #include "../../general/base/CommonMap.h"
+#include "../../client/base/Api_protocol.h"
 
 class MapServerMini : public CatchChallenger::CommonMap
 {
@@ -134,9 +135,9 @@ public:
 public:
     void displayConsoleMap(const MapParsedForBot &currentStep) const;
     bool mapIsValid(const MapParsedForBot &currentStep) const;
-    void targetBlockList(const BlockObject * const currentNearBlock,std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock,const unsigned int &depth=2) const;
+    void targetBlockList(const BlockObject * const currentNearBlock, std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock, const unsigned int &depth=2,const CatchChallenger::Api_protocol *api=NULL) const;
     std::unordered_set<const MapServerMini *> getValidMaps(const unsigned int &depth=2) const;
-    std::unordered_set<const BlockObject *> getAccessibleBlock(const std::unordered_set<const MapServerMini *> &validMaps,const BlockObject * const currentNearBlock) const;
+    std::unordered_set<const BlockObject *> getAccessibleBlock(const std::unordered_set<const MapServerMini *> &validMaps, const BlockObject * const currentNearBlock,const CatchChallenger::Api_protocol *api=NULL) const;
     void resolvBlockPath(const BlockObject * blockToExplore,
                          std::unordered_map<const BlockObject *, BlockObjectPathFinding> &resolvedBlock,
                          const std::unordered_set<const BlockObject *> &accessibleBlock,
