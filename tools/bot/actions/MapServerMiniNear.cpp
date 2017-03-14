@@ -4,6 +4,7 @@
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "ActionsAction.h"
+#include "../bot-actions/BotTargetList.h"
 
 std::unordered_set<const MapServerMini *> MapServerMini::getValidMaps(const unsigned int &depth) const
 {
@@ -73,6 +74,8 @@ std::unordered_set<const MapServerMini::BlockObject *> MapServerMini::getAccessi
                         indexCondition++;
                     }
                     searchNext=(indexCondition<linkConditions.size());
+                    if(searchNext)
+                        searchNext=BotTargetList::nextZoneIsAccessible(api,nextBlock);
                 }
                 if(searchNext)
                     if(accessibleBlock.find(nextBlock)==accessibleBlock.cend() && validMaps.find(nextBlock->map)!=validMaps.cend())

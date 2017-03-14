@@ -1346,3 +1346,9 @@ void BotTargetList::on_autoSelectFilter_clicked()
     wildMonster=targetFilter.get_wildMonster();
     updatePlayerInformation();
 }
+
+void BotTargetList::on_hideTooHard_toggled(bool checked)
+{
+    Q_UNUSED(checked);
+    updatePlayerInformation();
+}

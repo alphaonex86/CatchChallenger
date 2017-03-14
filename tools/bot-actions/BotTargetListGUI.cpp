@@ -617,6 +617,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
             if(!monsterCollisionValue.walkOnMonsters.empty())
             {
                 /// \todo do the real code
+                //too hard do after
                 //choice the first entry
                 const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monsterCollisionContent=monsterCollisionValue.walkOnMonsters.at(0);
                 if(!monsterCollisionContent.defaultMonsters.empty())
