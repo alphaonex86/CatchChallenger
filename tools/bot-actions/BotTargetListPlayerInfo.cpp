@@ -47,9 +47,9 @@ void BotTargetList::updatePlayerInformation()
             {
                 std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
                 if(ui->hideTooHard->isChecked())
-                    playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value());
-                else
                     playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value(),client->api);
+                else
+                    playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value());
                 const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
                 if(step.map==NULL)
                     return;
