@@ -11,7 +11,8 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
     MapServerMini::BlockObjectPathFinding pathFinding;
     pathFinding.weight=0;
     resolvedBlockList[blockObject]=pathFinding;
-    return contentToGUI(client,listGUI,resolvedBlockList,true,true,true,true,true,true,true);
+    ActionsBotInterface::GlobalTarget bestTarget;
+    return contentToGUI(client,listGUI,resolvedBlockList,true,true,true,true,true,true,true,bestTarget);
 }
 
 uint32_t BotTargetList::getSeedToPlant(CatchChallenger::Api_protocol * api,bool *haveSeedToPlant)
@@ -42,7 +43,15 @@ uint32_t BotTargetList::getSeedToPlant(CatchChallenger::Api_protocol * api,bool 
 
 std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI,
                                                      const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard,
-                                                     bool dirt,bool itemOnMap,bool fight,bool shop,bool heal,bool wildMonster)
+                                                     bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster)
+{
+    ActionsBotInterface::GlobalTarget bestTarget;
+    return contentToGUI(client,listGUI,resolvedBlockList,displayTooHard,dirt,itemOnMap,fight,shop,heal,wildMonster,bestTarget);
+}
+
+std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI,
+                                                     const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard,
+                                                     bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget)
 {
     //compute the forbiden direct value
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=client->api->get_player_informations();
@@ -68,6 +77,11 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
 
     QList<QListWidgetItem *> bestItems;
     unsigned int bestPoint=0;
+
+    bestTarget.blockObject=NULL;
+    bestTarget.extra=0;
+    bestTarget.bestPath.clear();
+    bestTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
 
     struct BufferMonstersCollisionEntry
     {
@@ -214,36 +228,42 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                                         newItem->setText(QString("Plant to collect %1 at %2,%3").arg(itemExtra.name).arg(dirtPoint.first).arg(dirtPoint.second));
                                         newItem->setIcon(QIcon(itemExtra.image));
 
+                                        ActionsBotInterface::GlobalTarget globalTarget;
+                                        globalTarget.blockObject=blockObject;
+                                        globalTarget.extra=plantOnMapIndex;
+                                        globalTarget.bestPath=resolvedBlock.bestPath;
+                                        globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant;
+                                        unsigned int points=0;
+                                        if(isMature)
+                                        {
+                                            points=2000;//2000 is for mature plant, never be less than 1000
+                                            {
+                                                //remove the distance point
+                                                points-=resolvedBlock.weight;
+                                                //add plant value
+                                                const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemId);
+                                                points+=item.price;
+                                                //if not consumable and player don't have it
+                                                if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemId)==player_private_and_public_informations.items.cend())
+                                                    points=points*14/10;//+40%
+
+                                                if(bestPoint<points)
+                                                {
+                                                    bestPoint=points;
+                                                    bestItems=QList<QListWidgetItem *>() << newItem;
+                                                    bestTarget=globalTarget;
+                                                }
+                                            }
+                                        }
+
                                         if(listGUI==ui->globalTargets)
                                         {
-                                            ActionsBotInterface::GlobalTarget globalTarget;
-                                            globalTarget.blockObject=blockObject;
-                                            globalTarget.extra=plantOnMapIndex;
-                                            globalTarget.bestPath=resolvedBlock.bestPath;
-                                            globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant;
                                             targetListGlobalTarget.push_back(globalTarget);
                                             unsigned int points=0;
                                             if(isMature)
                                             {
                                                 if(alternateColor)
                                                     newItem->setBackgroundColor(alternateColorValue);
-                                                points=2000;//2000 is for mature plant, never be less than 1000
-                                                {
-                                                    //remove the distance point
-                                                    points-=resolvedBlock.weight;
-                                                    //add plant value
-                                                    const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemId);
-                                                    points+=item.price;
-                                                    //if not consumable and player don't have it
-                                                    if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemId)==player_private_and_public_informations.items.cend())
-                                                        points=points*14/10;//+40%
-
-                                                    if(bestPoint<points)
-                                                    {
-                                                        bestPoint=points;
-                                                        bestItems=QList<QListWidgetItem *>() << newItem;
-                                                    }
-                                                }
                                             }
                                             else
                                             {
@@ -330,32 +350,36 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                     else
                         newItem->setText(QString("Item on map %1 %2$").arg(itemExtra.name).arg(item.price));
                     newItem->setIcon(QIcon(itemExtra.image));
+
+                    ActionsBotInterface::GlobalTarget globalTarget;
+                    globalTarget.blockObject=blockObject;
+                    globalTarget.extra=itemOnMap.indexOfItemOnMap;
+                    globalTarget.bestPath=resolvedBlock.bestPath;
+                    globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap;
+                    unsigned int points=2000;//2000 is for mature plant, never be less than 1000
+                    if(itemOnMap.infinite)
+                        points=1500;
+                    {
+                        //remove the distance point
+                        points-=resolvedBlock.weight;
+                        //add plant value
+                        points+=item.price;
+                        //if not consumable and player don't have it
+                        if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemOnMap.item)==player_private_and_public_informations.items.cend())
+                            points=points*14/10;//+40%
+
+                        if(bestPoint<points)
+                        {
+                            bestPoint=points;
+                            bestItems=QList<QListWidgetItem *>() << newItem;
+                            bestTarget=globalTarget;
+                        }
+                    }
+
                     if(listGUI==ui->globalTargets)
                     {
-                        unsigned int points=2000;//2000 is for mature plant, never be less than 1000
-                        if(itemOnMap.infinite)
-                            points=1500;
-                        {
-                            //remove the distance point
-                            points-=resolvedBlock.weight;
-                            //add plant value
-                            points+=item.price;
-                            //if not consumable and player don't have it
-                            if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemOnMap.item)==player_private_and_public_informations.items.cend())
-                                points=points*14/10;//+40%
-
-                            if(bestPoint<points)
-                            {
-                                bestPoint=points;
-                                bestItems=QList<QListWidgetItem *>() << newItem;
-                            }
-                        }
-                        ActionsBotInterface::GlobalTarget globalTarget;
-                        globalTarget.blockObject=blockObject;
-                        globalTarget.extra=itemOnMap.indexOfItemOnMap;
-                        globalTarget.bestPath=resolvedBlock.bestPath;
-                        globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap;
                         targetListGlobalTarget.push_back(globalTarget);
+
                         if(alternateColor)
                             newItem->setBackgroundColor(alternateColorValue);
                         alternateColor=!alternateColor;
