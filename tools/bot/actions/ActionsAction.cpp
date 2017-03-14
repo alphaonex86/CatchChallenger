@@ -451,7 +451,7 @@ void ActionsAction::doMove()
                         }
                     }
                     else
-                        std::cerr << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << "can't move" << std::endl;
+                        std::cerr << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << " can't move in direction: " << std::to_string(newDirection) << " to get the item" << std::endl;
                 }
 
                 if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))

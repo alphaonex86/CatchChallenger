@@ -316,9 +316,21 @@ void BotTargetList::startPlayerMove()
         destinationForPath.destination_x=point.first;
         destinationForPath.destination_y=point.second;
         destinations.push_back(destinationForPath);
+        std::cout << "player.target.bestPath.empty()" << std::endl;
     }
     else //search the best path to the next block
     {
+        {
+            std::cout << "player.target.bestPath (less the current block): " << std::endl;
+            unsigned int index=0;
+            while(index<player.target.bestPath.size())
+            {
+                const MapServerMini::BlockObject * blockObject=player.target.bestPath.at(index);
+                std::cout << " " << blockObject->map->map_file << " Block " << std::to_string(blockObject->id+1) << std::endl;
+                index++;
+            }
+            std::cout << std::endl;
+        }
         if(layer.blockObject->links.find(player.target.bestPath.front())==layer.blockObject->links.cend())
             abort();
         const MapServerMini::BlockObject::LinkInformation &linkInformation=layer.blockObject->links.at(player.target.bestPath.front());
@@ -1292,7 +1304,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end-start;
     std::cout << "Path not found into " << (uint32_t)elapsed.count() << "ms" << std::endl;
-    std::cout << "From " << blockObject->map << " " << std::to_string(source_x) << "," << std::to_string(source_y) << std::endl;
+    std::cout << "From " << blockObject->map->map_file << " Block " << std::to_string(blockObject->id+1) << " " << std::to_string(source_x) << "," << std::to_string(source_y) << std::endl;
     {
         unsigned int index=0;
         while(index<destinations.size())

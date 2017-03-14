@@ -24,7 +24,7 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
             for(auto it = blockObject->pointOnMap_Item.begin();it!=blockObject->pointOnMap_Item.cend();++it)
             {
                 const MapServerMini::ItemOnMap &itemOnMap=it->second;
-                if(itemOnMap.item==target.extra)
+                if(itemOnMap.indexOfItemOnMap==target.extra)
                     return it->first;
             }
             break;
@@ -88,5 +88,6 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
     }
     else
         abort();
+    abort();
     return point;
 }
