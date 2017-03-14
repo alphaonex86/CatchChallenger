@@ -210,6 +210,13 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QLabel" name="bestTarget">
+            <property name="text">
+             <string>Best target:</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
