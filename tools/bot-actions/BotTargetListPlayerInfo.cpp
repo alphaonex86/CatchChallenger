@@ -46,7 +46,10 @@ void BotTargetList::updatePlayerInformation()
 
             {
                 std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
-                playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value(),client->api);
+                if(ui->hideTooHard->isChecked())
+                    playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value());
+                else
+                    playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value(),client->api);
                 const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
                 if(step.map==NULL)
                     return;
@@ -54,7 +57,7 @@ void BotTargetList::updatePlayerInformation()
                 ui->globalTargets->clear();
                 targetListGlobalTarget.clear();
                 alternateColor=false;
-                contentToGUI(client,ui->globalTargets,resolvedBlock,!ui->tooHard->isChecked(),dirt,itemOnMap,fight,shop,heal,wildMonster);
+                contentToGUI(client,ui->globalTargets,resolvedBlock,!ui->hideTooHard->isChecked(),dirt,itemOnMap,fight,shop,heal,wildMonster);
             }
             //the next target
             {
