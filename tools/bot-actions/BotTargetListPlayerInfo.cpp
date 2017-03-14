@@ -46,7 +46,7 @@ void BotTargetList::updatePlayerInformation()
 
             {
                 std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
-                playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value());
+                playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value(),client->api);
                 const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
                 if(step.map==NULL)
                     return;
