@@ -92,6 +92,46 @@ void BotTargetList::updatePlayerInformation()
                     }
                 }
             }
+            //the best target
+            {
+                std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
+                playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value(),client->api);
+                const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
+                if(step.map==NULL)
+                    return;
+                ActionsBotInterface::GlobalTarget bestTarget;
+                contentToGUI(client,NULL,resolvedBlock,false,dirt,itemOnMap,fight,shop,heal,wildMonster,bestTarget);
+                switch(bestTarget.type)
+                {
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap:
+                        ui->bestTarget->setText(QString::fromStdString("Best target: ItemOnMap on "+bestTarget.blockObject->map->map_file+" (Block "+std::to_string(bestTarget.blockObject->id+1)+"), extra: "+std::to_string(bestTarget.extra)));
+                    break;
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight:
+                        ui->bestTarget->setText(QString::fromStdString("Best target: Fight on "+bestTarget.blockObject->map->map_file+" (Block "+std::to_string(bestTarget.blockObject->id+1)+"), extra: "+std::to_string(bestTarget.extra)));
+                    break;
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Shop:
+                        ui->bestTarget->setText(QString::fromStdString("Best target: Shop on "+bestTarget.blockObject->map->map_file+" (Block "+std::to_string(bestTarget.blockObject->id+1)+"), extra: "+std::to_string(bestTarget.extra)));
+                    break;
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
+                        ui->bestTarget->setText(QString::fromStdString("Best target: Heal on "+bestTarget.blockObject->map->map_file+" (Block "+std::to_string(bestTarget.blockObject->id+1)+"), extra: "+std::to_string(bestTarget.extra)));
+                    break;
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster:
+                        ui->bestTarget->setText(QString::fromStdString("Best target: WildMonster on "+bestTarget.blockObject->map->map_file+" (Block "+std::to_string(bestTarget.blockObject->id+1)+"), extra: "+std::to_string(bestTarget.extra)));
+                    break;
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Dirt:
+                        ui->bestTarget->setText(QString::fromStdString("Best target: Dirt on "+bestTarget.blockObject->map->map_file+" (Block "+std::to_string(bestTarget.blockObject->id+1)+"), extra: "+std::to_string(bestTarget.extra)));
+                    break;
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant:
+                        ui->bestTarget->setText(QString::fromStdString("Best target: Plant on "+bestTarget.blockObject->map->map_file+" (Block "+std::to_string(bestTarget.blockObject->id+1)+"), extra: "+std::to_string(bestTarget.extra)));
+                    break;
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::None:
+                        ui->bestTarget->setText("Best target: None");
+                    break;
+                    default:
+                        ui->bestTarget->setText("Best target: Unknown");
+                    break;
+                }
+            }
         }
         else
             ui->label_local_target->setTitle(ui->label_local_target->title()+" (Out of the map)");
