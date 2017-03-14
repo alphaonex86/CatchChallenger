@@ -258,7 +258,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="tooHard">
+         <widget class="QCheckBox" name="hideTooHard">
           <property name="text">
            <string>Hide too hard item</string>
           </property>
