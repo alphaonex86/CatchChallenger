@@ -170,6 +170,9 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
         newPlayer.y=0;
         newPlayer.target.blockObject=NULL;
         newPlayer.target.extra=0;
+        newPlayer.target.linkPoint.x=0;
+        newPlayer.target.linkPoint.y=0;
+        newPlayer.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
         newPlayer.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
         newPlayer.fightEngine=new CatchChallenger::ClientFightEngine();
         newPlayer.api=api;
@@ -303,26 +306,6 @@ void MainWindow::display_numberOfBotConnected(quint16 numberOfBotConnected)
 void MainWindow::display_numberOfSelectedCharacter(quint16 numberOfSelectedCharacter)
 {
     ui->numberOfSelectedCharacter->setText(tr("Selected character: %1").arg(numberOfSelectedCharacter));
-}
-
-void MainWindow::on_move_toggled(bool checked)
-{
-    multipleBotConnexion.botInterface->setValue("move",checked);
-}
-
-void MainWindow::on_randomText_toggled(bool checked)
-{
-    multipleBotConnexion.botInterface->setValue("randomText",checked);
-}
-
-void MainWindow::on_chatRandomReply_toggled(bool checked)
-{
-    multipleBotConnexion.botInterface->setValue("globalChatRandomReply",checked);
-}
-
-void MainWindow::on_bugInDirection_toggled(bool checked)
-{
-    multipleBotConnexion.botInterface->setValue("bugInDirection",checked);
 }
 
 void MainWindow::on_serverList_activated(const QModelIndex &index)
