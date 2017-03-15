@@ -103,7 +103,7 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                                         subgraph+=itemEntry.text.toStdString()+"\\n";
                                     index++;
                                 }*/
-                                std::vector<std::string> stringList=contentToGUI(&block,client);
+                                std::vector<std::string> stringList=contentToGUI(&block,client->api);
                                 const std::string &content=stringimplode(stringList,"\\n");
                                 if(!content.empty())
                                     subgraph+="|<f1> "+content;
@@ -276,7 +276,7 @@ std::string BotTargetList::graphLocalMap()
                 const MapServerMini::MapParsedForBot::Layer &layer=step2.layers.at(blockIndex);
                 const MapServerMini::BlockObject &block=*layer.blockObject;
 
-                std::vector<std::string> stringList=contentToGUI(&block,client);
+                std::vector<std::string> stringList=contentToGUI(&block,client->api);
                 const std::string &content=stringimplode(stringList,"\\n");
 
                 /*unsigned int index=0;

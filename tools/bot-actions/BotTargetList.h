@@ -55,10 +55,12 @@ public:
     void updatePlayerMap(const bool &force=false);
     void updatePlayerStep();
     void startPlayerMove();
+    void startPlayerMove(CatchChallenger::Api_protocol *api);
+    void autoStartAction();
     static bool nextZoneIsAccessible(const CatchChallenger::Api_protocol *api, const MapServerMini::BlockObject * const blockObject);
-    std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject,const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI=NULL);
-    std::vector<std::string> contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster);
-    std::vector<std::string> contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster,ActionsBotInterface::GlobalTarget &bestTarget);
+    std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject, const CatchChallenger::Api_protocol * const api, QListWidget *listGUI=NULL);
+    std::vector<std::string> contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster);
+    std::vector<std::string> contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster,ActionsBotInterface::GlobalTarget &bestTarget);
     std::string graphStepNearMap(const MultipleBotConnection::CatchChallengerClient * const client,const MapServerMini::BlockObject * const currentNearBlock, const unsigned int &depth=2);
     std::string graphLocalMap();
     std::pair<uint8_t,uint8_t> getNextPosition(const MapServerMini::BlockObject * const blockObject,ActionsBotInterface::GlobalTarget &target);
@@ -71,7 +73,7 @@ public:
             unsigned int &destinationIndexSelected,
             bool *ok);
     static std::string stepToString(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath);
-    static uint32_t getSeedToPlant(CatchChallenger::Api_protocol * api, bool *haveSeedToPlant=NULL);
+    static uint32_t getSeedToPlant(const CatchChallenger::Api_protocol *api, bool *haveSeedToPlant=NULL);
 signals:
     void start_preload_the_map();
 private slots:
@@ -82,7 +84,7 @@ private slots:
     void on_browseMap_clicked();
     void on_searchDeep_editingFinished();
     void on_globalTargets_itemActivated(QListWidgetItem *item);
-    void on_tooHard_clicked();
+    void on_hideTooHard_clicked();
     void on_trackThePlayer_clicked();
     void on_autoSelectTarget_toggled(bool checked);
     void on_autoSelectFilter_clicked();
@@ -104,6 +106,7 @@ private:
     uint8_t updateMapContentY;
     uint32_t updateMapContentMapId;
     CatchChallenger::Direction updateMapContentDirection;
+    QTimer autoStartActionTimer;
 
     bool dirt,itemOnMap,fight,shop,heal,wildMonster;
 

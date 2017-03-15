@@ -5,19 +5,19 @@
 #include "MapBrowse.h"
 #include <chrono>
 
-std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockObject * const blockObject, const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI)
+std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockObject * const blockObject, const CatchChallenger::Api_protocol * const api, QListWidget *listGUI)
 {
     std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> resolvedBlockList;
     MapServerMini::BlockObjectPathFinding pathFinding;
     pathFinding.weight=0;
     resolvedBlockList[blockObject]=pathFinding;
     ActionsBotInterface::GlobalTarget bestTarget;
-    return contentToGUI(client,listGUI,resolvedBlockList,true,true,true,true,true,true,true,bestTarget);
+    return contentToGUI(api,listGUI,resolvedBlockList,true,true,true,true,true,true,true,bestTarget);
 }
 
-uint32_t BotTargetList::getSeedToPlant(CatchChallenger::Api_protocol * api,bool *haveSeedToPlant)
+uint32_t BotTargetList::getSeedToPlant(const CatchChallenger::Api_protocol * api,bool *haveSeedToPlant)
 {
-    const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
+    const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations_ro();
     auto i=player_private_and_public_informations.items.begin();
     while (i!=player_private_and_public_informations.items.cend())
     {
@@ -41,21 +41,20 @@ uint32_t BotTargetList::getSeedToPlant(CatchChallenger::Api_protocol * api,bool 
     return 0;
 }
 
-std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI,
+std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI,
                                                      const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard,
                                                      bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster)
 {
     ActionsBotInterface::GlobalTarget bestTarget;
-    return contentToGUI(client,listGUI,resolvedBlockList,displayTooHard,dirt,itemOnMap,fight,shop,heal,wildMonster,bestTarget);
+    return contentToGUI(api,listGUI,resolvedBlockList,displayTooHard,dirt,itemOnMap,fight,shop,heal,wildMonster,bestTarget);
 }
 
-std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection::CatchChallengerClient * const client, QListWidget *listGUI,
+std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI,
                                                      const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard,
                                                      bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget)
 {
     //compute the forbiden direct value
-    const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=client->api->get_player_informations();
-    CatchChallenger::Api_client_real * api=client->api;
+    const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations_ro();
     uint32_t maxMonsterLevel=0;
     {
         unsigned int index=0;

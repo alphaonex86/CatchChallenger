@@ -10,6 +10,17 @@
 
 void BotTargetList::updatePlayerStep()
 {
+    CatchChallenger::Api_protocol * apiSelectClient=NULL;
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()==1)
+    {
+        const QString &pseudo=selectedItems.at(0)->text();
+        if(!pseudoToBot.contains(pseudo))
+            return;
+        MultipleBotConnection::CatchChallengerClient * currentSelectedclient=pseudoToBot.value(pseudo);
+        apiSelectClient=currentSelectedclient->api;
+    }
+
     QHashIterator<CatchChallenger::Api_protocol *,ActionsAction::Player> i(actionsAction->clientList);
     while (i.hasNext()) {
         i.next();
@@ -26,6 +37,7 @@ void BotTargetList::updatePlayerStep()
                 {
                     item->setSelected(true);
                     on_bots_itemSelectionChanged();
+                    ui->groupBoxBot->setVisible(false);
                 }
             }
             CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
@@ -285,14 +297,7 @@ void BotTargetList::updatePlayerStep()
                 }
             }
 
-            const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
-            if(selectedItems.size()!=1)
-                return;
-            const QString &pseudo=selectedItems.at(0)->text();
-            if(!pseudoToBot.contains(pseudo))
-                return;
-            MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-            if(haveChange && api==client->api)
+            if(haveChange && api==apiSelectClient)
             {
                 if(ui->trackThePlayer->isChecked())
                 {
@@ -462,8 +467,9 @@ void BotTargetList::updatePlayerStep()
                 player.target.linkPoint.y=0;
                 player.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
                 player.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
+                player.target.sinceTheLastAction.restart();
 
-                if(api==client->api)
+                if(api==apiSelectClient)
                 {
                     updatePlayerInformation();
                     updatePlayerMap(true);
