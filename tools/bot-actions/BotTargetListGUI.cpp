@@ -246,6 +246,19 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                                                 //if not consumable and player don't have it
                                                 if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemId)==player_private_and_public_informations.items.cend())
                                                     points=points*14/10;//+40%
+                                                if(player_private_and_public_informations.items.find(itemId)!=player_private_and_public_informations.items.cend())
+                                                {
+                                                    if(!item.consumeAtUse)
+                                                        points=0;
+                                                    else
+                                                    {
+                                                        const uint32_t &quantity=player_private_and_public_informations.items.at(itemId);
+                                                        if(quantity>20)
+                                                            points=0;
+                                                        else if(quantity>10)
+                                                            points/=4;
+                                                    }
+                                                }
 
                                                 if(bestPoint<points)
                                                 {
@@ -367,6 +380,19 @@ std::vector<std::string> BotTargetList::contentToGUI(const MultipleBotConnection
                         //if not consumable and player don't have it
                         if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemOnMap.item)==player_private_and_public_informations.items.cend())
                             points=points*14/10;//+40%
+                        if(player_private_and_public_informations.items.find(itemOnMap.item)!=player_private_and_public_informations.items.cend())
+                        {
+                            if(!item.consumeAtUse)
+                                points=0;
+                            else
+                            {
+                                const uint32_t &quantity=player_private_and_public_informations.items.at(itemOnMap.item);
+                                if(quantity>20)
+                                    points=0;
+                                else if(quantity>10)
+                                    points/=4;
+                            }
+                        }
 
                         if(bestPoint<points)
                         {
