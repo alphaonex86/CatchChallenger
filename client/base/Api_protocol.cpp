@@ -875,6 +875,7 @@ void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<uint16_t
 
 void Api_protocol::takeAnObjectOnMap()
 {
+    std::cout << "Api_protocol::takeAnObjectOnMap()" << std::endl;
     packOutcommingData(0x18,NULL,0);
 }
 
