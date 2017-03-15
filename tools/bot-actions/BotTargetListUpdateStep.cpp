@@ -240,38 +240,42 @@ void BotTargetList::updatePlayerStep()
                     }
                     else
                     {
-                        //do the final resolution path as do into startPlayerMove()
-                        std::vector<DestinationForPath> destinations;
-                        std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
-                        const std::pair<uint8_t,uint8_t> &point=getNextPosition(blockObject,player.target/*hop list, first is the next hop*/);
-                        DestinationForPath destinationForPath;
-                        destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
-                        destinationForPath.destination_x=point.first;
-                        destinationForPath.destination_y=point.second;
-                        destinations.push_back(destinationForPath);
-                        MapServerMini::BlockObject::LinkPoint linkPoint;
-                        linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
-                        linkPoint.x=point.first;
-                        linkPoint.y=point.second;
-                        pointsList.push_back(linkPoint);
-                        std::cout << "player.target.bestPath.empty()" << std::endl;
-                        if(pointsList.size()!=destinations.size())
-                            abort();
-                        uint8_t o=api->getDirection();
-                        while(o>4)
-                            o-=4;
-                        bool ok=false;
-                        unsigned int destinationIndexSelected=0;
-                        const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
-                                    blockObject,
-                                    static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
-                                    destinations,
-                                    destinationIndexSelected,
-                                    &ok);
-                        if(!ok)
-                            abort();
-                        player.target.linkPoint=pointsList.at(destinationIndexSelected);
-                        player.target.localStep=returnPath;
+                        //have finish the path and is on the final blockObject, then do internal path finding
+                        if(blockObject==player.target.blockObject)
+                        {
+                            //do the final resolution path as do into startPlayerMove()
+                            std::vector<DestinationForPath> destinations;
+                            std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
+                            const std::pair<uint8_t,uint8_t> &point=getNextPosition(blockObject,player.target/*hop list, first is the next hop*/);
+                            DestinationForPath destinationForPath;
+                            destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
+                            destinationForPath.destination_x=point.first;
+                            destinationForPath.destination_y=point.second;
+                            destinations.push_back(destinationForPath);
+                            MapServerMini::BlockObject::LinkPoint linkPoint;
+                            linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+                            linkPoint.x=point.first;
+                            linkPoint.y=point.second;
+                            pointsList.push_back(linkPoint);
+                            std::cout << "player.target.bestPath.empty()" << std::endl;
+                            if(pointsList.size()!=destinations.size())
+                                abort();
+                            uint8_t o=api->getDirection();
+                            while(o>4)
+                                o-=4;
+                            bool ok=false;
+                            unsigned int destinationIndexSelected=0;
+                            const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+                                        blockObject,
+                                        static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
+                                        destinations,
+                                        destinationIndexSelected,
+                                        &ok);
+                            if(!ok)
+                                abort();
+                            player.target.linkPoint=pointsList.at(destinationIndexSelected);
+                            player.target.localStep=returnPath;
+                        }
                     }
                 }
             }
