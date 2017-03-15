@@ -215,10 +215,11 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                     if(item.infinite || player.itemOnMap.find(item.indexOfItemOnMap)==player.itemOnMap.cend())
                         return false;
             }
+            //into check colision because some time just need get the near tile
+            if(!allowTeleport)
+                if(needBeTeleported(*new_map,x,y))
+                    return false;
         }
-        if(!allowTeleport)
-            if(needBeTeleported(*new_map,x,y))
-                return false;
     }
 
     {
