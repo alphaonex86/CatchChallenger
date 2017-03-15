@@ -705,9 +705,9 @@ void ActionsAction::remove_to_inventory(CatchChallenger::Api_protocol *api,const
     }
 }
 
-uint32_t ActionsAction::itemQuantity(CatchChallenger::Api_protocol *api,const uint32_t &itemId)
+uint32_t ActionsAction::itemQuantity(const CatchChallenger::Api_protocol *api,const uint32_t &itemId)
 {
-    const CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
+    const CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations_ro();
     if(player.items.find(itemId)!=player.items.cend())
         return player.items.at(itemId);
     return 0;

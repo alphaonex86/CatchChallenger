@@ -114,9 +114,9 @@ void ActionsAction::appendReputationPoint(CatchChallenger::Api_protocol *api,con
     #endif
 }
 
-bool ActionsAction::botHaveQuest(CatchChallenger::Api_protocol *api,const uint32_t &botId)
+bool ActionsAction::botHaveQuest(const CatchChallenger::Api_protocol *api,const uint32_t &botId)
 {
-    CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
+    const CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations_ro();
     const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "check bot quest for: " << botId;
@@ -271,9 +271,9 @@ bool ActionsAction::tryValidateQuestStep(CatchChallenger::Api_protocol *api, con
     return true;
 }
 
-bool ActionsAction::haveNextStepQuestRequirements(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest)
+bool ActionsAction::haveNextStepQuestRequirements(const CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest)
 {
-    CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
+    const CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations_ro();
     const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << QStringLiteral("haveNextStepQuestRequirements for quest: %1").arg(questId);
@@ -322,14 +322,13 @@ bool ActionsAction::haveNextStepQuestRequirements(CatchChallenger::Api_protocol 
     return true;
 }
 
-bool ActionsAction::haveStartQuestRequirement(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest)
+bool ActionsAction::haveStartQuestRequirement(const CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest)
 {
-    CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
-    const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
+    const CatchChallenger::Player_private_and_public_informations &informations=api->get_player_informations_ro();
+    const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=informations.quests;
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "check quest requirement for: " << quest.id;
     #endif
-    CatchChallenger::Player_private_and_public_informations informations=api->get_player_informations();
     if(quests.find(quest.id)!=quests.cend())
     {
         if(informations.quests.at(quest.id).step!=0)
