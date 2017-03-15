@@ -220,6 +220,7 @@ void BotTargetList::updatePlayerStep()
                                         index++;
                                     }
                                 }
+                                conditionIndex++;
                             }
                             bool ok=false;
                             unsigned int destinationIndexSelected=0;
