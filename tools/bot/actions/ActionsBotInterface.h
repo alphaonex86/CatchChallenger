@@ -11,6 +11,7 @@
 #include "MapServerMini.h"
 #include <unordered_map>
 #include <QRegularExpression>
+#include <QTime>
 
 class ActionsBotInterface : public BotInterface
 {
@@ -35,6 +36,7 @@ public:
         std::vector<const MapServerMini::BlockObject *> bestPath;//without the current path
         std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > localStep;
         MapServerMini::BlockObject::LinkPoint linkPoint;
+        QTime sinceTheLastAction;
     };
     struct ChatEntry
     {

@@ -30,7 +30,7 @@ void ActionsAction::appendReputationRewards(CatchChallenger::Api_protocol *api,c
     //show_reputation();
 }
 
-bool ActionsAction::haveReputationRequirements(CatchChallenger::Api_protocol *api,const std::vector<CatchChallenger::ReputationRequirements> &reputationList)
+bool ActionsAction::haveReputationRequirements(const CatchChallenger::Api_protocol *api,const std::vector<CatchChallenger::ReputationRequirements> &reputationList)
 {
     QList<CatchChallenger::ReputationRequirements> reputationListTemp;
     unsigned int index=0;
@@ -42,7 +42,7 @@ bool ActionsAction::haveReputationRequirements(CatchChallenger::Api_protocol *ap
     return haveReputationRequirements(api,reputationListTemp);
 }
 
-bool ActionsAction::haveReputationRequirements(CatchChallenger::Api_protocol *api,const QList<CatchChallenger::ReputationRequirements> &reputationList)
+bool ActionsAction::haveReputationRequirements(const CatchChallenger::Api_protocol *api, const QList<CatchChallenger::ReputationRequirements> &reputationList)
 {
     int index=0;
     while(index<reputationList.size())

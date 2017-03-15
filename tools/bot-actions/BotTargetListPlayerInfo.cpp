@@ -57,7 +57,7 @@ void BotTargetList::updatePlayerInformation()
                 ui->globalTargets->clear();
                 targetListGlobalTarget.clear();
                 alternateColor=false;
-                contentToGUI(client,ui->globalTargets,resolvedBlock,!ui->hideTooHard->isChecked(),dirt,itemOnMap,fight,shop,heal,wildMonster);
+                contentToGUI(client->api,ui->globalTargets,resolvedBlock,!ui->hideTooHard->isChecked(),dirt,itemOnMap,fight,shop,heal,wildMonster);
             }
             //the next target
             {
@@ -100,7 +100,7 @@ void BotTargetList::updatePlayerInformation()
                 if(step.map==NULL)
                     return;
                 ActionsBotInterface::GlobalTarget bestTarget;
-                contentToGUI(client,NULL,resolvedBlock,false,dirt,itemOnMap,fight,shop,heal,wildMonster,bestTarget);
+                contentToGUI(client->api,NULL,resolvedBlock,false,dirt,itemOnMap,fight,shop,heal,wildMonster,bestTarget);
                 switch(bestTarget.type)
                 {
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap:

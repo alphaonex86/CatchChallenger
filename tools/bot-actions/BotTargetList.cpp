@@ -54,11 +54,12 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
     updateMapContentMapId=0;
     updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
 
-    connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerStep);
-    connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerMapSlot);
-
-    if(ui->bots->count()==1)
-        ui->groupBoxBot->setVisible(false);
+    if(!connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerStep))
+        abort();
+    if(!connect(&actionsAction->moveTimer,&QTimer::timeout,this,&BotTargetList::updatePlayerMapSlot))
+        abort();
+    if(!connect(&autoStartActionTimer,&QTimer::timeout,this,&BotTargetList::autoStartAction))
+        abort();
 
     dirt=true,itemOnMap=true,fight=true,shop=true,heal=true,wildMonster=true;
 }
@@ -278,10 +279,18 @@ void BotTargetList::startPlayerMove()
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    startPlayerMove(client->api);
+    updateMapInformation();
+    ActionsBotInterface::Player &player=actionsAction->clientList[client->api];
+    ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
+}
+
+void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
+{
+    if(!actionsAction->clientList.contains(api))
         return;
 
-    ActionsBotInterface::Player &player=actionsAction->clientList[client->api];
+    ActionsBotInterface::Player &player=actionsAction->clientList[api];
 
     if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
         return;
@@ -304,7 +313,7 @@ void BotTargetList::startPlayerMove()
 
     std::vector<DestinationForPath> destinations;
     std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
-    uint8_t o=client->api->getDirection();
+    uint8_t o=api->getDirection();
     while(o>4)
         o-=4;
     //if the target is on the same block
@@ -343,7 +352,7 @@ void BotTargetList::startPlayerMove()
         while(indexLinkInformation<linkInformation.linkConditions.size())
         {
             const MapServerMini::BlockObject::LinkCondition &linkCondition=linkInformation.linkConditions.at(indexLinkInformation);
-            if(ActionsAction::mapConditionIsRepected(client->api,linkCondition.condition)) //condition is respected
+            if(ActionsAction::mapConditionIsRepected(api,linkCondition.condition)) //condition is respected
             {
                 pointsList=linkCondition.points;
                 if(pointsList.empty())
@@ -405,12 +414,10 @@ void BotTargetList::startPlayerMove()
     player.target.linkPoint=pointsList.at(destinationIndexSelected);
     player.target.localStep=returnPath;
 
-    ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(returnPath)));
     updateMapContentX=0;
     updateMapContentY=0;
     updateMapContentMapId=0;
     updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
-    updateMapInformation();
 }
 
 std::string BotTargetList::stepToString(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath)
@@ -684,7 +691,7 @@ void BotTargetList::updateLayerElements()
     const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(ui->comboBox_Layer->currentIndex());
     alternateColor=false;
     ui->localTargets->clear();
-    contentToGUI(layer.blockObject,client,ui->localTargets);
+    contentToGUI(layer.blockObject,client->api,ui->localTargets);
 
     ui->label_zone->setText(QString::fromStdString(layer.text));
 }
@@ -822,7 +829,7 @@ void BotTargetList::on_globalTargets_itemActivated(QListWidgetItem *item)
     updatePlayerInformation();
 }
 
-void BotTargetList::on_tooHard_clicked()
+void BotTargetList::on_hideTooHard_clicked()
 {
     updatePlayerInformation();
 }
@@ -1356,6 +1363,82 @@ void BotTargetList::on_trackThePlayer_clicked()
 
 void BotTargetList::on_autoSelectTarget_toggled(bool checked)
 {
+    Q_UNUSED(checked);
+    if(ui->autoSelectTarget->isChecked())
+        autoStartActionTimer.start(100);
+    else
+        autoStartActionTimer.stop();
+}
+
+void BotTargetList::autoStartAction()
+{
+    CatchChallenger::Api_protocol * apiSelectClient=NULL;
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()==1)
+    {
+        const QString &pseudo=selectedItems.at(0)->text();
+        if(!pseudoToBot.contains(pseudo))
+            return;
+        MultipleBotConnection::CatchChallengerClient * currentSelectedclient=pseudoToBot.value(pseudo);
+        apiSelectClient=currentSelectedclient->api;
+    }
+
+    QHashIterator<CatchChallenger::Api_protocol *,ActionsAction::Player> i(actionsAction->clientList);
+    while (i.hasNext()) {
+        i.next();
+        CatchChallenger::Api_protocol *api=i.key();
+        ActionsAction::Player &player=actionsAction->clientList[i.key()];
+        if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
+            abort();
+        if(api->getCaracterSelected())
+        {
+            if(player.target.sinceTheLastAction.isNull() || !player.target.sinceTheLastAction.isValid())
+                player.target.sinceTheLastAction.restart();
+            const int &msFromStart=player.target.sinceTheLastAction.elapsed();
+            if(player.target.blockObject==NULL &&
+                    player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None &&
+                    msFromStart>1000
+                    )
+            {
+                player.target.sinceTheLastAction.restart();
+                //the best target
+                const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+                const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+                if((uint32_t)playerMap->step.size()<=(uint32_t)ui->comboBoxStep->currentIndex())
+                    abort();
+                const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
+                const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
+                if(playerCodeZone<=0 || (uint32_t)(playerCodeZone-1)>=(uint32_t)stepPlayer.layers.size())
+                    return;
+                const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
+                std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
+                playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value(),api);
+                const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
+                if(step.map==NULL)
+                    return;
+                contentToGUI(api,NULL,resolvedBlock,false,dirt,itemOnMap,fight,shop,heal,wildMonster,player.target);
+                switch(player.target.type)
+                {
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap:
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight:
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Shop:
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster:
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Dirt:
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant:
+                        if(api==apiSelectClient)
+                            startPlayerMove();
+                        else
+                            startPlayerMove(api);
+                    break;
+                    case ActionsBotInterface::GlobalTarget::GlobalTargetType::None:
+                    break;
+                    default:
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void BotTargetList::on_autoSelectFilter_clicked()

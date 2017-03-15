@@ -47,10 +47,6 @@ private slots:
     void statusError(QString error);
     void display_numberOfBotConnected(quint16 numberOfBotConnected);
     void display_numberOfSelectedCharacter(quint16 numberOfSelectedCharacter);
-    void on_move_toggled(bool checked);
-    void on_randomText_toggled(bool checked);
-    void on_chatRandomReply_toggled(bool checked);
-    void on_bugInDirection_toggled(bool checked);
     void on_serverList_activated(const QModelIndex &index);
     void on_serverListSelect_clicked();
     void updateServerList(CatchChallenger::Api_client_real *senderObject);
