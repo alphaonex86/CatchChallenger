@@ -156,15 +156,15 @@ void BotTargetList::updatePlayerStep()
                         break;
                     }
 
+                    if(playerMap->step.size()<2)
+                        abort();
+                    const uint16_t &currentCodeZone=playerMap->step.at(1).map[player.x+player.y*playerMap->width];
+                    if(currentCodeZone==0)
+                        abort();
+                    const MapServerMini::BlockObject * blockObject=playerMap->step.at(1).layers.at(currentCodeZone-1).blockObject;
+
                     if(!player.target.bestPath.empty())
                     {
-                        if(playerMap->step.size()<2)
-                            abort();
-                        const uint16_t &currentCodeZone=playerMap->step.at(1).map[player.x+player.y*playerMap->width];
-                        if(currentCodeZone==0)
-                            abort();
-                        const MapServerMini::BlockObject * blockObject=playerMap->step.at(1).layers.at(currentCodeZone-1).blockObject;
-
                         std::vector<DestinationForPath> destinations;
                         std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
                         uint8_t o=api->getDirection();
@@ -238,6 +238,41 @@ void BotTargetList::updatePlayerStep()
                         else
                             std::cerr << "Unable to search the next path, the target should be into the current block and map" << std::endl;
                     }
+                    else
+                    {
+                        //do the final resolution path as do into startPlayerMove()
+                        std::vector<DestinationForPath> destinations;
+                        std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
+                        const std::pair<uint8_t,uint8_t> &point=getNextPosition(blockObject,player.target/*hop list, first is the next hop*/);
+                        DestinationForPath destinationForPath;
+                        destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
+                        destinationForPath.destination_x=point.first;
+                        destinationForPath.destination_y=point.second;
+                        destinations.push_back(destinationForPath);
+                        MapServerMini::BlockObject::LinkPoint linkPoint;
+                        linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+                        linkPoint.x=point.first;
+                        linkPoint.y=point.second;
+                        pointsList.push_back(linkPoint);
+                        std::cout << "player.target.bestPath.empty()" << std::endl;
+                        if(pointsList.size()!=destinations.size())
+                            abort();
+                        uint8_t o=api->getDirection();
+                        while(o>4)
+                            o-=4;
+                        bool ok=false;
+                        unsigned int destinationIndexSelected=0;
+                        const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+                                    blockObject,
+                                    static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
+                                    destinations,
+                                    destinationIndexSelected,
+                                    &ok);
+                        if(!ok)
+                            abort();
+                        player.target.linkPoint=pointsList.at(destinationIndexSelected);
+                        player.target.localStep=returnPath;
+                    }
                 }
             }
 
@@ -309,7 +344,15 @@ void BotTargetList::updatePlayerStep()
                             if(itemOnMap.indexOfItemOnMap==player.target.extra)
                             {
                                 if(!itemOnMap.infinite)
-                                    player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                {
+                                    if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
+                                        player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                    else
+                                    {
+                                        found=true;
+                                        break;
+                                    }
+                                }
                                 api->stopMove();
                                 api->takeAnObjectOnMap();
                                 ActionsAction::add_to_inventory(api,itemOnMap.item);
