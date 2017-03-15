@@ -119,6 +119,11 @@ void BotTargetList::updatePlayerStep()
                             {
                                 ActionsAction::move(api,newDirection,&playerMap,&player.x,&player.y,true,true);
                                 api->newDirection(newDirection);
+                                //enter into new zone, drop the entry
+                                if(player.target.bestPath.empty())
+                                    abort();
+                                player.target.bestPath.erase(player.target.bestPath.cbegin());
+                                player.mapId=playerMap->id;
                             }
                             else
                             {

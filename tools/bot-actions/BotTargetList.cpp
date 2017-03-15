@@ -559,6 +559,11 @@ void BotTargetList::updateMapContent()
         const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
         if(playerMap->step.size()<2)
             abort();
+        //if map not sync with x and y
+        if(player.x>=playerMap->width)
+            abort();
+        if(player.y>=playerMap->height)
+            abort();
         const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
         const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
         if(playerCodeZone==0)
