@@ -316,6 +316,11 @@ void BotTargetList::startPlayerMove()
         destinationForPath.destination_x=point.first;
         destinationForPath.destination_y=point.second;
         destinations.push_back(destinationForPath);
+        MapServerMini::BlockObject::LinkPoint linkPoint;
+        linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+        linkPoint.x=point.first;
+        linkPoint.y=point.second;
+        pointsList.push_back(linkPoint);
         std::cout << "player.target.bestPath.empty()" << std::endl;
     }
     else //search the best path to the next block
@@ -385,6 +390,8 @@ void BotTargetList::startPlayerMove()
             abort();
         }
     }
+    if(pointsList.size()!=destinations.size())
+        abort();
     bool ok=false;
     unsigned int destinationIndexSelected=0;
     const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
