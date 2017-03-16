@@ -78,7 +78,7 @@ public:
         {
             std::vector<LinkCondition> linkConditions;
         };
-        std::unordered_map<const BlockObject */*to where*/,LinkInformation/*how, if single way or both way*/> links;
+        std::map<const BlockObject */*to where*/,LinkInformation/*how, if single way or both way*/> links;
         MapServerMini * map;
         uint8_t id;
 
