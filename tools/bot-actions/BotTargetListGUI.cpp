@@ -15,6 +15,23 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
     return contentToGUI(api,listGUI,resolvedBlockList,true,true,true,true,true,true,true,bestTarget);
 }
 
+uint16_t BotTargetList::mapPointDistanceNormalised(uint8_t x1,uint8_t y1,uint8_t x2,uint8_t y2)
+{
+
+    uint16_t squaredistancex=0,squaredistancey=0;
+    if(x1>x2)
+        squaredistancex=x1-x2;
+    else
+        squaredistancex=x2-x1;
+    if(y1>y2)
+        squaredistancey=y1-y2;
+    else
+        squaredistancey=y2-y1;
+    if(squaredistancex<2 && squaredistancey<2)
+        return 1;
+    return squaredistancex+squaredistancey;
+}
+
 uint32_t BotTargetList::getSeedToPlant(const CatchChallenger::Api_protocol * api,bool *haveSeedToPlant)
 {
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations_ro();
@@ -51,7 +68,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
 
 std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI,
                                                      const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard,
-                                                     bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget)
+                                                     bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget,MapServerMini * player_map,const uint8_t &player_x,const uint8_t &player_y)
 {
     //compute the forbiden direct value
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations_ro();
@@ -66,6 +83,10 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
             index++;
         }
     }
+
+    std::map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> resolvedBlockListOrdered;
+    for(const auto& n:resolvedBlockList)
+        resolvedBlockListOrdered[n.first]=n.second;
 
     if(listGUI==ui->localTargets)
         mapIdListLocalTarget.clear();
@@ -90,7 +111,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
     };
     std::vector<BufferMonstersCollisionEntry> bufferMonstersCollision;
 
-    for(const auto& n:resolvedBlockList) {
+    for(const auto& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         if(listGUI==ui->localTargets)
         {
@@ -178,7 +199,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
         //insdustry -> skip, no position control on server side
     //wild monster (and their object, day cycle)
 
-    for(const auto& n:resolvedBlockList) {
+    for(const auto& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         const MapServerMini * const map=blockObject->map;
@@ -251,12 +272,21 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                                         points=0;
                                                     else
                                                     {
-                                                        const uint32_t &quantity=player_private_and_public_informations.items.at(itemId);
+                                                        /*Always collect the mature plant
+                                                         * const uint32_t &quantity=player_private_and_public_informations.items.at(itemId);
                                                         if(quantity>20)
                                                             points=0;
                                                         else if(quantity>10)
-                                                            points/=4;
+                                                            points/=4;*/
                                                     }
+                                                }
+                                                if(player_map==NULL)
+                                                {
+                                                    const uint16_t &distance=mapPointDistanceNormalised(pos.first,pos.second,player_x,player_y);
+                                                    if(distance<2)
+                                                        points*=4;
+                                                    else if(distance<5)
+                                                        points*=2;
                                                 }
 
                                                 if(bestPoint<points)
@@ -289,7 +319,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                             newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                                         }
                                         itemToReturn.push_back(newItem->text().toStdString());
-                                        if(listGUI!=NULL)
+                                        if(listGUI!=NULL && isMature)
                                             listGUI->addItem(newItem);
                                         else
                                             delete newItem;
@@ -305,14 +335,37 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                         newItem->setText(QString("Free dirt (use %1 at %2,%3)").arg(itemExtra.name).arg(dirtPoint.first).arg(dirtPoint.second));
                                         //firstDirtItem=newItem;
 
+                                        ActionsBotInterface::GlobalTarget globalTarget;
+                                        globalTarget.blockObject=blockObject;
+                                        globalTarget.extra=plantOnMapIndex;
+                                        globalTarget.bestPath=resolvedBlock.bestPath;
+                                        globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Dirt;
+
+                                        uint32_t points=1400;//2000 is for mature plant, never be less than 1000
+                                        {
+                                            //remove the distance point
+                                            points-=resolvedBlock.weight;
+
+                                            if(player_map==NULL)
+                                            {
+                                                const uint16_t &distance=mapPointDistanceNormalised(pos.first,pos.second,player_x,player_y);
+                                                if(distance<2)
+                                                    points*=4;
+                                                else if(distance<5)
+                                                    points*=2;
+                                            }
+
+                                            if(bestPoint<points)
+                                            {
+                                                bestPoint=points;
+                                                bestItems=QList<QListWidgetItem *>() << newItem;
+                                                bestTarget=globalTarget;
+                                            }
+                                        }
+
                                         newItem->setIcon(QIcon(":/dirt.png"));
                                         if(listGUI==ui->globalTargets)
                                         {
-                                            ActionsBotInterface::GlobalTarget globalTarget;
-                                            globalTarget.blockObject=blockObject;
-                                            globalTarget.extra=plantOnMapIndex;
-                                            globalTarget.bestPath=resolvedBlock.bestPath;
-                                            globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Dirt;
                                             targetListGlobalTarget.push_back(globalTarget);
                                             if(alternateColor)
                                                 newItem->setBackgroundColor(alternateColorValue);
@@ -342,7 +395,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
             }
         }
     }
-    for(const auto& n:resolvedBlockList) {
+    for(const auto& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //item on map
@@ -350,6 +403,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
         {
             for(auto it = blockObject->pointOnMap_Item.begin();it!=blockObject->pointOnMap_Item.cend();++it)
             {
+                const std::pair<uint8_t,uint8_t> &point=it->first;
                 const MapServerMini::ItemOnMap &itemOnMap=it->second;
 
                 if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
@@ -392,6 +446,14 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                     points/=4;
                             }
                         }
+                        if(player_map==NULL)
+                        {
+                            const uint16_t &distance=mapPointDistanceNormalised(point.first,point.second,player_x,player_y);
+                            if(distance<2)
+                                points*=4;
+                            else if(distance<5)
+                                points*=2;
+                        }
 
                         if(bestPoint<points)
                         {
@@ -419,7 +481,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
             }
         }
     }
-    for(const auto& n:resolvedBlockList) {
+    for(const auto& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //fight
@@ -553,7 +615,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
             }
         }
     }
-    for(const auto& n:resolvedBlockList) {
+    for(const auto& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //shop
@@ -623,7 +685,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
             }
         }
     }
-    for(const auto& n:resolvedBlockList) {
+    for(const auto& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //heal
@@ -655,7 +717,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                 delete newItem;
         }
     }
-    for(const auto& n:resolvedBlockList) {
+    for(const auto& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //the wild monster
