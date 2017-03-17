@@ -36,9 +36,13 @@ uint32_t BotTargetList::getSeedToPlant(const CatchChallenger::Api_protocol * api
 {
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations_ro();
     auto i=player_private_and_public_informations.items.begin();
+    bool haveQuantity=false;
+    uint32_t quantitySelected=0;
+    uint32_t itemSelected=0;
     while (i!=player_private_and_public_informations.items.cend())
     {
         const uint16_t &itemId=i->first;
+        const uint32_t &quantity=i->second;
         if(DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
         {
             /// \todo check the requirement
@@ -46,12 +50,28 @@ uint32_t BotTargetList::getSeedToPlant(const CatchChallenger::Api_protocol * api
 
             if(ActionsAction::haveReputationRequirements(api,CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId).requirements.reputation))
             {
+                if(!haveQuantity)
+                {
+                    haveQuantity=true;
+                    quantitySelected=quantity;
+                    itemSelected=itemId;
+                }
+                else if(quantity<quantitySelected)
+                {
+                    quantitySelected=quantity;
+                    itemSelected=itemId;
+                }
                 if(haveSeedToPlant!=NULL)
                     *haveSeedToPlant=true;
-                return itemId;
             }
         }
         ++i;
+    }
+    if(haveQuantity)
+    {
+        if(haveSeedToPlant!=NULL)
+            *haveSeedToPlant=true;
+        return itemSelected;
     }
     if(haveSeedToPlant!=NULL)
         *haveSeedToPlant=false;
@@ -68,7 +88,8 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
 
 std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI,
                                                      const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard,
-                                                     bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget,MapServerMini * player_map,const uint8_t &player_x,const uint8_t &player_y)
+                                                     bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget,
+                                                     const MapServerMini * player_map,const uint8_t &player_x,const uint8_t &player_y)
 {
     //compute the forbiden direct value
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations_ro();

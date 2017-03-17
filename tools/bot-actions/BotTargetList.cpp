@@ -1416,7 +1416,7 @@ void BotTargetList::autoStartAction()
                 const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
                 if(step.map==NULL)
                     return;
-                contentToGUI(api,NULL,resolvedBlock,false,dirt,itemOnMap,fight,shop,heal,wildMonster,player.target);
+                contentToGUI(api,NULL,resolvedBlock,false,dirt,itemOnMap,fight,shop,heal,wildMonster,player.target,playerMap,player.x,player.y);
                 switch(player.target.type)
                 {
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap:
