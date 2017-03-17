@@ -100,7 +100,7 @@ void BotTargetList::updatePlayerInformation()
                 if(step.map==NULL)
                     return;
                 ActionsBotInterface::GlobalTarget bestTarget;
-                contentToGUI(client->api,NULL,resolvedBlock,false,dirt,itemOnMap,fight,shop,heal,wildMonster,bestTarget);
+                contentToGUI(client->api,NULL,resolvedBlock,false,dirt,itemOnMap,fight,shop,heal,wildMonster,bestTarget,playerMap,player.x,player.y);
                 switch(bestTarget.type)
                 {
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap:
