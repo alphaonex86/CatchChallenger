@@ -301,7 +301,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                                             points/=4;*/
                                                     }
                                                 }
-                                                if(player_map==NULL)
+                                                if(player_map!=NULL && player_map==map)
                                                 {
                                                     const uint16_t &distance=mapPointDistanceNormalised(pos.first,pos.second,player_x,player_y);
                                                     if(distance<2)
@@ -322,11 +322,11 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                         if(listGUI==ui->globalTargets)
                                         {
                                             targetListGlobalTarget.push_back(globalTarget);
-                                            unsigned int points=0;
                                             if(isMature)
                                             {
                                                 if(alternateColor)
                                                     newItem->setBackgroundColor(alternateColorValue);
+                                                newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                                             }
                                             else
                                             {
@@ -335,9 +335,9 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                                 else
                                                     newItem->setBackgroundColor(redColorValue);
                                                 newItem->setText(newItem->text()+" "+QString::number(playerMonster.mature_at)+">"+QString::number(currentTime));
+                                                newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
                                             }
                                             alternateColor=!alternateColor;
-                                            newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                                         }
                                         itemToReturn.push_back(newItem->text().toStdString());
                                         if(listGUI!=NULL && isMature)
@@ -367,7 +367,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                             //remove the distance point
                                             points-=resolvedBlock.weight;
 
-                                            if(player_map==NULL)
+                                            if(player_map!=NULL && player_map==map)
                                             {
                                                 const uint16_t &distance=mapPointDistanceNormalised(pos.first,pos.second,player_x,player_y);
                                                 if(distance<2)
