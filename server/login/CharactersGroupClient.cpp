@@ -606,7 +606,7 @@ void CharactersGroupForLogin::addCharacterStep2_return(EpollClientLoginSlave * c
         }
     }
 
-    const uint32_t &characterId=maxCharacterId.back();
+    const uint32_t /*& destructed just after with the pop_back, can't be a ref*/characterId=maxCharacterId.back();
     const std::string &characterIdString=std::to_string(characterId);
     maxCharacterId.pop_back();
     int monster_position=1;
