@@ -121,7 +121,7 @@ bool EpollPostgresql::syncConnect(const std::string &host, const std::string &db
     }
     #endif
 
-    std::cout << "Connecting to postgresql: " << host << "..." << std::endl;
+    std::cout << "Connecting to postgresql: " << host << " on " << dbname << " with user " << user << std::endl;
     return syncConnectInternal();
 }
 
@@ -136,8 +136,13 @@ bool EpollPostgresql::syncConnectInternal(bool infinityTry)
             return false;
         if(lastErrorMessage.find("authentication failed")!=std::string::npos)
             return false;
-        if(lastErrorMessage.find("role \"")!=std::string::npos && lastErrorMessage.find("\" does not exist")!=std::string::npos)
-            return false;
+        if(lastErrorMessage.find("role \"")!=std::string::npos)
+        {
+            if(lastErrorMessage.find("\" does not exist")!=std::string::npos)
+                return false;
+            if(lastErrorMessage.find("\" is not permitted to log in")!=std::string::npos)
+                return false;
+        }
         std::cerr << "pg connexion not OK: " << lastErrorMessage << ", retrying..." << std::endl;
 
         unsigned int index=0;
