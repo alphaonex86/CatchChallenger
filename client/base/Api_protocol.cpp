@@ -259,7 +259,7 @@ void Api_protocol::socketDisconnectedForReconnect()
 {
     if(stageConnexion!=StageConnexion::Stage2)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::socketDisconnectedForReconnect() "));
+        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::socketDisconnectedForReconnect(): %1").arg((int)stageConnexion));
         return;
     }
     if(selectedServerIndex==-1)
@@ -278,6 +278,7 @@ void Api_protocol::socketDisconnectedForReconnect()
         parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("socket==NULL with Api_protocol::socketDisconnectedForReconnect()"));
         return;
     }
+    message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3 set at "+QString(__FILE__)+":"+QString::number(__LINE__));
     stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3;//prevent loop in stage2
     haveFirstHeader=false;
     qDebug() << "Api_protocol::socketDisconnectedForReconnect(), Try connect to: " << serverFromPoolForDisplay.host << ":" << serverFromPoolForDisplay.port;
@@ -1802,6 +1803,7 @@ void Api_protocol::resetAll()
         qDebug() << "Api_protocol::resetAll() Suspect internal bug";
     //status for the query
     token.clear();
+    message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+QString(__FILE__)+":"+QString::number(__LINE__));
     stageConnexion=StageConnexion::Stage1;
     if(socket==NULL || socket->fakeSocket==NULL)
         haveFirstHeader=false;
@@ -2168,7 +2170,10 @@ void Api_protocol::readForFirstHeader()
         return;
     }
     if(stageConnexion==StageConnexion::Stage2)
+    {
+        message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3 set at "+QString(__FILE__)+":"+QString::number(__LINE__));
         stageConnexion=StageConnexion::Stage3;
+    }
     {
         if(socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
         {
@@ -2280,6 +2285,7 @@ void Api_protocol::connectTheExternalSocketInternal()
         connectedOnLoginServer();
     if(stageConnexion==StageConnexion::Stage2 || stageConnexion==StageConnexion::Stage3)
     {
+        message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3 set at "+QString(__FILE__)+":"+QString::number(__LINE__));
         stageConnexion=StageConnexion::Stage3;
         connectedOnGameServer();
     }

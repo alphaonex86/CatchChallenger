@@ -147,6 +147,12 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
                 ++j;
             }
         }
+
+        //crash with heap-buffer-overflow if not flush before the end of destructor
+        while(!callbackRegistred.empty())
+            callbackRegistred.pop();
+        while(!paramToPassToCallBack.empty())
+            paramToPassToCallBack.pop();
     }
     disconnectClient();
 }

@@ -163,12 +163,18 @@ Client::~Client()
     if(socketString!=NULL)
         delete socketString;
     #endif
+    //SQL
     {
         while(!callbackRegistred.empty())
         {
             callbackRegistred.front()->object=NULL;
             callbackRegistred.pop();
         }
+        //crash with heap-buffer-overflow if not flush before the end of destructor
+        while(!callbackRegistred.empty())
+            callbackRegistred.pop();
+        while(!paramToPassToCallBack.empty())
+            paramToPassToCallBack.pop();
     }
 }
 

@@ -575,6 +575,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     if(tokenForGameServer.size()==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                     {
                         have_send_protocol=false;
+                        message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage2 set at "+QString(__FILE__)+":"+QString::number(__LINE__));
                         stageConnexion=StageConnexion::Stage2;
                         if(socket!=NULL)
                             socket->disconnectFromHost();
