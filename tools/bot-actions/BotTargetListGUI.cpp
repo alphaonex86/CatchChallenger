@@ -4,6 +4,7 @@
 #include "../../client/fight/interface/ClientFightEngine.h"
 #include "MapBrowse.h"
 #include <chrono>
+#include <math.h>
 
 std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockObject * const blockObject, const CatchChallenger::Api_protocol * const api, QListWidget *listGUI)
 {
@@ -27,9 +28,11 @@ uint16_t BotTargetList::mapPointDistanceNormalised(uint8_t x1,uint8_t y1,uint8_t
         squaredistancey=y1-y2;
     else
         squaredistancey=y2-y1;
-    if(squaredistancex<2 && squaredistancey<2)
+    if((squaredistancex==1 && squaredistancey==0) || (squaredistancex==0 && squaredistancey==1))
         return 1;
-    return squaredistancex+squaredistancey;
+    if(squaredistancex<2 && squaredistancey<2)
+        return 2;
+    return 2+log(squaredistancex+squaredistancey);
 }
 
 uint32_t BotTargetList::getSeedToPlant(const CatchChallenger::Api_protocol * api,bool *haveSeedToPlant)
@@ -304,10 +307,12 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                                 if(player_map!=NULL && player_map==map)
                                                 {
                                                     const uint16_t &distance=mapPointDistanceNormalised(pos.first,pos.second,player_x,player_y);
-                                                    if(distance<2)
-                                                        points*=4;
+                                                    if(distance<3)
+                                                        points*=(3+3-distance);
                                                     else if(distance<5)
                                                         points*=2;
+                                                    else
+                                                        points-=distance;
                                                 }
 
                                                 if(bestPoint<points)
@@ -370,10 +375,12 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                             if(player_map!=NULL && player_map==map)
                                             {
                                                 const uint16_t &distance=mapPointDistanceNormalised(pos.first,pos.second,player_x,player_y);
-                                                if(distance<2)
-                                                    points*=4;
+                                                if(distance<3)
+                                                    points*=(3+3-distance);
                                                 else if(distance<5)
                                                     points*=2;
+                                                else
+                                                    points-=distance;
                                             }
 
                                             if(bestPoint<points)
