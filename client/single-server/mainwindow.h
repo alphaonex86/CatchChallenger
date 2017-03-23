@@ -89,6 +89,7 @@ private:
     CatchChallenger::BaseWindow *baseWindow;
     CatchChallenger::Api_protocol *client;
     QCompleter *completer;
+    QString lastServer;
 
     QString server_name;
     QString server_dns_or_ip;

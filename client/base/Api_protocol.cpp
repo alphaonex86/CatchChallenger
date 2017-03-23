@@ -255,34 +255,43 @@ bool Api_protocol::sendProtocol()
     return true;
 }
 
-void Api_protocol::socketDisconnectedForReconnect()
+QString Api_protocol::socketDisconnectedForReconnect()
 {
     if(stageConnexion!=StageConnexion::Stage2)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::socketDisconnectedForReconnect(): %1").arg((int)stageConnexion));
-        return;
+        if(stageConnexion!=StageConnexion::Stage3)
+        {
+            newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::socketDisconnectedForReconnect(): %1").arg((int)stageConnexion));
+            return QString();
+        }
+        else
+        {
+            std::cerr << "socketDisconnectedForReconnect() double call detected, just drop it" << std::endl;
+            return QString();
+        }
     }
     if(selectedServerIndex==-1)
     {
         parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("selectedServerIndex==-1 with Api_protocol::socketDisconnectedForReconnect()"));
-        return;
+        return QString();
     }
     const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);
     if(serverFromPoolForDisplay.host.isEmpty())
     {
         parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("serverFromPoolForDisplay.host.isEmpty() with Api_protocol::socketDisconnectedForReconnect()"));
-        return;
+        return QString();
     }
     if(socket==NULL)
     {
         parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("socket==NULL with Api_protocol::socketDisconnectedForReconnect()"));
-        return;
+        return serverFromPoolForDisplay.host+":"+QString::number(serverFromPoolForDisplay.port);
     }
     message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3 set at "+QString(__FILE__)+":"+QString::number(__LINE__));
     stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3;//prevent loop in stage2
     haveFirstHeader=false;
     qDebug() << "Api_protocol::socketDisconnectedForReconnect(), Try connect to: " << serverFromPoolForDisplay.host << ":" << serverFromPoolForDisplay.port;
     socket->connectToHost(serverFromPoolForDisplay.host,serverFromPoolForDisplay.port);
+    return serverFromPoolForDisplay.host+":"+QString::number(serverFromPoolForDisplay.port);
 }
 
 bool Api_protocol::protocolWrong() const

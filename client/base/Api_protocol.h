@@ -38,7 +38,7 @@ public:
     bool tryCreateAccount();
     bool sendProtocol();
     bool protocolWrong() const;
-    virtual void socketDisconnectedForReconnect();
+    virtual QString socketDisconnectedForReconnect();
 
     //get the stored data
     Player_private_and_public_informations &get_player_informations();
