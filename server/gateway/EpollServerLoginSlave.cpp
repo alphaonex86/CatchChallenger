@@ -50,9 +50,36 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         strcpy(server_port,server_port_stdstring.data());
     }
 
+    if(!settings.contains("destination_ip"))
+        settings.setValue("destination_ip","");
+    if(!settings.contains("destination_port"))
+        settings.setValue("destination_port",rand()%40000+10000);
+    if(!settings.contains("httpDatapackMirrorRewriteBase"))
+        settings.setValue("httpDatapackMirrorRewriteBase","");
+    if(!settings.contains("httpDatapackMirrorRewriteMainAndSub"))
+        settings.setValue("httpDatapackMirrorRewriteMainAndSub","");
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    if(!settings.contains("compression"))
+        settings.setValue("compression","zlib");
+    if(!settings.contains("compressionLevel"))
+        settings.setValue("compressionLevel","6");
+    #endif
+    settings.beginGroup("Linux");
+    if(!settings.contains("tcpCork"))
+        settings.setValue("tcpCork",false);
+    if(!settings.contains("tcpNodelay"))
+        settings.setValue("tcpNodelay",false);
+    settings.endGroup();
+
+    settings.beginGroup("commandUpdateDatapack");
+    if(!settings.contains("base"))
+        settings.setValue("base","");
+    if(!settings.contains("main"))
+        settings.setValue("main","");
+    if(!settings.contains("sub"))
+        settings.setValue("sub","");
+    settings.endGroup();
     {
-        if(!settings.contains("destination_ip"))
-            settings.setValue("destination_ip","");
         const std::string &destination_server_ip_stdstring=settings.value("destination_ip");
         if(!destination_server_ip_stdstring.empty())
         {
@@ -65,8 +92,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             std::cerr << "destination_ip is empty (abort)" << std::endl;
             abort();
         }
-        if(!settings.contains("destination_port"))
-            settings.setValue("destination_port",rand()%40000+10000);
         bool ok;
         unsigned int tempPort=stringtouint16(settings.value("destination_port"),&ok);
         if(!ok)
@@ -84,8 +109,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         destination_server_port=tempPort;
     }
 
-    if(!settings.contains("httpDatapackMirrorRewriteBase"))
-        settings.setValue("httpDatapackMirrorRewriteBase","");
     LinkToGameServer::httpDatapackMirrorRewriteBase.resize(256+1);
     LinkToGameServer::httpDatapackMirrorRewriteBase.resize(
                 FacilityLibGeneral::toUTF8WithHeader(
@@ -99,8 +122,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         std::cerr << "httpDatapackMirrorRewriteBase.isEmpty() abort" << std::endl;
         abort();
     }
-    if(!settings.contains("httpDatapackMirrorRewriteMainAndSub"))
-        settings.setValue("httpDatapackMirrorRewriteMainAndSub","");
     LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.resize(256+1);
     LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.resize(
                 FacilityLibGeneral::toUTF8WithHeader(
@@ -117,10 +138,6 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    if(!settings.contains("compression"))
-        settings.setValue("compression","zlib");
-    if(!settings.contains("compressionLevel"))
-        settings.setValue("compressionLevel","6");
     if(settings.value("compression")=="none")
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::None;
     else if(settings.value("compression")=="xz")
@@ -133,21 +150,11 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     #endif
 
     settings.beginGroup("Linux");
-    if(!settings.contains("tcpCork"))
-        settings.setValue("tcpCork",false);
-    if(!settings.contains("tcpNodelay"))
-        settings.setValue("tcpNodelay",false);
     tcpCork=stringtobool(settings.value("tcpCork"));
     tcpNodelay=stringtobool(settings.value("tcpNodelay"));
     settings.endGroup();
 
     settings.beginGroup("commandUpdateDatapack");
-    if(!settings.contains("base"))
-        settings.setValue("base","");
-    if(!settings.contains("main"))
-        settings.setValue("main","");
-    if(!settings.contains("sub"))
-        settings.setValue("sub","");
     DatapackDownloaderBase::commandUpdateDatapackBase=settings.value("base");
     DatapackDownloaderMainSub::commandUpdateDatapackMain=settings.value("main");
     DatapackDownloaderMainSub::commandUpdateDatapackSub=settings.value("sub");
