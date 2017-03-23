@@ -47,6 +47,7 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
         std::cerr << "rp == NULL, can't bind" << std::endl;
         return false;
     }
+    unsigned int bindSuccess=0,bindFailed=0;
     while(rp != NULL)
     {
         sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
@@ -61,84 +62,67 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
             std::cerr << "Unable to apply SO_REUSEPORT" << std::endl;
 
         s = bind(sfd, rp->ai_addr, rp->ai_addrlen);
-        if (s == 0)
+        if(s!=0)
         {
-            /* We managed to bind successfully! */
-            break;
-        }
-        ::close(sfd);
-        rp = rp->ai_next;
-    }
-    if(sfd==-1)
-    {
-        std::cerr << "Leave without bind" << std::endl;
-        return false;
-    }
-
-    if(rp == NULL)
-    {
-        if(ip!=NULL)
-            std::cerr << ip << " resolved into:" << std::endl;
-        else
-            std::cerr << "ip * resolved into:" << std::endl;
-        for(rp = result; rp != NULL; rp = rp->ai_next)
-        {
+            //unable to bind
+            ::close(sfd);
             std::cerr
-                    << "familly: " << rp->ai_family
+                    << "unable to bind: familly: " << rp->ai_family
                     << ", rp->ai_socktype: " << rp->ai_socktype
                     << ", rp->ai_protocol: " << rp->ai_protocol
                     << ", rp->ai_addr: " << rp->ai_addr
                     << ", rp->ai_addrlen: " << rp->ai_addrlen
                     << std::endl;
-            sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-            if(sfd == -1)
-                std::cerr << "socket not created:" << sfd << ", error (errno): " << errno << ", error string: " << strerror(errno) << std::endl;
-            else
-            {
-                int one=1;
-                if(setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one)!=0)
-                    std::cerr << "Unable to apply SO_REUSEADDR" << std::endl;
-                one=1;
-                if(setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof one)!=0)
-                    std::cerr << "Unable to apply SO_REUSEPORT" << std::endl;
-
-                s = bind(sfd, rp->ai_addr, rp->ai_addrlen);
-                std::cerr << "bind failed:" << s << ", error (errno): " << errno << ", error string: " << strerror(errno) << std::endl;
-                ::close(sfd);
-            }
+            bindFailed++;
         }
-        return false;
-    }
+        else
+        {
 
+            if(sfd==-1)
+            {
+                std::cerr << "Leave without bind but s!=0" << std::endl;
+                return false;
+            }
+            s = EpollSocket::make_non_blocking(sfd);
+            if(s == -1)
+            {
+                close();
+                std::cerr << "Can't put in non blocking" << std::endl;
+                return false;
+            }
+
+            s = listen(sfd, SOMAXCONN);
+            if(s == -1)
+            {
+                close();
+                std::cerr << "Unable to listen" << std::endl;
+                return false;
+            }
+
+            epoll_event event;
+            event.data.ptr = this;
+            event.events = EPOLLIN | EPOLLOUT | EPOLLET;
+            s = Epoll::epoll.ctl(EPOLL_CTL_ADD, sfd, &event);
+            if(s == -1)
+            {
+                close();
+                std::cerr << "epoll_ctl error" << std::endl;
+                return false;
+            }
+
+            std::cout
+                    << "correctly bind: familly: " << rp->ai_family
+                    << ", rp->ai_socktype: " << rp->ai_socktype
+                    << ", rp->ai_protocol: " << rp->ai_protocol
+                    << ", rp->ai_addr: " << rp->ai_addr
+                    << ", rp->ai_addrlen: " << rp->ai_addrlen
+                    << std::endl;
+            bindSuccess++;
+        }
+        rp = rp->ai_next;
+    }
     freeaddrinfo (result);
-
-    s = EpollSocket::make_non_blocking(sfd);
-    if(s == -1)
-    {
-        close();
-        std::cerr << "Can't put in non blocking" << std::endl;
-        return false;
-    }
-
-    s = listen(sfd, SOMAXCONN);
-    if(s == -1)
-    {
-        close();
-        std::cerr << "Unable to listen" << std::endl;
-        return false;
-    }
-
-    epoll_event event;
-    event.data.ptr = this;
-    event.events = EPOLLIN | EPOLLOUT | EPOLLET;
-    s = Epoll::epoll.ctl(EPOLL_CTL_ADD, sfd, &event);
-    if(s == -1)
-    {
-        close();
-        std::cerr << "epoll_ctl error" << std::endl;
-        return false;
-    }
-    return true;
+    return bindSuccess>0;
 }
 
 void EpollGenericServer::close()
