@@ -1035,6 +1035,7 @@ void MainWindow::resetAll()
         if(socket!=NULL)
             socket->abort();
     }
+    lastServer.clear();
     chat_list_player_pseudo.clear();
     chat_list_player_type.clear();
     chat_list_type.clear();
@@ -1197,6 +1198,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection);
     connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection);
     connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&MainWindow::error,Qt::QueuedConnection);
+    lastServer=selectedServerConnexion->host+":"+QString::number(selectedServerConnexion->port);
     realSslSocket->connectToHost(selectedServerConnexion->host,selectedServerConnexion->port);
     selectedServerConnexion->connexionCounter++;
     selectedServerConnexion->lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
@@ -1260,6 +1262,7 @@ QString MainWindow::serverToDatapachPath(ListEntryEnvolued * selectedServer) con
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
 {
+    std::cout << "MainWindow::stateChanged(" << std::to_string((int)socketState) << ")" << std::endl;
     if(socketState==QAbstractSocket::ConnectedState)
     {
         if(realSslSocket==NULL)//If comment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
@@ -1270,11 +1273,18 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
     if(socketState==QAbstractSocket::UnconnectedState)
     {
         if(client!=NULL)
+        {
+            std::cout << "MainWindow::stateChanged(" << std::to_string((int)socketState) << ") client!=NULL" << std::endl;
             if(client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2 || client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage3)
             {
-                client->socketDisconnectedForReconnect();
+                std::cout << "MainWindow::stateChanged(" << std::to_string((int)socketState) << ") call socketDisconnectedForReconnect" << std::endl;
+                const QString &lastServer=client->socketDisconnectedForReconnect();
+                if(!lastServer.isEmpty())
+                    this->lastServer=lastServer;
                 return;
             }
+        }
+        std::cout << "MainWindow::stateChanged(" << std::to_string((int)socketState) << ") mostly quit" << std::endl;
         if(!isVisible() && internalServer==NULL)
         {
             QCoreApplication::quit();
@@ -1313,6 +1323,9 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
     if(client!=NULL)
         if(client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2)
             return;
+    QString additionalText;
+    if(!lastServer.isEmpty())
+        additionalText=tr(" on %1").arg(lastServer);
     resetAll();
     switch(socketError)
     {
@@ -1324,34 +1337,34 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
             haveShowDisconnectionReason=false;
             return;
         }
-        QMessageBox::information(this,tr("Connection closed"),tr("Connection closed by the server"));
+        QMessageBox::information(this,tr("Connection closed"),tr("Connection closed by the server")+additionalText);
     break;
     case QAbstractSocket::ConnectionRefusedError:
-        QMessageBox::information(this,tr("Connection closed"),tr("Connection refused by the server"));
+        QMessageBox::information(this,tr("Connection closed"),tr("Connection refused by the server")+additionalText);
     break;
     case QAbstractSocket::SocketTimeoutError:
-        QMessageBox::information(this,tr("Connection closed"),tr("Socket time out, server too long"));
+        QMessageBox::information(this,tr("Connection closed"),tr("Socket time out, server too long")+additionalText);
     break;
     case QAbstractSocket::HostNotFoundError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The host address was not found."));
+        QMessageBox::information(this,tr("Connection closed"),tr("The host address was not found")+additionalText);
     break;
     case QAbstractSocket::SocketAccessError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The socket operation failed because the application lacked the required privileges."));
+        QMessageBox::information(this,tr("Connection closed"),tr("The socket operation failed because the application lacked the required privileges")+additionalText);
     break;
     case QAbstractSocket::SocketResourceError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The local system ran out of resources"));
+        QMessageBox::information(this,tr("Connection closed"),tr("The local system ran out of resources")+additionalText);
     break;
     case QAbstractSocket::NetworkError:
-        QMessageBox::information(this,tr("Connection closed"),tr("An error occurred with the network"));
+        QMessageBox::information(this,tr("Connection closed"),tr("An error occurred with the network (Connection refused on game server?)")+additionalText);
     break;
     case QAbstractSocket::UnsupportedSocketOperationError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The requested socket operation is not supported by the local operating system (e.g., lack of IPv6 support)"));
+        QMessageBox::information(this,tr("Connection closed"),tr("The requested socket operation is not supported by the local operating system (e.g., lack of IPv6 support)")+additionalText);
     break;
     case QAbstractSocket::SslHandshakeFailedError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The SSL/TLS handshake failed, so the connection was closed"));
+        QMessageBox::information(this,tr("Connection closed"),tr("The SSL/TLS handshake failed, so the connection was closed")+additionalText);
     break;
     default:
-        QMessageBox::information(this,tr("Connection error"),tr("Connection error: %1").arg(socketError));
+        QMessageBox::information(this,tr("Connection error"),tr("Connection error: %1").arg(socketError)+additionalText);
     }
 }
 
@@ -1784,6 +1797,7 @@ void MainWindow::is_started(bool started)
     else
     {
         baseWindow->serverIsReady();
+        lastServer="localhost:9999";
         socket->connectToHost(QStringLiteral("localhost"),9999);
     }
 }

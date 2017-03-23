@@ -178,6 +178,7 @@ private:
     CatchChallenger::BaseWindow *baseWindow;
     CatchChallenger::Api_protocol *client;
     QCompleter *completer;
+    QString lastServer;
 signals:
     #ifndef CATCHCHALLENGER_NOAUDIO
     void audioLoopRestart(void *vlcPlayer);
