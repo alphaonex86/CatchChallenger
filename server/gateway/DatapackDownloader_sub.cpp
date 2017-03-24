@@ -224,7 +224,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
         }
         else
         {
-            std::cerr << "Datapack don't match with server hash, get from mirror" << std::endl;
+            std::cerr << "Datapack don't match with server hash, get from mirror for sub: local: " << binarytoHexa(hash) << " and remote: " << binarytoHexa(sendedHashSub) << std::endl;
 
             if(index_mirror_sub>=DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
                 index_mirror_sub=0;

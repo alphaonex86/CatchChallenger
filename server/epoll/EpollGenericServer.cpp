@@ -11,7 +11,6 @@ using namespace CatchChallenger;
 
 EpollGenericServer::EpollGenericServer()
 {
-    sfd=-1;
 }
 
 EpollGenericServer::~EpollGenericServer()
@@ -40,7 +39,7 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
         return false;
     }
 
-    sfd=-1;
+    close();
     rp = result;
     if(rp == NULL)
     {
@@ -50,9 +49,18 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
     unsigned int bindSuccess=0,bindFailed=0;
     while(rp != NULL)
     {
-        sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        const int sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if(sfd == -1)
+        {
+            std::cerr
+                    << "unable to create the socket: familly: " << rp->ai_family
+                    << ", rp->ai_socktype: " << rp->ai_socktype
+                    << ", rp->ai_protocol: " << rp->ai_protocol
+                    << ", rp->ai_addr: " << rp->ai_addr
+                    << ", rp->ai_addrlen: " << rp->ai_addrlen
+                    << std::endl;
             continue;
+        }
 
         int one=1;
         if(setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one)!=0)
@@ -109,6 +117,7 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
                 std::cerr << "epoll_ctl error" << std::endl;
                 return false;
             }
+            sfd_list.push_back(sfd);
 
             std::cout
                     << "correctly bind: familly: " << rp->ai_family
@@ -127,18 +136,32 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
 
 void EpollGenericServer::close()
 {
-    if(sfd!=-1)
-        ::close(sfd);
+    unsigned int index=0;
+    while(index<sfd_list.size())
+    {
+        ::close(sfd_list.at(index));
+        index++;
+    }
+    sfd_list.clear();
 }
 
 int EpollGenericServer::accept(sockaddr *in_addr,socklen_t *in_len)
 {
-    return ::accept(sfd, in_addr, in_len);
+    unsigned int index=0;
+    while(index<sfd_list.size())
+    {
+        const int &sfd=sfd_list.at(index);
+        const int &returnValue=::accept(sfd, in_addr, in_len);
+        if(returnValue!=-1)
+            return returnValue;
+        index++;
+    }
+    return -1;
 }
 
-int EpollGenericServer::getSfd()
+std::vector<int> EpollGenericServer::getSfd() const
 {
-    return sfd;
+    return sfd_list;
 }
 
 BaseClassSwitch::EpollObjectType EpollGenericServer::getType() const
