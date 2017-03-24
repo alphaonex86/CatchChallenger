@@ -925,6 +925,8 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                             return false;
                         }
                     }
+                    else
+                        sub.clear();
                 }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 messageParsingLayer("sub datapack code: "+sub);
@@ -1137,6 +1139,8 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                             return false;
                         }
                     }
+                    else
+                        sub.clear();
                 }
 
                 DatapackDownloaderMainSub *downloader=NULL;

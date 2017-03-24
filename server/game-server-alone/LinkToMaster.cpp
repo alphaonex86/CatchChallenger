@@ -225,7 +225,7 @@ void LinkToMaster::readTheFirstSslHeader()
     if(::read(LinkToMaster::linkToMasterSocketFd,buffer,1)<0)
     {
         std::cerr << "ERROR reading from socket to master server (abort)" << std::endl;
-        abort();
+        //abort();//normal for disconnect
         return;
     }
     #ifdef SERVERSSL

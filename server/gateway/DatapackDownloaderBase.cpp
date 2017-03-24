@@ -356,7 +356,7 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
         }
         else
         {
-            std::cerr << "Datapack don't match with server hash, get from mirror" << std::endl;
+            std::cerr << "Datapack don't match with server hash, get from mirror for base: local: " << binarytoHexa(hash) << " and remote: " << binarytoHexa(sendedHashBase) << std::endl;
 
             if(index_mirror_base>=DatapackDownloaderBase::httpDatapackMirrorBaseList.size())
                 index_mirror_base=0;

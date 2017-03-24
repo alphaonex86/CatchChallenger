@@ -923,6 +923,7 @@ int main(int argc, char *argv[])
     encodingBuff[0]=0x00;
     #endif
 
+    bool acceptSocketWarningShow=false;
     int numberOfConnectedClient=0;
     /* The event loop */
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -1004,6 +1005,11 @@ int main(int argc, char *argv[])
                             {
                                 /* We have processed all incoming
                                 connections. */
+                                if(!acceptSocketWarningShow)
+                                {
+                                    acceptSocketWarningShow=true;
+                                    std::cerr << "::accept() return -1 and errno: " << std::to_string(errno) << " event or socket ignored" << std::endl;
+                                }
                                 break;
                             }
                             else
