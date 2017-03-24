@@ -2,6 +2,7 @@
 #define EPOLLGENERICSERVER_H
 
 #include <sys/socket.h>
+#include <vector>
 
 #include "BaseClassSwitch.h"
 
@@ -14,10 +15,10 @@ public:
     bool tryListenInternal(const char* const ip,const char* const port);
     void close();
     int accept(sockaddr *in_addr,socklen_t *in_len);
-    int getSfd();
+    std::vector<int> getSfd() const;
     BaseClassSwitch::EpollObjectType getType() const;
 private:
-    int sfd;
+    std::vector<int> sfd_list;
 };
 }
 

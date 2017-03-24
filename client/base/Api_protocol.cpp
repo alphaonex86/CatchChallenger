@@ -81,8 +81,10 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     //connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::DirectConnection);-> why direct?
     if(socket->sslSocket!=NULL)
     {
-        connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader,Qt::DirectConnection);
-        //connect(socket->sslSocket,&QSslSocket::readyRead,this,&Api_protocol::readForFirstHeader,Qt::DirectConnection);
+        if(!connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader,Qt::DirectConnection))
+            abort();
+        /*if(!connect(socket->sslSocket,&QSslSocket::readyRead,this,&Api_protocol::readForFirstHeader,Qt::DirectConnection))
+            abort();*/
         if(socket->bytesAvailable())
             readForFirstHeader();
     }
