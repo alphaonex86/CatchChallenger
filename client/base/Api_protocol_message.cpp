@@ -1256,6 +1256,8 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
         {
             haveTheServerList=true;
 
+            if(in.device()->pos()!=0)
+                abort();
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
             {
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -1265,7 +1267,8 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             in >> serverMode;
             if(serverMode<1 || serverMode>2)
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("unknown serverMode main code: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("unknown serverMode %1 main code: %2, subCodeType: %3, line: %4")
+                           .arg(serverMode).arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                 return false;
             }
             proxyMode=Api_protocol::ProxyMode(serverMode);

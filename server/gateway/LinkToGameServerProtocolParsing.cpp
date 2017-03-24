@@ -288,7 +288,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
         parseNetworkReadError("client not connected");
         return false;
     }
-    if(stat!=Stat::ProtocolGood)
+    if(stat!=Stat::ProtocolGood || mainCodeType==0x40)
     {
         if(mainCodeType==0x44)//send Logical group
         {}
@@ -325,94 +325,100 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mainCodeType;
                 posOutput+=1+4;
 
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;//in gateway it's in proxy mode only
+                posOutput+=1;
 
-                unsigned int pos=1;
-                if((size-pos)<1)
+                unsigned int inputPos=1;
+                if((size-inputPos)<1)
                 {
                     parseNetworkReadError("parseFullMessage() missing data for server list size: "+std::to_string(mainCodeType));
                     return false;
                 }
-                const uint8_t &serverListSize=data[pos];
-                pos+=1;
+                const uint8_t &serverListSize=data[inputPos];
+                inputPos+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=serverListSize;
+                posOutput+=1;
                 uint8_t serverListIndex=0;
                 while(serverListIndex<serverListSize)
                 {
-                    if((size-pos)<(1+4+1))
+                    if((size-inputPos)<(1+4+1))
                     {
                         parseNetworkReadError("parseFullMessage() missing data for server unique key size: "+std::to_string(mainCodeType));
                         return false;
                     }
                     //charactersgroup
-                    const uint8_t &charactersGroupIndex=data[pos];
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=data[pos];
+                    const uint8_t &charactersGroupIndex=data[inputPos];
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=data[inputPos];
                     posOutput+=1;
-                    pos+=1;
+                    inputPos+=1;
                     //unique key
-                    const uint32_t &uniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
-                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+pos,4);
+                    const uint32_t &uniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+inputPos)));
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+inputPos,4);
                     posOutput+=4;
-                    pos+=4;
+                    inputPos+=4;
                     ServerReconnect serverReconnect;
-                    //host
+                    //host, skip because in gateway it's in proxy mode only
                     {
-                        const uint8_t &stringSize=data[pos];
-                        pos+=1;
-                        if((size-pos)<stringSize)
+                        const uint8_t &stringSize=data[inputPos];
+                        inputPos+=1;
+                        if((size-inputPos)<stringSize)
                         {
                             parseNetworkReadError("parseFullMessage() missing data for server host string size: "+std::to_string(mainCodeType));
                             return false;
                         }
                         if(stringSize>0)
-                            serverReconnect.host=std::string(data+pos,stringSize);
+                            serverReconnect.host=std::string(data+inputPos,stringSize);
                         if(serverReconnect.host.empty())
                         {
                             parseNetworkReadError("parseFullMessage() server list, host can't be empty: "+std::to_string(mainCodeType));
                             return false;
                         }
-                        pos+=stringSize;
+                        inputPos+=stringSize;
                     }
-                    if((size-pos)<(2+2))
+                    if((size-inputPos)<(2+2))
                     {
                         parseNetworkReadError("parseFullMessage() missing data for server port start description size: "+std::to_string(mainCodeType));
                         return false;
                     }
-                    //port
-                    serverReconnect.port=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
-                    pos+=2;
-                    //skip description
+                    //port, skip because in gateway it's in proxy mode only
+                    serverReconnect.port=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+inputPos)));
+                    inputPos+=2;
+                    //description
                     {
-                        const uint16_t &stringSize=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
-                        pos+=2;
-                        if((size-pos)<stringSize)
+                        const uint16_t &stringSize=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+inputPos)));
+                        inputPos+=2;
+                        if((size-inputPos)<stringSize)
                         {
                             parseNetworkReadError("parseFullMessage() missing data for server host string size: "+std::to_string(mainCodeType));
                             return false;
                         }
                         if(stringSize>0)
                         {
-                            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+pos-2,2+stringSize);
-                            pos+=stringSize;
+                            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+inputPos-2,2+stringSize);
+                            //posOutput+=stringSize;do after
+                            inputPos+=stringSize;
                         }
+                        else
+                            memset(ProtocolParsingBase::tempBigBufferForOutput+posOutput,0x00,2);
                         posOutput+=2+stringSize;
                     }
-                    //skip Logical group and max player
-                    if((size-pos)<(1+2))
+                    //Logical group and max player
+                    if((size-inputPos)<(1+2))
                     {
                         parseNetworkReadError("parseFullMessage() missing data for server port start description size: "+std::to_string(mainCodeType));
                         return false;
                     }
-                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+pos,1+2);
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+inputPos,1+2);
                     posOutput+=1+2;
 
-                    pos+=1+2;
+                    inputPos+=1+2;
 
                     serverReconnectList[charactersGroupIndex][uniqueKey]=serverReconnect;
                     serverListIndex++;
                 }
 
                 //Second list part with same size
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+pos,2*serverListSize);
+                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,data+inputPos,2*serverListSize);
                 posOutput+=2*serverListSize;
 
                 gameServerMode=GameServerMode::Reconnect;
@@ -820,6 +826,15 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
         }
         else
         {
+            switch(gameServerMode)
+            {
+                case GameServerMode::Proxy:
+                case GameServerMode::Reconnect:
+                break;
+                default:
+                    std::cerr << "Unknown game server mode or not set: " << std::to_string(gameServerMode) << std::endl;
+                abort();
+            }
             if(size<=40)
             {
                 if(size==1)
@@ -842,7 +857,13 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     parseNetworkReadError("error code at charater selection: "+std::to_string((uint32_t)*data));
                 }
                 else
-                    parseNetworkReadError("need more size (hole), data dump: "+binarytoHexa(data,size)+" at "+std::string(__FILE__)+":"+std::to_string(__LINE__)+" with main code: "+std::to_string(mainCodeType));
+                {
+                    parseNetworkReadError("need more size (hole), data dump: "+binarytoHexa(data,size)+
+                                          " at "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
+                                          " with main code: "+std::to_string(mainCodeType)+
+                                          " for gameServerMode: "+std::to_string(gameServerMode)
+                                          );
+                }
                 return false;
             }
             else
