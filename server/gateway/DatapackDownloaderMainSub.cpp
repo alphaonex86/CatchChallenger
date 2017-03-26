@@ -217,7 +217,7 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
     {
         LinkToGameServer * const clientLink=static_cast<LinkToGameServer * const>(clientInSuspend.at(index));
         if(clientLink!=NULL)
-            clientLink->sendDiffered0205Reply();
+            clientLink->sendDiffered93OrACReply();
         index++;
     }
     clientInSuspend.clear();

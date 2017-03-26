@@ -62,7 +62,7 @@ void DatapackDownloaderBase::haveTheDatapack()
     {
         LinkToGameServer * const clientLink=static_cast<LinkToGameServer * const>(clientInSuspend.at(index));
         if(clientLink!=NULL)
-            clientLink->sendDiffered04Reply();
+            clientLink->sendDifferedA8Reply();
         index++;
     }
     clientInSuspend.clear();
@@ -331,15 +331,26 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
         unsigned int index=0;
         while(index<datapackFilesListBase.size())
         {
+            const std::string &text=datapackFilesListBase.at(index);
+            if(!text.empty() && text.size()<255)
             {
-                const std::string &text=datapackFilesListBase.at(index);
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
-                posOutput+=1;
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                posOutput+=text.size();
+                posOutput+=FacilityLibGeneral::toUTF8WithHeader(text,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
             }
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(partialHashList.at(index));
-            posOutput+=4;
+            else
+                std::cerr << "file name too long or sort: " << text << std::endl;
+            index++;
+        }
+        index=0;
+        while(index<datapackFilesListBase.size())
+        {
+            const std::string &text=datapackFilesListBase.at(index);
+            if(!text.empty() && text.size()<255)
+            {
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(partialHashList.at(index));
+                posOutput+=4;
+            }
+            else
+                std::cerr << "file name too long or sort: " << text << std::endl;
             index++;
         }
 

@@ -241,7 +241,7 @@ void Api_client_real::datapackChecksumDoneBase(const std::vector<std::string> &d
 
             index++;
         }
-        packOutcommingQuery(0x0A1,datapack_content_query_number,outputData.constData(),outputData.size());
+        packOutcommingQuery(0xA1,datapack_content_query_number,outputData.constData(),outputData.size());
     }
     else
     {

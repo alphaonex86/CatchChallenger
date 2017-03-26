@@ -369,6 +369,8 @@ void BaseWindow::insert_player(const CatchChallenger::Player_public_informations
 
 void BaseWindow::haveTheDatapack()
 {
+    if(client==NULL)
+        return;
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveTheDatapack()";
     #endif
