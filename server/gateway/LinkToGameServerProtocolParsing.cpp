@@ -288,6 +288,8 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
         parseNetworkReadError("client not connected");
         return false;
     }
+    if(mainCodeType==0x75)
+        return true;//drop, need be recreate by the gateway in case of no mirror use
     if(stat!=Stat::ProtocolGood || mainCodeType==0x40)
     {
         if(mainCodeType==0x44)//send Logical group
@@ -450,52 +452,70 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
             }
             uint8_t fileListSize=data[pos];
             pos++;
-            int index=0;
+            if(fileListSize==0)
+            {
+                std::cerr << "fileListSize==0 with main ident: "+std::to_string(mainCodeType) << std::endl;
+                return false;
+            }
+
+            uint32_t sub_size32=size-pos;
+            uint32_t decompressedSize=0;
+            if(ProtocolParsingBase::compressionTypeClient==CompressionType::None || mainCodeType==0x76)
+            {
+                decompressedSize=sub_size32;
+                memcpy(ProtocolParsingBase::tempBigBufferForUncompressedInput,data+pos,sub_size32);
+            }
+            else
+                decompressedSize=computeDecompression(data+pos,ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
+
+            unsigned int decompressedDataPos=0;
+            uint8_t index=0;
             while(index<fileListSize)
             {
-                if((size-pos)<(int)(sizeof(uint8_t)))
+                if((decompressedSize-decompressedDataPos)<(int)(sizeof(uint8_t)))
                 {
                     parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
                 std::string fileName;
-                uint8_t fileNameSize=data[pos];
-                pos++;
+                uint8_t fileNameSize=ProtocolParsingBase::tempBigBufferForUncompressedInput[decompressedDataPos];
+                decompressedDataPos+=1;
                 if(fileNameSize>0)
                 {
-                    if((size-pos)<fileNameSize)
+                    if((decompressedSize-decompressedDataPos)<fileNameSize)
                     {
                         parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
-                    fileName=std::string(data+pos,fileNameSize);
-                    pos+=fileNameSize;
+                    fileName=std::string(ProtocolParsingBase::tempBigBufferForUncompressedInput+decompressedDataPos,fileNameSize);
+                    decompressedDataPos+=fileNameSize;
                 }
                 if(DatapackDownloaderBase::extensionAllowed.find(CatchChallenger::FacilityLibGeneral::getSuffix(fileName))==DatapackDownloaderBase::extensionAllowed.cend())
                 {
-                    parseNetworkReadError("extension not allowed: "+CatchChallenger::FacilityLibGeneral::getSuffix(fileName)+" with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
+                    std::cerr << "datadump: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForUncompressedInput,decompressedDataPos) << " " << binarytoHexa(ProtocolParsingBase::tempBigBufferForUncompressedInput+decompressedDataPos,decompressedSize-decompressedDataPos) << std::endl;
+                    parseNetworkReadError("main code: "+std::to_string(mainCodeType)+" extension not allowed: \""+CatchChallenger::FacilityLibGeneral::getSuffix(fileName)+"\" for file \""+fileName+"\" with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
-                if((size-pos)<(int)(sizeof(uint32_t)))
+                if((decompressedSize-decompressedDataPos)<(int)(sizeof(uint32_t)))
                 {
                     parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
-                const uint32_t &fileSize=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
-                pos+=4;
-                if((size-pos)<fileSize)
+                const uint32_t &fileSize=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(ProtocolParsingBase::tempBigBufferForUncompressedInput+decompressedDataPos)));
+                decompressedDataPos+=4;
+                if((decompressedSize-decompressedDataPos)<fileSize)
                 {
                     parseNetworkReadError("wrong file data size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
                 std::vector<char> dataFile;
                 dataFile.resize(fileSize);
-                memcpy(dataFile.data(),data+pos,fileSize);
-                pos+=fileSize;
+                memcpy(dataFile.data(),ProtocolParsingBase::tempBigBufferForUncompressedInput+decompressedDataPos,fileSize);
+                decompressedDataPos+=fileSize;
                 if(mainCodeType==0x76)
-                    parseNetworkReadError("Raw file to create: "+fileName);
+                    std::cout << "Raw file to create: " << fileName << std::endl;
                 else
-                    parseNetworkReadError("Compressed file to create: "+fileName);
+                    std::cout << "Compressed file to create: " << fileName << std::endl;
 
                 if(replySelectListInWait!=NULL)
                     DatapackDownloaderBase::datapackDownloaderBase->writeNewFileBase(fileName,dataFile);

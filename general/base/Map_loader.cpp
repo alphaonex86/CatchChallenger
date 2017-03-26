@@ -21,7 +21,7 @@ std::unordered_map<std::string/*file*/, std::unordered_map<uint32_t/*id*/,CATCHC
 #if defined(__has_feature)
 #  if __has_feature(address_sanitizer)
 extern "C" {
-const char* __asan_default_options() { return "alloc_dealloc_mismatch=0"; }
+const char* __asan_default_options() { return "alloc_dealloc_mismatch=0:detect_container_overflow=0"; }
 }  // extern "C"
 #  endif
 #endif

@@ -274,7 +274,7 @@ void LinkToGameServer::disconnectClient()
         replySelectCharInWait=NULL;
     }
     epollSocket.close();
-    messageParsingLayer("Disconnected client");
+    messageParsingLayer("Disconnected game server");
 }
 
 uint8_t LinkToGameServer::freeQueryNumberToServer()
