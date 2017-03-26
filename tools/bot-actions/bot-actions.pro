@@ -50,5 +50,5 @@ RESOURCES += \
 
 QMAKE_CXXFLAGS+="-std=c++0x -Wall -Wextra -fno-omit-frame-pointer -fsanitize=address"
 QMAKE_CFLAGS+="-Wall -Wextra -fno-omit-frame-pointer -fsanitize=address"
-QMAKE_LFLAGS+="-fno-omit-frame-pointer -Wl,--no-undefined -fsanitize=address -stdlib=libc++"
-#/usr/lib64/qt5/bin/qmake -spec linux-clang-libc++
+QMAKE_LFLAGS+="-fno-omit-frame-pointer -Wl,--no-undefined -fsanitize=address"
+#/usr/lib64/qt5/bin/qmake -spec linux-clang

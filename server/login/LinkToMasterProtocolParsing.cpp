@@ -1956,9 +1956,8 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 }
             }
             stat=Stat::Logged;
-            if(EpollServerLoginSlave::epollServerLoginSlave->getSfd()==-1)
-                if(!EpollServerLoginSlave::epollServerLoginSlave->tryListen())
-                    abort();
+            if(!EpollServerLoginSlave::epollServerLoginSlave->tryListen())
+                abort();
         }
         return true;
         //Select character on master
