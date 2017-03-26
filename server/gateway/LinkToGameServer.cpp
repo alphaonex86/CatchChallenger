@@ -340,7 +340,7 @@ void LinkToGameServer::sendProtocolHeaderGameServer()
     sendRawSmallPacket(reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
 }
 
-void LinkToGameServer::sendDiffered04Reply()
+void LinkToGameServer::sendDifferedA8Reply()
 {
     if(client==NULL)
     {
@@ -372,7 +372,7 @@ void LinkToGameServer::sendDiffered04Reply()
     replySelectListInWaitQueryNumber=0;
 }
 
-void LinkToGameServer::sendDiffered0205Reply()
+void LinkToGameServer::sendDiffered93OrACReply()
 {
     if(client==NULL)
     {

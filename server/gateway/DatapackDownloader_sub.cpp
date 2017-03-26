@@ -192,22 +192,33 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=datapack_content_query_number;
         posOutput+=1+4;
 
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
         posOutput+=1;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(datapackFilesListSub.size());
         posOutput+=4;
         unsigned int index=0;
         while(index<datapackFilesListSub.size())
         {
+            const std::string &text=datapackFilesListSub.at(index);
+            if(!text.empty() && text.size()<255)
             {
-                const std::string &text=datapackFilesListSub.at(index);
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
-                posOutput+=1;
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                posOutput+=text.size();
+                posOutput+=FacilityLibGeneral::toUTF8WithHeader(text,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
             }
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(partialHashList.at(index));
-            posOutput+=4;
+            else
+                std::cerr << "file name too long or sort: " << text << std::endl;
+            index++;
+        }
+        index=0;
+        while(index<datapackFilesListSub.size())
+        {
+            const std::string &text=datapackFilesListSub.at(index);
+            if(!text.empty() && text.size()<255)
+            {
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(partialHashList.at(index));
+                posOutput+=4;
+            }
+            else
+                std::cerr << "file name too long or sort: " << text << std::endl;
             index++;
         }
 

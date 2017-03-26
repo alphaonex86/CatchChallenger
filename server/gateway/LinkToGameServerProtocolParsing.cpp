@@ -1097,204 +1097,47 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
         }
     }
     //intercept the file sending
-    else if(mainCodeType==0xA1)//Send datapack file list
+    else if(mainCodeType==0xA1)//reply of datapack file list
     {
         if(replySelectListInWait!=NULL)
-            DatapackDownloaderBase::datapackDownloaderBase->datapackFileList(data,size);
-        else if(replySelectCharInWait==NULL)
         {
-            if(size>40 && data[0x00]==0x01)//all is good, change the reply
+            DatapackDownloaderBase::datapackDownloaderBase->datapackFileList(data,size);
+            return true;
+        }
+        else if(replySelectCharInWait!=NULL)
+        {
+            switch(client->datapackStatus)
             {
-                unsigned int pos=40;
-
+                case EpollClientLoginSlave::DatapackStatus::Base:
                 {
-                    if((size-pos)<1)
-                    {
-                        parseNetworkReadError("need more size");
-                        return false;
-                    }
-                    const uint8_t &stringSize=data[pos];
-                    pos+=1;
-                    if(stringSize>0)
-                    {
-                        if((size-pos)<stringSize)
-                        {
-                            parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
-                            return false;
-                        }
-                        main=std::string(data+pos,stringSize);
-                        pos+=stringSize;
-                        if(!regex_search(main,LinkToGameServer::mainDatapackCodeFilter))
-                        {
-                            parseNetworkReadError("main in A1 datapack code wrong: "+main+", data dump: "+binarytoHexa(data,size)+" at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        parseNetworkReadError("main datapack code can't be empty, data dump: "+binarytoHexa(data,size));
-                        return false;
-                    }
+                    DatapackDownloaderBase *downloader=DatapackDownloaderBase::datapackDownloaderBase;
+                    downloader->datapackFileList(data,size);
                 }
+                break;
+                case EpollClientLoginSlave::DatapackStatus::Main:
                 {
-                    if((size-pos)<1)
-                    {
-                        parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
-                        return false;
-                    }
-                    const uint8_t &stringSize=data[pos];
-                    pos+=1;
-                    if(stringSize>0)
-                    {
-                        if((size-pos)<stringSize)
-                        {
-                            parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
-                            return false;
-                        }
-                        sub=std::string(data+pos,stringSize);
-                        pos+=stringSize;
-                        if(!regex_search(sub,LinkToGameServer::subDatapackCodeFilter))
-                        {
-                            parseNetworkReadError("sub in A1 datapack code wrong: "+main+", data dump: "+binarytoHexa(data,size)+" at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                            return false;
-                        }
-                    }
-                    else
-                        sub.clear();
-                }
-
-                DatapackDownloaderMainSub *downloader=NULL;
-                {
+                    DatapackDownloaderMainSub *downloader=NULL;
                     if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(main)==DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())
                         DatapackDownloaderMainSub::datapackDownloaderMainSub[main][sub]=new DatapackDownloaderMainSub(LinkToGameServer::mDatapackBase,main,sub);
                     else if(DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).find(sub)==DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).cend())
                         DatapackDownloaderMainSub::datapackDownloaderMainSub[main][sub]=new DatapackDownloaderMainSub(LinkToGameServer::mDatapackBase,main,sub);
                     downloader=DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).at(sub);
+                    downloader->datapackFileList(data,size);
                 }
-                if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
+                break;
+                case EpollClientLoginSlave::DatapackStatus::Sub:
                 {
-                    parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
-                    return false;
+                    DatapackDownloaderMainSub *downloader=NULL;
+                    if(DatapackDownloaderMainSub::datapackDownloaderMainSub.find(main)==DatapackDownloaderMainSub::datapackDownloaderMainSub.cend())
+                        DatapackDownloaderMainSub::datapackDownloaderMainSub[main][sub]=new DatapackDownloaderMainSub(LinkToGameServer::mDatapackBase,main,sub);
+                    else if(DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).find(sub)==DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).cend())
+                        DatapackDownloaderMainSub::datapackDownloaderMainSub[main][sub]=new DatapackDownloaderMainSub(LinkToGameServer::mDatapackBase,main,sub);
+                    downloader=DatapackDownloaderMainSub::datapackDownloaderMainSub.at(main).at(sub);
+                    downloader->datapackFileList(data,size);
                 }
-                downloader->sendedHashMain.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                memcpy(downloader->sendedHashMain.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
-                pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
-                if(!sub.empty())
-                {
-                    if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
-                    {
-                        parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
-                        return false;
-                    }
-                    downloader->sendedHashSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                    memcpy(downloader->sendedHashSub.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
-                    pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
-                }
-                if((size-pos)<1)
-                {
-                    parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
-                    return false;
-                }
-                const uint16_t startString=pos;
-                const uint8_t &stringSize=data[pos];
-                pos+=1;
-                if((size-pos)<stringSize)
-                {
-                    parseNetworkReadError("need more size: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
-                    return false;
-                }
-                if(stringSize>0)
-                {
-                    const std::string httpDatapackMirrorServer(data+pos,stringSize);
-                    pos+=stringSize;
-                    if(DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())//can't change for performance and current download in progression corruption
-                    {
-                        DatapackDownloaderMainSub::httpDatapackMirrorServerList=stringsplit(httpDatapackMirrorServer,';');
-                        vectorRemoveEmpty(DatapackDownloaderMainSub::httpDatapackMirrorServerList);
-                        {
-                            unsigned int index=0;
-                            while(index<DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
-                            {
-                                const std::string &currentMirror=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index);
-
-                                const std::string::size_type &pos=currentMirror.find(LinkToGameServer::protocolString);
-                                if(pos==std::string::npos)
-                                {
-                                    parseNetworkReadError("no \"://\" found: "+currentMirror+", data dump: "+binarytoHexa(data,size));
-                                    return false;
-                                }
-                                const std::string &protocol=currentMirror.substr(0,pos);
-                                if(protocol!=LinkToGameServer::protocolHttp && protocol!=LinkToGameServer::protocolHttps)
-                                {
-                                    parseNetworkReadError("protocol not supported: "+protocol+" into "+currentMirror+", data dump: "+binarytoHexa(data,size));
-                                    return false;
-                                }
-
-                                if(!stringEndsWith(currentMirror,'/'))
-                                    DatapackDownloaderMainSub::httpDatapackMirrorServerList[index]+='/';
-                                index++;
-                            }
-                        }
-                    }
-                }
-                if(size<pos)
-                {
-                    parseNetworkReadError("size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
-                    return false;
-                }
-                unsigned int remainingSize=size-pos;
-                if(remainingSize>8*1024*1024)
-                {
-                    parseNetworkReadError("remainingSize>8M: size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
-                    return false;
-                }
-                if(remainingSize==0)
-                {
-                    parseNetworkReadError("remainingSize==0: size"+std::to_string(size)+"<pos"+std::to_string(pos)+" to final packet making: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", data:"+binarytoHexa(data,size));
-                    return false;
-                }
-                replySelectCharInWaitSize=startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size()+remainingSize;
-                replySelectCharInWait=new char[replySelectCharInWaitSize];
-                memcpy(replySelectCharInWait+0,data,startString);
-                memcpy(replySelectCharInWait+startString,LinkToGameServer::httpDatapackMirrorRewriteBase.data(),LinkToGameServer::httpDatapackMirrorRewriteBase.size());
-                memcpy(replySelectCharInWait+startString+LinkToGameServer::httpDatapackMirrorRewriteBase.size(),data+pos,remainingSize);
-
-                downloader->sendDatapackProgressionMainSub(client);
-                if(downloader->hashMain.empty() || (!sub.empty() && downloader->hashSub.empty()))//checksum never done
-                {
-                    replySelectCharInWaitQueryNumber=queryNumber;
-                    downloader->clientInSuspend.push_back(this);
-                    if(downloader->clientInSuspend.size()==1)
-                        downloader->sendDatapackContentMainSub();
-                }
-                else if(downloader->hashMain!=downloader->sendedHashMain || (!sub.empty() && downloader->hashSub!=downloader->sendedHashSub))//need download the datapack content
-                {
-                    replySelectCharInWaitQueryNumber=queryNumber;
-                    downloader->clientInSuspend.push_back(this);
-                    if(downloader->clientInSuspend.size()==1)
-                        downloader->sendDatapackContentMainSub();
-                }
-                else
-                {
-                    //send the network reply
-                    client->removeFromQueryReceived(queryNumber);
-                    uint32_t posOutput=0;
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-                    posOutput+=1;
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=queryNumber;
-                    posOutput+=1+4;
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(replySelectCharInWaitSize);//set the dynamic size
-
-                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,replySelectCharInWait,replySelectCharInWaitSize);
-                    posOutput+=replySelectCharInWaitSize;
-
-                    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-
-                    delete replySelectCharInWait;
-                    replySelectCharInWait=NULL;
-                    replySelectCharInWaitSize=0;
-                }
-                return true;
+                break;
+                default:
+                return false;
             }
         }
         else
@@ -1303,12 +1146,24 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             return false;
         }
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(client==NULL)
+    {
+        std::cerr << "client==NULL can't be at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        abort();
+    }
+    #endif
 
     if(mainCodeType==0x93 /*Select character on game server*/ || mainCodeType==0xAC/*Select character*/)
         client->fastForward=true;
 
+    std::cout << "remove for qeury: " << std::to_string(queryNumber) << ", main code: " << std::to_string(mainCodeType) << std::endl;
     //send the network reply
-    client->removeFromQueryReceived(queryNumber);
+    if(!client->removeFromQueryReceived(queryNumber))
+    {
+        errorParsingLayer("!client->removeFromQueryReceived("+std::to_string(queryNumber)+"): already replied?");
+        return false;
+    }
     const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType+128];
     if(fixedSize!=0xFE)
     {

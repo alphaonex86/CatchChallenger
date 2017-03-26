@@ -573,12 +573,36 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             partialHashList.reserve(number_of_file);
             std::string tempFileName;
             uint32_t index=0;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            std::regex datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
+            #endif
+            if(number_of_file>1000000)
+            {
+                errorOutput("number_of_file > million: "+std::to_string(number_of_file)+": parseQuery("+
+                    std::to_string(packetCode)+
+                    ","+
+                    std::to_string(queryNumber)+
+                    "): "+
+                    binarytoHexa(data,pos)+
+                    " "+
+                    binarytoHexa(data+pos,size-pos)
+                    );
+                return false;
+            }
             while(index<number_of_file)
             {
                 {
                     if((size-pos)<(int)sizeof(uint8_t))
                     {
-                        errorOutput("wrong utf8 to std::string size in PM for text size");
+                        errorOutput("wrong utf8 to std::string size "+std::to_string(size)+" pos "+std::to_string(pos)+": parseQuery("+
+                            std::to_string(packetCode)+
+                            ","+
+                            std::to_string(queryNumber)+
+                            "): "+
+                            binarytoHexa(data,pos)+
+                            " "+
+                            binarytoHexa(data+pos,size-pos)
+                            );
                         return false;
                     }
                     const uint8_t &textSize=data[pos];
@@ -602,6 +626,23 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                         tempFileName=std::string(data+pos,textSize);
                         pos+=textSize;
                     }
+                    else
+                        tempFileName.clear();
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(!std::regex_match(tempFileName,datapack_rightFileName))
+                    {
+                        errorOutput("wrong file name \""+tempFileName+"\": parseQuery("+
+                            std::to_string(packetCode)+
+                            ","+
+                            std::to_string(queryNumber)+
+                            "): "+
+                            binarytoHexa(data,pos)+
+                            " "+
+                            binarytoHexa(data+pos,size-pos)
+                            );
+                        return false;
+                    }
+                    #endif
                 }
                 files.push_back(tempFileName);
                 index++;
