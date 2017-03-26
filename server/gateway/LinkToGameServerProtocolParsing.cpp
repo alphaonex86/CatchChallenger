@@ -1075,7 +1075,11 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 else
                 {
                     //send the network reply
-                    client->removeFromQueryReceived(queryNumber);
+                    if(!client->removeFromQueryReceived(queryNumber))
+                    {
+                        errorParsingLayer("!client->removeFromQueryReceived("+std::to_string(queryNumber)+"): already replied?");
+                        return false;
+                    }
                     uint32_t posOutput=0;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
                     posOutput+=1;
@@ -1139,6 +1143,30 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 default:
                 return false;
             }
+
+            //block copied from above
+            //send the network reply
+            if(!client->removeFromQueryReceived(replySelectCharInWaitQueryNumber))
+            {
+                errorParsingLayer("!client->removeFromQueryReceived("+std::to_string(replySelectCharInWaitQueryNumber)+"): already replied?");
+                return false;
+            }
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=replySelectCharInWaitQueryNumber;
+            posOutput+=1+4;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(replySelectCharInWaitSize);//set the dynamic size
+
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,replySelectCharInWait,replySelectCharInWaitSize);
+            posOutput+=replySelectCharInWaitSize;
+
+            client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
+            delete replySelectCharInWait;
+            replySelectCharInWait=NULL;
+            replySelectCharInWaitSize=0;
+
             return true;
         }
         else
