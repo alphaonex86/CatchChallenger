@@ -1139,6 +1139,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 default:
                 return false;
             }
+            return true;
         }
         else
         {
@@ -1157,7 +1158,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     if(mainCodeType==0x93 /*Select character on game server*/ || mainCodeType==0xAC/*Select character*/)
         client->fastForward=true;
 
-    std::cout << "remove for qeury: " << std::to_string(queryNumber) << ", main code: " << std::to_string(mainCodeType) << std::endl;
+    std::cout << "remove for query: " << std::to_string(queryNumber) << ", main code: " << std::to_string(mainCodeType) << std::endl;
     //send the network reply
     if(!client->removeFromQueryReceived(queryNumber))
     {
