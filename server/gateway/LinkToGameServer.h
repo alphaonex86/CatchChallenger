@@ -67,8 +67,8 @@ public:
     static int tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
     void sendProtocolHeader();
     void sendProtocolHeaderGameServer();
-    void sendDiffered04Reply();
-    void sendDiffered0205Reply();
+    void sendDifferedA8Reply();
+    void sendDiffered93OrACReply();
     void readTheFirstSslHeader();
     void disconnectClient();
     uint8_t freeQueryNumberToServer();
