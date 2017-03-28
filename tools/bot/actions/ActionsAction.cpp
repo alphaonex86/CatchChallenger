@@ -394,10 +394,74 @@ bool ActionsAction::moveWithoutTeleport(CatchChallenger::Api_protocol *api,Catch
     }
 }
 
-void ActionsAction::checkOnTileEvent(Player &player)
+bool ActionsAction::checkOnTileEvent(Player &player)
 {
-/*    if(event)
-        player.target.localStep.clear();*/
+    std::pair<uint8_t,uint8_t> pos(x,y);
+    if(all_map.value(current_map)->logicalMap.botsFightTrigger.find(pos)!=all_map.value(current_map)->logicalMap.botsFightTrigger.cend())
+    {
+        std::vector<uint32_t> botFightList=all_map.value(current_map)->logicalMap.botsFightTrigger.at(pos);
+        QList<QPair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(QPair<uint8_t,uint8_t>(x,y));
+        unsigned int index=0;
+        while(index<botFightList.size())
+        {
+            const uint32_t &fightId=botFightList.at(index);
+            if(!haveBeatBot(fightId))
+            {
+                qDebug() <<  "is now in fight with: " << fightId;
+                player.canMoveOnMap=false;
+                if(inMove)
+                {
+                    inMove=false;
+                    emit send_player_direction(direction);
+                    keyPressed.clear();
+                }
+                parseStop();
+                emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),botFightRemotePointList.at(index).first,botFightRemotePointList.at(index).second);
+                if(all_map.value(current_map)->logicalMap.botsDisplay.contains(botFightRemotePointList.at(index)))
+                {
+                    TemporaryTile *temporaryTile=all_map.value(current_map)->logicalMap.botsDisplay.value(botFightRemotePointList.at(index)).temporaryTile;
+                    //show a temporary flags
+                    {
+                        if(fightCollisionBot==NULL)
+                        {
+                            fightCollisionBot=new Tiled::Tileset(QLatin1Literal("fightCollisionBot"),16,16);
+                            fightCollisionBot->loadFromImage(QImage(QStringLiteral(":/images/fightCollisionBot.png")),QStringLiteral(":/images/fightCollisionBot.png"));
+                        }
+                    }
+                    temporaryTile->startAnimation(fightCollisionBot->tileAt(0),150,fightCollisionBot->tileCount());
+                }
+                else
+                    qDebug() <<  "temporaryTile not found";
+                blocked=true;
+                return true;
+            }
+            index++;
+        }
+    }
+    //check if is in fight collision, but only if is move
+    if(repel_step<=0)
+    {
+        if(inMove)
+        {
+            if(fightEngine->generateWildFightIfCollision(&all_map.value(current_map)->logicalMap,x,y,*items,*events))
+            {
+                player.canMoveOnMap=false;
+                inMove=false;
+                emit send_player_direction(direction);
+                keyPressed.clear();
+                parseStop();
+                emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),x,y);
+                blocked=true;
+                return true;
+            }
+        }
+    }
+    else
+    {
+        repel_step--;
+        if(repel_step==0)
+            emit repelEffectIsOver();
+    }
 }
 
 void ActionsAction::doMove()
@@ -412,7 +476,7 @@ void ActionsAction::doMove()
         const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
         const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
         //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
-        if(api->getCaracterSelected())
+        if(api->getCaracterSelected() && player.canMoveOnMap)
         {
             CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
             //get item if in front of
@@ -460,7 +524,11 @@ void ActionsAction::doMove()
                     api->newDirection(direction);
                     if(step.second==0)
                         player.target.localStep.erase(player.target.localStep.cbegin());
-                    move(api,direction,&playerMap,&player.x,&player.y,true,true);
+                    if(!move(api,direction,&playerMap,&player.x,&player.y,true,true))
+                    {
+                        std::cerr << "Blocked on: " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << std::endl;
+                        abort();
+                    }
                     player.mapId=playerMap->id;
                     checkOnTileEvent(player);
                 }

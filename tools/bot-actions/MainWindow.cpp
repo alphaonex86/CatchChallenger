@@ -168,6 +168,7 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
         newPlayer.mapId=0;
         newPlayer.x=0;
         newPlayer.y=0;
+        newPlayer.canMoveOnMap=false;
         newPlayer.target.blockObject=NULL;
         newPlayer.target.extra=0;
         newPlayer.target.linkPoint.x=0;

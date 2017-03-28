@@ -54,6 +54,7 @@ void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol *api,const
     newPlayer.mapId=mapId;
     newPlayer.x=x;
     newPlayer.y=y;
+    newPlayer.canMoveOnMap=true;
 }
 
 void ActionsBotInterface::removeClient(CatchChallenger::Api_protocol *api)
