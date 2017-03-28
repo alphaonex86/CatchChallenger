@@ -61,6 +61,7 @@ public:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     LayersOptions layersOptions;
     std::vector<Event> events;
+    std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;//to prevent send network packet for item when luck is 100%
     #endif
     std::vector<std::string > skins;
 private:
@@ -84,6 +85,9 @@ private:
     void parseProfileList();
     void parseLayersOptions();
     void parseSkins();
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    void parseMonstersDrop();
+    #endif
 };
 }
 

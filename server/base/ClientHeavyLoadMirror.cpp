@@ -35,7 +35,7 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file_list_cached_base()
+std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list_cached_base()
 {
     if(GlobalServerData::serverSettings.datapackCache==-1)
         return datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
@@ -44,9 +44,9 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
         if(Client::datapack_list_cache_timestamp_base==0)
         {
             Client::datapack_list_cache_timestamp_base=sFrom1970();
-            Client::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
+            BaseServerMasterSendDatapack::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
         }
-        return Client::datapack_file_hash_cache_base;
+        return BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
     }
     else
     {
@@ -54,13 +54,13 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
         if(Client::datapack_list_cache_timestamp_base<(currentTime-GlobalServerData::serverSettings.datapackCache))
         {
             Client::datapack_list_cache_timestamp_base=currentTime;
-            Client::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
+            BaseServerMasterSendDatapack::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
         }
-        return Client::datapack_file_hash_cache_base;
+        return BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
     }
 }
 
-std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file_list_cached_main()
+std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list_cached_main()
 {
     if(GlobalServerData::serverSettings.datapackCache==-1)
         return datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/");
@@ -85,7 +85,7 @@ std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file
     }
 }
 
-std::unordered_map<std::string, Client::DatapackCacheFile> Client::datapack_file_list_cached_sub()
+std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list_cached_sub()
 {
     if(GlobalServerData::serverSettings.datapackCache==-1)
         return datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"");
@@ -125,7 +125,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
     tempDatapackListReply=0;
     tempDatapackListReplySize=0;
     std::string datapackPath;
-    std::unordered_map<std::string,DatapackCacheFile> filesList;
+    std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> filesList;
     switch(datapackStatus)
     {
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -152,7 +152,7 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
     //send the size to download on the client
     {
         //clone to drop the ask file and remain the missing client files
-        std::unordered_map<std::string,DatapackCacheFile> filesListForSize(filesList);
+        std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> filesListForSize(filesList);
         int index=0;
         uint32_t datapckFileNumber=0;
         uint32_t datapckFileSize=0;

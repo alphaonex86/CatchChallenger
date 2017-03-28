@@ -126,7 +126,6 @@ protected:
     void load_sql_monsters_max_id();
     static void load_monsters_max_id_static(void *object);
     void load_monsters_max_id_return();
-    std::unordered_map<uint16_t,std::vector<MonsterDrops> > loadMonsterDrop(const std::string &file, std::unordered_map<uint16_t,Item> items,const std::unordered_map<uint16_t,Monster> &monsters);
     virtual void criticalDatabaseQueryFailed();
     virtual void quitForCriticalDatabaseQueryFailed() = 0;
 
@@ -177,7 +176,6 @@ protected:
     void unload_the_events();
     void unload_the_plant_on_map();
     void unload_shop();
-    void unload_monsters_drops();
     void unload_dictionary();
     void unload_profile();
 

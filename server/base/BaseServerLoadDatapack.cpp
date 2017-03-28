@@ -18,7 +18,6 @@ void BaseServer::preload_the_datapack()
     Client::datapack_list_cache_timestamp_base=0;
     Client::datapack_list_cache_timestamp_main=0;
     Client::datapack_list_cache_timestamp_sub=0;
-    const std::unordered_set<std::string> &extensionAllowed=BaseServerMasterSendDatapack::extensionAllowed;
     #else
     std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     std::unordered_set<std::string> extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
@@ -84,7 +83,11 @@ void BaseServer::preload_the_datapack()
             std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
             abort();
         }
-        const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/",false);
+        #ifdef _WIN32
+        const std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"",false);
+        #else
+        const std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/",false);
+        #endif
         if(pair.size()==0)
         {
             std::cout << "Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,\"map/main/\",false) empty (abort)" << std::endl;
@@ -106,12 +109,19 @@ void BaseServer::preload_the_datapack()
         #endif
         std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
-        const std::regex mainDatapackBaseFilter("^map[/\\\\]main[/\\\\]");
+        #if defined(CATCHCHALLENGER_EXTRA_CHECK) || defined(_WIN32)
+        const std::string mainDatapackBaseFilter("map/main/");
+        #endif
+        /// \todo check under windows
+        #ifdef _WIN32
+        const std::string mainDatapackBaseFilterW("map\\main\\");
+        #endif
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName) && extensionAllowed.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=extensionAllowed.cend())
+            //right file name + extention check already done into Client::datapack_file_list() by if(regex_search(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
-                std::string fullPathFileToOpen=GlobalServerData::serverSettings.datapack_basePath+datapack_file_temp.at(index);
+                const std::string &fileName=datapack_file_temp.at(index);
+                std::string fullPathFileToOpen=GlobalServerData::serverSettings.datapack_basePath+fileName;
                 #ifdef Q_OS_WIN32
                 stringreplaceAll(fullPathFileToOpen,"/","\\");
                 #endif
@@ -121,32 +131,47 @@ void BaseServer::preload_the_datapack()
                     //read and load the file
                     const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
 
+
                     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-                    if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
+                    if((1+fileName.size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
                         if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
-                            if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=BaseServerMasterSendDatapack::compressedExtension.end())
+                            if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(fileName))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
                                 if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
                                 {
-                                    std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
+                                    std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << fileName << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
                                     abort();
                                 }
                             }
                             else
                             {
-                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
+                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << fileName << " is over the maximum packet size" << std::endl;
                                 abort();
                             }
                         }
                     }
                     #endif
 
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    bool skip=false;
+                    if(fileName.size()>mainDatapackBaseFilter.size())
+                        if(stringStartWith(fileName,mainDatapackBaseFilter)
+                            #ifdef _WIN32
+                            || stringStartWith(fileName,mainDatapackBaseFilterW)
+                            #endif
+                                )
+                            skip=true;
                     //switch the data to correct hash or drop it
-                    if(regex_search(datapack_file_temp.at(index),mainDatapackBaseFilter))
-                    {}
+                    if(skip)
+                    {
+                        #ifndef _WIN32
+                        abort();
+                        #endif
+                    }
                     else
+                    #endif
                     {
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
@@ -157,10 +182,10 @@ void BaseServer::preload_the_datapack()
                             abort();
                         }
                         SHA224_Update(&hashFile,data.data(),data.size());
-                        Client::DatapackCacheFile cacheFile;
+                        BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
                         SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
                         ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
-                        Client::datapack_file_hash_cache_base[datapack_file_temp.at(index)]=cacheFile;
+                        BaseServerMasterSendDatapack::datapack_file_hash_cache_base[fileName]=cacheFile;
                         #endif
                         #endif
 
@@ -169,12 +194,10 @@ void BaseServer::preload_the_datapack()
                 }
                 else
                 {
-                    std::cerr << "Stop now! Unable to open the file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " to do the datapack checksum for the mirror" << std::endl;
+                    std::cerr << "Stop now! Unable to open the file " << GlobalServerData::serverSettings.datapack_basePath << fileName << " to do the datapack checksum for the mirror" << std::endl;
                     abort();
                 }
             }
-            else
-                std::cerr << "File excluded because don't match the regex (1): " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
         if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()==CATCHCHALLENGER_SHA224HASH_SIZE)
@@ -206,7 +229,7 @@ void BaseServer::preload_the_datapack()
             std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
             abort();
         }
-        const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/",false);
+        const std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/",false);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
             auto i=pair.begin();
@@ -223,12 +246,18 @@ void BaseServer::preload_the_datapack()
         #endif
         std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
-        const std::regex mainDatapackFolderFilter("^sub[/\\\\]");
+        #if defined(CATCHCHALLENGER_EXTRA_CHECK) || defined(_WIN32)
+        const std::string mainDatapackFolderFilter("sub/");
+        #endif
+        #ifdef _WIN32
+        const std::string mainDatapackFolderFilterW("sub\\");
+        #endif
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName) && extensionAllowed.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=extensionAllowed.cend())
+            //right file name + extention check already done into Client::datapack_file_list() by if(regex_search(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
-                std::string fullPathFileToOpen=GlobalServerData::serverPrivateVariables.mainDatapackFolder+datapack_file_temp.at(index);
+                const std::string &fileName=datapack_file_temp.at(index);
+                std::string fullPathFileToOpen=GlobalServerData::serverPrivateVariables.mainDatapackFolder+fileName;
                 #ifdef Q_OS_WIN32
                 stringreplaceAll(fullPathFileToOpen,"/","\\");
                 #endif
@@ -239,34 +268,47 @@ void BaseServer::preload_the_datapack()
                     const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
 
                     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-                    if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
+                    if((1+fileName.size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
                         if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
                             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                            if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=BaseServerMasterSendDatapack::compressedExtension.end())
+                            if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(fileName))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
                                 if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
                                 {
-                                    std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
+                                    std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << fileName << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
                                     abort();
                                 }
                             }
                             else
                             #endif
                             {
-                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
+                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << fileName << " is over the maximum packet size" << std::endl;
                                 abort();
                             }
                         }
                     }
                     #endif
 
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    bool skip=false;
+                    if(fileName.size()>mainDatapackFolderFilter.size())
+                        if(stringStartWith(fileName,mainDatapackFolderFilter)
+                            #ifdef _WIN32
+                            || stringStartWith(fileName,mainDatapackFolderFilterW)
+                            #endif
+                                )
+                            skip=true;
                     //switch the data to correct hash or drop it
-                    if(regex_search(datapack_file_temp.at(index),mainDatapackFolderFilter))
+                    if(skip)
                     {
+                        #ifndef _WIN32
+                        abort();
+                        #endif
                     }
                     else
+                    #endif
                     {
                         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                         SHA256_CTX hashFile;
@@ -276,10 +318,10 @@ void BaseServer::preload_the_datapack()
                             abort();
                         }
                         SHA224_Update(&hashFile,data.data(),data.size());
-                        Client::DatapackCacheFile cacheFile;
+                        BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
                         SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
                         ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
-                        Client::datapack_file_hash_cache_main[datapack_file_temp.at(index)]=cacheFile;
+                        Client::datapack_file_hash_cache_main[fileName]=cacheFile;
                         #endif
 
                         SHA224_Update(&hashMain,data.data(),data.size());
@@ -287,12 +329,10 @@ void BaseServer::preload_the_datapack()
                 }
                 else
                 {
-                    std::cerr << "Stop now! Unable to open the file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " to do the datapack checksum for the mirror" << std::endl;
+                    std::cerr << "Stop now! Unable to open the file " << GlobalServerData::serverSettings.datapack_basePath << fileName << " to do the datapack checksum for the mirror" << std::endl;
                     abort();
                 }
             }
-            else
-                std::cerr << "File excluded because don't match the regex (2): " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
         CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
@@ -307,14 +347,15 @@ void BaseServer::preload_the_datapack()
             std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
             abort();
         }
-        const std::unordered_map<std::string,Client::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"",false);
+        const std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"",false);
         std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
         unsigned int index=0;
         while(index<datapack_file_temp.size()) {
-            if(regex_search(datapack_file_temp.at(index),GlobalServerData::serverPrivateVariables.datapack_rightFileName) && extensionAllowed.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=extensionAllowed.cend())
+            //right file name + extention check already done into Client::datapack_file_list() by if(regex_search(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
             {
-                std::string fullPathFileToOpen=GlobalServerData::serverPrivateVariables.subDatapackFolder+datapack_file_temp.at(index);
+                const std::string &fileName=datapack_file_temp.at(index);
+                std::string fullPathFileToOpen=GlobalServerData::serverPrivateVariables.subDatapackFolder+fileName;
                 #ifdef Q_OS_WIN32
                 stringreplaceAll(fullPathFileToOpen,"/","\\");
                 #endif
@@ -325,23 +366,23 @@ void BaseServer::preload_the_datapack()
                     const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
 
                     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-                    if((1+datapack_file_temp.at(index).size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
+                    if((1+fileName.size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
                         if(GlobalServerData::serverSettings.max_players>1)//if not internal
                         {
                             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                            if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(datapack_file_temp.at(index)))!=BaseServerMasterSendDatapack::compressedExtension.end())
+                            if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(fileName))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
                                 if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
                                 {
-                                    std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
+                                    std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << fileName << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
                                     abort();
                                 }
                             }
                             else
                             #endif
                             {
-                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " is over the maximum packet size" << std::endl;
+                                std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << fileName << " is over the maximum packet size" << std::endl;
                                 abort();
                             }
                         }
@@ -357,22 +398,20 @@ void BaseServer::preload_the_datapack()
                         abort();
                     }
                     SHA224_Update(&hashFile,data.data(),data.size());
-                    Client::DatapackCacheFile cacheFile;
+                    BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
                     SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
                     ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
-                    Client::datapack_file_hash_cache_sub[datapack_file_temp.at(index)]=cacheFile;
+                    Client::datapack_file_hash_cache_sub[fileName]=cacheFile;
                     #endif
 
                     SHA224_Update(&hashSub,data.data(),data.size());
                 }
                 else
                 {
-                    std::cerr << "Stop now! Unable to open the file " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << " to do the datapack checksum for the mirror" << std::endl;
+                    std::cerr << "Stop now! Unable to open the file " << GlobalServerData::serverSettings.datapack_basePath << fileName << " to do the datapack checksum for the mirror" << std::endl;
                     abort();
                 }
             }
-            else
-                std::cerr << "File excluded because don't match the regex (3): " << GlobalServerData::serverSettings.datapack_basePath << datapack_file_temp.at(index) << std::endl;
             index++;
         }
         CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
@@ -381,7 +420,7 @@ void BaseServer::preload_the_datapack()
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-    if(Client::datapack_file_hash_cache_base.size()==0)
+    if(BaseServerMasterSendDatapack::datapack_file_hash_cache_base.size()==0)
     {
         std::cout << "0 file for datapack loaded base (abort)" << std::endl;
         abort();
@@ -395,7 +434,7 @@ void BaseServer::preload_the_datapack()
         abort();
     }
 
-    std::cout << Client::datapack_file_hash_cache_base.size()
+    std::cout << BaseServerMasterSendDatapack::datapack_file_hash_cache_base.size()
               << " file for datapack loaded base, "
               << Client::datapack_file_hash_cache_main.size()
               << " file for datapack loaded main, "

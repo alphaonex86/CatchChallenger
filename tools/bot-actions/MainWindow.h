@@ -56,6 +56,8 @@ private slots:
     void on_autoCreateCharacter_stateChanged(int arg1);
     void all_player_connected();
     void all_player_on_map();
+    void on_host_returnPressed();
+
 signals:
     void isDisconnected();
 private:
