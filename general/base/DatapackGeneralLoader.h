@@ -32,6 +32,7 @@ public:
     static std::vector<ServerSpecProfile> loadServerProfileList(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file, const std::vector<Profile> &profileCommon);
     static std::vector<ServerSpecProfile> loadServerProfileListInternal(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file);
     #ifndef CATCHCHALLENGER_CLASS_MASTER
+    static std::unordered_map<uint16_t,std::vector<MonsterDrops> > loadMonsterDrop(const std::string &folder, const std::unordered_map<uint16_t, Item> &items,const std::unordered_map<uint16_t,Monster> &monsters);
     static std::vector<MonstersCollision> loadMonstersCollision(const std::string &file, const std::unordered_map<uint16_t, Item> &items, const std::vector<Event> &events);
     static LayersOptions loadLayersOptions(const std::string &file);
     static std::vector<Event> loadEvents(const std::string &file);

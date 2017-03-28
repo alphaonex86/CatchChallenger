@@ -20,6 +20,11 @@ public:
 
     static std::unordered_map<std::string,uint8_t> skinList;
 
+    struct DatapackCacheFile
+    {
+        //uint32_t mtime;
+        uint32_t partialHash;
+    };
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static std::unordered_set<std::string> compressedExtension;
@@ -29,13 +34,8 @@ public:
     static std::unordered_set<std::string> extensionAllowed;
     static std::vector<char> rawFilesBuffer;
     static int rawFilesBufferCount;
-    struct DatapackCacheFile
-    {
-        uint32_t mtime;
-        uint32_t partialHash;
-    };
     static std::unordered_map<std::string,uint32_t> datapack_file_list_cache;
-    static std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache;
+    static std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache_base;
     #endif
     static std::regex fileNameStartStringRegex;
 private:

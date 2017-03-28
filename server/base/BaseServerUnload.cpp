@@ -48,7 +48,6 @@ void BaseServer::unload_the_data()
     unload_the_plant_on_map();
     unload_the_map();
     unload_the_bots();
-    unload_monsters_drops();
     unload_the_skin();
     unload_the_datapack();
     unload_the_players();
@@ -184,7 +183,7 @@ void BaseServer::unload_the_datapack()
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     baseServerMasterSendDatapack.compressedExtension.clear();
     #endif
-    Client::datapack_file_hash_cache_base.clear();
+    BaseServerMasterSendDatapack::datapack_file_hash_cache_base.clear();
     Client::datapack_file_hash_cache_main.clear();
     Client::datapack_file_hash_cache_sub.clear();
     #endif

@@ -83,14 +83,6 @@ enum QuestAction : uint8_t
     QuestAction_NextStep
 };
 
-struct MonsterDrops
-{
-    uint32_t item;
-    uint32_t quantity_min;
-    uint32_t quantity_max;
-    uint32_t luck;//seam be 0 to 100
-};
-
 struct PlayerOnMap
 {
     CommonMap* map;

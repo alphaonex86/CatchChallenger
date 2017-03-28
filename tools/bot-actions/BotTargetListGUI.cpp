@@ -91,7 +91,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
 
 std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI,
                                                      const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard,
-                                                     bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget,
+                                                     bool dirt, bool itemFight, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget,
                                                      const MapServerMini * player_map,const uint8_t &player_x,const uint8_t &player_y)
 {
     //compute the forbiden direct value
@@ -427,7 +427,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
         //item on map
-        if(itemOnMap)
+        if(itemFight)
         {
             for(auto it = blockObject->pointOnMap_Item.begin();it!=blockObject->pointOnMap_Item.cend();++it)
             {
@@ -517,6 +517,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
         {
             for(auto it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
             {
+                const std::pair<uint8_t,uint8_t> &point=it->first;
                 const std::vector<uint32_t> &botsFightList=it->second;
                 unsigned int index=0;
                 while(index<botsFightList.size())
@@ -545,6 +546,8 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                     QColor colorValueL;
                     QColor alternateColorValueL;
                     const bool tooHard=maxFightLevel>(maxMonsterLevel+2);
+                    bool selected=false;
+                    unsigned int points=0;
                     if(tooHard)
                     {
                         colorValueL=redColorValue;
@@ -555,6 +558,54 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                     {
                         //colorValue=;
                         alternateColorValueL=alternateColorValue;
+
+                        points=1500;//never be less than 1000
+                        {
+                            //remove the distance point
+                            points-=resolvedBlock.weight;
+                            unsigned int sub_index=0;
+                            while(sub_index<fight.items.size())
+                            {
+                                const CatchChallenger::BotFight::Item &itemFight=fight.items.at(sub_index);
+                                const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemFight.id);
+                                //add plant value
+                                unsigned int addPoint=item.price;
+                                //if not consumable and player don't have it
+                                if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemFight.id)==player_private_and_public_informations.items.cend())
+                                    addPoint=addPoint*14/10;//+40%
+                                if(player_private_and_public_informations.items.find(itemFight.id)!=player_private_and_public_informations.items.cend())
+                                {
+                                    if(!item.consumeAtUse)
+                                        addPoint=0;
+                                    else
+                                    {
+                                        const uint32_t &quantity=player_private_and_public_informations.items.at(itemFight.id);
+                                        if(quantity>20)
+                                            addPoint=0;
+                                        else if(quantity>10)
+                                            addPoint/=4;
+                                    }
+                                }
+                                points+=addPoint;
+                                sub_index++;
+                            }
+                            if(player_map==NULL)
+                            {
+                                const uint16_t &distance=mapPointDistanceNormalised(point.first,point.second,player_x,player_y);
+                                if(distance<2)
+                                    points*=4;
+                                else if(distance<5)
+                                    points*=2;
+                            }
+
+                            if(bestPoint<points)
+                            {
+                                selected=true;
+                                bestPoint=points;
+                                bestItems.clear();
+                                bestTarget=globalTarget;
+                            }
+                        }
                     }
 
                     if(displayTooHard || !tooHard)
@@ -583,6 +634,8 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                     newItem->setIcon(QIcon(itemExtra.image));
                                     newItem->setToolTip(tips);
                                     itemToReturn.push_back(newItem->text().toStdString());
+                                    if(selected)
+                                        bestItems << newItem;
                                     if(listGUI==ui->globalTargets)
                                     {
                                         targetListGlobalTarget.push_back(globalTarget);
@@ -590,7 +643,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                             newItem->setBackgroundColor(alternateColorValueL);
                                         else if(colorValueL.isValid())
                                             newItem->setBackgroundColor(colorValueL);
-                                        newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                                        newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                                     }
                                     if(listGUI!=NULL)
                                         listGUI->addItem(newItem);
@@ -617,6 +670,8 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                     newItem->setIcon(QIcon(monsterExtra.thumb));
                                     newItem->setToolTip(tips);
                                     itemToReturn.push_back(newItem->text().toStdString());
+                                    if(selected)
+                                        bestItems << newItem;
                                     if(listGUI==ui->globalTargets)
                                     {
                                         targetListGlobalTarget.push_back(globalTarget);
@@ -624,7 +679,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                             newItem->setBackgroundColor(alternateColorValueL);
                                         else if(colorValueL.isValid())
                                             newItem->setBackgroundColor(colorValueL);
-                                        newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                                        newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                                     }
                                     if(listGUI!=NULL)
                                         listGUI->addItem(newItem);
@@ -820,6 +875,8 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
             QColor colorValueL;
             QColor alternateColorValueL;
             const bool tooHard=maxFightLevel>(maxMonsterLevel+2);
+            bool selected=false;
+            unsigned int points=0;
             if(tooHard)
             {
                 colorValueL=redColorValue;
@@ -830,6 +887,61 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
             {
                 //colorValue=;
                 alternateColorValueL=alternateColorValue;
+
+                points=1000;//never be less than 1000
+                {
+                    unsigned int totalLuck=0;
+                    //remove the distance point
+                    points-=resolvedBlock.weight;
+                    unsigned int sub_index=0;
+                    while(sub_index<monsterCollisionContent.defaultMonsters.size())
+                    {
+                        const CatchChallenger::MapMonster &mapMonster=monsterCollisionContent.defaultMonsters.at(sub_index);
+                        const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(mapMonster.id);
+                        CatchChallenger::CommonDatapackServerSpec::monsters.
+
+                        const CatchChallenger::BotFight::Item &itemFight=fight.items.at(sub_index);
+                        const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemFight.id);
+                        //add plant value
+                        unsigned int tempPoint=item.price;
+                        //if not consumable and player don't have it
+                        if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemFight.id)==player_private_and_public_informations.items.cend())
+                            tempPoint=tempPoint*14/10;//+40%
+                        if(player_private_and_public_informations.items.find(itemFight.id)!=player_private_and_public_informations.items.cend())
+                        {
+                            if(!item.consumeAtUse)
+                                tempPoint=0;
+                            else
+                            {
+                                const uint32_t &quantity=player_private_and_public_informations.items.at(itemFight.id);
+                                if(quantity>20)
+                                    tempPoint=0;
+                                else if(quantity>10)
+                                    tempPoint/=4;
+                            }
+                        }
+                        totalLuck+=mapMonster.luck;
+                        addPoint+=tempPoint*mapMonster.luck;
+                        sub_index++;
+                    }
+                    addPoint/=totalLuck;
+                    points+=addPoint;
+                    if(player_map==NULL)
+                    {
+                        const uint16_t &distance=mapPointDistanceNormalised(point.first,point.second,player_x,player_y);
+                        if(distance<2)
+                            points*=4;
+                        else if(distance<5)
+                            points*=2;
+                    }
+
+                    if(bestPoint<points)
+                    {
+                        selected=true;
+                        bestPoint=points;
+                        bestItems.clear();
+                        bestTarget=globalTarget;
+                    }
             }
 
             if(displayTooHard || !tooHard)
@@ -851,6 +963,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                         newItem->setToolTip(tips);
 
                         itemToReturn.push_back(newItem->text().toStdString());
+                        bestItems << newItem;
                         if(listGUI==ui->globalTargets)
                         {
                             targetListGlobalTarget.push_back(globalTarget);
@@ -858,7 +971,7 @@ std::vector<std::string> BotTargetList::contentToGUI(const CatchChallenger::Api_
                                 newItem->setBackgroundColor(alternateColorValueL);
                             else if(colorValueL.isValid())
                                 newItem->setBackgroundColor(colorValueL);
-                            newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                            newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                         }
                         if(listGUI!=NULL)
                             listGUI->addItem(newItem);

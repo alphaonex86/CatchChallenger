@@ -40,11 +40,11 @@ void EpollClientLoginSlave::askLogin(const uint8_t &query_id,const char *rawdata
     }
     else
     {
-        paramToPassToCallBack.push_back(askLoginParam);
+        paramToPassToCallBack.push(askLoginParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType.push_back("AskLoginParam");
+        paramToPassToCallBackType.push("AskLoginParam");
         #endif
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
     }
 }
 
@@ -203,7 +203,7 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
         abort();
     }
     #endif
-    callbackRegistred.erase(callbackRegistred.cbegin());
+    callbackRegistred.pop();
     {
         bool ok;
         if(!databaseBaseLogin.next())
@@ -220,9 +220,9 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                 removeFromQueryReceived(askLoginParam->query_id);
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginIsWrongBufferReply),sizeof(EpollClientLoginSlave::loginIsWrongBufferReply));
                 stat=EpollClientLoginStat::ProtocolGood;
-                paramToPassToCallBack.erase(paramToPassToCallBack.cbegin());
+                paramToPassToCallBack.pop();
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                paramToPassToCallBackType.erase(paramToPassToCallBackType.cbegin());
+                paramToPassToCallBackType.pop();
                 #endif
                 delete askLoginParam;
                 askLoginParam=NULL;
@@ -234,9 +234,9 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
             else
             {
                 loginIsWrong(askLoginParam->query_id,0x02,"Bad login for: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)+", pass: "+binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE));
-                paramToPassToCallBack.erase(paramToPassToCallBack.cbegin());
+                paramToPassToCallBack.pop();
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                paramToPassToCallBackType.erase(paramToPassToCallBackType.cbegin());
+                paramToPassToCallBackType.pop();
                 #endif
                 delete askLoginParam;
                 askLoginParam=NULL;
@@ -330,9 +330,9 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                              binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)
                              );
                 #endif
-                paramToPassToCallBack.erase(paramToPassToCallBack.cbegin());
+                paramToPassToCallBack.pop();
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                paramToPassToCallBackType.erase(paramToPassToCallBackType.cbegin());
+                paramToPassToCallBackType.pop();
                 #endif
                 delete askLoginParam;
                 askLoginParam=NULL;
@@ -345,9 +345,9 @@ void EpollClientLoginSlave::askLogin_return(AskLoginParam *askLoginParam)
                 {
                     account_id=0;
                     loginIsWrong(askLoginParam->query_id,0x03,"Account id is not a number");
-                    paramToPassToCallBack.erase(paramToPassToCallBack.cbegin());
+                    paramToPassToCallBack.pop();
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    paramToPassToCallBackType.erase(paramToPassToCallBackType.cbegin());
+                    paramToPassToCallBackType.pop();
                     #endif
                     delete askLoginParam;
                     askLoginParam=NULL;
@@ -380,7 +380,7 @@ void EpollClientLoginSlave::askLogin_cancel()
     }
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.erase(paramToPassToCallBack.cbegin());
+    paramToPassToCallBack.pop();
     loginIsWrong(askLoginParam->query_id,0x04,"Canceled by the Charaters group");
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
@@ -481,7 +481,7 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
         }
         #endif
         AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
-        paramToPassToCallBack.erase(paramToPassToCallBack.cbegin());
+        paramToPassToCallBack.pop();
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(askLoginParam==NULL)
             abort();
@@ -495,7 +495,7 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
         internalSendRawSmallPacket(EpollClientLoginSlave::loginGood,tempSize);
         //paramToPassToCallBack.pop();double call, look above
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType.erase(paramToPassToCallBackType.cbegin());
+        paramToPassToCallBackType.pop();
         #endif
         delete askLoginParam;
         askLoginParam=NULL;
@@ -544,11 +544,11 @@ void EpollClientLoginSlave::createAccount(const uint8_t &query_id, const char *r
     }
     else
     {
-        paramToPassToCallBack.push_back(askLoginParam);
+        paramToPassToCallBack.push(askLoginParam);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType.push_back("AskLoginParam");
+        paramToPassToCallBackType.push("AskLoginParam");
         #endif
-        callbackRegistred.push_back(callback);
+        callbackRegistred.push(callback);
     }
 }
 
@@ -569,7 +569,7 @@ void EpollClientLoginSlave::createAccount_object()
     }
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.erase(paramToPassToCallBack.cbegin());
+    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
         abort();
@@ -588,7 +588,7 @@ void EpollClientLoginSlave::createAccount_return(AskLoginParam *askLoginParam)
         abort();
     }
     #endif
-    callbackRegistred.erase(callbackRegistred.cbegin());
+    callbackRegistred.pop();
     if(!databaseBaseLogin.next())
     {
         //network send
