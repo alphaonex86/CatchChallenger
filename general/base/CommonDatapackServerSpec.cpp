@@ -39,6 +39,9 @@ void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath,con
     parseShop();
     parseServerProfileList();
     parseIndustries();
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    parseMonstersDrop();
+    #endif
     #endif
 
     #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -107,6 +110,16 @@ void CommonDatapackServerSpec::parseIndustries()
     }
 }
 
+#ifndef CATCHCHALLENGER_CLASS_MASTER
+void CommonDatapackServerSpec::parseMonstersDrop()
+{
+    monsterDrops=DatapackGeneralLoader::loadMonsterDrop(datapackPath+DATAPACK_BASE_PATH_MONSTERS,
+                                                       CommonDatapack::commonDatapack.items.item,
+                                                       CommonDatapack::commonDatapack.monsters);
+    std::cout << monsterDrops.size() << " monters drop(s) loaded" << std::endl;
+}
+#endif
+
 void CommonDatapackServerSpec::unload()
 {
     if(!isParsedSpec)
@@ -119,6 +132,9 @@ void CommonDatapackServerSpec::unload()
     #ifndef EPOLLCATCHCHALLENGERSERVER
     Map_loader::teleportConditionsUnparsed.clear();
     #endif
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    monsterDrops.clear();
+    #endif // CATCHCHALLENGER_CLASS_MASTER
     shops.clear();
     serverProfileList.clear();
     CommonDatapack::commonDatapack.unload();
