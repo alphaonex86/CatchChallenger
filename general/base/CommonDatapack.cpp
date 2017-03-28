@@ -47,9 +47,6 @@ void CommonDatapack::parseDatapack(const std::string &datapackPath)
     parseIndustries();
     parseProfileList();
     parseLayersOptions();
-    #ifndef CATCHCHALLENGER_CLASS_MASTER
-    parseMonstersDrop();
-    #endif
     #endif
 
     parsing=false;
@@ -186,16 +183,6 @@ void CommonDatapack::parseProfileList()
     std::cout << profileList.size() << " profile(s) loaded" << std::endl;
 }
 
-#ifndef CATCHCHALLENGER_CLASS_MASTER
-void CommonDatapack::parseMonstersDrop()
-{
-    monsterDrops=DatapackGeneralLoader::loadMonsterDrop(datapackPath+DATAPACK_BASE_PATH_MONSTERS,
-                                                       items.item,
-                                                       monsters);
-    std::cout << monsterDrops.size() << " monters drop(s) loaded" << std::endl;
-}
-#endif
-
 void CommonDatapack::parseLayersOptions()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
@@ -239,7 +226,6 @@ void CommonDatapack::unload()
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     monstersCollision.clear();
     types.clear();
-    monsterDrops.clear();
     #endif // CATCHCHALLENGER_CLASS_MASTER
     #ifndef EPOLLCATCHCHALLENGERSERVER
     xmlLoadedFile.clear();

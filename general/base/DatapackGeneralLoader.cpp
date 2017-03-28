@@ -3027,6 +3027,11 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
                                                     dropVar.luck=stringtouint32(luck,&ok);
                                                     if(!ok)
                                                         std::cerr << "Unable to open the xml file: " << file << ", luck is not a number: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
+                                                    else if(dropVar.luck==0)
+                                                    {
+                                                        std::cerr << "Unable to open the xml file: " << file << ", luck can't be 0: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
+                                                        ok=false;
+                                                    }
                                                 }
                                                 else
                                                     dropVar.luck=100;
@@ -3067,6 +3072,11 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
                                             {
                                                 if(CommonSettingsServer::commonSettingsServer.rates_drop!=1.0)
                                                 {
+                                                    if(CommonSettingsServer::commonSettingsServer.rates_drop==0)
+                                                    {
+                                                        std::cerr << "CommonSettingsServer::commonSettingsServer.rates_drop==0 durring loading the drop, reset to 1" << std::endl;
+                                                        CommonSettingsServer::commonSettingsServer.rates_drop=1;
+                                                    }
                                                     dropVar.luck=dropVar.luck*CommonSettingsServer::commonSettingsServer.rates_drop;
                                                     float targetAverage=((float)dropVar.quantity_min+(float)dropVar.quantity_max)/2.0;
                                                     targetAverage=(targetAverage*dropVar.luck)/100.0;

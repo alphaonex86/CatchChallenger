@@ -22,6 +22,7 @@ public:
     std::unordered_map<uint16_t,Quest> quests;
     std::unordered_map<uint32_t,Shop> shops;
     std::vector<ServerSpecProfile> serverProfileList;
+    std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;//to prevent send network packet for item when luck is 100%
     static CommonDatapackServerSpec commonDatapackServerSpec;
 private:
     bool isParsedSpec;
@@ -34,6 +35,9 @@ private:
     void parseShop();
     void parseServerProfileList();
     void parseIndustries();
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    void parseMonstersDrop();
+    #endif
 };
 }
 
