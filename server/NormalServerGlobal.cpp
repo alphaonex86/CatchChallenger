@@ -15,6 +15,16 @@ NormalServerGlobal::NormalServerGlobal()
 
 void NormalServerGlobal::displayInfo()
 {
+    #ifdef __EXCEPTIONS
+        puts("Exceptions are enabled");
+    #else
+        puts("Exceptions are disabled");
+    #endif
+    #ifdef _WIN32
+        puts("_WIN32 are enabled");
+    #else
+        puts("_WIN32 are disabled");
+    #endif
     #if defined(__clang__)
         std::cout << "Llvm and clang " << __clang_major__ << "." << __clang_minor__ << "." << __clang_patchlevel__ << ", version string: " << __clang_version__ << " build: " << __DATE__ << " " << __TIME__ << std::endl;
     #else

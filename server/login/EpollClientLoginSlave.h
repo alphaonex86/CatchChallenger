@@ -173,10 +173,10 @@ public:
 
     static unsigned char loginIsWrongBufferReply[1+1+4+1];
 private:
-    std::vector<DatabaseBase::CallBack *> callbackRegistred;
-    std::vector<void *> paramToPassToCallBack;
+    std::queue<DatabaseBase::CallBack *> callbackRegistred;
+    std::queue<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    std::vector<std::string> paramToPassToCallBackType;
+    std::queue<std::string> paramToPassToCallBackType;
     #endif
 
     static unsigned char protocolReplyProtocolNotSupported[7];
