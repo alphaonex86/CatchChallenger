@@ -205,7 +205,7 @@ private:
     void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
     void preload_the_bots(const std::vector<Map_semi> &semi_loaded_map);
     void loadBotFile(const std::string &mapfile,const std::string &file);
-    void checkOnTileEvent(Player &player);
+    bool checkOnTileEvent(Player &player);
 };
 
 #endif // ACTIONS_ACTION_BOT_INTERFACE_H

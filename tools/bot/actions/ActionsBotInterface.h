@@ -47,6 +47,7 @@ public:
     };
     struct Player
     {
+        bool canMoveOnMap;
         uint32_t mapId;
         uint8_t x;
         uint8_t y;
