@@ -528,3 +528,8 @@ void MainWindow::all_player_on_map()
     botTargetList->hide();
     botTargetList->loadAllBotsInformation();
 }
+
+void MainWindow::on_host_returnPressed()
+{
+    on_connect_clicked();
+}

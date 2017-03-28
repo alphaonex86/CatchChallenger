@@ -101,7 +101,7 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
             while(!callbackRegistred.empty())
             {
                 callbackRegistred.front()->object=NULL;
-                callbackRegistred.erase(callbackRegistred.cbegin());
+                callbackRegistred.pop();
             }
         }
 
@@ -149,8 +149,6 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
         }
 
         //crash with heap-buffer-overflow if not flush before the end of destructor
-        callbackRegistred.clear();
-        paramToPassToCallBack.clear();
     }
     disconnectClient();
 }

@@ -587,6 +587,14 @@ enum ApplyOn : uint8_t
     ApplyOn_Nobody=0x00
 };
 
+struct MonsterDrops
+{
+    uint32_t item;
+    uint32_t quantity_min;
+    uint32_t quantity_max;
+    uint32_t luck;//seam be 0 to 100
+};
+
 struct Skill
 {
     enum AttackReturnCase : uint8_t

@@ -30,7 +30,7 @@ std::vector<char> BaseServerMasterSendDatapack::rawFilesBuffer;
 int BaseServerMasterSendDatapack::rawFilesBufferCount;
 
 std::unordered_map<std::string,uint32_t> BaseServerMasterSendDatapack::datapack_file_list_cache;
-std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> BaseServerMasterSendDatapack::datapack_file_hash_cache;
+std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
 #endif
 
 std::regex BaseServerMasterSendDatapack::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/");
@@ -64,6 +64,12 @@ void BaseServerMasterSendDatapack::preload_the_skin()
 
 void BaseServerMasterSendDatapack::loadTheDatapackFileList()
 {
+    if(!CommonSettingsCommon::commonSettingsCommon.datapackHashBase.empty()
+            #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+            && !datapack_file_hash_cache_base.empty()
+            #endif
+            )
+        return;//base already calculated
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     char tempBigBufferForOutput[CATCHCHALLENGER_SHA224HASH_SIZE];
     #endif
@@ -124,10 +130,10 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                                 SHA224_Update(&hashFile,data.data(),data.size());
                                 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                                 BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
-                                cacheFile.mtime=buf.st_mtime;
+                                //cacheFile.mtime=buf.st_mtime;
                                 SHA224_Final(reinterpret_cast<unsigned char *>(tempBigBufferForOutput),&hashFile);
                                 ::memcpy(&cacheFile.partialHash,tempBigBufferForOutput,sizeof(uint32_t));
-                                datapack_file_hash_cache[datapack_file_temp.at(index)]=cacheFile;
+                                datapack_file_hash_cache_base[datapack_file_temp.at(index)]=cacheFile;
                                 #endif
                             }
                             SHA224_Update(&hashBase,data.data(),data.size());
@@ -175,6 +181,6 @@ void BaseServerMasterSendDatapack::unload()
     extensionAllowed.clear();
     rawFilesBuffer.clear();
     datapack_file_list_cache.clear();
-    datapack_file_hash_cache.clear();
+    datapack_file_hash_cache_base.clear();
     #endif
 }

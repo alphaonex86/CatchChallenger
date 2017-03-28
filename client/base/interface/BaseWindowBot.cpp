@@ -768,17 +768,17 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "check quest requirement for: " << quest.id;
     #endif
-    Player_private_and_public_informations informations=client->get_player_informations();
     if(quests.find(quest.id)!=quests.cend())
     {
-        if(informations.quests.at(quest.id).step!=0)
+        const PlayerQuest &playerquest=quests.at(quest.id);
+        if(playerquest.step!=0)
         {
             #ifdef DEBUG_CLIENT_QUEST
             qDebug() << "can start the quest because is already running: " << questId;
             #endif
             return false;
         }
-        if(informations.quests.at(quest.id).finish_one_time && !quest.repeatable)
+        if(playerquest.finish_one_time && !quest.repeatable)
         {
             #ifdef DEBUG_CLIENT_QUEST
             qDebug() << "done one time and no repeatable: " << questId;
@@ -801,7 +801,15 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
             #endif
             return false;
         }
-        if(!informations.quests.at(questId).finish_one_time)
+        if(quests.find(questId)!=quests.cend())
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            qDebug() << "quest never started: " << questId;
+            #endif
+            return false;
+        }
+        const PlayerQuest &playerquest=quests.at(quest.id);
+        if(!playerquest.finish_one_time)
         {
             #ifdef DEBUG_CLIENT_QUEST
             qDebug() << "quest never finished: " << questId;

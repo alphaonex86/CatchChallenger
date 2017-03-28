@@ -253,6 +253,46 @@ std::string FacilityLibGeneral::getSuffix(const std::string& fileName)
         return fileName.substr(pos+1);
 }
 
+std::string FacilityLibGeneral::getSuffixAndValidatePathFromFS(const std::string& fileName)
+{
+    const size_t &size=fileName.size();
+    if(size<5)
+        return std::string();
+    const char * const data=fileName.data();
+    size_t index=size;
+    while(1)//the last 4 char
+    {
+        index--;
+        const char &currentChar=data[index];
+        if(currentChar=='.')
+            break;
+        else if(currentChar<97 || currentChar>122)
+            return std::string();
+        if(index<=(size-5))
+            return std::string();
+        if(index<=1)
+            return std::string();
+    }
+    size_t index2=0;
+    //not needed: the FS will never return that's: if end with / false
+    //not needed: the FS will never return that's: if contains // false
+    while(index2<index)
+    {
+        const char &currentChar=data[index2];
+        if(currentChar>=97 && currentChar<=122)//a-z
+        {}
+        else if(currentChar>=45 && currentChar<=57)//0-9 + / + . + -
+        {}
+        else if(currentChar==95)
+        {}
+        else
+            return std::string();
+        index2++;
+    }
+    //not needed: if start with / false
+    return fileName.substr(index+1);
+}
+
 std::string FacilityLibGeneral::getFolderFromFile(const std::string& fileName)
 {
     const auto &pos=fileName.find_last_of('/');

@@ -42,9 +42,9 @@ using namespace CatchChallenger;
     //loadPlayerAllow();
 }*/
 
-std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_list(const std::string &path, const std::string &exclude, const bool withHash)
+std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list(const std::string &path, const std::string &exclude, const bool withHash)
 {
-    std::unordered_map<std::string,DatapackCacheFile> filesList;
+    std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> filesList;
 
     std::vector<std::string> returnList;
     if(exclude.empty())
@@ -66,9 +66,12 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
         #else
         const std::string &fileName=returnList.at(index);
         #endif
-        if(regex_search(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+        const std::string &suffix=FacilityLibGeneral::getSuffixAndValidatePathFromFS(fileName);
+        //if(regex_search(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
+        //try replace by better algo
+        if(!suffix.empty())
         {
-            const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
+//            const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
             if(!suffix.empty() &&
             #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                     BaseServerMasterSendDatapack::extensionAllowed.find(suffix)
@@ -77,7 +80,7 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
                     extensionAllowed.find(suffix)!=extensionAllowed.cend())
             #endif
             {
-                DatapackCacheFile datapackCacheFile;
+                BaseServerMasterSendDatapack::DatapackCacheFile datapackCacheFile;
                 if(withHash)
                 {
                     struct stat buf;
@@ -122,6 +125,14 @@ std::unordered_map<std::string,Client::DatapackCacheFile> Client::datapack_file_
                 filesList[fileName]=datapackCacheFile;
             }
         }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        else
+        {
+            std::cerr << "wrong file name: " << fileName << std::endl;
+            const std::string &suffix2=FacilityLibGeneral::getSuffixAndValidatePathFromFS(fileName);
+            std::cerr << "output: " << suffix2 << std::endl;
+        }
+        #endif
         index++;
     }
     return filesList;
