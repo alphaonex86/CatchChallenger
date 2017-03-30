@@ -1,6 +1,9 @@
 #include "ActionsAction.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonDatapackServerSpec.h"
+#include "../../general/base/FacilityLib.h"
+#include "../../client/fight/interface/ClientFightEngine.h"
 
 ActionsAction *ActionsAction::actionsAction=NULL;
 
@@ -52,6 +55,69 @@ void ActionsAction::insert_player_all(CatchChallenger::Api_protocol *api,const C
     {
         botplayer.visiblePlayers[player.simplifiedId]=player;
         botplayer.viewedPlayers << QString::fromStdString(player.pseudo);
+    }
+}
+
+void ActionsAction::newEvent(CatchChallenger::Api_protocol *api,const uint8_t &event,const uint8_t &event_value)
+{
+    forcedEvent(api,event,event_value);
+}
+
+void ActionsAction::forcedEvent(CatchChallenger::Api_protocol *api,const uint8_t &event,const uint8_t &event_value)
+{
+    Player &botplayer=clientList[api];
+    botplayer.events[event]=event_value;
+}
+
+void ActionsAction::setEvents_slot(const QList<QPair<uint8_t,uint8_t> > &events)
+{
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    if(api==NULL)
+        return;
+    setEvents(api,events);
+}
+
+void ActionsAction::newEvent_slot(const uint8_t &event,const uint8_t &event_value)
+{
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    if(api==NULL)
+        return;
+    newEvent(api,event,event_value);
+}
+
+void ActionsAction::setEvents(CatchChallenger::Api_protocol *api,const QList<QPair<uint8_t,uint8_t> > &events)
+{
+    Player &botplayer=clientList[api];
+    botplayer.events.clear();
+    unsigned int index=0;
+    while(index<botplayer.events.size())
+    {
+        const QPair<uint8_t,uint8_t> event=events.at(index);
+        if(event.first>=CatchChallenger::CommonDatapack::commonDatapack.events.size())
+        {
+            std::cerr << "ActionsAction::setEvents() event out of range" << std::endl;
+            break;
+        }
+        if(event.second>=CatchChallenger::CommonDatapack::commonDatapack.events.at(event.first).values.size())
+        {
+            std::cerr << "ActionsAction::setEvents() event value out of range" << std::endl;
+            break;
+        }
+        while(botplayer.events.size()<=event.first)
+            botplayer.events.push_back(0);
+        botplayer.events[event.first]=event.second;
+        index++;
+    }
+    while((uint32_t)botplayer.events.size()<CatchChallenger::CommonDatapack::commonDatapack.events.size())
+        botplayer.events.push_back(0);
+    if((uint32_t)botplayer.events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
+        while((uint32_t)botplayer.events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
+            botplayer.events.pop_back();
+    index=0;
+    while(index<botplayer.events.size())
+    {
+        forcedEvent(api,index,botplayer.events.at(index));
+        index++;
     }
 }
 
@@ -396,72 +462,53 @@ bool ActionsAction::moveWithoutTeleport(CatchChallenger::Api_protocol *api,Catch
 
 bool ActionsAction::checkOnTileEvent(Player &player)
 {
-    std::pair<uint8_t,uint8_t> pos(x,y);
-    if(all_map.value(current_map)->logicalMap.botsFightTrigger.find(pos)!=all_map.value(current_map)->logicalMap.botsFightTrigger.cend())
+    std::pair<uint8_t,uint8_t> pos(player.x,player.y);
+    const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+    const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+    if(playerMap->botsFightTrigger.find(pos)!=playerMap->botsFightTrigger.cend())
     {
-        std::vector<uint32_t> botFightList=all_map.value(current_map)->logicalMap.botsFightTrigger.at(pos);
-        QList<QPair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(QPair<uint8_t,uint8_t>(x,y));
+        std::vector<uint32_t> botFightList=playerMap->botsFightTrigger.at(pos);
         unsigned int index=0;
         while(index<botFightList.size())
         {
             const uint32_t &fightId=botFightList.at(index);
-            if(!haveBeatBot(fightId))
+            if(!haveBeatBot(player.api,fightId))
             {
                 qDebug() <<  "is now in fight with: " << fightId;
                 player.canMoveOnMap=false;
-                if(inMove)
+                player.api->stopMove();
+                QList<CatchChallenger::PlayerMonster> botFightMonstersTransformed;
+                const std::vector<CatchChallenger::BotFight::BotFightMonster> &monsters=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId).monsters;
+                unsigned int index=0;
+                while(index<monsters.size())
                 {
-                    inMove=false;
-                    emit send_player_direction(direction);
-                    keyPressed.clear();
+                    botFightMonstersTransformed << CatchChallenger::FacilityLib::botFightMonsterToPlayerMonster(monsters.at(index),CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsters.at(index).id),monsters.at(index).level));
+                    index++;
                 }
-                parseStop();
-                emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),botFightRemotePointList.at(index).first,botFightRemotePointList.at(index).second);
-                if(all_map.value(current_map)->logicalMap.botsDisplay.contains(botFightRemotePointList.at(index)))
-                {
-                    TemporaryTile *temporaryTile=all_map.value(current_map)->logicalMap.botsDisplay.value(botFightRemotePointList.at(index)).temporaryTile;
-                    //show a temporary flags
-                    {
-                        if(fightCollisionBot==NULL)
-                        {
-                            fightCollisionBot=new Tiled::Tileset(QLatin1Literal("fightCollisionBot"),16,16);
-                            fightCollisionBot->loadFromImage(QImage(QStringLiteral(":/images/fightCollisionBot.png")),QStringLiteral(":/images/fightCollisionBot.png"));
-                        }
-                    }
-                    temporaryTile->startAnimation(fightCollisionBot->tileAt(0),150,fightCollisionBot->tileCount());
-                }
-                else
-                    qDebug() <<  "temporaryTile not found";
-                blocked=true;
+                player.fightEngine->setBotMonster(botFightMonstersTransformed);
+                player.lastFightAction.restart();
                 return true;
             }
             index++;
         }
     }
     //check if is in fight collision, but only if is move
-    if(repel_step<=0)
+    if(player.repel_step<=0)
     {
-        if(inMove)
+        const CatchChallenger::Player_private_and_public_informations &playerInformationsRO=player.api->get_player_informations_ro();
+        const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+        const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+        if(player.fightEngine->generateWildFightIfCollision(playerMap,player.x,player.y,playerInformationsRO.items,player.events))
         {
-            if(fightEngine->generateWildFightIfCollision(&all_map.value(current_map)->logicalMap,x,y,*items,*events))
-            {
-                player.canMoveOnMap=false;
-                inMove=false;
-                emit send_player_direction(direction);
-                keyPressed.clear();
-                parseStop();
-                emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),x,y);
-                blocked=true;
-                return true;
-            }
+            player.canMoveOnMap=false;
+            player.api->stopMove();
+            player.lastFightAction.restart();
+            return true;
         }
     }
     else
-    {
-        repel_step--;
-        if(repel_step==0)
-            emit repelEffectIsOver();
-    }
+        player.repel_step--;
+    return false;
 }
 
 void ActionsAction::doMove()

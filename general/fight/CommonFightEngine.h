@@ -63,7 +63,7 @@ public:
     std::vector<Skill::BuffEffect> removeOldBuff(PublicPlayerMonster *playerMonster);
     virtual bool isInBattle() const = 0;
     //return true if now have wild monter to fight
-    virtual bool generateWildFightIfCollision(CommonMap *map, const COORD_TYPE &x, const COORD_TYPE &y,
+    virtual bool generateWildFightIfCollision(const CommonMap *map, const COORD_TYPE &x, const COORD_TYPE &y,
                                               #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
                                               const std::unordered_map<uint16_t, uint32_t> &items
                                               #else
