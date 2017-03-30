@@ -169,6 +169,7 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
         newPlayer.x=0;
         newPlayer.y=0;
         newPlayer.canMoveOnMap=false;
+        newPlayer.repel_step=0;
         newPlayer.target.blockObject=NULL;
         newPlayer.target.extra=0;
         newPlayer.target.linkPoint.x=0;
@@ -185,6 +186,10 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
         if(!connect(api,&CatchChallenger::Api_protocol::add_to_inventory,   actionsAction,&ActionsAction::add_to_inventory_slot,Qt::QueuedConnection))
             abort();
         if(!connect(api,&CatchChallenger::Api_protocol::remove_to_inventory,actionsAction,&ActionsAction::remove_to_inventory_slot,Qt::QueuedConnection))
+            abort();
+        if(!connect(api,&CatchChallenger::Api_protocol::setEvents,   actionsAction,&ActionsAction::setEvents_slot,Qt::QueuedConnection))
+            abort();
+        if(!connect(api,&CatchChallenger::Api_protocol::newEvent,actionsAction,&ActionsAction::newEvent_slot,Qt::QueuedConnection))
             abort();
     }
     else

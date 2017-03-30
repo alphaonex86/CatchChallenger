@@ -73,6 +73,11 @@ public:
     static void remove_to_inventory(CatchChallenger::Api_protocol *api,const QHash<uint16_t,uint32_t> &items);
     void remove_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
     static void remove_to_inventory(CatchChallenger::Api_protocol *api,const uint32_t &itemId,const uint32_t &quantity=1);
+    void setEvents_slot(const QList<QPair<uint8_t,uint8_t> > &events);
+    void newEvent_slot(const uint8_t &event,const uint8_t &event_value);
+    void setEvents(CatchChallenger::Api_protocol *api,const QList<QPair<uint8_t,uint8_t> > &events);
+    void newEvent(CatchChallenger::Api_protocol *api,const uint8_t &event,const uint8_t &event_value);
+    void forcedEvent(CatchChallenger::Api_protocol *api,const uint8_t &event,const uint8_t &event_value);
 
     static void showTip(const QString &text);
 
@@ -88,6 +93,7 @@ public:
     void seed_planted_slot(const bool &ok);
     static void plant_collected(CatchChallenger::Api_protocol *api,const CatchChallenger::Plant_collect &stat);
     void plant_collected_slot(const CatchChallenger::Plant_collect &stat);
+    static bool checkOnTileEvent(Player &player);
 public slots:
     bool preload_the_map();
 signals:
@@ -205,7 +211,6 @@ private:
     void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
     void preload_the_bots(const std::vector<Map_semi> &semi_loaded_map);
     void loadBotFile(const std::string &mapfile,const std::string &file);
-    bool checkOnTileEvent(Player &player);
 };
 
 #endif // ACTIONS_ACTION_BOT_INTERFACE_H
