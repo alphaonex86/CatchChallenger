@@ -47,7 +47,9 @@ public:
     };
     struct Player
     {
+        unsigned int repel_step;
         bool canMoveOnMap;
+        std::vector<uint8_t> events;
         uint32_t mapId;
         uint8_t x;
         uint8_t y;
@@ -55,6 +57,7 @@ public:
         GlobalTarget target;
         //uint8_t previousStepWalked;do into the api, see MoveOnTheMap::newDirection()
         CatchChallenger::ClientFightEngine *fightEngine;
+        QTime lastFightAction;
         CatchChallenger::Api_protocol *api;
         QHash<uint16_t,CatchChallenger::Player_public_informations> visiblePlayers;
         QSet<QString> viewedPlayers;
