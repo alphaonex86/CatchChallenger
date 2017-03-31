@@ -64,17 +64,6 @@ Client::Client(
     #endif
     connected_players(0),
     stopIt(false),
-    #ifdef CATCHCHALLENGER_DDOS_FILTER
-    movePacketKickSize(0),
-    movePacketKickTotalCache(0),
-    movePacketKickNewValue(0),
-    chatPacketKickSize(0),
-    chatPacketKickTotalCache(0),
-    chatPacketKickNewValue(0),
-    otherPacketKickSize(0),
-    otherPacketKickTotalCache(0),
-    otherPacketKickNewValue(0),
-    #endif
     profileIndex(0),
     otherPlayerBattle(NULL),
     battleIsValidated(false),
@@ -105,19 +94,6 @@ Client::Client(
     public_and_private_informations.encyclopedia_monster=NULL;
     public_and_private_informations.encyclopedia_item=NULL;
     public_and_private_informations.bot_already_beaten=NULL;
-    #ifdef CATCHCHALLENGER_DDOS_FILTER
-    {
-        memset(movePacketKick,
-               0x00,
-               CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
-        memset(chatPacketKick,
-               0x00,
-               CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
-        memset(otherPacketKick,
-               0x00,
-               CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
-    }
-    #endif
     queryNumberList.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
     {
         int index=0;

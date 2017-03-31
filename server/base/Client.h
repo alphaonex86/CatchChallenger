@@ -267,18 +267,9 @@ private:
     // for status
     bool stopIt;
     #ifdef CATCHCHALLENGER_DDOS_FILTER
-    uint8_t movePacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
-    uint8_t movePacketKickSize;
-    uint8_t movePacketKickTotalCache;
-    uint8_t movePacketKickNewValue;
-    uint8_t chatPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
-    uint8_t chatPacketKickSize;
-    uint8_t chatPacketKickTotalCache;
-    uint8_t chatPacketKickNewValue;
-    uint8_t otherPacketKick[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
-    uint8_t otherPacketKickSize;
-    uint8_t otherPacketKickTotalCache;
-    uint8_t otherPacketKickNewValue;
+    DdosBuffer<uint8_t,3> movePacketKick;
+    DdosBuffer<uint8_t,3> chatPacketKick;
+    DdosBuffer<uint8_t,3> otherPacketKick;
     #endif
     uint8_t profileIndex;
     std::queue<PlayerOnMap> lastTeleportation;

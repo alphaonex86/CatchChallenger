@@ -31,28 +31,28 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
     switch(packetCode)
     {
         case 0x02:
-            if((movePacketKickTotalCache+movePacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitMove)
+            if(movePacketKick.total()>=GlobalServerData::serverSettings.ddos.kickLimitMove)
             {
-                errorOutput("Too many move in sort time, check DDOS limit: ("+std::to_string(movePacketKickTotalCache)+"+"+std::to_string(movePacketKickNewValue)+")>="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitMove));
+                errorOutput("Too many move in sort time, check DDOS limit: ("+std::to_string(movePacketKick.total())+")>="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitMove));
                 return false;
             }
-            movePacketKickNewValue++;
+            movePacketKick.incrementLastValue();
         break;
         case 0x03:
-            if((chatPacketKickTotalCache+chatPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitChat)
+            if(chatPacketKick.total()>=GlobalServerData::serverSettings.ddos.kickLimitChat)
             {
-                errorOutput("Too many chat in sort time, check DDOS limit: ("+std::to_string(chatPacketKickTotalCache)+"+"+std::to_string(chatPacketKickNewValue)+")>="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitChat));
+                errorOutput("Too many chat in sort time, check DDOS limit: ("+std::to_string(chatPacketKick.total())+")>="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitChat));
                 return false;
             }
-            chatPacketKickNewValue++;
+            chatPacketKick.incrementLastValue();
         break;
         default:
-            if((otherPacketKickTotalCache+otherPacketKickNewValue)>=GlobalServerData::serverSettings.ddos.kickLimitOther)
+            if(otherPacketKick.total()>=GlobalServerData::serverSettings.ddos.kickLimitOther)
             {
-                errorOutput("Too many packet in sort time, check DDOS limit: ("+std::to_string(otherPacketKickTotalCache)+"+"+std::to_string(otherPacketKickNewValue)+")>="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitOther));
+                errorOutput("Too many packet in sort time, check DDOS limit: ("+std::to_string(otherPacketKick.total())+")>="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitOther));
                 return false;
             }
-            otherPacketKickNewValue++;
+            otherPacketKick.incrementLastValue();
         break;
     }
     #endif
