@@ -482,7 +482,92 @@ void BotTargetList::updatePlayerStep()
             else
             {
                 //can't move: can be in fight
-                //do the code here
+                if(player.fightEngine->isInFight())
+                {
+                    if((player.lastFightAction.elapsed()/1000)>(5/*5s*/))
+                    {
+                        player.lastFightAction.restart();
+                        //do the code here
+                        CatchChallenger::PlayerMonster *monster=player.fightEngine->getCurrentMonster();
+                        if(monster==NULL)
+                        {
+                            std::cerr << ", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+"NULL pointer at updateCurrentMonsterInformation()" << std::endl;
+                            return;
+                        }
+                        //list the attack
+                        unsigned int index=0;
+                        bool useTheRescueSkill=true;
+                        uint16_t skillUsed=0;
+                        while(index<monster->skills.size())
+                        {
+                            const CatchChallenger::PlayerMonster::PlayerSkill &skill=monster->skills.at(index);
+                            if(skill.endurance>0)
+                            {
+                                skillUsed=skill.skill;
+                                useTheRescueSkill=false;
+                            }
+                            index++;
+                        }
+                        if(useTheRescueSkill)
+                        {
+                            if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(0)!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
+                                player.fightEngine->useSkill(0);
+                            else
+                            {
+                                std::cerr << "No skill found and no rescue skill" << std::endl;
+                                abort();
+                            }
+                        }
+                        else
+                            player.fightEngine->useSkill(skillUsed);
+
+                        if(player.fightEngine->otherMonsterIsKO())
+                            player.fightEngine->dropKOOtherMonster();
+                        if(player.fightEngine->currentMonsterIsKO())
+                        {
+                            player.fightEngine->dropKOCurrentMonster();
+
+                            if(player.fightEngine->haveAnotherMonsterOnThePlayerToFight())
+                            {
+                                if(player.fightEngine->isInFight())
+                                {
+                                    #ifdef DEBUG_CLIENT_BATTLE
+                                    qDebug() << "Your current monster is KO, select another";
+                                    #endif
+                                    selectObject(CatchChallenger::ObjectType_MonsterToFightKO);
+                                }
+                                else
+                                {
+                                    player.canMoveOnMap=true;
+                                    player.fightEngine->fightFinished();
+                                    CatchChallenger::PlayerMonster *monster=player.fightEngine->evolutionByLevelUp();
+                                    if(monster!=NULL)
+                                    {
+                                        const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster->monster);
+                                        unsigned int index=0;
+                                        while(index<monsterInformations.evolutions.size())
+                                        {
+                                            const CatchChallenger::Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
+                                            if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.level==monster->level)
+                                            {
+                                                const uint8_t &monsterEvolutionPostion=player.fightEngine->getPlayerMonsterPosition(monster);
+                                                player.fightEngine->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
+                                                return;
+                                            }
+                                            index++;
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                player.canMoveOnMap=true;
+                                player.fightEngine->healAllMonsters();
+                                player.fightEngine->fightFinished();
+                            }
+                        }
+                   }
+                }
             }
         }
     }
