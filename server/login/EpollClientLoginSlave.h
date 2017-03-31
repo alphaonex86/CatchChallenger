@@ -6,6 +6,7 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "../VariableServer.h"
 #include "../epoll/db/EpollPostgresql.h"
+#include "../base/DdosBuffer.h"
 #include "LinkToMaster.h"
 #include "LinkToGameServer.h"
 
@@ -250,18 +251,9 @@ private:
     uint8_t serverListForReplyInSuspend;
     static std::vector<EpollClientLoginSlave *> client_list;
 
-    uint8_t movePacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
-    uint8_t movePacketKickSize;
-    uint8_t movePacketKickTotalCache;
-    uint8_t movePacketKickNewValue;
-    uint8_t chatPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
-    uint8_t chatPacketKickSize;
-    uint8_t chatPacketKickTotalCache;
-    uint8_t chatPacketKickNewValue;
-    uint8_t otherPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE];
-    uint8_t otherPacketKickSize;
-    uint8_t otherPacketKickTotalCache;
-    uint8_t otherPacketKickNewValue;
+    DdosBuffer<uint8_t,3> movePacketKick;
+    DdosBuffer<uint8_t,3> chatPacketKick;
+    DdosBuffer<uint8_t,3> otherPacketKick;
 public:
     static EpollPostgresql databaseBaseLogin;
     static EpollPostgresql databaseBaseCommon;
