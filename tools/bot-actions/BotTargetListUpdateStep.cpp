@@ -531,10 +531,31 @@ void BotTargetList::updatePlayerStep()
                             {
                                 if(player.fightEngine->isInFight())
                                 {
-                                    #ifdef DEBUG_CLIENT_BATTLE
-                                    qDebug() << "Your current monster is KO, select another";
-                                    #endif
-                                    selectObject(CatchChallenger::ObjectType_MonsterToFightKO);
+                                    uint8_t maxLevel=0;
+                                    uint8_t currentPos=0;
+                                    const std::vector<CatchChallenger::PlayerMonster> &playerMonsters=player.fightEngine->getPlayerMonster();
+                                    uint8_t index=0;
+                                    while(index<playerMonsters.size())
+                                    {
+                                        const CatchChallenger::PlayerMonster &playerMonster=playerMonsters.at(index);
+                                        if(playerMonster.hp>0)
+                                        {
+                                            if(playerMonster.level<maxLevel)
+                                            {
+                                                maxLevel=playerMonster.level;
+                                                currentPos=index;
+                                            }
+                                        }
+                                        index++;
+                                    }
+                                    if(maxLevel==0)
+                                    {
+                                        std::cerr << "player.fightEngine->haveAnotherMonsterOnThePlayerToFight() && player.fightEngine->isInFight(), unable to select other monster" << std::endl;
+                                        abort();
+                                    }
+                                    if(!player.fightEngine->changeOfMonsterInFight(currentPos))
+                                        return;
+                                    player.api->changeOfMonsterInFightByPosition(currentPos);
                                 }
                                 else
                                 {
