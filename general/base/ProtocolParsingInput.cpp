@@ -426,7 +426,7 @@ int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const ui
             {
                 if(!(flags & 0x08))
                 {
-                    errorParsingLayer("dynamic size blocked (header)");
+                    errorParsingLayer("dynamic size blocked (header) for packet code: "+std::to_string(packetCode));
                     return -1;
                 }
             }

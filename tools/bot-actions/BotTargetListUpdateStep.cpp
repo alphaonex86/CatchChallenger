@@ -40,9 +40,9 @@ void BotTargetList::updatePlayerStep()
             abort();
         if(api->getCaracterSelected())
         {
+            CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
             if(player.canMoveOnMap)
             {
-                CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
                 bool haveChange=false;
                 if(player.target.localStep.empty())
                 {
@@ -494,32 +494,84 @@ void BotTargetList::updatePlayerStep()
                             std::cerr << ", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+"NULL pointer at updateCurrentMonsterInformation()" << std::endl;
                             return;
                         }
+                        CatchChallenger::PublicPlayerMonster *othermonster=player.fightEngine->getOtherMonster();
+                        if(othermonster==NULL)
+                        {
+                            std::cerr << ", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+"NULL pointer at updateCurrentMonsterInformation()" << std::endl;
+                            return;
+                        }
                         //list the attack
-                        unsigned int index=0;
-                        bool useTheRescueSkill=true;
-                        uint16_t skillUsed=0;
-                        while(index<monster->skills.size())
-                        {
-                            const CatchChallenger::PlayerMonster::PlayerSkill &skill=monster->skills.at(index);
-                            if(skill.endurance>0)
+                        bool tryCapture=false;
+                        uint16_t  item=0;
+                        if(player_private_and_public_informations.encyclopedia_item!=NULL)
+                            if(!(player_private_and_public_informations.encyclopedia_item[othermonster->monster/8] & (1<<(7-othermonster->monster%8))))
                             {
-                                skillUsed=skill.skill;
-                                useTheRescueSkill=false;
+                                float bonusStat=1.0;
+                                if(wildMonsters.front().buffs.size())
+                                {
+                                    bonusStat=0;
+                                    unsigned int index=0;
+                                    while(index<wildMonsters.front().buffs.size())
+                                    {
+                                        const PlayerBuff &playerBuff=wildMonsters.front().buffs.at(index);
+                                        if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.find(playerBuff.buff)!=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
+                                        {
+                                            const Buff &buff=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.at(playerBuff.buff);
+                                            if(playerBuff.level>0 && playerBuff.level<=buff.level.size())
+                                                bonusStat+=buff.level.at(playerBuff.level-1).capture_bonus;
+                                            else
+                                            {
+                                                errorFightEngine("Buff level for wild monter not found: "+std::to_string(playerBuff.buff)+" at level "+std::to_string(playerBuff.level));
+                                                bonusStat+=1.0;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            errorFightEngine("Buff for wild monter not found: "+std::to_string(playerBuff.buff));
+                                            bonusStat+=1.0;
+                                        }
+                                        index++;
+                                    }
+                                    bonusStat/=wildMonsters.front().buffs.size();
+                                }
+
+                                const uint32_t catch_rate=(uint32_t)CatchChallenger::CommonDatapack::commonDatapack.monsters.at(wildMonsters.front().monster).catch_rate;
+                                uint32_t tempRate=(catch_rate*(wildMonsterStat.hp*maxTempRate-wildMonsters.front().hp*minTempRate)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
+                                the neart value to 255 for tempRate
+                            if(have pokeball, rate to capture to is correct)
+                                ;
+                            ;
                             }
-                            index++;
-                        }
-                        if(useTheRescueSkill)
-                        {
-                            if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(0)!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
-                                player.fightEngine->useSkill(0);
-                            else
-                            {
-                                std::cerr << "No skill found and no rescue skill" << std::endl;
-                                abort();
-                            }
-                        }
+                        if(tryCapture)
+                            player.fightEngine->tryCapture(item)
                         else
-                            player.fightEngine->useSkill(skillUsed);
+                        {
+                            unsigned int index=0;
+                            bool useTheRescueSkill=true;
+                            uint16_t skillUsed=0;
+                            while(index<monster->skills.size())
+                            {
+                                const CatchChallenger::PlayerMonster::PlayerSkill &skill=monster->skills.at(index);
+                                if(skill.endurance>0)
+                                {
+                                    skillUsed=skill.skill;
+                                    useTheRescueSkill=false;
+                                }
+                                index++;
+                            }
+                            if(useTheRescueSkill)
+                            {
+                                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(0)!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
+                                    player.fightEngine->useSkill(0);
+                                else
+                                {
+                                    std::cerr << "No skill found and no rescue skill" << std::endl;
+                                    abort();
+                                }
+                            }
+                            else
+                                player.fightEngine->useSkill(skillUsed);
+                        }
 
                         if(player.fightEngine->otherMonsterIsKO())
                             player.fightEngine->dropKOOtherMonster();
