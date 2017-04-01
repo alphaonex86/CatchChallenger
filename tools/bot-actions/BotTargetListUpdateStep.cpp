@@ -500,52 +500,81 @@ void BotTargetList::updatePlayerStep()
                             std::cerr << ", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+"NULL pointer at updateCurrentMonsterInformation()" << std::endl;
                             return;
                         }
-                        //list the attack
+                        const CatchChallenger::Monster::Stat &wildMonsterStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(othermonster->monster),othermonster->level);
+
+                        //try capture
                         bool tryCapture=false;
-                        uint16_t  item=0;
+                        uint16_t itemToCapture=0;
+                        uint32_t currentDiff=2000000;
                         if(player_private_and_public_informations.encyclopedia_item!=NULL)
                             if(!(player_private_and_public_informations.encyclopedia_item[othermonster->monster/8] & (1<<(7-othermonster->monster%8))))
                             {
                                 float bonusStat=1.0;
-                                if(wildMonsters.front().buffs.size())
+                                if(othermonster->buffs.size())
                                 {
                                     bonusStat=0;
                                     unsigned int index=0;
-                                    while(index<wildMonsters.front().buffs.size())
+                                    while(index<othermonster->buffs.size())
                                     {
-                                        const PlayerBuff &playerBuff=wildMonsters.front().buffs.at(index);
+                                        const CatchChallenger::PlayerBuff &playerBuff=othermonster->buffs.at(index);
                                         if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.find(playerBuff.buff)!=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
                                         {
-                                            const Buff &buff=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.at(playerBuff.buff);
+                                            const CatchChallenger::Buff &buff=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.at(playerBuff.buff);
                                             if(playerBuff.level>0 && playerBuff.level<=buff.level.size())
                                                 bonusStat+=buff.level.at(playerBuff.level-1).capture_bonus;
                                             else
                                             {
-                                                errorFightEngine("Buff level for wild monter not found: "+std::to_string(playerBuff.buff)+" at level "+std::to_string(playerBuff.level));
+                                                std::cerr << "Buff level for wild monter not found: " << std::to_string(playerBuff.buff) << " at level " << std::to_string(playerBuff.level) << std::endl;
                                                 bonusStat+=1.0;
                                             }
                                         }
                                         else
                                         {
-                                            errorFightEngine("Buff for wild monter not found: "+std::to_string(playerBuff.buff));
+                                            std::cerr << "Buff for wild monter not found: " << std::to_string(playerBuff.buff) << std::endl;
                                             bonusStat+=1.0;
                                         }
                                         index++;
                                     }
-                                    bonusStat/=wildMonsters.front().buffs.size();
+                                    bonusStat/=othermonster->buffs.size();
                                 }
 
-                                const uint32_t catch_rate=(uint32_t)CatchChallenger::CommonDatapack::commonDatapack.monsters.at(wildMonsters.front().monster).catch_rate;
-                                uint32_t tempRate=(catch_rate*(wildMonsterStat.hp*maxTempRate-wildMonsters.front().hp*minTempRate)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
-                                the neart value to 255 for tempRate
-                            if(have pokeball, rate to capture to is correct)
-                                ;
-                            ;
+                                for(const auto& n:player_private_and_public_informations.items) {
+                                    const CATCHCHALLENGER_TYPE_ITEM &item=n.first;
+                                    const uint32_t &quantity=n.second;
+                                    if(CatchChallenger::CommonDatapack::commonDatapack.items.trap.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.trap.cend())
+                                    {
+                                        const CatchChallenger::Trap &trap=CatchChallenger::CommonDatapack::commonDatapack.items.trap.at(item);
+                                        const uint32_t catch_rate=(uint32_t)CatchChallenger::CommonDatapack::commonDatapack.monsters.at(othermonster->monster).catch_rate;
+                                        uint32_t tempRate=(catch_rate*(wildMonsterStat.hp*maxTempRate-othermonster->hp*minTempRate)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
+                                        bool valid=false;
+                                        if(quantity>20)
+                                            valid=true;
+                                        else if(quantity>7 && tempRate>50)
+                                            valid=true;
+                                        else if(tempRate>150)
+                                            valid=true;
+                                        if(valid)
+                                        {
+                                            uint32_t newDiff=0;
+                                            if(tempRate<=255)
+                                                newDiff=255-tempRate;
+                                            else
+                                                newDiff=tempRate-255;
+                                            if(newDiff<currentDiff)
+                                            {
+                                                currentDiff=newDiff;
+                                                tryCapture=true;
+                                                itemToCapture=item;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         if(tryCapture)
-                            player.fightEngine->tryCapture(item)
+                            player.fightEngine->tryCapture(item);
                         else
                         {
+                            //try an attack
                             unsigned int index=0;
                             bool useTheRescueSkill=true;
                             uint16_t skillUsed=0;
