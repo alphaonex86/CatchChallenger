@@ -20,166 +20,19 @@ void EpollClientLoginSlave::doDDOSComputeAll()
 
 void EpollClientLoginSlave::doDDOSCompute()
 {
-    {
-        int index=0;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(movePacketKick[index]>movePacketKickTotalCache)
-            std::cerr << "movePacketKick[index]>movePacketKickTotalCache" << std::endl;
-        else
-        #endif
-        movePacketKickTotalCache-=movePacketKick[index];
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(index<0)
-            {
-                parseNetworkReadError("index out of range <0, movePacketKick");
-                return;
-            }
-            if((index+1)>=CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE)
-            {
-                parseNetworkReadError("index out of range >, movePacketKick");
-                return;
-            }
-            if(movePacketKick[index]>CATCHCHALLENGER_DDOS_KICKLIMITMOVE)
-            {
-                parseNetworkReadError("index out of range in array for index "+std::to_string(movePacketKick[index])+", movePacketKick");
-                return;
-            }
-            #endif
-            movePacketKick[index]=movePacketKick[index+1];
-            index++;
-        }
-        #else
-        memmove(movePacketKick,movePacketKick+1,sizeof(movePacketKick)-1);
-        #endif
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        {
-            int index=0;
-            int tot=0;
-            while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
-            {
-                tot+=movePacketKick[index];
-                index++;
-            }
-            if(tot!=movePacketKickTotalCache)
-                std::cerr << "tot!=movePacketKickTotalCache: cache is wrong" << std::endl;
-        }
-        #endif
-        movePacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1]=movePacketKickNewValue;
-        movePacketKickTotalCache+=movePacketKickNewValue;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(movePacketKickTotalCache>CATCHCHALLENGER_DDOS_KICKLIMITMOVE)
-        {
-            parseNetworkReadError("bug in DDOS calculation count");
-            return;
-        }
-        #endif
-        movePacketKickNewValue=0;
-    }
-    {
-        int index=0;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(chatPacketKick[index]>chatPacketKickTotalCache)
-            std::cerr << "chatPacketKick[index]>chatPacketKickTotalCache" << std::endl;
-        else
-        #endif
-        chatPacketKickTotalCache-=chatPacketKick[index];
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(index<0)
-                std::cerr << "index out of range <0, chatPacketKick" << std::endl;
-            if((index+1)>=CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE)
-                std::cerr << "index out of range >, chatPacketKick" << std::endl;
-            if(chatPacketKick[index]>CATCHCHALLENGER_DDOS_KICKLIMITCHAT*2)
-                std::cerr << "index out of range in array for index " << chatPacketKick[index] << ", chatPacketKick" << std::endl;
-            #endif
-            chatPacketKick[index]=chatPacketKick[index+1];
-            index++;
-        }
-        #else
-        memmove(chatPacketKick,chatPacketKick+1,sizeof(chatPacketKick)-1);
-        #endif
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        {
-            int index=0;
-            int tot=0;
-            while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
-            {
-                tot+=chatPacketKick[index];
-                index++;
-            }
-            if(tot!=chatPacketKickTotalCache)
-                std::cerr << "tot!=chatPacketKickTotalCache: cache is wrong" << std::endl;
-        }
-        #endif
-        chatPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1]=chatPacketKickNewValue;
-        chatPacketKickTotalCache+=chatPacketKickNewValue;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(chatPacketKickTotalCache>CATCHCHALLENGER_DDOS_KICKLIMITCHAT*2)
-            std::cerr << "bug in DDOS calculation count" << std::endl;
-        #endif
-        chatPacketKickNewValue=0;
-    }
-    {
-        int index=0;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(otherPacketKick[index]>otherPacketKickTotalCache)
-            std::cerr << "otherPacketKick[index]>otherPacketKickTotalCache" << std::endl;
-        else
-        #endif
-        otherPacketKickTotalCache-=otherPacketKick[index];
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(index<0)
-                std::cerr << "index out of range <0, otherPacketKick" << std::endl;
-            if((index+1)>=CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE)
-                std::cerr << "index out of range >, otherPacketKick" << std::endl;
-            if(otherPacketKick[index]>CATCHCHALLENGER_DDOS_KICKLIMITOTHER*2)
-                std::cerr << "index out of range in array for index " << otherPacketKick[index] << ", chatPacketKick" << std::endl;
-            #endif
-            otherPacketKick[index]=otherPacketKick[index+1];
-            index++;
-        }
-        #else
-        memmove(otherPacketKick,otherPacketKick+1,sizeof(otherPacketKick)-1);
-        #endif
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        {
-            int index=0;
-            int tot=0;
-            while(index<(CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1))
-            {
-                tot+=otherPacketKick[index];
-                index++;
-            }
-            if(tot!=otherPacketKickTotalCache)
-                std::cerr << "tot!=movePacketKickTotalCache: cache is wrong" << std::endl;
-        }
-        #endif
-        otherPacketKick[CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE-1]=otherPacketKickNewValue;
-        otherPacketKickTotalCache+=otherPacketKickNewValue;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(otherPacketKickTotalCache>CATCHCHALLENGER_DDOS_KICKLIMITOTHER*2)
-            std::cerr << "bug in DDOS calculation count" << std::endl;
-        #endif
-        otherPacketKickNewValue=0;
-    }
+    movePacketKick.flush();
+    chatPacketKick.flush();
+    otherPacketKick.flush();
 }
 
 bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
+    if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
         parseNetworkReadError("Too many packet in sort time, check DDOS limit");
         return false;
     }
-    otherPacketKickNewValue++;
+    otherPacketKick.incrementLastValue();
     (void)size;
     switch(mainCodeType)
     {
@@ -249,50 +102,29 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType,const char 
     {
         //Send position + direction
         case 0x02:
-            if((movePacketKickTotalCache+movePacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITMOVE)
+            if(movePacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITMOVE)
             {
-                std::vector<std::string> contentList;
-                int index=0;
-                while(index<CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE)
-                {
-                    contentList.push_back(std::to_string(movePacketKick[index]));
-                    index++;
-                }
-                parseNetworkReadError("Too many move in sort time, check DDOS limit: ("+std::to_string(movePacketKickTotalCache)+"+"+std::to_string(movePacketKickNewValue)+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITMOVE)+", dump: "+stringimplode(contentList,","));
+                parseNetworkReadError("Too many move in sort time, check DDOS limit: ("+std::to_string(otherPacketKick.total())+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITMOVE));
                 return false;
             }
-            movePacketKickNewValue++;
+            movePacketKick.incrementLastValue();
         break;
         //Chat
         case 0x03:
-            if((chatPacketKickTotalCache+chatPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT)
+            if(chatPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT)
             {
-                std::vector<std::string> contentList;
-                int index=0;
-                while(index<CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE)
-                {
-                    contentList.push_back(std::to_string(chatPacketKick[index]));
-                    index++;
-                }
-                parseNetworkReadError("Too many chat in sort time, check DDOS limit: ("+std::to_string(chatPacketKickTotalCache)+"+"+std::to_string(chatPacketKickNewValue)+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITCHAT)+", dump: "+stringimplode(contentList,","));
+                parseNetworkReadError("Too many chat in sort time, check DDOS limit: ("+std::to_string(chatPacketKick.total())+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITCHAT));
                 return false;
             }
-            chatPacketKickNewValue++;
+            chatPacketKick.incrementLastValue();
         break;
         default:
-            if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
+            if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
             {
-                std::vector<std::string> contentList;
-                int index=0;
-                while(index<CATCHCHALLENGER_DDOS_COMPUTERAVERAGEVALUE)
-                {
-                    contentList.push_back(std::to_string(otherPacketKick[index]));
-                    index++;
-                }
-                parseNetworkReadError("Too many packet in sort time, check DDOS limit: ("+std::to_string(otherPacketKickTotalCache)+"+"+std::to_string(otherPacketKickNewValue)+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER)+", dump: "+stringimplode(contentList,","));
+                parseNetworkReadError("Too many packet in sort time, check DDOS limit: ("+std::to_string(otherPacketKick.total())+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER));
                 return false;
             }
-            otherPacketKickNewValue++;
+            otherPacketKick.incrementLastValue();
         break;
     }
     if(stat==EpollClientLoginStat::GameServerConnected)
@@ -340,12 +172,12 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType,const char 
 //have query with reply
 bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
+    if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
         parseNetworkReadError("Too many packet in sort time, check DDOS limit");
         return false;
     }
-    otherPacketKickNewValue++;
+    otherPacketKick.incrementLastValue();
     (void)data;
     if(linkToGameServer==NULL && mainCodeType!=0xA0)
     {
@@ -592,12 +424,12 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
         parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
         return false;
     }
-    if((otherPacketKickTotalCache+otherPacketKickNewValue)>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
+    if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
         parseNetworkReadError("Too many packet in sort time, check DDOS limit");
         return false;
     }
-    otherPacketKickNewValue++;
+    otherPacketKick.incrementLastValue();
     if(linkToGameServer==NULL)
     {
         parseNetworkReadError("linkToGameServer==NULL");
