@@ -503,7 +503,7 @@ void BotTargetList::updatePlayerStep()
                         const CatchChallenger::Monster::Stat &wildMonsterStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(othermonster->monster),othermonster->level);
 
                         //try capture
-                        bool tryCapture=false;
+                        bool tryCaptureWithItem=false;
                         uint16_t itemToCapture=0;
                         uint32_t currentDiff=2000000;
                         if(player_private_and_public_informations.encyclopedia_item!=NULL)
@@ -543,6 +543,9 @@ void BotTargetList::updatePlayerStep()
                                     const uint32_t &quantity=n.second;
                                     if(CatchChallenger::CommonDatapack::commonDatapack.items.trap.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.trap.cend())
                                     {
+                                        const uint32_t maxTempRate=12;
+                                        const uint32_t minTempRate=5;
+                                        //const uint32_t tryCapture=4;
                                         const CatchChallenger::Trap &trap=CatchChallenger::CommonDatapack::commonDatapack.items.trap.at(item);
                                         const uint32_t catch_rate=(uint32_t)CatchChallenger::CommonDatapack::commonDatapack.monsters.at(othermonster->monster).catch_rate;
                                         uint32_t tempRate=(catch_rate*(wildMonsterStat.hp*maxTempRate-othermonster->hp*minTempRate)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
@@ -563,15 +566,15 @@ void BotTargetList::updatePlayerStep()
                                             if(newDiff<currentDiff)
                                             {
                                                 currentDiff=newDiff;
-                                                tryCapture=true;
+                                                tryCaptureWithItem=true;
                                                 itemToCapture=item;
                                             }
                                         }
                                     }
                                 }
                             }
-                        if(tryCapture)
-                            player.fightEngine->tryCapture(item);
+                        if(tryCaptureWithItem)
+                            player.fightEngine->tryCapture(itemToCapture);
                         else
                         {
                             //try an attack
