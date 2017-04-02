@@ -191,6 +191,8 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
             abort();
         if(!connect(api,&CatchChallenger::Api_protocol::newEvent,actionsAction,&ActionsAction::newEvent_slot,Qt::QueuedConnection))
             abort();
+        if(!connect(api,&CatchChallenger::Api_protocol::random_seeds,actionsAction,&ActionsAction::newRandomNumber_slot,Qt::QueuedConnection))
+            abort();
     }
     else
         abort();

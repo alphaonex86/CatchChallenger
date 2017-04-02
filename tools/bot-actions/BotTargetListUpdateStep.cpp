@@ -340,7 +340,11 @@ void BotTargetList::updatePlayerStep()
                             direction=api->getDirection();
                     }
                     if(!ActionsAction::moveWithoutTeleport(api,direction,&mapServer,&x,&y,false,false))
+                    {
+                        std::cerr << "Unable to do the last move before action: " << mapServer->map_file << "(" << std::to_string(x) << "," << std::to_string(y) << ") to " << std::to_string(direction) << std::endl;
+                        ActionsAction::moveWithoutTeleport(api,direction,&mapServer,&x,&y,false,false);
                         abort();
+                    }
 
                     CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
                     const QPair<uint8_t,uint8_t> QtPoint(x,y);
