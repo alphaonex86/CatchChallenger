@@ -69,6 +69,16 @@ void ActionsAction::forcedEvent(CatchChallenger::Api_protocol *api,const uint8_t
     botplayer.events[event]=event_value;
 }
 
+void ActionsAction::newRandomNumber_slot(const QByteArray &data)
+{
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    if(api==NULL)
+        return;
+    if(!clientList.contains(api))
+        return;
+    clientList[api].fightEngine->newRandomNumber(data);
+}
+
 void ActionsAction::setEvents_slot(const QList<QPair<uint8_t,uint8_t> > &events)
 {
     CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
@@ -341,6 +351,7 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                     }
                     if(!botplayer.fightEngine->canDoRandomFight(*new_map,x,y))
                     {
+                        std::cerr << "!botplayer.fightEngine->canDoRandomFight(*new_map,x,y)" << std::endl;
                         //emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
                         return false;
                     }
