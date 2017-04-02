@@ -78,6 +78,7 @@ public:
     void setEvents(CatchChallenger::Api_protocol *api,const QList<QPair<uint8_t,uint8_t> > &events);
     void newEvent(CatchChallenger::Api_protocol *api,const uint8_t &event,const uint8_t &event_value);
     void forcedEvent(CatchChallenger::Api_protocol *api,const uint8_t &event,const uint8_t &event_value);
+    void newRandomNumber_slot(const QByteArray &data);
 
     static void showTip(const QString &text);
 
