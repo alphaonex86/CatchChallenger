@@ -10,6 +10,8 @@
 #include <chrono>
 #include <QMessageBox>
 #include <unordered_map>
+#include <stdlib.h>
+#include <time.h>
 
 BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient,
                              QHash<CatchChallenger::ConnectedSocket *,MultipleBotConnection::CatchChallengerClient *> connectedSocketToCatchChallengerClient,
@@ -23,6 +25,7 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
     botsInformationLoaded(false),
     mapId(0)
 {
+    srand(time(NULL));
     ui->setupUi(this);
     ui->comboBoxStep->setCurrentIndex(1);
     ui->graphvizText->setVisible(false);
