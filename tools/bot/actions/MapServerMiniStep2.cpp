@@ -598,12 +598,12 @@ bool MapServerMini::preload_step2c()
                                     if(codeZone>0)
                                     {
                                         BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
-                                        blockObject.dirt.push_back(newDirtPoint);
+                                        blockObject.block.push_back(newDirtPoint);
                                     }
                                     else
                                     {
                                         BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
-                                        blockObject.dirt.push_back(newDirtPoint);
+                                        blockObject.block.push_back(newDirtPoint);
                                     }
                                 }
                                 x++;
@@ -711,15 +711,18 @@ bool MapServerMini::preload_step2c()
                                         const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=parsedLayer.monstersCollisionList.at(monsterCode);
                                         if(!monstersCollisionValue.walkOnMonsters.empty())
                                         {
+                                            std::pair<uint8_t,uint8_t> newPoint{x,y};
                                             if(codeZone>0)
                                             {
                                                 BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
                                                 blockObject.monstersCollisionValue=&monstersCollisionValue;
+                                                blockObject.block.push_back(newPoint);
                                             }
                                             else
                                             {
                                                 BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
                                                 blockObject.monstersCollisionValue=&monstersCollisionValue;
+                                                blockObject.block.push_back(newPoint);
                                             }
                                         }
                                     }
