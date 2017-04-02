@@ -37,6 +37,8 @@ public:
         std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > localStep;
         MapServerMini::BlockObject::LinkPoint linkPoint;
         QTime sinceTheLastAction;
+        std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > wildForwardStep,wildBackwardStep;
+        uint8_t wildCycle;
     };
     struct ChatEntry
     {
