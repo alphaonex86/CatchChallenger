@@ -244,7 +244,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
         const MapServerMini * const map=blockObject->map;
         //dirt
         if(dirt)
-        if(!blockObject->dirt.empty())
+        if(!blockObject->block.empty())
         {
             bool haveSeedToPlant=false;
             const uint32_t &itemToUse=getSeedToPlant(api,&haveSeedToPlant);
@@ -258,10 +258,10 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                     unsigned int dirtCount=0;
                     //QListWidgetItem * firstDirtItem=NULL;
                     unsigned int index=0;
-                    while(index<blockObject->dirt.size())
+                    while(index<blockObject->block.size())
                     {
                         {
-                            const std::pair<uint8_t,uint8_t> &dirtPoint=blockObject->dirt.at(index);
+                            const std::pair<uint8_t,uint8_t> &dirtPoint=blockObject->block.at(index);
                             const QHash<QPair<uint8_t,uint8_t>,uint16_t> &positionsList=DatapackClientLoader::datapackLoader.plantOnMap.value(tempMapFile);
                             QPair<uint8_t,uint8_t> pos;
                             pos.first=dirtPoint.first;

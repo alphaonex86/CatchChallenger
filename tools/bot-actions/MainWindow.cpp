@@ -176,6 +176,7 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
         newPlayer.target.linkPoint.y=0;
         newPlayer.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
         newPlayer.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
+        newPlayer.target.wildCycle=0;
         newPlayer.fightEngine=new CatchChallenger::ClientFightEngine();
         newPlayer.api=api;
         actionsAction->clientList[api]=newPlayer;
