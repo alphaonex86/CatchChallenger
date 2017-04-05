@@ -123,6 +123,7 @@ private:
     static std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > selectTheBetterPathToDestination(std::unordered_map<unsigned int,
                                                  std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> >
                                                  > pathToEachDestinations,unsigned int &destinationIndexSelected);
+    void wildMonsterTarget(ActionsAction::Player &player);
 
     //std::unodered_map<const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent,un> monsterCollisionContentDuplicate;
 };
