@@ -264,38 +264,44 @@ void BotTargetList::updatePlayerStep()
                             //have finish the path and is on the final blockObject, then do internal path finding
                             if(blockObject==player.target.blockObject)
                             {
-                                //do the final resolution path as do into startPlayerMove()
-                                std::vector<DestinationForPath> destinations;
-                                std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
-                                const std::pair<uint8_t,uint8_t> &point=getNextPosition(blockObject,player.target/*hop list, first is the next hop*/);
-                                DestinationForPath destinationForPath;
-                                destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
-                                destinationForPath.destination_x=point.first;
-                                destinationForPath.destination_y=point.second;
-                                destinations.push_back(destinationForPath);
-                                MapServerMini::BlockObject::LinkPoint linkPoint;
-                                linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
-                                linkPoint.x=point.first;
-                                linkPoint.y=point.second;
-                                pointsList.push_back(linkPoint);
-                                std::cout << "player.target.bestPath.empty()" << std::endl;
-                                if(pointsList.size()!=destinations.size())
-                                    abort();
-                                uint8_t o=api->getDirection();
-                                while(o>4)
-                                    o-=4;
-                                bool ok=false;
-                                unsigned int destinationIndexSelected=0;
-                                const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
-                                            blockObject,
-                                            static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
-                                            destinations,
-                                            destinationIndexSelected,
-                                            &ok);
-                                if(!ok)
-                                    abort();
-                                player.target.linkPoint=pointsList.at(destinationIndexSelected);
-                                player.target.localStep=returnPath;
+                                //not precise point for wils monster
+                                if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster)
+                                    wildMonsterTarget(player);
+                                else
+                                {
+                                    //do the final resolution path as do into startPlayerMove()
+                                    std::vector<DestinationForPath> destinations;
+                                    std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
+                                    const std::pair<uint8_t,uint8_t> &point=getNextPosition(blockObject,player.target/*hop list, first is the next hop*/);
+                                    DestinationForPath destinationForPath;
+                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
+                                    destinationForPath.destination_x=point.first;
+                                    destinationForPath.destination_y=point.second;
+                                    destinations.push_back(destinationForPath);
+                                    MapServerMini::BlockObject::LinkPoint linkPoint;
+                                    linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+                                    linkPoint.x=point.first;
+                                    linkPoint.y=point.second;
+                                    pointsList.push_back(linkPoint);
+                                    std::cout << "player.target.bestPath.empty()" << std::endl;
+                                    if(pointsList.size()!=destinations.size())
+                                        abort();
+                                    uint8_t o=api->getDirection();
+                                    while(o>4)
+                                        o-=4;
+                                    bool ok=false;
+                                    unsigned int destinationIndexSelected=0;
+                                    const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+                                                blockObject,
+                                                static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
+                                                destinations,
+                                                destinationIndexSelected,
+                                                &ok);
+                                    if(!ok)
+                                        abort();
+                                    player.target.linkPoint=pointsList.at(destinationIndexSelected);
+                                    player.target.localStep=returnPath;
+                                }
                             }
                         }
                     }
@@ -459,130 +465,7 @@ void BotTargetList::updatePlayerStep()
                         }
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster:
-                        {
-                            if(player.target.wildBackwardStep.empty())
-                            {
-                                if(!player.target.wildBackwardStep.empty())
-                                    abort();
-                                player.target.wildCycle=0;
-
-                                if(mapServer->step.size()<2)
-                                    abort();
-                                const uint16_t &currentCodeZone=mapServer->step.at(1).map[player.x+player.y*mapServer->width];
-                                if(currentCodeZone==0)
-                                    abort();
-                                const MapServerMini::BlockObject * blockObject=mapServer->step.at(1).layers.at(currentCodeZone-1).blockObject;
-                                if(blockObject->block.size()<1)
-                                {
-                                    std::cerr << "Error: Block list is empty" << std::endl;
-                                    abort();
-                                }
-                                if(blockObject->block.size()<2)
-                                {
-                                    std::cerr << "Error: Block list is too small" << std::endl;
-                                    abort();//todo
-                                }
-
-                                const std::pair<uint8_t,uint8_t> &point1=blockObject->block.at(rand()%blockObject->block.size());
-                                std::pair<uint8_t,uint8_t> point2=blockObject->block.at(rand()%blockObject->block.size());
-                                while(point2==point1)
-                                    point2=blockObject->block.at(rand()%blockObject->block.size());
-
-                                uint8_t directionToPoint1=0,directionToPoint2=0;
-                                //to the point 1
-                                {
-                                    uint8_t o=api->getDirection();
-                                    while(o>4)
-                                        o-=4;
-                                    std::vector<DestinationForPath> destinations;
-                                    DestinationForPath destinationForPath;
-                                    destinationForPath.destination_x=point1.first;
-                                    destinationForPath.destination_y=point1.second;
-                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
-                                    destinations.push_back(destinationForPath);
-                                    bool ok=false;
-                                    unsigned int destinationIndexSelected=0;
-                                    const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
-                                                blockObject,
-                                                static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
-                                                destinations,
-                                                destinationIndexSelected,
-                                                &ok);
-                                    if(!ok)
-                                        abort();
-                                    MapServerMini::BlockObject::LinkPoint linkPoint;
-                                    linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
-                                    linkPoint.x=point1.first;
-                                    linkPoint.y=point1.second;
-                                    player.target.linkPoint=linkPoint;
-                                    player.target.localStep=returnPath;
-                                    directionToPoint1=returnPath.back().first;
-                                    while(directionToPoint1>4)
-                                        directionToPoint1-=4;
-                                }
-                                //point 1 to 2
-                                {
-                                    std::vector<DestinationForPath> destinations;
-                                    DestinationForPath destinationForPath;
-                                    destinationForPath.destination_x=point2.first;
-                                    destinationForPath.destination_y=point2.second;
-                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
-                                    destinations.push_back(destinationForPath);
-                                    bool ok=false;
-                                    unsigned int destinationIndexSelected=0;
-                                    const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
-                                                blockObject,
-                                                static_cast<CatchChallenger::Orientation>(directionToPoint1),point1.first,point1.second,
-                                                destinations,
-                                                destinationIndexSelected,
-                                                &ok);
-                                    if(!ok)
-                                        abort();
-                                    player.target.wildForwardStep=returnPath;
-                                    directionToPoint1=returnPath.back().first;
-                                    while(directionToPoint1>4)
-                                        directionToPoint1-=4;
-                                }
-                                //point 2 to 1
-                                {
-                                    std::vector<DestinationForPath> destinations;
-                                    DestinationForPath destinationForPath;
-                                    destinationForPath.destination_x=point1.first;
-                                    destinationForPath.destination_y=point1.second;
-                                    destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
-                                    destinations.push_back(destinationForPath);
-                                    bool ok=false;
-                                    unsigned int destinationIndexSelected=0;
-                                    const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
-                                                blockObject,
-                                                static_cast<CatchChallenger::Orientation>(directionToPoint2),point2.first,point2.second,
-                                                destinations,
-                                                destinationIndexSelected,
-                                                &ok);
-                                    if(!ok)
-                                        abort();
-                                    player.target.wildBackwardStep=returnPath;
-                                }
-                            }
-                            else
-                            {
-                                if(player.target.wildCycle<10)
-                                {
-                                    if((player.target.wildCycle%2)==0)
-                                    {
-                                        //is into point 1, go to 2
-                                        player.target.localStep=player.target.wildForwardStep;
-                                    }
-                                    else
-                                    {
-                                        //is into point 1, go to 2
-                                        player.target.localStep=player.target.wildBackwardStep;
-                                    }
-                                    player.target.wildCycle++;
-                                    return;
-                                }
-                            }
-                        }
+                            wildMonsterTarget(player);
                         break;
                         default:
                             player.target.blockObject=NULL;
