@@ -285,6 +285,11 @@ bool ClientFightEngine::internalTryEscape()
 
 void ClientFightEngine::tryCatchClient(const uint32_t &item)
 {
+    if(!playerMonster_catchInProgress.isEmpty())
+    {
+        error("Añready try catch in progress");
+        return;
+    }
     if(wildMonsters.empty())
     {
         error("Try catch when not with wild");
@@ -307,6 +312,12 @@ void ClientFightEngine::tryCatchClient(const uint32_t &item)
     newMonster.skills=wildMonsters.front().skills;
     newMonster.sp=0;
     playerMonster_catchInProgress << newMonster;
+    //need wait the server reply, monsterCatch(const bool &success)
+}
+
+bool ClientFightEngine::catchInProgress() const
+{
+    return !playerMonster_catchInProgress.isEmpty();
 }
 
 uint32_t ClientFightEngine::catchAWild(const bool &toStorage, const PlayerMonster &newMonster)

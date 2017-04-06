@@ -11,7 +11,7 @@
 
 void BotTargetList::updatePlayerStep()
 {
-    CatchChallenger::Api_protocol * apiSelectClient=NULL;
+    CatchChallenger::Api_protocol * apiSelectedClient=NULL;
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()==1)
     {
@@ -19,7 +19,7 @@ void BotTargetList::updatePlayerStep()
         if(!pseudoToBot.contains(pseudo))
             return;
         MultipleBotConnection::CatchChallengerClient * currentSelectedclient=pseudoToBot.value(pseudo);
-        apiSelectClient=currentSelectedclient->api;
+        apiSelectedClient=currentSelectedclient->api;
     }
     if(ui->bots->count()==1)
     {
@@ -264,9 +264,13 @@ void BotTargetList::updatePlayerStep()
                             //have finish the path and is on the final blockObject, then do internal path finding
                             if(blockObject==player.target.blockObject)
                             {
-                                //not precise point for wils monster
+                                //not precise point for wilds monster
                                 if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster)
+                                {
                                     wildMonsterTarget(player);
+                                    if(apiSelectedClient==api)
+                                        ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
+                                }
                                 else
                                 {
                                     //do the final resolution path as do into startPlayerMove()
@@ -307,7 +311,7 @@ void BotTargetList::updatePlayerStep()
                     }
                 }
 
-                if(haveChange && api==apiSelectClient)
+                if(haveChange && api==apiSelectedClient)
                 {
                     if(ui->trackThePlayer->isChecked())
                     {
@@ -466,6 +470,8 @@ void BotTargetList::updatePlayerStep()
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster:
                             wildMonsterTarget(player);
+                            if(apiSelectedClient==api)
+                                ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
                         break;
                         default:
                             player.target.blockObject=NULL;
@@ -489,7 +495,7 @@ void BotTargetList::updatePlayerStep()
                     player.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
                     player.target.sinceTheLastAction.restart();
 
-                    if(api==apiSelectClient)
+                    if(api==apiSelectedClient)
                     {
                         updatePlayerInformation();
                         updatePlayerMap(true);
@@ -501,7 +507,7 @@ void BotTargetList::updatePlayerStep()
                 //can't move: can be in fight
                 if(player.fightEngine->isInFight())
                 {
-                    if((player.lastFightAction.elapsed()/1000)>(5/*5s*/))
+                    if((player.lastFightAction.elapsed()/1000)>(5/*5s*/) && player.fightEngine->catchInProgress())
                     {
                         player.lastFightAction.restart();
                         //do the code here
@@ -590,8 +596,19 @@ void BotTargetList::updatePlayerStep()
                                     }
                                 }
                             }
+                        if(player.fightEngine->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
+                            if(warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+                                tryCaptureWithItem=false;
                         if(tryCaptureWithItem)
-                            player.fightEngine->tryCapture(itemToCapture);
+                        {
+                            //api->useObject(itemToCapture);-> do into player.fightEngine->tryCatchClient(
+                            delelteObject(itemToCapture);
+                            if(player.fightEngine->tryCatchClient(itemToCapture)==0)
+                                ui->label_action->setText("Start this: Try capture with: "+QString::number(itemToCapture)+" (failed)");
+                            else
+                                ui->label_action->setText("Start this: Try capture with: "+QString::number(itemToCapture));
+                            return;//need wait the server reply, monsterCatch(const bool &success)
+                        }
                         else
                         {
                             //try an attack
@@ -687,6 +704,8 @@ void BotTargetList::updatePlayerStep()
                                 player.fightEngine->healAllMonsters();
                                 player.fightEngine->fightFinished();
                             }
+                            if(apiSelectedClient==api)
+                                ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
                         }
                    }
                 }

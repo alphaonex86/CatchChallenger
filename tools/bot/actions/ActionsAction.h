@@ -79,6 +79,7 @@ public:
     void newEvent(CatchChallenger::Api_protocol *api,const uint8_t &event,const uint8_t &event_value);
     void forcedEvent(CatchChallenger::Api_protocol *api,const uint8_t &event,const uint8_t &event_value);
     void newRandomNumber_slot(const QByteArray &data);
+    void monsterCatch(const bool &success);
 
     static void showTip(const QString &text);
 

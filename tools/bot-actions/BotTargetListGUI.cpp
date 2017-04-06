@@ -1030,7 +1030,12 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
 std::string BotTargetList::pathFindingToString(const MapServerMini::BlockObjectPathFinding &resolvedBlock, unsigned int points)
 {
     if(resolvedBlock.bestPath.empty())
-        return "";
+    {
+        if(points>0)
+            return "\npoints: "+std::to_string(points);
+        else
+            return std::string();
+    }
     std::string str;
     unsigned int index=0;
     while(index<resolvedBlock.bestPath.size())

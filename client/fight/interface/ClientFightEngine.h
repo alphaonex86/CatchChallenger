@@ -59,6 +59,7 @@ public:
     virtual bool useSkill(const uint16_t &skill);
     bool dropKOOtherMonster();
     void tryCatchClient(const uint32_t &item);
+    bool catchInProgress() const;
     virtual uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster);
     void catchIsDone();
     bool doTheOtherMonsterTurn();
