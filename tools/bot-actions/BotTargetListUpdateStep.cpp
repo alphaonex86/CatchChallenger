@@ -3,6 +3,7 @@
 #include "../../client/base/interface/DatapackClientLoader.h"
 #include "../../client/fight/interface/ClientFightEngine.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/CommonSettingsCommon.h"
 #include "MapBrowse.h"
 
 #include <chrono>
@@ -41,7 +42,7 @@ void BotTargetList::updatePlayerStep()
             abort();
         if(api->getCaracterSelected())
         {
-            CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
+            CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
             if(player.canMoveOnMap)
             {
                 bool haveChange=false;
@@ -90,10 +91,10 @@ void BotTargetList::updatePlayerStep()
                                     //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", have item on it" << std::endl;
                                     const MapServerMini::ItemOnMap &itemOnMap=playerMap->pointOnMap_Item.at(p);
                                     if(!itemOnMap.infinite && itemOnMap.visible)
-                                        if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
+                                        if(playerInformations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==playerInformations.itemOnMap.cend())
                                         {
                                             std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", take the item" << std::endl;
-                                            player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                            playerInformations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
                                             api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
                                             api->takeAnObjectOnMap();
                                             ActionsAction::add_to_inventory(api,itemOnMap.item);
@@ -377,8 +378,8 @@ void BotTargetList::updatePlayerStep()
                                 {
                                     if(!itemOnMap.infinite)
                                     {
-                                        if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
-                                            player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                        if(playerInformations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==playerInformations.itemOnMap.cend())
+                                            playerInformations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
                                         else
                                         {
                                             found=true;
@@ -529,8 +530,8 @@ void BotTargetList::updatePlayerStep()
                         bool tryCaptureWithItem=false;
                         uint16_t itemToCapture=0;
                         uint32_t currentDiff=2000000;
-                        if(player_private_and_public_informations.encyclopedia_item!=NULL)
-                            if(!(player_private_and_public_informations.encyclopedia_item[othermonster->monster/8] & (1<<(7-othermonster->monster%8))))
+                        if(playerInformations.encyclopedia_item!=NULL)
+                            if(!(playerInformations.encyclopedia_item[othermonster->monster/8] & (1<<(7-othermonster->monster%8))))
                             {
                                 float bonusStat=1.0;
                                 if(othermonster->buffs.size())
@@ -561,7 +562,7 @@ void BotTargetList::updatePlayerStep()
                                     bonusStat/=othermonster->buffs.size();
                                 }
 
-                                for(const auto& n:player_private_and_public_informations.items) {
+                                for(const auto& n:playerInformations.items) {
                                     const CATCHCHALLENGER_TYPE_ITEM &item=n.first;
                                     const uint32_t &quantity=n.second;
                                     if(CatchChallenger::CommonDatapack::commonDatapack.items.trap.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.trap.cend())
@@ -597,16 +598,14 @@ void BotTargetList::updatePlayerStep()
                                 }
                             }
                         if(player.fightEngine->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
-                            if(warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+                            if(playerInformations.warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
                                 tryCaptureWithItem=false;
                         if(tryCaptureWithItem)
                         {
                             //api->useObject(itemToCapture);-> do into player.fightEngine->tryCatchClient(
-                            delelteObject(itemToCapture);
-                            if(player.fightEngine->tryCatchClient(itemToCapture)==0)
-                                ui->label_action->setText("Start this: Try capture with: "+QString::number(itemToCapture)+" (failed)");
-                            else
-                                ui->label_action->setText("Start this: Try capture with: "+QString::number(itemToCapture));
+                            ActionsAction::remove_to_inventory(api,itemToCapture);
+                            player.fightEngine->tryCatchClient(itemToCapture);
+                            ui->label_action->setText("Start this: Try capture with: "+QString::number(itemToCapture));
                             return;//need wait the server reply, monsterCatch(const bool &success)
                         }
                         else
