@@ -340,8 +340,8 @@ private slots:
     bool tryValidateQuestStep(const uint16_t &questId, const uint32_t &botId, bool silent=false);
     bool nextStepQuest(const Quest &quest);
     bool startQuest(const Quest &quest);
-    bool botHaveQuest(const uint32_t &botId);
-    QList<QPair<uint32_t,QString> > getQuestList(const uint32_t &botId);
+    bool botHaveQuest(const uint32_t &botId) const;
+    QList<QPair<uint32_t,QString> > getQuestList(const uint32_t &botId) const;
     void updateDisplayedQuests();
     void appendReputationPoint(const QString &type,const int32_t &point);
 
@@ -497,7 +497,6 @@ private:
     QList<QueryType> queryList;
     uint32_t shopId;
     QHash<uint32_t,ItemToSellOrBuy> itemsIntoTheShop;
-    uint64_t cash,warehouse_cash;
     int64_t temp_warehouse_cash;// if >0 then Withdraw
     //selection of quantity
     uint32_t tempQuantityForSell;
@@ -505,9 +504,6 @@ private:
     QList<ItemToSellOrBuy> itemsToSell,itemsToBuy;
     QPixmap playerFrontImage,playerBackImage;
     QString playerFrontImagePath,playerBackImagePath;
-    uint32_t clan;
-    bool clan_leader;
-    std::unordered_set<ActionAllow,std::hash<uint8_t> > allow;
     QList<ActionClan> actionClan;
     QString clanName;
     bool haveClanInformations;
@@ -605,10 +601,7 @@ private:
     QList<MarketMonster> marketWithdrawMonsterList;
 
     //player items
-    std::unordered_set<uint16_t> itemOnMap;
-    std::unordered_map<uint16_t/*dirtOnMap*/,PlayerPlant> plantOnMap;
     QHash<uint16_t,int32_t> change_warehouse_items;//negative = deposite, positive = withdraw
-    std::unordered_map<uint16_t,uint32_t> items,warehouse_items;
     QHash<QListWidgetItem *,uint32_t> items_graphical;
     QHash<uint32_t,QListWidgetItem *> items_to_graphical;
     QHash<QListWidgetItem *,uint32_t> shop_items_graphical;
@@ -659,7 +652,6 @@ private:
     bool haveDisplayOtherAttackSuccess;
     BattleType battleType;
     QMovie *movie;
-    QList<PlayerMonster> warehouse_playerMonster;
     uint32_t trapItemId;
     int displayTrapProgression;
     QTimer displayTrapTimer;
@@ -691,7 +683,6 @@ private:
     //quest
     bool isInQuest;
     uint16_t questId;
-    std::unordered_map<uint16_t, PlayerQuest> quests;
 
     //battle
     BattleStep battleStep;

@@ -2137,6 +2137,7 @@ void BaseWindow::useTrap(const uint32_t &itemId)
     trapItemId=itemId;
     fightEngine.tryCatchClient(itemId);
     displayTrap();
+    //need wait the server reply, monsterCatch(const bool &success)
 }
 
 void BaseWindow::monsterCatch(const bool &success)
@@ -2162,7 +2163,14 @@ void BaseWindow::monsterCatch(const bool &success)
         #endif
         //fightEngine.playerMonster_catchInProgress.first().id=newMonsterId;
         if(fightEngine.getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
+        {
+            if(warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+            {
+                QMessageBox::warning(this,tr("Error"),tr("You have already the maximum number of monster into you warehouse"));
+                break;
+            }
             warehouse_playerMonster << fightEngine.playerMonster_catchInProgress.first();
+        }
         else
         {
             fightEngine.addPlayerMonster(fightEngine.playerMonster_catchInProgress.first());

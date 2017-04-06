@@ -16,17 +16,18 @@ void BaseWindow::on_toolButton_quit_shop_clicked()
 
 void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     if(!waitToSell)
     {
-        if(cash<itemsIntoTheShop.value(shop_items_graphical.value(item)).price)
+        if(playerInformations.cash<itemsIntoTheShop.value(shop_items_graphical.value(item)).price)
         {
             QMessageBox::information(this,tr("Buy"),tr("You have not the cash to buy this item"));
             return;
         }
         bool ok=true;
         ItemToSellOrBuy itemToSellOrBuy;
-        if(cash/itemsIntoTheShop.value(shop_items_graphical.value(item)).price>1)
-            itemToSellOrBuy.quantity=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,cash/itemsIntoTheShop.value(shop_items_graphical.value(item)).price,1,&ok);
+        if(playerInformations.cash/itemsIntoTheShop.value(shop_items_graphical.value(item)).price>1)
+            itemToSellOrBuy.quantity=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,playerInformations.cash/itemsIntoTheShop.value(shop_items_graphical.value(item)).price,1,&ok);
         else
             itemToSellOrBuy.quantity=1;
         if(!ok)
@@ -40,19 +41,19 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
     }
     else
     {
-        if(items.find(shop_items_graphical.value(item))==items.cend())
+        if(playerInformations.items.find(shop_items_graphical.value(item))==playerInformations.items.cend())
             return;
         uint32_t objectItem=shop_items_graphical.value(item);
         bool ok=true;
-        if(items.at(objectItem)>1)
-            tempQuantityForSell=QInputDialog::getInt(this,tr("Sell"),tr("Quantity to sell"),1,1,items.at(objectItem),1,&ok);
+        if(playerInformations.items.at(objectItem)>1)
+            tempQuantityForSell=QInputDialog::getInt(this,tr("Sell"),tr("Quantity to sell"),1,1,playerInformations.items.at(objectItem),1,&ok);
         else
             tempQuantityForSell=1;
         if(!ok)
             return;
-        if(items.find(objectItem)==items.cend())
+        if(playerInformations.items.find(objectItem)==playerInformations.items.cend())
             return;
-        if(items.at(objectItem)<tempQuantityForSell)
+        if(playerInformations.items.at(objectItem)<tempQuantityForSell)
             return;
         objectSelection(true,objectItem,tempQuantityForSell);
         showTip(tr("Selling the object..."));
@@ -103,6 +104,7 @@ void BaseWindow::haveShopList(const QList<ItemToSellOrBuy> &items)
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveShopList()";
     #endif
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     QFont MissingQuantity;
     MissingQuantity.setItalic(true);
     ui->shopItemList->clear();
@@ -132,7 +134,7 @@ void BaseWindow::haveShopList(const QList<ItemToSellOrBuy> &items)
             else
                 item->setText(tr("Item %1 at %2$\nQuantity: %3").arg(items.at(index).object).arg(items.at(index).price).arg(items.at(index).quantity));
         }
-        if(items.at(index).price>cash)
+        if(items.at(index).price>playerInformations.cash)
         {
             item->setFont(MissingQuantity);
             item->setForeground(QBrush(QColor(200,20,20)));
@@ -149,12 +151,13 @@ void BaseWindow::displaySellList()
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::displaySellList()";
     #endif
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     ui->shopItemList->clear();
     itemsIntoTheShop.clear();
     shop_items_graphical.clear();
     shop_items_to_graphical.clear();
-    auto i=items.begin();
-    while(i!=items.cend())
+    auto i=playerInformations.items.begin();
+    while(i!=playerInformations.items.cend())
     {
         if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i->first) && CatchChallenger::CommonDatapack::commonDatapack.items.item.at(i->first).price>0)
         {

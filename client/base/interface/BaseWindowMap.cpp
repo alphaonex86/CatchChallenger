@@ -165,11 +165,12 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
     }
     else if(map->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
     {
+        Player_private_and_public_informations &informations=client->get_player_informations();
         const Map_client::ItemOnMapForClient &item=map->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
-        if(itemOnMap.find(item.indexOfItemOnMap)==itemOnMap.cend())
+        if(informations.itemOnMap.find(item.indexOfItemOnMap)==informations.itemOnMap.cend())
         {
             if(!item.infinite)
-                itemOnMap.insert(item.indexOfItemOnMap);
+                informations.itemOnMap.insert(item.indexOfItemOnMap);
             add_to_inventory(item.item);
             client->takeAnObjectOnMap();
         }
