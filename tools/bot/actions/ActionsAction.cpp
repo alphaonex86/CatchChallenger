@@ -887,12 +887,12 @@ void ActionsAction::monsterCatch(const bool &success)
         player.canMoveOnMap=true;
         if(player.fightEngine->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
         {
-            if(warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
-            {
-                QMessageBox::warning(this,tr("Error"),tr("You have already the maximum number of monster into you warehouse"));
-                break;
-            }
             CatchChallenger::Player_private_and_public_informations &playerInformations=player.api->get_player_informations();
+            if(playerInformations.warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+            {
+                std::cerr << "You have already the maximum number of monster into you warehouse" << std::endl;
+                abort();
+            }
             playerInformations.warehouse_playerMonster.push_back(player.fightEngine->playerMonster_catchInProgress.first());
         }
         else
