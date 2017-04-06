@@ -322,18 +322,32 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
     //if the target is on the same block
     if(player.target.bestPath.empty())//set into BotTargetList::on_globalTargets_itemActivated()
     {
-        const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target/*hop list, first is the next hop*/);
-        DestinationForPath destinationForPath;
-        destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
-        destinationForPath.destination_x=point.first;
-        destinationForPath.destination_y=point.second;
-        destinations.push_back(destinationForPath);
-        MapServerMini::BlockObject::LinkPoint linkPoint;
-        linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
-        linkPoint.x=point.first;
-        linkPoint.y=point.second;
-        pointsList.push_back(linkPoint);
-        std::cout << "player.target.bestPath.empty()" << std::endl;
+        //not precise point for wilds monster
+        if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster)
+        {
+            wildMonsterTarget(player);
+
+            updateMapContentX=0;
+            updateMapContentY=0;
+            updateMapContentMapId=0;
+            updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
+            return;
+        }
+        else
+        {
+            const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target/*hop list, first is the next hop*/);
+            DestinationForPath destinationForPath;
+            destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
+            destinationForPath.destination_x=point.first;
+            destinationForPath.destination_y=point.second;
+            destinations.push_back(destinationForPath);
+            MapServerMini::BlockObject::LinkPoint linkPoint;
+            linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+            linkPoint.x=point.first;
+            linkPoint.y=point.second;
+            pointsList.push_back(linkPoint);
+            std::cout << "player.target.bestPath.empty()" << std::endl;
+        }
     }
     else //search the best path to the next block
     {
@@ -540,6 +554,10 @@ void BotTargetList::updateMapContent()
         return;
 
     const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    if(player.canMoveOnMap)
+        ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
+    else
+        ui->label_action->setText("Start this: In fight, can't move, elapsed since the last action: "+QString::number(player.lastFightAction.elapsed()));
     if(updateMapContentX==player.x && updateMapContentY==player.y && updateMapContentMapId==player.mapId && updateMapContentDirection==player.api->getDirection())
         return;
     updateMapContentX=player.x;
@@ -812,6 +830,8 @@ void BotTargetList::on_globalTargets_itemActivated(QListWidgetItem *item)
     const int &currentRow=ui->globalTargets->currentRow();
     if(currentRow==-1)
         return;
+    if(currentRow>=ui->globalTargets->count())
+        abort();
     const ActionsBotInterface::GlobalTarget &globalTarget=targetListGlobalTarget.at(currentRow);
 
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();

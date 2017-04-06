@@ -7,20 +7,21 @@ using namespace CatchChallenger;
 
 void BaseWindow::clanActionSuccess(const uint32_t &clanId)
 {
+    Player_private_and_public_informations &playerInformations=client->get_player_informations();
     switch(actionClan.first())
     {
         case ActionClan_Create:
-            if(clan==0)
+            if(playerInformations.clan==0)
             {
-                clan=clanId;
-                clan_leader=true;
+                playerInformations.clan=clanId;
+                playerInformations.clan_leader=true;
             }
             updateClanDisplay();
             showTip(tr("The clan is created"));
         break;
         case ActionClan_Leave:
         case ActionClan_Dissolve:
-            clan=0;
+            playerInformations.clan=0;
             updateClanDisplay();
             showTip(tr("You are leaved the clan"));
         break;
@@ -62,17 +63,19 @@ void BaseWindow::clanActionFailed()
 
 void BaseWindow::clanDissolved()
 {
+    Player_private_and_public_informations &playerInformations=client->get_player_informations();
     haveClanInformations=false;
     clanName.clear();
-    clan=0;
+    playerInformations.clan=0;
     updateClanDisplay();
 }
 
 void BaseWindow::updateClanDisplay()
 {
-    ui->tabWidgetTrainerCard->setTabEnabled(4,clan!=0);
-    ui->clanGrouBoxNormal->setVisible(!clan_leader);
-    ui->clanGrouBoxLeader->setVisible(clan_leader);
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+    ui->tabWidgetTrainerCard->setTabEnabled(4,playerInformations.clan!=0);
+    ui->clanGrouBoxNormal->setVisible(!playerInformations.clan_leader);
+    ui->clanGrouBoxLeader->setVisible(playerInformations.clan_leader);
     ui->clanGrouBoxInformations->setVisible(haveClanInformations);
     if(haveClanInformations)
     {
@@ -81,7 +84,7 @@ void BaseWindow::updateClanDisplay()
         else
             ui->clanName->setText(clanName);
     }
-    chat->setClan(clan!=0);
+    chat->setClan(playerInformations.clan!=0);
 }
 
 void BaseWindow::on_clanActionLeave_clicked()
@@ -131,8 +134,9 @@ void BaseWindow::clanInvite(const uint32_t &clanId,const QString &name)
     client->inviteAccept(button==QMessageBox::Yes);
     if(button==QMessageBox::Yes)
     {
-        this->clan=clanId;
-        this->clan_leader=false;
+        Player_private_and_public_informations &playerInformations=client->get_player_informations();
+        playerInformations.clan=clanId;
+        playerInformations.clan_leader=false;
         haveClanInformations=false;
         updateClanDisplay();
     }

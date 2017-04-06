@@ -21,7 +21,8 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
     uint32_t id=item->data(99).toUInt();
     uint32_t price=item->data(98).toUInt();
     uint32_t quantity=item->data(97).toUInt();
-    if(cash<price)
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+    if(playerInformations.cash<price)
     {
         QMessageBox::warning(this,tr("No cash"),tr("No bash to buy this item"));
         return;
@@ -32,7 +33,7 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
         return;
     }
     int quantityToBuy=1;
-    if(cash>=(price*2) && quantity>1)
+    if(playerInformations.cash>=(price*2) && quantity>1)
     {
         bool ok;
         quantityToBuy = QInputDialog::getInt(this, tr("Buy"),tr("Amount %1 to buy:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantity, 1, &ok);
@@ -79,10 +80,11 @@ void BaseWindow::on_factorySell_clicked()
 
 void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     uint32_t id=item->data(99).toUInt();
     uint32_t price=item->data(98).toUInt();
     uint32_t quantity=item->data(97).toUInt();
-    if(items.find(id)==items.cend())
+    if(playerInformations.items.find(id)==playerInformations.items.cend())
     {
         QMessageBox::warning(this,tr("No item"),tr("You have not the item to sell"));
         return;
@@ -93,11 +95,11 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         return;
     }
     int i=1;
-    if(items.at(id)>1 && quantity>1)
+    if(playerInformations.items.at(id)>1 && quantity>1)
     {
         uint32_t quantityToSell=quantity;
-        if(items.at(id)<quantityToSell)
-            quantityToSell=items.at(id);
+        if(playerInformations.items.at(id)<quantityToSell)
+            quantityToSell=playerInformations.items.at(id);
         bool ok;
         i = QInputDialog::getInt(this, tr("Sell"),tr("Amount %1 to sell:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantityToSell, 1, &ok);
         if(!ok || i<=0)
@@ -357,6 +359,7 @@ void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatu
 
 void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     QFont MissingQuantity;
     MissingQuantity.setItalic(true);
     if(item->data(97).toUInt()>1)
@@ -379,7 +382,7 @@ void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
         else
             item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(item->data(99).toUInt()).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
-    if(items.find(item->data(99).toUInt())==items.cend() || !haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.at(factoryId).requirements.reputation))
+    if(playerInformations.items.find(item->data(99).toUInt())==playerInformations.items.cend() || !haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.at(factoryId).requirements.reputation))
     {
         item->setFont(MissingQuantity);
         item->setForeground(QBrush(QColor(200,20,20)));
@@ -388,6 +391,7 @@ void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
 
 void BaseWindow::factoryToProductItem(QListWidgetItem *item)
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     QFont MissingQuantity;
     MissingQuantity.setItalic(true);
     if(item->data(97).toUInt()>1)
@@ -410,7 +414,7 @@ void BaseWindow::factoryToProductItem(QListWidgetItem *item)
         else
             item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(item->data(99).toUInt()).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
-    if(item->data(98).toUInt()>cash)
+    if(item->data(98).toUInt()>playerInformations.cash)
     {
         item->setFont(MissingQuantity);
         item->setForeground(QBrush(QColor(200,20,20)));

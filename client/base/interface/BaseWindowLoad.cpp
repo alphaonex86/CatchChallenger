@@ -61,8 +61,6 @@ void BaseWindow::resetAll()
     plants_items_to_graphical.clear();
     crafting_recipes_items_graphical.clear();
     crafting_recipes_items_to_graphical.clear();
-    itemOnMap.clear();
-    quests.clear();
     ui->tip->setVisible(false);
     ui->persistant_tip->setVisible(false);
     ui->gain->setVisible(false);
@@ -88,9 +86,6 @@ void BaseWindow::resetAll()
     ui->tabWidgetTrainerCard->setCurrentWidget(ui->tabWidgetTrainerCardPage1);
     ui->selectMonster->setVisible(false);
     doNextActionStep=DoNextActionStep_Start;
-    clan=0;
-    clan_leader=false;
-    allow.clear();
     actionClan.clear();
     clanName.clear();
     haveClanInformations=false;
@@ -309,12 +304,6 @@ void BaseWindow::have_main_and_sub_datapack_loaded()
     }
     const Player_private_and_public_informations &informations=client->get_player_informations();
 
-    clan=informations.clan;
-    allow=informations.allow;
-    clan_leader=informations.clan_leader;
-    cash=informations.cash;
-    warehouse_cash=informations.warehouse_cash;
-    quests=informations.quests;
     ui->player_informations_pseudo->setText(QString::fromStdString(informations.public_informations.pseudo));
     ui->tradePlayerPseudo->setText(QString::fromStdString(informations.public_informations.pseudo));
     ui->warehousePlayerPseudo->setText(QString::fromStdString(informations.public_informations.pseudo));
@@ -454,14 +443,13 @@ void BaseWindow::have_inventory(const std::unordered_map<uint16_t,uint32_t> &ite
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::have_inventory()";
     #endif
-    this->items=items;
-    this->warehouse_items=warehouse_items;
     haveInventory=true;
     updateConnectingStatus();
 }
 
 void BaseWindow::load_inventory()
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::load_inventory()";
     #endif
@@ -473,8 +461,8 @@ void BaseWindow::load_inventory()
     ui->inventory->clear();
     items_graphical.clear();
     items_to_graphical.clear();
-    auto i=items.begin();
-    while (i!=items.cend())
+    auto i=playerInformations.items.begin();
+    while (i!=playerInformations.items.cend())
     {
         bool show=!inSelection;
         if(inSelection)
@@ -766,12 +754,9 @@ void BaseWindow::updateConnectingStatus()
         waitedData << tr("Opening the datapack");
     if(waitedData.isEmpty())
     {
-        Player_private_and_public_informations player_private_and_public_informations=client->get_player_informations();
-        itemOnMap=player_private_and_public_informations.itemOnMap;
-        plantOnMap=player_private_and_public_informations.plantOnMap;
-        warehouse_playerMonster=stdvectorToQList(player_private_and_public_informations.warehouse_playerMonster);
-        mapController->setBotsAlreadyBeaten(player_private_and_public_informations.bot_already_beaten);
-        mapController->setInformations(&items,&quests,&events,&itemOnMap,&plantOnMap);
+        Player_private_and_public_informations playerInformations=client->get_player_informations();
+        mapController->setBotsAlreadyBeaten(playerInformations.bot_already_beaten);
+        mapController->setInformations(&playerInformations.items,&playerInformations.quests,&events,&playerInformations.itemOnMap,&playerInformations.plantOnMap);
         client->unloadSelection();
         load_inventory();
         load_plant_inventory();
@@ -1020,11 +1005,12 @@ void BaseWindow::updatePlayerImage()
 
 void BaseWindow::updateDisplayedQuests()
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     QString html=QStringLiteral("<ul>");
     ui->questsList->clear();
     quests_to_id_graphical.clear();
-    auto i=quests.begin();
-    while(i!=quests.cend())
+    auto i=playerInformations.quests.begin();
+    while(i!=playerInformations.quests.cend())
     {
         if(DatapackClientLoader::datapackLoader.questsExtra.contains(i->first))
         {
@@ -1059,6 +1045,7 @@ void BaseWindow::updateDisplayedQuests()
 
 void BaseWindow::on_questsList_itemSelectionChanged()
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     QList<QListWidgetItem *> items=ui->questsList->selectedItems();
     if(items.size()!=1)
     {
@@ -1072,22 +1059,22 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         return;
     }
     uint32_t questId=quests_to_id_graphical.value(items.first());
-    if(quests.find(questId)==quests.cend())
+    if(playerInformations.quests.find(questId)==playerInformations.quests.cend())
     {
         qDebug() << "Selected quest is not into the player list";
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }
-    if(quests.at(questId).step==0 || quests.at(questId).step>DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.size())
+    if(playerInformations.quests.at(questId).step==0 || playerInformations.quests.at(questId).step>DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.size())
     {
         qDebug() << "Selected quest step is out of range";
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }
-    const QString &stepDescription=DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.value(quests.at(questId).step-1)+"<br />";
+    const QString &stepDescription=DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.value(playerInformations.quests.at(questId).step-1)+"<br />";
     QString stepRequirements;
     {
-        std::vector<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(quests.at(questId).step-1).requirements.items;
+        std::vector<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(playerInformations.quests.at(questId).step-1).requirements.items;
         QStringList objects;
         unsigned int index=0;
         while(index<items.size())
@@ -1243,12 +1230,13 @@ void BaseWindow::updateTheWareHouseContent()
 {
     if(!haveInventory || !datapackIsParsed)
         return;
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
 
     //inventory
     {
         ui->warehousePlayerInventory->clear();
-        auto i=items.begin();
-        while(i!=items.cend())
+        auto i=playerInformations.items.begin();
+        while(i!=playerInformations.items.cend())
         {
             int64_t quantity=i->second;
             if(change_warehouse_items.contains(i->first))
@@ -1260,7 +1248,7 @@ void BaseWindow::updateTheWareHouseContent()
         QHashIterator<uint16_t,int32_t> j(change_warehouse_items);
         while (j.hasNext()) {
             j.next();
-            if(items.find(j.key())==items.cend() && j.value()>0)
+            if(playerInformations.items.find(j.key())==playerInformations.items.cend() && j.value()>0)
                 ui->warehousePlayerInventory->addItem(itemToGraphic(j.key(),j.value()));
         }
     }
@@ -1270,8 +1258,8 @@ void BaseWindow::updateTheWareHouseContent()
     //inventory warehouse
     {
         ui->warehousePlayerStoredInventory->clear();
-        auto i=warehouse_items.begin();
-        while(i!=warehouse_items.cend())
+        auto i=playerInformations.warehouse_items.begin();
+        while(i!=playerInformations.warehouse_items.cend())
         {
             int64_t quantity=i->second;
             if(change_warehouse_items.contains(i->first))
@@ -1283,14 +1271,14 @@ void BaseWindow::updateTheWareHouseContent()
         QHashIterator<uint16_t,int32_t> j(change_warehouse_items);
         while (j.hasNext()) {
             j.next();
-            if(warehouse_items.find(j.key())==warehouse_items.cend() && j.value()<0)
+            if(playerInformations.warehouse_items.find(j.key())==playerInformations.warehouse_items.cend() && j.value()<0)
                 ui->warehousePlayerStoredInventory->addItem(itemToGraphic(j.key(),-j.value()));
         }
     }
 
     //cash
-    ui->warehousePlayerCash->setText(tr("Cash: %1").arg(cash+temp_warehouse_cash));
-    ui->warehousePlayerStoredCash->setText(tr("Cash: %1").arg(warehouse_cash-temp_warehouse_cash));
+    ui->warehousePlayerCash->setText(tr("Cash: %1").arg(playerInformations.cash+temp_warehouse_cash));
+    ui->warehousePlayerStoredCash->setText(tr("Cash: %1").arg(playerInformations.warehouse_cash-temp_warehouse_cash));
 
     //do before because the dispatch put into random of it
     ui->warehousePlayerStoredMonster->clear();
@@ -1326,10 +1314,10 @@ void BaseWindow::updateTheWareHouseContent()
     //monster warehouse
     {
         int index=0;
-        int size=warehouse_playerMonster.size();
+        int size=playerInformations.warehouse_playerMonster.size();
         while(index<size)
         {
-            const PlayerMonster &monster=warehouse_playerMonster.at(index);
+            const PlayerMonster &monster=playerInformations.warehouse_playerMonster.at(index);
             if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
             {
                 QListWidgetItem *item=new QListWidgetItem();
@@ -1350,8 +1338,8 @@ void BaseWindow::updateTheWareHouseContent()
     }
 
     //set the button enabled
-    ui->warehouseWithdrawCash->setEnabled((warehouse_cash-temp_warehouse_cash)>0);
-    ui->warehouseDepositCash->setEnabled((cash+temp_warehouse_cash)>0);
+    ui->warehouseWithdrawCash->setEnabled((playerInformations.warehouse_cash-temp_warehouse_cash)>0);
+    ui->warehouseDepositCash->setEnabled((playerInformations.cash+temp_warehouse_cash)>0);
     ui->warehouseDepositItem->setEnabled(ui->warehousePlayerInventory->count()>0);
     ui->warehouseWithdrawItem->setEnabled(ui->warehousePlayerStoredInventory->count()>0);
     ui->warehouseDepositMonster->setEnabled(ui->warehousePlayerMonster->count()>1);
