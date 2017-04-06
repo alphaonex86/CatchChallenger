@@ -137,6 +137,7 @@ void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
 
 void BaseWindow::load_plant_inventory()
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::load_plant_inventory()";
     #endif
@@ -145,8 +146,8 @@ void BaseWindow::load_plant_inventory()
     ui->listPlantList->clear();
     plants_items_graphical.clear();
     plants_items_to_graphical.clear();
-    auto i=items.begin();
-    while(i!=items.cend())
+    auto i=playerInformations.items.begin();
+    while(i!=playerInformations.items.cend())
     {
         if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i->first))
         {
@@ -443,6 +444,7 @@ void BaseWindow::on_toolButton_quit_crafting_clicked()
 
 void BaseWindow::on_listCraftingList_itemSelectionChanged()
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     ui->listCraftingMaterials->clear();
     QList<QListWidgetItem *> displayedItems=ui->listCraftingList->selectedItems();
     if(displayedItems.size()!=1)
@@ -493,8 +495,8 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
 
         //load the quantity into the inventory
         quantity=0;
-        if(items.find(content.materials.at(index).item)!=items.cend())
-            quantity=items[content.materials.at(index).item];
+        if(playerInformations.items.find(content.materials.at(index).item)!=playerInformations.items.cend())
+            quantity=playerInformations.items.at(content.materials.at(index).item);
 
         //load the display
         item->setText(tr("Needed: %1 %2\nIn the inventory: %3 %4").arg(content.materials.at(index).quantity).arg(nameMaterials).arg(quantity).arg(nameMaterials));
@@ -515,6 +517,7 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
 
 void BaseWindow::on_craftingUse_clicked()
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     //recipeInUsing
     QList<QListWidgetItem *> displayedItems=ui->listCraftingList->selectedItems();
     if(displayedItems.size()!=1)
@@ -529,9 +532,9 @@ void BaseWindow::on_craftingUse_clicked()
     unsigned int index=0;
     while(index<content.materials.size())
     {
-        if(items.find(content.materials.at(index).item)==items.cend())
+        if(playerInformations.items.find(content.materials.at(index).item)==playerInformations.items.cend())
             return;
-        if(items[content.materials.at(index).item]<content.materials.at(index).quantity)
+        if(playerInformations.items.at(content.materials.at(index).item)<content.materials.at(index).quantity)
             return;
         uint32_t sub_index=0;
         while(sub_index<content.materials.at(index).quantity)
