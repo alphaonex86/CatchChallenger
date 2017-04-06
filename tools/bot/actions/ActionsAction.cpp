@@ -1,5 +1,6 @@
 #include "ActionsAction.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/FacilityLib.h"
@@ -864,4 +865,38 @@ bool ActionsAction::needBeTeleported(const MapServerMini &map, const COORD_TYPE 
         index++;
     }
     return false;
+}
+
+void ActionsAction::monsterCatch(const bool &success)
+{
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    if(api==NULL)
+        return;
+    if(!clientList.contains(api))
+        return;
+    Player &player=clientList[api];
+    if(player.fightEngine->playerMonster_catchInProgress.isEmpty())
+    {
+        std::cerr << "Internal bug: cupture monster list is emtpy" << std::endl;
+        return;
+    }
+    if(!success)
+        player.fightEngine->generateOtherAttack();
+    else
+    {
+        player.canMoveOnMap=true;
+        if(player.fightEngine->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
+        {
+            if(warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+            {
+                QMessageBox::warning(this,tr("Error"),tr("You have already the maximum number of monster into you warehouse"));
+                break;
+            }
+            CatchChallenger::Player_private_and_public_informations &playerInformations=player.api->get_player_informations();
+            playerInformations.warehouse_playerMonster.push_back(player.fightEngine->playerMonster_catchInProgress.first());
+        }
+        else
+            player.fightEngine->addPlayerMonster(player.fightEngine->playerMonster_catchInProgress.first());
+    }
+    player.fightEngine->playerMonster_catchInProgress.removeFirst();
 }

@@ -12,12 +12,13 @@ using namespace CatchChallenger;
 
 void BaseWindow::on_warehouseWithdrawCash_clicked()
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     bool ok=true;
     int i;
-    if((warehouse_cash-temp_warehouse_cash)==1)
+    if((playerInformations.warehouse_cash-temp_warehouse_cash)==1)
         i = 1;
     else
-        i = QInputDialog::getInt(this, tr("Withdraw"),tr("Amount cash to withdraw:"), 0, 0, warehouse_cash-temp_warehouse_cash, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Withdraw"),tr("Amount cash to withdraw:"), 0, 0, playerInformations.warehouse_cash-temp_warehouse_cash, 1, &ok);
     if(!ok || i<=0)
         return;
     temp_warehouse_cash+=i;
@@ -26,12 +27,13 @@ void BaseWindow::on_warehouseWithdrawCash_clicked()
 
 void BaseWindow::on_warehouseDepositCash_clicked()
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     bool ok=true;
     int i;
-    if((cash+temp_warehouse_cash)==1)
+    if((playerInformations.cash+temp_warehouse_cash)==1)
         i = 1;
     else
-        i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount cash to deposite:"), 0, 0, cash+temp_warehouse_cash, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount cash to deposite:"), 0, 0, playerInformations.cash+temp_warehouse_cash, 1, &ok);
     if(!ok || i<=0)
         return;
     temp_warehouse_cash-=i;
@@ -104,10 +106,11 @@ void BaseWindow::on_warehouseDepositMonster_clicked()
 
 void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item)
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     uint32_t quantity=0;
     uint32_t id=item->data(99).toUInt();
-    if(items.find(id)!=items.cend())
-        quantity+=items.at(id);
+    if(playerInformations.items.find(id)!=playerInformations.items.cend())
+        quantity+=playerInformations.items.at(id);
     if(change_warehouse_items.contains(id))
         quantity+=change_warehouse_items.value(id);
     if(quantity==0)
@@ -134,10 +137,11 @@ void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item
 
 void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem *item)
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     uint32_t quantity=0;
     uint32_t id=item->data(99).toUInt();
-    if(warehouse_items.find(id)!=warehouse_items.cend())
-        quantity+=warehouse_items.at(id);
+    if(playerInformations.warehouse_items.find(id)!=playerInformations.warehouse_items.cend())
+        quantity+=playerInformations.warehouse_items.at(id);
     if(change_warehouse_items.contains(id))
         quantity-=change_warehouse_items.value(id);
     if(quantity==0)
@@ -208,6 +212,7 @@ void BaseWindow::on_warehousePlayerStoredMonster_itemActivated(QListWidgetItem *
 
 QList<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     QList<PlayerMonster> warehouseMonsterOnPlayerList;
     {
         const std::vector<PlayerMonster> &playerMonster=fightEngine.getPlayerMonster();
@@ -223,10 +228,10 @@ QList<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
     }
     {
         int index=0;
-        int size=warehouse_playerMonster.size();
+        int size=playerInformations.warehouse_playerMonster.size();
         while(index<size)
         {
-            const PlayerMonster &monster=warehouse_playerMonster.at(index);
+            const PlayerMonster &monster=playerInformations.warehouse_playerMonster.at(index);
             if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() && monster_to_withdraw.contains(index))
                 warehouseMonsterOnPlayerList << monster;
             index++;
@@ -240,12 +245,13 @@ void BaseWindow::on_toolButton_quit_warehouse_clicked()
     monster_to_withdraw.clear();
     monster_to_deposit.clear();
     change_warehouse_items.clear();
-    warehouse_cash=0;
+    temp_warehouse_cash=0;
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
 void BaseWindow::on_warehouseValidate_clicked()
 {
+    Player_private_and_public_informations &playerInformations=client->get_player_informations();
     {
         QList<QPair<uint16_t,int32_t> > change_warehouse_items_list;
         QHash<uint16_t,int32_t>::const_iterator i = change_warehouse_items.constBegin();
@@ -260,29 +266,29 @@ void BaseWindow::on_warehouseValidate_clicked()
         addCash(temp_warehouse_cash);
     else
         removeCash(-temp_warehouse_cash);
-    warehouse_cash-=temp_warehouse_cash;
+    playerInformations.warehouse_cash-=temp_warehouse_cash;
     {
         QHash<uint16_t,int32_t>::const_iterator i = change_warehouse_items.constBegin();
         while (i != change_warehouse_items.constEnd()) {
             if(i.value()>0)
             {
-                if(items.find(i.key())!=items.cend())
-                    items[i.key()]+=i.value();
+                if(playerInformations.items.find(i.key())!=playerInformations.items.cend())
+                    playerInformations.items[i.key()]+=i.value();
                 else
-                    items[i.key()]=i.value();
-                warehouse_items[i.key()]-=i.value();
-                if(warehouse_items.at(i.key())==0)
-                    warehouse_items.erase(i.key());
+                    playerInformations.items[i.key()]=i.value();
+                playerInformations.warehouse_items[i.key()]-=i.value();
+                if(playerInformations.warehouse_items.at(i.key())==0)
+                    playerInformations.warehouse_items.erase(i.key());
             }
             if(i.value()<0)
             {
-                items[i.key()]+=i.value();
-                if(items.at(i.key())==0)
-                    items.erase(i.key());
-                if(warehouse_items.find(i.key())!=warehouse_items.cend())
-                    warehouse_items[i.key()]-=i.value();
+                playerInformations.items[i.key()]+=i.value();
+                if(playerInformations.items.at(i.key())==0)
+                    playerInformations.items.erase(i.key());
+                if(playerInformations.warehouse_items.find(i.key())!=playerInformations.warehouse_items.cend())
+                    playerInformations.warehouse_items[i.key()]-=i.value();
                 else
-                    warehouse_items[i.key()]=-i.value();
+                    playerInformations.warehouse_items[i.key()]=-i.value();
             }
             ++i;
         }
@@ -295,12 +301,12 @@ void BaseWindow::on_warehouseValidate_clicked()
         while(index<monster_to_withdraw.size())
         {
             unsigned int sub_index=0;
-            while((int)sub_index<warehouse_playerMonster.size())
+            while(sub_index<playerInformations.warehouse_playerMonster.size())
             {
                 if(sub_index==monster_to_withdraw.at(index))
                 {
-                    playerMonsterToWithdraw << warehouse_playerMonster.at(sub_index);
-                    warehouse_playerMonster.removeAt(sub_index);
+                    playerMonsterToWithdraw << playerInformations.warehouse_playerMonster.at(sub_index);
+                    playerInformations.warehouse_playerMonster.erase(playerInformations.warehouse_playerMonster.cbegin()+sub_index);
                     break;
                 }
                 sub_index++;
@@ -315,7 +321,7 @@ void BaseWindow::on_warehouseValidate_clicked()
         {
             const std::vector<PlayerMonster> &playerMonster=fightEngine.getPlayerMonster();
             const uint8_t &monsterPosition=monster_to_deposit.at(index);
-            warehouse_playerMonster << playerMonster.at(monsterPosition);
+            playerInformations.warehouse_playerMonster.push_back(playerMonster.at(monsterPosition));
             fightEngine.removeMonsterByPosition(monsterPosition);
             index++;
         }

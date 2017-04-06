@@ -11,8 +11,9 @@
 
 using namespace CatchChallenger;
 
-bool BaseWindow::botHaveQuest(const uint32_t &botId)
+bool BaseWindow::botHaveQuest(const uint32_t &botId) const
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "check bot quest for: " << botId;
     #endif
@@ -27,7 +28,7 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
         #endif
         const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
-        if(quests.find(botQuests.at(index))==quests.cend())
+        if(playerInformations.quests.find(botQuests.at(index))==playerInformations.quests.cend())
         {
             //quest not started
             if(haveStartQuestRequirement(currentQuest))
@@ -41,11 +42,11 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
-                if(quests.at(botQuests.at(index)).step==0)
+                if(playerInformations.quests.at(botQuests.at(index)).step==0)
                 {
                     if(currentQuest.repeatable)
                     {
-                        if(quests.at(botQuests.at(index)).finish_one_time)
+                        if(playerInformations.quests.at(botQuests.at(index)).finish_one_time)
                         {
                             //quest already done but repeatable
                             if(haveStartQuestRequirement(currentQuest))
@@ -61,7 +62,7 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
                 }
                 else
                 {
-                    auto bots=currentQuest.steps.at(quests.at(questId).step-1).bots;
+                    auto bots=currentQuest.steps.at(playerInformations.quests.at(questId).step-1).bots;
                     if(vectorcontainsAtLeastOne(bots,botId))
                         return true;//in progress
                     else
@@ -72,8 +73,8 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
         index++;
     }
     //do the started quest here
-    auto i=quests.begin();
-    while(i!=quests.cend())
+    auto i=playerInformations.quests.begin();
+    while(i!=playerInformations.quests.cend())
     {
         if(!botQuests.contains(i->first) && i->second.step>0)
         {
@@ -92,6 +93,7 @@ bool BaseWindow::botHaveQuest(const uint32_t &botId)
 //bot
 void BaseWindow::goToBotStep(const uint8_t &step)
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     lastStepUsed=step;
     isInQuest=false;
     if(actualBot.step.find(step)==actualBot.step.cend())
@@ -285,9 +287,9 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="clan")
     {
         QString textToShow;
-        if(clan==0)
+        if(playerInformations.clan==0)
         {
-            if(allow.find(ActionAllow_Clan)!=allow.cend())
+            if(playerInformations.allow.find(ActionAllow_Clan)!=playerInformations.allow.cend())
                 textToShow=QStringLiteral("<center><a href=\"clan_create\">%1</a></center>").arg(tr("Clan create"));
             else
                 textToShow=QStringLiteral("<center>You can't create your clan</center>");
@@ -394,7 +396,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             showTip(tr("Missing attribute for the step"));
             return;
         }
-        if(clan==0)
+        if(playerInformations.clan==0)
         {
             showTip(tr("You can't try capture if you are not in a clan"));
             return;
@@ -513,8 +515,9 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint32_t &b
                 false;
     }
     const Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
+    Player_private_and_public_informations &playerInformations=client->get_player_informations();
 
-    if(quests.find(questId)==quests.cend())
+    if(playerInformations.quests.find(questId)==playerInformations.quests.cend())
     {
         //start for the first time the quest
         if(vectorcontainsAtLeastOne(quest.steps.at(0).bots,botId)
@@ -532,7 +535,7 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint32_t &b
             return false;
         }
     }
-    else if(quests.at(questId).step==0)
+    else if(playerInformations.quests.at(questId).step==0)
     {
         //start again the quest if can be repeated
         if(quest.repeatable &&
@@ -557,7 +560,7 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint32_t &b
             showTip(tr("You don't have the requirement to continue this quest"));
         return false;
     }
-    if(quests.at(questId).step>=(quest.steps.size()))
+    if(playerInformations.quests.at(questId).step>=(quest.steps.size()))
     {
         if(!silent)
             showTip(tr("You have finish the quest <b>%1</b>").arg(DatapackClientLoader::datapackLoader.questsExtra.value(questId).name));
@@ -566,7 +569,7 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint32_t &b
         updateDisplayedQuests();
         return true;
     }
-    if(vectorcontainsAtLeastOne(quest.steps.at(quests.at(questId).step).bots,botId))
+    if(vectorcontainsAtLeastOne(quest.steps.at(playerInformations.quests.at(questId).step).bots,botId))
     {
         if(!silent)
             showTip(tr("You need talk to another bot"));
@@ -587,6 +590,7 @@ void BaseWindow::getTextEntryPoint()
     }
     QScriptEngine engine;
 
+    Player_private_and_public_informations &playerInformations=client->get_player_informations();
     const QString &client_logic=client->datapackPathMain()+DATAPACK_BASE_PATH_QUESTS2+"/"+QString::number(questId)+"/client_logic.js";
     if(!QFile(client_logic).exists())
     {
@@ -604,7 +608,7 @@ void BaseWindow::getTextEntryPoint()
     bool haveNextStepQuestRequirementsVar;
     bool finishOneTimeVar;
     scriptFile.close();
-    if(quests.find(questId)==quests.cend())
+    if(playerInformations.quests.find(questId)==playerInformations.quests.cend())
     {
         contents.replace("currentQuestStep()","0");
         contents.replace("currentBot()","0");
@@ -616,7 +620,7 @@ void BaseWindow::getTextEntryPoint()
     }
     else
     {
-        PlayerQuest quest=quests.at(questId);
+        PlayerQuest quest=playerInformations.quests.at(questId);
         contents.replace("currentQuestStep()",QString::number(quest.step));
         contents.replace("currentBot()",QString::number(actualBot.botId));
         if(quest.finish_one_time)
@@ -719,12 +723,13 @@ bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &que
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << QStringLiteral("haveNextStepQuestRequirements for quest: %1").arg(questId);
     #endif
-    if(quests.find(quest.id)==quests.cend())
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+    if(playerInformations.quests.find(quest.id)==playerInformations.quests.cend())
     {
         qDebug() << "step out of range for: " << quest.id;
         return false;
     }
-    uint8_t step=quests.at(quest.id).step;
+    uint8_t step=playerInformations.quests.at(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
         qDebug() << "step out of range for: " << quest.id;
@@ -768,9 +773,10 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "check quest requirement for: " << quest.id;
     #endif
-    if(quests.find(quest.id)!=quests.cend())
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+    if(playerInformations.quests.find(quest.id)!=playerInformations.quests.cend())
     {
-        const PlayerQuest &playerquest=quests.at(quest.id);
+        const PlayerQuest &playerquest=playerInformations.quests.at(quest.id);
         if(playerquest.step!=0)
         {
             #ifdef DEBUG_CLIENT_QUEST
@@ -791,9 +797,9 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
     {
         const uint16_t &questId=quest.requirements.quests.at(index).quest;
         if(
-                (quests.find(questId)==quests.cend() && !quest.requirements.quests.at(index).inverse)
+                (playerInformations.quests.find(questId)==playerInformations.quests.cend() && !quest.requirements.quests.at(index).inverse)
                 ||
-                (quests.find(questId)!=quests.cend() && quest.requirements.quests.at(index).inverse)
+                (playerInformations.quests.find(questId)!=playerInformations.quests.cend() && quest.requirements.quests.at(index).inverse)
                 )
         {
             #ifdef DEBUG_CLIENT_QUEST
@@ -801,14 +807,14 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
             #endif
             return false;
         }
-        if(quests.find(questId)!=quests.cend())
+        if(playerInformations.quests.find(questId)!=playerInformations.quests.cend())
         {
             #ifdef DEBUG_CLIENT_QUEST
             qDebug() << "quest never started: " << questId;
             #endif
             return false;
         }
-        const PlayerQuest &playerquest=quests.at(quest.id);
+        const PlayerQuest &playerquest=playerInformations.quests.at(quest.id);
         if(!playerquest.finish_one_time)
         {
             #ifdef DEBUG_CLIENT_QUEST
@@ -923,18 +929,20 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
 
 bool BaseWindow::startQuest(const Quest &quest)
 {
-    if(quests.find(quest.id)==quests.cend())
+    Player_private_and_public_informations &playerInformations=client->get_player_informations();
+    if(playerInformations.quests.find(quest.id)==playerInformations.quests.cend())
     {
-        quests[quest.id].step=1;
-        quests[quest.id].finish_one_time=false;
+        playerInformations.quests[quest.id].step=1;
+        playerInformations.quests[quest.id].finish_one_time=false;
     }
     else
-        quests[quest.id].step=1;
+        playerInformations.quests[quest.id].step=1;
     return true;
 }
 
-QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
+QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId) const
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     QList<QPair<uint32_t,QString> > entryList;
     QPair<uint32_t,QString> oneEntry;
     //do the not started quest here
@@ -948,7 +956,7 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
         #endif
         const CatchChallenger::Quest &currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
-        if(quests.find(botQuests.at(index))==quests.cend())
+        if(playerInformations.quests.find(botQuests.at(index))==playerInformations.quests.cend())
         {
             //quest not started
             if(haveStartQuestRequirement(currentQuest))
@@ -972,11 +980,11 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
                 qDebug() << "internal bug: have quest registred, but no quest found with this id";
             else
             {
-                if(quests.at(botQuests.at(index)).step==0)
+                if(playerInformations.quests.at(botQuests.at(index)).step==0)
                 {
                     if(currentQuest.repeatable)
                     {
-                        if(quests.at(botQuests.at(index)).finish_one_time)
+                        if(playerInformations.quests.at(botQuests.at(index)).finish_one_time)
                         {
                             //quest already done but repeatable
                             if(haveStartQuestRequirement(currentQuest))
@@ -1002,7 +1010,7 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
                 }
                 else
                 {
-                    auto bots=currentQuest.steps.at(quests.at(questId).step-1).bots;
+                    auto bots=currentQuest.steps.at(playerInformations.quests.at(questId).step-1).bots;
                     if(vectorcontainsAtLeastOne(bots,botId))
                     {
                         oneEntry.first=questId;
@@ -1023,8 +1031,8 @@ QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId)
         index++;
     }
     //do the started quest here
-    auto i=quests.begin();
-    while(i!=quests.cend())
+    auto i=playerInformations.quests.begin();
+    while(i!=playerInformations.quests.cend())
     {
         if(!botQuests.contains(i->first) && i->second.step>0)
         {

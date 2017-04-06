@@ -87,6 +87,8 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
 
 void BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
 {
+    if(!player.target.bestPath.empty())
+        return;
     if(!player.target.localStep.empty() && !player.target.wildBackwardStep.empty())
         return;
     if(player.target.wildBackwardStep.empty())

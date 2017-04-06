@@ -580,7 +580,8 @@ QString BaseWindow::lastLocation() const
 
 std::unordered_map<uint16_t, PlayerQuest> BaseWindow::getQuests() const
 {
-    return quests;
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+    return playerInformations.quests;
 }
 
 uint8_t BaseWindow::getActualBotId() const
@@ -672,7 +673,7 @@ void BaseWindow::add_to_inventory(const QList<QPair<uint16_t,uint32_t> > &items,
 
 void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bool &showGain)
 {
-    Player_private_and_public_informations &informations=client->get_player_informations();
+    Player_private_and_public_informations &playerInformations=client->get_player_informations();
     if(items.empty())
         return;
     if(showGain)
@@ -683,15 +684,15 @@ void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bo
             i.next();
 
             const uint16_t &item=i.key();
-            if(informations.encyclopedia_item!=NULL)
-                informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
+            if(playerInformations.encyclopedia_item!=NULL)
+                playerInformations.encyclopedia_item[item/8]|=(1<<(7-item%8));
             else
                 std::cerr << "encyclopedia_item is null, unable to set" << std::endl;
             //add really to the list
-            if(this->items.find(item)!=this->items.cend())
-                this->items[item]+=i.value();
+            if(playerInformations.items.find(item)!=playerInformations.items.cend())
+                playerInformations.items[item]+=i.value();
             else
-                this->items[item]=i.value();
+                playerInformations.items[item]=i.value();
 
             QPixmap image;
             QString name;
@@ -732,15 +733,15 @@ void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bo
             i.next();
 
             const uint16_t &item=i.key();
-            if(informations.encyclopedia_item!=NULL)
-                informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
+            if(playerInformations.encyclopedia_item!=NULL)
+                playerInformations.encyclopedia_item[item/8]|=(1<<(7-item%8));
             else
                 std::cerr << "encyclopedia_item is null, unable to set" << std::endl;
             //add really to the list
-            if(this->items.find(item)!=this->items.cend())
-                this->items[item]+=i.value();
+            if(playerInformations.items.find(item)!=playerInformations.items.cend())
+                playerInformations.items[item]+=i.value();
             else
-                this->items[item]=i.value();
+                playerInformations.items[item]=i.value();
         }
     }
 
@@ -763,17 +764,18 @@ void BaseWindow::remove_to_inventory_slot(const QHash<uint16_t,uint32_t> &items)
 
 void BaseWindow::remove_to_inventory(const QHash<uint16_t,uint32_t> &items)
 {
+    Player_private_and_public_informations &playerInformations=client->get_player_informations();
     QHashIterator<uint16_t,uint32_t> i(items);
     while (i.hasNext()) {
         i.next();
 
         //add really to the list
-        if(this->items.find(i.key())!=this->items.cend())
+        if(playerInformations.items.find(i.key())!=playerInformations.items.cend())
         {
-            if(this->items.at(i.key())<=i.value())
-                this->items.erase(i.key());
+            if(playerInformations.items.at(i.key())<=i.value())
+                playerInformations.items.erase(i.key());
             else
-                this->items[i.key()]-=i.value();
+                playerInformations.items[i.key()]-=i.value();
         }
     }
     load_inventory();
@@ -1191,15 +1193,16 @@ bool BaseWindow::haveReputationRequirements(const QList<ReputationRequirements> 
 
 bool BaseWindow::nextStepQuest(const Quest &quest)
 {
+    CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations();
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "drop quest step requirement for: " << quest.id;
     #endif
-    if(quests.find(quest.id)==quests.cend())
+    if(playerInformations.quests.find(quest.id)==playerInformations.quests.cend())
     {
         qDebug() << "step out of range for: " << quest.id;
         return false;
     }
-    uint8_t step=quests.at(quest.id).step;
+    uint8_t step=playerInformations.quests.at(quest.id).step;
     if(step<=0 || step>quest.steps.size())
     {
         qDebug() << "step out of range for: " << quest.id;
@@ -1215,14 +1218,14 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
         remove_to_inventory(items);
         index++;
     }
-    quests[quest.id].step++;
-    if(quests.at(quest.id).step>quest.steps.size())
+    playerInformations.quests[quest.id].step++;
+    if(playerInformations.quests.at(quest.id).step>quest.steps.size())
     {
         #ifdef DEBUG_CLIENT_QUEST
         qDebug() << "finish the quest: " << quest.id;
         #endif
-        quests[quest.id].step=0;
-        quests[quest.id].finish_one_time=true;
+        playerInformations.quests[quest.id].step=0;
+        playerInformations.quests[quest.id].finish_one_time=true;
         index=0;
         while(index<quest.rewards.reputation.size())
         {
@@ -1233,7 +1236,7 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
         index=0;
         while(index<quest.rewards.allow.size())
         {
-            allow.insert(quest.rewards.allow.at(index));
+            playerInformations.allow.insert(quest.rewards.allow.at(index));
             index++;
         }
     }
@@ -1349,14 +1352,15 @@ void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
 
 void BaseWindow::on_inventoryDestroy_clicked()
 {
+    Player_private_and_public_informations &playerInformations=client->get_player_informations();
     qDebug() << "on_inventoryDestroy_clicked()";
     QList<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
         return;
     uint32_t itemId=items_graphical.value(items.first());
-    if(this->items.find(itemId)==this->items.cend())
+    if(playerInformations.items.find(itemId)==playerInformations.items.cend())
         return;
-    uint32_t quantity=this->items.at(itemId);
+    uint32_t quantity=playerInformations.items.at(itemId);
     if(quantity>1)
     {
         bool ok;
@@ -1372,10 +1376,10 @@ void BaseWindow::on_inventoryDestroy_clicked()
         button=QMessageBox::question(this,tr("Destroy"),tr("Are you sure you want to destroy %1 unknow item (id: %2)?").arg(quantity).arg(itemId),QMessageBox::Yes|QMessageBox::No,QMessageBox::Yes);
     if(button!=QMessageBox::Yes)
         return;
-    if(this->items.find(itemId)==this->items.cend())
+    if(playerInformations.items.find(itemId)==playerInformations.items.cend())
         return;
-    if(this->items.at(itemId)<quantity)
-        quantity=this->items.at(itemId);
+    if(playerInformations.items.at(itemId)<quantity)
+        quantity=playerInformations.items.at(itemId);
     emit destroyObject(itemId,quantity);
     remove_to_inventory(itemId,quantity);
     load_inventory();
@@ -1384,8 +1388,9 @@ void BaseWindow::on_inventoryDestroy_clicked()
 
 uint32_t BaseWindow::itemQuantity(const uint32_t &itemId) const
 {
-    if(items.find(itemId)!=items.cend())
-        return items.at(itemId);
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+    if(playerInformations.items.find(itemId)!=playerInformations.items.cend())
+        return playerInformations.items.at(itemId);
     return 0;
 }
 
@@ -1437,18 +1442,20 @@ void BaseWindow::on_toolButtonOptions_clicked()
 
 void BaseWindow::addCash(const uint32_t &cash)
 {
-    this->cash+=cash;
-    ui->player_informations_cash->setText(QStringLiteral("%1$").arg(this->cash));
-    ui->shopCash->setText(tr("Cash: %1$").arg(this->cash));
-    ui->tradePlayerCash->setMaximum(this->cash);
+    Player_private_and_public_informations &playerInformations=client->get_player_informations();
+    playerInformations.cash+=cash;
+    ui->player_informations_cash->setText(QStringLiteral("%1$").arg(playerInformations.cash));
+    ui->shopCash->setText(tr("Cash: %1$").arg(playerInformations.cash));
+    ui->tradePlayerCash->setMaximum(playerInformations.cash);
 }
 
 void BaseWindow::removeCash(const uint32_t &cash)
 {
-    this->cash-=cash;
-    ui->player_informations_cash->setText(QStringLiteral("%1$").arg(this->cash));
-    ui->shopCash->setText(tr("Cash: %1$").arg(this->cash));
-    ui->tradePlayerCash->setMaximum(this->cash);
+    Player_private_and_public_informations &playerInformations=client->get_player_informations();
+    playerInformations.cash-=cash;
+    ui->player_informations_cash->setText(QStringLiteral("%1$").arg(playerInformations.cash));
+    ui->shopCash->setText(tr("Cash: %1$").arg(playerInformations.cash));
+    ui->tradePlayerCash->setMaximum(playerInformations.cash);
 }
 
 void BaseWindow::on_pushButton_interface_monsters_clicked()

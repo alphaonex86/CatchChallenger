@@ -255,6 +255,7 @@ void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &ma
 
 void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     if(marketBuyInSuspend)
     {
         QMessageBox::warning(this,tr("Error"),tr("You have aleady a buy in progress"));
@@ -262,7 +263,7 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
     }
     uint32_t priceQuantity;
     if(item->data(97).toUInt()>0)
-        priceQuantity=cash/item->data(97).toUInt();
+        priceQuantity=playerInformations.cash/item->data(97).toUInt();
     else
         priceQuantity=item->data(98).toUInt();
     if(priceQuantity>item->data(98).toUInt())
@@ -341,6 +342,7 @@ void BaseWindow::on_marketOwnObject_itemActivated(QListWidgetItem *item)
 
 void BaseWindow::on_marketMonster_itemActivated(QListWidgetItem *item)
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     if(marketBuyInSuspend)
     {
         QMessageBox::warning(this,tr("Error"),tr("You have aleady a buy in progress"));
@@ -348,7 +350,7 @@ void BaseWindow::on_marketMonster_itemActivated(QListWidgetItem *item)
     }
     uint32_t priceQuantity;
     if(item->data(98).toUInt()>0)
-        priceQuantity=cash/item->data(98).toUInt();
+        priceQuantity=playerInformations.cash/item->data(98).toUInt();
     else
         priceQuantity=1;
     if(priceQuantity>1)

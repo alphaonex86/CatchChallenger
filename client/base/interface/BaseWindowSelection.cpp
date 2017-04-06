@@ -60,6 +60,7 @@ void BaseWindow::selectObject(const ObjectType &objectType)
 
 void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const uint32_t &quantity)
 {
+    Player_private_and_public_informations &playerInformations=client->get_player_informations();
     inSelection=false;
     ObjectType tempWaitedObjectType=waitedObjectType;
     waitedObjectType=ObjectType_All;
@@ -169,12 +170,12 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             ui->inventoryUse->setText(tr("Select"));
             if(!ok)
                 break;
-            if(items.find(itemId)==items.cend())
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
             {
                 qDebug() << "item id is not into the inventory";
                 break;
             }
-            if(items.at(itemId)<quantity)
+            if(playerInformations.items.at(itemId)<quantity)
             {
                 qDebug() << "item id have not the quantity";
                 break;
@@ -196,12 +197,12 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             ui->stackedWidget->setCurrentWidget(ui->page_market);
             if(!ok)
                 break;
-            if(items.find(itemId)==items.cend())
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
             {
                 qDebug() << "item id is not into the inventory";
                 break;
             }
-            if(items.at(itemId)<quantity)
+            if(playerInformations.items.at(itemId)<quantity)
             {
                 qDebug() << "item id have not the quantity";
                 break;
@@ -229,20 +230,20 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             ui->stackedWidget->setCurrentWidget(ui->page_trade);
             if(!ok)
                 break;
-            if(items.find(itemId)==items.cend())
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
             {
                 qDebug() << "item id is not into the inventory";
                 break;
             }
-            if(items.at(itemId)<quantity)
+            if(playerInformations.items.at(itemId)<quantity)
             {
                 qDebug() << "item id have not the quantity";
                 break;
             }
             client->addObject(itemId,quantity);
-            items[itemId]-=quantity;
-            if(items.at(itemId)==0)
-                items.erase(itemId);
+            playerInformations.items[itemId]-=quantity;
+            if(playerInformations.items.at(itemId)==0)
+                playerInformations.items.erase(itemId);
             if(tradeCurrentObjects.contains(itemId))
                 tradeCurrentObjects[itemId]+=quantity;
             else
@@ -407,7 +408,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 seed_in_waiting.removeLast();
                 return;
             }
-            if(items.find(itemId)==items.cend())
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
             {
                 qDebug() << "item id is not into the inventory";
                 seed_in_waiting.removeLast();
@@ -437,17 +438,18 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             load_inventory();
             if(!ok)
                 break;
-            if(warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+            const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+            if(playerInformations.warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
             {
                 QMessageBox::warning(this,tr("Error"),tr("You have already the maximum number of monster into you warehouse"));
                 break;
             }
-            if(items.find(itemId)==items.cend())
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
             {
                 qDebug() << "item id is not into the inventory";
                 break;
             }
-            if(items.at(itemId)<quantity)
+            if(playerInformations.items.at(itemId)<quantity)
             {
                 qDebug() << "item id have not the quantity";
                 break;
@@ -497,6 +499,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
 
 void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     if(!items_graphical.contains(item))
     {
         qDebug() << "BaseWindow::on_inventory_itemActivated(): activated item not found";
@@ -512,8 +515,8 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
             case ObjectType_Sell:
             case ObjectType_Trade:
             case ObjectType_SellToMarket:
-                if(items.at(itemId)>1)
-                    tempQuantitySelected=QInputDialog::getInt(this,tr("Quantity"),tr("Select a quantity"),1,1,items.at(itemId),1,&ok);
+                if(playerInformations.items.at(itemId)>1)
+                    tempQuantitySelected=QInputDialog::getInt(this,tr("Quantity"),tr("Select a quantity"),1,1,playerInformations.items.at(itemId),1,&ok);
                 else
                     tempQuantitySelected=1;
             break;
@@ -526,12 +529,12 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
             objectSelection(false);
             return;
         }
-        if(items.find(itemId)==items.cend())
+        if(playerInformations.items.find(itemId)==playerInformations.items.cend())
         {
             objectSelection(false);
             return;
         }
-        if(items.at(itemId)<tempQuantitySelected)
+        if(playerInformations.items.at(itemId)<tempQuantitySelected)
         {
             objectSelection(false);
             return;
