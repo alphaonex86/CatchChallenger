@@ -535,6 +535,7 @@ bool BaseWindow::fightCollision(CatchChallenger::Map_client *map, const uint8_t 
 
 void BaseWindow::init_environement_display(Map_client *map, const uint8_t &x, const uint8_t &y)
 {
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     Q_UNUSED(x);
     Q_UNUSED(y);
     //map not located
@@ -551,7 +552,7 @@ void BaseWindow::init_environement_display(Map_client *map, const uint8_t &x, co
     while(index<monstersCollisionValue.walkOn.size())
     {
         const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
-        if(monstersCollision.item==0 || items.find(monstersCollision.item)!=items.cend())
+        if(monstersCollision.item==0 || playerInformations.items.find(monstersCollision.item)!=playerInformations.items.cend())
         {
             if(!monstersCollision.background.empty())
             {
@@ -2164,12 +2165,13 @@ void BaseWindow::monsterCatch(const bool &success)
         //fightEngine.playerMonster_catchInProgress.first().id=newMonsterId;
         if(fightEngine.getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
         {
-            if(warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+            Player_private_and_public_informations &playerInformations=client->get_player_informations();
+            if(playerInformations.warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
             {
                 QMessageBox::warning(this,tr("Error"),tr("You have already the maximum number of monster into you warehouse"));
-                break;
+                return;
             }
-            warehouse_playerMonster << fightEngine.playerMonster_catchInProgress.first();
+            playerInformations.warehouse_playerMonster.push_back(fightEngine.playerMonster_catchInProgress.first());
         }
         else
         {
