@@ -578,20 +578,29 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
     is_logged=character_selected=packOutcommingData(0x03,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::teleportDone()
+bool Api_protocol::teleportDone()
 {
     if(!is_logged)
     {
         std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
+        return false;
     }
     if(!character_selected)
     {
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
+        return false;
     }
-    is_logged=character_selected=postReplyData(teleportList.first(),NULL,0);
+    const TeleportQueryInformation &teleportQueryInformation=teleportList.first();
+    if(!last_direction_is_set)
+    {
+        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("Api_protocol::teleportDone() !last_direction_is_set value, line: %3").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        return false;
+    }
+    last_direction=teleportQueryInformation.direction;
+    last_step=0;
+    is_logged=character_selected=postReplyData(teleportQueryInformation.queryId,NULL,0);
     teleportList.removeFirst();
+    return true;
 }
 
 bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_t &profileIndex, const QString &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)

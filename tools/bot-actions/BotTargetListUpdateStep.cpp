@@ -508,7 +508,7 @@ void BotTargetList::updatePlayerStep()
                 //can't move: can be in fight
                 if(player.fightEngine->isInFight())
                 {
-                    if((player.lastFightAction.elapsed()/1000)>(5/*5s*/) && player.fightEngine->catchInProgress())
+                    if((player.lastFightAction.elapsed()/1000)>(5/*5s*/) && !player.fightEngine->catchInProgress())
                     {
                         player.lastFightAction.restart();
                         //do the code here
@@ -530,8 +530,8 @@ void BotTargetList::updatePlayerStep()
                         bool tryCaptureWithItem=false;
                         uint16_t itemToCapture=0;
                         uint32_t currentDiff=2000000;
-                        if(playerInformations.encyclopedia_item!=NULL)
-                            if(!(playerInformations.encyclopedia_item[othermonster->monster/8] & (1<<(7-othermonster->monster%8))))
+                        if(playerInformations.encyclopedia_monster!=NULL)
+                            if(!(playerInformations.encyclopedia_monster[othermonster->monster/8] & (1<<(7-othermonster->monster%8))))
                             {
                                 float bonusStat=1.0;
                                 if(othermonster->buffs.size())
@@ -602,10 +602,11 @@ void BotTargetList::updatePlayerStep()
                                 tryCaptureWithItem=false;
                         if(tryCaptureWithItem)
                         {
+                            std::cout << "Start this: Try capture with: " << std::to_string(itemToCapture) << std::endl;
                             //api->useObject(itemToCapture);-> do into player.fightEngine->tryCatchClient(
                             ActionsAction::remove_to_inventory(api,itemToCapture);
                             player.fightEngine->tryCatchClient(itemToCapture);
-                            ui->label_action->setText("Start this: Try capture with: "+QString::number(itemToCapture));
+                            ui->label_action->setText("Start this: Try capture with: "+QString::number(itemToCapture)+" for the monster "+QString::number(othermonster->monster));
                             return;//need wait the server reply, monsterCatch(const bool &success)
                         }
                         else
@@ -614,13 +615,36 @@ void BotTargetList::updatePlayerStep()
                             unsigned int index=0;
                             bool useTheRescueSkill=true;
                             uint16_t skillUsed=0;
+                            uint32_t skillPoint=0;
                             while(index<monster->skills.size())
                             {
                                 const CatchChallenger::PlayerMonster::PlayerSkill &skill=monster->skills.at(index);
                                 if(skill.endurance>0)
                                 {
-                                    skillUsed=skill.skill;
-                                    useTheRescueSkill=false;
+                                    const CatchChallenger::Skill &skillDatapack=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(skill.skill);
+                                    const CatchChallenger::Skill::SkillList &skillList=skillDatapack.level.at(skill.level-1);
+                                    unsigned int tempSkillPoint=0;
+                                    unsigned int skillIndex=0;
+                                    while(skillIndex<skillList.life.size())
+                                    {
+                                        const CatchChallenger::Skill::Life &lifeEffect=skillList.life.at(skillIndex);
+                                        unsigned int skillDamage=0;
+                                        if(lifeEffect.effect.type==CatchChallenger::QuantityType_Quantity)
+                                            skillDamage=lifeEffect.effect.quantity;
+                                        else
+                                            skillDamage=lifeEffect.effect.quantity*wildMonsterStat.hp/100;
+                                        if(lifeEffect.effect.on==CatchChallenger::ApplyOn::ApplyOn_AloneEnemy ||
+                                                lifeEffect.effect.on==CatchChallenger::ApplyOn::ApplyOn_AllEnemy)
+                                            tempSkillPoint+=skillDamage*lifeEffect.success/100;
+                                        /// \todo multiply by the effectiveness of the attack, and if is of the same type
+                                        skillIndex++;
+                                    }
+                                    if(skillPoint<tempSkillPoint || useTheRescueSkill)
+                                    {
+                                        skillPoint=tempSkillPoint;
+                                        skillUsed=skill.skill;
+                                        useTheRescueSkill=false;
+                                    }
                                 }
                                 index++;
                             }
@@ -636,6 +660,7 @@ void BotTargetList::updatePlayerStep()
                             }
                             else
                                 player.fightEngine->useSkill(skillUsed);
+                            std::cout << "Start this: Try skill: " << std::to_string(skillUsed) << std::endl;
                         }
 
                         if(player.fightEngine->otherMonsterIsKO())
@@ -657,7 +682,7 @@ void BotTargetList::updatePlayerStep()
                                         const CatchChallenger::PlayerMonster &playerMonster=playerMonsters.at(index);
                                         if(playerMonster.hp>0)
                                         {
-                                            if(playerMonster.level<maxLevel)
+                                            if(playerMonster.level>maxLevel)
                                             {
                                                 maxLevel=playerMonster.level;
                                                 currentPos=index;
@@ -674,8 +699,9 @@ void BotTargetList::updatePlayerStep()
                                         return;
                                     player.api->changeOfMonsterInFightByPosition(currentPos);
                                 }
-                                else
+                                else if(!player.canMoveOnMap)
                                 {
+                                    //win
                                     player.canMoveOnMap=true;
                                     player.fightEngine->fightFinished();
                                     CatchChallenger::PlayerMonster *monster=player.fightEngine->evolutionByLevelUp();
@@ -699,12 +725,34 @@ void BotTargetList::updatePlayerStep()
                             }
                             else
                             {
-                                player.canMoveOnMap=true;
-                                player.fightEngine->healAllMonsters();
-                                player.fightEngine->fightFinished();
+                                //loose, wait the server teleport, see ActionsAction::teleportTo()
                             }
                             if(apiSelectedClient==api)
                                 ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
+                        }
+
+                        if(!player.canMoveOnMap && !player.fightEngine->isInFight())
+                        {
+                            //win
+                            player.canMoveOnMap=true;
+                            player.fightEngine->fightFinished();
+                            CatchChallenger::PlayerMonster *monster=player.fightEngine->evolutionByLevelUp();
+                            if(monster!=NULL)
+                            {
+                                const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster->monster);
+                                unsigned int index=0;
+                                while(index<monsterInformations.evolutions.size())
+                                {
+                                    const CatchChallenger::Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
+                                    if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.level==monster->level)
+                                    {
+                                        const uint8_t &monsterEvolutionPostion=player.fightEngine->getPlayerMonsterPosition(monster);
+                                        player.fightEngine->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
+                                        return;
+                                    }
+                                    index++;
+                                }
+                            }
                         }
                    }
                 }
