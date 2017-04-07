@@ -205,7 +205,13 @@ protected:
     QString mDatapackSub;
 
     //teleport list query id
-    QList<uint8_t> teleportList;
+    struct TeleportQueryInformation
+    {
+        uint8_t queryId;
+        Direction direction;//for the internal set of last_direction
+    };
+
+    QList<TeleportQueryInformation> teleportList;
 
     //trade
     QList<uint32_t> tradeRequestId;
@@ -357,7 +363,7 @@ public:
     //void send_move_unit(const CatchChallenger::Direction &direction);->do by MoveOnTheMap::newDirection()
     void sendChatText(const CatchChallenger::Chat_type &chatType,const QString &text);
     void sendPM(const QString &text,const QString &pseudo);
-    void teleportDone();
+    bool teleportDone();
 
     //character
     bool addCharacter(const uint8_t &charactersGroupIndex,const uint8_t &profileIndex, const QString &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId);
