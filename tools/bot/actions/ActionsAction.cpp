@@ -905,7 +905,8 @@ void ActionsAction::monsterCatch(const bool &success)
 
 void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
-    std::cout << "ActionsAction::monsterCatch(" << std::to_string(success) << ")" << std::endl;
+    Q_UNUSED(direction);
+    std::cout << "ActionsAction::teleportTo()" << std::endl;
     CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
     if(api==NULL)
         return;
@@ -916,9 +917,10 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
     player.mapId=mapId;
     player.x=x;
     player.y=y;
-    client->teleportDone();
-    if(fightEngine.currentMonsterIsKO() && !fightEngine.haveAnotherMonsterOnThePlayerToFight())//then is dead, is teleported to the last rescue point
+    api->teleportDone();
+    if(player.fightEngine->currentMonsterIsKO() && !player.fightEngine->haveAnotherMonsterOnThePlayerToFight())//then is dead, is teleported to the last rescue point
     {
+        std::cout << "tp after loose" << std::endl;
         player.canMoveOnMap=true;
         player.fightEngine->healAllMonsters();
         player.fightEngine->fightFinished();
@@ -941,7 +943,5 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
         }
     }
     else
-        qDebug() << "normal tp";
+        std::cout << "normal tp" << std::endl;
 }
-
-do the teleport after dead
