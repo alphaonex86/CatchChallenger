@@ -107,7 +107,10 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
             }
             Direction direction=(Direction)directionInt;
 
-            teleportList << queryNumber;
+            TeleportQueryInformation teleportQueryInformation;
+            teleportQueryInformation.queryId=queryNumber;
+            teleportQueryInformation.direction=direction;
+            teleportList << teleportQueryInformation;
             teleportTo(mapId,x,y,direction);
         }
         break;

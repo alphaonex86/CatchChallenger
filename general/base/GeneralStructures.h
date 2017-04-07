@@ -324,7 +324,7 @@ class PlayerMonster : public PublicPlayerMonster
     struct PlayerSkill
     {
         uint16_t skill;
-        uint8_t level;
+        uint8_t level;//start at 1
         uint8_t endurance;
     };
     uint32_t remaining_xp;

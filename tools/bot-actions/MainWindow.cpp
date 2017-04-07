@@ -196,6 +196,8 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
             abort();
         if(!connect(api,&CatchChallenger::Api_protocol::monsterCatch,actionsAction,&ActionsAction::monsterCatch))
             abort();
+        if(!connect(api,&CatchChallenger::Api_protocol::teleportTo,actionsAction,&ActionsAction::teleportTo))
+            abort();
     }
     else
         abort();

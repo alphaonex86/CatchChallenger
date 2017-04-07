@@ -869,6 +869,7 @@ bool ActionsAction::needBeTeleported(const MapServerMini &map, const COORD_TYPE 
 
 void ActionsAction::monsterCatch(const bool &success)
 {
+    std::cout << "ActionsAction::monsterCatch(" << std::to_string(success) << ")" << std::endl;
     CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
     if(api==NULL)
         return;
@@ -899,4 +900,48 @@ void ActionsAction::monsterCatch(const bool &success)
             player.fightEngine->addPlayerMonster(player.fightEngine->playerMonster_catchInProgress.first());
     }
     player.fightEngine->playerMonster_catchInProgress.removeFirst();
+    player.fightEngine->fightFinished();
 }
+
+void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
+{
+    std::cout << "ActionsAction::monsterCatch(" << std::to_string(success) << ")" << std::endl;
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    if(api==NULL)
+        return;
+    if(!clientList.contains(api))
+        return;
+    Player &player=clientList[api];
+
+    player.mapId=mapId;
+    player.x=x;
+    player.y=y;
+    client->teleportDone();
+    if(fightEngine.currentMonsterIsKO() && !fightEngine.haveAnotherMonsterOnThePlayerToFight())//then is dead, is teleported to the last rescue point
+    {
+        player.canMoveOnMap=true;
+        player.fightEngine->healAllMonsters();
+        player.fightEngine->fightFinished();
+        CatchChallenger::PlayerMonster *monster=player.fightEngine->evolutionByLevelUp();
+        if(monster!=NULL)
+        {
+            const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster->monster);
+            unsigned int index=0;
+            while(index<monsterInformations.evolutions.size())
+            {
+                const CatchChallenger::Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
+                if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.level==monster->level)
+                {
+                    const uint8_t &monsterEvolutionPostion=player.fightEngine->getPlayerMonsterPosition(monster);
+                    player.fightEngine->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
+                    return;
+                }
+                index++;
+            }
+        }
+    }
+    else
+        qDebug() << "normal tp";
+}
+
+do the teleport after dead
