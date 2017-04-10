@@ -68,11 +68,15 @@ bool MapController::asyncMapLoaded(const QString &fileName,MapVisualiserThread::
         {
             if(DatapackClientLoader::datapackLoader.plantOnMap.contains(fileName))
             {
+                if(plantOnMap==NULL)
+                    abort();
                 const QHash<QPair<uint8_t,uint8_t>,uint16_t> &plantCoor=DatapackClientLoader::datapackLoader.plantOnMap.value(fileName);
                 QHashIterator<QPair<uint8_t,uint8_t>,uint16_t> i(plantCoor);
                 while (i.hasNext()) {
                     i.next();
-                    const uint16_t &indexOfMap=i.value();
+                    const uint16_t indexOfMap=i.value();
+                    if(plantOnMap->size()>1000000)
+                        abort();
                     if(plantOnMap->find(indexOfMap)!=plantOnMap->cend())
                     {
                         const uint8_t &x=i.key().first;

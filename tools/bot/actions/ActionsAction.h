@@ -81,6 +81,7 @@ public:
     void newRandomNumber_slot(const QByteArray &data);
     void monsterCatch(const bool &success);
     void teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
+    static void resetTarget(Player &player);
 
     static void showTip(const QString &text);
 
