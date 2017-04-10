@@ -586,6 +586,14 @@ void MapVisualiserPlayer::setInformations(std::unordered_map<uint16_t, uint32_t>
     this->quests=quests;
     this->itemOnMap=itemOnMap;
     this->plantOnMap=plantOnMap;
+    if(plantOnMap->size()>65535)
+        abort();
+    if(items->size()>65535)
+        abort();
+    if(quests->size()>65535)
+        abort();
+    if(itemOnMap->size()>65535)
+        abort();
 }
 
 void MapVisualiserPlayer::unblock()

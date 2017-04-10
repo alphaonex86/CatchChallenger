@@ -1,3 +1,5 @@
+DEFINES += CATCHCHALLENGER_NOAUDIO
+
 include(../../general/general.pri)
 include(../../client/base/client.pri)
 include(../../client/base/multi.pri)

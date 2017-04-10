@@ -57,6 +57,8 @@ public:
     void startPlayerMove();
     void startPlayerMove(CatchChallenger::Api_protocol *api);
     void autoStartAction();
+    void updateFightStats();
+    void teleportTo();
     static bool nextZoneIsAccessible(const CatchChallenger::Api_protocol *api, const MapServerMini::BlockObject * const blockObject);
     std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject, const CatchChallenger::Api_protocol * const api, QListWidget *listGUI=NULL);
     std::vector<std::string> contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster);

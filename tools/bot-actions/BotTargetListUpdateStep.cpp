@@ -475,26 +475,12 @@ void BotTargetList::updatePlayerStep()
                                 ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
                         break;
                         default:
-                            player.target.blockObject=NULL;
-                            player.target.extra=0;
-                            player.target.linkPoint.x=0;
-                            player.target.linkPoint.y=0;
-                            player.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
-                            player.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
+                            ActionsAction::resetTarget(player);
                             QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded (1): %1").arg(player.target.type));
                             return;
                         break;
                     }
-                    player.target.wildForwardStep.clear();
-                    player.target.wildBackwardStep.clear();
-                    player.target.wildCycle=0;
-                    player.target.blockObject=NULL;
-                    player.target.extra=0;
-                    player.target.linkPoint.x=0;
-                    player.target.linkPoint.y=0;
-                    player.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
-                    player.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
-                    player.target.sinceTheLastAction.restart();
+                    ActionsAction::resetTarget(player);
 
                     if(api==apiSelectedClient)
                     {
@@ -508,6 +494,8 @@ void BotTargetList::updatePlayerStep()
                 //can't move: can be in fight
                 if(player.fightEngine->isInFight())
                 {
+                    if(apiSelectedClient==api && !ui->groupBoxFight->isVisible())
+                        updateFightStats();
                     if((player.lastFightAction.elapsed()/1000)>(5/*5s*/) && !player.fightEngine->catchInProgress())
                     {
                         player.lastFightAction.restart();
@@ -716,7 +704,7 @@ void BotTargetList::updatePlayerStep()
                                             {
                                                 const uint8_t &monsterEvolutionPostion=player.fightEngine->getPlayerMonsterPosition(monster);
                                                 player.fightEngine->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
-                                                return;
+                                                break;
                                             }
                                             index++;
                                         }
@@ -748,12 +736,15 @@ void BotTargetList::updatePlayerStep()
                                     {
                                         const uint8_t &monsterEvolutionPostion=player.fightEngine->getPlayerMonsterPosition(monster);
                                         player.fightEngine->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
-                                        return;
+                                        break;
                                     }
                                     index++;
                                 }
                             }
                         }
+
+                        if(apiSelectedClient==api)
+                            updateFightStats();
                    }
                 }
             }

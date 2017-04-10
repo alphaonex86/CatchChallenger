@@ -906,7 +906,7 @@ void ActionsAction::monsterCatch(const bool &success)
 void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
     Q_UNUSED(direction);
-    std::cout << "ActionsAction::teleportTo()" << std::endl;
+    //std::cout << "ActionsAction::teleportTo()" << std::endl;
     CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
     if(api==NULL)
         return;
@@ -924,6 +924,9 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
         player.canMoveOnMap=true;
         player.fightEngine->healAllMonsters();
         player.fightEngine->fightFinished();
+
+        ActionsAction::resetTarget(player);
+
         CatchChallenger::PlayerMonster *monster=player.fightEngine->evolutionByLevelUp();
         if(monster!=NULL)
         {
@@ -944,4 +947,19 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
     }
     else
         std::cout << "normal tp" << std::endl;
+}
+
+void ActionsAction::resetTarget(Player &player)
+{
+    //reset the target
+    player.target.wildForwardStep.clear();
+    player.target.wildBackwardStep.clear();
+    player.target.wildCycle=0;
+    player.target.blockObject=NULL;
+    player.target.extra=0;
+    player.target.linkPoint.x=0;
+    player.target.linkPoint.y=0;
+    player.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+    player.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
+    player.target.sinceTheLastAction.restart();
 }
