@@ -1,3 +1,5 @@
+DEFINES += CATCHCHALLENGER_NOAUDIO
+
 include(../../general/general.pri)
 include(../bot/simple/Simple.pri)
 

@@ -6,9 +6,11 @@ QT       += gui network xml core
 DEFINES += CATCHCHALLENGER_CLIENT
 
 # see the file ClientVariableAudio.h
+!contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
 linux:LIBS += -lvlc
 macx:LIBS += -lvlc
 win32:LIBS += -lvlc
+}
 
 SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/DatapackChecksum.cpp \

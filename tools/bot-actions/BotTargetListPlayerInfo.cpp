@@ -170,6 +170,23 @@ void BotTargetList::updatePlayerInformation()
         }
     }
 
+    updateFightStats();
+}
+
+void BotTargetList::updateFightStats()
+{
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    if(!actionsAction->clientList.contains(client->api))
+        return;
+
+    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+
     {
         const std::vector<CatchChallenger::PlayerMonster> &playerMonsters=player.fightEngine->getPlayerMonster();
         ui->monsterList->clear();
@@ -245,5 +262,49 @@ void BotTargetList::updatePlayerInformation()
             }
             index++;
         }
+    }
+
+    if(player.fightEngine->isInFight())
+    {
+        CatchChallenger::PublicPlayerMonster *othermonster=player.fightEngine->getOtherMonster();
+        if(othermonster==NULL)
+            ui->groupBoxFight->setVisible(false);
+        else
+        {
+            ui->groupBoxFight->setVisible(true);
+            const CatchChallenger::Monster::Stat &wildMonsterStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(othermonster->monster),othermonster->level);
+            ui->fightOtherHp->setMaximum(wildMonsterStat.hp);
+            ui->fightOtherHp->setValue(othermonster->hp);
+            ui->fightOtherHp->setFormat(QString("%1/%2").arg(othermonster->hp).arg(wildMonsterStat.hp));
+            const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(othermonster->monster);
+            ui->monsterFightName->setText(QString("%1 level %2").arg(monsterExtra.name).arg(othermonster->level));
+            ui->monsterFightImage->setPixmap(monsterExtra.front);
+        }
+    }
+    else
+        ui->groupBoxFight->setVisible(false);
+}
+
+void BotTargetList::teleportTo()
+{
+    CatchChallenger::Api_protocol * apiSelectedClient=NULL;
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()==1)
+    {
+        const QString &pseudo=selectedItems.at(0)->text();
+        if(!pseudoToBot.contains(pseudo))
+            return;
+        MultipleBotConnection::CatchChallengerClient * currentSelectedclient=pseudoToBot.value(pseudo);
+        apiSelectedClient=currentSelectedclient->api;
+    }
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    if(api==NULL)
+        return;
+    if(api==apiSelectedClient)
+    {
+        updateMapContentX=0;
+        updateMapContentY=0;
+        updateMapContentMapId=0;
+        updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
     }
 }
