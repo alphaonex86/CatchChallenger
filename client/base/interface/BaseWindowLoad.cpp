@@ -756,7 +756,7 @@ void BaseWindow::updateConnectingStatus()
         waitedData << tr("Opening the datapack");
     if(waitedData.isEmpty())
     {
-        Player_private_and_public_informations playerInformations=client->get_player_informations();
+        Player_private_and_public_informations &playerInformations=client->get_player_informations();
         mapController->setBotsAlreadyBeaten(playerInformations.bot_already_beaten);
         mapController->setInformations(&playerInformations.items,&playerInformations.quests,&events,&playerInformations.itemOnMap,&playerInformations.plantOnMap);
         client->unloadSelection();
