@@ -440,8 +440,9 @@ void BaseWindow::progressingDatapackFile(const uint32_t &size)
 
 void BaseWindow::have_inventory(const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
 {
-    Q_UNUSED(items);
-    Q_UNUSED(warehouse_items);
+    CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations();
+    playerInformations.items=items;
+    playerInformations.warehouse_items=warehouse_items;
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::have_inventory()";
     #endif
