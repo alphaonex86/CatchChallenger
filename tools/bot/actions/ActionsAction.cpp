@@ -918,14 +918,13 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
     player.x=x;
     player.y=y;
     api->teleportDone();
+    ActionsAction::resetTarget(player);
     if(player.fightEngine->currentMonsterIsKO() && !player.fightEngine->haveAnotherMonsterOnThePlayerToFight())//then is dead, is teleported to the last rescue point
     {
         std::cout << "tp after loose" << std::endl;
         player.canMoveOnMap=true;
         player.fightEngine->healAllMonsters();
         player.fightEngine->fightFinished();
-
-        ActionsAction::resetTarget(player);
 
         CatchChallenger::PlayerMonster *monster=player.fightEngine->evolutionByLevelUp();
         if(monster!=NULL)
