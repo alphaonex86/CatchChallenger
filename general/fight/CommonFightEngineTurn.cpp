@@ -776,7 +776,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
             float OtherMulti=1.0;
             if(vectorcontainsAtLeastOne(commonMonster.type,type))
             {
-                std::cout << "1.45x because the attack is same type as the current monster" << typeDefinition.name << std::endl;
+                std::cout << "1.45x because the attack is same type as the current monster: " << typeDefinition.name << std::endl;
                 OtherMulti*=1.45;
             }
             effect_to_return.effective=1.0;

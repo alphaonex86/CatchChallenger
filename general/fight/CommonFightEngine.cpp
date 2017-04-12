@@ -649,23 +649,48 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
     bool winTheTurn=false;
     if(!wildMonsters.empty())
     {
-        if(wildMonsters.front().hp==0)
+        const PlayerMonster &wildMonster=wildMonsters.front();
+        if(wildMonster.hp==0)
         {
             winTheTurn=true;
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            messageFightEngine("The wild monster ("+std::to_string(wildMonsters.front().monster)+") is KO");
+            messageFightEngine("The wild monster ("+std::to_string(wildMonster.monster)+") is KO");
             #endif
             //drop the drop item here
-            wildDrop(wildMonsters.front().monster);
+            wildDrop(wildMonster.monster);
             //give xp/sp here
-            const Monster &wildmonster=CommonDatapack::commonDatapack.monsters.at(wildMonsters.front().monster);
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(CommonDatapack::commonDatapack.monsters.find(wildMonster.monster)==CommonDatapack::commonDatapack.monsters.cend())
+            {
+                std::cerr << "Error, monster into list not found: " << std::to_string(wildMonster.monster) << std::endl;
+                abort();
+            }
+            if(wildMonster.level<=0)
+            {
+                std::cerr << "Error, monster into list have level == 0: " << std::to_string(wildMonster.monster) << std::endl;
+                abort();
+            }
+            #endif
+            const Monster &wildMonsterInfo=CommonDatapack::commonDatapack.monsters.at(wildMonster.monster);
             //multiplicator do at datapack loading
-            int sp=wildmonster.give_sp*wildMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            int xp=wildmonster.give_xp*wildMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+            int sp=wildMonsterInfo.give_sp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+            int xp=wildMonsterInfo.give_xp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(wildMonsterInfo.give_xp<=0)
+            {
+                std::cerr << "Error, monster into list have wildmonster.give_xp == 0: " << std::to_string(wildMonster.monster) << std::endl;
+                abort();
+            }
+            if(xp==0)
+            {
+                std::cerr << "Error, given XP is 0, mostly some wrong value" << std::endl;
+                abort();
+            }
+            #endif
             giveXPSP(xp,sp);
             #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
-            messageFightEngine("You win "+std::to_string(wildmonster.give_xp*wildMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX)+
-                               " xp and "+std::to_string(wildmonster.give_sp*wildMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX)+" sp");
+            messageFightEngine("You win "+std::to_string(wildMonsterInfo.give_xp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX)+
+                               " xp and "+std::to_string(wildMonsterInfo.give_sp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX)+" sp");
             #endif
         }
     }
