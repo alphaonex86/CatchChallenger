@@ -7,7 +7,7 @@ QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g"
 
 QT       += core xml network
 QT -= gui widgets script opengl qml quick sql
-DEFINES += BOTTESTCONNECT
+DEFINES += BOTTESTCONNECT CATCHCHALLENGER_BOT
 
 TARGET = bot-test-connect-to-gameserver
 TEMPLATE = app
