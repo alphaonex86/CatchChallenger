@@ -193,6 +193,7 @@ void BotTargetList::updateFightStats()
         if(playerMonsters.empty())
             return;
         unsigned int index=0;
+        const uint8_t &selectedMonster=player.fightEngine->getCurrentSelectedMonsterNumber();
         while(index<playerMonsters.size())
         {
             const CatchChallenger::PlayerMonster &monster=playerMonsters.at(index);
@@ -207,6 +208,7 @@ void BotTargetList::updateFightStats()
                 else
                     item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front);
 
+                QString lastSkill;
                 QHash<uint32_t,uint8_t> skillToDisplay;
                 unsigned int sub_index=0;
                 while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size())
@@ -242,21 +244,31 @@ void BotTargetList::updateFightStats()
                     sub_index++;
 
                     if(skillToDisplay.isEmpty())
-                        item->setText(tr("%1, level: %2\nHP: %3/%4\n%5")
-                                .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)
-                                .arg(monster.level)
-                                .arg(monster.hp)
-                                .arg(stat.hp)
-                                .arg(tr("No skill to learn"))
-                                );
+                        lastSkill=tr("No skill to learn");
                     else
-                        item->setText(tr("%1, level: %2\nHP: %3/%4\n%5")
-                                .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)
-                                .arg(monster.level)
-                                .arg(monster.hp)
-                                .arg(stat.hp)
-                                .arg(tr("%n skill(s) to learn","",skillToDisplay.size()))
-                                );
+                        lastSkill=tr("%n skill(s) to learn","",skillToDisplay.size());
+
+                }
+                const CatchChallenger::Monster &monsterGeneralInfo=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster);
+                const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
+                item->setText(tr("%1, level: %2\nHP: %3/%4, SP: %5, XP: %6/%7\n%8")
+                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)
+                        .arg(monster.level)
+                        .arg(monster.hp)
+                        .arg(stat.hp)
+                        .arg(monster.sp)
+                        .arg(monster.remaining_xp)
+                        .arg(maxXp)
+                        .arg(lastSkill)
+                        );
+                if(monster.hp==0)
+                    item->setBackgroundColor(QColor(255,220,220,255));
+                else if(index==selectedMonster)
+                {
+                    if(player.fightEngine->isInFight())
+                        item->setBackgroundColor(QColor(200,255,200,255));
+                    else
+                        item->setBackgroundColor(QColor(200,255,255,255));
                 }
                 ui->monsterList->addItem(item);
             }
