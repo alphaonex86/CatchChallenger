@@ -320,3 +320,24 @@ void BotTargetList::teleportTo()
         updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
     }
 }
+
+void BotTargetList::monsterCatch(const bool &success)
+{
+    CatchChallenger::Api_protocol * apiSelectedClient=NULL;
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()==1)
+    {
+        const QString &pseudo=selectedItems.at(0)->text();
+        if(!pseudoToBot.contains(pseudo))
+            return;
+        MultipleBotConnection::CatchChallengerClient * currentSelectedclient=pseudoToBot.value(pseudo);
+        apiSelectedClient=currentSelectedclient->api;
+    }
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    if(api==NULL)
+        return;
+    if(api==apiSelectedClient)
+    {
+        updatePlayerInformation();
+    }
+}
