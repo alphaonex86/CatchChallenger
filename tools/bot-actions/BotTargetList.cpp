@@ -41,6 +41,8 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
             pseudoToBot[qtpseudo]=client;
             if(!connect(client->api,&CatchChallenger::Api_protocol::teleportTo,this,&BotTargetList::teleportTo))
                 abort();
+            if(!connect(client->api,&CatchChallenger::Api_protocol::monsterCatch,this,&BotTargetList::monsterCatch))
+                abort();
         }
         ++i;
     }
