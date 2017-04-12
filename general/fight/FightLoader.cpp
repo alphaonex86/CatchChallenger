@@ -429,6 +429,11 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                 std::cerr << "Unable to open the xml file: " << file << ", speed is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                         }
                         #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+                        if(CommonSettingsServer::commonSettingsServer.rates_xp<=0)
+                        {
+                            std::cerr << "CommonSettingsServer::commonSettingsServer.rates_xp can't be null" << std::endl;
+                            abort();
+                        }
                         if(ok)
                         {
                             monster.give_xp=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_give_xp)),&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
