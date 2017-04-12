@@ -115,7 +115,7 @@ void MultipleBotConnection::tryLink(CatchChallengerClient * client)
 {
     numberOfBotConnected++;
     emit emit_numberOfBotConnected(numberOfBotConnected);
-    std::cout << "MultipleBotConnection::tryLink(): numberOfBotConnected--: " << client->api->player_informations.public_informations.pseudo << std::endl;
+    std::cout << "MultipleBotConnection::tryLink(): numberOfBotConnected++: multipleConnexion():" << std::to_string(multipleConnexion()) << std::endl;
 
     if(!connect(client->api,&CatchChallenger::Api_client_real::protocol_is_good,this,&MultipleBotConnection::protocol_is_good))
         abort();
@@ -160,6 +160,11 @@ void MultipleBotConnection::haveCharacter()
 {
 }
 
+std::string MultipleBotConnection::getNewPseudo()
+{
+    return std::string("bot")+CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3);
+}
+
 void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
 {
     if(!serverIsSelected)
@@ -179,7 +184,7 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
             }
             qDebug() << client->login << "create new character";
             quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
-            QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
+            QString pseudo=QString::fromStdString(getNewPseudo());
             uint8_t skinId;
             const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
             if(!profile.forcedskin.empty())

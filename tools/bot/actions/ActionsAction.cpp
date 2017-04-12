@@ -882,9 +882,13 @@ void ActionsAction::monsterCatch(const bool &success)
         return;
     }
     if(!success)
-        player.fightEngine->generateOtherAttack();
+    {
+        const CatchChallenger::Skill::AttackReturn &attackReturn=player.fightEngine->generateOtherAttack();
+        std::cout << "Start this: Try capture failed, do monster attack: " << std::to_string(attackReturn.attack) << std::endl;
+    }
     else
     {
+        std::cout << "Start this: Try capture success" << std::endl;
         player.canMoveOnMap=true;
         if(player.fightEngine->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
         {
