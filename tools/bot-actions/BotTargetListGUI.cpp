@@ -342,9 +342,9 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
 
                                         if(listGUI==ui->globalTargets)
                                         {
-                                            targetListGlobalTarget.push_back(globalTarget);
                                             if(isMature)
                                             {
+                                                targetListGlobalTarget.push_back(globalTarget);
                                                 if(alternateColor)
                                                     newItem->setBackgroundColor(alternateColorValue);
                                                 newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
@@ -1023,6 +1023,12 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             index++;
         }
     }
+    if(listGUI==ui->globalTargets)
+        if(targetListGlobalTarget.size()!=(uint32_t)ui->globalTargets->count())
+        {
+            std::cerr << "The target count not match with visual elements" << std::endl;
+            abort();
+        }
 
     return itemToReturn;
 }
