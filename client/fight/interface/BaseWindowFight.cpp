@@ -106,7 +106,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
         ui->monsterDetailsGender->setPixmap(QPixmap());
         ui->monsterDetailsGender->setToolTip(QString());
     }
-    uint32_t maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
+    const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
     ui->monsterDetailsLevel->setText(tr("Level %1").arg(monster.level));
     #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
     if(stat.hp>(monster.hp/2))
@@ -404,6 +404,13 @@ void BaseWindow::load_monsters()
                         .arg(monster.hp)
                         .arg(stat.hp)
                         );
+            }
+            if(monster.hp==0)
+                item->setBackgroundColor(QColor(255,220,220,255));
+            else if(index==currentMonsterPosition)
+            {
+                if(!fightEngine.isInFight())
+                    item->setBackgroundColor(QColor(200,255,255,255));
             }
             ui->monsterList->addItem(item);
             monsters_items_graphical[item]=index;
