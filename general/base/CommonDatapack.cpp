@@ -1,4 +1,5 @@
 #include "CommonDatapack.h"
+#include "CommonSettingsServer.h"
 #include "GeneralVariable.h"
 #include "FacilityLib.h"
 #include "../fight/FightLoader.h"
@@ -15,6 +16,9 @@ CommonDatapack::CommonDatapack()
 {
     isParsed=false;
     parsing=false;
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    monsterRateApplied=false;
+    #endif
     monstersMaxId=0;
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     crafingRecipesMaxId=0;
@@ -140,6 +144,15 @@ void CommonDatapack::parseEvents()
 
 void CommonDatapack::parseMonsters()
 {
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    if(CommonSettingsServer::commonSettingsServer.rates_xp<=0 || CommonSettingsServer::commonSettingsServer.rates_xp==1.0)
+    {
+        monsterRateApplied=false;
+        CommonSettingsServer::commonSettingsServer.rates_xp=1.0;
+    }
+    else
+        monsterRateApplied=true;
+    #endif
     monsters=FightLoader::loadMonster(datapackPath+DATAPACK_BASE_PATH_MONSTERS,monsterSkills
                                       #ifndef CATCHCHALLENGER_CLASS_MASTER
                                       ,types,items.item
@@ -232,6 +245,9 @@ void CommonDatapack::unload()
     #endif
     skins.clear();
 
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    monsterRateApplied=false;
+    #endif
     parsing=false;
     isParsed=false;
 }

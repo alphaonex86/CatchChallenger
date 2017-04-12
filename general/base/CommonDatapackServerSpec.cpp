@@ -1,5 +1,6 @@
 #include "CommonDatapackServerSpec.h"
 #include "CommonDatapack.h"
+#include "CommonSettingsServer.h"
 #include "GeneralVariable.h"
 #include "FacilityLib.h"
 #include "Map_loader.h"
@@ -39,6 +40,9 @@ void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath,con
     parseShop();
     parseServerProfileList();
     parseIndustries();
+    #ifdef CATCHCHALLENGER_CLIENT
+    applyMonstersRate();
+    #endif
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     parseMonstersDrop();
     #endif
@@ -81,6 +85,39 @@ void CommonDatapackServerSpec::parseServerProfileList()
     serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,mainDatapackCode,datapackPath+DATAPACK_BASE_PATH_PLAYERSPEC+"/"+mainDatapackCode+"/start.xml",CommonDatapack::commonDatapack.profileList);
     std::cout << serverProfileList.size() << " server profile(s) loaded" << std::endl;
 }
+
+#ifdef CATCHCHALLENGER_CLIENT
+void CommonDatapackServerSpec::applyMonstersRate()
+{
+    if(CommonDatapack::commonDatapack.monsterRateApplied)
+        return;
+    CommonDatapack::commonDatapack.monsterRateApplied=false;
+    if(CommonSettingsServer::commonSettingsServer.rates_xp<=0)
+    {
+        std::cerr << "CommonSettingsServer::commonSettingsServer.rates_xp can't be null, are you connected to game server to have the rates?" << std::endl;
+        abort();
+    }
+    for(const auto& n : CommonDatapack::commonDatapack.monsters) {
+        CatchChallenger::Monster &monster=CommonDatapack::commonDatapack.monsters[n.first];
+        monster.give_xp*=CommonSettingsServer::commonSettingsServer.rates_xp;
+        monster.give_sp*=CommonSettingsServer::commonSettingsServer.rates_xp;
+        monster.powerVar*=CommonSettingsServer::commonSettingsServer.rates_xp_pow;
+        monster.level_to_xp.clear();
+        int index=0;
+        while(index<CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+        {
+            uint64_t xp_for_this_level=std::pow(index+1,monster.powerVar);
+            uint64_t xp_for_max_level=monster.xp_for_max_level;
+            uint64_t max_xp=std::pow(CATCHCHALLENGER_MONSTER_LEVEL_MAX,monster.powerVar);
+            uint64_t tempXp=xp_for_this_level*xp_for_max_level/max_xp;
+            if(tempXp<1)
+                tempXp=1;
+            monster.level_to_xp.push_back(tempXp);
+            index++;
+        }
+    }
+}
+#endif
 
 void CommonDatapackServerSpec::parseIndustries()
 {

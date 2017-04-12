@@ -11,7 +11,7 @@ QT += widgets
 TARGET = bot-actions
 TEMPLATE = app
 
-DEFINES += BOTACTIONS
+DEFINES += BOTACTIONS CATCHCHALLENGER_BOT
 
 SOURCES += main.cpp\
         MainWindow.cpp \

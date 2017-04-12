@@ -711,6 +711,9 @@ struct Monster
     uint32_t give_sp;
     uint32_t give_xp;
     std::vector<uint32_t> level_to_xp;//first is xp to level 1
+    #ifdef CATCHCHALLENGER_CLIENT
+    double powerVar;
+    #endif
 
     struct AttackToLearnByItem
     {
