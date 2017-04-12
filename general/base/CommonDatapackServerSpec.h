@@ -31,12 +31,15 @@ private:
     std::string mainDatapackCode;
 private:
     void parseQuests();
-    void parseBotFights();
+    void parseBotFights();//gold/item variables by server
     void parseShop();
     void parseServerProfileList();
     void parseIndustries();
+    #ifdef CATCHCHALLENGER_CLIENT
+    void applyMonstersRate();//xp,sp variable by server, only have this second pass on client
+    #endif
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    void parseMonstersDrop();
+    void parseMonstersDrop();//drop rate variable by server
     #endif
 };
 }

@@ -11,6 +11,7 @@ QT += widgets
 TARGET = bot-connection
 TEMPLATE = app
 
+DEFINES += CATCHCHALLENGER_BOT
 
 SOURCES += main.cpp\
         MainWindow.cpp \

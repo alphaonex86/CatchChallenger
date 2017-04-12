@@ -215,9 +215,9 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
 {
     if(botInterface!=NULL)
         qDebug() << "MultipleBotConnection::haveTheDatapack_with_client(): Bot version:" << botInterface->name() << botInterface->version();
-    //load the datapack
+    //load the profil list
     {
-        CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());
+        CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());//load always after the rates
         //load the skins list
         QDir dir(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/skin/fighter/"));
         QFileInfoList entryList=dir.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
