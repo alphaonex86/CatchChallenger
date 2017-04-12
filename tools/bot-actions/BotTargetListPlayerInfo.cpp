@@ -323,6 +323,7 @@ void BotTargetList::teleportTo()
 
 void BotTargetList::monsterCatch(const bool &success)
 {
+    Q_UNUSED(success);
     CatchChallenger::Api_protocol * apiSelectedClient=NULL;
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()==1)

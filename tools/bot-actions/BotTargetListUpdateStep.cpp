@@ -435,6 +435,7 @@ void BotTargetList::updatePlayerStep()
                             {
                                 if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
                                     abort();
+                                abort();
                             }
                         }
                         break;
@@ -449,6 +450,8 @@ void BotTargetList::updatePlayerStep()
                             if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
                                 if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
                                     abort();
+                            if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
+                                abort();
                             std::cout << "collectMaturePlant(): " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                             api->collectMaturePlant();
                             if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
@@ -590,11 +593,13 @@ void BotTargetList::updatePlayerStep()
                                 tryCaptureWithItem=false;
                         if(tryCaptureWithItem)
                         {
-                            std::cout << "Start this: Try capture with: " << std::to_string(itemToCapture) << std::endl;
                             //api->useObject(itemToCapture);-> do into player.fightEngine->tryCatchClient(
                             ActionsAction::remove_to_inventory(api,itemToCapture);
-                            player.fightEngine->tryCatchClient(itemToCapture);
+                            std::cout << "Start this: Try capture with: " << std::to_string(itemToCapture) << ", now have only quantity: " << std::to_string(ActionsAction::itemQuantity(api,itemToCapture)) << std::endl;
+                            player.fightEngine->tryCatchClient(itemToCapture);//api->useObject(item); call into it
                             ui->label_action->setText("Start this: Try capture with: "+QString::number(itemToCapture)+" for the monster "+QString::number(othermonster->monster));
+                            if(api==apiSelectedClient)
+                                updatePlayerInformation();
                             return;//need wait the server reply, monsterCatch(const bool &success)
                         }
                         else
