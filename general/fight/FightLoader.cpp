@@ -351,7 +351,12 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                 index++;
                             }
                         }
+                        #ifdef CATCHCHALLENGER_CLIENT
+                        double &powerVar=monster.powerVar;
+                        #else
                         double powerVar=1.0;
+                        #endif
+                        powerVar=1.0;
                         if(ok)
                         {
                             if(item->Attribute(XMLCACHEDSTRING_pow)!=NULL)
@@ -376,7 +381,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             }
                         }
                         #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-                        powerVar=std::pow(powerVar,CommonSettingsServer::commonSettingsServer.rates_xp_pow);
+                        powerVar*=CommonSettingsServer::commonSettingsServer.rates_xp_pow;
                         #endif
                         if(ok)
                         {

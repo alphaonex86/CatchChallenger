@@ -7,6 +7,7 @@
 class CommonSettingsServer
 {
 public:
+    CommonSettingsServer();
     #ifndef CATCHCHALLENGER_CLASS_GATEWAY
     std::string httpDatapackMirrorServer;
     #endif
