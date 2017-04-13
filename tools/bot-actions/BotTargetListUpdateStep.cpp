@@ -521,73 +521,76 @@ void BotTargetList::updatePlayerStep()
                         bool tryCaptureWithItem=false;
                         uint16_t itemToCapture=0;
                         uint32_t currentDiff=2000000;
-                        if(playerInformations.encyclopedia_monster!=NULL)
-                            if(!(playerInformations.encyclopedia_monster[othermonster->monster/8] & (1<<(7-othermonster->monster%8))))
-                            {
-                                float bonusStat=1.0;
-                                if(othermonster->buffs.size())
+                        if(player.fightEngine->isInFightWithWild())
+                        {
+                            if(playerInformations.encyclopedia_monster!=NULL)
+                                if(!(playerInformations.encyclopedia_monster[othermonster->monster/8] & (1<<(7-othermonster->monster%8))))
                                 {
-                                    bonusStat=0;
-                                    unsigned int index=0;
-                                    while(index<othermonster->buffs.size())
+                                    float bonusStat=1.0;
+                                    if(othermonster->buffs.size())
                                     {
-                                        const CatchChallenger::PlayerBuff &playerBuff=othermonster->buffs.at(index);
-                                        if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.find(playerBuff.buff)!=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
+                                        bonusStat=0;
+                                        unsigned int index=0;
+                                        while(index<othermonster->buffs.size())
                                         {
-                                            const CatchChallenger::Buff &buff=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.at(playerBuff.buff);
-                                            if(playerBuff.level>0 && playerBuff.level<=buff.level.size())
-                                                bonusStat+=buff.level.at(playerBuff.level-1).capture_bonus;
+                                            const CatchChallenger::PlayerBuff &playerBuff=othermonster->buffs.at(index);
+                                            if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.find(playerBuff.buff)!=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
+                                            {
+                                                const CatchChallenger::Buff &buff=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.at(playerBuff.buff);
+                                                if(playerBuff.level>0 && playerBuff.level<=buff.level.size())
+                                                    bonusStat+=buff.level.at(playerBuff.level-1).capture_bonus;
+                                                else
+                                                {
+                                                    std::cerr << "Buff level for wild monter not found: " << std::to_string(playerBuff.buff) << " at level " << std::to_string(playerBuff.level) << std::endl;
+                                                    bonusStat+=1.0;
+                                                }
+                                            }
                                             else
                                             {
-                                                std::cerr << "Buff level for wild monter not found: " << std::to_string(playerBuff.buff) << " at level " << std::to_string(playerBuff.level) << std::endl;
+                                                std::cerr << "Buff for wild monter not found: " << std::to_string(playerBuff.buff) << std::endl;
                                                 bonusStat+=1.0;
                                             }
+                                            index++;
                                         }
-                                        else
-                                        {
-                                            std::cerr << "Buff for wild monter not found: " << std::to_string(playerBuff.buff) << std::endl;
-                                            bonusStat+=1.0;
-                                        }
-                                        index++;
+                                        bonusStat/=othermonster->buffs.size();
                                     }
-                                    bonusStat/=othermonster->buffs.size();
-                                }
 
-                                for(const auto& n:playerInformations.items) {
-                                    const CATCHCHALLENGER_TYPE_ITEM &item=n.first;
-                                    const uint32_t &quantity=n.second;
-                                    if(CatchChallenger::CommonDatapack::commonDatapack.items.trap.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.trap.cend())
-                                    {
-                                        const uint32_t maxTempRate=12;
-                                        const uint32_t minTempRate=5;
-                                        //const uint32_t tryCapture=4;
-                                        const CatchChallenger::Trap &trap=CatchChallenger::CommonDatapack::commonDatapack.items.trap.at(item);
-                                        const uint32_t catch_rate=(uint32_t)CatchChallenger::CommonDatapack::commonDatapack.monsters.at(othermonster->monster).catch_rate;
-                                        uint32_t tempRate=(catch_rate*(wildMonsterStat.hp*maxTempRate-othermonster->hp*minTempRate)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
-                                        bool valid=false;
-                                        if(quantity>20)
-                                            valid=true;
-                                        else if(quantity>7 && tempRate>50)
-                                            valid=true;
-                                        else if(tempRate>150)
-                                            valid=true;
-                                        if(valid)
+                                    for(const auto& n:playerInformations.items) {
+                                        const CATCHCHALLENGER_TYPE_ITEM &item=n.first;
+                                        const uint32_t &quantity=n.second;
+                                        if(CatchChallenger::CommonDatapack::commonDatapack.items.trap.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.trap.cend())
                                         {
-                                            uint32_t newDiff=0;
-                                            if(tempRate<=255)
-                                                newDiff=255-tempRate;
-                                            else
-                                                newDiff=tempRate-255;
-                                            if(newDiff<currentDiff)
+                                            const uint32_t maxTempRate=12;
+                                            const uint32_t minTempRate=5;
+                                            //const uint32_t tryCapture=4;
+                                            const CatchChallenger::Trap &trap=CatchChallenger::CommonDatapack::commonDatapack.items.trap.at(item);
+                                            const uint32_t catch_rate=(uint32_t)CatchChallenger::CommonDatapack::commonDatapack.monsters.at(othermonster->monster).catch_rate;
+                                            uint32_t tempRate=(catch_rate*(wildMonsterStat.hp*maxTempRate-othermonster->hp*minTempRate)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
+                                            bool valid=false;
+                                            if(quantity>20)
+                                                valid=true;
+                                            else if(quantity>7 && tempRate>50)
+                                                valid=true;
+                                            else if(tempRate>150)
+                                                valid=true;
+                                            if(valid)
                                             {
-                                                currentDiff=newDiff;
-                                                tryCaptureWithItem=true;
-                                                itemToCapture=item;
+                                                uint32_t newDiff=0;
+                                                if(tempRate<=255)
+                                                    newDiff=255-tempRate;
+                                                else
+                                                    newDiff=tempRate-255;
+                                                if(newDiff<currentDiff)
+                                                {
+                                                    currentDiff=newDiff;
+                                                    tryCaptureWithItem=true;
+                                                    itemToCapture=item;
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
+                        }
                         if(player.fightEngine->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
                             if(playerInformations.warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
                                 tryCaptureWithItem=false;
@@ -596,7 +599,11 @@ void BotTargetList::updatePlayerStep()
                             //api->useObject(itemToCapture);-> do into player.fightEngine->tryCatchClient(
                             ActionsAction::remove_to_inventory(api,itemToCapture);
                             std::cout << "Start this: Try capture with: " << std::to_string(itemToCapture) << ", now have only quantity: " << std::to_string(ActionsAction::itemQuantity(api,itemToCapture)) << std::endl;
-                            player.fightEngine->tryCatchClient(itemToCapture);//api->useObject(item); call into it
+                            if(!player.fightEngine->tryCatchClient(itemToCapture))//api->useObject(item); call into it
+                            {
+                                std::cerr << "!player.fightEngine->tryCatchClient(itemToCapture)" << std::endl;
+                                abort();
+                            }
                             ui->label_action->setText("Start this: Try capture with: "+QString::number(itemToCapture)+" for the monster "+QString::number(othermonster->monster));
                             if(api==apiSelectedClient)
                                 updatePlayerInformation();

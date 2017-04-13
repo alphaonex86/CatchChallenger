@@ -47,6 +47,19 @@ public:
         CatchChallenger::Chat_type chat_type;
         std::string text;
     };
+    enum DelayedMapPlayerChangeType
+    {
+        DelayedMapPlayerChangeType_Insert,
+        DelayedMapPlayerChangeType_Delete
+    };
+    struct DelayedMapPlayerChange
+    {
+        DelayedMapPlayerChangeType type;
+        CatchChallenger::Player_public_informations player;
+        uint32_t mapId;
+        uint16_t x,y;
+        CatchChallenger::Direction direction;
+    };
     struct Player
     {
         unsigned int repel_step;
@@ -79,6 +92,7 @@ public:
         };
         QList<ClientPlantInCollecting> plant_collect_in_waiting;
         QRegularExpression regexMatchPseudo;
+        std::vector<DelayedMapPlayerChange> delayedMapPlayerChange;
     };
 
     ActionsBotInterface();
