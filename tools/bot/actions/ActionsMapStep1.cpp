@@ -76,6 +76,36 @@ bool ActionsAction::preload_post_subdatapack()
     return true;
 }
 
+void ActionsAction::loadFinishedReemitTheDelayedFunction()
+{
+    allMapIsLoaded=true;
+    QHashIterator<CatchChallenger::Api_protocol *,Player> i(clientList);
+    while (i.hasNext()) {
+        i.next();
+        CatchChallenger::Api_protocol *api=i.key();
+        const Player &player=i.value();
+
+        unsigned int index=0;
+        while(index<player.delayedMapPlayerChange.size())
+        {
+            const DelayedMapPlayerChange &delayedMapPlayerChange=player.delayedMapPlayerChange.at(index);
+            switch(delayedMapPlayerChange.type)
+            {
+                case DelayedMapPlayerChangeType_Insert:
+                    insert_player(api,delayedMapPlayerChange.player,delayedMapPlayerChange.mapId,delayedMapPlayerChange.x,delayedMapPlayerChange.y,delayedMapPlayerChange.direction);
+                break;
+                case DelayedMapPlayerChangeType_Delete:
+                    remove_player(api,delayedMapPlayerChange.player.simplifiedId);
+                break;
+                default:
+                    abort();
+            }
+
+            index++;
+        }
+    }
+}
+
 uint64_t ActionsAction::elementToLoad() const
 {
     return map_list.size()*(1/*server load*/+1/*step1*/+3/*step2*/);
