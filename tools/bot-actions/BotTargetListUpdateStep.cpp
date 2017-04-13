@@ -4,6 +4,7 @@
 #include "../../client/fight/interface/ClientFightEngine.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/FacilityLib.h"
 #include "MapBrowse.h"
 
 #include <chrono>
@@ -476,6 +477,28 @@ void BotTargetList::updatePlayerStep()
                             wildMonsterTarget(player);
                             if(apiSelectedClient==api)
                                 ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
+                        break;
+                        case ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight:
+                        {
+                            const uint32_t &fightId=player.target.extra;
+                            if(!ActionsAction::haveBeatBot(api,fightId) && player.fightEngine->getAbleToFight())
+                            {
+                                qDebug() <<  "is now in fight by target with: " << fightId;
+                                player.canMoveOnMap=false;
+                                player.api->stopMove();
+                                player.api->requestFight(fightId);
+                                QList<CatchChallenger::PlayerMonster> botFightMonstersTransformed;
+                                const std::vector<CatchChallenger::BotFight::BotFightMonster> &monsters=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId).monsters;
+                                unsigned int index=0;
+                                while(index<monsters.size())
+                                {
+                                    botFightMonstersTransformed << CatchChallenger::FacilityLib::botFightMonsterToPlayerMonster(monsters.at(index),CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsters.at(index).id),monsters.at(index).level));
+                                    index++;
+                                }
+                                player.fightEngine->setBotMonster(botFightMonstersTransformed);
+                                player.lastFightAction.restart();
+                            }
+                        }
                         break;
                         default:
                             ActionsAction::resetTarget(player);

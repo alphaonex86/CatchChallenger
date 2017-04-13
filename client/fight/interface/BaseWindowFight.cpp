@@ -2143,7 +2143,11 @@ void BaseWindow::useTrap(const uint32_t &itemId)
     updateTrapTime.restart();
     displayTrapProgression=0;
     trapItemId=itemId;
-    fightEngine.tryCatchClient(itemId);
+    if(!fightEngine.tryCatchClient(itemId))
+    {
+        std::cerr << "!fightEngine.tryCatchClient(itemId)" << std::endl;
+        abort();
+    }
     displayTrap();
     //need wait the server reply, monsterCatch(const bool &success)
 }
