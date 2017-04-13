@@ -209,6 +209,7 @@ void BotTargetList::loadAllBotsInformation2()
 {
     if(!actionsAction->preload_the_map_step2())
         abort();
+    actionsAction->loadFinishedReemitTheDelayedFunction();
     show();
     SocialChat::socialChat->show();
     //waitScreen.hide();

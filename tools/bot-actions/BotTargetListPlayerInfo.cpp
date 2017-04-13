@@ -318,6 +318,7 @@ void BotTargetList::teleportTo()
         updateMapContentY=0;
         updateMapContentMapId=0;
         updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
+        updatePlayerInformation();
     }
 }
 
