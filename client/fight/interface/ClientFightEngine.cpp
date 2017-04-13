@@ -283,17 +283,17 @@ bool ClientFightEngine::internalTryEscape()
     return CommonFightEngine::internalTryEscape();
 }
 
-void ClientFightEngine::tryCatchClient(const uint32_t &item)
+bool ClientFightEngine::tryCatchClient(const uint32_t &item)
 {
     if(!playerMonster_catchInProgress.isEmpty())
     {
         error("Añready try catch in progress");
-        return;
+        return false;
     }
     if(wildMonsters.empty())
     {
         error("Try catch when not with wild");
-        return;
+        return false;
     }
     emit message("ClientFightEngine::tryCapture(): emit tryCapture()");
     client->useObject(item);
@@ -313,6 +313,7 @@ void ClientFightEngine::tryCatchClient(const uint32_t &item)
     newMonster.sp=0;
     playerMonster_catchInProgress << newMonster;
     //need wait the server reply, monsterCatch(const bool &success)
+    return true;
 }
 
 bool ClientFightEngine::catchInProgress() const

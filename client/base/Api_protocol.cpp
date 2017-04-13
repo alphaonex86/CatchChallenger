@@ -809,17 +809,17 @@ void Api_protocol::destroyObject(const uint16_t &object, const uint32_t &quantit
     is_logged=character_selected=packOutcommingData(0x13,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::useObject(const uint16_t &object)
+bool Api_protocol::useObject(const uint16_t &object)
 {
     if(!is_logged)
     {
         std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
+        return false;
     }
     if(!character_selected)
     {
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
+        return false;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -827,19 +827,20 @@ void Api_protocol::useObject(const uint16_t &object)
     out << object;
     is_logged=character_selected=packOutcommingQuery(0x86,queryNumber(),outputData.constData(),outputData.size());
     lastObjectUsed << object;
+    return true;
 }
 
-void Api_protocol::useObjectOnMonsterByPosition(const uint16_t &object,const uint8_t &monsterPosition)
+bool Api_protocol::useObjectOnMonsterByPosition(const uint16_t &object,const uint8_t &monsterPosition)
 {
     if(!is_logged)
     {
         std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
+        return false;
     }
     if(!character_selected)
     {
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
+        return false;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
@@ -847,6 +848,7 @@ void Api_protocol::useObjectOnMonsterByPosition(const uint16_t &object,const uin
     out << object;
     out << monsterPosition;
     is_logged=character_selected=packOutcommingData(0x10,outputData.constData(),outputData.size());
+    return true;
 }
 
 

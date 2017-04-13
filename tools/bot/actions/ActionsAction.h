@@ -46,6 +46,7 @@ public:
     bool preload_the_map_step1();
     bool preload_the_map_step2();
     bool preload_post_subdatapack();
+    void loadFinishedReemitTheDelayedFunction();
     uint64_t elementToLoad() const;
     uint64_t elementLoaded() const;
     static bool haveBeatBot(const CatchChallenger::Api_protocol *api, const uint16_t &botFightId);
@@ -97,7 +98,7 @@ public:
     void seed_planted_slot(const bool &ok);
     static void plant_collected(CatchChallenger::Api_protocol *api,const CatchChallenger::Plant_collect &stat);
     void plant_collected_slot(const CatchChallenger::Plant_collect &stat);
-    static bool checkOnTileEvent(Player &player);
+    static bool checkOnTileEvent(Player &player,bool haveDoStep=true);
 public slots:
     bool preload_the_map();
 signals:
@@ -106,6 +107,7 @@ signals:
 private:
     QTimer textTimer;
     uint64_t loaded;
+    bool allMapIsLoaded;
 public:
     //map
     /* map related */

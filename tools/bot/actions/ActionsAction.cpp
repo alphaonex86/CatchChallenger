@@ -15,6 +15,7 @@ ActionsAction::ActionsAction()
     textTimer.start(1000);
     flat_map_list=NULL;
     loaded=0;
+    allMapIsLoaded=false;
     ActionsAction::actionsAction=this;
 }
 
@@ -34,14 +35,30 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
     Player &botplayer=clientList[api];
     if(player_private_and_public_informations.public_informations.simplifiedId==player.simplifiedId)
     {
-        botplayer.fightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
-        ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
-        connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection);
-        connect(api,&CatchChallenger::Api_protocol::seed_planted,   actionsAction,&ActionsAction::seed_planted_slot);
-        connect(api,&CatchChallenger::Api_protocol::plant_collected,   actionsAction,&ActionsAction::plant_collected_slot);
+        if(allMapIsLoaded)
+        {
+            botplayer.fightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
+            ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
+            connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection);
+            connect(api,&CatchChallenger::Api_protocol::seed_planted,   actionsAction,&ActionsAction::seed_planted_slot);
+            connect(api,&CatchChallenger::Api_protocol::plant_collected,   actionsAction,&ActionsAction::plant_collected_slot);
 
-        if(!moveTimer.isActive())
-            moveTimer.start(player_private_and_public_informations.public_informations.speed);
+            if(!moveTimer.isActive())
+                moveTimer.start(player_private_and_public_informations.public_informations.speed);
+
+            checkOnTileEvent(botplayer,false);
+        }
+        else
+        {
+            DelayedMapPlayerChange delayedMapPlayerChange;
+            delayedMapPlayerChange.direction=direction;
+            delayedMapPlayerChange.mapId=mapId;
+            delayedMapPlayerChange.player=player;
+            delayedMapPlayerChange.x=x;
+            delayedMapPlayerChange.y=y;
+            delayedMapPlayerChange.type=DelayedMapPlayerChangeType_Insert;
+            botplayer.delayedMapPlayerChange.push_back(delayedMapPlayerChange);
+        }
     }
 }
 
@@ -136,12 +153,28 @@ void ActionsAction::dropAllPlayerOnTheMap(CatchChallenger::Api_protocol *api)
 {
     Player &botplayer=clientList[api];
     botplayer.visiblePlayers.clear();
+    botplayer.delayedMapPlayerChange.clear();
 }
 
 void ActionsAction::remove_player(CatchChallenger::Api_protocol *api, const uint16_t &id)
 {
     Player &botplayer=clientList[api];
-    botplayer.visiblePlayers.remove(id);
+    if(allMapIsLoaded)
+        botplayer.visiblePlayers.remove(id);
+    else
+    {
+        DelayedMapPlayerChange delayedMapPlayerChange;
+        delayedMapPlayerChange.direction=CatchChallenger::Direction::Direction_look_at_bottom;
+        delayedMapPlayerChange.mapId=0;
+        delayedMapPlayerChange.player.skinId=0;
+        delayedMapPlayerChange.player.simplifiedId=id;
+        delayedMapPlayerChange.player.speed=0;
+        delayedMapPlayerChange.player.type=CatchChallenger::Player_type_normal;
+        delayedMapPlayerChange.x=0;
+        delayedMapPlayerChange.y=0;
+        delayedMapPlayerChange.type=DelayedMapPlayerChangeType_Delete;
+        botplayer.delayedMapPlayerChange.push_back(delayedMapPlayerChange);
+    }
 }
 
 bool ActionsAction::mapConditionIsRepected(const CatchChallenger::Api_protocol *api,const CatchChallenger::MapCondition &condition)
@@ -472,8 +505,13 @@ bool ActionsAction::moveWithoutTeleport(CatchChallenger::Api_protocol *api,Catch
     }
 }
 
-bool ActionsAction::checkOnTileEvent(Player &player)
+bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
 {
+    if(actionsAction->id_map_to_map.empty())
+    {
+        std::cerr << "ActionsAction::checkOnTileEvent() need to be call after all the map is loaded" << std::endl;
+        abort();
+    }
     std::pair<uint8_t,uint8_t> pos(player.x,player.y);
     const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
     const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
@@ -505,21 +543,24 @@ bool ActionsAction::checkOnTileEvent(Player &player)
         }
     }
     //check if is in fight collision, but only if is move
-    if(player.repel_step<=0)
+    if(haveDoStep)
     {
-        const CatchChallenger::Player_private_and_public_informations &playerInformationsRO=player.api->get_player_informations_ro();
-        const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
-        const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
-        if(player.fightEngine->generateWildFightIfCollision(playerMap,player.x,player.y,playerInformationsRO.items,player.events))
+        if(player.repel_step<=0)
         {
-            player.canMoveOnMap=false;
-            player.api->stopMove();
-            player.lastFightAction.restart();
-            return true;
+            const CatchChallenger::Player_private_and_public_informations &playerInformationsRO=player.api->get_player_informations_ro();
+            const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+            const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+            if(player.fightEngine->generateWildFightIfCollision(playerMap,player.x,player.y,playerInformationsRO.items,player.events))
+            {
+                player.canMoveOnMap=false;
+                player.api->stopMove();
+                player.lastFightAction.restart();
+                return true;
+            }
         }
+        else
+            player.repel_step--;
     }
-    else
-        player.repel_step--;
     return false;
 }
 
