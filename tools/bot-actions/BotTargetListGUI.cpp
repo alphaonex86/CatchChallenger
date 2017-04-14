@@ -541,175 +541,178 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                 while(index<botsFightList.size())
                 {
                     const uint32_t &fightId=botsFightList.at(index);
-                    const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId);
-                    ActionsBotInterface::GlobalTarget globalTarget;
-                    globalTarget.blockObject=blockObject;
-                    globalTarget.extra=fightId;
-                    globalTarget.bestPath=resolvedBlock.bestPath;
-                    globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight;
-
-                    uint8_t maxFightLevel=0;
+                    if(!ActionsAction::haveBeatBot(api,fightId))
                     {
-                        unsigned int sub_index=0;
-                        while(sub_index<fight.monsters.size())
-                        {
-                            const CatchChallenger::BotFight::BotFightMonster &monster=fight.monsters.at(sub_index);
-                            if(monster.level>maxFightLevel)
-                                maxFightLevel=monster.level;
-                            sub_index++;
-                        }
-                    }
+                        const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId);
+                        ActionsBotInterface::GlobalTarget globalTarget;
+                        globalTarget.blockObject=blockObject;
+                        globalTarget.extra=fightId;
+                        globalTarget.bestPath=resolvedBlock.bestPath;
+                        globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight;
 
-                    QString tips;
-                    QColor colorValueL;
-                    QColor alternateColorValueL;
-                    const bool tooHard=maxFightLevel>(maxMonsterLevel+2);
-                    bool selected=false;
-                    unsigned int points=0;
-                    if(tooHard)
-                    {
-                        colorValueL=redColorValue;
-                        alternateColorValueL=redAlternateColorValue;
-                        tips="Too hard fight";
-                    }
-                    else
-                    {
-                        //colorValue=;
-                        alternateColorValueL=alternateColorValue;
-
-                        points=1500;//never be less than 1000
-                        {
-                            //remove the distance point
-                            points-=resolvedBlock.weight;
-                            unsigned int sub_index=0;
-                            while(sub_index<fight.items.size())
-                            {
-                                const CatchChallenger::BotFight::Item &itemFight=fight.items.at(sub_index);
-                                const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemFight.id);
-                                //add plant value
-                                unsigned int addPoint=item.price;
-                                //if not consumable and player don't have it
-                                if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemFight.id)==player_private_and_public_informations.items.cend())
-                                    addPoint=addPoint*14/10;//+40%
-                                if(player_private_and_public_informations.items.find(itemFight.id)!=player_private_and_public_informations.items.cend())
-                                {
-                                    if(!item.consumeAtUse)
-                                        addPoint=0;
-                                    else
-                                    {
-                                        const uint32_t &quantity=player_private_and_public_informations.items.at(itemFight.id);
-                                        if(quantity>20)
-                                            addPoint=0;
-                                        else if(quantity>10)
-                                            addPoint/=4;
-                                    }
-                                }
-                                points+=addPoint;
-                                sub_index++;
-                            }
-                            if(player_map==NULL)
-                            {
-                                const uint16_t &distance=mapPointDistanceNormalised(point.first,point.second,player_x,player_y);
-                                if(distance<2)
-                                    points*=4;
-                                else if(distance<5)
-                                    points*=2;
-                            }
-
-                            if(bestPoint<points)
-                            {
-                                selected=true;
-                                bestPoint=points;
-                                bestItems.clear();
-                                bestTarget=globalTarget;
-                            }
-                        }
-                    }
-
-                    if(displayTooHard || !tooHard)
-                    {
-                        //item
-                        {
-                            unsigned int sub_index=0;
-                            while(sub_index<fight.items.size())
-                            {
-                                const CatchChallenger::BotFight::Item &item=fight.items.at(sub_index);
-                                const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item.id);
-                                const uint32_t &quantity=item.quantity;
-                                {
-                                    QListWidgetItem * newItem=new QListWidgetItem();
-                                    if(quantity>1)
-                                        newItem->setText(QString("Fight %1: %2x %3")
-                                                      .arg(fightId)
-                                                      .arg(quantity)
-                                                      .arg(itemExtra.name)
-                                                      );
-                                    else
-                                        newItem->setText(QString("Fight %1: %2")
-                                                      .arg(fightId)
-                                                      .arg(itemExtra.name)
-                                                      );
-                                    newItem->setIcon(QIcon(itemExtra.image));
-                                    newItem->setToolTip(tips);
-                                    itemToReturn.push_back(newItem->text().toStdString());
-                                    if(listGUI==ui->globalTargets)
-                                    {
-                                        if(selected)
-                                            bestItems << newItem;
-                                        targetListGlobalTarget.push_back(globalTarget);
-                                        if(alternateColor)
-                                            newItem->setBackgroundColor(alternateColorValueL);
-                                        else if(colorValueL.isValid())
-                                            newItem->setBackgroundColor(colorValueL);
-                                        newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
-                                    }
-                                    if(listGUI!=NULL)
-                                        listGUI->addItem(newItem);
-                                    else
-                                        delete newItem;
-                                }
-                                sub_index++;
-                            }
-                        }
-                        //monster
+                        uint8_t maxFightLevel=0;
                         {
                             unsigned int sub_index=0;
                             while(sub_index<fight.monsters.size())
                             {
                                 const CatchChallenger::BotFight::BotFightMonster &monster=fight.monsters.at(sub_index);
-                                const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monster.id);
-                                {
-                                    QListWidgetItem * newItem=new QListWidgetItem();
-                                    newItem->setText(QString("Fight %1: %2 level %3")
-                                            .arg(fightId)
-                                            .arg(monsterExtra.name)
-                                            .arg(monster.level)
-                                            );
-                                    newItem->setIcon(QIcon(monsterExtra.thumb));
-                                    newItem->setToolTip(tips);
-                                    itemToReturn.push_back(newItem->text().toStdString());
-                                    if(listGUI==ui->globalTargets)
-                                    {
-                                        if(selected)
-                                            bestItems << newItem;
-                                        targetListGlobalTarget.push_back(globalTarget);
-                                        if(alternateColor)
-                                            newItem->setBackgroundColor(alternateColorValueL);
-                                        else if(colorValueL.isValid())
-                                            newItem->setBackgroundColor(colorValueL);
-                                        newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
-                                    }
-                                    if(listGUI!=NULL)
-                                        listGUI->addItem(newItem);
-                                    else
-                                        delete newItem;
-                                }
+                                if(monster.level>maxFightLevel)
+                                    maxFightLevel=monster.level;
                                 sub_index++;
                             }
                         }
-                        if(!fight.items.empty() || !fight.monsters.empty())
-                            if(listGUI==ui->globalTargets)
-                                alternateColor=!alternateColor;
+
+                        QString tips;
+                        QColor colorValueL;
+                        QColor alternateColorValueL;
+                        const bool tooHard=maxFightLevel>(maxMonsterLevel+2);
+                        bool selected=false;
+                        unsigned int points=0;
+                        if(tooHard)
+                        {
+                            colorValueL=redColorValue;
+                            alternateColorValueL=redAlternateColorValue;
+                            tips="Too hard fight";
+                        }
+                        else
+                        {
+                            //colorValue=;
+                            alternateColorValueL=alternateColorValue;
+
+                            points=1500;//never be less than 1000
+                            {
+                                //remove the distance point
+                                points-=resolvedBlock.weight;
+                                unsigned int sub_index=0;
+                                while(sub_index<fight.items.size())
+                                {
+                                    const CatchChallenger::BotFight::Item &itemFight=fight.items.at(sub_index);
+                                    const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemFight.id);
+                                    //add plant value
+                                    unsigned int addPoint=item.price;
+                                    //if not consumable and player don't have it
+                                    if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemFight.id)==player_private_and_public_informations.items.cend())
+                                        addPoint=addPoint*14/10;//+40%
+                                    if(player_private_and_public_informations.items.find(itemFight.id)!=player_private_and_public_informations.items.cend())
+                                    {
+                                        if(!item.consumeAtUse)
+                                            addPoint=0;
+                                        else
+                                        {
+                                            const uint32_t &quantity=player_private_and_public_informations.items.at(itemFight.id);
+                                            if(quantity>20)
+                                                addPoint=0;
+                                            else if(quantity>10)
+                                                addPoint/=4;
+                                        }
+                                    }
+                                    points+=addPoint;
+                                    sub_index++;
+                                }
+                                if(player_map==NULL)
+                                {
+                                    const uint16_t &distance=mapPointDistanceNormalised(point.first,point.second,player_x,player_y);
+                                    if(distance<2)
+                                        points*=4;
+                                    else if(distance<5)
+                                        points*=2;
+                                }
+
+                                if(bestPoint<points)
+                                {
+                                    selected=true;
+                                    bestPoint=points;
+                                    bestItems.clear();
+                                    bestTarget=globalTarget;
+                                }
+                            }
+                        }
+
+                        if(displayTooHard || !tooHard)
+                        {
+                            //item
+                            {
+                                unsigned int sub_index=0;
+                                while(sub_index<fight.items.size())
+                                {
+                                    const CatchChallenger::BotFight::Item &item=fight.items.at(sub_index);
+                                    const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item.id);
+                                    const uint32_t &quantity=item.quantity;
+                                    {
+                                        QListWidgetItem * newItem=new QListWidgetItem();
+                                        if(quantity>1)
+                                            newItem->setText(QString("Fight %1: %2x %3")
+                                                          .arg(fightId)
+                                                          .arg(quantity)
+                                                          .arg(itemExtra.name)
+                                                          );
+                                        else
+                                            newItem->setText(QString("Fight %1: %2")
+                                                          .arg(fightId)
+                                                          .arg(itemExtra.name)
+                                                          );
+                                        newItem->setIcon(QIcon(itemExtra.image));
+                                        newItem->setToolTip(tips);
+                                        itemToReturn.push_back(newItem->text().toStdString());
+                                        if(listGUI==ui->globalTargets)
+                                        {
+                                            if(selected)
+                                                bestItems << newItem;
+                                            targetListGlobalTarget.push_back(globalTarget);
+                                            if(alternateColor)
+                                                newItem->setBackgroundColor(alternateColorValueL);
+                                            else if(colorValueL.isValid())
+                                                newItem->setBackgroundColor(colorValueL);
+                                            newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
+                                        }
+                                        if(listGUI!=NULL)
+                                            listGUI->addItem(newItem);
+                                        else
+                                            delete newItem;
+                                    }
+                                    sub_index++;
+                                }
+                            }
+                            //monster
+                            {
+                                unsigned int sub_index=0;
+                                while(sub_index<fight.monsters.size())
+                                {
+                                    const CatchChallenger::BotFight::BotFightMonster &monster=fight.monsters.at(sub_index);
+                                    const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monster.id);
+                                    {
+                                        QListWidgetItem * newItem=new QListWidgetItem();
+                                        newItem->setText(QString("Fight %1: %2 level %3")
+                                                .arg(fightId)
+                                                .arg(monsterExtra.name)
+                                                .arg(monster.level)
+                                                );
+                                        newItem->setIcon(QIcon(monsterExtra.thumb));
+                                        newItem->setToolTip(tips);
+                                        itemToReturn.push_back(newItem->text().toStdString());
+                                        if(listGUI==ui->globalTargets)
+                                        {
+                                            if(selected)
+                                                bestItems << newItem;
+                                            targetListGlobalTarget.push_back(globalTarget);
+                                            if(alternateColor)
+                                                newItem->setBackgroundColor(alternateColorValueL);
+                                            else if(colorValueL.isValid())
+                                                newItem->setBackgroundColor(colorValueL);
+                                            newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
+                                        }
+                                        if(listGUI!=NULL)
+                                            listGUI->addItem(newItem);
+                                        else
+                                            delete newItem;
+                                    }
+                                    sub_index++;
+                                }
+                            }
+                            if(!fight.items.empty() || !fight.monsters.empty())
+                                if(listGUI==ui->globalTargets)
+                                    alternateColor=!alternateColor;
+                        }
                     }
                     index++;
                 }

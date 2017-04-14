@@ -500,6 +500,12 @@ void BotTargetList::updatePlayerStep()
                                 player.fightEngine->setBotMonster(botFightMonstersTransformed);
                                 player.lastFightAction.restart();
                             }
+                            else
+                            {
+                                ActionsAction::resetTarget(player);
+                                QMessageBox::critical(this,tr("Already beaten"),tr("This bot is already beaten (1): %1").arg(fightId));
+                                return;
+                            }
                         }
                         break;
                         default:
