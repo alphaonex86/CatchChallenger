@@ -435,6 +435,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
         abort();
     player.target.linkPoint=pointsList.at(destinationIndexSelected);
     player.target.localStep=returnPath;
+    BotTargetList::finishTheLocalStep(player);
 
     updateMapContentX=0;
     updateMapContentY=0;
