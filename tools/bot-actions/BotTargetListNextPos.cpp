@@ -220,3 +220,20 @@ void BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
         }
     }
 }
+
+void BotTargetList::finishTheLocalStep(ActionsAction::Player &player)
+{
+    Q_UNUSED(player);
+    /*if(player.target.bestPath.empty() && !player.target.local
+    Step.empty() && player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap)
+    {
+        std::pair<CatchChallenger::Orientation,uint8_t> &lastPair=player.target.localStep.back();
+        if(lastPair.second>1)
+            lastPair.second--;
+        else
+        {
+            lastPair.second=0;
+            lastPair.first=moveToLook(lastPair.first);
+        }
+    }do directly at direction parsing*/
+}

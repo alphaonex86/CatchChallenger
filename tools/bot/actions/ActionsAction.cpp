@@ -621,16 +621,21 @@ void ActionsAction::doMove()
 
                 if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))
                 {
-                    api->newDirection(direction);
+                    if(player.target.bestPath.empty() && step.second==0 && player.target.localStep.size()==1 && player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap)
+                        api->newDirection((CatchChallenger::Direction)(direction-4));
+                    else
+                    {
+                        api->newDirection(direction);
+                        if(!move(api,direction,&playerMap,&player.x,&player.y,true,true))
+                        {
+                            std::cerr << "Blocked on: " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << std::endl;
+                            abort();
+                        }
+                        player.mapId=playerMap->id;
+                        checkOnTileEvent(player);
+                    }
                     if(step.second==0)
                         player.target.localStep.erase(player.target.localStep.cbegin());
-                    if(!move(api,direction,&playerMap,&player.x,&player.y,true,true))
-                    {
-                        std::cerr << "Blocked on: " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << std::endl;
-                        abort();
-                    }
-                    player.mapId=playerMap->id;
-                    checkOnTileEvent(player);
                 }
                 else
                 {
