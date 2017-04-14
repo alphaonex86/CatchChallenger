@@ -62,12 +62,12 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
             continue;
         }
 
-        int one=1;
+        /*int one=1;
         if(setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one)!=0)
             std::cerr << "Unable to apply SO_REUSEADDR" << std::endl;
         one=1;
         if(setsockopt(sfd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof one)!=0)
-            std::cerr << "Unable to apply SO_REUSEPORT" << std::endl;
+            std::cerr << "Unable to apply SO_REUSEPORT" << std::endl;*/
 
         s = bind(sfd, rp->ai_addr, rp->ai_addrlen);
         if(s!=0)

@@ -257,6 +257,7 @@ void BotTargetList::updatePlayerStep()
                                     abort();
                                 player.target.linkPoint=pointsList.at(destinationIndexSelected);
                                 player.target.localStep=returnPath;
+                                BotTargetList::finishTheLocalStep(player);
                             }
                             else
                                 std::cerr << "Unable to search the next path, the target should be into the current block and map" << std::endl;
@@ -307,6 +308,7 @@ void BotTargetList::updatePlayerStep()
                                         abort();
                                     player.target.linkPoint=pointsList.at(destinationIndexSelected);
                                     player.target.localStep=returnPath;
+                                    BotTargetList::finishTheLocalStep(player);
                                 }
                             }
                         }
