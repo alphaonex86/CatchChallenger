@@ -150,9 +150,14 @@ void BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
             linkPoint.y=point1.second;
             player.target.linkPoint=linkPoint;
             player.target.localStep=returnPath;
-            directionToPoint1=returnPath.back().first;
-            while(directionToPoint1>4)
-                directionToPoint1-=4;
+            if(!returnPath.empty())
+            {
+                directionToPoint1=returnPath.back().first;
+                while(directionToPoint1>4)
+                    directionToPoint1-=4;
+            }
+            else
+                directionToPoint1=static_cast<CatchChallenger::Orientation>(o);
         }
         //point 1 to 2
         {
@@ -173,9 +178,14 @@ void BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
             if(!ok)
                 abort();
             player.target.wildForwardStep=returnPath;
-            directionToPoint1=returnPath.back().first;
-            while(directionToPoint1>4)
-                directionToPoint1-=4;
+            if(!returnPath.empty())
+            {
+                directionToPoint1=returnPath.back().first;
+                while(directionToPoint1>4)
+                    directionToPoint1-=4;
+            }
+            else
+                directionToPoint1=static_cast<CatchChallenger::Orientation>(directionToPoint1);
         }
         //point 2 to 1
         {
