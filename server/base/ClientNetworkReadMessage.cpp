@@ -587,10 +587,10 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("wrong remaining size for warehouse cash");
                 return false;
             }
-            uint64_t tempVar;
-            memcpy(&tempVar,data+pos,sizeof(uint64_t));
-            const uint64_t &cash=le64toh(tempVar);
-            pos+=sizeof(uint64_t);
+            int64_t tempVar;//cash move can be negative
+            memcpy(&tempVar,data+pos,sizeof(int64_t));
+            const int64_t &cash=le64toh(tempVar);//cash move can be negative
+            pos+=sizeof(int64_t);
 
             uint16_t size16;
             if((size-pos)<((int)sizeof(uint16_t)))
@@ -629,11 +629,11 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("wrong remaining size for warehouse monster list");
                 return false;
             }
-            uint32_t size;
-            size=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+            uint32_t size32;
+            size32=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
             pos+=sizeof(uint32_t);
             uint32_t index=0;
-            while(index<size)
+            while(index<size32)
             {
                 if((size-pos)<((int)sizeof(uint32_t)))
                 {
@@ -650,10 +650,10 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("wrong remaining size for warehouse sub monster id");
                 return false;
             }
-            size=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+            size32=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
             pos+=sizeof(uint32_t);
             index=0;
-            while(index<size)
+            while(index<size32)
             {
                 if((size-pos)<((int)sizeof(uint32_t)))
                 {

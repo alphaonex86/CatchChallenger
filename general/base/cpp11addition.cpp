@@ -204,11 +204,13 @@ std::string binarytoHexa(const char * const data, const uint32_t &size, bool *ok
 {
     if(size==0)
         return std::string();
-    if(size>100000000)
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(__builtin_expect((size>100000000),0))
     {
         std::cerr << "cpp11addition binarytoHexa() size>100000000, seam be a bug, dropped to empty string" << std::endl;
         return std::string();
     }
+    #endif
     if(ok!=NULL)
        *ok=true;
     std::string output;
