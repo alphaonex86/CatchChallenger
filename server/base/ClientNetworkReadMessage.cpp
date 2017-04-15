@@ -666,6 +666,16 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 index++;
             }
             wareHouseStore(cash,items,withdrawMonsters,depositeMonsters);
+            if(pos>(size+1))
+            {
+                errorOutput("remaining data: parsenormalOutput("+
+                            std::to_string(packetCode)+
+                            "): "+
+                            binarytoHexa(data,size)+
+                            " pos>size"
+                            );
+                return false;
+            }
             if((size-pos)!=0)
             {
                 errorOutput("remaining data: parsenormalOutput("+
