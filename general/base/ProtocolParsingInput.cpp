@@ -738,7 +738,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!returnValue)
-            errorParsingLayer("parseReplyData(): return false, need be aborted before");
+            errorParsingLayer("parseReplyData(): return false, need be aborted before, packetCode: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
         #endif
         return returnValue;
     }
@@ -772,7 +772,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         const bool &returnValue=parseQuery(packetCode,queryNumber,data,size);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!returnValue)
-            errorParsingLayer("parseQuery(): return false, need be aborted before");
+            errorParsingLayer("parseQuery(): return false, need be aborted before, packetCode: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
         #endif
         return returnValue;
     }
