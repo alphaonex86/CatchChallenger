@@ -754,7 +754,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
         const bool &returnValue=parseMessage(packetCode,data,size);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!returnValue)
-            errorParsingLayer("parseMessage(): return false, need be aborted before");
+            errorParsingLayer("parseMessage(): return false, need be aborted before, packetCode: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
         #endif
         return returnValue;
     }
