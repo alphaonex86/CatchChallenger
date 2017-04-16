@@ -415,7 +415,7 @@ void Client::generateRandomNumber()
     posOutput+=1+4;
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE);//set the dynamic size
 
-    if((randomIndex+randomSize)<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
+    if((randomIndex+randomSize+CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE)<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
     {
         //can send the next block
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,GlobalServerData::serverPrivateVariables.randomData.data()+randomIndex+randomSize,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE);
@@ -431,7 +431,7 @@ void Client::generateRandomNumber()
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
-    randomSize+=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE;
+    randomSize+=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
 }
 
 uint32_t Client::randomSeedsSize() const
