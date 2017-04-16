@@ -502,19 +502,21 @@ void BotTargetList::updatePlayerStep()
                             }
                             else
                             {
-                                ActionsAction::resetTarget(player);
+                                ActionsAction::resetTarget(player.target);
+                                stopAll();
                                 QMessageBox::critical(this,tr("Already beaten"),tr("This bot is already beaten (1): %1").arg(fightId));
                                 return;
                             }
                         }
                         break;
                         default:
-                            ActionsAction::resetTarget(player);
+                            ActionsAction::resetTarget(player.target);
+                            stopAll();
                             QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded (1): %1").arg(player.target.type));
                             return;
                         break;
                     }
-                    ActionsAction::resetTarget(player);
+                    ActionsAction::resetTarget(player.target);
 
                     if(api==apiSelectedClient)
                     {

@@ -128,6 +128,7 @@ private:
                                                  std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> >
                                                  > pathToEachDestinations,unsigned int &destinationIndexSelected);
     void wildMonsterTarget(ActionsAction::Player &player);
+    void stopAll();
 
     //std::unodered_map<const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent,un> monsterCollisionContentDuplicate;
 };

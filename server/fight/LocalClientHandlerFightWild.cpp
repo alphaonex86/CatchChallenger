@@ -39,7 +39,7 @@ void Client::wildDrop(const uint32_t &monster)
                 quantity=quantity_min;
             else
                 quantity=rand()%(quantity_max-quantity_min+1)+quantity_min;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            #ifdef CATCHCHALLENGER_DEBUG_FIGHT
             normalOutput("Win "+std::to_string(quantity)+" item: "+std::to_string(drops.at(index).item));
             #endif
             addObjectAndSend(drops.at(index).item,quantity);

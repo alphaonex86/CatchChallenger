@@ -968,7 +968,7 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
     player.x=x;
     player.y=y;
     api->teleportDone();
-    ActionsAction::resetTarget(player);
+    ActionsAction::resetTarget(player.target);
     if(player.fightEngine->currentMonsterIsKO() && !player.fightEngine->haveAnotherMonsterOnThePlayerToFight())//then is dead, is teleported to the last rescue point
     {
         std::cout << "tp after loose" << std::endl;
@@ -998,17 +998,17 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
         std::cout << "normal tp" << std::endl;
 }
 
-void ActionsAction::resetTarget(Player &player)
+void ActionsAction::resetTarget(GlobalTarget &target)
 {
     //reset the target
-    player.target.wildForwardStep.clear();
-    player.target.wildBackwardStep.clear();
-    player.target.wildCycle=0;
-    player.target.blockObject=NULL;
-    player.target.extra=0;
-    player.target.linkPoint.x=0;
-    player.target.linkPoint.y=0;
-    player.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
-    player.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
-    player.target.sinceTheLastAction.restart();
+    target.wildForwardStep.clear();
+    target.wildBackwardStep.clear();
+    target.wildCycle=0;
+    target.blockObject=NULL;
+    target.extra=0;
+    target.linkPoint.x=0;
+    target.linkPoint.y=0;
+    target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+    target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
+    target.sinceTheLastAction.restart();
 }

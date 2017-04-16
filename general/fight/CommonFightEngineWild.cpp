@@ -232,7 +232,7 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const
                         const PlayerMonster &monster=getRandomMonster(monsterList,&ok);
                         if(ok)
                         {
-                            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+                            #ifdef CATCHCHALLENGER_DEBUG_FIGHT
                             messageFightEngine("Start grass fight with monster id "+std::to_string(monster.monster)+" level "+std::to_string(monster.level));
                             #endif
                             startTheFight();
@@ -261,7 +261,7 @@ uint32_t CommonFightEngine::tryCapture(const uint16_t &item)
     doTurnIfChangeOfMonster=true;
     if(internalTryCapture(CommonDatapack::commonDatapack.items.trap.at(item)))
     {
-        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        #ifdef CATCHCHALLENGER_DEBUG_FIGHT
         messageFightEngine("capture is successful");
         #endif
         PlayerMonster newMonster;
@@ -285,7 +285,7 @@ uint32_t CommonFightEngine::tryCapture(const uint16_t &item)
     }
     else
     {
-        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        #ifdef CATCHCHALLENGER_DEBUG_FIGHT
         messageFightEngine("capture is failed");
         #endif
         generateOtherAttack();//Skill::AttackReturn attackReturn=
@@ -303,7 +303,7 @@ bool CommonFightEngine::tryEscape()
         return false;
     if(internalTryEscape())
     {
-        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        #ifdef CATCHCHALLENGER_DEBUG_FIGHT
         messageFightEngine("escape is successful");
         #endif
         wildMonsters.clear();
@@ -311,7 +311,7 @@ bool CommonFightEngine::tryEscape()
     }
     else
     {
-        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        #ifdef CATCHCHALLENGER_DEBUG_FIGHT
         messageFightEngine("escape is failed");
         #endif
         generateOtherAttack();//Skill::AttackReturn attackReturn=
