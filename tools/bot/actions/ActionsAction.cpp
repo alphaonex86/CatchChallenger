@@ -386,6 +386,7 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                     if(!botplayer.fightEngine->canDoRandomFight(*new_map,x,y))
                     {
                         std::cerr << "!botplayer.fightEngine->canDoRandomFight(*new_map,x,y)" << std::endl;
+                        abort();
                         //emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
                         return false;
                     }
@@ -642,18 +643,27 @@ void ActionsAction::doMove()
                     std::cerr << "Blocked on: " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << std::endl;
                     if(player.target.bestPath.size()>1)
                     {
-                        std::cerr << "Something is wrong  to go to the destination, path finding buggy? block not walkable?" << std::endl;
+                        std::cerr << "Something is wrong to go to the destination, path finding buggy? block not walkable?" << std::endl;
+                        std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
+                        std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
+                        std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
                         abort();
                     }
                     if(player.target.localStep.size()>1)
                     {
                         std::cerr << "Something is wrong  to go to the destination, path finding buggy? block not walkable?" << std::endl;
+                        std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
+                        std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
+                        std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
                         abort();
                     }
                     if(player.target.localStep.size()==1)
                         if(player.target.localStep.at(0).second>1)
                         {
                             std::cerr << "Something is wrong  to go to the destination, path finding buggy? block not walkable?" << std::endl;
+                            std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
+                            std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
+                            std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
                             abort();
                         }
                     //turn on the new direction
