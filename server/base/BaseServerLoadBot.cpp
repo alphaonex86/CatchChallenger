@@ -408,7 +408,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                                 }
                                             }
                                             //load the botsFightTrigger
-                                            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT_BOT
+                                            #ifdef CATCHCHALLENGER_DEBUG_FIGHT_BOT
                                             std::cerr << "Put bot fight point: for bot id: "
                                                       << bot_Semi.id
                                                       << " ("

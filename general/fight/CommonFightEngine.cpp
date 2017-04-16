@@ -653,7 +653,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
         if(wildMonster.hp==0)
         {
             winTheTurn=true;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            #ifdef CATCHCHALLENGER_DEBUG_FIGHT
             messageFightEngine("The wild monster ("+std::to_string(wildMonster.monster)+") is KO");
             #endif
             //drop the drop item here
@@ -688,7 +688,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             }
             #endif
             giveXPSP(xp,sp);
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            #ifdef CATCHCHALLENGER_DEBUG_FIGHT
             messageFightEngine("You win "+std::to_string(wildMonsterInfo.give_xp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX)+
                                " xp and "+std::to_string(wildMonsterInfo.give_sp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX)+" sp");
             #endif
@@ -699,7 +699,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
         if(botFightMonsters.front().hp==0)
         {
             winTheTurn=true;
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            #ifdef CATCHCHALLENGER_DEBUG_FIGHT
             messageFightEngine("The wild monster ("+std::to_string(botFightMonsters.front().monster)+") is KO");
             #endif
             //don't drop item because it's not a wild fight
@@ -709,7 +709,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             int sp=botmonster.give_sp*botFightMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             int xp=botmonster.give_xp*botFightMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             giveXPSP(xp,sp);
-            #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+            #ifdef CATCHCHALLENGER_DEBUG_FIGHT
             messageFightEngine("You win "+std::to_string(botmonster.give_xp*botFightMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX)+
                                " xp and "+std::to_string(botmonster.give_sp*botFightMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX)+" sp");
             #endif
@@ -744,6 +744,9 @@ bool CommonFightEngine::giveXPSP(int xp,int sp)
     }
     while((remaining_xp+xp)>=monsterInformations.level_to_xp.at(level-1))
     {
+        #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+        messageFightEngine("Level up because: ("+std::to_string(remaining_xp)+"+"+std::to_string(xp)+")>=monsterInformations.level_to_xp.at("+std::to_string(level)+"-1): "+std::to_string(monsterInformations.level_to_xp.at(level-1))+"");
+        #endif
         const uint32_t &old_max_hp=getStat(monsterInformations,level).hp;
         const uint32_t &new_max_hp=getStat(monsterInformations,level+1).hp;
         xp-=monsterInformations.level_to_xp.at(level-1)-remaining_xp;
@@ -753,7 +756,7 @@ bool CommonFightEngine::giveXPSP(int xp,int sp)
         haveChangeOfLevel=true;
         if(new_max_hp>old_max_hp)
             monster->hp+=new_max_hp-old_max_hp;
-        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        #ifdef CATCHCHALLENGER_DEBUG_FIGHT
         messageFightEngine("You pass to the level "+std::to_string(level));
         #endif
         if(level>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
@@ -766,6 +769,10 @@ bool CommonFightEngine::giveXPSP(int xp,int sp)
     monster->remaining_xp=remaining_xp;
     if(haveChangeOfLevel)
         monster->level=level;
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+    else
+        messageFightEngine("Not level up: ("+std::to_string(remaining_xp)+")<monsterInformations.level_to_xp.at("+std::to_string(level)+"-1): "+std::to_string(monsterInformations.level_to_xp.at(level-1))+"");
+    #endif
     monster->sp+=sp;
 
     return haveChangeOfLevel;
@@ -797,7 +804,7 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const uint8_t &numberO
     const uint32_t &new_max_hp=getStat(monsterInformations,level+1).hp;
     if(new_max_hp>old_max_hp)
         monster->hp+=new_max_hp-old_max_hp;
-    #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
     messageFightEngine("You pass to the level "+std::to_string(level)+" on your monster "+std::to_string(monster->id));
     #endif
 

@@ -68,6 +68,9 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
     }
     #endif
     bool turnIsEnd=false;
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+    std::cout << "currentMonsterStatIsFirstToAttack: " << std::to_string(currentMonsterStatIsFirstToAttack) << std::endl;
+    #endif
     if(currentMonsterStatIsFirstToAttack)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -558,7 +561,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     #endif
     const Skill &skillDef=CommonDatapack::commonDatapack.monsterSkills.at(skill);
     const Skill::SkillList &skillList=skillDef.level.at(skillLevel-1);
-    #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
     messageFightEngine("You use skill "+std::to_string(skill)+" at level "+std::to_string(skillLevel));
     #endif
     unsigned int index;
@@ -659,14 +662,14 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
             else
             {
                 success=(getOneSeed(100)<buff.success);
-                #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+                #ifdef CATCHCHALLENGER_DEBUG_FIGHT
                 if(success)
                     messageFightEngine("Add successfull buff: "+std::to_string(buff.effect.buff)+" at level: "+std::to_string(buff.effect.level)+" on "+std::to_string(buff.effect.on));
                 #endif
             }
             if(success)
             {
-                #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+                #ifdef CATCHCHALLENGER_DEBUG_FIGHT
                 if(success)
                     messageFightEngine("Add buff: "+std::to_string(buff.effect.buff)+" at level: "+std::to_string(buff.effect.level)+" on "+std::to_string(buff.effect.on));
                 #endif
@@ -737,6 +740,33 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
                              " after the skill use doTheTurn() at 1)");
             return attackReturn;
         }
+    }
+    #endif
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+    {
+        std::cout << "attackReturn buff:";
+        unsigned int index=0;
+        while(index<attackReturn.buffLifeEffectMonster.size())
+        {
+            const Skill::LifeEffectReturn &lifeEffectReturn=attackReturn.buffLifeEffectMonster.at(index);
+            std::cout << " critical: " << std::to_string(lifeEffectReturn.critical);
+            std::cout << " effective: " << std::to_string(lifeEffectReturn.effective);
+            std::cout << " on: " << std::to_string(lifeEffectReturn.on);
+            std::cout << " quantity: " << std::to_string(lifeEffectReturn.quantity);
+            index++;
+        }
+        std::cout << " life:";
+        index=0;
+        while(index<attackReturn.lifeEffectMonster.size())
+        {
+            const Skill::LifeEffectReturn &lifeEffectReturn=attackReturn.lifeEffectMonster.at(index);
+            std::cout << " critical: " << std::to_string(lifeEffectReturn.critical);
+            std::cout << " effective: " << std::to_string(lifeEffectReturn.effective);
+            std::cout << " on: " << std::to_string(lifeEffectReturn.on);
+            std::cout << " quantity: " << std::to_string(lifeEffectReturn.quantity);
+            index++;
+        }
+        std::cout << std::endl;
     }
     #endif
     return attackReturn;
@@ -836,7 +866,11 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
                 if(effect_quantity<0)
                     effect_quantity-=2;
             }
-            std::cout << "quantity(" << quantity << ") = effect_to_return.effective(" << effect_to_return.effective << ")*(((float)currentMonster->level(" << currentMonster->level << ")*(float)1.99+10.5)/(float)255*((float)attack(" << attack << ")/(float)defense(" << defense << "))*(float)effect.quantity(" << effect.quantity << "))*criticalHit(" << criticalHit << ")*OtherMulti(" << OtherMulti << ")*(100-getOneSeed(17)(" << seed << "))/100; effect_quantity: " << effect_quantity << std::endl;
+            std::cout << "quantity(" << quantity << ") = effect_to_return.effective(" << std::to_string(effect_to_return.effective) <<
+                         ")*(((float)currentMonster->level(" << std::to_string(currentMonster->level) << ")*(float)1.99+10.5)/(float)255*((float)attack("<<
+                         std::to_string(attack) << ")/(float)defense(" << std::to_string(defense) << "))*(float)effect.quantity(" << std::to_string(effect.quantity) <<
+                         "))*criticalHit(" << std::to_string(criticalHit) << ")*OtherMulti(" << std::to_string(OtherMulti) << ")*(100-getOneSeed(17)(" <<
+                         std::to_string(seed) << "))/100;" << std::endl;
             #endif
             /*if(effect.quantity<0)
                 quantity=-((-effect.quantity*stat.attack)/(otherStat.defense*4));
@@ -886,7 +920,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
         errorFightEngine("Wrong calculated value");
     }
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT
-    std::cout << "Life: Apply on" << otherMonster->monster << "quantity" << quantity << "hp was:" << otherMonster->hp << std::endl;
+    std::cout << "Life: Apply on " << std::to_string(otherMonster->monster) << " quantity " << std::to_string(quantity) << " hp was: " << std::to_string(otherMonster->hp) << std::endl;
     #endif
     //kill
     if(quantity<0 && (-quantity)>=(int32_t)otherMonster->hp)
