@@ -124,7 +124,7 @@ bool Client::checkKOCurrentMonsters()
 {
     if(getCurrentMonster()->hp==0)
     {
-        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        #ifdef CATCHCHALLENGER_DEBUG_FIGHT
         normalOutput("You current monster ("+std::to_string(getCurrentMonster()->monster)+") is KO");
         #endif
         saveStat();
@@ -141,7 +141,7 @@ bool Client::checkLoose(bool withTeleport)
         return false;
     if(!haveAnotherMonsterOnThePlayerToFight())
     {
-        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        #ifdef CATCHCHALLENGER_DEBUG_FIGHT
         normalOutput("You have lost, tp to "+rescue.map->map_file+" ("+std::to_string(rescue.x)+","+std::to_string(rescue.y)+") and heal");
         #endif
         doTurnIfChangeOfMonster=true;
@@ -442,8 +442,25 @@ bool Client::finishTheTurn(const bool &isBot)
         }
         fightOrBattleFinish(win,0);
     }
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+    displayCurrentStatus();
+    #endif
     return win;
 }
+
+#ifdef CATCHCHALLENGER_DEBUG_FIGHT
+void Client::displayCurrentStatus()
+{
+    PlayerMonster * currentMonster=getCurrentMonster();
+    if(currentMonster==NULL)
+        return;
+    std::cout << "current monster: " << currentMonster->hp;
+    PublicPlayerMonster * otherMonster=getOtherMonster();
+    if(otherMonster!=NULL)
+        std::cout << ", other monster: " << otherMonster->hp;
+    std::cout << std::endl;
+}
+#endif
 
 bool Client::bothRealPlayerIsReady() const
 {

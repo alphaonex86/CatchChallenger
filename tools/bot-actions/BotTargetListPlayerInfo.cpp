@@ -250,6 +250,11 @@ void BotTargetList::updateFightStats()
 
                 }
                 const CatchChallenger::Monster &monsterGeneralInfo=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster);
+                if(monster.level>=monsterGeneralInfo.level_to_xp.size())
+                {
+                    std::cerr << "monster.level>=monsterGeneralInfo.level_to_xp.size()" << std::endl;
+                    abort();
+                }
                 const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
                 item->setText(tr("%1, level: %2\nHP: %3/%4, SP: %5, XP: %6/%7\n%8")
                         .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)

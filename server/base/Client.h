@@ -571,6 +571,9 @@ private:
     void battleFinishedReset();
     Client * getOtherPlayerBattle() const;
     bool finishTheTurn(const bool &isBot);
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+    void displayCurrentStatus();
+    #endif
     bool useSkill(const uint16_t &skill);
     bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
     void healAllMonsters();

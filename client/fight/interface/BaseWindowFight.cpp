@@ -2162,7 +2162,7 @@ void BaseWindow::monsterCatch(const bool &success)
     if(!success)
     {
         trapSuccess=false;
-        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        #ifdef CATCHCHALLENGER_DEBUG_FIGHT
         emit message(QStringLiteral("catch is failed"));
         #endif
         fightEngine.generateOtherAttack();
@@ -2170,7 +2170,7 @@ void BaseWindow::monsterCatch(const bool &success)
     else
     {
         trapSuccess=true;
-        #ifdef DEBUG_MESSAGE_CLIENT_FIGHT
+        #ifdef CATCHCHALLENGER_DEBUG_FIGHT
         emit message(QStringLiteral("catch is success"));
         #endif
         //fightEngine.playerMonster_catchInProgress.first().id=newMonsterId;

@@ -76,6 +76,12 @@ BotTargetList::~BotTargetList()
     delete ui;
 }
 
+void BotTargetList::stopAll()
+{
+    actionsAction->moveTimer.stop();
+    autoStartActionTimer.stop();
+}
+
 bool BotTargetList::newPathIsBetterPath(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &oldPath,const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &newPath)
 {
     if(oldPath.size()>newPath.size())
