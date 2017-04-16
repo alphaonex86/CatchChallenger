@@ -441,6 +441,9 @@ uint32_t Client::randomSeedsSize() const
 
 uint8_t Client::getOneSeed(const uint8_t &max)
 {
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+    std::cout << "Random seed remaining: " << randomSize << std::endl;
+    #endif
     const uint8_t &number=GlobalServerData::serverPrivateVariables.randomData.at(randomIndex);
     randomIndex++;
     randomSize--;
