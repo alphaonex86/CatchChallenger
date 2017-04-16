@@ -145,10 +145,12 @@ void CommonDatapack::parseEvents()
 void CommonDatapack::parseMonsters()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    if(CommonSettingsServer::commonSettingsServer.rates_xp<=0 || CommonSettingsServer::commonSettingsServer.rates_xp==1.0)
+    if(CommonSettingsServer::commonSettingsServer.rates_xp<=0 || CommonSettingsServer::commonSettingsServer.rates_xp==1.0 ||
+            CommonSettingsServer::commonSettingsServer.rates_xp_pow<=0 || CommonSettingsServer::commonSettingsServer.rates_xp_pow==1.0)
     {
         monsterRateApplied=false;
         CommonSettingsServer::commonSettingsServer.rates_xp=1.0;
+        CommonSettingsServer::commonSettingsServer.rates_xp_pow=1.0;
     }
     else
         monsterRateApplied=true;
