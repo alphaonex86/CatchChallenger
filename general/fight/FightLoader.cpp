@@ -172,6 +172,11 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                 #endif
                                                 )
 {
+    if(CommonSettingsServer::commonSettingsServer.rates_xp_pow==0)
+    {
+        std::cerr << "CommonSettingsServer::commonSettingsServer.rates_xp_pow==0 abort" << std::endl;
+        abort();
+    }
     std::unordered_map<uint16_t,Monster> monsters;
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
     unsigned int file_index=0;
@@ -730,6 +735,13 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                         std::cerr << "Unable to open the xml file: " << file << ", attack_list balise is not an element: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                                 }
                             }
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(powerVar==0)
+                            {
+                                std::cerr << "powerVar==0" << std::endl;
+                                abort();
+                            }
+                            #endif
                             int index=0;
                             while(index<CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                             {
@@ -739,6 +751,10 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                 uint64_t tempXp=xp_for_this_level*xp_for_max_level/max_xp;
                                 if(tempXp<1)
                                     tempXp=1;
+                                /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                if(id==7 && monster.level_to_xp.size()==20)
+                                    std::cout << "Example level to xp: " << tempXp << std::endl;
+                                #endif*/
                                 monster.level_to_xp.push_back(tempXp);
                                 index++;
                             }
