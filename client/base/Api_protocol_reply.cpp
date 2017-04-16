@@ -50,6 +50,13 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         lastReplyTime(querySendTime.value(queryNumber).elapsed());
         querySendTime.remove(queryNumber);
     }
+    if(vectorcontainsAtLeastOne(lastQueryNumber,queryNumber))
+    {
+        errorParsingLayer("Api_protocol::parseReplyData(): queryNumber: allready returned: "+std::to_string(queryNumber));
+        abort();
+    }
+    else
+        lastQueryNumber.push_back(queryNumber);
     QDataStream in(data);
     in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
     switch(packetCode)

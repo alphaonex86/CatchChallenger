@@ -71,6 +71,7 @@ public:
     uint32_t lastGivenXP();
     void newRandomNumber(const QByteArray &data);
     void setClient(Api_protocol * client);
+    uint32_t randomSeedsSize() const;
 private:
     uint32_t mLastGivenXP;
     QList<int> mEvolutionByLevelUp;
@@ -84,7 +85,6 @@ private:
     void levelUp(const uint8_t &level,const uint8_t &monsterIndex);
     void addXPSP();
     uint8_t getOneSeed(const uint8_t &max);
-    uint32_t randomSeedsSize() const;
 //private:
 public:
     explicit ClientFightEngine();

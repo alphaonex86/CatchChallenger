@@ -709,6 +709,9 @@ uint32_t ClientFightEngine::randomSeedsSize() const
 
 uint8_t ClientFightEngine::getOneSeed(const uint8_t &max)
 {
+    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+    std::cout << "Random seed remaining: " << randomSeeds.size() << std::endl;
+    #endif
     const uint8_t &number=randomSeeds.at(0);
     randomSeeds.remove(0,1);
     return number%(max+1);
