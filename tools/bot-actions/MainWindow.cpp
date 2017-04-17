@@ -509,9 +509,6 @@ void MainWindow::datapackMainSubIsReady()
                 QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode),
                 QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)
                 );
-    ActionsAction *actionsAction=static_cast<ActionsAction *>(multipleBotConnexion.botInterface);
-    if(!actionsAction->preload_post_subdatapack())
-        abort();
 }
 
 void MainWindow::on_autoCreateCharacter_stateChanged(int arg1)
