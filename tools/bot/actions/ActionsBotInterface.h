@@ -68,6 +68,7 @@ public:
         uint32_t mapId;
         uint8_t x;
         uint8_t y;
+        uint32_t internalId;
         //CatchChallenger::Direction direction;
         GlobalTarget target;
         //uint8_t previousStepWalked;do into the api, see MoveOnTheMap::newDirection()
