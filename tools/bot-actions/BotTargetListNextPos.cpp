@@ -81,12 +81,12 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
     return point;
 }
 
-void BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
+bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
 {
     if(!player.target.bestPath.empty())
-        return;
+        return true;
     if(!player.target.localStep.empty() && !player.target.wildBackwardStep.empty())
-        return;
+        return true;
     if(player.target.wildBackwardStep.empty())
     {
         if(!player.target.wildBackwardStep.empty())
@@ -101,7 +101,7 @@ void BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
         const uint16_t &currentCodeZone=mapServer->step.at(1).map[player.x+player.y*mapServer->width];
         if(currentCodeZone==0)
             abort();
-        const MapServerMini::BlockObject * blockObject=mapServer->step.at(1).layers.at(currentCodeZone-1).blockObject;
+        MapServerMini::BlockObject * blockObject=mapServer->step.at(1).layers.at(currentCodeZone-1).blockObject;
         if(blockObject->block.size()<1)
         {
             std::cerr << "Error: Block list is empty" << std::endl;
@@ -124,8 +124,8 @@ void BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
             uint8_t o=player.api->getDirection();
             while(o>4)
                 o-=4;
-            std::vector<DestinationForPath> destinations;
-            DestinationForPath destinationForPath;
+            std::vector<MapServerMini::BlockObject::DestinationForPath> destinations;
+            MapServerMini::BlockObject::DestinationForPath destinationForPath;
             destinationForPath.destination_x=point1.first;
             destinationForPath.destination_y=point1.second;
             destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
@@ -157,8 +157,8 @@ void BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
         }
         //point 1 to 2
         {
-            std::vector<DestinationForPath> destinations;
-            DestinationForPath destinationForPath;
+            std::vector<MapServerMini::BlockObject::DestinationForPath> destinations;
+            MapServerMini::BlockObject::DestinationForPath destinationForPath;
             destinationForPath.destination_x=point2.first;
             destinationForPath.destination_y=point2.second;
             destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
@@ -185,8 +185,8 @@ void BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
         }
         //point 2 to 1
         {
-            std::vector<DestinationForPath> destinations;
-            DestinationForPath destinationForPath;
+            std::vector<MapServerMini::BlockObject::DestinationForPath> destinations;
+            MapServerMini::BlockObject::DestinationForPath destinationForPath;
             destinationForPath.destination_x=point1.first;
             destinationForPath.destination_y=point1.second;
             destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
@@ -221,10 +221,13 @@ void BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
                     player.target.localStep=player.target.wildBackwardStep;
                 }
                 player.target.wildCycle++;
-                return;
+                return true;
             }
+            else
+                return false;
         }
     }
+    return true;
 }
 
 void BotTargetList::finishTheLocalStep(ActionsAction::Player &player)

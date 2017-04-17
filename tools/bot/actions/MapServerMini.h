@@ -78,6 +78,23 @@ public:
         {
             std::vector<LinkCondition> linkConditions;
         };
+        struct DestinationForPath
+        {
+            CatchChallenger::Orientation destination_orientation;
+            uint8_t destination_x;
+            uint8_t destination_y;
+        };
+        struct PathFindingCacheEntry
+        {
+            CatchChallenger::Orientation source_orientation;
+            uint8_t source_x,source_y;
+            std::vector<DestinationForPath> destinations;
+
+            unsigned int destinationIndexSelected;
+            std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar;
+        };
+
+        std::vector<PathFindingCacheEntry> pathFindingCache;
         std::map<const BlockObject */*to where*/,LinkInformation/*how, if single way or both way*/> links;
         MapServerMini * map;
         uint8_t id;

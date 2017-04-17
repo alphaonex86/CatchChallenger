@@ -600,6 +600,18 @@ void ActionsAction::doMove()
                     if(ActionsAction::move(api,newDirection,&destMap,&x,&y,false,false))
                     {
                         //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        {
+                            std::unordered_set<uint32_t> known_indexOfItemOnMap;
+                            for ( const auto &item : playerMap->pointOnMap_Item )
+                            {
+                                const MapServerMini::ItemOnMap &itemOnMap=item.second;
+                                if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
+                                    abort();
+                                known_indexOfItemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                            }
+                        }
+                        #endif
                         std::pair<uint8_t,uint8_t> p(x,y);
                         if(playerMap->pointOnMap_Item.find(p)!=playerMap->pointOnMap_Item.cend())
                         {
@@ -608,7 +620,10 @@ void ActionsAction::doMove()
                             if(!itemOnMap.infinite && itemOnMap.visible)
                                 if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
                                 {
-                                    std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", take the item" << std::endl;
+                                    std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
+                                              << ", take the item, action, itemOnMap.indexOfItemOnMap: " << std::to_string(itemOnMap.indexOfItemOnMap)
+                                              << ", item: " << std::to_string(itemOnMap.item)
+                                              << ", pseudo: " << api->getPseudo().toStdString() << std::endl;
                                     player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
                                     api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
                                     api->takeAnObjectOnMap();

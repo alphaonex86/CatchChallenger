@@ -446,10 +446,24 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
         //item on map
         if(itemFight)
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            {
+                std::unordered_set<uint32_t> known_indexOfItemOnMap;
+                for ( const auto &item : blockObject->pointOnMap_Item )
+                {
+                    const MapServerMini::ItemOnMap &itemOnMap=item.second;
+                    if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
+                        abort();
+                    known_indexOfItemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                }
+            }
+            #endif
             for(auto it = blockObject->pointOnMap_Item.begin();it!=blockObject->pointOnMap_Item.cend();++it)
             {
                 const std::pair<uint8_t,uint8_t> &point=it->first;
                 const MapServerMini::ItemOnMap &itemOnMap=it->second;
+                /*if(blockObject->map->map_file=="hidden-place" && itemOnMap.item==101)
+                    std::cout << "test tmp" << std::endl;*/
 
                 if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
                 {
