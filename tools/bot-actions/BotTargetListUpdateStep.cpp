@@ -373,7 +373,7 @@ void BotTargetList::updatePlayerStep()
                     {
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap:
                         {
-                            bool found=false;
+                            bool alreadyTake=false;
                             for(auto&entry:mapServer->pointOnMap_Item)
                             {
                                 const MapServerMini::ItemOnMap &itemOnMap=entry.second;
@@ -385,22 +385,24 @@ void BotTargetList::updatePlayerStep()
                                             playerInformations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
                                         else
                                         {
-                                            found=true;
+                                            alreadyTake=true;
                                             break;
                                         }
                                     }
-                                    api->stopMove();
-                                    api->takeAnObjectOnMap();
-                                    ActionsAction::add_to_inventory(api,itemOnMap.item);
-                                    found=true;
+                                    if(!alreadyTake)
+                                    {
+                                        api->stopMove();
+                                        api->takeAnObjectOnMap();
+                                        ActionsAction::add_to_inventory(api,itemOnMap.item);
+                                    }
                                     break;
                                 }
                             }
-                            if(!found)
+                            /*if(!alreadyTake)
                             {
                                 std::cerr << "On the next tile don't found the montioned item on map" << std::endl;
                                 abort();
-                            }
+                            }can be take by auto take*/
                         }
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:

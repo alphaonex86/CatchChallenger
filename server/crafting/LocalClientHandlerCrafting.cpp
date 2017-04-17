@@ -173,7 +173,7 @@ void Client::takeAnObjectOnMap()
     {
         if(public_and_private_informations.itemOnMap.find(item.pointOnMapDbCode)!=public_and_private_informations.itemOnMap.cend())
         {
-            errorOutput("Have already this item");
+            errorOutput("Have already this item: "+std::to_string(item.item)+" at "+map->map_file+" "+std::to_string(x)+","+std::to_string(y));
             return;
         }
         public_and_private_informations.itemOnMap.insert(item.pointOnMapDbCode);
