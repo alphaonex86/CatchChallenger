@@ -38,12 +38,6 @@ public:
         std::unordered_map<std::pair<uint8_t,uint8_t>,PathToGo,pairhash> pathToGo;
         std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> pointQueued;
     };
-    struct DestinationForPath
-    {
-        CatchChallenger::Orientation destination_orientation;
-        uint8_t destination_x;
-        uint8_t destination_y;
-    };
 
     void loadAllBotsInformation();
     void loadAllBotsInformation2();
@@ -73,10 +67,10 @@ public:
     std::pair<uint8_t,uint8_t> getNextPosition(const MapServerMini::BlockObject * const blockObject,ActionsBotInterface::GlobalTarget &target);
     /*if normal, then just go
      * else if dirt like: is linked as idenpendant tile */
-    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > pathFinding(const MapServerMini::BlockObject * const source_blockObject,
+    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > pathFinding(MapServerMini::BlockObject * const source_blockObject,
             const CatchChallenger::Orientation &source_orientation, const uint8_t &source_x, const uint8_t &source_y,
             /*const MapServerMini::BlockObject * const destination_blockObject,the block link to the multi-map change*/
-            const std::vector<DestinationForPath> &destinations,
+            const std::vector<MapServerMini::BlockObject::DestinationForPath> &destinations,
             unsigned int &destinationIndexSelected,
             bool *ok);
     static std::string stepToString(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath);
@@ -127,7 +121,7 @@ private:
     static std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > selectTheBetterPathToDestination(std::unordered_map<unsigned int,
                                                  std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> >
                                                  > pathToEachDestinations,unsigned int &destinationIndexSelected);
-    void wildMonsterTarget(ActionsAction::Player &player);
+    bool wildMonsterTarget(ActionsAction::Player &player);
     void stopAll();
 
     //std::unodered_map<const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent,un> monsterCollisionContentDuplicate;

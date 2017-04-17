@@ -216,6 +216,8 @@ void BotTargetList::loadAllBotsInformation2()
     if(!actionsAction->preload_the_map_step2())
         abort();
     actionsAction->loadFinishedReemitTheDelayedFunction();
+    if(!ActionsAction::actionsAction->preload_post_subdatapack())
+        abort();
     show();
     SocialChat::socialChat->show();
     //waitScreen.hide();
@@ -325,7 +327,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
     if(step.map==NULL)
         return;
 
-    std::vector<DestinationForPath> destinations;
+    std::vector<MapServerMini::BlockObject::DestinationForPath> destinations;
     std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
     uint8_t o=api->getDirection();
     while(o>4)
@@ -347,7 +349,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
         else
         {
             const std::pair<uint8_t,uint8_t> &point=getNextPosition(layer.blockObject,player.target/*hop list, first is the next hop*/);
-            DestinationForPath destinationForPath;
+            MapServerMini::BlockObject::DestinationForPath destinationForPath;
             destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
             destinationForPath.destination_x=point.first;
             destinationForPath.destination_y=point.second;
@@ -389,7 +391,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
                 while(index<linkCondition.points.size())
                 {
                     const MapServerMini::BlockObject::LinkPoint &point=linkCondition.points.at(index);
-                    DestinationForPath destinationForPath;
+                    MapServerMini::BlockObject::DestinationForPath destinationForPath;
                     destinationForPath.destination_x=point.x;
                     destinationForPath.destination_y=point.y;
                     switch(point.type)
@@ -869,18 +871,58 @@ void BotTargetList::on_hideTooHard_clicked()
     updatePlayerInformation();
 }
 
-std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFinding(const MapServerMini::BlockObject * const blockObject,
+std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFinding(MapServerMini::BlockObject * const blockObject,
         const CatchChallenger::Orientation &source_orientation, const uint8_t &source_x, const uint8_t &source_y,
         /*const MapServerMini::BlockObject * const destination_blockObject,the block link to the multi-map change*/
-        const std::vector<DestinationForPath> &destinations,
+        const std::vector<MapServerMini::BlockObject::DestinationForPath> &destinations,
         unsigned int &destinationIndexSelected,
         bool *ok)
 {
     if(ok==NULL)
         abort();
     *ok=false;
-    /// \todo ignore and not optimised:
-    (void)source_orientation;
+
+    {
+        //cache
+        unsigned int index=0;
+        while(index<blockObject->pathFindingCache.size())
+        {
+            const MapServerMini::BlockObject::PathFindingCacheEntry &pathFindingCacheEntry=blockObject->pathFindingCache.at(index);
+            if(pathFindingCacheEntry.destinations.size()==destinations.size())
+            {
+                if(pathFindingCacheEntry.source_orientation==source_orientation &&
+                        pathFindingCacheEntry.source_x==source_x &&
+                        pathFindingCacheEntry.source_y==source_y)
+                {
+                    unsigned int indexDest=0;
+                    while(indexDest<pathFindingCacheEntry.destinations.size())
+                    {
+                        const MapServerMini::BlockObject::DestinationForPath &e1=pathFindingCacheEntry.destinations.at(indexDest);
+                        const MapServerMini::BlockObject::DestinationForPath &e2=destinations.at(indexDest);
+                        if(e1.destination_orientation!=e2.destination_orientation)
+                            break;
+                        if(e1.destination_x!=e2.destination_x)
+                            break;
+                        if(e1.destination_y!=e2.destination_y)
+                            break;
+                        indexDest++;
+                    }
+                    if(indexDest>=pathFindingCacheEntry.destinations.size())
+                    {
+                        if(ok!=NULL)
+                            *ok=true;
+                        if(index>2)//up only if into the 60% of lower list, to prevent constant top change
+                            std::rotate(blockObject->pathFindingCache.begin(),blockObject->pathFindingCache.begin()+index,blockObject->pathFindingCache.begin()+index+1);
+                        destinationIndexSelected=pathFindingCacheEntry.destinationIndexSelected;
+                        return pathFindingCacheEntry.returnedVar;
+                    }
+                }
+            }
+        }
+        if(blockObject->pathFindingCache.size()>10)
+            blockObject->pathFindingCache.erase(blockObject->pathFindingCache.cbegin()+blockObject->pathFindingCache.size()-1);
+    }
+
     auto start = std::chrono::high_resolution_clock::now();
 
     //resolv the path
@@ -896,7 +938,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         unsigned int index=0;
         while(index<destinations.size())
         {
-            const DestinationForPath &destination=destinations.at(index);
+            const MapServerMini::BlockObject::DestinationForPath &destination=destinations.at(index);
             //if good position (no more shorter than the current position)
             if(source_x==destination.destination_x && source_y==destination.destination_y/* && destination_blockObject==source_blockObject the block link to the multi-map change*/)
             {
@@ -1063,7 +1105,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             unsigned int index=0;
             while(index<destinations.size())
             {
-                const DestinationForPath &destination=destinations.at(index);
+                const MapServerMini::BlockObject::DestinationForPath &destination=destinations.at(index);
                 //if good position
                 if(x==destination.destination_x && y==destination.destination_y/* && destination_blockObject==source_blockObject the block link to the multi-map change*/)
                 {
@@ -1218,6 +1260,19 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                                     std::cerr << "To " << std::to_string(destination.destination_x) << "," << std::to_string(destination.destination_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)destination.destination_orientation) << std::endl;
                                     std::cerr << "Dump: " << BotTargetList::stepToString(returnedVar) << std::endl;
                                     std::cerr << "Last path choose: " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)set_orientation) << std::endl;
+
+                                    {
+                                        //cache
+                                        MapServerMini::BlockObject::PathFindingCacheEntry pathFindingCacheEntry;
+                                        pathFindingCacheEntry.source_orientation=source_orientation;
+                                        pathFindingCacheEntry.source_x=source_x;
+                                        pathFindingCacheEntry.source_y=source_y;
+                                        pathFindingCacheEntry.destinations=destinations;
+                                        pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
+                                        pathFindingCacheEntry.returnedVar=returnedVar;
+                                        blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
+                                    }
+
                                     return returnedVar;
                                 }
                                 else
@@ -1236,6 +1291,19 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                                 std::cerr << "To " << std::to_string(destination.destination_x) << "," << std::to_string(destination.destination_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)destination.destination_orientation) << std::endl;
                                 std::cerr << "Dump: " << BotTargetList::stepToString(returnedVar) << std::endl;
                                 std::cerr << "Last path choose: " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)set_orientation) << std::endl;
+
+                                {
+                                    //cache
+                                    MapServerMini::BlockObject::PathFindingCacheEntry pathFindingCacheEntry;
+                                    pathFindingCacheEntry.source_orientation=source_orientation;
+                                    pathFindingCacheEntry.source_x=source_x;
+                                    pathFindingCacheEntry.source_y=source_y;
+                                    pathFindingCacheEntry.destinations=destinations;
+                                    pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
+                                    pathFindingCacheEntry.returnedVar=returnedVar;
+                                    blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
+                                }
+
                                 return returnedVar;
                             }
                         }
@@ -1268,6 +1336,18 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             std::chrono::duration<double, std::milli> elapsed = end-start;
                             std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
 
+                            {
+                                //cache
+                                MapServerMini::BlockObject::PathFindingCacheEntry pathFindingCacheEntry;
+                                pathFindingCacheEntry.source_orientation=source_orientation;
+                                pathFindingCacheEntry.source_x=source_x;
+                                pathFindingCacheEntry.source_y=source_y;
+                                pathFindingCacheEntry.destinations=destinations;
+                                pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
+                                pathFindingCacheEntry.returnedVar=returnedVar;
+                                blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
+                            }
+
                             *ok=true;
                             return finalVar;
                         }
@@ -1283,6 +1363,18 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             auto end = std::chrono::high_resolution_clock::now();
                             std::chrono::duration<double, std::milli> elapsed = end-start;
                             std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+
+                            {
+                                //cache
+                                MapServerMini::BlockObject::PathFindingCacheEntry pathFindingCacheEntry;
+                                pathFindingCacheEntry.source_orientation=source_orientation;
+                                pathFindingCacheEntry.source_x=source_x;
+                                pathFindingCacheEntry.source_y=source_y;
+                                pathFindingCacheEntry.destinations=destinations;
+                                pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
+                                pathFindingCacheEntry.returnedVar=returnedVar;
+                                blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
+                            }
 
                             *ok=true;
                             return finalVar;
@@ -1365,7 +1457,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         {
             if(pathToEachDestinations.find(index)==pathToEachDestinations.cend())
             {
-                const DestinationForPath &destination=destinations.at(index);
+                const MapServerMini::BlockObject::DestinationForPath &destination=destinations.at(index);
                 std::cout << "To " << std::to_string(destination.destination_x) << "," << std::to_string(destination.destination_y) << std::endl;
             }
             index++;

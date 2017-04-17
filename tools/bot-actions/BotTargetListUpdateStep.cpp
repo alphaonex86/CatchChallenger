@@ -85,6 +85,18 @@ void BotTargetList::updatePlayerStep()
                             uint8_t x=player.x,y=player.y;
                             if(ActionsAction::move(api,newDirection,&destMap,&x,&y,false,false))
                             {
+                                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                {
+                                    std::unordered_set<uint32_t> known_indexOfItemOnMap;
+                                    for ( const auto &item : playerMap->pointOnMap_Item )
+                                    {
+                                        const MapServerMini::ItemOnMap &itemOnMap=item.second;
+                                        if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
+                                            abort();
+                                        known_indexOfItemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                    }
+                                }
+                                #endif
                                 //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                                 std::pair<uint8_t,uint8_t> p(x,y);
                                 if(playerMap->pointOnMap_Item.find(p)!=playerMap->pointOnMap_Item.cend())
@@ -94,7 +106,10 @@ void BotTargetList::updatePlayerStep()
                                     if(!itemOnMap.infinite && itemOnMap.visible)
                                         if(playerInformations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==playerInformations.itemOnMap.cend())
                                         {
-                                            std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", take the item" << std::endl;
+                                            std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
+                                                      << ", take the item, bot, itemOnMap.indexOfItemOnMap: " << std::to_string(itemOnMap.indexOfItemOnMap)
+                                                      << ", item: " << std::to_string(itemOnMap.item)
+                                                      << ", pseudo: " << api->getPseudo().toStdString() << std::endl;
                                             playerInformations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
                                             api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
                                             api->takeAnObjectOnMap();
@@ -184,11 +199,11 @@ void BotTargetList::updatePlayerStep()
                         const uint16_t &currentCodeZone=playerMap->step.at(1).map[player.x+player.y*playerMap->width];
                         if(currentCodeZone==0)
                             abort();
-                        const MapServerMini::BlockObject * blockObject=playerMap->step.at(1).layers.at(currentCodeZone-1).blockObject;
+                        MapServerMini::BlockObject * blockObject=playerMap->step.at(1).layers.at(currentCodeZone-1).blockObject;
 
                         if(!player.target.bestPath.empty())
                         {
-                            std::vector<DestinationForPath> destinations;
+                            std::vector<MapServerMini::BlockObject::DestinationForPath> destinations;
                             std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
                             uint8_t o=api->getDirection();
                             while(o>4)
@@ -213,7 +228,7 @@ void BotTargetList::updatePlayerStep()
                                         while(index<pointsList.size())
                                         {
                                             const MapServerMini::BlockObject::LinkPoint &point=pointsList.at(index);
-                                            DestinationForPath destinationForPath;
+                                            MapServerMini::BlockObject::DestinationForPath destinationForPath;
                                             destinationForPath.destination_x=point.x;
                                             destinationForPath.destination_y=point.y;
                                             switch(point.type)
@@ -277,10 +292,10 @@ void BotTargetList::updatePlayerStep()
                                 else
                                 {
                                     //do the final resolution path as do into startPlayerMove()
-                                    std::vector<DestinationForPath> destinations;
+                                    std::vector<MapServerMini::BlockObject::DestinationForPath> destinations;
                                     std::vector<MapServerMini::BlockObject::LinkPoint> pointsList;
                                     const std::pair<uint8_t,uint8_t> &point=getNextPosition(blockObject,player.target/*hop list, first is the next hop*/);
-                                    DestinationForPath destinationForPath;
+                                    MapServerMini::BlockObject::DestinationForPath destinationForPath;
                                     destinationForPath.destination_orientation=CatchChallenger::Orientation::Orientation_none;
                                     destinationForPath.destination_x=point.first;
                                     destinationForPath.destination_y=point.second;
@@ -373,6 +388,18 @@ void BotTargetList::updatePlayerStep()
                     {
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap:
                         {
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            {
+                                std::unordered_set<uint32_t> known_indexOfItemOnMap;
+                                for ( const auto &item : mapServer->pointOnMap_Item )
+                                {
+                                    const MapServerMini::ItemOnMap &itemOnMap=item.second;
+                                    if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
+                                        abort();
+                                    known_indexOfItemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                }
+                            }
+                            #endif
                             bool alreadyTake=false;
                             for(auto&entry:mapServer->pointOnMap_Item)
                             {
@@ -391,6 +418,10 @@ void BotTargetList::updatePlayerStep()
                                     }
                                     if(!alreadyTake)
                                     {
+                                        std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
+                                                  << ", take the item, wish, itemOnMap.indexOfItemOnMap: " << std::to_string(itemOnMap.indexOfItemOnMap)
+                                                  << ", item: " << std::to_string(itemOnMap.item)
+                                                  << ", pseudo: " << api->getPseudo().toStdString() << std::endl;
                                         api->stopMove();
                                         api->takeAnObjectOnMap();
                                         ActionsAction::add_to_inventory(api,itemOnMap.item);
@@ -478,9 +509,13 @@ void BotTargetList::updatePlayerStep()
                         }
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster:
-                            wildMonsterTarget(player);
+                        {
+                            bool returnedValue=wildMonsterTarget(player);
                             if(apiSelectedClient==api)
                                 ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
+                            if(returnedValue==true)
+                                return;
+                        }
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight:
                         {
