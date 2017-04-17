@@ -248,7 +248,7 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
                 }
                 qDebug() << client->login << "create new character";
                 quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
-                QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
+                QString pseudo=QString::fromStdString(getNewPseudo());
                 uint8_t skinId;
                 const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
                 if(!profile.forcedskin.empty())

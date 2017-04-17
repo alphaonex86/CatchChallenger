@@ -26,6 +26,7 @@ public:
     QString mHost;
     quint16 mPort;
     bool firstCharacterSelected;
+    static bool displayingError;
 private:
     QString login();
     QString pass();
@@ -55,7 +56,6 @@ private:
     virtual void disconnected();
     virtual void connectTimerSlot();
     virtual void haveCharacter();
-
     virtual void connectTheExternalSocket(CatchChallengerClient * client);
 signals:
     void loggedDone(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack);
