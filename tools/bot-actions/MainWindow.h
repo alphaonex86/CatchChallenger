@@ -13,7 +13,7 @@
 #include <time.h>
 #include <QTreeWidgetItem>
 
-#include "../bot/MultipleBotConnectionImplForGui.h"
+#include "MultipleBotConnectionAction.h"
 #include "../../client/base/ClientStructures.h"
 #include "BotTargetList.h"
 #include "SocialChat.h"
@@ -33,12 +33,10 @@ private:
     QTimer slowDownTimer;
     BotTargetList *botTargetList;
 
-    MultipleBotConnectionImplForGui multipleBotConnexion;
+    MultipleBotConnectionAction multipleBotConnexion;
     QHash<uint8_t/*character group index*/,QPair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
     QList<CatchChallenger::ServerFromPoolForDisplay *> serverOrdenedList;
     QList<QList<CatchChallenger::CharacterEntry> > characterEntryList;
-    std::vector<std::string> pseudoNotUsed;
-    std::unordered_set<std::string> pseudoUsed;
 public slots:
     void detectSlowDown(uint32_t queryCount, uint32_t worseTime);
 private slots:
@@ -59,11 +57,11 @@ private slots:
     void all_player_connected();
     void all_player_on_map();
     void on_host_returnPressed();
-    std::string getNewPseudo();
 signals:
     void isDisconnected();
 private:
     Ui::MainWindow *ui;
+    unsigned int internalId;
 };
 
 #endif // MAINWINDOW_H

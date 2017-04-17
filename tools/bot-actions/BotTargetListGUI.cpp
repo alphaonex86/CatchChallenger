@@ -145,8 +145,8 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
     struct BufferMonstersCollisionEntry
     {
         CatchChallenger::MonstersCollisionValue::MonstersCollisionContent bufferMonstersCollisionContent;
-        const MapServerMini::BlockObject * blockObject;
-        MapServerMini::BlockObjectPathFinding resolvedBlock;
+        std::vector<const MapServerMini::BlockObject *> blockObject;
+        std::vector<MapServerMini::BlockObjectPathFinding> resolvedBlock;
     };
     std::vector<BufferMonstersCollisionEntry> bufferMonstersCollision;
 
@@ -824,6 +824,8 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
     for(const auto& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
+        /*if(blockObject->map->map_file=="road" && (blockObject->id+1)==6)
+            std::cout << std::to_string(blockObject->id+1)<< std::endl;*/
         //the wild monster
         if(wildMonster)
         if(blockObject->monstersCollisionValue!=NULL)
@@ -844,10 +846,17 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                         BufferMonstersCollisionEntry &bufferMonstersCollisionEntry=bufferMonstersCollision[bufferMonstersCollisionIndex];
                         if(isSame(bufferMonstersCollisionEntry.bufferMonstersCollisionContent,monsterCollisionContent))
                         {
-                            if(bufferMonstersCollisionEntry.resolvedBlock.weight>resolvedBlock.weight)
+                            if(bufferMonstersCollisionEntry.resolvedBlock.back().weight==resolvedBlock.weight)
                             {
-                                bufferMonstersCollisionEntry.blockObject=blockObject;
-                                bufferMonstersCollisionEntry.resolvedBlock=resolvedBlock;
+                                bufferMonstersCollisionEntry.blockObject.push_back(blockObject);
+                                bufferMonstersCollisionEntry.resolvedBlock.push_back(resolvedBlock);
+                            }
+                            else if(bufferMonstersCollisionEntry.resolvedBlock.back().weight>resolvedBlock.weight)
+                            {
+                                bufferMonstersCollisionEntry.blockObject.clear();
+                                bufferMonstersCollisionEntry.resolvedBlock.clear();
+                                bufferMonstersCollisionEntry.blockObject.push_back(blockObject);
+                                bufferMonstersCollisionEntry.resolvedBlock.push_back(resolvedBlock);
                             }
                             break;
                         }
@@ -857,8 +866,8 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                     if(bufferMonstersCollisionIndex>=bufferMonstersCollision.size())
                     {
                         BufferMonstersCollisionEntry bufferMonstersCollisionEntry;
-                        bufferMonstersCollisionEntry.blockObject=blockObject;
-                        bufferMonstersCollisionEntry.resolvedBlock=resolvedBlock;
+                        bufferMonstersCollisionEntry.blockObject.push_back(blockObject);
+                        bufferMonstersCollisionEntry.resolvedBlock.push_back(resolvedBlock);
                         bufferMonstersCollisionEntry.bufferMonstersCollisionContent=monsterCollisionContent;
                         bufferMonstersCollision.push_back(bufferMonstersCollisionEntry);
                     }
@@ -873,8 +882,10 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
         while(buffer_index<bufferMonstersCollision.size())
         {
             const BufferMonstersCollisionEntry &bufferMonstersCollisionEntry=bufferMonstersCollision.at(buffer_index);
-            const MapServerMini::BlockObject * const blockObject=bufferMonstersCollisionEntry.blockObject;
-            const MapServerMini::BlockObjectPathFinding &resolvedBlock=bufferMonstersCollisionEntry.resolvedBlock;
+            //std::cout << "Choose monster between: " << std::to_string(bufferMonstersCollisionEntry.blockObject.size()) << std::endl;
+            const unsigned int &wilZoneIndex=((uint64_t)api)%bufferMonstersCollisionEntry.blockObject.size();
+            const MapServerMini::BlockObject * const blockObject=bufferMonstersCollisionEntry.blockObject.at(wilZoneIndex);
+            const MapServerMini::BlockObjectPathFinding &resolvedBlock=bufferMonstersCollisionEntry.resolvedBlock.at(wilZoneIndex);
             const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monsterCollisionContent=bufferMonstersCollisionEntry.bufferMonstersCollisionContent;
 
             ActionsBotInterface::GlobalTarget globalTarget;

@@ -5,6 +5,8 @@
 #include <QMessageBox>
 #endif
 
+bool MultipleBotConnectionImplForGui::displayingError=false;
+
 MultipleBotConnectionImplForGui::MultipleBotConnectionImplForGui()
 {
     firstCharacterSelected=false;
@@ -443,12 +445,24 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
             MultipleBotConnection::newSocketError_with_client(connectedSocketToCatchChallengerClient[senderObject],error);
         }
     }
+    /*QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
+    while (i.hasNext()) {
+        i.next();
+        i.value()->st;
+    }no way here to stop the timer*/
+
     #ifdef QT_GUI_LIB
-    QMessageBox::critical(NULL,tr("Error"),errorString);
+    if(!displayingError)
+    {
+        displayingError=true;
+        QMessageBox::critical(NULL,tr("Error"),errorString);
+        displayingError=false;
+        QCoreApplication::exit(85);
+    }
     #else
     std::cerr << errorString.toStdString() << std::endl;
-    #endif
     QCoreApplication::exit(85);
+    #endif
 }
 
 void MultipleBotConnectionImplForGui::newError(QString error,QString detailedError)
