@@ -487,11 +487,11 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             if((sizeof(uint16_t)+to_send_remove.size()*sizeof(uint16_t))<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
             {
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(sizeof(uint16_t)+to_send_remove.size()*sizeof(uint16_t));//set the dynamic size
-                //std::cout << "data: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", line " << std::to_string(__LINE__) << std::endl;
+                std::cout << "data: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", line " << std::to_string(__LINE__) << std::endl;
 
                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_remove.size());
                 posOutput+=2;
-                //std::cout << "data: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", line " << std::to_string(__LINE__) << std::endl;
+                std::cout << "data: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", line " << std::to_string(__LINE__) << std::endl;
                 unsigned int index_subindex=0;
                 while(index_subindex<to_send_remove.size())
                 {
@@ -499,11 +499,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     posOutput+=2;
                     index_subindex++;
                 }
-                //std::cout << "data: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", line " << std::to_string(__LINE__) << std::endl;
+                std::cout << "data: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", line " << std::to_string(__LINE__) << std::endl;
                 index_subindex=0;
                 while(index_subindex<clientsToSendDataSizeOldClients)
                 {
                     clientsToSendDataOldClients[index_subindex]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    std::cout << "data: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", line " << std::to_string(__LINE__) << std::endl;
                     index_subindex++;
                 }
             }

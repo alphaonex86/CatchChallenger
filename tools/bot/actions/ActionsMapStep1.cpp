@@ -65,11 +65,13 @@ bool ActionsAction::preload_the_map_step2()
 
 bool ActionsAction::preload_post_subdatapack()
 {
+    if(map_list.empty())
+        abort();
     unsigned int index=0;
     while(index<map_list.size())
     {
         static_cast<MapServerMini *>(flat_map_list[index])->preload_post_subdatapack();
-        QCoreApplication::processEvents();
+        //QCoreApplication::processEvents(); do a bug, try parse GUI
         index++;
         loaded++;
     }
