@@ -919,7 +919,10 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         }
     }
     while(source_blockObject->pathFindingCache.size()>10)
-        source_blockObject->pathFindingCache.erase(source_blockObject->pathFindingCache.cbegin()+source_blockObject->pathFindingCache.size()-1);
+    {
+        //drop the first because the insert is at the last std::vector::push_back
+        source_blockObject->pathFindingCache.erase(source_blockObject->pathFindingCache.cbegin());
+    }
 
     std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar=pathFinding(source_blockObject,
                                                                                                        source_orientation,source_x,source_y,
