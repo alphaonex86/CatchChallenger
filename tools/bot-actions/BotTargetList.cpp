@@ -909,10 +909,12 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                     }
                     if(indexDest>=pathFindingCacheEntry.destinations.size())
                     {
-                        if(ok!=NULL)
-                            *ok=true;
+
                         if(index>2)//up only if into the 60% of lower list, to prevent constant top change
                             std::rotate(blockObject->pathFindingCache.begin(),blockObject->pathFindingCache.begin()+index,blockObject->pathFindingCache.begin()+index+1);
+                        if(ok!=NULL)
+                        //    *ok=pathFindingCacheEntry.ok;
+                            *ok=true;
                         destinationIndexSelected=pathFindingCacheEntry.destinationIndexSelected;
                         return pathFindingCacheEntry.returnedVar;
                     }
@@ -920,9 +922,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             }
             index++;
         }
-        if(blockObject->pathFindingCache.size()>10)
-            blockObject->pathFindingCache.erase(blockObject->pathFindingCache.cbegin()+blockObject->pathFindingCache.size()-1);
     }
+    while(blockObject->pathFindingCache.size()>10)
+        blockObject->pathFindingCache.erase(blockObject->pathFindingCache.cbegin()+blockObject->pathFindingCache.size()-1);
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -1269,7 +1271,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                                         pathFindingCacheEntry.source_x=source_x;
                                         pathFindingCacheEntry.source_y=source_y;
                                         pathFindingCacheEntry.destinations=destinations;
+
                                         pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
+                                        pathFindingCacheEntry.ok=*ok;
                                         pathFindingCacheEntry.returnedVar=returnedVar;
                                         blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
                                     }
@@ -1300,7 +1304,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                                     pathFindingCacheEntry.source_x=source_x;
                                     pathFindingCacheEntry.source_y=source_y;
                                     pathFindingCacheEntry.destinations=destinations;
+
                                     pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
+                                    pathFindingCacheEntry.ok=*ok;
                                     pathFindingCacheEntry.returnedVar=returnedVar;
                                     blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
                                 }
@@ -1337,6 +1343,8 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             std::chrono::duration<double, std::milli> elapsed = end-start;
                             std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
 
+                            *ok=true;
+
                             {
                                 //cache
                                 MapServerMini::BlockObject::PathFindingCacheEntry pathFindingCacheEntry;
@@ -1344,12 +1352,13 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                                 pathFindingCacheEntry.source_x=source_x;
                                 pathFindingCacheEntry.source_y=source_y;
                                 pathFindingCacheEntry.destinations=destinations;
+
                                 pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
-                                pathFindingCacheEntry.returnedVar=returnedVar;
+                                pathFindingCacheEntry.ok=*ok;
+                                pathFindingCacheEntry.returnedVar=finalVar;
                                 blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
                             }
 
-                            *ok=true;
                             return finalVar;
                         }
                     }
@@ -1365,6 +1374,8 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             std::chrono::duration<double, std::milli> elapsed = end-start;
                             std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
 
+                            *ok=true;
+
                             {
                                 //cache
                                 MapServerMini::BlockObject::PathFindingCacheEntry pathFindingCacheEntry;
@@ -1372,12 +1383,13 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                                 pathFindingCacheEntry.source_x=source_x;
                                 pathFindingCacheEntry.source_y=source_y;
                                 pathFindingCacheEntry.destinations=destinations;
+
                                 pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
-                                pathFindingCacheEntry.returnedVar=returnedVar;
+                                pathFindingCacheEntry.ok=*ok;
+                                pathFindingCacheEntry.returnedVar=finalVar;
                                 blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
                             }
 
-                            *ok=true;
                             return finalVar;
                         }
                     }

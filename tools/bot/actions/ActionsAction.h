@@ -84,7 +84,7 @@ public:
     void teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
     static void resetTarget(GlobalTarget &target);
     static void showTip(const QString &text);
-    static bool canGoTo(CatchChallenger::Api_protocol *api, const CatchChallenger::Direction &direction, const MapServerMini &map, COORD_TYPE x, COORD_TYPE y, const bool &checkCollision, const bool &allowTeleport);
+    static bool canGoTo(CatchChallenger::Api_protocol *api, const CatchChallenger::Direction &direction, const MapServerMini &map, COORD_TYPE x, COORD_TYPE y, const bool &checkCollision, const bool &allowTeleport, const bool &debug=false);
     static bool move(CatchChallenger::Api_protocol *api, CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport);
     static bool moveWithoutTeleport(CatchChallenger::Api_protocol *api, CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport);
     static bool teleport(const MapServerMini **map, COORD_TYPE *x, COORD_TYPE *y);
