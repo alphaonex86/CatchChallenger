@@ -584,96 +584,89 @@ void ActionsAction::doMove()
             if(!player.target.localStep.empty())
             {
                 std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &step=player.target.localStep[0];
-                if(step.second==0)
-                    abort();
-                step.second--;
-                //need just continue to walk
-                if(step.first<1 || step.first>4)
-                    abort();
-                const CatchChallenger::Direction direction=(CatchChallenger::Direction)((uint8_t)step.first+4);
-
-                //get the item in front of to continue the progression
+                if(step.second!=0 || step.first!=CatchChallenger::Orientation::Orientation_none)
                 {
-                    const CatchChallenger::Direction &newDirection=direction;
-                    const MapServerMini * destMap=playerMap;
-                    uint8_t x=player.x,y=player.y;
-                    if(ActionsAction::move(api,newDirection,&destMap,&x,&y,false,false))
+                    if(step.second==0)
+                        abort();
+                    step.second--;
+                    //need just continue to walk
+                    if(step.first<1 || step.first>4)
+                        abort();
+                    const CatchChallenger::Direction direction=(CatchChallenger::Direction)((uint8_t)step.first+4);
+
+                    //get the item in front of to continue the progression
                     {
-                        //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        const CatchChallenger::Direction &newDirection=direction;
+                        const MapServerMini * destMap=playerMap;
+                        uint8_t x=player.x,y=player.y;
+                        if(ActionsAction::move(api,newDirection,&destMap,&x,&y,false,false))
                         {
-                            std::unordered_set<uint32_t> known_indexOfItemOnMap;
-                            for ( const auto &item : playerMap->pointOnMap_Item )
+                            //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             {
-                                const MapServerMini::ItemOnMap &itemOnMap=item.second;
-                                if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
-                                    abort();
-                                known_indexOfItemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                std::unordered_set<uint32_t> known_indexOfItemOnMap;
+                                for ( const auto &item : playerMap->pointOnMap_Item )
+                                {
+                                    const MapServerMini::ItemOnMap &itemOnMap=item.second;
+                                    if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
+                                        abort();
+                                    known_indexOfItemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                }
+                            }
+                            #endif
+                            std::pair<uint8_t,uint8_t> p(x,y);
+                            if(playerMap->pointOnMap_Item.find(p)!=playerMap->pointOnMap_Item.cend())
+                            {
+                                //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", have item on it" << std::endl;
+                                const MapServerMini::ItemOnMap &itemOnMap=playerMap->pointOnMap_Item.at(p);
+                                if(!itemOnMap.infinite && itemOnMap.visible)
+                                    if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
+                                    {
+                                        std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
+                                                  << ", take the item, action, itemOnMap.indexOfItemOnMap: " << std::to_string(itemOnMap.indexOfItemOnMap)
+                                                  << ", item: " << std::to_string(itemOnMap.item)
+                                                  << ", pseudo: " << api->getPseudo().toStdString() << std::endl;
+                                        player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                        api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
+                                        api->takeAnObjectOnMap();
+                                        add_to_inventory(api,itemOnMap.item);
+                                    }
                             }
                         }
-                        #endif
-                        std::pair<uint8_t,uint8_t> p(x,y);
-                        if(playerMap->pointOnMap_Item.find(p)!=playerMap->pointOnMap_Item.cend())
+                        else
+                            std::cerr << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << " can't move in direction: " << std::to_string(newDirection) << " to get the item" << std::endl;
+                    }
+
+                    if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))
+                    {
+                        if(player.target.bestPath.empty() && step.second==0 && player.target.localStep.size()==1 && player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap)
+                            api->newDirection((CatchChallenger::Direction)(direction-4));
+                        else
                         {
-                            //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", have item on it" << std::endl;
-                            const MapServerMini::ItemOnMap &itemOnMap=playerMap->pointOnMap_Item.at(p);
-                            if(!itemOnMap.infinite && itemOnMap.visible)
-                                if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
-                                {
-                                    std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
-                                              << ", take the item, action, itemOnMap.indexOfItemOnMap: " << std::to_string(itemOnMap.indexOfItemOnMap)
-                                              << ", item: " << std::to_string(itemOnMap.item)
-                                              << ", pseudo: " << api->getPseudo().toStdString() << std::endl;
-                                    player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
-                                    api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
-                                    api->takeAnObjectOnMap();
-                                    add_to_inventory(api,itemOnMap.item);
-                                }
+                            api->newDirection(direction);
+                            if(!move(api,direction,&playerMap,&player.x,&player.y,true,true))
+                            {
+                                std::cerr << "Blocked on: " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << std::endl;
+                                abort();
+                            }
+                            player.mapId=playerMap->id;
+                            checkOnTileEvent(player);
                         }
+                        if(step.second==0)
+                            player.target.localStep.erase(player.target.localStep.cbegin());
                     }
                     else
-                        std::cerr << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << " can't move in direction: " << std::to_string(newDirection) << " to get the item" << std::endl;
-                }
-
-                if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))
-                {
-                    if(player.target.bestPath.empty() && step.second==0 && player.target.localStep.size()==1 && player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap)
-                        api->newDirection((CatchChallenger::Direction)(direction-4));
-                    else
                     {
-                        api->newDirection(direction);
-                        if(!move(api,direction,&playerMap,&player.x,&player.y,true,true))
+                        std::cerr << "Blocked on: " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << std::endl;
+                        if(player.target.bestPath.size()>1)
                         {
-                            std::cerr << "Blocked on: " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << std::endl;
+                            std::cerr << "Something is wrong to go to the destination, path finding buggy? block not walkable?" << std::endl;
+                            std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
+                            std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
+                            std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
                             abort();
                         }
-                        player.mapId=playerMap->id;
-                        checkOnTileEvent(player);
-                    }
-                    if(step.second==0)
-                        player.target.localStep.erase(player.target.localStep.cbegin());
-                }
-                else
-                {
-                    std::cerr << "Blocked on: " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << std::endl;
-                    if(player.target.bestPath.size()>1)
-                    {
-                        std::cerr << "Something is wrong to go to the destination, path finding buggy? block not walkable?" << std::endl;
-                        std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
-                        std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
-                        std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
-                        abort();
-                    }
-                    if(player.target.localStep.size()>1)
-                    {
-                        std::cerr << "Something is wrong  to go to the destination, path finding buggy? block not walkable?" << std::endl;
-                        std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
-                        std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
-                        std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
-                        abort();
-                    }
-                    if(player.target.localStep.size()==1)
-                        if(player.target.localStep.at(0).second>1)
+                        if(player.target.localStep.size()>1)
                         {
                             std::cerr << "Something is wrong  to go to the destination, path finding buggy? block not walkable?" << std::endl;
                             std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
@@ -681,12 +674,24 @@ void ActionsAction::doMove()
                             std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
                             abort();
                         }
-                    //turn on the new direction
-                    const CatchChallenger::Direction &newDirection=(CatchChallenger::Direction)((uint8_t)direction-4);
-                    api->newDirection(newDirection);
-                    player.target.localStep.clear();
-                    player.target.bestPath.clear();
+                        if(player.target.localStep.size()==1)
+                            if(player.target.localStep.at(0).second>1)
+                            {
+                                std::cerr << "Something is wrong  to go to the destination, path finding buggy? block not walkable?" << std::endl;
+                                std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
+                                std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
+                                std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
+                                abort();
+                            }
+                        //turn on the new direction
+                        const CatchChallenger::Direction &newDirection=(CatchChallenger::Direction)((uint8_t)direction-4);
+                        api->newDirection(newDirection);
+                        player.target.localStep.clear();
+                        player.target.bestPath.clear();
+                    }
                 }
+                /*else
+                    player.target.localStep.clear();: not work with this*/
             }
             else
             {
