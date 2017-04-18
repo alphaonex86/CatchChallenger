@@ -684,10 +684,10 @@ void ActionsAction::doMove()
                                 if(!itemOnMap.infinite && itemOnMap.visible)
                                     if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
                                     {
-                                        std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
+                                        /*std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
                                                   << ", take the item, action, itemOnMap.indexOfItemOnMap: " << std::to_string(itemOnMap.indexOfItemOnMap)
                                                   << ", item: " << std::to_string(itemOnMap.item)
-                                                  << ", pseudo: " << api->getPseudo().toStdString() << std::endl;
+                                                  << ", pseudo: " << api->getPseudo().toStdString() << std::endl;*/
                                         player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
                                         api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
                                         api->takeAnObjectOnMap();
@@ -695,8 +695,8 @@ void ActionsAction::doMove()
                                     }
                             }
                         }
-                        else
-                            std::cerr << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << " can't move in direction: " << std::to_string(newDirection) << " to get the item" << std::endl;
+                        /*else
+                            std::cerr << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << " can't move in direction: " << std::to_string(newDirection) << " to get the item" << std::endl;*/
                     }
 
                     if(canGoTo(api,direction,*playerMap,player.x,player.y,true,true))

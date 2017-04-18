@@ -190,7 +190,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         #endif
         }
     }
-    std::cout << "Path to return: " << BotTargetList::stepToString(returnVar) << std::endl;
+    //std::cout << "Path to return: " << BotTargetList::stepToString(returnVar) << std::endl;
     return returnVar;
 }
 
@@ -365,7 +365,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
     else //search the best path to the next block
     {
         {
-            std::cout << "player.target.bestPath (less the current block): " << std::endl;
+            /*std::cout << "player.target.bestPath (less the current block): " << std::endl;
             unsigned int index=0;
             while(index<player.target.bestPath.size())
             {
@@ -373,7 +373,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
                 std::cout << " " << blockObject->map->map_file << " Block " << std::to_string(blockObject->id+1) << std::endl;
                 index++;
             }
-            std::cout << std::endl;
+            std::cout << std::endl;*/
         }
         if(layer.blockObject->links.find(player.target.bestPath.front())==layer.blockObject->links.cend())
             abort();
@@ -871,23 +871,19 @@ void BotTargetList::on_hideTooHard_clicked()
     updatePlayerInformation();
 }
 
-std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFinding(MapServerMini::BlockObject * const blockObject,
+std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFindingWithCache(MapServerMini::BlockObject * const source_blockObject,
         const CatchChallenger::Orientation &source_orientation, const uint8_t &source_x, const uint8_t &source_y,
         /*const MapServerMini::BlockObject * const destination_blockObject,the block link to the multi-map change*/
         const std::vector<MapServerMini::BlockObject::DestinationForPath> &destinations,
         unsigned int &destinationIndexSelected,
         bool *ok)
 {
-    if(ok==NULL)
-        abort();
-    *ok=false;
-
     {
         //cache
         unsigned int index=0;
-        while(index<blockObject->pathFindingCache.size())
+        while(index<source_blockObject->pathFindingCache.size())
         {
-            const MapServerMini::BlockObject::PathFindingCacheEntry &pathFindingCacheEntry=blockObject->pathFindingCache.at(index);
+            const MapServerMini::BlockObject::PathFindingCacheEntry &pathFindingCacheEntry=source_blockObject->pathFindingCache.at(index);
             if(pathFindingCacheEntry.destinations.size()==destinations.size())
             {
                 if(pathFindingCacheEntry.source_orientation==source_orientation &&
@@ -910,11 +906,10 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                     if(indexDest>=pathFindingCacheEntry.destinations.size())
                     {
 
-                        if(index>2)//up only if into the 60% of lower list, to prevent constant top change
-                            std::rotate(blockObject->pathFindingCache.begin(),blockObject->pathFindingCache.begin()+index,blockObject->pathFindingCache.begin()+index+1);
+                        /*if(index>2)//up only if into the 60% of lower list, to prevent constant top change
+                            std::rotate(source_blockObject->pathFindingCache.begin(),source_blockObject->pathFindingCache.begin()+index,source_blockObject->pathFindingCache.begin()+index+1);*/
                         if(ok!=NULL)
-                        //    *ok=pathFindingCacheEntry.ok;
-                            *ok=true;
+                            *ok=pathFindingCacheEntry.ok;
                         destinationIndexSelected=pathFindingCacheEntry.destinationIndexSelected;
                         return pathFindingCacheEntry.returnedVar;
                     }
@@ -923,17 +918,51 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             index++;
         }
     }
-    while(blockObject->pathFindingCache.size()>10)
-        blockObject->pathFindingCache.erase(blockObject->pathFindingCache.cbegin()+blockObject->pathFindingCache.size()-1);
+    while(source_blockObject->pathFindingCache.size()>10)
+        source_blockObject->pathFindingCache.erase(source_blockObject->pathFindingCache.cbegin()+source_blockObject->pathFindingCache.size()-1);
+
+    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar=pathFinding(source_blockObject,
+                                                                                                       source_orientation,source_x,source_y,
+                                                                                                       destinations,
+                                                                                                       destinationIndexSelected,
+                                                                                                       ok);
+
+    if(ok!=NULL && *ok==true)
+    {
+        MapServerMini::BlockObject::PathFindingCacheEntry pathFindingCacheEntry;
+        pathFindingCacheEntry.source_orientation=source_orientation;
+        pathFindingCacheEntry.source_x=source_x;
+        pathFindingCacheEntry.source_y=source_y;
+        pathFindingCacheEntry.destinations=destinations;
+
+        pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
+        pathFindingCacheEntry.ok=*ok;
+        pathFindingCacheEntry.returnedVar=returnedVar;
+        source_blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
+    }
+
+    return returnedVar;
+}
+
+std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > BotTargetList::pathFinding(const MapServerMini::BlockObject * const source_blockObject,
+        const CatchChallenger::Orientation &source_orientation, const uint8_t &source_x, const uint8_t &source_y,
+        /*const MapServerMini::BlockObject * const destination_blockObject,the block link to the multi-map change*/
+        const std::vector<MapServerMini::BlockObject::DestinationForPath> &destinations,
+        unsigned int &destinationIndexSelected,
+        bool *ok)
+{
+    if(ok==NULL)
+        abort();
+    *ok=false;
 
     auto start = std::chrono::high_resolution_clock::now();
 
     //resolv the path
     std::vector<std::pair<uint8_t,uint8_t> > mapPointToParseList;
     SimplifiedMapForPathFinding simplifiedMap;
-    if(blockObject->map==NULL)
+    if(source_blockObject->map==NULL)
         abort();
-    if(blockObject->map->step.size()<2)
+    if(source_blockObject->map->step.size()<2)
         abort();
     if(destinations.empty())
         abort();
@@ -952,13 +981,13 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             index++;
         }
     }
-    const MapServerMini::MapParsedForBot &step=blockObject->map->step.at(1);
+    const MapServerMini::MapParsedForBot &step=source_blockObject->map->step.at(1);
     if(step.map==NULL)
         abort();
     std::unordered_map<unsigned int,
             std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> >
             > pathToEachDestinations;
-    const uint16_t &codeZone=step.map[source_x+source_y*blockObject->map->width];
+    const uint16_t &codeZone=step.map[source_x+source_y*source_blockObject->map->width];
 
     //init the first case
     {
@@ -1258,25 +1287,11 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                                 {
                                     auto end = std::chrono::high_resolution_clock::now();
                                     std::chrono::duration<double, std::milli> elapsed = end-start;
-                                    std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+                                    /*std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
                                     std::cerr << "Bug from " << std::to_string(source_x) << "," << std::to_string(source_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)source_orientation) << " due for last step (1)" << std::endl;
                                     std::cerr << "To " << std::to_string(destination.destination_x) << "," << std::to_string(destination.destination_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)destination.destination_orientation) << std::endl;
                                     std::cerr << "Dump: " << BotTargetList::stepToString(returnedVar) << std::endl;
-                                    std::cerr << "Last path choose: " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)set_orientation) << std::endl;
-
-                                    {
-                                        //cache
-                                        MapServerMini::BlockObject::PathFindingCacheEntry pathFindingCacheEntry;
-                                        pathFindingCacheEntry.source_orientation=source_orientation;
-                                        pathFindingCacheEntry.source_x=source_x;
-                                        pathFindingCacheEntry.source_y=source_y;
-                                        pathFindingCacheEntry.destinations=destinations;
-
-                                        pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
-                                        pathFindingCacheEntry.ok=*ok;
-                                        pathFindingCacheEntry.returnedVar=returnedVar;
-                                        blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
-                                    }
+                                    std::cerr << "Last path choose: " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)set_orientation) << std::endl;*/
 
                                     return returnedVar;
                                 }
@@ -1291,25 +1306,11 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             {
                                 auto end = std::chrono::high_resolution_clock::now();
                                 std::chrono::duration<double, std::milli> elapsed = end-start;
-                                std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+                                /*std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
                                 std::cerr << "Bug from " << std::to_string(source_x) << "," << std::to_string(source_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)source_orientation) << " due for last step (2)" << std::endl;
                                 std::cerr << "To " << std::to_string(destination.destination_x) << "," << std::to_string(destination.destination_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)destination.destination_orientation) << std::endl;
                                 std::cerr << "Dump: " << BotTargetList::stepToString(returnedVar) << std::endl;
-                                std::cerr << "Last path choose: " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)set_orientation) << std::endl;
-
-                                {
-                                    //cache
-                                    MapServerMini::BlockObject::PathFindingCacheEntry pathFindingCacheEntry;
-                                    pathFindingCacheEntry.source_orientation=source_orientation;
-                                    pathFindingCacheEntry.source_x=source_x;
-                                    pathFindingCacheEntry.source_y=source_y;
-                                    pathFindingCacheEntry.destinations=destinations;
-
-                                    pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
-                                    pathFindingCacheEntry.ok=*ok;
-                                    pathFindingCacheEntry.returnedVar=returnedVar;
-                                    blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
-                                }
+                                std::cerr << "Last path choose: " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)set_orientation) << std::endl;*/
 
                                 return returnedVar;
                             }
@@ -1326,7 +1327,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                     if(destination.destination_orientation!=set_orientation)
                         returnedVar.push_back(toAdd);
 
-                    std::cout << "new destination resolved: " << std::to_string(source_x) << "," << std::to_string(source_y) << " -> " << std::to_string(x) << "," << std::to_string(y) << ": " << BotTargetList::stepToString(returnedVar) << std::endl;
+                    //std::cout << "new destination resolved: " << std::to_string(source_x) << "," << std::to_string(source_y) << " -> " << std::to_string(x) << "," << std::to_string(y) << ": " << BotTargetList::stepToString(returnedVar) << std::endl;
                     if(!returnedVar.empty())
                     {
                         if(pathToEachDestinations.find(index)==pathToEachDestinations.cend())
@@ -1341,23 +1342,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &finalVar=selectTheBetterPathToDestination(pathToEachDestinations,destinationIndexSelected);
                             auto end = std::chrono::high_resolution_clock::now();
                             std::chrono::duration<double, std::milli> elapsed = end-start;
-                            std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+                            //std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
 
                             *ok=true;
-
-                            {
-                                //cache
-                                MapServerMini::BlockObject::PathFindingCacheEntry pathFindingCacheEntry;
-                                pathFindingCacheEntry.source_orientation=source_orientation;
-                                pathFindingCacheEntry.source_x=source_x;
-                                pathFindingCacheEntry.source_y=source_y;
-                                pathFindingCacheEntry.destinations=destinations;
-
-                                pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
-                                pathFindingCacheEntry.ok=*ok;
-                                pathFindingCacheEntry.returnedVar=finalVar;
-                                blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
-                            }
 
                             return finalVar;
                         }
@@ -1372,23 +1359,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &finalVar=selectTheBetterPathToDestination(pathToEachDestinations,destinationIndexSelected);
                             auto end = std::chrono::high_resolution_clock::now();
                             std::chrono::duration<double, std::milli> elapsed = end-start;
-                            std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+                            //std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
 
                             *ok=true;
-
-                            {
-                                //cache
-                                MapServerMini::BlockObject::PathFindingCacheEntry pathFindingCacheEntry;
-                                pathFindingCacheEntry.source_orientation=source_orientation;
-                                pathFindingCacheEntry.source_x=source_x;
-                                pathFindingCacheEntry.source_y=source_y;
-                                pathFindingCacheEntry.destinations=destinations;
-
-                                pathFindingCacheEntry.destinationIndexSelected=destinationIndexSelected;
-                                pathFindingCacheEntry.ok=*ok;
-                                pathFindingCacheEntry.returnedVar=finalVar;
-                                blockObject->pathFindingCache.push_back(pathFindingCacheEntry);
-                            }
 
                             return finalVar;
                         }
@@ -1403,9 +1376,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
         {
             //if the right case have been parsed
             coord=std::pair<uint8_t,uint8_t>(x+1,y);
-            if(coord.first<blockObject->map->width)
+            if(coord.first<source_blockObject->map->width)
             {
-                const uint16_t &newCodeZone=step.map[coord.first+coord.second*blockObject->map->width];
+                const uint16_t &newCodeZone=step.map[coord.first+coord.second*source_blockObject->map->width];
                 if(codeZone==newCodeZone && simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
                 {
                     if(simplifiedMap.pointQueued.find(coord)==simplifiedMap.pointQueued.cend())
@@ -1419,7 +1392,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             if(x>0)
             {
                 coord=std::pair<uint8_t,uint8_t>(x-1,y);
-                const uint16_t &newCodeZone=step.map[coord.first+coord.second*blockObject->map->width];
+                const uint16_t &newCodeZone=step.map[coord.first+coord.second*source_blockObject->map->width];
                 if(codeZone==newCodeZone && simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
                 {
                     if(simplifiedMap.pointQueued.find(coord)==simplifiedMap.pointQueued.cend())
@@ -1431,9 +1404,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             }
             //if the bottom case have been parsed
             coord=std::pair<uint8_t,uint8_t>(x,y+1);
-            if(coord.second<blockObject->map->height)
+            if(coord.second<source_blockObject->map->height)
             {
-                const uint16_t &newCodeZone=step.map[coord.first+coord.second*blockObject->map->width];
+                const uint16_t &newCodeZone=step.map[coord.first+coord.second*source_blockObject->map->width];
                 if(codeZone==newCodeZone && simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
                 {
                     if(simplifiedMap.pointQueued.find(coord)==simplifiedMap.pointQueued.cend())
@@ -1447,7 +1420,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
             if(y>0)
             {
                 coord=std::pair<uint8_t,uint8_t>(x,y-1);
-                const uint16_t &newCodeZone=step.map[coord.first+coord.second*blockObject->map->width];
+                const uint16_t &newCodeZone=step.map[coord.first+coord.second*source_blockObject->map->width];
                 if(codeZone==newCodeZone && simplifiedMap.pathToGo.find(coord)==simplifiedMap.pathToGo.cend())
                 {
                     if(simplifiedMap.pointQueued.find(coord)==simplifiedMap.pointQueued.cend())
@@ -1463,7 +1436,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end-start;
     std::cout << "Path not found into " << (uint32_t)elapsed.count() << "ms" << std::endl;
-    std::cout << "From " << blockObject->map->map_file << " Block " << std::to_string(blockObject->id+1) << " " << std::to_string(source_x) << "," << std::to_string(source_y) << std::endl;
+    std::cout << "From " << source_blockObject->map->map_file << " Block " << std::to_string(source_blockObject->id+1) << " " << std::to_string(source_x) << "," << std::to_string(source_y) << std::endl;
     {
         unsigned int index=0;
         while(index<destinations.size())

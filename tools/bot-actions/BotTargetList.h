@@ -67,7 +67,13 @@ public:
     std::pair<uint8_t,uint8_t> getNextPosition(const MapServerMini::BlockObject * const blockObject,ActionsBotInterface::GlobalTarget &target);
     /*if normal, then just go
      * else if dirt like: is linked as idenpendant tile */
-    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > pathFinding(MapServerMini::BlockObject * const source_blockObject,
+    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > pathFinding(const MapServerMini::BlockObject * const source_blockObject,
+            const CatchChallenger::Orientation &source_orientation, const uint8_t &source_x, const uint8_t &source_y,
+            /*const MapServerMini::BlockObject * const destination_blockObject,the block link to the multi-map change*/
+            const std::vector<MapServerMini::BlockObject::DestinationForPath> &destinations,
+            unsigned int &destinationIndexSelected,
+            bool *ok);
+    std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > pathFindingWithCache(MapServerMini::BlockObject * const source_blockObject,
             const CatchChallenger::Orientation &source_orientation, const uint8_t &source_x, const uint8_t &source_y,
             /*const MapServerMini::BlockObject * const destination_blockObject,the block link to the multi-map change*/
             const std::vector<MapServerMini::BlockObject::DestinationForPath> &destinations,
