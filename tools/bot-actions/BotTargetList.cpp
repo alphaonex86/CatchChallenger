@@ -918,6 +918,7 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                     }
                 }
             }
+            index++;
         }
         if(blockObject->pathFindingCache.size()>10)
             blockObject->pathFindingCache.erase(blockObject->pathFindingCache.cbegin()+blockObject->pathFindingCache.size()-1);

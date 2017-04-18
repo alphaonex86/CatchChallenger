@@ -172,11 +172,13 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                 #endif
                                                 )
 {
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
     if(CommonSettingsServer::commonSettingsServer.rates_xp_pow==0)
     {
         std::cerr << "CommonSettingsServer::commonSettingsServer.rates_xp_pow==0 abort" << std::endl;
         abort();
     }
+    #endif
     std::unordered_map<uint16_t,Monster> monsters;
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
     unsigned int file_index=0;
@@ -385,8 +387,10 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                 }
                             }
                         }
+                        #ifndef CATCHCHALLENGER_CLASS_MASTER
                         #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                         powerVar*=CommonSettingsServer::commonSettingsServer.rates_xp_pow;
+                        #endif
                         #endif
                         if(ok)
                         {

@@ -80,6 +80,7 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
                     << ", rp->ai_protocol: " << rp->ai_protocol
                     << ", rp->ai_addr: " << rp->ai_addr
                     << ", rp->ai_addrlen: " << rp->ai_addrlen
+                    << ", errno: " << std::to_string(errno)
                     << std::endl;
             bindFailed++;
         }
