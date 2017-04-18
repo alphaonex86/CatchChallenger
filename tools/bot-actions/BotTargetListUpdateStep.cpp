@@ -400,12 +400,14 @@ void BotTargetList::updatePlayerStep()
                                 }
                             }
                             #endif
+                            bool found=false;
                             bool alreadyTake=false;
                             for(auto&entry:mapServer->pointOnMap_Item)
                             {
                                 const MapServerMini::ItemOnMap &itemOnMap=entry.second;
                                 if(itemOnMap.indexOfItemOnMap==player.target.extra)
                                 {
+                                    found=true;
                                     if(!itemOnMap.infinite)
                                     {
                                         if(playerInformations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==playerInformations.itemOnMap.cend())
@@ -428,6 +430,11 @@ void BotTargetList::updatePlayerStep()
                                     }
                                     break;
                                 }
+                            }
+                            if(!found)
+                            {
+                                std::cerr << "On the next tile don't found the montioned item on map" << std::endl;
+                                abort();
                             }
                             /*if(!alreadyTake)
                             {
