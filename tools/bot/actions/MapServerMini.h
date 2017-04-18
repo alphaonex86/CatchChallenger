@@ -86,10 +86,13 @@ public:
         };
         struct PathFindingCacheEntry
         {
+            //input
             CatchChallenger::Orientation source_orientation;
             uint8_t source_x,source_y;
             std::vector<DestinationForPath> destinations;
 
+            //output
+            bool ok;
             unsigned int destinationIndexSelected;
             std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar;
         };

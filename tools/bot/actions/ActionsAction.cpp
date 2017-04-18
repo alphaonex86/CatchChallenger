@@ -211,7 +211,7 @@ bool ActionsAction::mapConditionIsRepected(const CatchChallenger::Api_protocol *
     return true;
 }
 
-bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction,const MapServerMini &map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision, const bool &allowTeleport)
+bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChallenger::Direction &direction,const MapServerMini &map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision, const bool &allowTeleport,const bool &debug)
 {
     switch(direction)
     {
@@ -233,19 +233,35 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
         {
             case CatchChallenger::Direction_move_at_bottom:
             if(ledge!=CatchChallenger::ParsedLayerLedges_LedgesBottom)
+            {
+                if(debug)
+                    std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                 return false;
+            }
             break;
             case CatchChallenger::Direction_move_at_top:
             if(ledge!=CatchChallenger::ParsedLayerLedges_LedgesTop)
+            {
+                if(debug)
+                    std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                 return false;
+            }
             break;
             case CatchChallenger::Direction_move_at_left:
             if(ledge!=CatchChallenger::ParsedLayerLedges_LedgesLeft)
+            {
+                if(debug)
+                    std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                 return false;
+            }
             break;
             case CatchChallenger::Direction_move_at_right:
             if(ledge!=CatchChallenger::ParsedLayerLedges_LedgesRight)
+            {
+                if(debug)
+                    std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                 return false;
+            }
             break;
             default:
             break;
@@ -264,7 +280,11 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
             else
             {
                 if(map.border.left.map==NULL)
+                {
+                    if(debug)
+                        std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                     return false;
+                }
                 x=map.border.left.map->width-1;
                 y+=map.border.left.y_offset;
                 new_map=static_cast<const MapServerMini *>(map.border.left.map);
@@ -276,7 +296,11 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
             else
             {
                 if(map.border.right.map==NULL)
+                {
+                    if(debug)
+                        std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                     return false;
+                }
                 x=0;
                 y+=map.border.right.y_offset;
                 new_map=static_cast<const MapServerMini *>(map.border.right.map);
@@ -288,7 +312,11 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
             else
             {
                 if(map.border.top.map==NULL)
+                {
+                    if(debug)
+                        std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                     return false;
+                }
                 y=map.border.top.map->height-1;
                 x+=map.border.top.x_offset;
                 new_map=static_cast<const MapServerMini *>(map.border.top.map);
@@ -300,35 +328,59 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
             else
             {
                 if(map.border.bottom.map==NULL)
+                {
+                    if(debug)
+                        std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                     return false;
+                }
                 y=0;
                 x+=map.border.bottom.x_offset;
                 new_map=static_cast<const MapServerMini *>(map.border.bottom.map);
             }
         break;
         default:
+        {
+            if(debug)
+                std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             return false;
+        }
     }
     {
         //bot colision
         if(checkCollision)
         {
             if(!isWalkable(*new_map,x,y))
+            {
+                if(debug)
+                    std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                 return false;
+            }
             if(isDirt(*new_map,x,y))
+            {
+                if(debug)
+                    std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                 return false;
+            }
             const std::pair<uint8_t,uint8_t> point(x,y);
             if(new_map->pointOnMap_Item.find(point)!=new_map->pointOnMap_Item.cend())
             {
                 const MapServerMini::ItemOnMap &item=new_map->pointOnMap_Item.at(point);
                 if(item.visible)
                     if(item.infinite || player.itemOnMap.find(item.indexOfItemOnMap)==player.itemOnMap.cend())
+                    {
+                        if(debug)
+                            std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                         return false;
+                    }
             }
             //into check colision because some time just need get the near tile
             if(!allowTeleport)
                 if(needBeTeleported(*new_map,x,y))
+                {
+                    if(debug)
+                        std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                     return false;
+                }
         }
     }
 
@@ -341,7 +393,11 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
             if(teleporter.source_x==x && teleporter.source_y==y)
             {
                 if(!mapConditionIsRepected(api,teleporter.condition))
+                {
+                    if(debug)
+                        std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                     return false;
+                }
             }
             index++;
         }
@@ -359,6 +415,8 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                 {
                     if(!botplayer.fightEngine->getAbleToFight())
                     {
+                        if(debug)
+                            std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                         //emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
                         return false;
                     }
@@ -380,6 +438,8 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
                 {
                     if(!botplayer.fightEngine->getAbleToFight())
                     {
+                        if(debug)
+                            std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                         //emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneFight);
                         return false;
                     }
@@ -396,6 +456,8 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
             index++;
         }
         //emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneItem);
+        if(debug)
+            std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         return false;
     }
     return true;
@@ -657,13 +719,14 @@ void ActionsAction::doMove()
                     }
                     else
                     {
-                        std::cerr << "Blocked on: " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << std::endl;
+                        std::cerr << "Blocked on: " << playerMap->map_file << " " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << " for " << api->getPseudo().toStdString() << std::endl;
                         if(player.target.bestPath.size()>1)
                         {
                             std::cerr << "Something is wrong to go to the destination, path finding buggy? block not walkable?" << std::endl;
                             std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
                             std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
                             std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
+                            canGoTo(api,direction,*playerMap,player.x,player.y,true,true,true);
                             abort();
                         }
                         if(player.target.localStep.size()>1)
@@ -672,6 +735,7 @@ void ActionsAction::doMove()
                             std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
                             std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
                             std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
+                            canGoTo(api,direction,*playerMap,player.x,player.y,true,true,true);
                             abort();
                         }
                         if(player.target.localStep.size()==1)
@@ -681,6 +745,7 @@ void ActionsAction::doMove()
                                 std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
                                 std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
                                 std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
+                                canGoTo(api,direction,*playerMap,player.x,player.y,true,true,true);
                                 abort();
                             }
                         //turn on the new direction
@@ -690,8 +755,8 @@ void ActionsAction::doMove()
                         player.target.bestPath.clear();
                     }
                 }
-                /*else
-                    player.target.localStep.clear();: not work with this*/
+                else
+                    player.target.localStep.erase(player.target.localStep.cbegin());
             }
             else
             {
