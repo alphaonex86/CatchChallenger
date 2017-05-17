@@ -805,7 +805,7 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const uint8_t &numberO
     if(new_max_hp>old_max_hp)
         monster->hp+=new_max_hp-old_max_hp;
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT
-    messageFightEngine("You pass to the level "+std::to_string(level)+" on your monster "+std::to_string(monster->id));
+    messageFightEngine("You pass to the level "+std::to_string(level));
     #endif
 
     if((public_and_private_informations.playerMonster.at(monsterIndex).level+numberOfLevel)>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
