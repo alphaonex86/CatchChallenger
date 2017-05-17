@@ -352,7 +352,10 @@ BaseWindow::~BaseWindow()
 void BaseWindow::connectAllSignals()
 {
     if(client==NULL)
+    {
+        std::cerr << "BaseWindow::connectAllSignals(), unable to connect the signals: client==NULL" << std::endl;
         return;
+    }
     mapController->connectAllSignals(client);
 
     if(!connect(client,&CatchChallenger::Api_client_real::lastReplyTime,      this,&BaseWindow::lastReplyTime,    Qt::QueuedConnection))

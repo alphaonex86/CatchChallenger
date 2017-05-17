@@ -25,8 +25,8 @@
 #define DEBUG_MESSAGE_MONSTER_LOAD
 #define DEBUG_CLIENT_PLANTS
 #define DEBUG_MESSAGE_FIGHT_LOAD
-//*/
 #define CATCHCHALLENGER_DEBUG_FIGHT
+//*/
 
 //name better:#define CATCHCHALLENGER_TOKENSIZE 16//can't be more than 250 due to server conception, and useless, with 8bytes, at 2 billions connexion rate, it's 300years to crack
 #define CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER 32
