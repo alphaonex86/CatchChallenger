@@ -1668,8 +1668,8 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
     connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
     connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
-    baseWindow->connectAllSignals();
     baseWindow->setMultiPlayer(false,client);
+    baseWindow->connectAllSignals();//need always be after setMultiPlayer()
     client->setDatapackPath(QCoreApplication::applicationDirPath()+"/datapack/internal/");
     baseWindow->mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
     serverMode=ServerMode_Internal;

@@ -230,6 +230,7 @@ void BaseWindow::logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedLi
 
 void BaseWindow::protocol_is_good()
 {
+    std::cout << "BaseWindow::protocol_is_good()" << std::endl;
     protocolIsGood=true;
     updateConnectingStatus();
 }
