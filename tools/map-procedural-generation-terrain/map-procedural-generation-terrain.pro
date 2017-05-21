@@ -15,19 +15,33 @@ greaterThan(QT_MAJOR_VERSION, 4) {
     QT += widgets
 }
 
-SOURCES += main.cpp \
-    ../../client/base/Map_client.cpp \
-    ../../client/base/render/MapVisualiserOrder.cpp \
-    ../../client/base/interface/MapDoor.cpp
-
-HEADERS += \
-    ../../client/base/ClientStructures.h \
-    ../../client/base/Map_client.h \
-    ../../client/base/render/MapVisualiserOrder.h \
-    ../../client/base/interface/MapDoor.h
+SOURCES += \
+    src/Diagram.cpp \
+    src/Edge.cpp \
+    src/Point2.cpp \
+    src/Vector2.cpp \
+    src/VoronoiDiagramGenerator.cpp \
+    src/BeachLine.cpp \
+    src/Cell.cpp \
+    src/CircleEventQueue.cpp \
+    main.cpp
 
 RESOURCES += \
     resources.qrc
+
+HEADERS += \
+    include/Cell.h \
+    include/Diagram.h \
+    include/Edge.h \
+    include/VoronoiDiagramGenerator.h \
+    include/Point2.h \
+    include/Vector2.h \
+    src/CircleEventQueue.h \
+    src/Epsilon.h \
+    src/RBTree.h \
+    src/BeachLine.h \
+    src/MemoryPool/StackAlloc.h \
+    src/MemoryPool/C-11/MemoryPool.h
 
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1
