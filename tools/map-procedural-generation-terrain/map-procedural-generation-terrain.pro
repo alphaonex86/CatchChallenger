@@ -41,7 +41,10 @@ HEADERS += \
     src/RBTree.h \
     src/BeachLine.h \
     src/MemoryPool/StackAlloc.h \
-    src/MemoryPool/C-11/MemoryPool.h
+    src/MemoryPool/C-11/MemoryPool.h \
+    PoissonGenerator.h
+
+LIBS += -lboost_system
 
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1

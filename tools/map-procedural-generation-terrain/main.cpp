@@ -3,6 +3,11 @@
 #include <QDir>
 #include <QSettings>
 
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <memory.h>
+
 #include "../../client/tiled/tiled_mapobject.h"
 #include "../../client/tiled/tiled_objectgroup.h"
 #include "../../client/base/render/MapVisualiserThread.h"
@@ -22,9 +27,11 @@
 #include "../../client/tiled/tiled_tilelayer.h"
 #include "../../client/tiled/tiled_tileset.h"
 
-#include "include/Point2.h"
-#include "include/Vector2.h"
-#include "include/VoronoiDiagramGenerator.h"
+#include "PoissonGenerator.h"
+
+#include <boost/polygon/voronoi.hpp>
+using boost::polygon::voronoi_builder;
+using boost::polygon::voronoi_diagram;
 
 /*To do:
 Polygons
@@ -36,6 +43,18 @@ Moisture
 Biomes
 Noisy Edges
 http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/*/
+
+struct Point {
+  int a;
+  int b;
+  Point (int x, int y) : a(x), b(y) {}
+};
+
+struct Segment {
+  Point p0;
+  Point p1;
+  Segment (int x1, int y1, int x2, int y2) : p0(x1, y1), p1(x2, y2) {}
+};
 
 struct Terrain
 {
@@ -55,39 +74,6 @@ unsigned int floatToLevel(const float f)
         return 2;
     else
         return 3;
-}
-
-bool sitesOrdered(const Point2& s1, const Point2& s2) {
-    if (s1.y < s2.y)
-        return true;
-    if (s1.y == s2.y && s1.x < s2.x)
-        return true;
-
-    return false;
-}
-
-void genRandomSites(std::vector<Point2>& sites, BoundingBox& bbox, unsigned int dimension, unsigned int numSites, unsigned int seed) {
-    bbox = BoundingBox(0, dimension, dimension, 0);
-    std::vector<Point2> tmpSites;
-
-    tmpSites.reserve(numSites);
-    sites.reserve(numSites);
-
-    Point2 s;
-
-    srand(seed);
-    for (unsigned int i = 0; i < numSites; ++i) {
-        s.x = 1 + (rand() / (double)RAND_MAX)*(dimension - 2);
-        s.y = 1 + (rand() / (double)RAND_MAX)*(dimension - 2);
-        tmpSites.push_back(s);
-    }
-
-    //remove any duplicates that exist
-    std::sort(tmpSites.begin(), tmpSites.end(), sitesOrdered);
-    sites.push_back(tmpSites[0]);
-    for (Point2& s : tmpSites) {
-        if (s != sites.back()) sites.push_back(s);
-    }
 }
 
 Tiled::Tileset *readTileset(const QString &tsx,Tiled::Map *tiledMap)
@@ -259,7 +245,7 @@ int main(int argc, char *argv[])
             montain.baseY=8;
         settings.endGroup();
     settings.endGroup();
-    const unsigned int resize_TerrainMap=settings.value("resize_TerrainMap").toUInt(&ok);
+/*    const unsigned int resize_TerrainMap=settings.value("resize_TerrainMap").toUInt(&ok);
     if(ok==false)
     {
         std::cerr << "resize_TerrainMap not number into the config file" << std::endl;
@@ -282,7 +268,7 @@ int main(int argc, char *argv[])
     {
         std::cerr << "scale_TerrainHeat not number into the config file" << std::endl;
         abort();
-    }
+    }*/
     const unsigned int mapWidth=settings.value("mapWidth").toUInt(&ok);
     if(ok==false)
     {
@@ -412,34 +398,70 @@ int main(int argc, char *argv[])
         tiledMap.addLayer(layerHeat);
         Tiled::ObjectGroup *layerZone=new Tiled::ObjectGroup("Zone",0,0,tiledMap.width(),tiledMap.height());
         tiledMap.addLayer(layerZone);
+        Tiled::ObjectGroup *layerPoint=new Tiled::ObjectGroup("Point",0,0,tiledMap.width(),tiledMap.height());
+        tiledMap.addLayer(layerPoint);
         layerHeat->setVisible(false);
 
-        VoronoiDiagramGenerator vdg = VoronoiDiagramGenerator();
-        std::vector<Point2> sites;
-        BoundingBox bbox;
+        PoissonGenerator::DefaultPRNG PRNG;
+        const std::vector<PoissonGenerator::sPoint> Points = PoissonGenerator::GeneratePoissonPoints(30,PRNG,30,false);
 
-        genRandomSites(sites,bbox,tiledMap.width(),30,seed);
-        Diagram* diagram = vdg.compute(sites, bbox);
-        /*for(int x=0;x<99;x++)
-            diagram = vdg.relax();*/
+        std::vector<Point> points;
+        std::vector<Segment> segments;
+        for(auto i=Points.begin();i!=Points.end();i++)
+        {
+            float x=i->x,y=i->y;
+            x=x*tiledMap.width()+((double)rand()/(double)RAND_MAX)*1.5-0.75;
+            if(x>tiledMap.width())
+                x=tiledMap.width();
+            if(x<0)
+                x=0;
+            y=y*tiledMap.height()+((double)rand()/(double)RAND_MAX)*1.5-0.75;
+            if(y>tiledMap.height())
+                y=tiledMap.height();
+            if(y<0)
+                y=0;
+
+            points.push_back(Point(x*16,y*16));
+
+            Tiled::MapObject *object = new Tiled::MapObject("P","",QPointF(i->x,i->y), QSizeF(0.0,0.0));
+            object->setPolygon(QPolygonF(QVector<QPointF>()<<QPointF(0.05,0.0)<<QPointF(0.05,0.0)<<QPointF(0.05,0.05)<<QPointF(0.0,0.05)));
+            object->setShape(Tiled::MapObject::Polygon);
+            layerPoint->addObject(object);
+        }
+
+        voronoi_diagram<double> vd;
+        boost::polygon::construct_voronoi(points.begin(), points.end(), &vd);
+
+        for (voronoi_diagram<double>::const_cell_iterator it = vd.cells().begin();
+             it != vd.cells().end(); ++it) {
+          const voronoi_diagram<double>::cell_type &cell = *it;
+          const voronoi_diagram<double>::edge_type *edge = cell.incident_edge();
+          Tiled::MapObject *object = new Tiled::MapObject("C","",QPointF(0,0), QSizeF(0.0,0.0));
+          QVector<QPointF> pointsFloat;
+          // This is convenient way to iterate edges around Voronoi cell.
+          do {
+            pointsFloat<<QPointF(edge->,point.y);
+            edge = edge->next();
+          } while (edge != cell.incident_edge());
+          object->setPolygon(QPolygonF(pointsFloat));
+          object->setShape(Tiled::MapObject::Polygon);
+          layerZone->addObject(object);
+        }
 
         /*unsigned int indexSites=0;
         while(indexSites<sites.size())
         {
             const Point2 &site=sites.at(indexSites);
-            Tiled::MapObject *object = new Tiled::MapObject("Auto","",QPointF(site.x,site.y), QSizeF(0.0,0.0));
-            object->setPolygon(QPolygonF(QVector<QPointF>()<<QPointF(0.05,0.0)<<QPointF(0.05,0.0)<<QPointF(0.05,0.05)<<QPointF(0.0,0.05)));
-            object->setShape(Tiled::MapObject::Polygon);
-            layerZone->addObject(object);
+
             indexSites++;
-        }*/
+        }
 
         unsigned int indexCells=0;
         while(indexCells<diagram->cells.size())
         {
             const Cell &cell=*diagram->cells.at(indexCells);
 
-            Tiled::MapObject *object = new Tiled::MapObject("","",QPointF(0,0), QSizeF(0.0,0.0));
+            Tiled::MapObject *object = new Tiled::MapObject("C"+QString::number(indexCells),"",QPointF(0,0), QSizeF(0.0,0.0));
             QVector<QPointF> points;
 
             std::vector<HalfEdge*> halfEdges=cell.halfEdges;
@@ -457,7 +479,7 @@ int main(int argc, char *argv[])
             layerZone->addObject(object);
 
             indexCells++;
-        }
+        }*/
 
         delete diagram;
 
