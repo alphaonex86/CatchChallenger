@@ -30,6 +30,7 @@
 #include "PoissonGenerator.h"
 
 #include <boost/polygon/voronoi.hpp>
+#include <boost/geometry/geometries/segment.hpp>
 using boost::polygon::voronoi_builder;
 using boost::polygon::voronoi_diagram;
 
@@ -43,18 +44,6 @@ Moisture
 Biomes
 Noisy Edges
 http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/*/
-
-struct Point {
-  int a;
-  int b;
-  Point (int x, int y) : a(x), b(y) {}
-};
-
-struct Segment {
-  Point p0;
-  Point p1;
-  Segment (int x1, int y1, int x2, int y2) : p0(x1, y1), p1(x2, y2) {}
-};
 
 struct Terrain
 {
@@ -299,6 +288,7 @@ int main(int argc, char *argv[])
         std::cerr << "seed not number into the config file" << std::endl;
         abort();
     }
+    srand(seed);
 
     //fill
     /*Simplex simplexWalkable,simplexHeat;
@@ -402,11 +392,12 @@ int main(int argc, char *argv[])
         tiledMap.addLayer(layerPoint);
         layerHeat->setVisible(false);
 
-        PoissonGenerator::DefaultPRNG PRNG;
+        PoissonGenerator::DefaultPRNG PRNG(seed);
         const std::vector<PoissonGenerator::sPoint> Points = PoissonGenerator::GeneratePoissonPoints(30,PRNG,30,false);
 
-        std::vector<Point> points;
-        std::vector<Segment> segments;
+        std::vector<boost::polygon::point_data<int> > points;
+        //std::vector<boost::polygon::segment_data<int> > segments;
+        unsigned int index=0;
         for(auto i=Points.begin();i!=Points.end();i++)
         {
             float x=i->x,y=i->y;
@@ -421,31 +412,39 @@ int main(int argc, char *argv[])
             if(y<0)
                 y=0;
 
-            points.push_back(Point(x*16,y*16));
+            points.push_back(boost::polygon::point_data<int>(x*16,y*16));
 
-            Tiled::MapObject *object = new Tiled::MapObject("P","",QPointF(i->x,i->y), QSizeF(0.0,0.0));
+            Tiled::MapObject *object = new Tiled::MapObject("P"+QString::number(index+1),"",QPointF(((float)x),((float)y)), QSizeF(0.0,0.0));
             object->setPolygon(QPolygonF(QVector<QPointF>()<<QPointF(0.05,0.0)<<QPointF(0.05,0.0)<<QPointF(0.05,0.05)<<QPointF(0.0,0.05)));
             object->setShape(Tiled::MapObject::Polygon);
             layerPoint->addObject(object);
+            index++;
         }
 
         voronoi_diagram<double> vd;
         boost::polygon::construct_voronoi(points.begin(), points.end(), &vd);
 
+        index=0;
         for (voronoi_diagram<double>::const_cell_iterator it = vd.cells().begin();
              it != vd.cells().end(); ++it) {
           const voronoi_diagram<double>::cell_type &cell = *it;
           const voronoi_diagram<double>::edge_type *edge = cell.incident_edge();
-          Tiled::MapObject *object = new Tiled::MapObject("C","",QPointF(0,0), QSizeF(0.0,0.0));
+          Tiled::MapObject *object = new Tiled::MapObject("C"+QString::number(index+1),"",QPointF(0,0), QSizeF(0.0,0.0));
           QVector<QPointF> pointsFloat;
           // This is convenient way to iterate edges around Voronoi cell.
           do {
-            pointsFloat<<QPointF(edge->,point.y);
+              const auto* vertex=edge->vertex0();
+              if(vertex!=NULL)
+                pointsFloat<<QPointF(
+                                 ((float)vertex->x())/16,
+                                 ((float)vertex->y())/16
+                                 );
             edge = edge->next();
           } while (edge != cell.incident_edge());
           object->setPolygon(QPolygonF(pointsFloat));
           object->setShape(Tiled::MapObject::Polygon);
           layerZone->addObject(object);
+          index++;
         }
 
         /*unsigned int indexSites=0;
@@ -481,7 +480,7 @@ int main(int argc, char *argv[])
             indexCells++;
         }*/
 
-        delete diagram;
+        //delete diagram;
 
 /*        uint32_t y=0;
         while(y<(uint32_t)tiledMap.height())
