@@ -69,7 +69,7 @@ static Grid generateGrid(const unsigned int &w, const unsigned int &h, const uns
     g.reserve(size_t(w) * size_t(h));
 
     PoissonGenerator::DefaultPRNG PRNG(seed);
-    const std::vector<PoissonGenerator::sPoint> Points = PoissonGenerator::GeneratePoissonPoints(w*h,PRNG,30,false);
+    const std::vector<PoissonGenerator::sPoint> Points = PoissonGenerator::GeneratePoissonPoints(30,PRNG,30,false);
     unsigned int index=0;
     for(auto i=Points.begin();i!=Points.end();i++)
     {
@@ -84,7 +84,7 @@ static Grid generateGrid(const unsigned int &w, const unsigned int &h, const uns
             y=h;
         if(y<0)
             y=0;
-        g.emplace_back(x*16,y*16);
+        g.emplace_back(x,y);
         index++;
     }
 
@@ -402,8 +402,8 @@ int main(int argc, char *argv[])
         for (const auto &p : grid)
         {
             Tiled::MapObject *object = new Tiled::MapObject("P","",QPointF(
-                                                                ((float)p.x())/16,
-                                                                ((float)p.y())/16
+                                                                ((float)p.x()),
+                                                                ((float)p.y())
                                                                 ),
                                                             QSizeF(0.0,0.0));
             object->setPolygon(QPolygonF(QVector<QPointF>()<<QPointF(0.05,0.0)<<QPointF(0.05,0.0)<<QPointF(0.05,0.05)<<QPointF(0.0,0.05)));
