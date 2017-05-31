@@ -29,10 +29,19 @@
 
 #include "PoissonGenerator.h"
 
+#include <boost/polygon/point_data.hpp>
+#include <boost/polygon/segment_data.hpp>
 #include <boost/polygon/voronoi.hpp>
+#include <boost/geometry.hpp>
 #include <boost/geometry/geometries/segment.hpp>
+#include <boost/geometry/geometries/geometries.hpp>
+
 using boost::polygon::voronoi_builder;
 using boost::polygon::voronoi_diagram;
+
+typedef boost::polygon::point_data<int> Point;
+typedef boost::polygon::segment_data<int> Segment;
+typedef std::vector<Point> Grid;
 
 /*To do:
 Polygons
@@ -45,6 +54,8 @@ Biomes
 Noisy Edges
 http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/*/
 
+static const int tile_size = 16;
+
 struct Terrain
 {
     QString tsx;
@@ -52,6 +63,108 @@ struct Terrain
     Tiled::Tileset *tileset;
     uint32_t baseX,baseY;
 };
+
+static Grid generateGrid(const unsigned int &w, const unsigned int &h, const unsigned int &seed) {
+    Grid g;
+    g.reserve(size_t(w) * size_t(h));
+
+    PoissonGenerator::DefaultPRNG PRNG(seed);
+    const std::vector<PoissonGenerator::sPoint> Points = PoissonGenerator::GeneratePoissonPoints(w*h,PRNG,30,false);
+    unsigned int index=0;
+    for(auto i=Points.begin();i!=Points.end();i++)
+    {
+        float x=i->x,y=i->y;
+        x=x*w+((double)rand()/(double)RAND_MAX)*1.5-0.75;
+        if(x>w)
+            x=w;
+        if(x<0)
+            x=0;
+        y=y*h+((double)rand()/(double)RAND_MAX)*1.5-0.75;
+        if(y>h)
+            y=h;
+        if(y<0)
+            y=0;
+        g.emplace_back(x*16,y*16);
+        index++;
+    }
+
+    /*
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dis(-rnd/2, rnd/2);
+
+    Grid g;
+    g.reserve(size_t(w) * size_t(h));
+
+    for (int x = 0; x < w; ++x)
+        for (int y = 0; y < h; ++y)
+            g.emplace_back(tile_size*x + dis(gen) + tile_size/2,
+                           tile_size*y + dis(gen) + tile_size/2);
+
+    */
+    return g;
+}
+
+static std::vector<QPolygonF> computeVoronoi(const Grid &g, int w, int h) {
+    QPolygonF rect;
+    rect.append({0.0, 0.0});
+    rect.append({0.0, tile_size * double(h)});
+    rect.append({tile_size * double(w), tile_size * double(h)});
+    rect.append({tile_size * double(w), 0.0});
+
+    // create and add segments to ensure that the diagram spans the whole rect
+    std::vector<Segment> s;
+
+    for (int x = -1; x <= w; ++x) {
+        Point p1(tile_size*(x+0), -2*tile_size);
+        Point p2(tile_size*(x+1), -2*tile_size);
+        s.emplace_back(p1, p2);
+
+        p1 = Point(tile_size*(x+0), (h+2) * tile_size);
+        p2 = Point(tile_size*(x+1), (h+2) * tile_size);
+        s.emplace_back(p1, p2);
+    }
+
+    for (int y = -1; y <= h; ++y) {
+        Point p1(-2*tile_size, tile_size*(y+0));
+        Point p2(-2*tile_size, tile_size*(y+1));
+        s.emplace_back(p1, p2);
+
+        p1 = Point((w+2) * tile_size, tile_size*(y+0));
+        p2 = Point((w+2) * tile_size, tile_size*(y+1));
+        s.emplace_back(p1, p2);
+    }
+
+    boost::polygon::voronoi_diagram<double> vd;
+    boost::polygon::construct_voronoi(g.begin(), g.end(), s.begin(), s.end(), &vd);
+
+    std::vector<QPolygonF> cells;
+
+    for (auto &c : vd.cells()) {
+        if (!c.contains_point())
+            continue;
+
+        auto e = c.incident_edge();
+        QPolygonF poly;
+        do {
+            if (e->is_primary()) {
+                if (e->is_finite())
+                    poly.append(QPointF(e->vertex0()->x(), e->vertex0()->y()));
+                else {
+                   if (e->vertex0())
+                      poly.append(QPointF(e->vertex0()->x(), e->vertex0()->y()));
+                   else if (e->vertex1())
+                      poly.append(QPointF(e->vertex1()->x(), e->vertex1()->y()));
+                }
+            }
+            e = e->next();
+        } while (e != c.incident_edge());
+
+        cells.push_back(poly.intersected(rect));
+    }
+
+    return cells;
+}
 
 unsigned int floatToLevel(const float f)
 {
@@ -234,30 +347,6 @@ int main(int argc, char *argv[])
             montain.baseY=8;
         settings.endGroup();
     settings.endGroup();
-/*    const unsigned int resize_TerrainMap=settings.value("resize_TerrainMap").toUInt(&ok);
-    if(ok==false)
-    {
-        std::cerr << "resize_TerrainMap not number into the config file" << std::endl;
-        abort();
-    }
-    const unsigned int resize_TerrainHeat=settings.value("resize_TerrainHeat").toUInt(&ok);
-    if(ok==false)
-    {
-        std::cerr << "resize_TerrainHeat not number into the config file" << std::endl;
-        abort();
-    }
-    const float scale_TerrainMap=settings.value("scale_TerrainMap").toFloat(&ok);
-    if(ok==false)
-    {
-        std::cerr << "scale_TerrainMap not number into the config file" << std::endl;
-        abort();
-    }
-    const float scale_TerrainHeat=settings.value("scale_TerrainHeat").toFloat(&ok);
-    if(ok==false)
-    {
-        std::cerr << "scale_TerrainHeat not number into the config file" << std::endl;
-        abort();
-    }*/
     const unsigned int mapWidth=settings.value("mapWidth").toUInt(&ok);
     if(ok==false)
     {
@@ -290,89 +379,6 @@ int main(int argc, char *argv[])
     }
     srand(seed);
 
-    //fill
-    /*Simplex simplexWalkable,simplexHeat;
-    simplexWalkable.Shuffle(10+seed%10000);
-    simplexHeat.Shuffle(5+seed%10000);*/
-
-    /*uint8_t y_map=0;
-    while(y_map<mapXCount)
-    {
-        uint8_t x_map=0;
-        while(x_map<mapYCount)
-        {
-            Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,mapWidth,mapHeight,16,16);
-            QHash<QString,Tiled::Tileset *> cachedTileset;
-            loadTileset(water,cachedTileset,tiledMap);
-            loadTileset(grass,cachedTileset,tiledMap);
-            loadTileset(montain,cachedTileset,tiledMap);
-            Tiled::Tileset *tilesetDebug=readTileset("mapgen.tsx",&tiledMap);
-
-            //layer
-            Tiled::TileLayer *layerWalkable=new Tiled::TileLayer("Walkable",0,0,tiledMap.width(),tiledMap.height());
-            tiledMap.addLayer(layerWalkable);
-            Tiled::TileLayer *layerHeat=new Tiled::TileLayer("Heat",0,0,tiledMap.width(),tiledMap.height());
-            tiledMap.addLayer(layerHeat);
-            layerHeat->setVisible(false);
-
-            uint32_t y=0;
-            while(y<(uint32_t)tiledMap.height())
-            {
-                uint32_t x=0;
-                while(x<(uint32_t)tiledMap.width())
-                {
-                    // simplexWalkable.Get() returned noise value is between -1 and 1
-                    // Set noise scale with the last parameter
-                    unsigned int intWalkable=0;
-                    {
-                        float valueWalkable = simplexWalkable.Get(
-                        {(float)(x/resize_TerrainMap+x_map*tiledMap.width()/resize_TerrainMap),
-                         (float)(y/resize_TerrainMap+y_map*tiledMap.height()/resize_TerrainMap),
-                         1.f,2.f},
-                                    scale_TerrainMap*resize_TerrainMap);
-                        intWalkable=floatToLevel(valueWalkable);
-                    }
-                    float valueHeat = simplexHeat.Get(
-                    {(float)(x/resize_TerrainHeat+x_map*tiledMap.width()/resize_TerrainHeat),
-                     (float)(y/resize_TerrainHeat+y_map*tiledMap.height()/resize_TerrainHeat),
-                     1.f,2.f},
-                                scale_TerrainHeat*resize_TerrainHeat);
-                    {
-                        Tiled::Cell cell;//=layerWalkable.cellAt(x,y)
-
-                        if(intWalkable==0)
-                            cell.tile=water.tileset->tileAt(water.tile);
-                        else if(intWalkable==1)
-                            cell.tile=grass.tileset->tileAt(grass.tile);
-                        else
-                            cell.tile=montain.tileset->tileAt(montain.tile);
-
-                        layerWalkable->setCell(x,y,cell);
-                    }
-                    {
-                        Tiled::Cell cell;//=layerHeat.cellAt(x,y)
-
-                        valueHeat+=1;
-                        valueHeat/=2;
-                        valueHeat*=6;
-                        valueHeat-=0.01f;
-                        //valueHeat range: 0.0 at 5.99
-                        cell.tile=tilesetDebug->tileAt((int)valueHeat);
-
-                        layerHeat->setCell(x,y,cell);
-                    }
-                    ++x;
-                }
-                ++y;
-            }
-
-            Tiled::MapWriter maprwriter;
-            maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/"+QString::number(x_map)+"."+QString::number(y_map)+".tmx");
-            x_map++;
-        }
-        y_map++;
-    }*/
-
     {
         Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,mapWidth*mapXCount,mapHeight*mapYCount,16,16);
         QHash<QString,Tiled::Tileset *> cachedTileset;
@@ -392,147 +398,27 @@ int main(int argc, char *argv[])
         tiledMap.addLayer(layerPoint);
         layerHeat->setVisible(false);
 
-        PoissonGenerator::DefaultPRNG PRNG(seed);
-        const std::vector<PoissonGenerator::sPoint> Points = PoissonGenerator::GeneratePoissonPoints(30,PRNG,30,false);
-
-        std::vector<boost::polygon::point_data<int> > points;
-        //std::vector<boost::polygon::segment_data<int> > segments;
-        unsigned int index=0;
-        for(auto i=Points.begin();i!=Points.end();i++)
+        auto grid = generateGrid(tiledMap.width(),tiledMap.height(),seed);
+        for (const auto &p : grid)
         {
-            float x=i->x,y=i->y;
-            x=x*tiledMap.width()+((double)rand()/(double)RAND_MAX)*1.5-0.75;
-            if(x>tiledMap.width())
-                x=tiledMap.width();
-            if(x<0)
-                x=0;
-            y=y*tiledMap.height()+((double)rand()/(double)RAND_MAX)*1.5-0.75;
-            if(y>tiledMap.height())
-                y=tiledMap.height();
-            if(y<0)
-                y=0;
-
-            points.push_back(boost::polygon::point_data<int>(x*16,y*16));
-
-            Tiled::MapObject *object = new Tiled::MapObject("P"+QString::number(index+1),"",QPointF(((float)x),((float)y)), QSizeF(0.0,0.0));
+            Tiled::MapObject *object = new Tiled::MapObject("P","",QPointF(
+                                                                ((float)p.x())/16,
+                                                                ((float)p.y())/16
+                                                                ),
+                                                            QSizeF(0.0,0.0));
             object->setPolygon(QPolygonF(QVector<QPointF>()<<QPointF(0.05,0.0)<<QPointF(0.05,0.0)<<QPointF(0.05,0.05)<<QPointF(0.0,0.05)));
             object->setShape(Tiled::MapObject::Polygon);
             layerPoint->addObject(object);
-            index++;
         }
 
-        voronoi_diagram<double> vd;
-        boost::polygon::construct_voronoi(points.begin(), points.end(), &vd);
-
-        index=0;
-        for (voronoi_diagram<double>::const_cell_iterator it = vd.cells().begin();
-             it != vd.cells().end(); ++it) {
-          const voronoi_diagram<double>::cell_type &cell = *it;
-          const voronoi_diagram<double>::edge_type *edge = cell.incident_edge();
-          Tiled::MapObject *object = new Tiled::MapObject("C"+QString::number(index+1),"",QPointF(0,0), QSizeF(0.0,0.0));
-          QVector<QPointF> pointsFloat;
-          // This is convenient way to iterate edges around Voronoi cell.
-          do {
-              const auto* vertex=edge->vertex0();
-              if(vertex!=NULL)
-                pointsFloat<<QPointF(
-                                 ((float)vertex->x())/16,
-                                 ((float)vertex->y())/16
-                                 );
-            edge = edge->next();
-          } while (edge != cell.incident_edge());
-          object->setPolygon(QPolygonF(pointsFloat));
-          object->setShape(Tiled::MapObject::Polygon);
-          layerZone->addObject(object);
-          index++;
-        }
-
-        /*unsigned int indexSites=0;
-        while(indexSites<sites.size())
+        auto vd = computeVoronoi(grid,tiledMap.width(),tiledMap.height());
+        for (const auto &poly : vd)
         {
-            const Point2 &site=sites.at(indexSites);
-
-            indexSites++;
-        }
-
-        unsigned int indexCells=0;
-        while(indexCells<diagram->cells.size())
-        {
-            const Cell &cell=*diagram->cells.at(indexCells);
-
-            Tiled::MapObject *object = new Tiled::MapObject("C"+QString::number(indexCells),"",QPointF(0,0), QSizeF(0.0,0.0));
-            QVector<QPointF> points;
-
-            std::vector<HalfEdge*> halfEdges=cell.halfEdges;
-            unsigned int halfEdgesIndex=0;
-            while(halfEdgesIndex<halfEdges.size())
-            {
-                HalfEdge* halfEdge=halfEdges.at(halfEdgesIndex);
-                const Point2 point=*halfEdge->startPoint();
-                points<<QPointF(point.x,point.y);
-                halfEdgesIndex++;
-            }
-
-            object->setPolygon(QPolygonF(points));
+            Tiled::MapObject *object = new Tiled::MapObject("C","",QPointF(0,0), QSizeF(0.0,0.0));
+            object->setPolygon(poly);
             object->setShape(Tiled::MapObject::Polygon);
             layerZone->addObject(object);
-
-            indexCells++;
-        }*/
-
-        //delete diagram;
-
-/*        uint32_t y=0;
-        while(y<(uint32_t)tiledMap.height())
-        {
-            uint32_t x=0;
-            while(x<(uint32_t)tiledMap.width())
-            {
-                // simplexWalkable.Get() returned noise value is between -1 and 1
-                // Set noise scale with the last parameter
-                unsigned int intWalkable=0;
-                {
-                    float valueWalkable = simplexWalkable.Get(
-                    {(float)(x/resize_TerrainMap),
-                     (float)(y/resize_TerrainMap),
-                     1.f,2.f},
-                                scale_TerrainMap*resize_TerrainMap);
-                    intWalkable=floatToLevel(valueWalkable);
-                }
-
-
-                float valueHeat = simplexHeat.Get(
-                {(float)(x/resize_TerrainHeat),
-                 (float)(y/resize_TerrainHeat),
-                 1.f,2.f},
-                            scale_TerrainHeat*resize_TerrainHeat);
-                {
-                    Tiled::Cell cell;//=layerWalkable.cellAt(x,y)
-                    if(intWalkable==0)
-                        cell.tile=water.tileset->tileAt(water.tile);
-                    else if(intWalkable==1)
-                        cell.tile=grass.tileset->tileAt(grass.tile);
-                    else
-                        cell.tile=montain.tileset->tileAt(montain.tile);
-
-                    layerWalkable->setCell(x,y,cell);
-                }
-                {
-                    Tiled::Cell cell;//=layerHeat.cellAt(x,y)
-
-                    valueHeat+=1;
-                    valueHeat/=2;
-                    valueHeat*=6;
-                    valueHeat-=0.01f;
-                    //valueHeat range: 0.0 at 5.99
-                    cell.tile=tilesetDebug->tileAt((int)valueHeat);
-
-                    layerHeat->setCell(x,y,cell);
-                }
-                ++x;
-            }
-            ++y;
-        }*/
+        }
 
         Tiled::MapWriter maprwriter;
         maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/all.tmx");
