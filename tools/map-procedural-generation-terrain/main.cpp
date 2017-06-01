@@ -7,6 +7,9 @@
 #include <iostream>
 #include <fstream>
 #include <memory.h>
+#include <cmath>
+#include <random>
+#include <limits>
 
 #include "../../client/tiled/tiled_mapobject.h"
 #include "../../client/tiled/tiled_objectgroup.h"
@@ -28,6 +31,7 @@
 #include "../../client/tiled/tiled_tileset.h"
 
 #include "PoissonGenerator.h"
+#include "znoise/headers/Simplex.hpp"
 
 #include <boost/polygon/point_data.hpp>
 #include <boost/polygon/segment_data.hpp>
@@ -54,7 +58,7 @@ Biomes
 Noisy Edges
 http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/*/
 
-static const int tile_size = 16;
+static const int SCALE = 100;
 
 struct Terrain
 {
@@ -64,118 +68,120 @@ struct Terrain
     uint32_t baseX,baseY;
 };
 
-static Grid generateGrid(const unsigned int &w, const unsigned int &h, const unsigned int &seed) {
+static Grid generateGrid(const unsigned int w, const unsigned int h, const unsigned int seed, const int num) {
+    std::mt19937 gen(seed);
+    std::uniform_real_distribution<double> dis(-0.75, 0.75);
+
     Grid g;
     g.reserve(size_t(w) * size_t(h));
 
     PoissonGenerator::DefaultPRNG PRNG(seed);
-    const std::vector<PoissonGenerator::sPoint> Points = PoissonGenerator::GeneratePoissonPoints(30,PRNG,30,false);
-    unsigned int index=0;
-    for(auto i=Points.begin();i!=Points.end();i++)
-    {
-        float x=i->x,y=i->y;
-        x=x*w+((double)rand()/(double)RAND_MAX)*1.5-0.75;
-        if(x>w)
-            x=w;
-        if(x<0)
-            x=0;
-        y=y*h+((double)rand()/(double)RAND_MAX)*1.5-0.75;
-        if(y>h)
-            y=h;
-        if(y<0)
-            y=0;
-        g.emplace_back(x,y);
-        index++;
+    const auto points = PoissonGenerator::GeneratePoissonPoints(num, PRNG, num, false);
+    //qDebug("Size: %ld", points.size());
+
+    for(const auto &p : points) {
+        double x = double(p.x) * w + dis(gen);
+        if (x > w)
+            x = w;
+        if (x < 0)
+            x = 0;
+        double y = double(p.y) * h + dis(gen);
+        if (y > h)
+            y = h;
+        if (y < 0)
+            y = 0;
+        g.emplace_back(SCALE*x, SCALE*y);
     }
 
-    /*
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dis(-rnd/2, rnd/2);
-
-    Grid g;
-    g.reserve(size_t(w) * size_t(h));
-
-    for (int x = 0; x < w; ++x)
-        for (int y = 0; y < h; ++y)
-            g.emplace_back(tile_size*x + dis(gen) + tile_size/2,
-                           tile_size*y + dis(gen) + tile_size/2);
-
-    */
     return g;
 }
 
-static std::vector<QPolygonF> computeVoronoi(const Grid &g, int w, int h) {
+static std::vector<QPolygonF> computeVoronoi(const Grid &g, double w, double h) {
     QPolygonF rect;
     rect.append({0.0, 0.0});
-    rect.append({0.0, tile_size * double(h)});
-    rect.append({tile_size * double(w), tile_size * double(h)});
-    rect.append({tile_size * double(w), 0.0});
-
-    // create and add segments to ensure that the diagram spans the whole rect
-    std::vector<Segment> s;
-
-    for (int x = -1; x <= w; ++x) {
-        Point p1(tile_size*(x+0), -2*tile_size);
-        Point p2(tile_size*(x+1), -2*tile_size);
-        s.emplace_back(p1, p2);
-
-        p1 = Point(tile_size*(x+0), (h+2) * tile_size);
-        p2 = Point(tile_size*(x+1), (h+2) * tile_size);
-        s.emplace_back(p1, p2);
-    }
-
-    for (int y = -1; y <= h; ++y) {
-        Point p1(-2*tile_size, tile_size*(y+0));
-        Point p2(-2*tile_size, tile_size*(y+1));
-        s.emplace_back(p1, p2);
-
-        p1 = Point((w+2) * tile_size, tile_size*(y+0));
-        p2 = Point((w+2) * tile_size, tile_size*(y+1));
-        s.emplace_back(p1, p2);
-    }
+    rect.append({0.0, SCALE*h});
+    rect.append({SCALE*w, SCALE*h});
+    rect.append({SCALE*w, 0.0});
 
     boost::polygon::voronoi_diagram<double> vd;
-    boost::polygon::construct_voronoi(g.begin(), g.end(), s.begin(), s.end(), &vd);
+    boost::polygon::construct_voronoi(g.begin(), g.end(), &vd);
 
     std::vector<QPolygonF> cells;
+    cells.resize(g.size());
 
     for (auto &c : vd.cells()) {
-        if (!c.contains_point())
-            continue;
-
         auto e = c.incident_edge();
+        unsigned int final_index=c.source_index();
         QPolygonF poly;
         do {
             if (e->is_primary()) {
-                if (e->is_finite())
+                if (e->is_finite()) {
                     poly.append(QPointF(e->vertex0()->x(), e->vertex0()->y()));
+                }
                 else {
-                   if (e->vertex0())
-                      poly.append(QPointF(e->vertex0()->x(), e->vertex0()->y()));
-                   else if (e->vertex1())
-                      poly.append(QPointF(e->vertex1()->x(), e->vertex1()->y()));
+                    const auto &cell1 = e->cell();
+                    const auto &cell2 = e->twin()->cell();
+                    auto p1 = g[cell1->source_index()];
+                    auto p2 = g[cell2->source_index()];
+                    double ox = 0.5 * (p1.x() + p2.x());
+                    double oy = 0.5 * (p1.y() + p2.y());
+                    double dx = p1.y() - p2.y();
+                    double dy = p2.x() - p1.x();
+                    double coef = SCALE * w / std::max(fabs(dx), fabs(dy));
+
+                    if (e->vertex0())
+                        poly.append(QPointF(e->vertex0()->x(), e->vertex0()->y()));
+                    else
+                        poly.append(QPointF(ox - dx * coef, oy - dy * coef));
+
+                    if (e->vertex1())
+                        poly.append(QPointF(e->vertex1()->x(), e->vertex1()->y()));
+                    else
+                        poly.append(QPointF(ox + dx * coef, oy + dy * coef));
                 }
             }
             e = e->next();
         } while (e != c.incident_edge());
 
-        cells.push_back(poly.intersected(rect));
+        poly = poly.intersected(rect);
+        for (auto &p : poly)
+            p /= SCALE;
+
+        //cells.push_back(poly);
+        cells[final_index]=poly;
     }
 
     return cells;
 }
 
-unsigned int floatToLevel(const float f)
+unsigned int floatToHigh(const float f)
 {
     if(f<-0.1)
         return 0;
-    else if(f<0.3)
+    else if(f<0.2)
         return 1;
-    else if(f<0.6)
+    else if(f<0.4)
         return 2;
-    else
+    else if(f<0.6)
         return 3;
+    else
+        return 4;
+}
+
+unsigned int floatToMoisure(const float f)
+{
+    if(f<-0.6)
+        return 1;
+    else if(f<-0.3)
+        return 2;
+    else if(f<0.0)
+        return 3;
+    else if(f<0.3)
+        return 4;
+    else if(f<0.6)
+        return 5;
+    else
+        return 6;
 }
 
 Tiled::Tileset *readTileset(const QString &tsx,Tiled::Map *tiledMap)
@@ -387,23 +393,90 @@ int main(int argc, char *argv[])
         loadTileset(montain,cachedTileset,tiledMap);
         //Tiled::Tileset *tilesetDebug=readTileset("mapgen.tsx",&tiledMap);
 
-        //layer
-        Tiled::TileLayer *layerWalkable=new Tiled::TileLayer("Walkable",0,0,tiledMap.width(),tiledMap.height());
-        tiledMap.addLayer(layerWalkable);
-        Tiled::TileLayer *layerHeat=new Tiled::TileLayer("Heat",0,0,tiledMap.width(),tiledMap.height());
-        tiledMap.addLayer(layerHeat);
-        Tiled::ObjectGroup *layerZone=new Tiled::ObjectGroup("Zone",0,0,tiledMap.width(),tiledMap.height());
-        tiledMap.addLayer(layerZone);
+        Tiled::ObjectGroup *layerZoneWater=new Tiled::ObjectGroup("Water",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneWater->setColor(QColor("#6273cc"));
+        tiledMap.addLayer(layerZoneWater);
+
+        Tiled::ObjectGroup *layerZoneSnow=new Tiled::ObjectGroup("Snow",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneSnow->setColor(QColor("#ffffff"));
+        tiledMap.addLayer(layerZoneSnow);
+        Tiled::ObjectGroup *layerZoneTundra=new Tiled::ObjectGroup("Tundra",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneTundra->setColor(QColor("#ddddbb"));
+        tiledMap.addLayer(layerZoneTundra);
+        Tiled::ObjectGroup *layerZoneBare=new Tiled::ObjectGroup("Bare",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneBare->setColor(QColor("#bbbbbb"));
+        tiledMap.addLayer(layerZoneBare);
+        Tiled::ObjectGroup *layerZoneScorched=new Tiled::ObjectGroup("Scorched",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneScorched->setColor(QColor("#999999"));
+        tiledMap.addLayer(layerZoneScorched);
+        Tiled::ObjectGroup *layerZoneTaiga=new Tiled::ObjectGroup("Taiga",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneTaiga->setColor(QColor("#ccd4bb"));
+        tiledMap.addLayer(layerZoneTaiga);
+        Tiled::ObjectGroup *layerZoneShrubland=new Tiled::ObjectGroup("Shrubland",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneShrubland->setColor(QColor("#c4ccbb"));
+        tiledMap.addLayer(layerZoneShrubland);
+        Tiled::ObjectGroup *layerZoneTemperateDesert=new Tiled::ObjectGroup("Temperate Desert",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneTemperateDesert->setColor(QColor("#e4e8ca"));
+        tiledMap.addLayer(layerZoneTemperateDesert);
+        Tiled::ObjectGroup *layerZoneTemperateRainForest=new Tiled::ObjectGroup("Temperate Rain Forest",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneTemperateRainForest->setColor(QColor("#a4c4a8"));
+        tiledMap.addLayer(layerZoneTemperateRainForest);
+        Tiled::ObjectGroup *layerZoneTemperateDeciduousForest=new Tiled::ObjectGroup("Temperate Deciduous Forest",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneTemperateDeciduousForest->setColor(QColor("#b4c9a9"));
+        tiledMap.addLayer(layerZoneTemperateDeciduousForest);
+        Tiled::ObjectGroup *layerZoneGrassland=new Tiled::ObjectGroup("Grassland",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneGrassland->setColor(QColor("#c4d4aa"));
+        tiledMap.addLayer(layerZoneGrassland);
+        Tiled::ObjectGroup *layerZoneTropicalRainForest=new Tiled::ObjectGroup("Tropical Rain Forest",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneTropicalRainForest->setColor(QColor("#9cbba9"));
+        tiledMap.addLayer(layerZoneTropicalRainForest);
+        Tiled::ObjectGroup *layerZoneTropicalSeasonalForest=new Tiled::ObjectGroup("Tropical Seasonal Forest",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneTropicalSeasonalForest->setColor(QColor("#a9cca4"));
+        tiledMap.addLayer(layerZoneTropicalSeasonalForest);
+        Tiled::ObjectGroup *layerZoneSubtropicalDesert=new Tiled::ObjectGroup("Subtropical Desert",0,0,tiledMap.width(),tiledMap.height());
+        layerZoneSubtropicalDesert->setColor(QColor("#e9ddc7"));
+        tiledMap.addLayer(layerZoneSubtropicalDesert);
+
+        Tiled::ObjectGroup * arrayTerrain[4][6];
+        //high 1
+        arrayTerrain[0][0]=layerZoneSubtropicalDesert;//Moisture 1
+        arrayTerrain[0][1]=layerZoneGrassland;
+        arrayTerrain[0][2]=layerZoneTropicalSeasonalForest;
+        arrayTerrain[0][3]=layerZoneTropicalSeasonalForest;
+        arrayTerrain[0][4]=layerZoneTropicalRainForest;
+        arrayTerrain[0][5]=layerZoneTropicalRainForest;
+        //high 2
+        arrayTerrain[1][0]=layerZoneTemperateDesert;//Moisture 1
+        arrayTerrain[1][1]=layerZoneGrassland;
+        arrayTerrain[1][2]=layerZoneGrassland;
+        arrayTerrain[1][3]=layerZoneTemperateDeciduousForest;
+        arrayTerrain[1][4]=layerZoneTemperateDeciduousForest;
+        arrayTerrain[1][5]=layerZoneTemperateRainForest;
+        //high 3
+        arrayTerrain[2][0]=layerZoneTemperateDesert;//Moisture 1
+        arrayTerrain[2][1]=layerZoneTemperateDesert;
+        arrayTerrain[2][2]=layerZoneShrubland;
+        arrayTerrain[2][3]=layerZoneShrubland;
+        arrayTerrain[2][4]=layerZoneTaiga;
+        arrayTerrain[2][5]=layerZoneTaiga;
+        //high 4
+        arrayTerrain[3][0]=layerZoneScorched;//Moisture 1
+        arrayTerrain[3][1]=layerZoneBare;
+        arrayTerrain[3][2]=layerZoneTundra;
+        arrayTerrain[3][3]=layerZoneSnow;
+        arrayTerrain[3][4]=layerZoneSnow;
+        arrayTerrain[3][5]=layerZoneSnow;
+
         Tiled::ObjectGroup *layerPoint=new Tiled::ObjectGroup("Point",0,0,tiledMap.width(),tiledMap.height());
         tiledMap.addLayer(layerPoint);
-        layerHeat->setVisible(false);
+        layerPoint->setVisible(false);
 
-        auto grid = generateGrid(tiledMap.width(),tiledMap.height(),seed);
+        auto grid = generateGrid(tiledMap.width(),tiledMap.height(),seed,1000);
         for (const auto &p : grid)
         {
             Tiled::MapObject *object = new Tiled::MapObject("P","",QPointF(
-                                                                ((float)p.x()),
-                                                                ((float)p.y())
+                                                                ((float)p.x()/SCALE),
+                                                                ((float)p.y()/SCALE)
                                                                 ),
                                                             QSizeF(0.0,0.0));
             object->setPolygon(QPolygonF(QVector<QPointF>()<<QPointF(0.05,0.0)<<QPointF(0.05,0.0)<<QPointF(0.05,0.05)<<QPointF(0.0,0.05)));
@@ -411,13 +484,31 @@ int main(int argc, char *argv[])
             layerPoint->addObject(object);
         }
 
+        Simplex heighmap(seed+500);
+        Simplex moisuremap(seed+5200);
         auto vd = computeVoronoi(grid,tiledMap.width(),tiledMap.height());
-        for (const auto &poly : vd)
+        if(vd.size()!=grid.size())
+            abort();
+        unsigned int index=0;
+        while(index<grid.size())
         {
+            //const Point &centroid=grid.at(index);
+            const QPolygonF &poly=vd.at(index);
             Tiled::MapObject *object = new Tiled::MapObject("C","",QPointF(0,0), QSizeF(0.0,0.0));
             object->setPolygon(poly);
             object->setShape(Tiled::MapObject::Polygon);
-            layerZone->addObject(object);
+            const QList<QPointF> &edges=poly.toList();
+            if(!edges.isEmpty())
+            {
+                const QPointF &edge=edges.first();
+                const unsigned int &heigh=floatToHigh(heighmap.Get({(float)edge.x(),(float)edge.y()},0.05f));
+                const unsigned int &moisure=floatToMoisure(moisuremap.Get({(float)edge.x(),(float)edge.y()},0.05f));
+                if(heigh==0)
+                    layerZoneWater->addObject(object);
+                else
+                    arrayTerrain[heigh-1][moisure-1]->addObject(object);
+            }
+            index++;
         }
 
         Tiled::MapWriter maprwriter;
