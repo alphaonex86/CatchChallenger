@@ -16,33 +16,30 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 }
 
 SOURCES += \
-    src/Diagram.cpp \
-    src/Edge.cpp \
-    src/Point2.cpp \
-    src/Vector2.cpp \
-    src/VoronoiDiagramGenerator.cpp \
-    src/BeachLine.cpp \
-    src/Cell.cpp \
-    src/CircleEventQueue.cpp \
-    main.cpp
+    main.cpp \
+    znoise/cpp/FBM.cpp \
+    znoise/cpp/HybridMultiFractal.cpp \
+    znoise/cpp/MixerBase.cpp \
+    znoise/cpp/NoiseBase.cpp \
+    znoise/cpp/NoiseTools.cpp \
+    znoise/cpp/Perlin.cpp \
+    znoise/cpp/Simplex.cpp \
+    znoise/cpp/Worley.cpp
 
 RESOURCES += \
     resources.qrc
 
 HEADERS += \
-    include/Cell.h \
-    include/Diagram.h \
-    include/Edge.h \
-    include/VoronoiDiagramGenerator.h \
-    include/Point2.h \
-    include/Vector2.h \
-    src/CircleEventQueue.h \
-    src/Epsilon.h \
-    src/RBTree.h \
-    src/BeachLine.h \
-    src/MemoryPool/StackAlloc.h \
-    src/MemoryPool/C-11/MemoryPool.h \
-    PoissonGenerator.h
+    PoissonGenerator.h \
+    znoise/headers/Enums.hpp \
+    znoise/headers/FBM.hpp \
+    znoise/headers/HybridMultiFractal.hpp \
+    znoise/headers/MixerBase.hpp \
+    znoise/headers/NoiseBase.hpp \
+    znoise/headers/NoiseTools.hpp \
+    znoise/headers/Perlin.hpp \
+    znoise/headers/Simplex.hpp \
+    znoise/headers/Worley.hpp
 
 LIBS += -lboost_system
 
