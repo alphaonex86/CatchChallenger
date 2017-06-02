@@ -13,7 +13,7 @@ class VoronioForTiledMapTmx
 {
 public:
     static Grid generateGrid(const unsigned int w, const unsigned int h, const unsigned int seed, const int num);
-    static std::vector<QPolygonF> computeVoronoi(const Grid &g, double w, double h);
+    static std::vector<QPolygonF> computeVoronoi(const Grid &g, int w, int h);
     static const int SCALE;
 };
 
