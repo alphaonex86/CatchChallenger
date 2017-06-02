@@ -208,13 +208,15 @@ Tiled::ObjectGroup *addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<T
 
 void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain,Tiled::ObjectGroup *layerZoneWater,const Grid &grid,
                         const std::vector<QPolygonF> &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
-                        int offsetX=0,int offsetY=0)
+                        const int widthMap,const int heightMap,const int offsetX=0,const int offsetY=0)
 {
+    QPolygonF polyMap(QRectF(-offsetX,-offsetY,widthMap,heightMap));
     unsigned int index=0;
     while(index<grid.size())
     {
         const Point &centroid=grid.at(index);
-        const QPolygonF &poly=vd.at(index);
+        QPolygonF poly=vd.at(index);
+        poly=poly.intersected(polyMap);
         Tiled::MapObject *object = new Tiled::MapObject("C","",QPointF(offsetX,offsetY), QSizeF(0.0,0.0));
         object->setPolygon(poly);
         object->setShape(Tiled::MapObject::Polygon);
@@ -425,7 +427,27 @@ int main(int argc, char *argv[])
             //Tiled::Tileset *tilesetDebug=readTileset("mapgen.tsx",&tiledMap);
             std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrain;
             Tiled::ObjectGroup *layerZoneWater=addDebugLayer(tiledMap,arrayTerrain);
-            addPolygoneTerrain(arrayTerrain,layerZoneWater,grid,vd,heighmap,moisuremap,noiseMapScale);
+            addPolygoneTerrain(arrayTerrain,layerZoneWater,grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height());
+            {
+                Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0,tiledMap.width(),tiledMap.height());
+                layerZoneChunk->setColor(QColor("#ffe000"));
+                tiledMap.addLayer(layerZoneChunk);
+
+                unsigned int mapY=0;
+                while(mapY<mapYCount)
+                {
+                    unsigned int mapX=0;
+                    while(mapX<mapXCount)
+                    {
+                        Tiled::MapObject *object = new Tiled::MapObject(QString::number(mapX)+","+QString::number(mapY),"",QPointF(0,0), QSizeF(0.0,0.0));
+                        object->setPolygon(QPolygonF(QRectF(mapX*mapWidth,mapY*mapHeight,mapWidth,mapHeight)));
+                        object->setShape(Tiled::MapObject::Polygon);
+                        layerZoneChunk->addObject(object);
+                        mapX++;
+                    }
+                    mapY++;
+                }
+            }
             Tiled::MapWriter maprwriter;maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/all.tmx");
         }
         {
@@ -443,7 +465,7 @@ int main(int argc, char *argv[])
                     //Tiled::Tileset *tilesetDebug=readTileset("mapgen.tsx",&tiledMap);
                     std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrain;
                     Tiled::ObjectGroup *layerZoneWater=addDebugLayer(tiledMap,arrayTerrain);
-                    addPolygoneTerrain(arrayTerrain,layerZoneWater,grid,vd,heighmap,moisuremap,noiseMapScale,-(mapWidth*mapX),-(mapHeight*mapY));
+                    addPolygoneTerrain(arrayTerrain,layerZoneWater,grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height(),-(mapWidth*mapX),-(mapHeight*mapY));
                     Tiled::MapWriter maprwriter;
                     maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/"+QString::number(mapX)+"."+QString::number(mapY)+".tmx");
 
