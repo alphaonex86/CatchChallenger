@@ -3,7 +3,9 @@ include(../../client/tiled/tiled.pri)
 TEMPLATE = app
 TARGET = map-procedural-generation-terrain
 
-QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g"
+QMAKE_CXXFLAGS+="-std=c++0x -g"
+QMAKE_CFLAGS += -fno-omit-frame-pointer -g
+QMAKE_CXXFLAGS += -fno-omit-frame-pointer -g
 
 QT += xml
 
@@ -24,7 +26,8 @@ SOURCES += \
     znoise/cpp/NoiseTools.cpp \
     znoise/cpp/Perlin.cpp \
     znoise/cpp/Simplex.cpp \
-    znoise/cpp/Worley.cpp
+    znoise/cpp/Worley.cpp \
+    VoronioForTiledMapTmx.cpp
 
 RESOURCES += \
     resources.qrc
@@ -39,7 +42,8 @@ HEADERS += \
     znoise/headers/NoiseTools.hpp \
     znoise/headers/Perlin.hpp \
     znoise/headers/Simplex.hpp \
-    znoise/headers/Worley.hpp
+    znoise/headers/Worley.hpp \
+    VoronioForTiledMapTmx.h
 
 LIBS += -lboost_system
 
