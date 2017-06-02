@@ -71,6 +71,13 @@ unsigned int floatToMoisure(const float f)
         return 6;
 }
 
+double area(const QPolygonF &p) {
+    double a = 0.0;
+    for (int i = 0; i < p.size() - 1; ++i)
+        a += p[i].x() * p[i+1].y() - p[i+1].x() * p[i].y();
+    return 0.5 * a;
+}
+
 Tiled::Tileset *readTileset(const QString &tsx,Tiled::Map *tiledMap)
 {
     QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/");
@@ -207,8 +214,9 @@ Tiled::ObjectGroup *addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<T
 }
 
 void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain,Tiled::ObjectGroup *layerZoneWater,const Grid &grid,
-                        const std::vector<QPolygonF> &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
-                        const int widthMap,const int heightMap,const int offsetX=0,const int offsetY=0)
+                        const std::vector<VoronioForTiledMapTmx::PolygonZoneOnMap> &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
+                        const int widthMap,const int heightMap,
+                        const int offsetX=0,const int offsetY=0)
 {
     QPolygonF polyMap(QRectF(-offsetX,-offsetY,widthMap,heightMap));
     unsigned int index=0;
@@ -415,7 +423,7 @@ int main(int argc, char *argv[])
         Simplex moisuremap(seed+5200);
 
         t.start();
-        const std::vector<QPolygonF> &vd = VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight);
+        const std::vector<VoronioForTiledMapTmx::PolygonZoneOnMap> &vd = VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight);
         if(vd.size()!=grid.size())
             abort();
         qDebug("computVoronoi took %d ms", t.elapsed());
