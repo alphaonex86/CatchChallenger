@@ -49,13 +49,13 @@ Grid VoronioForTiledMapTmx::generateGrid(const unsigned int w, const unsigned in
     return g;
 }
 
-std::vector<QPolygonF> VoronioForTiledMapTmx::computeVoronoi(const Grid &g, int w, int h) {
+std::vector<VoronioForTiledMapTmx::PolygonZoneOnMap> VoronioForTiledMapTmx::computeVoronoi(const Grid &g, int w, int h) {
     QPolygonF rect(QRectF(0.0, 0.0, w, h));
 
     boost::polygon::voronoi_diagram<double> vd;
     boost::polygon::construct_voronoi(g.begin(), g.end(), &vd);
 
-    std::vector<QPolygonF> cells;
+    std::vector<PolygonZoneOnMap> cells;
     cells.resize(g.size());
 
     for (auto &c : vd.cells()) {
@@ -92,8 +92,12 @@ std::vector<QPolygonF> VoronioForTiledMapTmx::computeVoronoi(const Grid &g, int 
             e = e->next();
         } while (e != c.incident_edge());
 
-        cells[final_index]=poly.intersected(rect);
+        cells[final_index].polygons=poly.intersected(rect);
     }
+
+    /*polygonZoneOnMap.resize(widthMap);
+    for( int a = 0; a < widthMap; a++ )
+          polygonZoneOnMap[a].resize(heightMap);*/
 
     return cells;
 }
