@@ -49,12 +49,8 @@ Grid VoronioForTiledMapTmx::generateGrid(const unsigned int w, const unsigned in
     return g;
 }
 
-std::vector<QPolygonF> VoronioForTiledMapTmx::computeVoronoi(const Grid &g, double w, double h) {
-    QPolygonF rect;
-    rect.append({0.0, 0.0});
-    rect.append({0.0, SCALE*h});
-    rect.append({SCALE*w, SCALE*h});
-    rect.append({SCALE*w, 0.0});
+std::vector<QPolygonF> VoronioForTiledMapTmx::computeVoronoi(const Grid &g, int w, int h) {
+    QPolygonF rect(QRectF(0.0, 0.0, w, h));
 
     boost::polygon::voronoi_diagram<double> vd;
     boost::polygon::construct_voronoi(g.begin(), g.end(), &vd);
@@ -69,7 +65,7 @@ std::vector<QPolygonF> VoronioForTiledMapTmx::computeVoronoi(const Grid &g, doub
         do {
             if (e->is_primary()) {
                 if (e->is_finite()) {
-                    poly.append(QPointF(e->vertex0()->x(), e->vertex0()->y()));
+                    poly.append(QPointF(e->vertex0()->x(), e->vertex0()->y()) / SCALE);
                 }
                 else {
                     const auto &cell1 = e->cell();
@@ -83,25 +79,20 @@ std::vector<QPolygonF> VoronioForTiledMapTmx::computeVoronoi(const Grid &g, doub
                     double coef = SCALE * w / std::max(fabs(dx), fabs(dy));
 
                     if (e->vertex0())
-                        poly.append(QPointF(e->vertex0()->x(), e->vertex0()->y()));
+                        poly.append(QPointF(e->vertex0()->x(), e->vertex0()->y()) / SCALE);
                     else
-                        poly.append(QPointF(ox - dx * coef, oy - dy * coef));
+                        poly.append(QPointF(ox - dx * coef, oy - dy * coef) / SCALE);
 
                     if (e->vertex1())
-                        poly.append(QPointF(e->vertex1()->x(), e->vertex1()->y()));
+                        poly.append(QPointF(e->vertex1()->x(), e->vertex1()->y()) / SCALE);
                     else
-                        poly.append(QPointF(ox + dx * coef, oy + dy * coef));
+                        poly.append(QPointF(ox + dx * coef, oy + dy * coef) / SCALE);
                 }
             }
             e = e->next();
         } while (e != c.incident_edge());
 
-        poly = poly.intersected(rect);
-        for (auto &p : poly)
-            p /= SCALE;
-
-        //cells.push_back(poly);
-        cells[final_index]=poly;
+        cells[final_index]=poly.intersected(rect);
     }
 
     return cells;
