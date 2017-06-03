@@ -21,6 +21,7 @@ public:
     {
         QPolygonF polygon;
         std::vector<Point> points;
+        QPolygonF pixelizedPolygon;
     };
     struct PolygonZoneMap
     {
