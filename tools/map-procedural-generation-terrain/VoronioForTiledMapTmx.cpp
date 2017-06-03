@@ -18,6 +18,13 @@ typedef boost::polygon::segment_data<int> Segment;
 
 const int VoronioForTiledMapTmx::SCALE = 1000;
 
+double VoronioForTiledMapTmx::area(const QPolygonF &p) {
+    double a = 0.0;
+    for (int i = 0; i < p.size() - 1; ++i)
+        a += p[i].x() * p[i+1].y() - p[i+1].x() * p[i].y();
+    return 0.5 * a;
+}
+
 Grid VoronioForTiledMapTmx::generateGrid(const unsigned int w, const unsigned int h, const unsigned int seed, const int num) {
     std::mt19937 gen(seed);
     /*std::uniform_real_distribution<double> disw(0,w);
@@ -49,16 +56,19 @@ Grid VoronioForTiledMapTmx::generateGrid(const unsigned int w, const unsigned in
     return g;
 }
 
-std::vector<VoronioForTiledMapTmx::PolygonZoneOnMap> VoronioForTiledMapTmx::computeVoronoi(const Grid &g, int w, int h) {
+VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h) {
     QPolygonF rect(QRectF(0.0, 0.0, w, h));
 
     boost::polygon::voronoi_diagram<double> vd;
     boost::polygon::construct_voronoi(g.begin(), g.end(), &vd);
 
-    std::vector<PolygonZoneOnMap> cells;
-    cells.resize(g.size());
+    PolygonZoneMap polygonZoneMap;
+    polygonZoneMap.tileToPolygonZoneIndex=(PolygonZoneIndex *)malloc(sizeof(PolygonZoneIndex)*w*h);
+    memset(polygonZoneMap.tileToPolygonZoneIndex,0,sizeof(PolygonZoneIndex)*w*h);
+    polygonZoneMap.zones.resize(g.size());
 
     for (auto &c : vd.cells()) {
+        float minX=0,minY=0,maxX=99999999999,maxY=99999999999;
         auto e = c.incident_edge();
         unsigned int final_index=c.source_index();
         QPolygonF poly;
@@ -88,16 +98,71 @@ std::vector<VoronioForTiledMapTmx::PolygonZoneOnMap> VoronioForTiledMapTmx::comp
                     else
                         poly.append(QPointF(ox + dx * coef, oy + dy * coef) / SCALE);
                 }
+                const QPointF &point=poly.last();
+                float tempminX=floor(point.x()),tempminY=floor(point.y()),tempmaxX=ceil(point.x()),tempmaxY=ceil(point.y());
+                if(poly.size()==1)
+                {
+                    minX=tempminX;
+                    minY=tempminY;
+                    maxX=tempmaxX;
+                    maxY=tempmaxY;
+                }
+                else
+                {
+                    if(tempminX<minX)
+                        minX=tempminX;
+                    if(tempminY<minY)
+                        minY=tempminY;
+                    if(tempmaxX<maxX)
+                        maxX=tempmaxX;
+                    if(tempmaxY<maxY)
+                        maxY=tempmaxY;
+                }
             }
             e = e->next();
         } while (e != c.incident_edge());
 
-        cells[final_index].polygons=poly.intersected(rect);
+        const QPolygonF &resultPolygon=poly.intersected(rect);
+        polygonZoneMap.zones[final_index].polygon=resultPolygon;
+        if(!resultPolygon.isEmpty())
+        {
+            unsigned int y=minY;
+            while(y<maxY)
+            {
+                unsigned int x=minX;
+                while(x<maxX)
+                {
+                    const QPolygonF &tilePolygon=resultPolygon.intersected(QRectF(x,y,x+1,y+1));
+                    const double &a=area(tilePolygon);
+                    PolygonZoneIndex &tileIndex=polygonZoneMap.tileToPolygonZoneIndex[x+y*w];
+                    if(a>tileIndex.area)
+                    {
+                        tileIndex.area=a;
+                        tileIndex.index=final_index;
+                    }
+                    x++;
+                }
+                y++;
+            }
+        }
     }
 
-    /*polygonZoneOnMap.resize(widthMap);
-    for( int a = 0; a < widthMap; a++ )
-          polygonZoneOnMap[a].resize(heightMap);*/
+    //resolv the return function
+    {
+        unsigned int y=0;
+        while(y<h)
+        {
+            unsigned int x=0;
+            while(x<w)
+            {
+                PolygonZoneIndex &tileIndex=polygonZoneMap.tileToPolygonZoneIndex[x+y*w];
+                std::vector<Point> &points=polygonZoneMap.zones[tileIndex.index].points;
+                points.push_back(Point(x,y));
+                x++;
+            }
+            y++;
+        }
+    }
 
-    return cells;
+    return polygonZoneMap;
 }
