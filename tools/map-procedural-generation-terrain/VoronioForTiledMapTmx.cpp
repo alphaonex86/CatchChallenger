@@ -164,5 +164,76 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
         }
     }
 
+    //group the tile into pixelised polygon
+    {
+        enum Direction
+        {
+            Direction_top,
+            Direction_right,
+            Direction_bottom,
+            Direction_left,
+        };
+        unsigned int y=0;
+        while(y<h)
+        {
+            unsigned int x=0;
+            while(x<w)
+            {
+                PolygonZoneIndex &tileIndex=polygonZoneMap.tileToPolygonZoneIndex[x+y*w];
+                PolygonZone &zone=polygonZoneMap.zones[tileIndex.index];
+                QPolygonF &pixelizedPolygon=zone.pixelizedPolygon;
+                if(!zone.points.empty() && pixelizedPolygon.empty())
+                {
+                    bool stopIt=false;
+                    unsigned int polygonx=x;
+                    unsigned int polygony=y;
+                    //start detour the new tile block
+                    pixelizedPolygon << QPointF(polygonx,polygony);
+                    Direction direction=Direction_right;
+                    while(!stopIt)
+                        switch(direction)
+                        {
+                            case Direction_right:
+                            {
+                                polygonx++;
+                                QPointF p(polygonx,polygony);
+                                if(pixelizedPolygon.first()==p)//then polygon finished
+                                {
+                                    stopIt=true;
+                                    break;
+                                }
+                                if(polygony>0)//check if can go top
+                                {
+                                    PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[polygonx+(polygony-1)*w];
+                                    if(exploredTileIndex.index==tileIndex.index)//direction change
+                                    {
+                                        pixelizedPolygon << QPointF(polygonx,polygony);
+                                        direction=Direction_top;
+                                        break;
+                                    }
+                                }
+                                if(polygonx<w)//check if can go right
+                                {
+                                    PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[polygonx+polygony*w];
+                                    if(exploredTileIndex.index==tileIndex.index)//same direction
+                                        break;
+                                }
+                                if(polygony<h)//check if can go bottom
+                                {
+                                    pixelizedPolygon << QPointF(polygonx,polygony);
+                                    direction=Direction_bottom;
+                                }
+                                else
+                                    abort();
+                            }
+                            break;
+                        }
+                }
+                x++;
+            }
+            y++;
+        }
+    }
+
     return polygonZoneMap;
 }
