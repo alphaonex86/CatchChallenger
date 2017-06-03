@@ -71,13 +71,6 @@ unsigned int floatToMoisure(const float f)
         return 6;
 }
 
-double area(const QPolygonF &p) {
-    double a = 0.0;
-    for (int i = 0; i < p.size() - 1; ++i)
-        a += p[i].x() * p[i+1].y() - p[i+1].x() * p[i].y();
-    return 0.5 * a;
-}
-
 Tiled::Tileset *readTileset(const QString &tsx,Tiled::Map *tiledMap)
 {
     QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/");
@@ -214,7 +207,7 @@ Tiled::ObjectGroup *addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<T
 }
 
 void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain,Tiled::ObjectGroup *layerZoneWater,const Grid &grid,
-                        const std::vector<VoronioForTiledMapTmx::PolygonZoneOnMap> &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
+                        const VoronioForTiledMapTmx::PolygonZoneMap &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
                         const int widthMap,const int heightMap,
                         const int offsetX=0,const int offsetY=0)
 {
@@ -223,7 +216,8 @@ void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTe
     while(index<grid.size())
     {
         const Point &centroid=grid.at(index);
-        QPolygonF poly=vd.at(index);
+        const VoronioForTiledMapTmx::PolygonZone &zone=vd.zones.at(index);
+        QPolygonF poly=zone.polygon;
         poly=poly.intersected(polyMap);
         Tiled::MapObject *object = new Tiled::MapObject("C","",QPointF(offsetX,offsetY), QSizeF(0.0,0.0));
         object->setPolygon(poly);
@@ -423,8 +417,8 @@ int main(int argc, char *argv[])
         Simplex moisuremap(seed+5200);
 
         t.start();
-        const std::vector<VoronioForTiledMapTmx::PolygonZoneOnMap> &vd = VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight);
-        if(vd.size()!=grid.size())
+        const VoronioForTiledMapTmx::PolygonZoneMap &vd = VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight);
+        if(vd.zones.size()!=grid.size())
             abort();
         qDebug("computVoronoi took %d ms", t.elapsed());
 
