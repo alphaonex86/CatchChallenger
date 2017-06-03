@@ -21,11 +21,6 @@ class HybridMultiFractal : public MixerBase
     protected:
     private:
         const NoiseBase & m_source;
-        float m_value;
-        float m_remainder;
-        float m_offset;
-        float m_weight;
-        float m_signal;
 };
 
 #endif // HYBRIDMULTIFRACTAL_HPP
