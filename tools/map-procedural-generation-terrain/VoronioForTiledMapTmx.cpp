@@ -190,7 +190,8 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
     }
 
     //dump to output
-    /*{
+    if(false)
+    {
         unsigned int y=0;
         while(y<h)
         {
@@ -210,7 +211,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
             y++;
         }
         std::cout << std::endl;
-    }*/
+    }
 
     //group the tile into pixelised polygon
     {
@@ -270,6 +271,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                         abort();
                                     pixelizedPolygon << QPointF(polygonx,polygony);
                                     direction=Direction_bottom;
+                                    break;
                                 }
                                 else
                                     abort();
@@ -287,6 +289,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                             abort();
                                         pixelizedPolygon << QPointF(polygonx,polygony);
                                         direction=Direction_right;
+                                        break;
                                     }
                                 }
                                 if(polygony<h && polygonx>0)//check if can go bottom
@@ -301,6 +304,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                         abort();
                                     pixelizedPolygon << QPointF(polygonx,polygony);
                                     direction=Direction_left;
+                                    break;
                                 }
                                 else
                                     abort();
@@ -320,6 +324,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                             abort();
                                         pixelizedPolygon << QPointF(polygonx,polygony);
                                         direction=Direction_bottom;
+                                        break;
                                     }
                                 }
                                 if(polygonx>0 && polygony>0)//check if can go left
@@ -334,6 +339,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                         abort();
                                     pixelizedPolygon << QPointF(polygonx,polygony);
                                     direction=Direction_top;
+                                    break;
                                 }
                                 else
                                     abort();
@@ -351,6 +357,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                             abort();
                                         pixelizedPolygon << QPointF(polygonx,polygony);
                                         direction=Direction_left;
+                                        break;
                                     }
                                 }
                                 if(polygony>0 && polygony<(h-1))//check if can go top
@@ -365,6 +372,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                         abort();
                                     pixelizedPolygon << QPointF(polygonx,polygony);
                                     direction=Direction_right;
+                                    break;
                                 }
                                 else
                                     abort();
