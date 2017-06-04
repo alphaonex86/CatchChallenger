@@ -190,7 +190,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
     }
 
     //dump to output
-    {
+    /*{
         unsigned int y=0;
         while(y<h)
         {
@@ -210,7 +210,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
             y++;
         }
         std::cout << std::endl;
-    }
+    }*/
 
     //group the tile into pixelised polygon
     {
@@ -246,24 +246,28 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                             {
                                 polygonx++;
                                 QPointF p(polygonx,polygony);
-                                if(polygony>0 && polygonx<(w-1))//check if can go top
+                                if(polygony>0 && polygonx<w)//check if can go top
                                 {
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[polygonx+(polygony-1)*w];
                                     if(exploredTileIndex.index==tileIndex.index)//direction change
                                     {
+                                        if(pixelizedPolygon.last()==QPointF(polygonx,polygony))
+                                            abort();
                                         pixelizedPolygon << QPointF(polygonx,polygony);
                                         direction=Direction_top;
                                         break;
                                     }
                                 }
-                                if(polygonx<(w-1) && polygony<(h-1))//check if can go right
+                                if(polygonx<w && polygony<h)//check if can go right
                                 {
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[polygonx+polygony*w];
                                     if(exploredTileIndex.index==tileIndex.index)//same direction
                                         break;
                                 }
-                                if(polygony<(h-1))//check if can go bottom
+                                if(polygony<h)//check if can go bottom
                                 {
+                                    if(pixelizedPolygon.last()==QPointF(polygonx,polygony))
+                                        abort();
                                     pixelizedPolygon << QPointF(polygonx,polygony);
                                     direction=Direction_bottom;
                                 }
@@ -274,16 +278,18 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                             case Direction_bottom:
                             {
                                 polygony++;
-                                if(polygonx<(w-1) && polygony<(h-1))//check if can go right
+                                if(polygonx<w && polygony<h)//check if can go right
                                 {
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[polygonx+polygony*w];
                                     if(exploredTileIndex.index==tileIndex.index)//direction change
                                     {
+                                        if(pixelizedPolygon.last()==QPointF(polygonx,polygony))
+                                            abort();
                                         pixelizedPolygon << QPointF(polygonx,polygony);
                                         direction=Direction_right;
                                     }
                                 }
-                                if(polygony<(h-1) && polygonx>0)//check if can go bottom
+                                if(polygony<h && polygonx>0)//check if can go bottom
                                 {
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[(polygonx-1)+polygony*w];
                                     if(exploredTileIndex.index==tileIndex.index)//same direction
@@ -291,6 +297,8 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                 }
                                 if(polygonx>0)//check if can go left
                                 {
+                                    if(pixelizedPolygon.last()==QPointF(polygonx,polygony))
+                                        abort();
                                     pixelizedPolygon << QPointF(polygonx,polygony);
                                     direction=Direction_left;
                                 }
@@ -300,12 +308,16 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                             break;
                             case Direction_left:
                             {
+                                if(tileIndex.index==345)
+                                    tileIndex.index=345;
                                 polygonx--;
-                                if(polygony<(h-1) && polygonx>0)//check if can go bottom
+                                if(polygony<h && polygonx>0)//check if can go bottom
                                 {
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[(polygonx-1)+polygony*w];
                                     if(exploredTileIndex.index==tileIndex.index)//direction change
                                     {
+                                        if(pixelizedPolygon.last()==QPointF(polygonx,polygony))
+                                            abort();
                                         pixelizedPolygon << QPointF(polygonx,polygony);
                                         direction=Direction_bottom;
                                     }
@@ -318,6 +330,8 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                 }
                                 if(polygony>0)//check if can go top
                                 {
+                                    if(pixelizedPolygon.last()==QPointF(polygonx,polygony))
+                                        abort();
                                     pixelizedPolygon << QPointF(polygonx,polygony);
                                     direction=Direction_top;
                                 }
@@ -333,6 +347,8 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[(polygonx-1)+(polygony-1)*w];
                                     if(exploredTileIndex.index==tileIndex.index)//direction change
                                     {
+                                        if(pixelizedPolygon.last()==QPointF(polygonx,polygony))
+                                            abort();
                                         pixelizedPolygon << QPointF(polygonx,polygony);
                                         direction=Direction_left;
                                     }
@@ -343,8 +359,10 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                     if(exploredTileIndex.index==tileIndex.index)//same direction
                                         break;
                                 }
-                                if(polygonx<(w-1))//check if can go right
+                                if(polygonx<w)//check if can go right
                                 {
+                                    if(pixelizedPolygon.last()==QPointF(polygonx,polygony))
+                                        abort();
                                     pixelizedPolygon << QPointF(polygonx,polygony);
                                     direction=Direction_right;
                                 }
@@ -362,7 +380,30 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                             }
                             if((unsigned int)pixelizedPolygon.size()>(zone.points.size()*4))
                             {
-                                std::cerr << "Too many border:" << std::endl;
+                                {
+                                    unsigned int y=0;
+                                    while(y<h)
+                                    {
+                                        std::cout << y << ": ";
+                                        unsigned int x=0;
+                                        while(x<w)
+                                        {
+                                            const PolygonZoneIndex &i=polygonZoneMap.tileToPolygonZoneIndex[x+y*w];
+                                            if(i.index<10)
+                                                std::cout << "00" << std::to_string(i.index) << " ";
+                                            else if(i.index<100)
+                                                std::cout << "0" << std::to_string(i.index) << " ";
+                                            else
+                                                std::cout << std::to_string(i.index) << " ";
+                                            x++;
+                                        }
+                                        std::cout << std::endl;
+                                        y++;
+                                    }
+                                    std::cout << std::endl;
+                                }
+
+                                std::cerr << "Too many border for the zone " << tileIndex.index << " at " << x << "," << y << ":" << std::endl;
                                 const QList<QPointF> &points=pixelizedPolygon.toList();
                                 unsigned int index=0;
                                 while(index<(unsigned int)points.size())
