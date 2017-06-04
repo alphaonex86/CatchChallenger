@@ -219,7 +219,7 @@ void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTe
         const VoronioForTiledMapTmx::PolygonZone &zone=vd.zones.at(index);
         QPolygonF poly=zone.polygon;
         poly=poly.intersected(polyMap);
-        Tiled::MapObject *object = new Tiled::MapObject("C","",QPointF(offsetX,offsetY), QSizeF(0.0,0.0));
+        Tiled::MapObject *object = new Tiled::MapObject("C"+QString::number(index),"",QPointF(offsetX,offsetY), QSizeF(0.0,0.0));
         object->setPolygon(poly);
         object->setShape(Tiled::MapObject::Polygon);
         const QList<QPointF> &edges=poly.toList();
