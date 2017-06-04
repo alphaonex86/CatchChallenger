@@ -312,8 +312,6 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                             break;
                             case Direction_left:
                             {
-                                if(tileIndex.index==345)
-                                    tileIndex.index=345;
                                 polygonx--;
                                 if(polygony<h && polygonx>0)//check if can go bottom
                                 {
@@ -360,7 +358,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                         break;
                                     }
                                 }
-                                if(polygony>0 && polygony<(h-1))//check if can go top
+                                if(polygony>0 && polygonx<w)//check if can go top
                                 {
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[polygonx+(polygony-1)*w];
                                     if(exploredTileIndex.index==tileIndex.index)//same direction
