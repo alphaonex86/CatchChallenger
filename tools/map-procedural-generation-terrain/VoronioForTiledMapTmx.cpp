@@ -190,7 +190,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
     }
 
     //dump to output
-    /*{
+    {
         unsigned int y=0;
         while(y<h)
         {
@@ -210,7 +210,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
             y++;
         }
         std::cout << std::endl;
-    }*/
+    }
 
     //group the tile into pixelised polygon
     {
@@ -239,17 +239,13 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                     pixelizedPolygon << QPointF(polygonx,polygony);
                     Direction direction=Direction_right;
                     while(!stopIt)
+                    {
                         switch(direction)
                         {
                             case Direction_right:
                             {
                                 polygonx++;
                                 QPointF p(polygonx,polygony);
-                                if(pixelizedPolygon.first()==p)//then polygon finished
-                                {
-                                    stopIt=true;
-                                    break;
-                                }
                                 if(polygony>0 && polygonx<(w-1))//check if can go top
                                 {
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[polygonx+(polygony-1)*w];
@@ -278,12 +274,6 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                             case Direction_bottom:
                             {
                                 polygony++;
-                                QPointF p(polygonx,polygony);
-                                if(pixelizedPolygon.first()==p)//then polygon finished
-                                {
-                                    stopIt=true;
-                                    break;
-                                }
                                 if(polygonx<(w-1) && polygony<(h-1))//check if can go right
                                 {
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[polygonx+polygony*w];
@@ -311,12 +301,6 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                             case Direction_left:
                             {
                                 polygonx--;
-                                QPointF p(polygonx,polygony);
-                                if(pixelizedPolygon.first()==p)//then polygon finished
-                                {
-                                    stopIt=true;
-                                    break;
-                                }
                                 if(polygony<(h-1) && polygonx>0)//check if can go bottom
                                 {
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[(polygonx-1)+polygony*w];
@@ -344,12 +328,6 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                             case Direction_top:
                             {
                                 polygony--;
-                                QPointF p(polygonx,polygony);
-                                if(pixelizedPolygon.first()==p)//then polygon finished
-                                {
-                                    stopIt=true;
-                                    break;
-                                }
                                 if(polygonx>0 && polygony>0)//check if can go left
                                 {
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[(polygonx-1)+(polygony-1)*w];
@@ -375,6 +353,29 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                             }
                             break;
                         }
+                        {
+                            QPointF p(polygonx,polygony);
+                            if(pixelizedPolygon.first()==p)//then polygon finished
+                            {
+                                stopIt=true;
+                                break;
+                            }
+                            if((unsigned int)pixelizedPolygon.size()>(zone.points.size()*4))
+                            {
+                                std::cerr << "Too many border:" << std::endl;
+                                const QList<QPointF> &points=pixelizedPolygon.toList();
+                                unsigned int index=0;
+                                while(index<(unsigned int)points.size())
+                                {
+                                    const QPointF &point=points.at(index);
+                                    std::cerr << point.x() << "," << point.y() << " ";
+                                    index++;
+                                }
+                                std::cerr << std::endl;
+                                abort();
+                            }
+                        }
+                    }
                 }
                 x++;
             }
