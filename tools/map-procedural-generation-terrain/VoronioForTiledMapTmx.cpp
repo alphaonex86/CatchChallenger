@@ -68,7 +68,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
     polygonZoneMap.zones.resize(g.size());
 
     for (auto &c : vd.cells()) {
-        float minX=0,minY=0,maxX=99999999999,maxY=99999999999;
+        float minX=99999999999,minY=99999999999,maxX=0,maxY=0;
         auto e = c.incident_edge();
         unsigned int final_index=c.source_index();
         QPolygonF poly;
@@ -98,42 +98,67 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                     else
                         poly.append(QPointF(ox + dx * coef, oy + dy * coef) / SCALE);
                 }
-                const QPointF &point=poly.last();
-                float tempminX=floor(point.x()),tempminY=floor(point.y()),tempmaxX=ceil(point.x()),tempmaxY=ceil(point.y());
-                if(poly.size()==1)
-                {
-                    minX=tempminX;
-                    minY=tempminY;
-                    maxX=tempmaxX;
-                    maxY=tempmaxY;
-                }
-                else
-                {
-                    if(tempminX<minX)
-                        minX=tempminX;
-                    if(tempminY<minY)
-                        minY=tempminY;
-                    if(tempmaxX<maxX)
-                        maxX=tempmaxX;
-                    if(tempmaxY<maxY)
-                        maxY=tempmaxY;
-                }
             }
             e = e->next();
         } while (e != c.incident_edge());
 
         const QPolygonF &resultPolygon=poly.intersected(rect);
         polygonZoneMap.zones[final_index].polygon=resultPolygon;
-        if(!resultPolygon.isEmpty())
+        if(resultPolygon.size()>2)
         {
+            QList<QPointF> points=resultPolygon.toList();
+            {
+                QPointF point=points.first();
+                float x=point.x(),y=point.y();
+                if(x<0)
+                    x=0;
+                if(y<0)
+                    y=0;
+                if(x>w)
+                    x=w;
+                if(y>h)
+                    y=h;
+                float tempminX=floor(x),tempminY=floor(y),tempmaxX=ceil(x),tempmaxY=ceil(y);
+                minX=tempminX;
+                minY=tempminY;
+                maxX=tempmaxX;
+                maxY=tempmaxY;
+                unsigned int index=1;
+                while(index<(unsigned int)points.size())
+                {
+                    const QPointF &point=points.at(index);
+                    float x=point.x(),y=point.y();
+                    if(x<0)
+                        x=0;
+                    if(y<0)
+                        y=0;
+                    if(x>w)
+                        x=w;
+                    if(y>h)
+                        y=h;
+                    float tempminX=floor(x),tempminY=floor(y),tempmaxX=ceil(x),tempmaxY=ceil(y);
+                    if(tempminX<minX)
+                        minX=tempminX;
+                    if(tempminY<minY)
+                        minY=tempminY;
+                    if(tempmaxX>maxX)
+                        maxX=tempmaxX;
+                    if(tempmaxY>maxY)
+                        maxY=tempmaxY;
+                    index++;
+                }
+            }
             unsigned int y=minY;
             while(y<maxY)
             {
                 unsigned int x=minX;
                 while(x<maxX)
                 {
-                    const QPolygonF &tilePolygon=resultPolygon.intersected(QRectF(x,y,x+1,y+1));
+                    const QPolygonF tileRect(QRectF(x,y,1.0,1.0));
+                    const QPolygonF &tilePolygon=resultPolygon.intersected(tileRect);
                     const double &a=area(tilePolygon);
+                    if(a>1.01)
+                        abort();
                     PolygonZoneIndex &tileIndex=polygonZoneMap.tileToPolygonZoneIndex[x+y*w];
                     if(a>tileIndex.area)
                     {
@@ -165,7 +190,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
     }
 
     //dump to output
-    {
+    /*{
         unsigned int y=0;
         while(y<h)
         {
@@ -173,9 +198,9 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
             while(x<w)
             {
                 const PolygonZoneIndex &i=polygonZoneMap.tileToPolygonZoneIndex[x+y*w];
-                if(i.index<9)
+                if(i.index<10)
                     std::cout << "00" << std::to_string(i.index) << " ";
-                else if(i.index<99)
+                else if(i.index<100)
                     std::cout << "0" << std::to_string(i.index) << " ";
                 else
                     std::cout << std::to_string(i.index) << " ";
@@ -185,7 +210,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
             y++;
         }
         std::cout << std::endl;
-    }
+    }*/
 
     //group the tile into pixelised polygon
     {
