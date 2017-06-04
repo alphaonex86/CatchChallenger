@@ -164,6 +164,29 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
         }
     }
 
+    //dump to output
+    {
+        unsigned int y=0;
+        while(y<h)
+        {
+            unsigned int x=0;
+            while(x<w)
+            {
+                const PolygonZoneIndex &i=polygonZoneMap.tileToPolygonZoneIndex[x+y*w];
+                if(i.index<9)
+                    std::cout << "00" << std::to_string(i.index) << " ";
+                else if(i.index<99)
+                    std::cout << "0" << std::to_string(i.index) << " ";
+                else
+                    std::cout << std::to_string(i.index) << " ";
+                x++;
+            }
+            std::cout << std::endl;
+            y++;
+        }
+        std::cout << std::endl;
+    }
+
     //group the tile into pixelised polygon
     {
         enum Direction
@@ -202,7 +225,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                     stopIt=true;
                                     break;
                                 }
-                                if(polygony>0)//check if can go top
+                                if(polygony>0 && polygonx<(w-1))//check if can go top
                                 {
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[polygonx+(polygony-1)*w];
                                     if(exploredTileIndex.index==tileIndex.index)//direction change
@@ -212,16 +235,115 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                                         break;
                                     }
                                 }
-                                if(polygonx<w)//check if can go right
+                                if(polygonx<(w-1) && polygony<(h-1))//check if can go right
                                 {
                                     PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[polygonx+polygony*w];
                                     if(exploredTileIndex.index==tileIndex.index)//same direction
                                         break;
                                 }
-                                if(polygony<h)//check if can go bottom
+                                if(polygony<(h-1))//check if can go bottom
                                 {
                                     pixelizedPolygon << QPointF(polygonx,polygony);
                                     direction=Direction_bottom;
+                                }
+                                else
+                                    abort();
+                            }
+                            break;
+                            case Direction_bottom:
+                            {
+                                polygony++;
+                                QPointF p(polygonx,polygony);
+                                if(pixelizedPolygon.first()==p)//then polygon finished
+                                {
+                                    stopIt=true;
+                                    break;
+                                }
+                                if(polygonx<(w-1) && polygony<(h-1))//check if can go right
+                                {
+                                    PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[polygonx+polygony*w];
+                                    if(exploredTileIndex.index==tileIndex.index)//direction change
+                                    {
+                                        pixelizedPolygon << QPointF(polygonx,polygony);
+                                        direction=Direction_right;
+                                    }
+                                }
+                                if(polygony<(h-1) && polygonx>0)//check if can go bottom
+                                {
+                                    PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[(polygonx-1)+polygony*w];
+                                    if(exploredTileIndex.index==tileIndex.index)//same direction
+                                        break;
+                                }
+                                if(polygonx>0)//check if can go left
+                                {
+                                    pixelizedPolygon << QPointF(polygonx,polygony);
+                                    direction=Direction_left;
+                                }
+                                else
+                                    abort();
+                            }
+                            break;
+                            case Direction_left:
+                            {
+                                polygonx--;
+                                QPointF p(polygonx,polygony);
+                                if(pixelizedPolygon.first()==p)//then polygon finished
+                                {
+                                    stopIt=true;
+                                    break;
+                                }
+                                if(polygony<(h-1) && polygonx>0)//check if can go bottom
+                                {
+                                    PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[(polygonx-1)+polygony*w];
+                                    if(exploredTileIndex.index==tileIndex.index)//direction change
+                                    {
+                                        pixelizedPolygon << QPointF(polygonx,polygony);
+                                        direction=Direction_bottom;
+                                    }
+                                }
+                                if(polygonx>0 && polygony>0)//check if can go left
+                                {
+                                    PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[(polygonx-1)+(polygony-1)*w];
+                                    if(exploredTileIndex.index==tileIndex.index)//same direction
+                                        break;
+                                }
+                                if(polygony>0)//check if can go top
+                                {
+                                    pixelizedPolygon << QPointF(polygonx,polygony);
+                                    direction=Direction_top;
+                                }
+                                else
+                                    abort();
+                            }
+                            break;
+                            case Direction_top:
+                            {
+                                polygony--;
+                                QPointF p(polygonx,polygony);
+                                if(pixelizedPolygon.first()==p)//then polygon finished
+                                {
+                                    stopIt=true;
+                                    break;
+                                }
+                                if(polygonx>0 && polygony>0)//check if can go left
+                                {
+                                    PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[(polygonx-1)+(polygony-1)*w];
+                                    if(exploredTileIndex.index==tileIndex.index)//direction change
+                                    {
+                                        pixelizedPolygon << QPointF(polygonx,polygony);
+                                        direction=Direction_left;
+                                    }
+                                }
+                                if(polygony>0 && polygony<(h-1))//check if can go top
+                                {
+                                    PolygonZoneIndex &exploredTileIndex=polygonZoneMap.tileToPolygonZoneIndex[polygonx+(polygony-1)*w];
+                                    if(exploredTileIndex.index==tileIndex.index)//same direction
+                                        break;
+                                }
+                                if(polygonx<(w-1))//check if can go right
+                                {
+                                    pixelizedPolygon << QPointF(polygonx,polygony);
+                                    direction=Direction_right;
                                 }
                                 else
                                     abort();

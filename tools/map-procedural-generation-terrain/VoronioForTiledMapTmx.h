@@ -15,7 +15,7 @@ public:
     struct PolygonZoneIndex
     {
         float area;
-        uint8_t index;
+        unsigned int index;
     };
     struct PolygonZone
     {
