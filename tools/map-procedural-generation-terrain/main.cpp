@@ -36,7 +36,7 @@ http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generati
 struct Terrain
 {
     QString tsx;
-    uint32_t tile;
+    uint32_t tileId;
     Tiled::Tileset *tileset;
     uint32_t baseX,baseY;
 };
@@ -117,7 +117,7 @@ void loadTileset(Terrain &terrain,QHash<QString,Tiled::Tileset *> &cachedTileset
         terrain.tileset=cachedTileset.value(terrain.tsx);
     else
     {
-        Tiled::Tileset *tilesetBase=readTileset(terrain.tile,terrain.tsx,&tiledMap);
+        Tiled::Tileset *tilesetBase=readTileset(terrain.tileId,terrain.tsx,&tiledMap);
         terrain.tileset=tilesetBase;
         cachedTileset[terrain.tsx]=tilesetBase;
     }
@@ -211,6 +211,91 @@ Tiled::ObjectGroup *addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<T
     return layerZoneWater;
 }
 
+Tiled::TileLayer *addTerrainLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::TileLayer *> > &arrayTerrain)
+{
+    Tiled::TileLayer *layerZoneWater=new Tiled::TileLayer("Water",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneWater);
+
+    Tiled::TileLayer *layerZoneWalkable=new Tiled::TileLayer("Walkable",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneWalkable);
+
+    arrayTerrain.resize(4);
+    //high 1
+    arrayTerrain[0].resize(6);
+    arrayTerrain[0][0]=layerZoneWalkable;//Moisture 1
+    arrayTerrain[0][1]=layerZoneWalkable;
+    arrayTerrain[0][2]=layerZoneWalkable;
+    arrayTerrain[0][3]=layerZoneWalkable;
+    arrayTerrain[0][4]=layerZoneWalkable;
+    arrayTerrain[0][5]=layerZoneWalkable;
+    //high 2
+    arrayTerrain[1].resize(6);
+    arrayTerrain[1][0]=layerZoneWalkable;//Moisture 1
+    arrayTerrain[1][1]=layerZoneWalkable;
+    arrayTerrain[1][2]=layerZoneWalkable;
+    arrayTerrain[1][3]=layerZoneWalkable;
+    arrayTerrain[1][4]=layerZoneWalkable;
+    arrayTerrain[1][5]=layerZoneWalkable;
+    //high 3
+    arrayTerrain[2].resize(6);
+    arrayTerrain[2][0]=layerZoneWalkable;//Moisture 1
+    arrayTerrain[2][1]=layerZoneWalkable;
+    arrayTerrain[2][2]=layerZoneWalkable;
+    arrayTerrain[2][3]=layerZoneWalkable;
+    arrayTerrain[2][4]=layerZoneWalkable;
+    arrayTerrain[2][5]=layerZoneWalkable;
+    //high 4
+    arrayTerrain[3].resize(6);
+    arrayTerrain[3][0]=layerZoneWalkable;//Moisture 1
+    arrayTerrain[3][1]=layerZoneWalkable;
+    arrayTerrain[3][2]=layerZoneWalkable;
+    arrayTerrain[3][3]=layerZoneWalkable;
+    arrayTerrain[3][4]=layerZoneWalkable;
+    arrayTerrain[3][5]=layerZoneWalkable;
+
+    return layerZoneWater;
+}
+
+void addTerrainTile(std::vector<std::vector<Tiled::Tile *> > &arrayTerrainTile,const Terrain &grass,const Terrain &montain)
+{
+    Tiled::Tile * const grassTile=grass.tileset->tileAt(grass.tileId);
+    Tiled::Tile * const montainTile=montain.tileset->tileAt(montain.tileId);
+
+    arrayTerrainTile.resize(4);
+    //high 1
+    arrayTerrainTile[0].resize(6);
+    arrayTerrainTile[0][0]=grassTile;//Moisture 1
+    arrayTerrainTile[0][1]=grassTile;
+    arrayTerrainTile[0][2]=grassTile;
+    arrayTerrainTile[0][3]=grassTile;
+    arrayTerrainTile[0][4]=grassTile;
+    arrayTerrainTile[0][5]=grassTile;
+    //high 2
+    arrayTerrainTile[1].resize(6);
+    arrayTerrainTile[1][0]=grassTile;//Moisture 1
+    arrayTerrainTile[1][1]=grassTile;
+    arrayTerrainTile[1][2]=grassTile;
+    arrayTerrainTile[1][3]=grassTile;
+    arrayTerrainTile[1][4]=grassTile;
+    arrayTerrainTile[1][5]=grassTile;
+    //high 3
+    arrayTerrainTile[2].resize(6);
+    arrayTerrainTile[2][0]=grassTile;//Moisture 1
+    arrayTerrainTile[2][1]=grassTile;
+    arrayTerrainTile[2][2]=grassTile;
+    arrayTerrainTile[2][3]=grassTile;
+    arrayTerrainTile[2][4]=grassTile;
+    arrayTerrainTile[2][5]=grassTile;
+    //high 4
+    arrayTerrainTile[3].resize(6);
+    arrayTerrainTile[3][0]=montainTile;//Moisture 1
+    arrayTerrainTile[3][1]=montainTile;
+    arrayTerrainTile[3][2]=montainTile;
+    arrayTerrainTile[3][3]=montainTile;
+    arrayTerrainTile[3][4]=montainTile;
+    arrayTerrainTile[3][5]=montainTile;
+}
+
 void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainPolygon,Tiled::ObjectGroup *layerZoneWaterPolygon,
                         std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainTile,Tiled::ObjectGroup *layerZoneWaterTile,
                         const Grid &grid,
@@ -256,6 +341,59 @@ void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTe
                 arrayTerrainPolygon[heigh-1][moisure-1]->addObject(objectPolygon);
                 if(!polyTile.isEmpty())
                     arrayTerrainTile[heigh-1][moisure-1]->addObject(objectTile);
+            }
+        }
+        index++;
+    }
+}
+
+void addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTerrain,Tiled::TileLayer *layerZoneWater,
+                        const Grid &grid,
+                        const VoronioForTiledMapTmx::PolygonZoneMap &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
+                        const int widthMap,const int heightMap,
+                        const Terrain &water,const std::vector<std::vector<Tiled::Tile *> > &arrayTerrainTile,
+                        const int offsetX=0,const int offsetY=0)
+{
+    const QPolygonF polyMap(QRectF(-offsetX,-offsetY,widthMap,heightMap));
+    unsigned int index=0;
+    while(index<grid.size())
+    {
+        const Point &centroid=grid.at(index);
+        const VoronioForTiledMapTmx::PolygonZone &zone=vd.zones.at(index);
+
+        QPolygonF polyTile;
+        polyTile=zone.pixelizedPolygon;
+        polyTile=polyTile.intersected(polyMap);
+
+        const QList<QPointF> &edges=polyTile.toList();
+        if(!edges.isEmpty())
+        {
+            //const QPointF &edge=edges.first();
+            const unsigned int &heigh=floatToHigh(heighmap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale));
+            const unsigned int &moisure=floatToMoisure(moisuremap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale*10));
+            if(heigh==0)
+            {
+                unsigned int pointIndex=0;
+                while(pointIndex<zone.points.size())
+                {
+                    const Point &point=zone.points.at(pointIndex);
+                    Tiled::Cell cell;
+                    cell.tile=water.tileset->tileAt(water.tileId);
+                    layerZoneWater->setCell(point.x(),point.y(),cell);
+                    pointIndex++;
+                }
+            }
+            else
+            {
+                unsigned int pointIndex=0;
+                while(pointIndex<zone.points.size())
+                {
+                    const Point &point=zone.points.at(pointIndex);
+                    Tiled::Cell cell;
+                    cell.tile=arrayTerrainTile.at(heigh-1).at(moisure-1);
+                    arrayTerrain[heigh-1][moisure-1]->setCell(point.x(),point.y(),cell);
+                    pointIndex++;
+                }
             }
         }
         index++;
@@ -350,7 +488,7 @@ int main(int argc, char *argv[])
     settings.beginGroup("terrain");
         settings.beginGroup("grass");
             grass.tsx=settings.value("tsx").toString();
-            grass.tile=settings.value("tile").toUInt(&ok);
+            grass.tileId=settings.value("tile").toUInt(&ok);
             if(ok==false)
             {
                 std::cerr << "tile not number into the config file" << std::endl;
@@ -361,7 +499,7 @@ int main(int argc, char *argv[])
         settings.endGroup();
         settings.beginGroup("water");
             water.tsx=settings.value("tsx").toString();
-            water.tile=settings.value("tile").toUInt(&ok);
+            water.tileId=settings.value("tile").toUInt(&ok);
             if(ok==false)
             {
                 std::cerr << "tile not number into the config file" << std::endl;
@@ -372,7 +510,7 @@ int main(int argc, char *argv[])
         settings.endGroup();
         settings.beginGroup("montain");
             montain.tsx=settings.value("tsx").toString();
-            montain.tile=settings.value("tile").toUInt(&ok);
+            montain.tileId=settings.value("tile").toUInt(&ok);
             if(ok==false)
             {
                 std::cerr << "tile not number into the config file" << std::endl;
@@ -454,6 +592,8 @@ int main(int argc, char *argv[])
             Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth,totalHeight,16,16);
             QHash<QString,Tiled::Tileset *> cachedTileset;
             loadTileset(water,cachedTileset,tiledMap);loadTileset(grass,cachedTileset,tiledMap);loadTileset(montain,cachedTileset,tiledMap);
+            std::vector<std::vector<Tiled::Tile *> > arrayTerrainTile;
+            addTerrainTile(arrayTerrainTile,grass,montain);
             //Tiled::Tileset *tilesetDebug=readTileset("mapgen.tsx",&tiledMap);
             if(displayzone)
             {
@@ -462,6 +602,11 @@ int main(int argc, char *argv[])
                 std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainTile;
                 Tiled::ObjectGroup *layerZoneWaterTile=addDebugLayer(tiledMap,arrayTerrainTile,false);
                 addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height());
+            }
+            {
+                std::vector<std::vector<Tiled::TileLayer *> > arrayTerrain;
+                Tiled::TileLayer *layerZoneWater=addTerrainLayer(tiledMap,arrayTerrain);
+                addTerrain(arrayTerrain,layerZoneWater,grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height(),water,arrayTerrainTile);
             }
             {
                 Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0,tiledMap.width(),tiledMap.height());
