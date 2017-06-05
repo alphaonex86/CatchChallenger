@@ -431,20 +431,22 @@ Tiled::Tile * intToTile(const Terrain &grass,const Terrain &water,const Terrain 
     switch(terrainInt)
     {
         case 0:
-            return grass.tileset->addTile(grass.tileId);
+            return grass.tileset->tileAt(grass.tileId);
         break;
         case 1:
-            return water.tileset->addTile(water.tileId);
+            return water.tileset->tileAt(water.tileId);
         break;
         case 2:
-            return montain.tileset->addTile(montain.tileId);
+            return montain.tileset->tileAt(montain.tileId);
         break;
     }
     abort();
     return NULL;
 }
 
-void load_terrainTransitionList(const Terrain &grass,const Terrain &water,const Terrain &montain,std::vector<TerrainTransition> &terrainTransitionList)
+void load_terrainTransitionList(const Terrain &grass,const Terrain &water,const Terrain &montain,
+                                QHash<QString,Tiled::Tileset *> &cachedTileset,
+                                std::vector<TerrainTransition> &terrainTransitionList,Tiled::Map &tiledMap)
 {
     unsigned int terrainTransitionIndex=0;
     while(terrainTransitionIndex<terrainTransitionList.size())
@@ -455,14 +457,30 @@ void load_terrainTransitionList(const Terrain &grass,const Terrain &water,const 
         unsigned int to_type_Index=0;
         while(to_type_Index<terrainTransition.tmp_to_type.size())
         {
-            terrainTransition.to_type.push_back(intToTile(grass,water,montain,terrainTransition.tmp_to_type.at(terrainTransition)));
+            const unsigned int &to_type=terrainTransition.tmp_to_type.at(to_type_Index);
+            terrainTransition.to_type.push_back(intToTile(grass,water,montain,to_type));
             to_type_Index++;
         }
-        //tempory value
-        QString tmp_transition_tsx;
-        std::vector<unsigned int> tmp_transition_tile;
-        //after map creation
-        std::vector<Tiled::Tile *> transition_tile;
+        Tiled::Tileset *tileset;
+        if(cachedTileset.contains(terrainTransition.tmp_transition_tsx))
+            tileset=cachedTileset.value(terrainTransition.tmp_transition_tsx);
+        else
+        {
+            tileset=readTileset(terrainTransition.tmp_transition_tsx,&tiledMap);
+            cachedTileset[terrainTransition.tmp_transition_tsx]=tileset;
+        }
+        unsigned int transition_tile_index=0;
+        while(transition_tile_index<terrainTransition.tmp_transition_tile.size())
+        {
+            const unsigned int &tileId=terrainTransition.tmp_transition_tile.at(transition_tile_index);
+            if(tileId>(unsigned int)tileset->tileCount())
+            {
+                std::cerr << "tileId greater than tile count, abort(): " << std::to_string(tileId) << std::endl;
+                abort();
+            }
+            terrainTransition.transition_tile.push_back(tileset->tileAt(tileId));
+            transition_tile_index++;
+        }
 
         terrainTransitionIndex++;
     }
@@ -706,10 +724,9 @@ int main(int argc, char *argv[])
             Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth,totalHeight,16,16);
             QHash<QString,Tiled::Tileset *> cachedTileset;
             loadTileset(water,cachedTileset,tiledMap);loadTileset(grass,cachedTileset,tiledMap);loadTileset(montain,cachedTileset,tiledMap);
-            load_terrainTransitionList(grass,water,montain,terrainTransitionList);
+            load_terrainTransitionList(grass,water,montain,cachedTileset,terrainTransitionList,tiledMap);
             std::vector<std::vector<Tiled::Tile *> > arrayTerrainTile;
             addTerrainTile(arrayTerrainTile,grass,montain);
-            //Tiled::Tileset *tilesetDebug=readTileset("mapgen.tsx",&tiledMap);
             if(displayzone)
             {
                 std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainPolygon;
@@ -755,8 +772,7 @@ int main(int argc, char *argv[])
                     Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,mapWidth,mapHeight,16,16);
                     QHash<QString,Tiled::Tileset *> cachedTileset;
                     loadTileset(water,cachedTileset,tiledMap);loadTileset(grass,cachedTileset,tiledMap);loadTileset(montain,cachedTileset,tiledMap);
-                    load_terrainTransitionList(grass,water,montain,terrainTransitionList);
-                    //Tiled::Tileset *tilesetDebug=readTileset("mapgen.tsx",&tiledMap);
+                    load_terrainTransitionList(grass,water,montain,cachedTileset,terrainTransitionList,tiledMap);
                     if(displayzone)
                     {
                         std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainPolygon;
