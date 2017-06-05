@@ -123,49 +123,54 @@ void loadTileset(Terrain &terrain,QHash<QString,Tiled::Tileset *> &cachedTileset
     }
 }
 
-Tiled::ObjectGroup *addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain)
+Tiled::ObjectGroup *addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain,bool polygon)
 {
-    Tiled::ObjectGroup *layerZoneWater=new Tiled::ObjectGroup("WaterZone",0,0,tiledMap.width(),tiledMap.height());
+    QString addText;
+    if(polygon==true)
+        addText=" (Polygon)";
+    else
+        addText=" (Tile)";
+    Tiled::ObjectGroup *layerZoneWater=new Tiled::ObjectGroup("WaterZone"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneWater->setColor(QColor("#6273cc"));
     tiledMap.addLayer(layerZoneWater);
 
-    Tiled::ObjectGroup *layerZoneSnow=new Tiled::ObjectGroup("Snow",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneSnow=new Tiled::ObjectGroup("Snow"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneSnow->setColor(QColor("#ffffff"));
     tiledMap.addLayer(layerZoneSnow);
-    Tiled::ObjectGroup *layerZoneTundra=new Tiled::ObjectGroup("Tundra",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTundra=new Tiled::ObjectGroup("Tundra"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneTundra->setColor(QColor("#ddddbb"));
     tiledMap.addLayer(layerZoneTundra);
-    Tiled::ObjectGroup *layerZoneBare=new Tiled::ObjectGroup("Bare",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneBare=new Tiled::ObjectGroup("Bare"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneBare->setColor(QColor("#bbbbbb"));
     tiledMap.addLayer(layerZoneBare);
-    Tiled::ObjectGroup *layerZoneScorched=new Tiled::ObjectGroup("Scorched",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneScorched=new Tiled::ObjectGroup("Scorched"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneScorched->setColor(QColor("#999999"));
     tiledMap.addLayer(layerZoneScorched);
-    Tiled::ObjectGroup *layerZoneTaiga=new Tiled::ObjectGroup("Taiga",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTaiga=new Tiled::ObjectGroup("Taiga"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneTaiga->setColor(QColor("#ccd4bb"));
     tiledMap.addLayer(layerZoneTaiga);
-    Tiled::ObjectGroup *layerZoneShrubland=new Tiled::ObjectGroup("Shrubland",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneShrubland=new Tiled::ObjectGroup("Shrubland"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneShrubland->setColor(QColor("#c4ccbb"));
     tiledMap.addLayer(layerZoneShrubland);
-    Tiled::ObjectGroup *layerZoneTemperateDesert=new Tiled::ObjectGroup("Temperate Desert",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTemperateDesert=new Tiled::ObjectGroup("Temperate Desert"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneTemperateDesert->setColor(QColor("#e4e8ca"));
     tiledMap.addLayer(layerZoneTemperateDesert);
-    Tiled::ObjectGroup *layerZoneTemperateRainForest=new Tiled::ObjectGroup("Temperate Rain Forest",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTemperateRainForest=new Tiled::ObjectGroup("Temperate Rain Forest"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneTemperateRainForest->setColor(QColor("#a4c4a8"));
     tiledMap.addLayer(layerZoneTemperateRainForest);
-    Tiled::ObjectGroup *layerZoneTemperateDeciduousForest=new Tiled::ObjectGroup("Temperate Deciduous Forest",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTemperateDeciduousForest=new Tiled::ObjectGroup("Temperate Deciduous Forest"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneTemperateDeciduousForest->setColor(QColor("#b4c9a9"));
     tiledMap.addLayer(layerZoneTemperateDeciduousForest);
-    Tiled::ObjectGroup *layerZoneGrassland=new Tiled::ObjectGroup("Grassland",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneGrassland=new Tiled::ObjectGroup("Grassland"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneGrassland->setColor(QColor("#c4d4aa"));
     tiledMap.addLayer(layerZoneGrassland);
-    Tiled::ObjectGroup *layerZoneTropicalRainForest=new Tiled::ObjectGroup("Tropical Rain Forest",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTropicalRainForest=new Tiled::ObjectGroup("Tropical Rain Forest"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneTropicalRainForest->setColor(QColor("#9cbba9"));
     tiledMap.addLayer(layerZoneTropicalRainForest);
-    Tiled::ObjectGroup *layerZoneTropicalSeasonalForest=new Tiled::ObjectGroup("Tropical Seasonal Forest",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTropicalSeasonalForest=new Tiled::ObjectGroup("Tropical Seasonal Forest"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneTropicalSeasonalForest->setColor(QColor("#a9cca4"));
     tiledMap.addLayer(layerZoneTropicalSeasonalForest);
-    Tiled::ObjectGroup *layerZoneSubtropicalDesert=new Tiled::ObjectGroup("Subtropical Desert",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneSubtropicalDesert=new Tiled::ObjectGroup("Subtropical Desert"+addText,0,0,tiledMap.width(),tiledMap.height());
     layerZoneSubtropicalDesert->setColor(QColor("#e9ddc7"));
     tiledMap.addLayer(layerZoneSubtropicalDesert);
 
@@ -206,22 +211,34 @@ Tiled::ObjectGroup *addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<T
     return layerZoneWater;
 }
 
-void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain,Tiled::ObjectGroup *layerZoneWater,const Grid &grid,
+void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainPolygon,Tiled::ObjectGroup *layerZoneWaterPolygon,
+                        std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainTile,Tiled::ObjectGroup *layerZoneWaterTile,
+                        const Grid &grid,
                         const VoronioForTiledMapTmx::PolygonZoneMap &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
                         const int widthMap,const int heightMap,
                         const int offsetX=0,const int offsetY=0)
 {
-    QPolygonF polyMap(QRectF(-offsetX,-offsetY,widthMap,heightMap));
+    const QPolygonF polyMap(QRectF(-offsetX,-offsetY,widthMap,heightMap));
     unsigned int index=0;
     while(index<grid.size())
     {
         const Point &centroid=grid.at(index);
         const VoronioForTiledMapTmx::PolygonZone &zone=vd.zones.at(index);
-        QPolygonF poly=zone.polygon;
+
+        QPolygonF poly;
+        poly=zone.polygon;
         poly=poly.intersected(polyMap);
-        Tiled::MapObject *object = new Tiled::MapObject("C"+QString::number(index),"",QPointF(offsetX,offsetY), QSizeF(0.0,0.0));
-        object->setPolygon(poly);
-        object->setShape(Tiled::MapObject::Polygon);
+        Tiled::MapObject *objectPolygon = new Tiled::MapObject("Zone "+QString::number(index),"",QPointF(offsetX,offsetY), QSizeF(0.0,0.0));
+        objectPolygon->setPolygon(poly);
+        objectPolygon->setShape(Tiled::MapObject::Polygon);
+
+        QPolygonF polyTile;
+        polyTile=zone.pixelizedPolygon;
+        polyTile=polyTile.intersected(polyMap);
+        Tiled::MapObject *objectTile = new Tiled::MapObject("Zone "+QString::number(index),"",QPointF(offsetX,offsetY), QSizeF(0.0,0.0));
+        objectTile->setPolygon(polyTile);
+        objectTile->setShape(Tiled::MapObject::Polygon);
+
         const QList<QPointF> &edges=poly.toList();
         if(!edges.isEmpty())
         {
@@ -229,9 +246,17 @@ void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTe
             const unsigned int &heigh=floatToHigh(heighmap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale));
             const unsigned int &moisure=floatToMoisure(moisuremap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale*10));
             if(heigh==0)
-                layerZoneWater->addObject(object);
+            {
+                layerZoneWaterPolygon->addObject(objectPolygon);
+                if(!polyTile.isEmpty())
+                    layerZoneWaterTile->addObject(objectTile);
+            }
             else
-                arrayTerrain[heigh-1][moisure-1]->addObject(object);
+            {
+                arrayTerrainPolygon[heigh-1][moisure-1]->addObject(objectPolygon);
+                if(!polyTile.isEmpty())
+                    arrayTerrainTile[heigh-1][moisure-1]->addObject(objectTile);
+            }
         }
         index++;
     }
@@ -315,6 +340,8 @@ int main(int argc, char *argv[])
         settings.setValue("mapYCount",3);
     if(!settings.contains("seed"))
         settings.setValue("seed",0);
+    if(!settings.contains("displayzone"))
+        settings.setValue("displayzone",false);
 
     settings.sync();
 
@@ -386,6 +413,7 @@ int main(int argc, char *argv[])
         abort();
     }
     srand(seed);
+    const bool displayzone=settings.value("displayzone").toBool();
 
     {
         const unsigned int totalWidth=mapWidth*mapXCount;
@@ -427,9 +455,14 @@ int main(int argc, char *argv[])
             QHash<QString,Tiled::Tileset *> cachedTileset;
             loadTileset(water,cachedTileset,tiledMap);loadTileset(grass,cachedTileset,tiledMap);loadTileset(montain,cachedTileset,tiledMap);
             //Tiled::Tileset *tilesetDebug=readTileset("mapgen.tsx",&tiledMap);
-            std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrain;
-            Tiled::ObjectGroup *layerZoneWater=addDebugLayer(tiledMap,arrayTerrain);
-            addPolygoneTerrain(arrayTerrain,layerZoneWater,grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height());
+            if(displayzone)
+            {
+                std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainPolygon;
+                Tiled::ObjectGroup *layerZoneWaterPolygon=addDebugLayer(tiledMap,arrayTerrainPolygon,true);
+                std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainTile;
+                Tiled::ObjectGroup *layerZoneWaterTile=addDebugLayer(tiledMap,arrayTerrainTile,false);
+                addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height());
+            }
             {
                 Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0,tiledMap.width(),tiledMap.height());
                 layerZoneChunk->setColor(QColor("#ffe000"));
@@ -465,9 +498,14 @@ int main(int argc, char *argv[])
                     loadTileset(grass,cachedTileset,tiledMap);
                     loadTileset(montain,cachedTileset,tiledMap);
                     //Tiled::Tileset *tilesetDebug=readTileset("mapgen.tsx",&tiledMap);
-                    std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrain;
-                    Tiled::ObjectGroup *layerZoneWater=addDebugLayer(tiledMap,arrayTerrain);
-                    addPolygoneTerrain(arrayTerrain,layerZoneWater,grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height(),-(mapWidth*mapX),-(mapHeight*mapY));
+                    if(displayzone)
+                    {
+                        std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainPolygon;
+                        Tiled::ObjectGroup *layerZoneWaterPolygon=addDebugLayer(tiledMap,arrayTerrainPolygon,true);
+                        std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainTile;
+                        Tiled::ObjectGroup *layerZoneWaterTile=addDebugLayer(tiledMap,arrayTerrainTile,false);
+                        addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height(),-(mapWidth*mapX),-(mapHeight*mapY));
+                    }
                     Tiled::MapWriter maprwriter;
                     maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/"+QString::number(mapX)+"."+QString::number(mapY)+".tmx");
 
