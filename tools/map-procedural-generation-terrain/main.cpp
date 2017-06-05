@@ -41,6 +41,22 @@ struct Terrain
     uint32_t baseX,baseY;
 };
 
+struct TerrainTransition
+{
+    //before map creation
+    bool collision;
+    bool replace_tile;
+    //tempory value
+    unsigned int tmp_from_type;
+    std::vector<unsigned int> tmp_to_type;
+    QString tmp_transition_tsx;
+    std::vector<unsigned int> tmp_transition_tile;
+    //after map creation
+    Tiled::Tile * from_type;
+    std::vector<Tiled::Tile *> to_type;
+    std::vector<Tiled::Tile *> transition_tile;
+};
+
 unsigned int floatToHigh(const float f)
 {
     if(f<-0.1)
@@ -400,6 +416,16 @@ void addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTerrain,Tile
     }
 }
 
+unsigned int stringToTerrainInt(const QString &string)
+{
+    if(string=="water")
+        return 0;
+    else if(string=="grass")
+        return 1;
+    else
+        return 2;
+}
+
 int main(int argc, char *argv[])
 {
     // Avoid performance issues with X11 engine when rendering objects
@@ -455,8 +481,8 @@ int main(int argc, char *argv[])
                     settings.setValue("transition_tile","184,185,186,218,250,249,248,216,281,282,314,313");
                 if(!settings.contains("collision"))
                     settings.setValue("collision",false);
-                if(!settings.contains("insamelayer"))
-                    settings.setValue("insamelayer",false);
+                if(!settings.contains("replace_tile"))
+                    settings.setValue("replace_tile",false);
             settings.endGroup();
         settings.endGroup();
     settings.endGroup();
@@ -485,6 +511,7 @@ int main(int argc, char *argv[])
 
     bool ok;
     Terrain grass,water,montain;
+    std::vector<TerrainTransition> terrainTransitionList;
     settings.beginGroup("terrain");
         settings.beginGroup("grass");
             grass.tsx=settings.value("tsx").toString();
@@ -552,6 +579,51 @@ int main(int argc, char *argv[])
     }
     srand(seed);
     const bool displayzone=settings.value("displayzone").toBool();
+    settings.beginGroup("transition");
+        const QStringList &groupsNames=settings.childGroups();
+        {
+            unsigned int index=0;
+            while(index<(unsigned int)groupsNames.size())
+            {
+                settings.beginGroup(groupsNames.at(index));
+                    TerrainTransition terrainTransition;
+                    //before map creation
+                    terrainTransition.collision=settings.value("collision").toBool();
+                    terrainTransition.replace_tile=settings.value("replace_tile").toBool();
+                    //tempory value
+                    terrainTransition.tmp_from_type=stringToTerrainInt(settings.value("from_type").toString());
+                    {
+                        const QStringList &to_type_list=settings.value("to_type").toString().split(',');
+                        unsigned int to_type_index=0;
+                        while(to_type_index<(unsigned int)to_type_list.size())
+                        {
+                            terrainTransition.tmp_to_type.push_back(stringToTerrainInt(to_type_list.at(to_type_index)));
+                            to_type_index++;
+                        }
+                    }
+                    terrainTransition.tmp_transition_tsx=settings.value("tmp_transition_tsx").toString();
+                    {
+                        bool ok;
+                        const QStringList &tmp_transition_tile_list=settings.value("tmp_transition_tile").toString().split(',');
+                        unsigned int tmp_transition_tile_index=0;
+                        while(tmp_transition_tile_index<(unsigned int)tmp_transition_tile_list.size())
+                        {
+                            const QString &s=tmp_transition_tile_list.at(tmp_transition_tile_index);
+                            terrainTransition.tmp_transition_tile.push_back(s.toUInt(&ok));
+                            if(!ok)
+                            {
+                                std::cerr << "into transition_tile some is not a number: " << s.toStdString() << " (abort)" << std::endl;
+                                abort();
+                            }
+                            tmp_transition_tile_index++;
+                        }
+                    }
+                    terrainTransitionList.push_back(terrainTransition);
+                settings.endGroup();
+                index++;
+            }
+        }
+    settings.endGroup();
 
     {
         const unsigned int totalWidth=mapWidth*mapXCount;
