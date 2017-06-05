@@ -56,7 +56,7 @@ Grid VoronioForTiledMapTmx::generateGrid(const unsigned int w, const unsigned in
     return g;
 }
 
-VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h) {
+VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h,const unsigned int tileStep) {
     QPolygonF rect(QRectF(0.0, 0.0, w, h));
 
     boost::polygon::voronoi_diagram<double> vd;
@@ -66,9 +66,10 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
     polygonZoneMap.tileToPolygonZoneIndex=(PolygonZoneIndex *)malloc(sizeof(PolygonZoneIndex)*w*h);
     memset(polygonZoneMap.tileToPolygonZoneIndex,0,sizeof(PolygonZoneIndex)*w*h);
     polygonZoneMap.zones.resize(g.size());
+    double maxArea=((double)pow(tileStep,2))*1.01;
 
     for (auto &c : vd.cells()) {
-        float minX=99999999999,minY=99999999999,maxX=0,maxY=0;
+        unsigned int minX=9999999,minY=9999999,maxX=0,maxY=0;
         auto e = c.incident_edge();
         unsigned int final_index=c.source_index();
         QPolygonF poly;
@@ -136,7 +137,11 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                         x=w;
                     if(y>h)
                         y=h;
-                    float tempminX=floor(x),tempminY=floor(y),tempmaxX=ceil(x),tempmaxY=ceil(y);
+                    unsigned int tempminX=floor(x),tempminY=floor(y),tempmaxX=ceil(x),tempmaxY=ceil(y);
+                    tempminX-=tempminX%tileStep;
+                    tempminY-=tempminY%tileStep;
+                    tempmaxX+=tileStep-tempmaxX%tileStep;
+                    tempmaxY+=tileStep-tempmaxY%tileStep;
                     if(tempminX<minX)
                         minX=tempminX;
                     if(tempminY<minY)
@@ -154,20 +159,31 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                 unsigned int x=minX;
                 while(x<maxX)
                 {
-                    const QPolygonF tileRect(QRectF(x,y,1.0,1.0));
+                    const QPolygonF tileRect(QRectF(x,y,tileStep,tileStep));
                     const QPolygonF &tilePolygon=resultPolygon.intersected(tileRect);
                     const double &a=area(tilePolygon);
-                    if(a>1.01)
+                    if(a>maxArea)
                         abort();
                     PolygonZoneIndex &tileIndex=polygonZoneMap.tileToPolygonZoneIndex[x+y*w];
                     if(a>tileIndex.area)
                     {
-                        tileIndex.area=a;
-                        tileIndex.index=final_index;
+                        unsigned offsety=0;
+                        while(offsety<tileStep)
+                        {
+                            unsigned offsetx=0;
+                            while(offsetx<tileStep)
+                            {
+                                PolygonZoneIndex &tileIndex=polygonZoneMap.tileToPolygonZoneIndex[x+offsetx+(y+offsety)*w];
+                                tileIndex.area=a;
+                                tileIndex.index=final_index;
+                                offsetx++;
+                            }
+                            offsety++;
+                        }
                     }
-                    x++;
+                    x+=tileStep;
                 }
-                y++;
+                y+=tileStep;
             }
         }
     }
@@ -424,9 +440,9 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                         }
                     }
                 }
-                x++;
+                x+=tileStep;
             }
-            y++;
+            y+=tileStep;
         }
     }
 

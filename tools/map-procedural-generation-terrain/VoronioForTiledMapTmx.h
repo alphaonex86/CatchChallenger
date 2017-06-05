@@ -29,7 +29,7 @@ public:
         PolygonZoneIndex *tileToPolygonZoneIndex;
     };
     static Grid generateGrid(const unsigned int w, const unsigned int h, const unsigned int seed, const int num);
-    static PolygonZoneMap computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h);
+    static PolygonZoneMap computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h, const unsigned int tileStep=1);
     static const int SCALE;
     static double area(const QPolygonF &p);
 };

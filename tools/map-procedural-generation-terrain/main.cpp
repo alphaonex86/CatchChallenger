@@ -583,7 +583,7 @@ int main(int argc, char *argv[])
         Simplex moisuremap(seed+5200);
 
         t.start();
-        const VoronioForTiledMapTmx::PolygonZoneMap &vd = VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight);
+        const VoronioForTiledMapTmx::PolygonZoneMap &vd = VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,2);
         if(vd.zones.size()!=grid.size())
             abort();
         qDebug("computVoronoi took %d ms", t.elapsed());
