@@ -443,14 +443,14 @@ void LoadMap::load_terrainTransitionList(const Terrain &grass,const Terrain &wat
     }
 }
 
-Tiled::Layer * LoadMap::searchTileLayerByName(const Tiled::Map &tiledMap,const QString &name)
+Tiled::TileLayer * LoadMap::searchTileLayerByName(const Tiled::Map &tiledMap,const QString &name)
 {
     unsigned int tileLayerIndex=0;
     while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
     {
         Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
         if(layer->isTileLayer() && layer->name()==name)
-            return layer;
+            return static_cast<Tiled::TileLayer *>(layer);
         tileLayerIndex++;
     }
     std::cerr << "Unable to found layer with name: " << name.toStdString() << std::endl;
@@ -477,7 +477,7 @@ std::vector<Tiled::Tile *> LoadMap::getTileAt(const Tiled::Map &tiledMap,const u
     return tiles;
 }
 
-Tiled::Layer * LoadMap::haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const Tiled::Tile * const tile)
+Tiled::TileLayer *LoadMap::haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const Tiled::Tile * const tile)
 {
     unsigned int tileLayerIndex=0;
     while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
@@ -490,14 +490,14 @@ Tiled::Layer * LoadMap::haveTileAt(const Tiled::Map &tiledMap,const unsigned int
             if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
                 abort();
             if(static_cast<Tiled::TileLayer *>(layer)->cellAt(x,y).tile==tile)
-                return layer;
+                return static_cast<Tiled::TileLayer *>(layer);
         }
         tileLayerIndex++;
     }
     return NULL;
 }
 
-Tiled::Layer * LoadMap::haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const std::vector<Tiled::Tile *> &tiles)
+Tiled::TileLayer *LoadMap::haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const std::vector<Tiled::Tile *> &tiles)
 {
     unsigned int tileLayerIndex=0;
     while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
@@ -510,7 +510,7 @@ Tiled::Layer * LoadMap::haveTileAt(const Tiled::Map &tiledMap,const unsigned int
             if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
                 abort();
             if(vectorcontainsAtLeastOne(tiles,static_cast<Tiled::TileLayer *>(layer)->cellAt(x,y).tile))
-                return layer;
+                return static_cast<Tiled::TileLayer *>(layer);
         }
         tileLayerIndex++;
     }

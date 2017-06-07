@@ -61,10 +61,10 @@ public:
     static void load_terrainTransitionList(const Terrain &grass,const Terrain &water,const Terrain &montain,
                                     QHash<QString,Tiled::Tileset *> &cachedTileset,
                                     std::vector<TerrainTransition> &terrainTransitionList,Tiled::Map &tiledMap);
-    static Tiled::Layer * searchTileLayerByName(const Tiled::Map &tiledMap,const QString &name);
+    static Tiled::TileLayer *searchTileLayerByName(const Tiled::Map &tiledMap,const QString &name);
     static std::vector<Tiled::Tile *> getTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y);
-    static Tiled::Layer * haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const Tiled::Tile * const tile);
-    static Tiled::Layer * haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const std::vector<Tiled::Tile *> &tiles);
+    static Tiled::TileLayer * haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const Tiled::Tile * const tile);
+    static Tiled::TileLayer * haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const std::vector<Tiled::Tile *> &tiles);
 };
 
 #endif // LOADMAP_H
