@@ -27,7 +27,8 @@ SOURCES += \
     znoise/cpp/Perlin.cpp \
     znoise/cpp/Simplex.cpp \
     znoise/cpp/Worley.cpp \
-    VoronioForTiledMapTmx.cpp
+    VoronioForTiledMapTmx.cpp \
+    LoadMap.cpp
 
 RESOURCES += \
     resources.qrc
@@ -43,7 +44,8 @@ HEADERS += \
     znoise/headers/Perlin.hpp \
     znoise/headers/Simplex.hpp \
     znoise/headers/Worley.hpp \
-    VoronioForTiledMapTmx.h
+    VoronioForTiledMapTmx.h \
+    LoadMap.h
 
 LIBS += -lboost_system
 
