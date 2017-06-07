@@ -20,6 +20,13 @@ http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generati
 
 void addTransitionOnMap(Tiled::Map &tiledMap,const std::vector<LoadMap::TerrainTransition> &terrainTransitionList)
 {
+    struct BufferRemplace
+    {
+        unsigned int x,y;
+        Tiled::Tile * tile;
+    };
+    std::map<Tiled::TileLayer *,std::vector<BufferRemplace> > bufferRemplace;
+
     /*Tiled::Layer * walkableLayer=searchTileLayerByName(tiledMap,"Walkable");
     Tiled::Layer * waterLayer=searchTileLayerByName(tiledMap,"Water");*/
     Tiled::TileLayer * transitionLayer=LoadMap::searchTileLayerByName(tiledMap,"Transition");
@@ -185,12 +192,11 @@ void addTransitionOnMap(Tiled::Map &tiledMap,const std::vector<LoadMap::TerrainT
                         {
                             //current tile
                             {
-                                Tiled::Cell cell;
-                                cell.tile=transitionTileToType;
-                                cell.flippedHorizontally=false;
-                                cell.flippedVertically=false;
-                                cell.flippedAntiDiagonally=false;
-                                transitionLayerReturn->setCell(x,y,cell);
+                                BufferRemplace bufferRemplaceUnit;
+                                bufferRemplaceUnit.x=x;
+                                bufferRemplaceUnit.y=y;
+                                bufferRemplaceUnit.tile=transitionTileToType;
+                                bufferRemplace[transitionLayerReturn].push_back(bufferRemplaceUnit);
                             }
                             //over layer
                             {
@@ -221,7 +227,35 @@ void addTransitionOnMap(Tiled::Map &tiledMap,const std::vector<LoadMap::TerrainT
         }
         y++;
     }
+
+    //flush the replace buffer
+    for (auto it = bufferRemplace.begin(); it != bufferRemplace.cend(); ++it) {
+        Tiled::TileLayer * layer=it->first;
+        const std::vector<BufferRemplace> &entries=it->second;
+        unsigned int index=0;
+        while(index<entries.size())
+        {
+            const BufferRemplace &bufferRemplace=entries.at(index);
+            Tiled::Cell cell;
+            cell.tile=bufferRemplace.tile;
+            cell.flippedHorizontally=false;
+            cell.flippedVertically=false;
+            cell.flippedAntiDiagonally=false;
+            layer->setCell(bufferRemplace.x,bufferRemplace.y,cell);
+            index++;
+        }
+      }
 }
+
+
+
+
+
+
+
+
+
+
 
 int main(int argc, char *argv[])
 {
