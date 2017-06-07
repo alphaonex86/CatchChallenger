@@ -351,6 +351,9 @@ void LoadMap::addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTer
                 {
                     const Point &point=zone.points.at(pointIndex);
                     Tiled::Cell cell;
+                    cell.flippedHorizontally=false;
+                    cell.flippedVertically=false;
+                    cell.flippedAntiDiagonally=false;
                     cell.tile=water.tileset->tileAt(water.tileId);
                     layerZoneWater->setCell(point.x(),point.y(),cell);
                     pointIndex++;
@@ -363,6 +366,9 @@ void LoadMap::addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTer
                 {
                     const Point &point=zone.points.at(pointIndex);
                     Tiled::Cell cell;
+                    cell.flippedHorizontally=false;
+                    cell.flippedVertically=false;
+                    cell.flippedAntiDiagonally=false;
                     cell.tile=arrayTerrainTile.at(heigh-1).at(moisure-1);
                     arrayTerrain[heigh-1][moisure-1]->setCell(point.x(),point.y(),cell);
                     pointIndex++;
@@ -388,10 +394,10 @@ Tiled::Tile * LoadMap::intToTile(const Terrain &grass,const Terrain &water,const
     switch(terrainInt)
     {
         case 0:
-            return grass.tileset->tileAt(grass.tileId);
+            return water.tileset->tileAt(water.tileId);
         break;
         case 1:
-            return water.tileset->tileAt(water.tileId);
+            return grass.tileset->tileAt(grass.tileId);
         break;
         case 2:
             return montain.tileset->tileAt(montain.tileId);
