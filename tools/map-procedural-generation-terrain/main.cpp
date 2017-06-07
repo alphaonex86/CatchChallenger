@@ -39,72 +39,155 @@ void addTransitionOnMap(Tiled::Map &tiledMap,const std::vector<LoadMap::TerrainT
                 Tiled::TileLayer * const transitionLayerReturn=LoadMap::haveTileAt(tiledMap,x,y,terrainTransition.from_type);
                 if(transitionLayerReturn!=NULL)
                 {
-                    Tiled::TileLayer * transitionLayerTmp=NULL;
-                    if(terrainTransition.collision)
-                        transitionLayerTmp=collisionsLayer;
-                    else if(terrainTransition.replace_tile)
-                        transitionLayerTmp=transitionLayerReturn;
-                    else
-                        transitionLayerTmp=transitionLayer;
+                    Tiled::Tile * transitionTileToType=NULL;
                     //check the near tile and determine what transition use
                     uint8_t to_type_match=0;//9 bits used-1=8bit, the center bit is the current tile
-                    if(x>0 && y>0 && LoadMap::haveTileAt(tiledMap,x-1,y-1,terrainTransition.to_type))
-                        to_type_match|=1;
-                    if(y>0 && LoadMap::haveTileAt(tiledMap,x,y-1,terrainTransition.to_type))
-                        to_type_match|=2;
-                    if(x<(w-1) && y>0 && LoadMap::haveTileAt(tiledMap,x+1,y-1,terrainTransition.to_type))
-                        to_type_match|=4;
-                    if(x>0 && LoadMap::haveTileAt(tiledMap,x-1,y,terrainTransition.to_type))
-                        to_type_match|=8;
+                    if(x>0 && y>0)
+                    {
+                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x-1,y-1,terrainTransition.to_type);
+                        if(transitionTileToType!=NULL)
+                            to_type_match|=1;
+                    }
+                    if(y>0)
+                    {
+                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x,y-1,terrainTransition.to_type);
+                        if(transitionTileToType!=NULL)
+                            to_type_match|=2;
+                    }
+                    if(x<(w-1) && y>0)
+                    {
+                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x+1,y-1,terrainTransition.to_type);
+                        if(transitionTileToType!=NULL)
+                            to_type_match|=4;
+                    }
+                    if(x>0)
+                    {
+                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x-1,y,terrainTransition.to_type);
+                        if(transitionTileToType!=NULL)
+                            to_type_match|=8;
+                    }
                     /*if(the center tile)
                         to_type_match|=X;*/
-                    if(x<(w-1) && LoadMap::haveTileAt(tiledMap,x+1,y,terrainTransition.to_type))
-                        to_type_match|=16;
-                    if(x>0 && y<(h-1) && LoadMap::haveTileAt(tiledMap,x-1,y+1,terrainTransition.to_type))
-                        to_type_match|=32;
-                    if(y<(h-1) && LoadMap::haveTileAt(tiledMap,x,y+1,terrainTransition.to_type))
-                        to_type_match|=64;
-                    if(x<(w-1) && y<(h-1) && LoadMap::haveTileAt(tiledMap,x+1,y+1,terrainTransition.to_type))
-                        to_type_match|=128;
+                    if(x<(w-1))
+                    {
+                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x+1,y,terrainTransition.to_type);
+                        if(transitionTileToType!=NULL)
+                            to_type_match|=16;
+                    }
+                    if(x>0 && y<(h-1))
+                    {
+                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x-1,y+1,terrainTransition.to_type);
+                        if(transitionTileToType!=NULL)
+                            to_type_match|=32;
+                    }
+                    if(y<(h-1))
+                    {
+                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x,y+1,terrainTransition.to_type);
+                        if(transitionTileToType!=NULL)
+                            to_type_match|=64;
+                    }
+                    if(x<(w-1) && y<(h-1))
+                    {
+                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x+1,y+1,terrainTransition.to_type);
+                        if(transitionTileToType!=NULL)
+                            to_type_match|=128;
+                    }
                     //remplace the tile
-                    Tiled::Cell cell;
-                    cell.tile=NULL;
-                    cell.flippedHorizontally=false;
-                    cell.flippedVertically=false;
-                    cell.flippedAntiDiagonally=false;
+                    Tiled::Cell cellReplace;
+                    cellReplace.tile=NULL;
+                    cellReplace.flippedHorizontally=false;
+                    cellReplace.flippedVertically=false;
+                    cellReplace.flippedAntiDiagonally=false;
+                    Tiled::Cell cellOver;
+                    cellOver.tile=NULL;
+                    cellOver.flippedHorizontally=false;
+                    cellOver.flippedVertically=false;
+                    cellOver.flippedAntiDiagonally=false;
+                    Tiled::Cell cellCollision;
+                    cellCollision.tile=NULL;
+                    cellCollision.flippedHorizontally=false;
+                    cellCollision.flippedVertically=false;
+                    cellCollision.flippedAntiDiagonally=false;
+
+                    unsigned int indexTile=0;
                     if(to_type_match&2)
                     {
                         if(to_type_match&8)
-                            cell.tile=terrainTransition.transition_tile.at(0);
+                            indexTile=0;
                         else if(to_type_match&16)
-                            cell.tile=terrainTransition.transition_tile.at(2);
+                            indexTile=2;
                         else
-                            cell.tile=terrainTransition.transition_tile.at(1);
+                            indexTile=1;
                     }
                     else if(to_type_match&64)
                     {
                         if(to_type_match&8)
-                            cell.tile=terrainTransition.transition_tile.at(6);
+                            indexTile=6;
                         else if(to_type_match&16)
-                            cell.tile=terrainTransition.transition_tile.at(4);
+                            indexTile=4;
                         else
-                            cell.tile=terrainTransition.transition_tile.at(5);
+                            indexTile=5;
                     }
                     else if(to_type_match&8)
-                        cell.tile=terrainTransition.transition_tile.at(7);
+                        indexTile=7;
                     else if(to_type_match&16)
-                        cell.tile=terrainTransition.transition_tile.at(3);
+                        indexTile=3;
                     else if(to_type_match&128)
-                        cell.tile=terrainTransition.transition_tile.at(8);
+                        indexTile=8;
                     else if(to_type_match&32)
-                        cell.tile=terrainTransition.transition_tile.at(9);
+                        indexTile=9;
                     else if(to_type_match&1)
-                        cell.tile=terrainTransition.transition_tile.at(10);
+                        indexTile=10;
                     else if(to_type_match&4)
-                        cell.tile=terrainTransition.transition_tile.at(11);
+                        indexTile=11;
 
-                    if(cell.tile!=NULL && !cell.tile->image().isNull())
-                        transitionLayerTmp->setCell(x,y,cell);
+                    cellOver.tile=terrainTransition.transition_tile.at(indexTile);
+                    cellCollision.tile=terrainTransition.collision_tile.at(indexTile);
+                    cellReplace.tile=transitionTileToType;
+
+                    if(cellReplace.tile!=NULL)
+                    {
+                        if(!terrainTransition.replace_tile)
+                        {
+                            Tiled::Cell cell;
+                            cell.tile=cellOver.tile;
+                            cell.flippedHorizontally=false;
+                            cell.flippedVertically=false;
+                            cell.flippedAntiDiagonally=false;
+                            transitionLayer->setCell(x,y,cell);
+                        }
+                        else
+                        {
+                            //current tile
+                            {
+                                Tiled::Cell cell;
+                                cell.tile=transitionTileToType;
+                                cell.flippedHorizontally=false;
+                                cell.flippedVertically=false;
+                                cell.flippedAntiDiagonally=false;
+                                transitionLayerReturn->setCell(x,y,cell);
+                            }
+                            //over layer
+                            {
+                                Tiled::Cell cell;
+                                cell.tile=cellOver.tile;
+                                cell.flippedHorizontally=false;
+                                cell.flippedVertically=false;
+                                cell.flippedAntiDiagonally=false;
+                                transitionLayer->setCell(x,y,cell);
+                            }
+                        }
+                        //collision
+                        if(cellCollision.tile!=NULL)
+                        {
+                            Tiled::Cell cell;
+                            cell.tile=cellCollision.tile;
+                            cell.flippedHorizontally=false;
+                            cell.flippedVertically=false;
+                            cell.flippedAntiDiagonally=false;
+                            collisionsLayer->setCell(x,y,cell);
+                        }
+                    }
                     break;
                 }
                 terrainTransitionIndex++;
@@ -168,10 +251,24 @@ int main(int argc, char *argv[])
                     settings.setValue("transition_tsx","terra.tsx");
                 if(!settings.contains("transition_tile"))
                     settings.setValue("transition_tile","184,185,186,218,250,249,248,216,281,282,314,313");
-                if(!settings.contains("collision"))
-                    settings.setValue("collision",false);
                 if(!settings.contains("replace_tile"))
                     settings.setValue("replace_tile",false);
+            settings.endGroup();
+            settings.beginGroup("monstainborder");
+                if(!settings.contains("from_type"))
+                    settings.setValue("from_type","mountain");
+                if(!settings.contains("to_type"))
+                    settings.setValue("to_type","grass");
+                if(!settings.contains("transition_tsx"))
+                    settings.setValue("transition_tsx","terra.tsx");
+                if(!settings.contains("transition_tile"))
+                    settings.setValue("transition_tile","320,321,322,354,386,385,384,352,323,324,356,355");//missing moutain piece
+                if(!settings.contains("collision_tsx"))
+                    settings.setValue("collision_tsx","terra.tsx");
+                if(!settings.contains("collision_tile"))
+                    settings.setValue("collision_tile","21,22,23,55,87,86,85,53,82,83,115,114");//the mountain borden
+                if(!settings.contains("replace_tile"))
+                    settings.setValue("replace_tile",true);//put the nearest tile into current (grass replace mountain)
             settings.endGroup();
         settings.endGroup();
     settings.endGroup();
@@ -278,7 +375,6 @@ int main(int argc, char *argv[])
                 settings.beginGroup(groupsNames.at(index));
                     LoadMap::TerrainTransition terrainTransition;
                     //before map creation
-                    terrainTransition.collision=settings.value("collision").toBool();
                     terrainTransition.replace_tile=settings.value("replace_tile").toBool();
                     //tempory value
                     terrainTransition.tmp_from_type=LoadMap::stringToTerrainInt(settings.value("from_type").toString());
@@ -295,19 +391,47 @@ int main(int argc, char *argv[])
                     {
                         bool ok;
                         const QString &tmp_transition_tile_settings=settings.value("transition_tile").toString();
-                        const QStringList &tmp_transition_tile_list=tmp_transition_tile_settings.split(',');
-                        unsigned int tmp_transition_tile_index=0;
-                        while(tmp_transition_tile_index<(unsigned int)tmp_transition_tile_list.size())
+                        if(!tmp_transition_tile_settings.isEmpty())
                         {
-                            const QString &s=tmp_transition_tile_list.at(tmp_transition_tile_index);
-                            terrainTransition.tmp_transition_tile.push_back(s.toUInt(&ok));
-                            if(!ok)
+                            const QStringList &tmp_transition_tile_list=tmp_transition_tile_settings.split(',');
+                            unsigned int tmp_transition_tile_index=0;
+                            while(tmp_transition_tile_index<(unsigned int)tmp_transition_tile_list.size())
                             {
-                                std::cerr << "into transition_tile some is not a number: " << s.toStdString() << " from: " << tmp_transition_tile_settings.toStdString() << " (abort)" << std::endl;
-                                abort();
+                                const QString &s=tmp_transition_tile_list.at(tmp_transition_tile_index);
+                                terrainTransition.tmp_transition_tile.push_back(s.toInt(&ok));
+                                if(!ok)
+                                {
+                                    std::cerr << "into transition_tile some is not a number: " << s.toStdString() << " from: " << tmp_transition_tile_settings.toStdString() << " (abort)" << std::endl;
+                                    abort();
+                                }
+                                tmp_transition_tile_index++;
                             }
-                            tmp_transition_tile_index++;
                         }
+                        while(terrainTransition.tmp_transition_tile.size()<=12)
+                            terrainTransition.tmp_transition_tile.push_back(-1);
+                    }
+                    terrainTransition.tmp_collision_tsx=settings.value("collision_tsx").toString();
+                    {
+                        bool ok;
+                        const QString &tmp_collision_tile_settings=settings.value("collision_tile").toString();
+                        if(!tmp_collision_tile_settings.isEmpty())
+                        {
+                            const QStringList &tmp_collision_tile_list=tmp_collision_tile_settings.split(',');
+                            unsigned int tmp_transition_tile_index=0;
+                            while(tmp_transition_tile_index<(unsigned int)tmp_collision_tile_list.size())
+                            {
+                                const QString &s=tmp_collision_tile_list.at(tmp_transition_tile_index);
+                                terrainTransition.tmp_collision_tile.push_back(s.toInt(&ok));
+                                if(!ok)
+                                {
+                                    std::cerr << "into transition_tile some is not a number: " << s.toStdString() << " from: " << tmp_collision_tile_settings.toStdString() << " (abort)" << std::endl;
+                                    abort();
+                                }
+                                tmp_transition_tile_index++;
+                            }
+                        }
+                        while(terrainTransition.tmp_collision_tile.size()<=12)
+                            terrainTransition.tmp_collision_tile.push_back(-1);
                     }
                     terrainTransitionList.push_back(terrainTransition);
                 settings.endGroup();
