@@ -39,58 +39,83 @@ void addTransitionOnMap(Tiled::Map &tiledMap,const std::vector<LoadMap::TerrainT
                 Tiled::TileLayer * const transitionLayerReturn=LoadMap::haveTileAt(tiledMap,x,y,terrainTransition.from_type);
                 if(transitionLayerReturn!=NULL)
                 {
+                    Tiled::Tile * transitionTileToTypeTmp=NULL;
                     Tiled::Tile * transitionTileToType=NULL;
                     //check the near tile and determine what transition use
                     uint8_t to_type_match=0;//9 bits used-1=8bit, the center bit is the current tile
                     if(x>0 && y>0)
                     {
-                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x-1,y-1,terrainTransition.to_type);
-                        if(transitionTileToType!=NULL)
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x-1,y-1,terrainTransition.to_type);
+                        if(transitionTileToTypeTmp!=NULL)
+                        {
+                            transitionTileToType=transitionTileToTypeTmp;
                             to_type_match|=1;
+                        }
                     }
                     if(y>0)
                     {
-                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x,y-1,terrainTransition.to_type);
-                        if(transitionTileToType!=NULL)
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x,y-1,terrainTransition.to_type);
+                        if(transitionTileToTypeTmp!=NULL)
+                        {
+                            transitionTileToType=transitionTileToTypeTmp;
                             to_type_match|=2;
+                        }
                     }
                     if(x<(w-1) && y>0)
                     {
-                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x+1,y-1,terrainTransition.to_type);
-                        if(transitionTileToType!=NULL)
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x+1,y-1,terrainTransition.to_type);
+                        if(transitionTileToTypeTmp!=NULL)
+                        {
+                            transitionTileToType=transitionTileToTypeTmp;
                             to_type_match|=4;
+                        }
                     }
                     if(x>0)
                     {
-                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x-1,y,terrainTransition.to_type);
-                        if(transitionTileToType!=NULL)
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x-1,y,terrainTransition.to_type);
+                        if(transitionTileToTypeTmp!=NULL)
+                        {
+                            transitionTileToType=transitionTileToTypeTmp;
                             to_type_match|=8;
+                        }
                     }
                     /*if(the center tile)
                         to_type_match|=X;*/
                     if(x<(w-1))
                     {
-                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x+1,y,terrainTransition.to_type);
-                        if(transitionTileToType!=NULL)
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x+1,y,terrainTransition.to_type);
+                        if(transitionTileToTypeTmp!=NULL)
+                        {
+                            transitionTileToType=transitionTileToTypeTmp;
                             to_type_match|=16;
+                        }
                     }
                     if(x>0 && y<(h-1))
                     {
-                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x-1,y+1,terrainTransition.to_type);
-                        if(transitionTileToType!=NULL)
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x-1,y+1,terrainTransition.to_type);
+                        if(transitionTileToTypeTmp!=NULL)
+                        {
+                            transitionTileToType=transitionTileToTypeTmp;
                             to_type_match|=32;
+                        }
                     }
                     if(y<(h-1))
                     {
-                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x,y+1,terrainTransition.to_type);
-                        if(transitionTileToType!=NULL)
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x,y+1,terrainTransition.to_type);
+                        if(transitionTileToTypeTmp!=NULL)
+                        {
+                            transitionTileToType=transitionTileToTypeTmp;
                             to_type_match|=64;
+                        }
                     }
                     if(x<(w-1) && y<(h-1))
                     {
-                        transitionTileToType=LoadMap::haveTileAtReturnTile(tiledMap,x+1,y+1,terrainTransition.to_type);
-                        if(transitionTileToType!=NULL)
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x+1,y+1,terrainTransition.to_type);
+                        if(transitionTileToTypeTmp!=NULL)
+                        {
+                            transitionTileToType=transitionTileToTypeTmp;
                             to_type_match|=128;
+                        }
                     }
                     //remplace the tile
                     Tiled::Cell cellReplace;
@@ -145,7 +170,7 @@ void addTransitionOnMap(Tiled::Map &tiledMap,const std::vector<LoadMap::TerrainT
                     cellCollision.tile=terrainTransition.collision_tile.at(indexTile);
                     cellReplace.tile=transitionTileToType;
 
-                    if(cellReplace.tile!=NULL)
+                    if(to_type_match!=0)
                     {
                         if(!terrainTransition.replace_tile)
                         {
