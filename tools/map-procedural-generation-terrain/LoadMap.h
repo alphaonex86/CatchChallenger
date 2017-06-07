@@ -24,17 +24,19 @@ public:
     struct TerrainTransition
     {
         //before map creation
-        bool collision;
         bool replace_tile;
         //tempory value
         unsigned int tmp_from_type;
         std::vector<unsigned int> tmp_to_type;
         QString tmp_transition_tsx;
-        std::vector<unsigned int> tmp_transition_tile;
+        std::vector<int> tmp_transition_tile;
+        QString tmp_collision_tsx;
+        std::vector<int> tmp_collision_tile;
         //after map creation
         Tiled::Tile * from_type;
         std::vector<Tiled::Tile *> to_type;
         std::vector<Tiled::Tile *> transition_tile;
+        std::vector<Tiled::Tile *> collision_tile;
     };
     static unsigned int floatToHigh(const float f);
     static unsigned int floatToMoisure(const float f);
@@ -64,7 +66,7 @@ public:
     static Tiled::TileLayer *searchTileLayerByName(const Tiled::Map &tiledMap,const QString &name);
     static std::vector<Tiled::Tile *> getTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y);
     static Tiled::TileLayer * haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const Tiled::Tile * const tile);
-    static Tiled::TileLayer * haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const std::vector<Tiled::Tile *> &tiles);
+    static Tiled::Tile * haveTileAtReturnTile(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const std::vector<Tiled::Tile *> &tiles);
 };
 
 #endif // LOADMAP_H
