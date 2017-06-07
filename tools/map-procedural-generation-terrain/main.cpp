@@ -21,30 +21,84 @@ void addTransitionOnMap(Tiled::Map &tiledMap,const std::vector<LoadMap::TerrainT
 {
     /*Tiled::Layer * walkableLayer=searchTileLayerByName(tiledMap,"Walkable");
     Tiled::Layer * waterLayer=searchTileLayerByName(tiledMap,"Water");*/
-    Tiled::Layer * transitionLayer=LoadMap::searchTileLayerByName(tiledMap,"Transition");
-    Tiled::Layer * collisionsLayer=LoadMap::searchTileLayerByName(tiledMap,"Collisions");
+    Tiled::TileLayer * transitionLayer=LoadMap::searchTileLayerByName(tiledMap,"Transition");
+    Tiled::TileLayer * collisionsLayer=LoadMap::searchTileLayerByName(tiledMap,"Collisions");
+    const unsigned int w=tiledMap.width();
+    const unsigned int h=tiledMap.height();
     unsigned int y=0;
-    while(y<(unsigned int)tiledMap.height())
+    while(y<h)
     {
         unsigned int x=0;
-        while(x<(unsigned int)tiledMap.width())
+        while(x<w)
         {
             unsigned int terrainTransitionIndex=0;
             while(terrainTransitionIndex<terrainTransitionList.size())
             {
                 const LoadMap::TerrainTransition &terrainTransition=terrainTransitionList.at(terrainTransitionIndex);
-                Tiled::Layer * const transitionLayerReturn=LoadMap::haveTileAt(tiledMap,x,y,terrainTransition.from_type);
+                Tiled::TileLayer * const transitionLayerReturn=LoadMap::haveTileAt(tiledMap,x,y,terrainTransition.from_type);
                 if(transitionLayerReturn!=NULL)
                 {
-                    Tiled::Layer * transitionLayerTmp=NULL;
+                    Tiled::TileLayer * transitionLayerTmp=NULL;
                     if(terrainTransition.collision)
                         transitionLayerTmp=collisionsLayer;
                     else if(!terrainTransition.replace_tile)
                         transitionLayerTmp=transitionLayer;
                     else
                         transitionLayerTmp=transitionLayerReturn;
-                    //check the near tile
+                    //check the near tile and determine what transition use
+                    uint8_t to_type_match=0;//9 bits used-1=8bit, the center bit is the current tile
+                    if(x>0 && y>0 && LoadMap::haveTileAt(tiledMap,x-1,y-1,terrainTransition.to_type))
+                        to_type_match|=1;
+                    if(y>0 && LoadMap::haveTileAt(tiledMap,x,y-1,terrainTransition.to_type))
+                        to_type_match|=2;
+                    if(x<(w-1) && y>0 && LoadMap::haveTileAt(tiledMap,x+1,y-1,terrainTransition.to_type))
+                        to_type_match|=4;
+                    if(x>0 && LoadMap::haveTileAt(tiledMap,x-1,y,terrainTransition.to_type))
+                        to_type_match|=8;
+                    /*if(the center tile)
+                        to_type_match|=X;*/
+                    if(x<(w-1) && LoadMap::haveTileAt(tiledMap,x+1,y,terrainTransition.to_type))
+                        to_type_match|=16;
+                    if(x>0 && y<(h-1) && LoadMap::haveTileAt(tiledMap,x-1,y+1,terrainTransition.to_type))
+                        to_type_match|=32;
+                    if(y<(h-1) && LoadMap::haveTileAt(tiledMap,x,y+1,terrainTransition.to_type))
+                        to_type_match|=64;
+                    if(x<(w-1) && y<(h-1) && LoadMap::haveTileAt(tiledMap,x+1,y+1,terrainTransition.to_type))
+                        to_type_match|=128;
                     //remplace the tile
+                    Tiled::Cell cell;
+                    if(to_type_match|2)
+                    {
+                        if(to_type_match|8)
+                            cell.tile=terrainTransition.transition_tile.at(0);
+                        else if(to_type_match|16)
+                            cell.tile=terrainTransition.transition_tile.at(2);
+                        else
+                            cell.tile=terrainTransition.transition_tile.at(1);
+                    }
+                    else if(to_type_match|64)
+                    {
+                        if(to_type_match|8)
+                            cell.tile=terrainTransition.transition_tile.at(6);
+                        else if(to_type_match|16)
+                            cell.tile=terrainTransition.transition_tile.at(4);
+                        else
+                            cell.tile=terrainTransition.transition_tile.at(5);
+                    }
+                    else if(to_type_match|8)
+                        cell.tile=terrainTransition.transition_tile.at(7);
+                    else if(to_type_match|16)
+                        cell.tile=terrainTransition.transition_tile.at(3);
+                    else if(to_type_match|128)
+                        cell.tile=terrainTransition.transition_tile.at(8);
+                    else if(to_type_match|32)
+                        cell.tile=terrainTransition.transition_tile.at(9);
+                    else if(to_type_match|1)
+                        cell.tile=terrainTransition.transition_tile.at(10);
+                    else if(to_type_match|4)
+                        cell.tile=terrainTransition.transition_tile.at(11);
+
+                    transitionLayerTmp->setCell(x,y,cell);
                     break;
                 }
                 terrainTransitionIndex++;
@@ -305,10 +359,14 @@ int main(int argc, char *argv[])
                 LoadMap::addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height());
             }
             {
+                t.start();
                 std::vector<std::vector<Tiled::TileLayer *> > arrayTerrain;
                 Tiled::TileLayer *layerZoneWater=LoadMap::addTerrainLayer(tiledMap,arrayTerrain);
                 LoadMap::addTerrain(arrayTerrain,layerZoneWater,grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height(),water,arrayTerrainTile);
+                if(terrainTransitionList.empty())
+                    abort();
                 addTransitionOnMap(tiledMap,terrainTransitionList);
+                qDebug("Transitions took %d ms", t.elapsed());
             }
             {
                 Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0,tiledMap.width(),tiledMap.height());
