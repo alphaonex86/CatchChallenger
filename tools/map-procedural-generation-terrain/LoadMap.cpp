@@ -424,25 +424,70 @@ void LoadMap::load_terrainTransitionList(const Terrain &grass,const Terrain &wat
             terrainTransition.to_type.push_back(intToTile(grass,water,montain,to_type));
             to_type_Index++;
         }
-        Tiled::Tileset *tileset;
-        if(cachedTileset.contains(terrainTransition.tmp_transition_tsx))
-            tileset=cachedTileset.value(terrainTransition.tmp_transition_tsx);
-        else
+
+        //transition
         {
-            tileset=readTileset(terrainTransition.tmp_transition_tsx,&tiledMap);
-            cachedTileset[terrainTransition.tmp_transition_tsx]=tileset;
-        }
-        unsigned int transition_tile_index=0;
-        while(transition_tile_index<terrainTransition.tmp_transition_tile.size())
-        {
-            const unsigned int &tileId=terrainTransition.tmp_transition_tile.at(transition_tile_index);
-            if(tileId>(unsigned int)tileset->tileCount())
+            if(!terrainTransition.tmp_transition_tsx.isEmpty())
             {
-                std::cerr << "tileId greater than tile count, abort(): " << std::to_string(tileId) << std::endl;
-                abort();
+                Tiled::Tileset *tileset;
+                if(cachedTileset.contains(terrainTransition.tmp_transition_tsx))
+                    tileset=cachedTileset.value(terrainTransition.tmp_transition_tsx);
+                else
+                {
+                    tileset=readTileset(terrainTransition.tmp_transition_tsx,&tiledMap);
+                    cachedTileset[terrainTransition.tmp_transition_tsx]=tileset;
+                }
+                unsigned int transition_tile_index=0;
+                while(transition_tile_index<terrainTransition.tmp_transition_tile.size())
+                {
+                    const int &tileId=terrainTransition.tmp_transition_tile.at(transition_tile_index);
+                    if(tileId!=-1 && tileId>tileset->tileCount())
+                    {
+                        std::cerr << "tileId greater than tile count, abort(): " << std::to_string(tileId) << std::endl;
+                        abort();
+                    }
+                    if(tileId!=-1)
+                        terrainTransition.transition_tile.push_back(tileset->tileAt(tileId));
+                    else
+                        terrainTransition.transition_tile.push_back(NULL);
+                    transition_tile_index++;
+                }
             }
-            terrainTransition.transition_tile.push_back(tileset->tileAt(tileId));
-            transition_tile_index++;
+            else
+                while(terrainTransition.transition_tile.size()<=12)
+                    terrainTransition.transition_tile.push_back(NULL);
+        }
+        //collision
+        {
+            if(!terrainTransition.tmp_collision_tsx.isEmpty())
+            {
+                Tiled::Tileset *tileset;
+                if(cachedTileset.contains(terrainTransition.tmp_collision_tsx))
+                    tileset=cachedTileset.value(terrainTransition.tmp_collision_tsx);
+                else
+                {
+                    tileset=readTileset(terrainTransition.tmp_collision_tsx,&tiledMap);
+                    cachedTileset[terrainTransition.tmp_collision_tsx]=tileset;
+                }
+                unsigned int collision_tile_index=0;
+                while(collision_tile_index<terrainTransition.tmp_collision_tile.size())
+                {
+                    const int &tileId=terrainTransition.tmp_collision_tile.at(collision_tile_index);
+                    if(tileId!=-1 && tileId>tileset->tileCount())
+                    {
+                        std::cerr << "tileId greater than tile count, abort(): " << std::to_string(tileId) << std::endl;
+                        abort();
+                    }
+                    if(tileId!=-1)
+                        terrainTransition.collision_tile.push_back(tileset->tileAt(tileId));
+                    else
+                        terrainTransition.collision_tile.push_back(NULL);
+                    collision_tile_index++;
+                }
+            }
+            else
+                while(terrainTransition.collision_tile.size()<=12)
+                    terrainTransition.collision_tile.push_back(NULL);
         }
 
         terrainTransitionIndex++;
@@ -491,19 +536,20 @@ Tiled::TileLayer *LoadMap::haveTileAt(const Tiled::Map &tiledMap,const unsigned 
         Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
         if(layer->isTileLayer())
         {
+            Tiled::TileLayer * const castedLayer=static_cast<Tiled::TileLayer *>(layer);
             if(layer->x()!=0 || layer->y()!=0)
                 abort();
             if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
                 abort();
-            if(static_cast<Tiled::TileLayer *>(layer)->cellAt(x,y).tile==tile)
-                return static_cast<Tiled::TileLayer *>(layer);
+            if(castedLayer->cellAt(x,y).tile==tile)
+                return castedLayer;
         }
         tileLayerIndex++;
     }
     return NULL;
 }
 
-Tiled::TileLayer *LoadMap::haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const std::vector<Tiled::Tile *> &tiles)
+Tiled::Tile * LoadMap::haveTileAtReturnTile(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const std::vector<Tiled::Tile *> &tiles)
 {
     unsigned int tileLayerIndex=0;
     while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
@@ -511,12 +557,14 @@ Tiled::TileLayer *LoadMap::haveTileAt(const Tiled::Map &tiledMap,const unsigned 
         Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
         if(layer->isTileLayer())
         {
+            Tiled::TileLayer * const castedLayer=static_cast<Tiled::TileLayer *>(layer);
             if(layer->x()!=0 || layer->y()!=0)
                 abort();
             if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
                 abort();
-            if(vectorcontainsAtLeastOne(tiles,static_cast<Tiled::TileLayer *>(layer)->cellAt(x,y).tile))
-                return static_cast<Tiled::TileLayer *>(layer);
+            Tiled::Tile * const tile=castedLayer->cellAt(x,y).tile;
+            if(vectorcontainsAtLeastOne(tiles,tile))
+                return tile;
         }
         tileLayerIndex++;
     }
