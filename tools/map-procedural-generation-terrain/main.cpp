@@ -14,6 +14,7 @@
 #include "../../client/tiled/tiled_orthogonalrenderer.h"
 #include "../../client/tiled/tiled_tilelayer.h"
 #include "../../client/tiled/tiled_tileset.h"
+#include "../../general/base/cpp11addition.h"
 
 #include "znoise/headers/Simplex.hpp"
 #include "VoronioForTiledMapTmx.h"
@@ -231,9 +232,10 @@ Tiled::TileLayer *addTerrainLayer(Tiled::Map &tiledMap,std::vector<std::vector<T
 {
     Tiled::TileLayer *layerZoneWater=new Tiled::TileLayer("Water",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneWater);
-
     Tiled::TileLayer *layerZoneWalkable=new Tiled::TileLayer("Walkable",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneWalkable);
+    Tiled::TileLayer *layerZoneTransition=new Tiled::TileLayer("Transition",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneTransition);
 
     arrayTerrain.resize(4);
     //high 1
@@ -484,6 +486,87 @@ void load_terrainTransitionList(const Terrain &grass,const Terrain &water,const 
 
         terrainTransitionIndex++;
     }
+}
+
+Tiled::Layer * searchTileLayerByName(const Tiled::Map &tiledMap,const QString &name)
+{
+    unsigned int tileLayerIndex=0;
+    while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
+    {
+        Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
+        if(layer->isTileLayer() && layer->name()==name)
+            return layer;
+        tileLayerIndex++;
+    }
+    std::cerr << "Unable to found layer with name: " << name.toStdString() << std::endl;
+    abort();
+}
+
+std::vector<Tiled::Tile *> getTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y)
+{
+    std::vector<Tiled::Tile *> tiles;
+    unsigned int tileLayerIndex=0;
+    while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
+    {
+        Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
+        if(layer->isTileLayer())
+        {
+            if(layer->x()!=0 || layer->y()!=0)
+                abort();
+            if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
+                abort();
+            tiles.push_back(static_cast<Tiled::TileLayer *>(layer)->cellAt(x,y).tile);
+        }
+        tileLayerIndex++;
+    }
+    return tiles;
+}
+
+Tiled::Layer * haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const Tiled::Tile * const tile)
+{
+    unsigned int tileLayerIndex=0;
+    while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
+    {
+        Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
+        if(layer->isTileLayer())
+        {
+            if(layer->x()!=0 || layer->y()!=0)
+                abort();
+            if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
+                abort();
+            if(static_cast<Tiled::TileLayer *>(layer)->cellAt(x,y).tile==tile)
+                return layer;
+        }
+        tileLayerIndex++;
+    }
+    return NULL;
+}
+
+Tiled::Layer * haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const std::vector<Tiled::Tile *> &tiles)
+{
+    unsigned int tileLayerIndex=0;
+    while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
+    {
+        Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
+        if(layer->isTileLayer())
+        {
+            if(layer->x()!=0 || layer->y()!=0)
+                abort();
+            if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
+                abort();
+            if(vectorcontainsAtLeastOne(tiles,static_cast<Tiled::TileLayer *>(layer)->cellAt(x,y).tile))
+                return layer;
+        }
+        tileLayerIndex++;
+    }
+    return NULL;
+}
+
+void addTransitionOnMap(Tiled::Map &tiledMap,const std::vector<TerrainTransition> &terrainTransitionList)
+{
+    /*Tiled::Layer * walkableLayer=searchTileLayerByName(tiledMap,"Walkable");
+    Tiled::Layer * waterLayer=searchTileLayerByName(tiledMap,"Water");*/
+    Tiled::Layer * transitionLayer=searchTileLayerByName(tiledMap,"Transition");
 }
 
 int main(int argc, char *argv[])
@@ -739,6 +822,7 @@ int main(int argc, char *argv[])
                 std::vector<std::vector<Tiled::TileLayer *> > arrayTerrain;
                 Tiled::TileLayer *layerZoneWater=addTerrainLayer(tiledMap,arrayTerrain);
                 addTerrain(arrayTerrain,layerZoneWater,grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height(),water,arrayTerrainTile);
+                addTransitionOnMap(tiledMap,terrainTransitionList);
             }
             {
                 Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0,tiledMap.width(),tiledMap.height());
@@ -759,10 +843,11 @@ int main(int argc, char *argv[])
                     }
                     mapY++;
                 }
+                layerZoneChunk->setVisible(false);
             }
             Tiled::MapWriter maprwriter;maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/all.tmx");
         }
-        {
+/* rewrite a real all.tmx split        {
             unsigned int mapY=0;
             while(mapY<mapYCount)
             {
@@ -788,7 +873,7 @@ int main(int argc, char *argv[])
                 }
                 mapY++;
             }
-        }
+        }*/
     }
 
     return 0;
