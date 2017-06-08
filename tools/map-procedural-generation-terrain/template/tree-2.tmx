@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="2" height="3" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" source="../wood.tsx"/>
+ <layer name="Collisions" width="2" height="3">
+  <data encoding="base64" compression="zlib">
+   eJxjYIAAFSBWBWIXIHYFYgAHSADT
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="2" height="3">
+  <data encoding="base64" compression="zlib">
+   eJxjYWBgYGXABAAA3AAK
+  </data>
+ </layer>
+</map>

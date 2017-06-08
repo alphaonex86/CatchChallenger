@@ -42,6 +42,7 @@ public:
     static unsigned int floatToMoisure(const float f);
     static Tiled::Tileset *readTileset(const QString &tsx,Tiled::Map *tiledMap);
     static Tiled::Tileset *readTileset(const uint32_t &tile,const QString &tsx,Tiled::Map *tiledMap);
+    static Tiled::Map *readMap(const QString &tmx);
     static void loadTileset(Terrain &terrain,QHash<QString,Tiled::Tileset *> &cachedTileset,Tiled::Map &tiledMap);
     static Tiled::ObjectGroup *addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain,bool polygon);
     static Tiled::TileLayer *addTerrainLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::TileLayer *> > &arrayTerrain);
@@ -52,12 +53,12 @@ public:
                             const VoronioForTiledMapTmx::PolygonZoneMap &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
                             const int widthMap,const int heightMap,
                             const int offsetX=0,const int offsetY=0);
-    static void addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTerrain,Tiled::TileLayer *layerZoneWater,
+    static void addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTerrain, Tiled::TileLayer *layerZoneWater,
                             const Grid &grid,
-                            const VoronioForTiledMapTmx::PolygonZoneMap &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
-                            const int widthMap,const int heightMap,
-                            const Terrain &water,const std::vector<std::vector<Tiled::Tile *> > &arrayTerrainTile,
-                            const int offsetX=0,const int offsetY=0);
+                            VoronioForTiledMapTmx::PolygonZoneMap &vd, const Simplex &heighmap, const Simplex &moisuremap, const float &noiseMapScale,
+                            const int widthMap, const int heightMap,
+                            const Terrain &water, const std::vector<std::vector<Tiled::Tile *> > &arrayTerrainTile,
+                            const int offsetX=0, const int offsetY=0);
     static unsigned int stringToTerrainInt(const QString &string);
     static Tiled::Tile * intToTile(const Terrain &grass,const Terrain &water,const Terrain &montain,const unsigned int &terrainInt);
     static void load_terrainTransitionList(const Terrain &grass,const Terrain &water,const Terrain &montain,

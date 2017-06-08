@@ -28,7 +28,8 @@ SOURCES += \
     znoise/cpp/Simplex.cpp \
     znoise/cpp/Worley.cpp \
     VoronioForTiledMapTmx.cpp \
-    LoadMap.cpp
+    LoadMap.cpp \
+    TransitionTerrain.cpp
 
 RESOURCES += \
     resources.qrc
@@ -45,7 +46,8 @@ HEADERS += \
     znoise/headers/Simplex.hpp \
     znoise/headers/Worley.hpp \
     VoronioForTiledMapTmx.h \
-    LoadMap.h
+    LoadMap.h \
+    TransitionTerrain.h
 
 LIBS += -lboost_system
 
