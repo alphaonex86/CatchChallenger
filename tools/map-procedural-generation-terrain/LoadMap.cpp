@@ -67,6 +67,18 @@ Tiled::Tileset *LoadMap::readTileset(const QString &tsx,Tiled::Map *tiledMap)
     return tilesetBase;
 }
 
+Tiled::Map *LoadMap::readMap(const QString &tmx)
+{
+    Tiled::MapReader reader;
+    Tiled::Map *map=reader.readMap(QCoreApplication::applicationDirPath()+"/dest/"+tmx);
+    if(map==NULL)
+    {
+        std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString() << "/" << tmx.toStdString() << std::endl;
+        abort();
+    }
+    return map;
+}
+
 Tiled::Tileset *LoadMap::readTileset(const uint32_t &tile,const QString &tsx,Tiled::Map *tiledMap)
 {
     Tiled::Tileset *tilesetBase=readTileset(tsx,tiledMap);
@@ -187,10 +199,14 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,std::vector<std:
     tiledMap.addLayer(layerZoneWater);
     Tiled::TileLayer *layerZoneWalkable=new Tiled::TileLayer("Walkable",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneWalkable);
-    Tiled::TileLayer *layerZoneTransition=new Tiled::TileLayer("Transition",0,0,tiledMap.width(),tiledMap.height());
-    tiledMap.addLayer(layerZoneTransition);
+    Tiled::TileLayer *layerZoneOnGrass=new Tiled::TileLayer("OnGrass",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneOnGrass);
     Tiled::TileLayer *layerZoneCollisions=new Tiled::TileLayer("Collisions",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneCollisions);
+    Tiled::TileLayer *layerZoneWalkBehind=new Tiled::TileLayer("WalkBehind",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneWalkBehind);
+    Tiled::TileLayer *layerZoneWalkBehind2=new Tiled::TileLayer("WalkBehind",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneWalkBehind2);
 
     arrayTerrain.resize(4);
     //high 1
@@ -322,7 +338,7 @@ void LoadMap::addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> >
 
 void LoadMap::addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTerrain,Tiled::TileLayer *layerZoneWater,
                         const Grid &grid,
-                        const VoronioForTiledMapTmx::PolygonZoneMap &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
+                        VoronioForTiledMapTmx::PolygonZoneMap &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
                         const int widthMap,const int heightMap,
                         const Terrain &water,const std::vector<std::vector<Tiled::Tile *> > &arrayTerrainTile,
                         const int offsetX,const int offsetY)
@@ -332,7 +348,7 @@ void LoadMap::addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTer
     while(index<grid.size())
     {
         const Point &centroid=grid.at(index);
-        const VoronioForTiledMapTmx::PolygonZone &zone=vd.zones.at(index);
+        VoronioForTiledMapTmx::PolygonZone &zone=vd.zones[index];
 
         QPolygonF polyTile;
         polyTile=zone.pixelizedPolygon;
@@ -342,9 +358,9 @@ void LoadMap::addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTer
         if(!edges.isEmpty())
         {
             //const QPointF &edge=edges.first();
-            const unsigned int &heigh=floatToHigh(heighmap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale));
-            const unsigned int &moisure=floatToMoisure(moisuremap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale*10));
-            if(heigh==0)
+            zone.heigh=floatToHigh(heighmap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale));
+            zone.moisure=floatToMoisure(moisuremap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale*10));
+            if(zone.heigh==0)
             {
                 unsigned int pointIndex=0;
                 while(pointIndex<zone.points.size())
@@ -369,8 +385,8 @@ void LoadMap::addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTer
                     cell.flippedHorizontally=false;
                     cell.flippedVertically=false;
                     cell.flippedAntiDiagonally=false;
-                    cell.tile=arrayTerrainTile.at(heigh-1).at(moisure-1);
-                    arrayTerrain[heigh-1][moisure-1]->setCell(point.x(),point.y(),cell);
+                    cell.tile=arrayTerrainTile.at(zone.heigh-1).at(zone.moisure-1);
+                    arrayTerrain[zone.heigh-1][zone.moisure-1]->setCell(point.x(),point.y(),cell);
                     pointIndex++;
                 }
             }
