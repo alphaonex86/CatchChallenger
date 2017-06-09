@@ -41,7 +41,7 @@ public:
     static unsigned int floatToHigh(const float f);
     static unsigned int floatToMoisure(const float f);
     static Tiled::Tileset *readTileset(const QString &tsx,Tiled::Map *tiledMap);
-    static Tiled::Tileset *readTileset(const uint32_t &tile,const QString &tsx,Tiled::Map *tiledMap);
+    static Tiled::Tileset *readTilesetWithTileId(const uint32_t &tile,const QString &tsx,Tiled::Map *tiledMap);
     static Tiled::Map *readMap(const QString &tmx);
     static void loadTileset(Terrain &terrain,QHash<QString,Tiled::Tileset *> &cachedTileset,Tiled::Map &tiledMap);
     static Tiled::ObjectGroup *addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain,bool polygon);

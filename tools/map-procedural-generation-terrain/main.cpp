@@ -14,6 +14,9 @@
 #include "TransitionTerrain.h"
 
 #include <unordered_set>
+#include <unordered_map>
+#include <QFileInfo>
+#include <QDir>
 
 /*To do: Tree/Grass, Rivers
 http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/*/
@@ -24,6 +27,7 @@ struct MapTemplate
 {
     const Tiled::Map * tiledMap;
     std::vector<uint8_t> templateLayerNumberToMapLayerNumber;
+    std::unordered_map<Tiled::Tileset *,Tiled::Tileset *> templateTilesetToMapTileset;
     uint8_t width,height,x,y;
 };
 
@@ -88,60 +92,93 @@ bool detectBorder(Tiled::TileLayer *layer,MapTemplate *templateMap)
     return true;
 }
 
-MapTemplate tiledMapToMapTemplate(const Tiled::Map *templateMap,const Tiled::Map &worldMap)
+MapTemplate tiledMapToMapTemplate(const Tiled::Map *templateMap,Tiled::Map &worldMap)
 {
     uint8_t lastDimensionLayerUsed;
     MapTemplate returnedVar;
     returnedVar.tiledMap=templateMap;
     returnedVar.templateLayerNumberToMapLayerNumber.resize(templateMap->layerCount());
-    std::unordered_set<uint8_t> alreadyBlockedLayer;
-    uint8_t templateLayerIndex=0;
-    while(templateLayerIndex<templateMap->layerCount())
+    //returnedVar.templateTilesetToMapTileset.resize(templateMap->tilesetCount());
+
     {
-        Tiled::Layer * layer=templateMap->layerAt(templateLayerIndex);
-        if(layer->isTileLayer())
+        std::unordered_set<uint8_t> alreadyBlockedLayer;
+        uint8_t templateLayerIndex=0;
+        while(templateLayerIndex<templateMap->layerCount())
         {
-            Tiled::TileLayer * tileLayer=static_cast<Tiled::TileLayer *>(layer);
-            //search into the world map
-            uint8_t worldLayerIndex=0;
-            while(worldLayerIndex<worldMap.layerCount())
+            Tiled::Layer * layer=templateMap->layerAt(templateLayerIndex);
+            if(layer->isTileLayer())
             {
-                Tiled::Layer * layer=worldMap.layerAt(worldLayerIndex);
-                if(layer->isTileLayer())
+                Tiled::TileLayer * tileLayer=static_cast<Tiled::TileLayer *>(layer);
+                //search into the world map
+                uint8_t worldLayerIndex=0;
+                while(worldLayerIndex<worldMap.layerCount())
                 {
-                    Tiled::TileLayer * worldTileLayer=static_cast<Tiled::TileLayer *>(layer);
-                    //search into the world map
-                    if(alreadyBlockedLayer.find(worldLayerIndex)==alreadyBlockedLayer.cend() && worldTileLayer->name()==tileLayer->name())
+                    Tiled::Layer * layer=worldMap.layerAt(worldLayerIndex);
+                    if(layer->isTileLayer())
                     {
-                        alreadyBlockedLayer.insert(worldLayerIndex);
-                        returnedVar.templateLayerNumberToMapLayerNumber[templateLayerIndex]=worldLayerIndex;
-                        break;
+                        Tiled::TileLayer * worldTileLayer=static_cast<Tiled::TileLayer *>(layer);
+                        //search into the world map
+                        if(alreadyBlockedLayer.find(worldLayerIndex)==alreadyBlockedLayer.cend() && worldTileLayer->name()==tileLayer->name())
+                        {
+                            alreadyBlockedLayer.insert(worldLayerIndex);
+                            returnedVar.templateLayerNumberToMapLayerNumber[templateLayerIndex]=worldLayerIndex;
+                            break;
+                        }
                     }
+                    worldLayerIndex++;
                 }
-                worldLayerIndex++;
+                if(worldLayerIndex>=worldMap.layerCount())
+                {
+                    std::cerr << "a template layer is not found: " << tileLayer->name().toStdString() << " (abort)" << std::endl;
+                    abort();
+                }
+                if(tileLayer->name()=="Collisions")
+                {
+                    if(detectBorder(tileLayer,&returnedVar))
+                        lastDimensionLayerUsed=0;
+                }
+                else if(tileLayer->name()=="Grass" && lastDimensionLayerUsed>0)
+                {
+                    if(detectBorder(tileLayer,&returnedVar))
+                        lastDimensionLayerUsed=1;
+                }
+                else if(tileLayer->name()=="OnGrass" && lastDimensionLayerUsed>1)
+                {
+                    if(detectBorder(tileLayer,&returnedVar))
+                        lastDimensionLayerUsed=2;
+                }
             }
-            if(worldLayerIndex>=worldMap.layerCount())
-            {
-                std::cerr << "a template layer is not found: " << tileLayer->name().toStdString() << " (abort)" << std::endl;
-                abort();
-            }
-            if(tileLayer->name()=="Collisions")
-            {
-                if(detectBorder(tileLayer,&returnedVar))
-                    lastDimensionLayerUsed=0;
-            }
-            else if(tileLayer->name()=="Grass" && lastDimensionLayerUsed>0)
-            {
-                if(detectBorder(tileLayer,&returnedVar))
-                    lastDimensionLayerUsed=1;
-            }
-            else if(tileLayer->name()=="OnGrass" && lastDimensionLayerUsed>1)
-            {
-                if(detectBorder(tileLayer,&returnedVar))
-                    lastDimensionLayerUsed=2;
-            }
+            templateLayerIndex++;
         }
-        templateLayerIndex++;
+    }
+    {
+        uint8_t templateTilesetIndex=0;
+        while(templateTilesetIndex<templateMap->tilesetCount())
+        {
+            Tiled::Tileset * tileset=templateMap->tilesetAt(templateTilesetIndex);
+            QFileInfo tilesetFile(tileset->fileName());
+            QString tilesetPath=tilesetFile.absoluteFilePath();
+            uint8_t templateTilesetWorldIndex=0;
+            while(templateTilesetWorldIndex<worldMap.tilesetCount())
+            {
+                Tiled::Tileset * tilesetWorld=worldMap.tilesetAt(templateTilesetWorldIndex);
+                QFileInfo tilesetWorldFile(tilesetWorld->fileName());
+                QString tilesetWorldPath=tilesetWorldFile.absoluteFilePath();
+                if(tilesetPath==tilesetWorldPath)
+                {
+                    returnedVar.templateTilesetToMapTileset[tileset]=tilesetWorld;
+                    break;
+                }
+                templateTilesetWorldIndex++;
+            }
+            if(templateTilesetWorldIndex>=templateMap->tilesetCount())
+            {
+                QDir templateDir(QCoreApplication::applicationDirPath()+"/dest/template/");
+                const QString &tilesetTemplateRelativePath=templateDir.relativeFilePath(tilesetPath);
+                returnedVar.templateTilesetToMapTileset[tileset]=LoadMap::readTileset("map/"+tilesetTemplateRelativePath,&worldMap);
+            }
+            templateTilesetIndex++;
+        }
     }
     return returnedVar;
 }
@@ -164,7 +201,16 @@ void brushTheMap(Tiled::Map &worldMap,const Tiled::Map *brush,const MapTemplate 
                 {
                     const Tiled::Cell &cell=castedLayer->cellAt(index_x,index_y);
                     if(!cell.isEmpty())
+                    {
+                        const unsigned int &tileId=cell.tile->id();
+                        Tiled::Tileset *worldTileset=selectedTemplate.templateTilesetToMapTileset.at(cell.tile->tileset());
+                        Tiled::Cell cell;
+                        cell.flippedHorizontally=false;
+                        cell.flippedVertically=false;
+                        cell.flippedAntiDiagonally=false;
+                        cell.tile=worldTileset->tileAt(tileId);
                         worldLayer->setCell(index_x+x,index_y+y,cell);
+                    }
                     index_x++;
                 }
                 index_y++;
