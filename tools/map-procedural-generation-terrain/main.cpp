@@ -35,9 +35,18 @@ void loadTypeToMap(std::vector</*heigh*/std::vector</*moisure*/MapTemplate> > &t
 {
     if(templateResolver.size()<4)
     {
+        MapTemplate mapTemplate;
+        mapTemplate.height=0;
+        mapTemplate.width=0;
+        mapTemplate.tiledMap=NULL;
+        mapTemplate.x=0;
+        mapTemplate.y=0;
         templateResolver.resize(4);
         for(int i=0;i<4;i++)
+        {
+            std::fill(templateResolver[i].begin(),templateResolver[i].end(),mapTemplate);
             templateResolver[i].resize(6);
+        }
     }
     if(templateResolver.size()<(heigh+1))
         templateResolver.resize((heigh+1));
@@ -137,9 +146,32 @@ MapTemplate tiledMapToMapTemplate(const Tiled::Map *templateMap,const Tiled::Map
     return returnedVar;
 }
 
-void brushTheMap(Tiled::Map &tiledMap,const Tiled::Map *brush,const unsigned int x,const unsigned int y)
+void brushTheMap(Tiled::Map &worldMap,const Tiled::Map *brush,const MapTemplate &selectedTemplate,const unsigned int x,const unsigned int y)
 {
-
+    unsigned int layerIndex=0;
+    while(layerIndex<(unsigned int)brush->layerCount())
+    {
+        const Tiled::Layer * const layer=brush->layerAt(layerIndex);
+        if(layer->isTileLayer())
+        {
+            const Tiled::TileLayer * const castedLayer=static_cast<const Tiled::TileLayer * const>(layer);
+            Tiled::TileLayer * const worldLayer=static_cast<Tiled::TileLayer *>(worldMap.layerAt(selectedTemplate.templateLayerNumberToMapLayerNumber.at(layerIndex)));
+            unsigned int index_y=0;
+            while(index_y<(unsigned int)brush->height())
+            {
+                unsigned int index_x=0;
+                while(index_x<(unsigned int)brush->width())
+                {
+                    const Tiled::Cell &cell=castedLayer->cellAt(index_x,index_y);
+                    if(!cell.isEmpty())
+                        worldLayer->setCell(index_x+x,index_y+y,cell);
+                    index_x++;
+                }
+                index_y++;
+            }
+        }
+        layerIndex++;
+    }
 }
 
 void addVegetation(Tiled::Map &tiledMap,const VoronioForTiledMapTmx::PolygonZoneMap &vd)
@@ -167,8 +199,13 @@ void addVegetation(Tiled::Map &tiledMap,const VoronioForTiledMapTmx::PolygonZone
             if(zone.height>0)
             {
                 const MapTemplate &selectedTemplate=templateResolver.at(zone.height-1).at(zone.moisure-1);
-                if(x%selectedTemplate.width==0 && y%selectedTemplate.height==0)
-                    brushTheMap(tiledMap,selectedTemplate.tiledMap,x,y);
+                if(selectedTemplate.tiledMap!=NULL)
+                {
+                    if(selectedTemplate.width==0 || selectedTemplate.height==0)
+                        abort();
+                    if(x%selectedTemplate.width==0 && y%selectedTemplate.height==0)
+                        brushTheMap(tiledMap,selectedTemplate.tiledMap,selectedTemplate,x,y);
+                }
             }
             x++;
         }
