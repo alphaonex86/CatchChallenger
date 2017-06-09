@@ -33,6 +33,12 @@ void loadTypeToMap(std::vector</*heigh*/std::vector</*moisure*/MapTemplate> > &t
                    const MapTemplate &templateMap
                    )
 {
+    if(templateResolver.size()<4)
+    {
+        templateResolver.resize(4);
+        for(int i=0;i<4;i++)
+            templateResolver[i].resize(6);
+    }
     if(templateResolver.size()<(heigh+1))
         templateResolver.resize((heigh+1));
     if(templateResolver[heigh].size()<(moisure+1))
@@ -75,9 +81,10 @@ bool detectBorder(Tiled::TileLayer *layer,MapTemplate *templateMap)
 
 MapTemplate tiledMapToMapTemplate(const Tiled::Map *templateMap,const Tiled::Map &worldMap)
 {
-    std::string lastDimensionLayerUsed;
+    uint8_t lastDimensionLayerUsed;
     MapTemplate returnedVar;
     returnedVar.tiledMap=templateMap;
+    returnedVar.templateLayerNumberToMapLayerNumber.resize(templateMap->layerCount());
     std::unordered_set<uint8_t> alreadyBlockedLayer;
     uint8_t templateLayerIndex=0;
     while(templateLayerIndex<templateMap->layerCount())
@@ -99,6 +106,7 @@ MapTemplate tiledMapToMapTemplate(const Tiled::Map *templateMap,const Tiled::Map
                     {
                         alreadyBlockedLayer.insert(worldLayerIndex);
                         returnedVar.templateLayerNumberToMapLayerNumber[templateLayerIndex]=worldLayerIndex;
+                        break;
                     }
                 }
                 worldLayerIndex++;
@@ -108,10 +116,20 @@ MapTemplate tiledMapToMapTemplate(const Tiled::Map *templateMap,const Tiled::Map
                 std::cerr << "a template layer is not found: " << tileLayer->name().toStdString() << " (abort)" << std::endl;
                 abort();
             }
-            if(tileLayer->name()=="Collision")
+            if(tileLayer->name()=="Collisions")
             {
                 if(detectBorder(tileLayer,&returnedVar))
-                    lastDimensionLayerUsed=tileLayer->name().toStdString();
+                    lastDimensionLayerUsed=0;
+            }
+            else if(tileLayer->name()=="Grass" && lastDimensionLayerUsed>0)
+            {
+                if(detectBorder(tileLayer,&returnedVar))
+                    lastDimensionLayerUsed=1;
+            }
+            else if(tileLayer->name()=="OnGrass" && lastDimensionLayerUsed>1)
+            {
+                if(detectBorder(tileLayer,&returnedVar))
+                    lastDimensionLayerUsed=2;
             }
         }
         templateLayerIndex++;
@@ -119,17 +137,43 @@ MapTemplate tiledMapToMapTemplate(const Tiled::Map *templateMap,const Tiled::Map
     return returnedVar;
 }
 
-void addVegetation(const Tiled::Map &tiledMap,const VoronioForTiledMapTmx::PolygonZoneMap &vd)
+void brushTheMap(Tiled::Map &tiledMap,const Tiled::Map *brush,const unsigned int x,const unsigned int y)
 {
-    const Tiled::Map *flowers=LoadMap::readMap("template/flowers.tmx");
+
+}
+
+void addVegetation(Tiled::Map &tiledMap,const VoronioForTiledMapTmx::PolygonZoneMap &vd)
+{
+    /*const Tiled::Map *flowers=LoadMap::readMap("template/flowers.tmx");
     const Tiled::Map *grass=LoadMap::readMap("template/grass.tmx");
     const Tiled::Map *tree1=LoadMap::readMap("template/tree-1.tmx");
+    const Tiled::Map *tree3=LoadMap::readMap("template/tree-3.tmx");*/
     const Tiled::Map *tree2=LoadMap::readMap("template/tree-2.tmx");
-    const Tiled::Map *tree3=LoadMap::readMap("template/tree-3.tmx");
     MapTemplate t2=tiledMapToMapTemplate(tree2,tiledMap);
     //resolv form zone to template
     std::vector<std::vector</*moisure*/MapTemplate> > templateResolver;
     loadTypeToMap(templateResolver,0,0,t2);
+
+    unsigned int y=0;
+    while(y<(unsigned int)tiledMap.height())
+    {
+        unsigned int x=0;
+        while(x<(unsigned int)tiledMap.width())
+        {
+            //resolve into zone
+            const VoronioForTiledMapTmx::PolygonZoneIndex &zoneIndex=vd.tileToPolygonZoneIndex[x+y*tiledMap.width()];
+            const VoronioForTiledMapTmx::PolygonZone &zone=vd.zones[zoneIndex.index];
+            //resolve into MapTemplate
+            if(zone.height>0)
+            {
+                const MapTemplate &selectedTemplate=templateResolver.at(zone.height-1).at(zone.moisure-1);
+                if(x%selectedTemplate.width==0 && y%selectedTemplate.height==0)
+                    brushTheMap(tiledMap,selectedTemplate.tiledMap,x,y);
+            }
+            x++;
+        }
+        y++;
+    }
 }
 
 int main(int argc, char *argv[])

@@ -358,9 +358,9 @@ void LoadMap::addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTer
         if(!edges.isEmpty())
         {
             //const QPointF &edge=edges.first();
-            zone.heigh=floatToHigh(heighmap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale));
+            zone.height=floatToHigh(heighmap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale));
             zone.moisure=floatToMoisure(moisuremap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale*10));
-            if(zone.heigh==0)
+            if(zone.height==0)
             {
                 unsigned int pointIndex=0;
                 while(pointIndex<zone.points.size())
@@ -385,8 +385,8 @@ void LoadMap::addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTer
                     cell.flippedHorizontally=false;
                     cell.flippedVertically=false;
                     cell.flippedAntiDiagonally=false;
-                    cell.tile=arrayTerrainTile.at(zone.heigh-1).at(zone.moisure-1);
-                    arrayTerrain[zone.heigh-1][zone.moisure-1]->setCell(point.x(),point.y(),cell);
+                    cell.tile=arrayTerrainTile.at(zone.height-1).at(zone.moisure-1);
+                    arrayTerrain[zone.height-1][zone.moisure-1]->setCell(point.x(),point.y(),cell);
                     pointIndex++;
                 }
             }
