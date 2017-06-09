@@ -22,7 +22,7 @@ http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generati
 
 struct MapTemplate
 {
-    Tiled::Map * tiledMap;
+    const Tiled::Map * tiledMap;
     std::vector<uint8_t> templateLayerNumberToMapLayerNumber;
     uint8_t width,height,x,y;
 };
@@ -40,16 +40,16 @@ void loadTypeToMap(std::vector</*heigh*/std::vector</*moisure*/MapTemplate> > &t
     templateResolver[heigh][moisure]=templateMap;
 }
 
-bool detectBorder(const Tiled::TileLayer &layer,MapTemplate &templateMap)
+bool detectBorder(Tiled::TileLayer *layer,MapTemplate *templateMap)
 {
-    uint8_t min_x=layer.width(),min_y=layer.height(),max_x=0,max_y=0;
+    uint8_t min_x=layer->width(),min_y=layer->height(),max_x=0,max_y=0;
     uint8_t y=0;
-    while(y<layer.height())
+    while(y<layer->height())
     {
         uint8_t x=0;
-        while(x<layer.width())
+        while(x<layer->width())
         {
-            if(!layer.cellAt(x,y).isEmpty())
+            if(!layer->cellAt(x,y).isEmpty())
             {
                 if(x<min_x)
                     min_x=x;
@@ -66,14 +66,14 @@ bool detectBorder(const Tiled::TileLayer &layer,MapTemplate &templateMap)
     }
     if(max_x<min_x)
         return false;
-    templateMap.width=max_x-min_x+1;
-    templateMap.height=max_y-min_y+1;
-    templateMap.x=min_x;
-    templateMap.y=min_y;
+    templateMap->width=max_x-min_x+1;
+    templateMap->height=max_y-min_y+1;
+    templateMap->x=min_x;
+    templateMap->y=min_y;
     return true;
 }
 
-MapTemplate tiledMapToMapTemplate(Tiled::Map *templateMap,const Tiled::Map &worldMap)
+MapTemplate tiledMapToMapTemplate(const Tiled::Map *templateMap,const Tiled::Map &worldMap)
 {
     std::string lastDimensionLayerUsed;
     MapTemplate returnedVar;
@@ -82,42 +82,40 @@ MapTemplate tiledMapToMapTemplate(Tiled::Map *templateMap,const Tiled::Map &worl
     uint8_t templateLayerIndex=0;
     while(templateLayerIndex<templateMap->layerCount())
     {
-        Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
+        Tiled::Layer * layer=templateMap->layerAt(templateLayerIndex);
         if(layer->isTileLayer())
         {
-            const Tiled::Layer * const tileLayer=static_cast<Tiled::TileLayer *>(layer);
+            Tiled::TileLayer * tileLayer=static_cast<Tiled::TileLayer *>(layer);
             //search into the world map
             uint8_t worldLayerIndex=0;
-            while(worldLayerIndex<worldMap->layerCount())
+            while(worldLayerIndex<worldMap.layerCount())
             {
-                Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
+                Tiled::Layer * layer=worldMap.layerAt(worldLayerIndex);
                 if(layer->isTileLayer())
                 {
-                    const Tiled::Layer * const worldTileLayer=static_cast<Tiled::TileLayer *>(layer);
+                    Tiled::TileLayer * worldTileLayer=static_cast<Tiled::TileLayer *>(layer);
                     //search into the world map
                     if(alreadyBlockedLayer.find(worldLayerIndex)==alreadyBlockedLayer.cend() && worldTileLayer->name()==tileLayer->name())
                     {
                         alreadyBlockedLayer.insert(worldLayerIndex);
-                        returnedVar.templateLayerNumberToMapLayerNumber[tileLayerIndex]=worldLayerIndex;
+                        returnedVar.templateLayerNumberToMapLayerNumber[templateLayerIndex]=worldLayerIndex;
                     }
                 }
                 worldLayerIndex++;
             }
-            if(worldLayerIndex>=worldMap->layerCount())
+            if(worldLayerIndex>=worldMap.layerCount())
             {
                 std::cerr << "a template layer is not found: " << tileLayer->name().toStdString() << " (abort)" << std::endl;
                 abort();
             }
             if(tileLayer->name()=="Collision")
             {
-                if(detectBorder(tileLayer,templateMap))
-                    lastDimensionLayerUsed=tileLayer->name();
+                if(detectBorder(tileLayer,&returnedVar))
+                    lastDimensionLayerUsed=tileLayer->name().toStdString();
             }
         }
         templateLayerIndex++;
     }
-    std::vector<uint8_t> templateLayerNumberToMapLayerNumber;
-    uint8_t width,heigh;
     return returnedVar;
 }
 
