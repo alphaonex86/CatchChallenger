@@ -79,7 +79,7 @@ Tiled::Map *LoadMap::readMap(const QString &tmx)
     return map;
 }
 
-Tiled::Tileset *LoadMap::readTileset(const uint32_t &tile,const QString &tsx,Tiled::Map *tiledMap)
+Tiled::Tileset *LoadMap::readTilesetWithTileId(const uint32_t &tile,const QString &tsx,Tiled::Map *tiledMap)
 {
     Tiled::Tileset *tilesetBase=readTileset(tsx,tiledMap);
     if(tilesetBase!=NULL)
@@ -99,7 +99,7 @@ void LoadMap::loadTileset(Terrain &terrain,QHash<QString,Tiled::Tileset *> &cach
         terrain.tileset=cachedTileset.value(terrain.tsx);
     else
     {
-        Tiled::Tileset *tilesetBase=readTileset(terrain.tileId,terrain.tsx,&tiledMap);
+        Tiled::Tileset *tilesetBase=readTilesetWithTileId(terrain.tileId,terrain.tsx,&tiledMap);
         terrain.tileset=tilesetBase;
         cachedTileset[terrain.tsx]=tilesetBase;
     }
