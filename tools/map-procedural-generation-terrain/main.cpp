@@ -29,6 +29,7 @@ struct MapTemplate
     std::vector<uint8_t> templateLayerNumberToMapLayerNumber;
     std::unordered_map<Tiled::Tileset *,Tiled::Tileset *> templateTilesetToMapTileset;
     uint8_t width,height,x,y;
+    uint8_t baseLayerIndex;
 };
 
 void loadTypeToMap(std::vector</*heigh*/std::vector</*moisure*/MapTemplate> > &templateResolver,
@@ -94,10 +95,11 @@ bool detectBorder(Tiled::TileLayer *layer,MapTemplate *templateMap)
 
 MapTemplate tiledMapToMapTemplate(const Tiled::Map *templateMap,Tiled::Map &worldMap)
 {
-    uint8_t lastDimensionLayerUsed;
+    uint8_t lastDimensionLayerUsed=99;
     MapTemplate returnedVar;
     returnedVar.tiledMap=templateMap;
     returnedVar.templateLayerNumberToMapLayerNumber.resize(templateMap->layerCount());
+    returnedVar.baseLayerIndex=0;
     //returnedVar.templateTilesetToMapTileset.resize(templateMap->tilesetCount());
 
     {
@@ -135,17 +137,26 @@ MapTemplate tiledMapToMapTemplate(const Tiled::Map *templateMap,Tiled::Map &worl
                 if(tileLayer->name()=="Collisions")
                 {
                     if(detectBorder(tileLayer,&returnedVar))
+                    {
+                        returnedVar.baseLayerIndex=templateLayerIndex;
                         lastDimensionLayerUsed=0;
+                    }
                 }
                 else if(tileLayer->name()=="Grass" && lastDimensionLayerUsed>0)
                 {
                     if(detectBorder(tileLayer,&returnedVar))
+                    {
+                        returnedVar.baseLayerIndex=templateLayerIndex;
                         lastDimensionLayerUsed=1;
+                    }
                 }
                 else if(tileLayer->name()=="OnGrass" && lastDimensionLayerUsed>1)
                 {
                     if(detectBorder(tileLayer,&returnedVar))
+                    {
+                        returnedVar.baseLayerIndex=templateLayerIndex;
                         lastDimensionLayerUsed=2;
+                    }
                 }
             }
             templateLayerIndex++;
@@ -183,8 +194,10 @@ MapTemplate tiledMapToMapTemplate(const Tiled::Map *templateMap,Tiled::Map &worl
     return returnedVar;
 }
 
-void brushTheMap(Tiled::Map &worldMap,const Tiled::Map *brush,const MapTemplate &selectedTemplate,const unsigned int x,const unsigned int y)
+//brush down/right to the point
+void brushTheMap(Tiled::Map &worldMap,const MapTemplate &selectedTemplate,const int x,const int y,uint8_t * const mapMask)
 {
+    const Tiled::Map *brush=selectedTemplate.tiledMap;
     unsigned int layerIndex=0;
     while(layerIndex<(unsigned int)brush->layerCount())
     {
@@ -193,25 +206,41 @@ void brushTheMap(Tiled::Map &worldMap,const Tiled::Map *brush,const MapTemplate 
         {
             const Tiled::TileLayer * const castedLayer=static_cast<const Tiled::TileLayer * const>(layer);
             Tiled::TileLayer * const worldLayer=static_cast<Tiled::TileLayer *>(worldMap.layerAt(selectedTemplate.templateLayerNumberToMapLayerNumber.at(layerIndex)));
-            unsigned int index_y=0;
-            while(index_y<(unsigned int)brush->height())
+            int index_y=0;
+            while(index_y<brush->height())
             {
-                unsigned int index_x=0;
-                while(index_x<(unsigned int)brush->width())
+                const int y_world=index_y-selectedTemplate.y+y;
+                if(y_world>=0 && y_world<worldMap.height())
                 {
-                    const Tiled::Cell &cell=castedLayer->cellAt(index_x,index_y);
-                    if(!cell.isEmpty())
+                    int index_x=0;
+                    while(index_x<brush->width())
                     {
-                        const unsigned int &tileId=cell.tile->id();
-                        Tiled::Tileset *worldTileset=selectedTemplate.templateTilesetToMapTileset.at(cell.tile->tileset());
-                        Tiled::Cell cell;
-                        cell.flippedHorizontally=false;
-                        cell.flippedVertically=false;
-                        cell.flippedAntiDiagonally=false;
-                        cell.tile=worldTileset->tileAt(tileId);
-                        worldLayer->setCell(index_x+x,index_y+y,cell);
+                        const int x_world=index_x-selectedTemplate.x+x;
+                        if(x_world>=0 && x_world<worldMap.width())
+                        {
+                            const Tiled::Cell &cell=castedLayer->cellAt(index_x,index_y);
+                            if(!cell.isEmpty())
+                            {
+                                const unsigned int &tileId=cell.tile->id();
+                                Tiled::Tileset *worldTileset=selectedTemplate.templateTilesetToMapTileset.at(cell.tile->tileset());
+                                Tiled::Cell cell;
+                                cell.flippedHorizontally=false;
+                                cell.flippedVertically=false;
+                                cell.flippedAntiDiagonally=false;
+                                cell.tile=worldTileset->tileAt(tileId);
+                                worldLayer->setCell(x_world,y_world,cell);
+                                if(layerIndex==selectedTemplate.baseLayerIndex)
+                                {
+                                    const unsigned int &bitMask=x_world+y_world*worldMap.width();
+                                    const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                                    if(bitMask/8>=maxMapSize)
+                                        abort();
+                                    mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                }
+                            }
+                        }
+                        index_x++;
                     }
-                    index_x++;
                 }
                 index_y++;
             }
@@ -220,26 +249,82 @@ void brushTheMap(Tiled::Map &worldMap,const Tiled::Map *brush,const MapTemplate 
     }
 }
 
-void addVegetation(Tiled::Map &tiledMap,const VoronioForTiledMapTmx::PolygonZoneMap &vd)
+//brush down/right to the point
+bool brushHaveCollision(Tiled::Map &worldMap,const MapTemplate &selectedTemplate,const int x,const int y,const uint8_t * const mapMask)
+{
+    const Tiled::Map *brush=selectedTemplate.tiledMap;
+    unsigned int layerIndex=0;
+    while(layerIndex<(unsigned int)brush->layerCount())
+    {
+        const Tiled::Layer * const layer=brush->layerAt(layerIndex);
+        if(layer->isTileLayer())
+        {
+            const Tiled::TileLayer * const castedLayer=static_cast<const Tiled::TileLayer * const>(layer);
+            Tiled::TileLayer * const worldLayer=static_cast<Tiled::TileLayer *>(worldMap.layerAt(selectedTemplate.templateLayerNumberToMapLayerNumber.at(layerIndex)));
+            int index_y=0;
+            while(index_y<brush->height())
+            {
+                const int y_world=index_y-selectedTemplate.y+y;
+                if(y_world>=0 && y_world<worldMap.height())
+                {
+                    int index_x=0;
+                    while(index_x<brush->width())
+                    {
+                        const int x_world=index_x-selectedTemplate.x+x;
+                        if(x_world>=0 && x_world<worldMap.width())
+                        {
+                            const Tiled::Cell &cell=castedLayer->cellAt(index_x,index_y);
+                            if(!cell.isEmpty())
+                            {
+                                if(!worldLayer->cellAt(x_world,y_world).isEmpty())
+                                    return false;
+                                if(layerIndex==selectedTemplate.baseLayerIndex)
+                                {
+                                    const unsigned int &bitMask=x_world+y_world*worldMap.width();
+                                    if(mapMask[bitMask/8] & (1<<(7-bitMask%8)))
+                                        return false;
+                                }
+                            }
+                        }
+                        index_x++;
+                    }
+                }
+                index_y++;
+            }
+        }
+        layerIndex++;
+    }
+    return true;
+}
+
+void addVegetation(Tiled::Map &worldMap,const VoronioForTiledMapTmx::PolygonZoneMap &vd)
 {
     /*const Tiled::Map *flowers=LoadMap::readMap("template/flowers.tmx");
-    const Tiled::Map *grass=LoadMap::readMap("template/grass.tmx");
     const Tiled::Map *tree1=LoadMap::readMap("template/tree-1.tmx");
-    const Tiled::Map *tree3=LoadMap::readMap("template/tree-3.tmx");*/
+    */
+    const Tiled::Map *grass=LoadMap::readMap("template/grass.tmx");
+    const Tiled::Map *tree3=LoadMap::readMap("template/tree-3.tmx");
     const Tiled::Map *tree2=LoadMap::readMap("template/tree-2.tmx");
-    MapTemplate t2=tiledMapToMapTemplate(tree2,tiledMap);
+    MapTemplate t3=tiledMapToMapTemplate(tree3,worldMap);
+    MapTemplate t2=tiledMapToMapTemplate(tree2,worldMap);
+    MapTemplate g=tiledMapToMapTemplate(grass,worldMap);
     //resolv form zone to template
     std::vector<std::vector</*moisure*/MapTemplate> > templateResolver;
-    loadTypeToMap(templateResolver,0,0,t2);
+    loadTypeToMap(templateResolver,0,0,g);
+    loadTypeToMap(templateResolver,1,0,t3);
+    loadTypeToMap(templateResolver,0,2,t2);
 
+    const unsigned int mapMaskSize=(worldMap.width()*worldMap.height()/8+1);
+    uint8_t mapMask[mapMaskSize];
+    memset(mapMask,0x00,mapMaskSize);
     unsigned int y=0;
-    while(y<(unsigned int)tiledMap.height())
+    while(y<(unsigned int)worldMap.height())
     {
         unsigned int x=0;
-        while(x<(unsigned int)tiledMap.width())
+        while(x<(unsigned int)worldMap.width())
         {
             //resolve into zone
-            const VoronioForTiledMapTmx::PolygonZoneIndex &zoneIndex=vd.tileToPolygonZoneIndex[x+y*tiledMap.width()];
+            const VoronioForTiledMapTmx::PolygonZoneIndex &zoneIndex=vd.tileToPolygonZoneIndex[x+y*worldMap.width()];
             const VoronioForTiledMapTmx::PolygonZone &zone=vd.zones[zoneIndex.index];
             //resolve into MapTemplate
             if(zone.height>0)
@@ -250,7 +335,42 @@ void addVegetation(Tiled::Map &tiledMap,const VoronioForTiledMapTmx::PolygonZone
                     if(selectedTemplate.width==0 || selectedTemplate.height==0)
                         abort();
                     if(x%selectedTemplate.width==0 && y%selectedTemplate.height==0)
-                        brushTheMap(tiledMap,selectedTemplate.tiledMap,selectedTemplate,x,y);
+                    {
+                        //check if all the collions layer is into the zone
+                        bool collionsIsIntoZone=brushHaveCollision(worldMap,selectedTemplate,x,y,mapMask);
+                        /*{
+                            const Tiled::Map *brush=selectedTemplate.tiledMap;
+                            int index_y=0;
+                            while(index_y<brush->height())
+                            {
+                                const int y_world=index_y-selectedTemplate.y+y;
+                                if(y_world>=0 && y_world<worldMap.height())
+                                {
+                                    int index_x=0;
+                                    while(index_x<brush->width())
+                                    {
+                                        const int x_world=index_x-selectedTemplate.x+x;
+                                        if(x_world>=0 && x_world<worldMap.width())
+                                        {
+                                            const VoronioForTiledMapTmx::PolygonZoneIndex &exploredZoneIndex=vd.tileToPolygonZoneIndex[x_world+y_world*worldMap.height()];
+                                            const VoronioForTiledMapTmx::PolygonZone &exploredZone=vd.zones[exploredZoneIndex.index];
+                                            if(LoadMap::heightAndMoisureToZoneType(exploredZone.height,exploredZone.moisure)!=LoadMap::heightAndMoisureToZoneType(zone.height,zone.moisure))
+                                            {
+                                                collionsIsIntoZone=false;
+                                                break;
+                                            }
+                                        }
+                                        index_x++;
+                                    }
+                                    if(index_x<brush->width())
+                                        break;
+                                }
+                                index_y++;
+                            }
+                        }*/
+                        if(collionsIsIntoZone)
+                            brushTheMap(worldMap,selectedTemplate,x,y,mapMask);
+                    }
                 }
             }
             x++;
