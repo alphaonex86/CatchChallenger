@@ -38,6 +38,24 @@ public:
         std::vector<Tiled::Tile *> transition_tile;
         std::vector<Tiled::Tile *> collision_tile;
     };
+    enum ZoneType
+    {
+        Water,
+        SubtropicalDesert,
+        Grassland,
+        TropicalSeasonalForest,
+        TropicalRainForest,
+        TemperateDesert,
+        TemperateDeciduousForest,
+        TemperateRainForest,
+        Shrubland,
+        Taiga,
+        Scorched,
+        Bare,
+        Tundra,
+        Snow
+    };
+
     static unsigned int floatToHigh(const float f);
     static unsigned int floatToMoisure(const float f);
     static Tiled::Tileset *readTileset(const QString &tsx,Tiled::Map *tiledMap);
@@ -45,6 +63,7 @@ public:
     static Tiled::Map *readMap(const QString &tmx);
     static void loadTileset(Terrain &terrain,QHash<QString,Tiled::Tileset *> &cachedTileset,Tiled::Map &tiledMap);
     static Tiled::ObjectGroup *addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain,bool polygon);
+    static ZoneType heightAndMoisureToZoneType(const uint8_t &height,const uint8_t &moisure);
     static Tiled::TileLayer *addTerrainLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::TileLayer *> > &arrayTerrain);
     static void addTerrainTile(std::vector<std::vector<Tiled::Tile *> > &arrayTerrainTile,const Terrain &grass,const Terrain &montain);
     static void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainPolygon,Tiled::ObjectGroup *layerZoneWaterPolygon,

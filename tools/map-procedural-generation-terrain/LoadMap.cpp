@@ -105,6 +105,62 @@ void LoadMap::loadTileset(Terrain &terrain,QHash<QString,Tiled::Tileset *> &cach
     }
 }
 
+LoadMap::ZoneType LoadMap::heightAndMoisureToZoneType(const uint8_t &height,const uint8_t &moisure)
+{
+    switch(height)
+    {
+        case 0:
+            return LoadMap::ZoneType::Water;
+        break;
+        case 1:
+        switch(moisure)
+        {
+            case 1:return LoadMap::ZoneType::SubtropicalDesert;break;
+            case 2:return LoadMap::ZoneType::Grassland;break;
+            case 3:return LoadMap::ZoneType::TropicalSeasonalForest;break;
+            case 4:return LoadMap::ZoneType::TropicalSeasonalForest;break;
+            case 5:return LoadMap::ZoneType::TropicalRainForest;break;
+            case 6:return LoadMap::ZoneType::TropicalRainForest;break;
+        }
+        break;
+        case 2:
+        switch(moisure)
+        {
+            case 1:return LoadMap::ZoneType::TemperateDesert;break;
+            case 2:return LoadMap::ZoneType::Grassland;break;
+            case 3:return LoadMap::ZoneType::Grassland;break;
+            case 4:return LoadMap::ZoneType::TemperateDeciduousForest;break;
+            case 5:return LoadMap::ZoneType::TemperateDeciduousForest;break;
+            case 6:return LoadMap::ZoneType::TemperateRainForest;break;
+        }
+        break;
+        case 3:
+        switch(moisure)
+        {
+            case 1:return LoadMap::ZoneType::TemperateDesert;break;
+            case 2:return LoadMap::ZoneType::TemperateDesert;break;
+            case 3:return LoadMap::ZoneType::Shrubland;break;
+            case 4:return LoadMap::ZoneType::Shrubland;break;
+            case 5:return LoadMap::ZoneType::Taiga;break;
+            case 6:return LoadMap::ZoneType::Taiga;break;
+        }
+        break;
+        case 4:
+        switch(moisure)
+        {
+            case 1:return LoadMap::ZoneType::Scorched;break;
+            case 2:return LoadMap::ZoneType::Bare;break;
+            case 3:return LoadMap::ZoneType::Tundra;break;
+            case 4:return LoadMap::ZoneType::Snow;break;
+            case 5:return LoadMap::ZoneType::Snow;break;
+            case 6:return LoadMap::ZoneType::Snow;break;
+        }
+        break;
+    }
+    abort();
+    return LoadMap::ZoneType::Water;
+}
+
 Tiled::ObjectGroup *LoadMap::addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain,bool polygon)
 {
     QString addText;
@@ -201,6 +257,8 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,std::vector<std:
     tiledMap.addLayer(layerZoneWalkable);
     Tiled::TileLayer *layerZoneOnGrass=new Tiled::TileLayer("OnGrass",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneOnGrass);
+    Tiled::TileLayer *layerZoneGrass=new Tiled::TileLayer("Grass",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneGrass);
     Tiled::TileLayer *layerZoneCollisions=new Tiled::TileLayer("Collisions",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneCollisions);
     Tiled::TileLayer *layerZoneWalkBehind=new Tiled::TileLayer("WalkBehind",0,0,tiledMap.width(),tiledMap.height());
