@@ -12,7 +12,7 @@
 #include "../../general/base/cpp11addition.h"
 
 LoadMap::Terrain LoadMap::terrainList[5][6];
-std::unordered_map<std::string,LoadMap::Terrain *> LoadMap::terrainNameToObject;
+QHash<QString,LoadMap::Terrain *> LoadMap::terrainNameToObject;
 
 unsigned int LoadMap::floatToHigh(const float f)
 {
@@ -99,7 +99,7 @@ Tiled::Tileset *LoadMap::readTilesetWithTileId(const uint32_t &tile,const QStrin
 void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tiled::Map &tiledMap)
 {
     for(int height=0;height<5;height++)
-        for(int moisure=0;moisure<7;moisure++)
+        for(int moisure=0;moisure<6;moisure++)
         {
             Terrain &terrain=LoadMap::terrainList[height][moisure];
             const QString &layerString=terrain.layerString;
@@ -117,8 +117,7 @@ void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tile
                 }
                 terrain.tile=tilesetBase->tileAt(tileId);
                 terrain.tileLayer=searchTileLayerByName(tiledMap,layerString);
-                //LoadMap::terrainNameToObject.insert(terrain.terrainName,&terrain);
-                LoadMap::terrainNameToObject["dfdf"]=NULL;
+                LoadMap::terrainNameToObject.insert(terrain.terrainName,&terrain);
             }
         }
 }
@@ -384,21 +383,21 @@ void LoadMap::load_terrainTransitionList(QHash<QString,Tiled::Tileset *> &cached
     {
         //Tiled::Tile * from_type;
         TerrainTransition &terrainTransition=terrainTransitionList.at(terrainTransitionIndex);
-        if(LoadMap::terrainNameToObject.find(terrainTransition.tmp_from_type.toStdString())==LoadMap::terrainNameToObject.cend())
+        if(!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type))
         {
-            std::cerr << "!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type)" << std::endl;
+            std::cerr << "!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type): " << terrainTransition.tmp_from_type.toStdString() << std::endl;
             abort();
         }
-        terrainTransition.from_type=LoadMap::terrainNameToObject[terrainTransition.tmp_from_type.toStdString()]->tile;
+        terrainTransition.from_type=LoadMap::terrainNameToObject[terrainTransition.tmp_from_type]->tile;
         unsigned int to_type_Index=0;
         while(to_type_Index<terrainTransition.tmp_to_type.size())
         {
-            if(LoadMap::terrainNameToObject.find(terrainTransition.tmp_to_type.at(to_type_Index).toStdString())==LoadMap::terrainNameToObject.cend())
+            if(!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_to_type.at(to_type_Index)))
             {
-                std::cerr << "!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type)" << std::endl;
+                std::cerr << "!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type): " << terrainTransition.tmp_to_type.at(to_type_Index).toStdString() << std::endl;
                 abort();
             }
-            terrainTransition.to_type.push_back(LoadMap::terrainNameToObject[terrainTransition.tmp_from_type.toStdString()]->tile);
+            terrainTransition.to_type.push_back(LoadMap::terrainNameToObject[terrainTransition.tmp_from_type]->tile);
             to_type_Index++;
         }
 
