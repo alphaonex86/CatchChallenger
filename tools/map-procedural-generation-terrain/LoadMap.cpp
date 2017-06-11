@@ -11,6 +11,9 @@
 
 #include "../../general/base/cpp11addition.h"
 
+LoadMap::Terrain LoadMap::terrainList[5][6];
+QHash<QString,LoadMap::Terrain *> LoadMap::terrainNameToObject;
+
 unsigned int LoadMap::floatToHigh(const float f)
 {
     if(f<-0.1)
@@ -93,16 +96,29 @@ Tiled::Tileset *LoadMap::readTilesetWithTileId(const uint32_t &tile,const QStrin
     return tilesetBase;
 }
 
-void LoadMap::loadTileset(Terrain &terrain,QHash<QString,Tiled::Tileset *> &cachedTileset,Tiled::Map &tiledMap)
+void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tiled::Map &tiledMap)
 {
-    if(cachedTileset.contains(terrain.tsx))
-        terrain.tileset=cachedTileset.value(terrain.tsx);
-    else
-    {
-        Tiled::Tileset *tilesetBase=readTilesetWithTileId(terrain.tileId,terrain.tsx,&tiledMap);
-        terrain.tileset=tilesetBase;
-        cachedTileset[terrain.tsx]=tilesetBase;
-    }
+    for(int height=0;height<5;height++)
+        for(int moisure=0;moisure<7;moisure++)
+        {
+            Terrain &terrain=LoadMap::terrainList[height][moisure];
+            const QString &layerString=terrain.layerString;
+            const QString &tsx=terrain.tsx;
+            const unsigned int &tileId=terrain.tileId;
+            if(!layerString.isEmpty())
+            {
+                Tiled::Tileset *tilesetBase;
+                if(cachedTileset.contains(tsx))
+                    tilesetBase=cachedTileset.value(tsx);
+                else
+                {
+                    tilesetBase=readTilesetWithTileId(tileId,tsx,&tiledMap);
+                    cachedTileset[tsx]=tilesetBase;
+                }
+                terrain.tile=tilesetBase->tileAt(tileId);
+                terrain.tileLayer=searchTileLayerByName(tiledMap,layerString);
+            }
+        }
 }
 
 LoadMap::ZoneType LoadMap::heightAndMoisureToZoneType(const uint8_t &height,const uint8_t &moisure)
@@ -303,46 +319,6 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,std::vector<std:
     return layerZoneWater;
 }
 
-void LoadMap::addTerrainTile(std::vector<std::vector<Tiled::Tile *> > &arrayTerrainTile,const Terrain &grass,const Terrain &montain)
-{
-    Tiled::Tile * const grassTile=grass.tileset->tileAt(grass.tileId);
-    Tiled::Tile * const montainTile=montain.tileset->tileAt(montain.tileId);
-
-    arrayTerrainTile.resize(4);
-    //high 1
-    arrayTerrainTile[0].resize(6);
-    arrayTerrainTile[0][0]=grassTile;//Moisture 1
-    arrayTerrainTile[0][1]=grassTile;
-    arrayTerrainTile[0][2]=grassTile;
-    arrayTerrainTile[0][3]=grassTile;
-    arrayTerrainTile[0][4]=grassTile;
-    arrayTerrainTile[0][5]=grassTile;
-    //high 2
-    arrayTerrainTile[1].resize(6);
-    arrayTerrainTile[1][0]=grassTile;//Moisture 1
-    arrayTerrainTile[1][1]=grassTile;
-    arrayTerrainTile[1][2]=grassTile;
-    arrayTerrainTile[1][3]=grassTile;
-    arrayTerrainTile[1][4]=grassTile;
-    arrayTerrainTile[1][5]=grassTile;
-    //high 3
-    arrayTerrainTile[2].resize(6);
-    arrayTerrainTile[2][0]=grassTile;//Moisture 1
-    arrayTerrainTile[2][1]=grassTile;
-    arrayTerrainTile[2][2]=grassTile;
-    arrayTerrainTile[2][3]=grassTile;
-    arrayTerrainTile[2][4]=grassTile;
-    arrayTerrainTile[2][5]=grassTile;
-    //high 4
-    arrayTerrainTile[3].resize(6);
-    arrayTerrainTile[3][0]=montainTile;//Moisture 1
-    arrayTerrainTile[3][1]=montainTile;
-    arrayTerrainTile[3][2]=montainTile;
-    arrayTerrainTile[3][3]=montainTile;
-    arrayTerrainTile[3][4]=montainTile;
-    arrayTerrainTile[3][5]=montainTile;
-}
-
 void LoadMap::addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainPolygon,Tiled::ObjectGroup *layerZoneWaterPolygon,
                         std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainTile,Tiled::ObjectGroup *layerZoneWaterTile,
                         const Grid &grid,
@@ -394,11 +370,9 @@ void LoadMap::addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> >
     }
 }
 
-void LoadMap::addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTerrain,Tiled::TileLayer *layerZoneWater,
-                        const Grid &grid,
+void LoadMap::addTerrain(const Grid &grid,
                         VoronioForTiledMapTmx::PolygonZoneMap &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
                         const int widthMap,const int heightMap,
-                        const Terrain &water,const std::vector<std::vector<Tiled::Tile *> > &arrayTerrainTile,
                         const int offsetX,const int offsetY)
 {
     const QPolygonF polyMap(QRectF(-offsetX,-offsetY,widthMap,heightMap));
@@ -418,71 +392,24 @@ void LoadMap::addTerrain(std::vector<std::vector<Tiled::TileLayer *> > &arrayTer
             //const QPointF &edge=edges.first();
             zone.height=floatToHigh(heighmap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale));
             zone.moisure=floatToMoisure(moisuremap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale*10));
-            if(zone.height==0)
+            unsigned int pointIndex=0;
+            while(pointIndex<zone.points.size())
             {
-                unsigned int pointIndex=0;
-                while(pointIndex<zone.points.size())
-                {
-                    const Point &point=zone.points.at(pointIndex);
-                    Tiled::Cell cell;
-                    cell.flippedHorizontally=false;
-                    cell.flippedVertically=false;
-                    cell.flippedAntiDiagonally=false;
-                    cell.tile=water.tileset->tileAt(water.tileId);
-                    layerZoneWater->setCell(point.x(),point.y(),cell);
-                    pointIndex++;
-                }
-            }
-            else
-            {
-                unsigned int pointIndex=0;
-                while(pointIndex<zone.points.size())
-                {
-                    const Point &point=zone.points.at(pointIndex);
-                    Tiled::Cell cell;
-                    cell.flippedHorizontally=false;
-                    cell.flippedVertically=false;
-                    cell.flippedAntiDiagonally=false;
-                    cell.tile=arrayTerrainTile.at(zone.height-1).at(zone.moisure-1);
-                    arrayTerrain[zone.height-1][zone.moisure-1]->setCell(point.x(),point.y(),cell);
-                    pointIndex++;
-                }
+                const Point &point=zone.points.at(pointIndex);
+                Tiled::Cell cell;
+                cell.flippedHorizontally=false;
+                cell.flippedVertically=false;
+                cell.flippedAntiDiagonally=false;
+                cell.tile=LoadMap::terrainList[zone.height][zone.moisure-1].tile;
+                LoadMap::terrainList[zone.height][zone.moisure-1].tileLayer->setCell(point.x(),point.y(),cell);
+                pointIndex++;
             }
         }
         index++;
     }
 }
 
-unsigned int LoadMap::stringToTerrainInt(const QString &string)
-{
-    if(string=="water")
-        return 0;
-    else if(string=="grass")
-        return 1;
-    else
-        return 2;
-}
-
-Tiled::Tile * LoadMap::intToTile(const Terrain &grass,const Terrain &water,const Terrain &montain,const unsigned int &terrainInt)
-{
-    switch(terrainInt)
-    {
-        case 0:
-            return water.tileset->tileAt(water.tileId);
-        break;
-        case 1:
-            return grass.tileset->tileAt(grass.tileId);
-        break;
-        case 2:
-            return montain.tileset->tileAt(montain.tileId);
-        break;
-    }
-    abort();
-    return NULL;
-}
-
-void LoadMap::load_terrainTransitionList(const Terrain &grass,const Terrain &water,const Terrain &montain,
-                                QHash<QString,Tiled::Tileset *> &cachedTileset,
+void LoadMap::load_terrainTransitionList(QHash<QString,Tiled::Tileset *> &cachedTileset,
                                 std::vector<TerrainTransition> &terrainTransitionList,Tiled::Map &tiledMap)
 {
     unsigned int terrainTransitionIndex=0;
@@ -490,12 +417,21 @@ void LoadMap::load_terrainTransitionList(const Terrain &grass,const Terrain &wat
     {
         //Tiled::Tile * from_type;
         TerrainTransition &terrainTransition=terrainTransitionList.at(terrainTransitionIndex);
-        terrainTransition.from_type=intToTile(grass,water,montain,terrainTransition.tmp_from_type);
+        if(!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type))
+        {
+            std::cerr << "!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type)" << std::endl;
+            abort();
+        }
+        terrainTransition.from_type=LoadMap::terrainNameToObject[terrainTransition.tmp_from_type]->tile;
         unsigned int to_type_Index=0;
         while(to_type_Index<terrainTransition.tmp_to_type.size())
         {
-            const unsigned int &to_type=terrainTransition.tmp_to_type.at(to_type_Index);
-            terrainTransition.to_type.push_back(intToTile(grass,water,montain,to_type));
+            if(!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_to_type.at(to_type_Index)))
+            {
+                std::cerr << "!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type)" << std::endl;
+                abort();
+            }
+            terrainTransition.to_type.push_back(LoadMap::terrainNameToObject[terrainTransition.tmp_from_type]->tile);
             to_type_Index++;
         }
 
