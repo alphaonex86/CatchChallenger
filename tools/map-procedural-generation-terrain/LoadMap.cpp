@@ -401,6 +401,11 @@ void LoadMap::load_terrainTransitionList(QHash<QString,Tiled::Tileset *> &cached
             Terrain * tempToTerrain=LoadMap::terrainNameToObject[terrainTransition.tmp_to_type.at(to_type_Index)];
             terrainTransition.to_type_tile.push_back(tempToTerrain->tile);
             terrainTransition.to_type_layer.push_back(tempToTerrain->tileLayer);
+            if(terrainTransition.from_type_tile==terrainTransition.to_type_tile.back() && terrainTransition.from_type_layer==terrainTransition.to_type_layer.back())
+            {
+                std::cerr << "The transition can't have from into the to list" << std::endl;
+                abort();
+            }
             to_type_Index++;
         }
 
