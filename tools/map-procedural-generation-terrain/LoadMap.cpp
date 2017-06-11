@@ -12,7 +12,7 @@
 #include "../../general/base/cpp11addition.h"
 
 LoadMap::Terrain LoadMap::terrainList[5][6];
-QHash<QString,LoadMap::Terrain *> LoadMap::terrainNameToObject;
+std::unordered_map<std::string,LoadMap::Terrain *> LoadMap::terrainNameToObject;
 
 unsigned int LoadMap::floatToHigh(const float f)
 {
@@ -117,6 +117,8 @@ void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tile
                 }
                 terrain.tile=tilesetBase->tileAt(tileId);
                 terrain.tileLayer=searchTileLayerByName(tiledMap,layerString);
+                //LoadMap::terrainNameToObject.insert(terrain.terrainName,&terrain);
+                LoadMap::terrainNameToObject["dfdf"]=NULL;
             }
         }
 }
@@ -265,7 +267,7 @@ Tiled::ObjectGroup *LoadMap::addDebugLayer(Tiled::Map &tiledMap,std::vector<std:
     return layerZoneWater;
 }
 
-Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::TileLayer *> > &arrayTerrain)
+Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap)
 {
     Tiled::TileLayer *layerZoneWater=new Tiled::TileLayer("Water",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneWater);
@@ -281,41 +283,6 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,std::vector<std:
     tiledMap.addLayer(layerZoneWalkBehind);
     Tiled::TileLayer *layerZoneWalkBehind2=new Tiled::TileLayer("WalkBehind",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneWalkBehind2);
-
-    arrayTerrain.resize(4);
-    //high 1
-    arrayTerrain[0].resize(6);
-    arrayTerrain[0][0]=layerZoneWalkable;//Moisture 1
-    arrayTerrain[0][1]=layerZoneWalkable;
-    arrayTerrain[0][2]=layerZoneWalkable;
-    arrayTerrain[0][3]=layerZoneWalkable;
-    arrayTerrain[0][4]=layerZoneWalkable;
-    arrayTerrain[0][5]=layerZoneWalkable;
-    //high 2
-    arrayTerrain[1].resize(6);
-    arrayTerrain[1][0]=layerZoneWalkable;//Moisture 1
-    arrayTerrain[1][1]=layerZoneWalkable;
-    arrayTerrain[1][2]=layerZoneWalkable;
-    arrayTerrain[1][3]=layerZoneWalkable;
-    arrayTerrain[1][4]=layerZoneWalkable;
-    arrayTerrain[1][5]=layerZoneWalkable;
-    //high 3
-    arrayTerrain[2].resize(6);
-    arrayTerrain[2][0]=layerZoneWalkable;//Moisture 1
-    arrayTerrain[2][1]=layerZoneWalkable;
-    arrayTerrain[2][2]=layerZoneWalkable;
-    arrayTerrain[2][3]=layerZoneWalkable;
-    arrayTerrain[2][4]=layerZoneWalkable;
-    arrayTerrain[2][5]=layerZoneWalkable;
-    //high 4
-    arrayTerrain[3].resize(6);
-    arrayTerrain[3][0]=layerZoneWalkable;//Moisture 1
-    arrayTerrain[3][1]=layerZoneWalkable;
-    arrayTerrain[3][2]=layerZoneWalkable;
-    arrayTerrain[3][3]=layerZoneWalkable;
-    arrayTerrain[3][4]=layerZoneWalkable;
-    arrayTerrain[3][5]=layerZoneWalkable;
-
     return layerZoneWater;
 }
 
@@ -417,21 +384,21 @@ void LoadMap::load_terrainTransitionList(QHash<QString,Tiled::Tileset *> &cached
     {
         //Tiled::Tile * from_type;
         TerrainTransition &terrainTransition=terrainTransitionList.at(terrainTransitionIndex);
-        if(!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type))
+        if(LoadMap::terrainNameToObject.find(terrainTransition.tmp_from_type.toStdString())==LoadMap::terrainNameToObject.cend())
         {
             std::cerr << "!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type)" << std::endl;
             abort();
         }
-        terrainTransition.from_type=LoadMap::terrainNameToObject[terrainTransition.tmp_from_type]->tile;
+        terrainTransition.from_type=LoadMap::terrainNameToObject[terrainTransition.tmp_from_type.toStdString()]->tile;
         unsigned int to_type_Index=0;
         while(to_type_Index<terrainTransition.tmp_to_type.size())
         {
-            if(!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_to_type.at(to_type_Index)))
+            if(LoadMap::terrainNameToObject.find(terrainTransition.tmp_to_type.at(to_type_Index).toStdString())==LoadMap::terrainNameToObject.cend())
             {
                 std::cerr << "!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type)" << std::endl;
                 abort();
             }
-            terrainTransition.to_type.push_back(LoadMap::terrainNameToObject[terrainTransition.tmp_from_type]->tile);
+            terrainTransition.to_type.push_back(LoadMap::terrainNameToObject[terrainTransition.tmp_from_type.toStdString()]->tile);
             to_type_Index++;
         }
 

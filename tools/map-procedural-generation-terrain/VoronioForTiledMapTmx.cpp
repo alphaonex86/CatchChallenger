@@ -63,7 +63,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
     boost::polygon::construct_voronoi(g.begin(), g.end(), &vd);
 
     PolygonZoneMap polygonZoneMap;
-    polygonZoneMap.tileToPolygonZoneIndex=(PolygonZoneIndex *)malloc(sizeof(PolygonZoneIndex)*w*h);
+    polygonZoneMap.tileToPolygonZoneIndex=(PolygonZoneIndex *)malloc(sizeof(PolygonZoneIndex)*(w*h+1));
     memset(polygonZoneMap.tileToPolygonZoneIndex,0,sizeof(PolygonZoneIndex)*w*h);
     polygonZoneMap.zones.resize(g.size());
     double maxArea=((double)pow(tileStep,2))*1.01;
@@ -150,6 +150,10 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                         maxX=tempmaxX;
                     if(tempmaxY>maxY)
                         maxY=tempmaxY;
+                    if(maxX>w)
+                        abort();
+                    if(maxY>h)
+                        abort();
                     index++;
                 }
             }
