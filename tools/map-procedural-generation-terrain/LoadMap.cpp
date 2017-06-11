@@ -388,7 +388,8 @@ void LoadMap::load_terrainTransitionList(QHash<QString,Tiled::Tileset *> &cached
             std::cerr << "!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type): " << terrainTransition.tmp_from_type.toStdString() << std::endl;
             abort();
         }
-        terrainTransition.from_type=LoadMap::terrainNameToObject[terrainTransition.tmp_from_type]->tile;
+        terrainTransition.from_type_tile=LoadMap::terrainNameToObject[terrainTransition.tmp_from_type]->tile;
+        terrainTransition.from_type_layer=LoadMap::terrainNameToObject[terrainTransition.tmp_from_type]->tileLayer;
         unsigned int to_type_Index=0;
         while(to_type_Index<terrainTransition.tmp_to_type.size())
         {
@@ -397,7 +398,9 @@ void LoadMap::load_terrainTransitionList(QHash<QString,Tiled::Tileset *> &cached
                 std::cerr << "!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type): " << terrainTransition.tmp_to_type.at(to_type_Index).toStdString() << std::endl;
                 abort();
             }
-            terrainTransition.to_type.push_back(LoadMap::terrainNameToObject[terrainTransition.tmp_from_type]->tile);
+            Terrain * tempToTerrain=LoadMap::terrainNameToObject[terrainTransition.tmp_to_type.at(to_type_Index)];
+            terrainTransition.to_type_tile.push_back(tempToTerrain->tile);
+            terrainTransition.to_type_layer.push_back(tempToTerrain->tileLayer);
             to_type_Index++;
         }
 
@@ -506,6 +509,8 @@ std::vector<Tiled::Tile *> LoadMap::getTileAt(const Tiled::Map &tiledMap,const u
 
 Tiled::TileLayer *LoadMap::haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const Tiled::Tile * const tile)
 {
+    if(tile==NULL)
+        abort();
     unsigned int tileLayerIndex=0;
     while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
     {
@@ -527,6 +532,8 @@ Tiled::TileLayer *LoadMap::haveTileAt(const Tiled::Map &tiledMap,const unsigned 
 
 Tiled::Tile * LoadMap::haveTileAtReturnTile(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const std::vector<Tiled::Tile *> &tiles)
 {
+    if(vectorcontainsAtLeastOne(tiles,static_cast<Tiled::Tile *>(NULL)))
+        abort();
     unsigned int tileLayerIndex=0;
     while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
     {
@@ -542,6 +549,23 @@ Tiled::Tile * LoadMap::haveTileAtReturnTile(const Tiled::Map &tiledMap,const uns
             if(vectorcontainsAtLeastOne(tiles,tile))
                 return tile;
         }
+        tileLayerIndex++;
+    }
+    return NULL;
+}
+
+Tiled::Tile * LoadMap::haveTileAtReturnTileUniqueLayer(const unsigned int x,const unsigned int y,const std::vector<Tiled::TileLayer *> &tilesLayers,const std::vector<Tiled::Tile *> &tiles)
+{
+    if(vectorcontainsAtLeastOne(tiles,static_cast<Tiled::Tile *>(NULL)))
+        abort();
+    unsigned int tileLayerIndex=0;
+    while(tileLayerIndex<(unsigned int)tilesLayers.size())
+    {
+        const Tiled::TileLayer * const layer=tilesLayers.at(tileLayerIndex);
+        const Tiled::Tile * const tileToSearch=tiles.at(tileLayerIndex);
+        Tiled::Tile * const tile=layer->cellAt(x,y).tile;
+        if(tile==tileToSearch)
+            return tile;
         tileLayerIndex++;
     }
     return NULL;

@@ -25,8 +25,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vecto
             while(terrainTransitionIndex<terrainTransitionList.size())
             {
                 const LoadMap::TerrainTransition &terrainTransition=terrainTransitionList.at(terrainTransitionIndex);
-                Tiled::TileLayer * const transitionLayerReturn=LoadMap::haveTileAt(tiledMap,x,y,terrainTransition.from_type);
-                if(transitionLayerReturn!=NULL)
+                if(terrainTransition.from_type_layer->cellAt(x,y).tile==terrainTransition.from_type_tile)
                 {
                     Tiled::Tile * transitionTileToTypeTmp=NULL;
                     Tiled::Tile * transitionTileToType=NULL;
@@ -34,7 +33,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vecto
                     uint8_t to_type_match=0;//9 bits used-1=8bit, the center bit is the current tile
                     if(x>0 && y>0)
                     {
-                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x-1,y-1,terrainTransition.to_type);
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTileUniqueLayer(x-1,y-1,terrainTransition.to_type_layer,terrainTransition.to_type_tile);
                         if(transitionTileToTypeTmp!=NULL)
                         {
                             transitionTileToType=transitionTileToTypeTmp;
@@ -43,7 +42,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vecto
                     }
                     if(y>0)
                     {
-                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x,y-1,terrainTransition.to_type);
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTileUniqueLayer(x,y-1,terrainTransition.to_type_layer,terrainTransition.to_type_tile);
                         if(transitionTileToTypeTmp!=NULL)
                         {
                             transitionTileToType=transitionTileToTypeTmp;
@@ -52,7 +51,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vecto
                     }
                     if(x<(w-1) && y>0)
                     {
-                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x+1,y-1,terrainTransition.to_type);
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTileUniqueLayer(x+1,y-1,terrainTransition.to_type_layer,terrainTransition.to_type_tile);
                         if(transitionTileToTypeTmp!=NULL)
                         {
                             transitionTileToType=transitionTileToTypeTmp;
@@ -61,7 +60,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vecto
                     }
                     if(x>0)
                     {
-                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x-1,y,terrainTransition.to_type);
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTileUniqueLayer(x-1,y,terrainTransition.to_type_layer,terrainTransition.to_type_tile);
                         if(transitionTileToTypeTmp!=NULL)
                         {
                             transitionTileToType=transitionTileToTypeTmp;
@@ -72,7 +71,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vecto
                         to_type_match|=X;*/
                     if(x<(w-1))
                     {
-                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x+1,y,terrainTransition.to_type);
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTileUniqueLayer(x+1,y,terrainTransition.to_type_layer,terrainTransition.to_type_tile);
                         if(transitionTileToTypeTmp!=NULL)
                         {
                             transitionTileToType=transitionTileToTypeTmp;
@@ -81,7 +80,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vecto
                     }
                     if(x>0 && y<(h-1))
                     {
-                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x-1,y+1,terrainTransition.to_type);
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTileUniqueLayer(x-1,y+1,terrainTransition.to_type_layer,terrainTransition.to_type_tile);
                         if(transitionTileToTypeTmp!=NULL)
                         {
                             transitionTileToType=transitionTileToTypeTmp;
@@ -90,7 +89,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vecto
                     }
                     if(y<(h-1))
                     {
-                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x,y+1,terrainTransition.to_type);
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTileUniqueLayer(x,y+1,terrainTransition.to_type_layer,terrainTransition.to_type_tile);
                         if(transitionTileToTypeTmp!=NULL)
                         {
                             transitionTileToType=transitionTileToTypeTmp;
@@ -99,68 +98,72 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vecto
                     }
                     if(x<(w-1) && y<(h-1))
                     {
-                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTile(tiledMap,x+1,y+1,terrainTransition.to_type);
+                        transitionTileToTypeTmp=LoadMap::haveTileAtReturnTileUniqueLayer(x+1,y+1,terrainTransition.to_type_layer,terrainTransition.to_type_tile);
                         if(transitionTileToTypeTmp!=NULL)
                         {
                             transitionTileToType=transitionTileToTypeTmp;
                             to_type_match|=128;
                         }
                     }
-                    //remplace the tile
-                    Tiled::Cell cellReplace;
-                    cellReplace.tile=NULL;
-                    cellReplace.flippedHorizontally=false;
-                    cellReplace.flippedVertically=false;
-                    cellReplace.flippedAntiDiagonally=false;
-                    Tiled::Cell cellOver;
-                    cellOver.tile=NULL;
-                    cellOver.flippedHorizontally=false;
-                    cellOver.flippedVertically=false;
-                    cellOver.flippedAntiDiagonally=false;
-                    Tiled::Cell cellCollision;
-                    cellCollision.tile=NULL;
-                    cellCollision.flippedHorizontally=false;
-                    cellCollision.flippedVertically=false;
-                    cellCollision.flippedAntiDiagonally=false;
-
-                    unsigned int indexTile=0;
-                    if(to_type_match&2)
-                    {
-                        if(to_type_match&8)
-                            indexTile=0;
-                        else if(to_type_match&16)
-                            indexTile=2;
-                        else
-                            indexTile=1;
-                    }
-                    else if(to_type_match&64)
-                    {
-                        if(to_type_match&8)
-                            indexTile=6;
-                        else if(to_type_match&16)
-                            indexTile=4;
-                        else
-                            indexTile=5;
-                    }
-                    else if(to_type_match&8)
-                        indexTile=7;
-                    else if(to_type_match&16)
-                        indexTile=3;
-                    else if(to_type_match&128)
-                        indexTile=8;
-                    else if(to_type_match&32)
-                        indexTile=9;
-                    else if(to_type_match&1)
-                        indexTile=10;
-                    else if(to_type_match&4)
-                        indexTile=11;
-
-                    cellOver.tile=terrainTransition.transition_tile.at(indexTile);
-                    cellCollision.tile=terrainTransition.collision_tile.at(indexTile);
-                    cellReplace.tile=transitionTileToType;
 
                     if(to_type_match!=0)
                     {
+                        //remplace the tile
+                        Tiled::Cell cellReplace;
+                        cellReplace.tile=NULL;
+                        cellReplace.flippedHorizontally=false;
+                        cellReplace.flippedVertically=false;
+                        cellReplace.flippedAntiDiagonally=false;
+                        Tiled::Cell cellOver;
+                        cellOver.tile=NULL;
+                        cellOver.flippedHorizontally=false;
+                        cellOver.flippedVertically=false;
+                        cellOver.flippedAntiDiagonally=false;
+                        Tiled::Cell cellCollision;
+                        cellCollision.tile=NULL;
+                        cellCollision.flippedHorizontally=false;
+                        cellCollision.flippedVertically=false;
+                        cellCollision.flippedAntiDiagonally=false;
+
+                        unsigned int indexTile=0;
+                        if(to_type_match!=0)
+                        {
+                            if(to_type_match&2)
+                            {
+                                if(to_type_match&8)
+                                    indexTile=0;
+                                else if(to_type_match&16)
+                                    indexTile=2;
+                                else
+                                    indexTile=1;
+                            }
+                            else if(to_type_match&64)
+                            {
+                                if(to_type_match&8)
+                                    indexTile=6;
+                                else if(to_type_match&16)
+                                    indexTile=4;
+                                else
+                                    indexTile=5;
+                            }
+                            else if(to_type_match&8)
+                                indexTile=7;
+                            else if(to_type_match&16)
+                                indexTile=3;
+                            else if(to_type_match&128)
+                                indexTile=8;
+                            else if(to_type_match&32)
+                                indexTile=9;
+                            else if(to_type_match&1)
+                                indexTile=10;
+                            else if(to_type_match&4)
+                                indexTile=11;
+                        }
+
+                        cellOver.tile=terrainTransition.transition_tile.at(indexTile);
+                        cellCollision.tile=terrainTransition.collision_tile.at(indexTile);
+                        cellReplace.tile=transitionTileToType;
+
                         if(!terrainTransition.replace_tile)
                         {
                             Tiled::Cell cell;
@@ -178,7 +181,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vecto
                                 bufferRemplaceUnit.x=x;
                                 bufferRemplaceUnit.y=y;
                                 bufferRemplaceUnit.tile=transitionTileToType;
-                                bufferRemplace[transitionLayerReturn].push_back(bufferRemplaceUnit);
+                                bufferRemplace[terrainTransition.from_type_layer].push_back(bufferRemplaceUnit);
                             }
                             //over layer
                             {

@@ -40,8 +40,10 @@ public:
         QString tmp_collision_tsx;
         std::vector<int> tmp_collision_tile;
         //after map creation
-        Tiled::Tile * from_type;
-        std::vector<Tiled::Tile *> to_type;
+        Tiled::Tile * from_type_tile;
+        Tiled::TileLayer * from_type_layer;
+        std::vector<Tiled::Tile *> to_type_tile;
+        std::vector<Tiled::TileLayer *> to_type_layer;
         std::vector<Tiled::Tile *> transition_tile;
         std::vector<Tiled::Tile *> collision_tile;
     };
@@ -88,6 +90,7 @@ public:
     static std::vector<Tiled::Tile *> getTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y);
     static Tiled::TileLayer * haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const Tiled::Tile * const tile);
     static Tiled::Tile * haveTileAtReturnTile(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const std::vector<Tiled::Tile *> &tiles);
+    static Tiled::Tile * haveTileAtReturnTileUniqueLayer(const unsigned int x,const unsigned int y,const std::vector<Tiled::TileLayer *> &tilesLayers,const std::vector<Tiled::Tile *> &tiles);
 };
 
 #endif // LOADMAP_H
