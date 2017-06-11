@@ -508,6 +508,7 @@ void loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned int &mapHe
             for(int moisure=0;moisure<7;moisure++)
             {
                 LoadMap::terrainList[height][moisure].tile=NULL;
+                LoadMap::terrainList[height][moisure].tileLayer=NULL;
                 LoadMap::terrainList[height][moisure].tileId=0;
             }
         settings.beginGroup("terrain");
@@ -561,7 +562,7 @@ void loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned int &mapHe
                     LoadMap::terrainList[height][moisure-1].tsx=tsx;
                     LoadMap::terrainList[height][moisure-1].tileId=tileId;
                     LoadMap::terrainList[height][moisure-1].layerString=layerString;
-                    LoadMap::terrainNameToObject[terrainName]=&LoadMap::terrainList[height][moisure-1];
+                    LoadMap::terrainList[height][moisure-1].terrainName=terrainName;
                     heightmoisurelistIndex++;
                 }
             settings.endGroup();
@@ -732,6 +733,7 @@ int main(int argc, char *argv[])
         {
             Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth,totalHeight,16,16);
             QHash<QString,Tiled::Tileset *> cachedTileset;
+            LoadMap::addTerrainLayer(tiledMap);
             LoadMap::loadAllTileset(cachedTileset,tiledMap);
             LoadMap::load_terrainTransitionList(cachedTileset,terrainTransitionList,tiledMap);
             if(displayzone)
