@@ -4,6 +4,7 @@
 #include <vector>
 #include <QString>
 #include <unordered_map>
+#include <string>
 
 #include "../../client/tiled/tiled_tilelayer.h"
 #include "../../client/tiled/tiled_map.h"
@@ -25,7 +26,7 @@ public:
         QString terrainName;
     };
     static Terrain terrainList[5][6];
-    static std::unordered_map<std::string,Terrain *> terrainNameToObject;
+    static QHash<QString,Terrain *> terrainNameToObject;
 
     struct TerrainTransition
     {

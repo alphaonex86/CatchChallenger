@@ -403,7 +403,7 @@ void putDefaultSettings(QSettings &settings)
             if(!settings.contains("layer"))
                 settings.setValue("layer","Walkable");
         settings.endGroup();
-        settings.beginGroup("montain");
+        settings.beginGroup("mountain");
             if(!settings.contains("tsx"))
                 settings.setValue("tsx","terra.tsx");
             if(!settings.contains("tileId"))
@@ -451,7 +451,7 @@ void putDefaultSettings(QSettings &settings)
             if(!settings.contains("from_type"))
                 settings.setValue("from_type","water");
             if(!settings.contains("to_type"))
-                settings.setValue("to_type","grass,grass2");
+                settings.setValue("to_type","grass");
             if(!settings.contains("transition_tsx"))
                 settings.setValue("transition_tsx","terra.tsx");
             if(!settings.contains("transition_tile"))
@@ -496,16 +496,21 @@ void putDefaultSettings(QSettings &settings)
         settings.setValue("seed",0);
     if(!settings.contains("displayzone"))
         settings.setValue("displayzone",false);
+    if(!settings.contains("dotransition"))
+        settings.setValue("dotransition",true);
+    if(!settings.contains("dovegetation"))
+        settings.setValue("dovegetation",true);
 
     settings.sync();
 }
 
-void loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned int &mapHeight,unsigned int &mapXCount,unsigned int &mapYCount,unsigned int &seed,bool &displayzone,std::vector<LoadMap::TerrainTransition> &terrainTransitionList)
+void loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned int &mapHeight,unsigned int &mapXCount,unsigned int &mapYCount,unsigned int &seed,bool &displayzone,std::vector<LoadMap::TerrainTransition> &terrainTransitionList,
+                  bool &dotransition,bool &dovegetation)
 {
     bool ok;
     {
         for(int height=0;height<5;height++)
-            for(int moisure=0;moisure<7;moisure++)
+            for(int moisure=0;moisure<6;moisure++)
             {
                 LoadMap::terrainList[height][moisure].tile=NULL;
                 LoadMap::terrainList[height][moisure].tileLayer=NULL;
@@ -601,6 +606,8 @@ void loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned int &mapHe
         abort();
     }
     displayzone=settings.value("displayzone").toBool();
+    dotransition=settings.value("dotransition").toBool();
+    dovegetation=settings.value("dovegetation").toBool();
     {
         settings.beginGroup("transition");
         const QStringList &groupsNames=settings.childGroups();
@@ -699,9 +706,9 @@ int main(int argc, char *argv[])
     unsigned int mapXCount;
     unsigned int mapYCount;
     unsigned int seed;
-    bool displayzone;
+    bool displayzone,dotransition,dovegetation;
     std::vector<LoadMap::TerrainTransition> terrainTransitionList;
-    loadSettings(settings,mapWidth,mapHeight,mapXCount,mapYCount,seed,displayzone,terrainTransitionList);
+    loadSettings(settings,mapWidth,mapHeight,mapXCount,mapYCount,seed,displayzone,terrainTransitionList,dotransition,dovegetation);
     srand(seed);
 
     {
@@ -728,7 +735,7 @@ int main(int argc, char *argv[])
         VoronioForTiledMapTmx::PolygonZoneMap vd = VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,2);
         if(vd.zones.size()!=grid.size())
             abort();
-        qDebug("computVoronoi took %d ms", t.elapsed());
+        qDebug("computeVoronoi took %d ms", t.elapsed());
 
         {
             Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth,totalHeight,16,16);
@@ -747,9 +754,15 @@ int main(int argc, char *argv[])
             {
                 t.start();
                 LoadMap::addTerrain(grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height());
-                TransitionTerrain::addTransitionOnMap(tiledMap,terrainTransitionList);
-                qDebug("Transitions took %d ms", t.elapsed());
+                qDebug("Add terrain took %d ms", t.elapsed());
+                if(dotransition)
+                {
+                    t.start();
+                    TransitionTerrain::addTransitionOnMap(tiledMap,terrainTransitionList);
+                    qDebug("Transitions took %d ms", t.elapsed());
+                }
             }
+            if(dovegetation)
             {
                 t.start();
                 addVegetation(tiledMap,vd);

@@ -137,23 +137,41 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                         x=w;
                     if(y>h)
                         y=h;
-                    unsigned int tempminX=floor(x),tempminY=floor(y),tempmaxX=ceil(x),tempmaxY=ceil(y);
-                    tempminX-=tempminX%tileStep;
-                    tempminY-=tempminY%tileStep;
-                    tempmaxX+=tileStep-tempmaxX%tileStep;
-                    tempmaxY+=tileStep-tempmaxY%tileStep;
-                    if(tempminX<minX)
-                        minX=tempminX;
-                    if(tempminY<minY)
-                        minY=tempminY;
-                    if(tempmaxX>maxX)
-                        maxX=tempmaxX;
-                    if(tempmaxY>maxY)
-                        maxY=tempmaxY;
+                    unsigned int tempminXInt=floor(x),tempminYInt=floor(y),tempmaxXInt=ceil(x),tempmaxYInt=ceil(y);
                     if(maxX>w)
                         abort();
                     if(maxY>h)
                         abort();
+                    tempminXInt-=tempminXInt%tileStep;
+                    tempminYInt-=tempminYInt%tileStep;
+                    if(tempmaxXInt%tileStep!=0)
+                        tempmaxXInt+=tileStep-tempmaxXInt%tileStep;
+                    if(tempmaxYInt%tileStep!=0)
+                        tempmaxYInt+=tileStep-tempmaxYInt%tileStep;
+                    if(tempminXInt<minX)
+                        minX=tempminXInt;
+                    if(tempminYInt<minY)
+                        minY=tempminYInt;
+                    if(tempmaxXInt>maxX)
+                        maxX=tempmaxXInt;
+                    if(tempmaxYInt>maxY)
+                        maxY=tempmaxYInt;
+                    if(maxX>w)
+                    {
+                        unsigned int tempmaxXIntdebug1=ceil(x);
+                        unsigned int tempmaxXIntdebug3=tempmaxXIntdebug1;
+                        if(tempmaxXInt%tileStep!=0)
+                            tempmaxXIntdebug3+=tileStep-tempmaxXIntdebug3%tileStep;
+                        abort();
+                    }
+                    if(maxY>h)
+                    {
+                        unsigned int tempmaxYIntdebug1=ceil(y);
+                        unsigned int tempmaxYIntdebug3=tempmaxYIntdebug1;
+                        if(tempmaxYInt%tileStep!=0)
+                            tempmaxYIntdebug3+=tileStep-tempmaxYIntdebug3%tileStep;
+                        abort();
+                    }
                     index++;
                 }
             }
