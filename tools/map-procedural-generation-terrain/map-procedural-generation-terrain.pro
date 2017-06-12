@@ -29,7 +29,9 @@ SOURCES += \
     znoise/cpp/Worley.cpp \
     VoronioForTiledMapTmx.cpp \
     LoadMap.cpp \
-    TransitionTerrain.cpp
+    TransitionTerrain.cpp \
+    Settings.cpp \
+    MapPlants.cpp
 
 RESOURCES += \
     resources.qrc
@@ -47,7 +49,9 @@ HEADERS += \
     znoise/headers/Worley.hpp \
     VoronioForTiledMapTmx.h \
     LoadMap.h \
-    TransitionTerrain.h
+    TransitionTerrain.h \
+    Settings.h \
+    MapPlants.h
 
 LIBS += -lboost_system
 
