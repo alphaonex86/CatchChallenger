@@ -1,0 +1,16 @@
+#ifndef SETTINGS_H
+#define SETTINGS_H
+
+#include <QSettings>
+#include <vector>
+#include "LoadMap.h"
+
+class Settings
+{
+public:
+    static void putDefaultSettings(QSettings &settings);
+    static void loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned int &mapHeight,unsigned int &mapXCount,unsigned int &mapYCount,unsigned int &seed,bool &displayzone,std::vector<LoadMap::TerrainTransition> &terrainTransitionList,
+                      bool &dotransition,bool &dovegetation,unsigned int &tileStep);
+};
+
+#endif // SETTINGS_H
