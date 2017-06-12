@@ -32,6 +32,15 @@ struct MapTemplate
     uint8_t baseLayerIndex;
 };
 
+struct MapPlantsOptions
+{
+    QString tmx;
+    Tiled::Map *map;
+    MapTemplate mapTemplate;
+};
+
+static MapPlantsOptions mapPlantsOptions[5][6];
+
 void loadTypeToMap(std::vector</*heigh*/std::vector</*moisure*/MapTemplate> > &templateResolver,
                    const unsigned int heigh/*heigh, starting at 0*/,
                    const unsigned int moisure/*moisure, starting at 0*/,
@@ -299,20 +308,18 @@ bool brushHaveCollision(Tiled::Map &worldMap,const MapTemplate &selectedTemplate
 
 void addVegetation(Tiled::Map &worldMap,const VoronioForTiledMapTmx::PolygonZoneMap &vd)
 {
-    /*const Tiled::Map *flowers=LoadMap::readMap("template/flowers.tmx");
-    const Tiled::Map *tree1=LoadMap::readMap("template/tree-1.tmx");
-    */
-    const Tiled::Map *grass=LoadMap::readMap("template/grass.tmx");
-    const Tiled::Map *tree3=LoadMap::readMap("template/tree-3.tmx");
-    const Tiled::Map *tree2=LoadMap::readMap("template/tree-2.tmx");
-    MapTemplate t3=tiledMapToMapTemplate(tree3,worldMap);
-    MapTemplate t2=tiledMapToMapTemplate(tree2,worldMap);
-    MapTemplate g=tiledMapToMapTemplate(grass,worldMap);
-    //resolv form zone to template
     std::vector<std::vector</*moisure*/MapTemplate> > templateResolver;
-    loadTypeToMap(templateResolver,0,0,g);
-    loadTypeToMap(templateResolver,1,0,t3);
-    loadTypeToMap(templateResolver,0,2,t2);
+    for(int height=1;height<5;height++)
+        for(int moisure=0;moisure<6;moisure++)
+        {
+            MapPlantsOptions &mapPlantsOption=mapPlantsOptions[height][moisure];
+            if(!mapPlantsOption.tmx.isEmpty())
+            {
+                const Tiled::Map *map=LoadMap::readMap("template/"+mapPlantsOption.tmx+".tmx");
+                mapPlantsOption.mapTemplate=tiledMapToMapTemplate(map,worldMap);
+                loadTypeToMap(templateResolver,height-1,moisure,mapPlantsOption.mapTemplate);
+            }
+        }
 
     const unsigned int mapMaskSize=(worldMap.width()*worldMap.height()/8+1);
     uint8_t mapMask[mapMaskSize];
@@ -568,6 +575,56 @@ void loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned int &mapHe
                     LoadMap::terrainList[height][moisure-1].tileId=tileId;
                     LoadMap::terrainList[height][moisure-1].layerString=layerString;
                     LoadMap::terrainList[height][moisure-1].terrainName=terrainName;
+                    heightmoisurelistIndex++;
+                }
+            settings.endGroup();
+            index++;
+        }
+        settings.endGroup();
+    }
+    {
+        settings.beginGroup("plants");
+        const QStringList &groupsNames=settings.childGroups();
+        unsigned int index=0;
+        while(index<(unsigned int)groupsNames.size())
+        {
+            const QString &terrainName=groupsNames.at(index);
+            settings.beginGroup(terrainName);
+                const QString &tmx=settings.value("tmx").toString();
+
+                QStringList heightmoisurelist=settings.value("heightmoisurelist").toString().split(';');
+                unsigned int heightmoisurelistIndex=0;
+                while(heightmoisurelistIndex<(unsigned int)heightmoisurelist.size())
+                {
+                    QStringList heightmoisure=heightmoisurelist.at(heightmoisurelistIndex).split(',');
+                    if(heightmoisure.size()!=2)
+                    {
+                        std::cerr << "heightmoisure.size()!=2" << std::endl;
+                        abort();
+                    }
+                    const unsigned int &height=heightmoisure.at(0).toUInt(&ok);
+                    if(!ok)
+                    {
+                        std::cerr << "height not a number" << std::endl;
+                        abort();
+                    }
+                    if(height>4)
+                    {
+                        std::cerr << "height not in valid range" << std::endl;
+                        abort();
+                    }
+                    const unsigned int &moisure=heightmoisure.at(1).toUInt(&ok);
+                    if(!ok)
+                    {
+                        std::cerr << "moisure not a number" << std::endl;
+                        abort();
+                    }
+                    if(moisure>6 && moisure<1)
+                    {
+                        std::cerr << "moisure not in valid range" << std::endl;
+                        abort();
+                    }
+                    mapPlantsOptions[height][moisure-1].tmx=tmx;
                     heightmoisurelistIndex++;
                 }
             settings.endGroup();
