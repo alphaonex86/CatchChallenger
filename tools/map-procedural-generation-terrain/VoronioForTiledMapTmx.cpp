@@ -59,6 +59,10 @@ Grid VoronioForTiledMapTmx::generateGrid(const unsigned int w, const unsigned in
 VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h,const unsigned int tileStep) {
     QPolygonF rect(QRectF(0.0, 0.0, w, h));
 
+    if(w%tileStep!=0)
+        abort();
+    if(h%tileStep!=0)
+        abort();
     boost::polygon::voronoi_diagram<double> vd;
     boost::polygon::construct_voronoi(g.begin(), g.end(), &vd);
 
