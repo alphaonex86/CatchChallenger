@@ -527,7 +527,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             ProtocolParsingBase::packetFixedSize[128+0xA8]=0xFE;
             ProtocolParsingBase::packetFixedSize[128+0xA9]=0xFE;
             ProtocolParsingBase::packetFixedSize[128+0xAA]=1+4;/*drop dynamic size to improve the packet size overhead*/
-            ProtocolParsingBase::packetFixedSize[128+0xAB]=0xFE;
+            ProtocolParsingBase::packetFixedSize[128+0xAB]=1;
             ProtocolParsingBase::packetFixedSize[128+0xAC]=0xFE;
             ProtocolParsingBase::packetFixedSize[128+0xAD]=0x01;
             ProtocolParsingBase::packetFixedSize[128+0xB0]=CATCHCHALLENGER_SERVER_MAXIDBLOCK*4;
