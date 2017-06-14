@@ -18,12 +18,14 @@ std::unordered_map<std::string/*file*/, std::unordered_map<uint32_t/*id*/,CATCHC
 
 /// \todo put at walkable the tp on push
 
+#ifndef BOTTESTCONNECT
 #if defined(__has_feature)
 #  if __has_feature(address_sanitizer)
 extern "C" {
 const char* __asan_default_options() { return "alloc_dealloc_mismatch=0:detect_container_overflow=0"; }
 }  // extern "C"
 #  endif
+#endif
 #endif
 
 Map_loader::Map_loader()
