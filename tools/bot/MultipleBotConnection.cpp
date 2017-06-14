@@ -462,9 +462,17 @@ MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClie
     QNetworkProxy proxyObject;
     if(!proxy().isEmpty())
     {
+        #ifdef BOTTESTCONNECT
+        qDebug() << "use proxy: " << proxy() << ":" << proxyport();
+        #endif
         proxyObject.setType(QNetworkProxy::Socks5Proxy);
         proxyObject.setHostName(proxy());
         proxyObject.setPort(proxyport());
+        sslSocket->setProxy(proxyObject);
+    }
+    else
+    {
+        proxyObject.setType(QNetworkProxy::NoProxy);
         sslSocket->setProxy(proxyObject);
     }
 
@@ -477,6 +485,9 @@ MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClie
         abort();
     if(!connect(sslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),this,&MultipleBotConnection::newSocketError))
         abort();
+    #ifdef BOTTESTCONNECT
+    qDebug() << "Try connect on: " << host() << ":" << port();
+    #endif
     sslSocket->connectToHost(host(),port());
     connectTheExternalSocket(client);
     return client;
