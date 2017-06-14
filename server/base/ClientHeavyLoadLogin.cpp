@@ -1217,11 +1217,11 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
     }
     /// \todo don't save and failed if timedrift detected
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_update_character_time_to_delete_by_id.asyncWrite({
-                std::to_string(characterId),
                 std::to_string(
                       sFrom1970()+
                       CommonSettingsCommon::commonSettingsCommon.character_delete_time
-                  )
+                  ),
+                  std::to_string(characterId)
                 });
 
     //send the network reply
