@@ -12,11 +12,24 @@
  * 30: Timeout
  */
 
+#if defined(__has_feature)
+#  if __has_feature(address_sanitizer)
+extern "C" {
+const char* __asan_default_options() { return "alloc_dealloc_mismatch=0:detect_container_overflow=0:detect_leaks=0"; }
+}  // extern "C"
+#  endif
+#endif
+
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
     a.setOrganizationDomain("CatchChallenger");
     a.setOrganizationName("bot-test-connect-to-gameserver");
+    {
+        QNetworkProxy proxy;
+        proxy.setType(QNetworkProxy::NoProxy);
+        QNetworkProxy::setApplicationProxy(proxy);
+    }
     GlobalControler w;
     return a.exec();
 }
