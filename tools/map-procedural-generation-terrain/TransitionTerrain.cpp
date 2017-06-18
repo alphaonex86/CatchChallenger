@@ -164,7 +164,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vecto
                         cellCollision.tile=terrainTransition.collision_tile.at(indexTile);
                         cellReplace.tile=transitionTileToType;
 
-                        if(!terrainTransition.replace_tile)
+                        if(!terrainTransition.outer)
                         {
                             Tiled::Cell cell;
                             cell.tile=cellOver.tile;
