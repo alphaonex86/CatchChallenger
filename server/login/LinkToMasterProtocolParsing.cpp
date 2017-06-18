@@ -1128,7 +1128,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                 if(deleteSize>0)
                 {
                     size_t index=0;
-                    if((size-pos)<(deleteSize*sizeof(uint16_t)))
+                    if((size-pos)<(deleteSize*sizeof(uint8_t)))
                     {
                         parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", (size-cursor)<(deleteSize*sizeof(uint16_t)), file:"+__FILE__+":"+std::to_string(__LINE__));
                         return false;

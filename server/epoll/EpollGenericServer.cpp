@@ -106,7 +106,6 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
             }
 
             s = listen(sfd, SOMAXCONN);
-            std::cerr << "listen: " << bindSuccess << "," << bindFailed << std::endl;
             if(s == -1)
             {
                 close();
