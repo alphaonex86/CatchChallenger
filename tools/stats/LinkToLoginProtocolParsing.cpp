@@ -244,7 +244,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 if(deleteSize>0)
                 {
                     size_t index=0;
-                    if((size-pos)<(deleteSize*sizeof(uint16_t)))
+                    if((size-pos)<(deleteSize*sizeof(uint8_t)))
                     {
                         std::cerr << "dump data: " << binarytoHexa(data,pos) << " " << binarytoHexa(data+pos,size-pos) << std::endl;
                         parseNetworkReadError("for main ident: "+std::to_string(mainCodeType)+", (size-cursor)<(deleteSize*sizeof(uint16_t)), file:"+__FILE__+":"+std::to_string(__LINE__));
