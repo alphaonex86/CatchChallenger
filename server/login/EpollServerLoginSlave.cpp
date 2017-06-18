@@ -478,12 +478,17 @@ bool EpollServerLoginSlave::tryListen()
     preload_the_randomData();
     preload_profile();
 
+    if(server_port.empty())
+    {
+        std::cout << "EpollServerLoginSlave::tryListen() port can't be empty (abort)" << std::endl;
+        abort();
+    }
     if(!server_ip.empty())
         std::cout << "Listen on " << server_ip << ":" << server_port << std::endl;
     else
         std::cout << "Listen on *:" << server_port << std::endl;
-    server_ip.clear();
-    server_port.clear();
+    /*no, to resume it server_ip.clear();
+    server_port.clear();*/
     return returnedValue;
 }
 

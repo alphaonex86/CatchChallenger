@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QSettings>
 #include <QTime>
+#include <QFile>
 #include <iostream>
 
 #include "../../client/tiled/tiled_mapwriter.h"
@@ -33,6 +34,8 @@ int main(int argc, char *argv[])
     a.setApplicationName(QStringLiteral("map-procedural-generation-terrain"));
     a.setApplicationVersion(QStringLiteral("1.0"));
 
+    if(!QFile::exists(QCoreApplication::applicationDirPath()+"/settings.xml"))
+        QFile::copy(":/settings.xml",QCoreApplication::applicationDirPath()+"/settings.xml");
     QSettings settings(QCoreApplication::applicationDirPath()+"/settings.xml",QSettings::NativeFormat);
     Settings::putDefaultSettings(settings);
     unsigned int mapWidth;
@@ -75,7 +78,7 @@ int main(int argc, char *argv[])
         {
             Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth,totalHeight,16,16);
             QHash<QString,Tiled::Tileset *> cachedTileset;
-            LoadMap::addTerrainLayer(tiledMap);
+            LoadMap::addTerrainLayer(tiledMap,dotransition);
             LoadMap::loadAllTileset(cachedTileset,tiledMap);
             LoadMap::load_terrainTransitionList(cachedTileset,terrainTransitionList,tiledMap);
             if(displayzone)

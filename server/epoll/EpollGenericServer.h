@@ -17,6 +17,7 @@ public:
     int accept(sockaddr *in_addr,socklen_t *in_len);
     std::vector<int> getSfd() const;
     BaseClassSwitch::EpollObjectType getType() const;
+    bool isListening() const;
 private:
     std::vector<int> sfd_list;
 };

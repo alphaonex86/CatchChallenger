@@ -3,6 +3,7 @@
 #include "CommonDatapackServerSpec.h"
 #include "ProtocolParsing.h"
 #include "FacilityLibGeneral.h"
+#include "cpp11addition.h"
 
 #include "CommonDatapack.h"
 #include "CachedString.h"

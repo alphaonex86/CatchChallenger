@@ -72,12 +72,12 @@ void Client::selectCharacterServer_object()
     }
     #endif
     SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(selectCharacterParam==NULL)
         abort();
     #endif
     selectCharacterServer_return(selectCharacterParam->query_id,selectCharacterParam->characterId);
+    paramToPassToCallBack.pop();
     delete selectCharacterParam;
     GlobalServerData::serverPrivateVariables.db_server->clear();
 }

@@ -102,9 +102,10 @@ void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tile
         for(int moisure=0;moisure<6;moisure++)
         {
             Terrain &terrain=LoadMap::terrainList[height][moisure];
-            const QString &layerString=terrain.layerString;
-            const QString &tsx=terrain.tsx;
-            const unsigned int &tileId=terrain.tileId;
+            const QString &layerString=terrain.tmp_layerString;
+            const QString &terrainName=terrain.tmp_terrainName;
+            const QString &tsx=terrain.tmp_tsx;
+            const unsigned int &tileId=terrain.tmp_tileId;
             if(!layerString.isEmpty())
             {
                 Tiled::Tileset *tilesetBase;
@@ -116,8 +117,8 @@ void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tile
                     cachedTileset[tsx]=tilesetBase;
                 }
                 terrain.tile=tilesetBase->tileAt(tileId);
-                terrain.tileLayer=searchTileLayerByName(tiledMap,layerString);
-                LoadMap::terrainNameToObject.insert(terrain.terrainName,&terrain);
+                terrain.tileLayer=searchTileLayerByName(tiledMap,"[T]"+terrainName);
+                LoadMap::terrainNameToObject.insert(terrain.tmp_terrainName,&terrain);
             }
         }
 }
@@ -266,7 +267,7 @@ Tiled::ObjectGroup *LoadMap::addDebugLayer(Tiled::Map &tiledMap,std::vector<std:
     return layerZoneWater;
 }
 
-Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap)
+Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotransition)
 {
     Tiled::TileLayer *layerZoneWater=new Tiled::TileLayer("Water",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneWater);
@@ -282,6 +283,21 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap)
     tiledMap.addLayer(layerZoneWalkBehind);
     Tiled::TileLayer *layerZoneWalkBehind2=new Tiled::TileLayer("WalkBehind",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneWalkBehind2);
+
+    //add temporary layer
+    QSet<QString> terrainLayerNameAlreadySet;
+    for(int height=0;height<5;height++)
+        for(int moisure=0;moisure<6;moisure++)
+        {
+            const QString &terrainName=LoadMap::terrainList[height][moisure].tmp_terrainName;
+            if(!terrainLayerNameAlreadySet.contains(terrainName))
+            {
+                Tiled::TileLayer *layerZoneterrainName=new Tiled::TileLayer("[T]"+terrainName,0,0,tiledMap.width(),tiledMap.height());
+                tiledMap.addLayer(layerZoneterrainName);
+                terrainLayerNameAlreadySet << terrainName;
+            }
+        }
+
     return layerZoneWater;
 }
 
