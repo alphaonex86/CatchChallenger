@@ -275,6 +275,7 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
                 QPolygonF &pixelizedPolygon=zone.pixelizedPolygon;
                 if(!zone.points.empty() && pixelizedPolygon.empty())
                 {
+                    //std::unordered_set<unsigned int> groupedZone; CAN'T GROUP HERE, no info about height/moisure
                     bool stopIt=false;
                     unsigned int polygonx=x;
                     unsigned int polygony=y;
