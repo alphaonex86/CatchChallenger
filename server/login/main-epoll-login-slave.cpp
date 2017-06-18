@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
                         if(!(events[i].events & EPOLLHUP))
                             std::cerr << "master epoll error: " << events[i].events << std::endl;
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        std::cerr << "master epoll bye: " << events[i].events << std::endl;
+                        std::cerr << "master link epoll bye: " << events[i].events << std::endl;
                         #endif
                         client->tryReconnect();
                         continue;

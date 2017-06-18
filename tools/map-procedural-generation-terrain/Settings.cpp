@@ -7,100 +7,6 @@
 void Settings::putDefaultSettings(QSettings &settings)
 {
     //do tile to zone converter
-    settings.beginGroup("terrain");
-        settings.beginGroup("water");
-            if(!settings.contains("tsx"))
-                settings.setValue("tsx","animation.tsx");
-            if(!settings.contains("tileId"))
-                settings.setValue("tileId",0);
-            if(!settings.contains("heightmoisurelist"))
-                settings.setValue("heightmoisurelist","0,1;0,2;0,3;0,4;0,5;0,6");//the index
-            if(!settings.contains("layer"))
-                settings.setValue("layer","Water");
-        settings.endGroup();
-        settings.beginGroup("grass");
-            if(!settings.contains("tsx"))
-                settings.setValue("tsx","terra.tsx");
-            if(!settings.contains("tileId"))
-                settings.setValue("tileId",0);
-            if(!settings.contains("heightmoisurelist"))
-                settings.setValue("heightmoisurelist","1,1;1,2;1,3;1,4;1,5;1,6;2,1;2,2;2,3;2,4;2,5;2,6;3,1;3,2;3,3;3,4;3,5;3,6");//the index
-            if(!settings.contains("layer"))
-                settings.setValue("layer","Walkable");
-        settings.endGroup();
-        settings.beginGroup("mountain");
-            if(!settings.contains("tsx"))
-                settings.setValue("tsx","terra.tsx");
-            if(!settings.contains("tileId"))
-                settings.setValue("tileId",353);
-            if(!settings.contains("heightmoisurelist"))
-                settings.setValue("heightmoisurelist","4,1;4,2;4,3;4,4;4,5;4,6");//the index
-            if(!settings.contains("layer"))
-                settings.setValue("layer","Walkable");
-        settings.endGroup();
-    settings.endGroup();
-    settings.beginGroup("plants");
-        settings.beginGroup("flowers");
-            if(!settings.contains("tmx"))
-                settings.setValue("tmx","flowers");
-            if(!settings.contains("heightmoisurelist"))
-                settings.setValue("heightmoisurelist","1,1");
-        settings.endGroup();
-        settings.beginGroup("grass");
-            if(!settings.contains("tmx"))
-                settings.setValue("tmx","grass");
-            if(!settings.contains("heightmoisurelist"))
-                settings.setValue("heightmoisurelist","1,2");
-        settings.endGroup();
-        settings.beginGroup("tree-1");
-            if(!settings.contains("tmx"))
-                settings.setValue("tmx","tree-1");
-            if(!settings.contains("heightmoisurelist"))
-                settings.setValue("heightmoisurelist","1,3");
-        settings.endGroup();
-        settings.beginGroup("tree-2");
-            if(!settings.contains("tmx"))
-                settings.setValue("tmx","tree-2");
-            if(!settings.contains("heightmoisurelist"))
-                settings.setValue("heightmoisurelist","1,4");
-        settings.endGroup();
-        settings.beginGroup("tree-3");
-            if(!settings.contains("tmx"))
-                settings.setValue("tmx","tree-3");
-            if(!settings.contains("heightmoisurelist"))
-                settings.setValue("heightmoisurelist","1,5;1,6");
-        settings.endGroup();
-    settings.endGroup();
-    settings.beginGroup("transition");
-        settings.beginGroup("waterborder");
-            if(!settings.contains("from_type"))
-                settings.setValue("from_type","water");
-            if(!settings.contains("to_type"))
-                settings.setValue("to_type","grass");
-            if(!settings.contains("transition_tsx"))
-                settings.setValue("transition_tsx","terra.tsx");
-            if(!settings.contains("transition_tile"))
-                settings.setValue("transition_tile","184,185,186,218,250,249,248,216,281,282,314,313");
-            if(!settings.contains("replace_tile"))
-                settings.setValue("replace_tile",false);
-        settings.endGroup();
-        settings.beginGroup("monstainborder");
-            if(!settings.contains("from_type"))
-                settings.setValue("from_type","mountain");
-            if(!settings.contains("to_type"))
-                settings.setValue("to_type","grass");
-            if(!settings.contains("transition_tsx"))
-                settings.setValue("transition_tsx","terra.tsx");
-            if(!settings.contains("transition_tile"))
-                settings.setValue("transition_tile","320,321,322,354,386,385,384,352,323,324,356,355");//missing moutain piece
-            if(!settings.contains("collision_tsx"))
-                settings.setValue("collision_tsx","terra.tsx");
-            if(!settings.contains("collision_tile"))
-                settings.setValue("collision_tile","21,22,23,55,87,86,85,53,82,83,115,114");//the mountain borden
-            if(!settings.contains("replace_tile"))
-                settings.setValue("replace_tile",true);//put the nearest tile into current (grass replace mountain)
-        settings.endGroup();
-    settings.endGroup();
     if(!settings.contains("resize_TerrainMap"))
         settings.setValue("resize_TerrainMap",4);
     if(!settings.contains("resize_TerrainHeat"))
@@ -141,7 +47,8 @@ void Settings::loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned 
             {
                 LoadMap::terrainList[height][moisure].tile=NULL;
                 LoadMap::terrainList[height][moisure].tileLayer=NULL;
-                LoadMap::terrainList[height][moisure].tileId=0;
+                LoadMap::terrainList[height][moisure].tmp_tileId=0;
+                LoadMap::terrainList[height][moisure].outer=true;
             }
         settings.beginGroup("terrain");
         const QStringList &groupsNames=settings.childGroups();
@@ -191,10 +98,52 @@ void Settings::loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned 
                         std::cerr << "moisure not in valid range" << std::endl;
                         abort();
                     }
-                    LoadMap::terrainList[height][moisure-1].tsx=tsx;
-                    LoadMap::terrainList[height][moisure-1].tileId=tileId;
-                    LoadMap::terrainList[height][moisure-1].layerString=layerString;
-                    LoadMap::terrainList[height][moisure-1].terrainName=terrainName;
+
+                    //before map creation
+                    const bool outer=settings.value("outer").toBool();
+                    //tempory value
+                    const QString &tmp_transition_tsx=settings.value("transition_tsx").toString();
+                    std::vector<uint32_t> tmp_transition_tile;
+                    {
+                        bool ok;
+                        const QString &tmp_transition_tile_settings=settings.value("transition_tile").toString();
+                        if(!tmp_transition_tile_settings.isEmpty())
+                        {
+                            const QStringList &tmp_transition_tile_list=tmp_transition_tile_settings.split(',');
+                            unsigned int tmp_transition_tile_index=0;
+                            while(tmp_transition_tile_index<(unsigned int)tmp_transition_tile_list.size())
+                            {
+                                const QString &s=tmp_transition_tile_list.at(tmp_transition_tile_index);
+                                tmp_transition_tile.push_back(s.toInt(&ok));
+                                if(!ok)
+                                {
+                                    std::cerr << "into transition_tile some is not a number: " << s.toStdString() << " from: " << tmp_transition_tile_settings.toStdString() << " (abort)" << std::endl;
+                                    abort();
+                                }
+                                tmp_transition_tile_index++;
+                            }
+                        }
+                        if(terrainTransition.tmp_transition_tile.size()!=12)
+                        {
+                            std::cerr << "into transition_tile number should be 12, 8 border + 4 curved border (abort)" << std::endl;
+                            abort();
+                        }
+                    }
+
+                    LoadMap::Terrain &terrain=LoadMap::terrainList[height][moisure-1];
+                    terrain.tmp_tsx=tsx;
+                    terrain.tmp_tileId=tileId;
+                    terrain.tmp_layerString=layerString;
+                    terrain.terrainName=terrainName;
+
+                    terrain.outer=outer;
+                    terrain.tmp_transition_tsx=tmp_transition_tsx;
+                    terrain.tmp_transition_tile=tmp_transition_tile;
+
+
+                    grass\outer=true
+                    grass\transition_tile="512,513,514,546,578,577,576,544,451,452,484,483"
+                    grass\transition_tsx=terra.tsx
                     heightmoisurelistIndex++;
                 }
             settings.endGroup();
@@ -311,18 +260,8 @@ void Settings::loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned 
                 settings.beginGroup(groupsNames.at(index));
                     LoadMap::TerrainTransition terrainTransition;
                     //before map creation
-                    terrainTransition.replace_tile=settings.value("replace_tile").toBool();
+                    terrainTransition.outer=settings.value("outer").toBool();
                     //tempory value
-                    terrainTransition.tmp_from_type=settings.value("from_type").toString();
-                    {
-                        const QStringList &to_type_list=settings.value("to_type").toString().split(',');
-                        unsigned int to_type_index=0;
-                        while(to_type_index<(unsigned int)to_type_list.size())
-                        {
-                            terrainTransition.tmp_to_type.push_back(to_type_list.at(to_type_index));
-                            to_type_index++;
-                        }
-                    }
                     terrainTransition.tmp_transition_tsx=settings.value("transition_tsx").toString();
                     {
                         bool ok;

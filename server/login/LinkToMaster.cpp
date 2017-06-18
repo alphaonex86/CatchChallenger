@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "CharactersGroupForLogin.h"
+#include "EpollServerLoginSlave.h"
 
 using namespace CatchChallenger;
 
@@ -233,8 +234,8 @@ void LinkToMaster::readTheFirstSslHeader()
     char buffer[1];
     if(::read(LinkToMaster::linkToMasterSocketFd,buffer,1)<0)
     {
-        std::cerr << "ERROR reading from socket to master server (abort)" << std::endl;
-        abort();
+        std::cerr << "ERROR reading from socket to master server (abort): " << std::to_string(errno) << ", LinkToMaster::linkToMasterSocketFd: " << std::to_string(LinkToMaster::linkToMasterSocketFd) << std::endl;
+        //abort();
         return;
     }
     #ifdef SERVERSSL
@@ -332,6 +333,7 @@ void LinkToMaster::tryReconnect()
         }
         memset(LinkToMaster::queryNumberToCharacterGroup,0x00,sizeof(LinkToMaster::queryNumberToCharacterGroup));
     }
+    EpollServerLoginSlave::epollServerLoginSlave->loginProfileList.clear();
 
     if(stat!=Stat::Unconnected)
         return;

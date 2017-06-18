@@ -80,12 +80,12 @@ void Client::selectCharacter_object()
     }
     #endif
     SelectCharacterParam *selectCharacterParam=static_cast<SelectCharacterParam *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(selectCharacterParam==NULL)
         abort();
     #endif
     selectCharacter_return(selectCharacterParam->query_id,selectCharacterParam->characterId);
+    paramToPassToCallBack.pop();
     delete selectCharacterParam;
     GlobalServerData::serverPrivateVariables.db_common->clear();
 }
@@ -109,7 +109,8 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        std::cerr << "Try select " << characterId << " but not found with account " << account_id << std::endl;
+        std::cerr << "Try select character " << characterId << " but not found with account " << account_id << std::endl;
+        std::cerr << "Via: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.queryText() << ", callback list size: " << paramToPassToCallBack.size() << std::endl;
         std::cerr << "Maybe connected on another db than login server: " <<  DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()) << " at ";
         if(GlobalServerData::serverSettings.database_common.host=="localhost")
             std::cerr << "localhost";

@@ -192,9 +192,9 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     if(!settings->contains("token"))
         settings->setValue("token","");
     if(!settings->contains("maxLockAge"))
-        settings->setValue("maxLockAge",10*60);
+        settings->setValue("maxLockAge",30);
     if(!settings->contains("purgeLockPeriod"))
-        settings->setValue("purgeLockPeriod",3*60);
+        settings->setValue("purgeLockPeriod",15);
     settings->endGroup();
     #endif
 

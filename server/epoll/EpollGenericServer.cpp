@@ -20,6 +20,12 @@ EpollGenericServer::~EpollGenericServer()
 
 bool EpollGenericServer::tryListenInternal(const char* const ip,const char* const port)
 {
+    if(strlen(port)==0)
+    {
+        std::cout << "EpollGenericServer::tryListenInternal() port can't be empty (abort)" << std::endl;
+        abort();
+    }
+
     struct addrinfo hints;
     struct addrinfo *result, *rp;
     int s;
@@ -86,7 +92,6 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
         }
         else
         {
-
             if(sfd==-1)
             {
                 std::cerr << "Leave without bind but s!=0" << std::endl;
@@ -101,6 +106,7 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
             }
 
             s = listen(sfd, SOMAXCONN);
+            std::cerr << "listen: " << bindSuccess << "," << bindFailed << std::endl;
             if(s == -1)
             {
                 close();
@@ -126,7 +132,13 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
                     << ", rp->ai_protocol: " << rp->ai_protocol
                     << ", rp->ai_addr: " << rp->ai_addr
                     << ", rp->ai_addrlen: " << rp->ai_addrlen
+                    << ", port: " << port
+                    << ", rp->ai_flags: " << rp->ai_flags
+                    //<< ", rp->ai_canonname: " << rp->ai_canonname-> corrupt the output
                     << std::endl;
+            char hbuf[NI_MAXHOST];
+            if(!getnameinfo(rp->ai_addr, rp->ai_addrlen, hbuf, sizeof(hbuf),NULL, 0, NI_NAMEREQD))
+                std::cout << "getnameinfo: " << hbuf << std::endl;
             bindSuccess++;
         }
         rp = rp->ai_next;
@@ -144,6 +156,11 @@ void EpollGenericServer::close()
         index++;
     }
     sfd_list.clear();
+}
+
+bool EpollGenericServer::isListening() const
+{
+    return !sfd_list.empty();
 }
 
 int EpollGenericServer::accept(sockaddr *in_addr,socklen_t *in_len)
