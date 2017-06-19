@@ -101,7 +101,7 @@ void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tile
     for(int height=0;height<5;height++)
         for(int moisure=0;moisure<6;moisure++)
         {
-            Terrain &terrain=LoadMap::terrainList[height][moisure];
+            LoadMap::Terrain &terrain=LoadMap::terrainList[height][moisure];
             const QString &layerString=terrain.tmp_layerString;
             const QString &terrainName=terrain.tmp_terrainName;
             const QString &tsx=terrain.tmp_tsx;
@@ -388,109 +388,6 @@ void LoadMap::addTerrain(const Grid &grid,
             }
         }
         index++;
-    }
-}
-
-void LoadMap::load_terrainTransitionList(QHash<QString,Tiled::Tileset *> &cachedTileset,
-                                std::vector<TerrainTransition> &terrainTransitionList,Tiled::Map &tiledMap)
-{
-    unsigned int terrainTransitionIndex=0;
-    while(terrainTransitionIndex<terrainTransitionList.size())
-    {
-        //Tiled::Tile * from_type;
-        TerrainTransition &terrainTransition=terrainTransitionList.at(terrainTransitionIndex);
-        if(!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type))
-        {
-            std::cerr << "!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type): " << terrainTransition.tmp_from_type.toStdString() << std::endl;
-            abort();
-        }
-        terrainTransition.from_type_tile=LoadMap::terrainNameToObject[terrainTransition.tmp_from_type]->tile;
-        terrainTransition.from_type_layer=LoadMap::terrainNameToObject[terrainTransition.tmp_from_type]->tileLayer;
-        unsigned int to_type_Index=0;
-        while(to_type_Index<terrainTransition.tmp_to_type.size())
-        {
-            if(!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_to_type.at(to_type_Index)))
-            {
-                std::cerr << "!LoadMap::terrainNameToObject.contains(terrainTransition.tmp_from_type): " << terrainTransition.tmp_to_type.at(to_type_Index).toStdString() << std::endl;
-                abort();
-            }
-            Terrain * tempToTerrain=LoadMap::terrainNameToObject[terrainTransition.tmp_to_type.at(to_type_Index)];
-            terrainTransition.to_type_tile.push_back(tempToTerrain->tile);
-            terrainTransition.to_type_layer.push_back(tempToTerrain->tileLayer);
-            if(terrainTransition.from_type_tile==terrainTransition.to_type_tile.back() && terrainTransition.from_type_layer==terrainTransition.to_type_layer.back())
-            {
-                std::cerr << "The transition can't have from into the to list" << std::endl;
-                abort();
-            }
-            to_type_Index++;
-        }
-
-        //transition
-        {
-            if(!terrainTransition.tmp_transition_tsx.isEmpty())
-            {
-                Tiled::Tileset *tileset;
-                if(cachedTileset.contains(terrainTransition.tmp_transition_tsx))
-                    tileset=cachedTileset.value(terrainTransition.tmp_transition_tsx);
-                else
-                {
-                    tileset=readTileset(terrainTransition.tmp_transition_tsx,&tiledMap);
-                    cachedTileset[terrainTransition.tmp_transition_tsx]=tileset;
-                }
-                unsigned int transition_tile_index=0;
-                while(transition_tile_index<terrainTransition.tmp_transition_tile.size())
-                {
-                    const int &tileId=terrainTransition.tmp_transition_tile.at(transition_tile_index);
-                    if(tileId!=-1 && tileId>tileset->tileCount())
-                    {
-                        std::cerr << "tileId greater than tile count, abort(): " << std::to_string(tileId) << std::endl;
-                        abort();
-                    }
-                    if(tileId!=-1)
-                        terrainTransition.transition_tile.push_back(tileset->tileAt(tileId));
-                    else
-                        terrainTransition.transition_tile.push_back(NULL);
-                    transition_tile_index++;
-                }
-            }
-            else
-                while(terrainTransition.transition_tile.size()<=12)
-                    terrainTransition.transition_tile.push_back(NULL);
-        }
-        //collision
-        {
-            if(!terrainTransition.tmp_collision_tsx.isEmpty())
-            {
-                Tiled::Tileset *tileset;
-                if(cachedTileset.contains(terrainTransition.tmp_collision_tsx))
-                    tileset=cachedTileset.value(terrainTransition.tmp_collision_tsx);
-                else
-                {
-                    tileset=readTileset(terrainTransition.tmp_collision_tsx,&tiledMap);
-                    cachedTileset[terrainTransition.tmp_collision_tsx]=tileset;
-                }
-                unsigned int collision_tile_index=0;
-                while(collision_tile_index<terrainTransition.tmp_collision_tile.size())
-                {
-                    const int &tileId=terrainTransition.tmp_collision_tile.at(collision_tile_index);
-                    if(tileId!=-1 && tileId>tileset->tileCount())
-                    {
-                        std::cerr << "tileId greater than tile count, abort(): " << std::to_string(tileId) << std::endl;
-                        abort();
-                    }
-                    if(tileId!=-1)
-                        terrainTransition.collision_tile.push_back(tileset->tileAt(tileId));
-                    else
-                        terrainTransition.collision_tile.push_back(NULL);
-                    collision_tile_index++;
-                }
-            }
-            else
-                while(terrainTransition.collision_tile.size()<=12)
-                    terrainTransition.collision_tile.push_back(NULL);
-        }
-
-        terrainTransitionIndex++;
     }
 }
 

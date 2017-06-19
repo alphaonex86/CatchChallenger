@@ -40,11 +40,17 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
         errorOutput("selectCharacter() Query db_query_update_character_time_to_delete is empty, bug");
         return;
     }*/
+    if(characterId==0)
+    {
+        errorOutput("selectCharacter() characterId==0, bug");
+        abort();
+    }
     #endif
     SelectCharacterParam *selectCharacterParam=new SelectCharacterParam;
     selectCharacterParam->query_id=query_id;
     selectCharacterParam->characterId=characterId;
     stat=ClientStat::CharacterSelecting;
+    std::cerr << "Client::selectCharacter(), Try select character " << characterId << " with account " << account_id << std::endl;
 
     CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.asyncRead(this,&Client::selectCharacter_static,{std::to_string(characterId)});
     if(callback==NULL)

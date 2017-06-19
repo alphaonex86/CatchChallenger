@@ -143,7 +143,7 @@ bool EpollPostgresql::syncConnectInternal(bool infinityTry)
             if(lastErrorMessage.find("\" is not permitted to log in")!=std::string::npos)
                 return false;
         }
-        std::cerr << "pg connexion not OK: " << lastErrorMessage << ", retrying..." << std::endl;
+        std::cerr << "pg connexion not OK: " << lastErrorMessage << ", retrying..., infinityTry: " << std::to_string(infinityTry) << std::endl;
 
         unsigned int index=0;
         while(index<considerDownAfterNumberOfTry && connStatusType==CONNECTION_BAD)
