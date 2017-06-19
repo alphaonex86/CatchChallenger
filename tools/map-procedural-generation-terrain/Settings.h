@@ -9,7 +9,8 @@ class Settings
 {
 public:
     static void putDefaultSettings(QSettings &settings);
-    static void loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned int &mapHeight,unsigned int &mapXCount,unsigned int &mapYCount,unsigned int &seed,bool &displayzone,std::vector<LoadMap::TerrainTransition> &terrainTransitionList,
+    static void loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned int &mapHeight,
+                             unsigned int &mapXCount,unsigned int &mapYCount,unsigned int &seed,bool &displayzone,
                       bool &dotransition,bool &dovegetation,unsigned int &tileStep);
 };
 

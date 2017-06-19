@@ -19,7 +19,7 @@ public:
         //final values
         Tiled::Tile *tile;
         Tiled::TileLayer *tileLayer;
-        bool outer;//if true, the border is out of the zone else use OnGrass layer
+        bool outsideBorder;//if true, the border is out of the zone else use OnGrass layer
         std::vector<Tiled::Tile *> transition_tile;
         QString terrainName;
         //temporary values
@@ -51,8 +51,6 @@ public:
                             VoronioForTiledMapTmx::PolygonZoneMap &vd, const Simplex &heighmap, const Simplex &moisuremap, const float &noiseMapScale,
                             const int widthMap, const int heightMap,
                             const int offsetX=0, const int offsetY=0);
-    static void load_terrainTransitionList(QHash<QString,Tiled::Tileset *> &cachedTileset,
-                                    std::vector<TerrainTransition> &terrainTransitionList,Tiled::Map &tiledMap);
     static Tiled::TileLayer *searchTileLayerByName(const Tiled::Map &tiledMap,const QString &name);
     static std::vector<Tiled::Tile *> getTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y);
     static Tiled::TileLayer * haveTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y,const Tiled::Tile * const tile);
