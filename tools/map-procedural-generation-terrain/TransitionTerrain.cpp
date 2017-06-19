@@ -1,6 +1,6 @@
 #include "TransitionTerrain.h"
 
-void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vector<LoadMap::TerrainTransition> &terrainTransitionList)
+void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap)
 {
     struct BufferRemplace
     {
@@ -15,6 +15,59 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const std::vecto
     Tiled::TileLayer * collisionsLayer=LoadMap::searchTileLayerByName(tiledMap,"Collisions");
     const unsigned int w=tiledMap.width();
     const unsigned int h=tiledMap.height();
+
+    //list the layer name to parse
+    QHash<QString,LoadMap::Terrain> innerTerrain;
+    QHash<QString,LoadMap::Terrain> outsideTerrain;
+    for(int height=0;height<5;height++)
+        for(int moisure=0;moisure<6;moisure++)
+        {
+            LoadMap::Terrain &terrain=LoadMap::terrainList[height][moisure];
+            if(!layerString.isEmpty())
+            {
+                if(terrain.outsideBorder)
+                    outsideTerrain["[T]"+terrainName]=terrain;
+                else
+                    innerTerrain[terrain.tmp_layerString]=terrain;
+            }
+        }
+
+    //innerTerrain
+    {
+        QHashIterator<QString,LoadMap::Terrain> i(hash);
+        while (i.hasNext()) {
+            i.next();
+            cout << i.key() << ": " << i.value() << endl;
+            unsigned int y=0;
+            while(y<h)
+            {
+                unsigned int x=0;
+                while(x<w)
+                {
+                    x++;
+                }
+                y++;
+            }
+        }
+    }
+    //outsideTerrain
+    {
+        QHashIterator<QString,LoadMap::Terrain> i(hash);
+        while (i.hasNext()) {
+            i.next();
+            cout << i.key() << ": " << i.value() << endl;
+            unsigned int y=0;
+            while(y<h)
+            {
+                unsigned int x=0;
+                while(x<w)
+                {
+                    x++;
+                }
+                y++;
+            }
+        }
+    }
     unsigned int y=0;
     while(y<h)
     {
