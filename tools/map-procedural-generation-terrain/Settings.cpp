@@ -37,8 +37,8 @@ void Settings::putDefaultSettings(QSettings &settings)
     settings.sync();
 }
 
-void Settings::loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned int &mapHeight,unsigned int &mapXCount,unsigned int &mapYCount,unsigned int &seed,bool &displayzone,std::vector<LoadMap::TerrainTransition> &terrainTransitionList,
-                  bool &dotransition,bool &dovegetation,unsigned int &tileStep)
+void Settings::loadSettings(QSettings &settings, unsigned int &mapWidth, unsigned int &mapHeight, unsigned int &mapXCount, unsigned int &mapYCount, unsigned int &seed, bool &displayzone,
+                  bool &dotransition, bool &dovegetation, unsigned int &tileStep)
 {
     bool ok;
     {
@@ -48,7 +48,7 @@ void Settings::loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned 
                 LoadMap::terrainList[height][moisure].tile=NULL;
                 LoadMap::terrainList[height][moisure].tileLayer=NULL;
                 LoadMap::terrainList[height][moisure].tmp_tileId=0;
-                LoadMap::terrainList[height][moisure].outer=true;
+                LoadMap::terrainList[height][moisure].outsideBorder=true;
             }
         settings.beginGroup("terrain");
         const QStringList &groupsNames=settings.childGroups();
@@ -100,7 +100,7 @@ void Settings::loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned 
                     }
 
                     //before map creation
-                    const bool outer=settings.value("outer").toBool();
+                    const bool outsideBorder=settings.value("outsideBorder").toBool();
                     //tempory value
                     const QString &tmp_transition_tsx=settings.value("transition_tsx").toString();
                     std::vector<uint32_t> tmp_transition_tile;
@@ -123,7 +123,7 @@ void Settings::loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned 
                                 tmp_transition_tile_index++;
                             }
                         }
-                        if(terrainTransition.tmp_transition_tile.size()!=12)
+                        if(tmp_transition_tile.size()!=12)
                         {
                             std::cerr << "into transition_tile number should be 12, 8 border + 4 curved border (abort)" << std::endl;
                             abort();
@@ -136,14 +136,10 @@ void Settings::loadSettings(QSettings &settings,unsigned int &mapWidth,unsigned 
                     terrain.tmp_layerString=layerString;
                     terrain.terrainName=terrainName;
 
-                    terrain.outer=outer;
+                    terrain.outsideBorder=outsideBorder;
                     terrain.tmp_transition_tsx=tmp_transition_tsx;
                     terrain.tmp_transition_tile=tmp_transition_tile;
 
-
-                    grass\outer=true
-                    grass\transition_tile="512,513,514,546,578,577,576,544,451,452,484,483"
-                    grass\transition_tsx=terra.tsx
                     heightmoisurelistIndex++;
                 }
             settings.endGroup();

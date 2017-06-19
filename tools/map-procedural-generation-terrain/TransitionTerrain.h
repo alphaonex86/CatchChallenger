@@ -7,7 +7,7 @@
 class TransitionTerrain
 {
 public:
-    static void addTransitionOnMap(Tiled::Map &tiledMap,const std::vector<LoadMap::TerrainTransition> &terrainTransitionList);
+    static void addTransitionOnMap(Tiled::Map &tiledMap);
 };
 
 #endif // TRANSITIONTERRAIN_H
