@@ -105,6 +105,7 @@ void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tile
             const QString &layerString=terrain.tmp_layerString;
             const QString &terrainName=terrain.terrainName;
             const QString &tsx=terrain.tmp_tsx;
+            const QString &transition_tsx=terrain.tmp_transition_tsx;
             const unsigned int &tileId=terrain.tmp_tileId;
             if(!layerString.isEmpty())
             {
@@ -121,6 +122,23 @@ void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tile
                     terrain.tileLayer=searchTileLayerByName(tiledMap,"[T]"+terrainName);
                 else
                     terrain.tileLayer=searchTileLayerByName(tiledMap,terrain.tmp_layerString);
+
+                //load the transition tile
+                Tiled::Tileset *tilesetTransition;
+                if(cachedTileset.contains(transition_tsx))
+                    tilesetTransition=cachedTileset.value(transition_tsx);
+                else
+                {
+                    tilesetTransition=readTileset(transition_tsx,&tiledMap);
+                    cachedTileset[transition_tsx]=tilesetTransition;
+                }
+                unsigned int index=0;
+                while(index<terrain.tmp_transition_tile.size())
+                {
+                    terrain.transition_tile.push_back(tilesetTransition->tileAt(terrain.tmp_transition_tile.at(index)));
+                    index++;
+                }
+
                 LoadMap::terrainNameToObject.insert(terrain.terrainName,&terrain);
             }
         }
