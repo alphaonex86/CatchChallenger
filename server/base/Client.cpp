@@ -472,6 +472,8 @@ void Client::messageFightEngine(const std::string &message) const
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 char *Client::addAuthGetToken(const uint32_t &characterId, const uint32_t &accountIdRequester)
 {
+    if(characterId==0)
+        std::cerr << "Client::addAuthGetToken() call with characterId=0" << std::endl;
     TokenAuth newEntry;
     newEntry.characterId=characterId;
     newEntry.accountIdRequester=accountIdRequester;

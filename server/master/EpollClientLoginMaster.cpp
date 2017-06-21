@@ -213,6 +213,8 @@ void EpollClientLoginMaster::parseIncommingData()
 
 void EpollClientLoginMaster::selectCharacter(const uint8_t &query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId,const uint32_t &accountId)
 {
+    if(characterId==0)
+        std::cerr << "EpollClientLoginMaster::selectCharacter() call with characterId=0" << std::endl;
     if(charactersGroupIndex>=CharactersGroup::list.size())
     {
         errorParsingLayer("EpollClientLoginMaster::selectCharacter() charactersGroupIndex is out of range");

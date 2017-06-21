@@ -458,6 +458,8 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
             const uint8_t &charactersGroupIndex=data[0];
             const uint32_t &serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+1)));
             const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+5)));
+            if(characterId==0)
+                std::cerr << "EpollClientLoginMaster::selectCharacter() call with characterId=0" << std::endl;
             selectCharacter(queryNumber,serverUniqueKey,charactersGroupIndex,characterId);
             return true;
         }

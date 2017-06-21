@@ -132,16 +132,19 @@ bool EpollPostgresql::syncConnectInternal(bool infinityTry)
     if(connStatusType==CONNECTION_BAD)
     {
         std::string lastErrorMessage=errorMessage();
-        if(lastErrorMessage.find("pg_hba.conf")!=std::string::npos)
-            return false;
-        if(lastErrorMessage.find("authentication failed")!=std::string::npos)
-            return false;
-        if(lastErrorMessage.find("role \"")!=std::string::npos)
+        if(!infinityTry)
         {
-            if(lastErrorMessage.find("\" does not exist")!=std::string::npos)
+            if(lastErrorMessage.find("pg_hba.conf")!=std::string::npos)
                 return false;
-            if(lastErrorMessage.find("\" is not permitted to log in")!=std::string::npos)
+            if(lastErrorMessage.find("authentication failed")!=std::string::npos)
                 return false;
+            if(lastErrorMessage.find("role \"")!=std::string::npos)
+            {
+                if(lastErrorMessage.find("\" does not exist")!=std::string::npos)
+                    return false;
+                if(lastErrorMessage.find("\" is not permitted to log in")!=std::string::npos)
+                    return false;
+            }
         }
         std::cerr << "pg connexion not OK: " << lastErrorMessage << ", retrying..., infinityTry: " << std::to_string(infinityTry) << std::endl;
 

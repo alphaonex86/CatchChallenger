@@ -660,6 +660,11 @@ bool Api_protocol::removeCharacter(const uint8_t &charactersGroupIndex,const uin
 
 bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const uint32_t &serverUniqueKey, const uint32_t &characterId)
 {
+    if(characterId==0)
+    {
+        std::cerr << "Api_protocol::selectCharacter() can't have characterId==0" << std::endl;
+        abort();
+    }
     int index=0;
     while(index<serverOrdenedList.size())
     {
@@ -674,6 +679,11 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
 
 bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const uint32_t &serverUniqueKey, const uint32_t &characterId,const uint32_t &serverIndex)
 {
+    if(characterId==0)
+    {
+        std::cerr << "Api_protocol::selectCharacter() with server index can't have characterId==0" << std::endl;
+        abort();
+    }
     if(!is_logged)
     {
         std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
