@@ -40,11 +40,6 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
         errorOutput("selectCharacter() Query db_query_update_character_time_to_delete is empty, bug");
         return;
     }*/
-    if(characterId==0)
-    {
-        errorOutput("selectCharacter() characterId==0, bug");
-        abort();
-    }
     #endif
     SelectCharacterParam *selectCharacterParam=new SelectCharacterParam;
     selectCharacterParam->query_id=query_id;

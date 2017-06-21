@@ -103,7 +103,7 @@ void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tile
         {
             LoadMap::Terrain &terrain=LoadMap::terrainList[height][moisure];
             const QString &layerString=terrain.tmp_layerString;
-            const QString &terrainName=terrain.tmp_terrainName;
+            const QString &terrainName=terrain.terrainName;
             const QString &tsx=terrain.tmp_tsx;
             const unsigned int &tileId=terrain.tmp_tileId;
             if(!layerString.isEmpty())
@@ -117,66 +117,13 @@ void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tile
                     cachedTileset[tsx]=tilesetBase;
                 }
                 terrain.tile=tilesetBase->tileAt(tileId);
-                terrain.tileLayer=searchTileLayerByName(tiledMap,"[T]"+terrainName);
-                LoadMap::terrainNameToObject.insert(terrain.tmp_terrainName,&terrain);
+                if(terrain.outsideBorder)
+                    terrain.tileLayer=searchTileLayerByName(tiledMap,"[T]"+terrainName);
+                else
+                    terrain.tileLayer=searchTileLayerByName(tiledMap,terrain.tmp_layerString);
+                LoadMap::terrainNameToObject.insert(terrain.terrainName,&terrain);
             }
         }
-}
-
-LoadMap::ZoneType LoadMap::heightAndMoisureToZoneType(const uint8_t &height,const uint8_t &moisure)
-{
-    switch(height)
-    {
-        case 0:
-            return LoadMap::ZoneType::Water;
-        break;
-        case 1:
-        switch(moisure)
-        {
-            case 1:return LoadMap::ZoneType::SubtropicalDesert;break;
-            case 2:return LoadMap::ZoneType::Grassland;break;
-            case 3:return LoadMap::ZoneType::TropicalSeasonalForest;break;
-            case 4:return LoadMap::ZoneType::TropicalSeasonalForest;break;
-            case 5:return LoadMap::ZoneType::TropicalRainForest;break;
-            case 6:return LoadMap::ZoneType::TropicalRainForest;break;
-        }
-        break;
-        case 2:
-        switch(moisure)
-        {
-            case 1:return LoadMap::ZoneType::TemperateDesert;break;
-            case 2:return LoadMap::ZoneType::Grassland;break;
-            case 3:return LoadMap::ZoneType::Grassland;break;
-            case 4:return LoadMap::ZoneType::TemperateDeciduousForest;break;
-            case 5:return LoadMap::ZoneType::TemperateDeciduousForest;break;
-            case 6:return LoadMap::ZoneType::TemperateRainForest;break;
-        }
-        break;
-        case 3:
-        switch(moisure)
-        {
-            case 1:return LoadMap::ZoneType::TemperateDesert;break;
-            case 2:return LoadMap::ZoneType::TemperateDesert;break;
-            case 3:return LoadMap::ZoneType::Shrubland;break;
-            case 4:return LoadMap::ZoneType::Shrubland;break;
-            case 5:return LoadMap::ZoneType::Taiga;break;
-            case 6:return LoadMap::ZoneType::Taiga;break;
-        }
-        break;
-        case 4:
-        switch(moisure)
-        {
-            case 1:return LoadMap::ZoneType::Scorched;break;
-            case 2:return LoadMap::ZoneType::Bare;break;
-            case 3:return LoadMap::ZoneType::Tundra;break;
-            case 4:return LoadMap::ZoneType::Snow;break;
-            case 5:return LoadMap::ZoneType::Snow;break;
-            case 6:return LoadMap::ZoneType::Snow;break;
-        }
-        break;
-    }
-    abort();
-    return LoadMap::ZoneType::Water;
 }
 
 Tiled::ObjectGroup *LoadMap::addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain,bool polygon)
@@ -269,6 +216,7 @@ Tiled::ObjectGroup *LoadMap::addDebugLayer(Tiled::Map &tiledMap,std::vector<std:
 
 Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotransition)
 {
+    (void)dotransition;
     Tiled::TileLayer *layerZoneWater=new Tiled::TileLayer("Water",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneWater);
     Tiled::TileLayer *layerZoneWalkable=new Tiled::TileLayer("Walkable",0,0,tiledMap.width(),tiledMap.height());
@@ -289,13 +237,15 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
     for(int height=0;height<5;height++)
         for(int moisure=0;moisure<6;moisure++)
         {
-            const QString &terrainName=LoadMap::terrainList[height][moisure].tmp_terrainName;
-            if(!terrainLayerNameAlreadySet.contains(terrainName))
-            {
-                Tiled::TileLayer *layerZoneterrainName=new Tiled::TileLayer("[T]"+terrainName,0,0,tiledMap.width(),tiledMap.height());
-                tiledMap.addLayer(layerZoneterrainName);
-                terrainLayerNameAlreadySet << terrainName;
-            }
+            const LoadMap::Terrain &terrain=LoadMap::terrainList[height][moisure];
+            const QString &terrainName=terrain.terrainName;
+            if(terrain.outsideBorder)
+                if(!terrainLayerNameAlreadySet.contains(terrainName))
+                {
+                    Tiled::TileLayer *layerZoneterrainName=new Tiled::TileLayer("[T]"+terrainName,0,0,tiledMap.width(),tiledMap.height());
+                    tiledMap.addLayer(layerZoneterrainName);
+                    terrainLayerNameAlreadySet << terrainName;
+                }
         }
 
     return layerZoneWater;

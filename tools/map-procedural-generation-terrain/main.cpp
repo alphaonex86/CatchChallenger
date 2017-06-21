@@ -44,9 +44,8 @@ int main(int argc, char *argv[])
     unsigned int mapYCount;
     unsigned int seed;
     bool displayzone,dotransition,dovegetation;
-    std::vector<LoadMap::TerrainTransition> terrainTransitionList;
     unsigned int tileStep;
-    Settings::loadSettings(settings,mapWidth,mapHeight,mapXCount,mapYCount,seed,displayzone,terrainTransitionList,dotransition,dovegetation,tileStep);
+    Settings::loadSettings(settings,mapWidth,mapHeight,mapXCount,mapYCount,seed,displayzone,dotransition,dovegetation,tileStep);
     srand(seed);
 
     {
@@ -80,7 +79,6 @@ int main(int argc, char *argv[])
             QHash<QString,Tiled::Tileset *> cachedTileset;
             LoadMap::addTerrainLayer(tiledMap,dotransition);
             LoadMap::loadAllTileset(cachedTileset,tiledMap);
-            LoadMap::load_terrainTransitionList(cachedTileset,terrainTransitionList,tiledMap);
             if(displayzone)
             {
                 std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainPolygon;
@@ -96,7 +94,7 @@ int main(int argc, char *argv[])
                 if(dotransition)
                 {
                     t.start();
-                    TransitionTerrain::addTransitionOnMap(tiledMap,terrainTransitionList);
+                    TransitionTerrain::addTransitionOnMap(tiledMap);
                     qDebug("Transitions took %d ms", t.elapsed());
                 }
             }
