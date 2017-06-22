@@ -25,6 +25,9 @@ void LinkToLoginShow2::tryReconnect()
     LinkToLoginShow2::writeData("\ec\e[2s\e[1r\e[33m");
     writeData("Try reconnect...");
     LinkToLogin::tryReconnect();
+    displayedServerNumber=0;
+    displayedPlayer=0;
+    displayedMaxPlayer=0;
 }
 
 void LinkToLoginShow2::updateJsonFile()
