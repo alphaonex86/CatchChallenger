@@ -552,14 +552,16 @@ void EpollClientLoginMaster::sendServerChange()
     }
 }
 
-void EpollClientLoginMaster::sendCurrentPlayer()
+//return the number if player
+int EpollClientLoginMaster::sendCurrentPlayer()
 {
     if(!currentPlayerForGameServerToUpdate)
-        return;
+        return -1;
     if(EpollClientLoginMaster::gameServers.size()==0)
-        return;
+        return -1;
     if(EpollClientLoginMaster::loginServers.size()==0)
-        return;
+        return -1;
+    int numberOfPlayer=0;
     //do the list
     uint32_t posOutput=0;
     {
@@ -574,6 +576,7 @@ void EpollClientLoginMaster::sendCurrentPlayer()
         {
             const EpollClientLoginMaster * const gameServer=EpollClientLoginMaster::gameServers.at(index);
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(gameServer->charactersGroupForGameServerInformation->currentPlayer);
+            numberOfPlayer+=gameServer->charactersGroupForGameServerInformation->currentPlayer;
             posOutput+=2;
             index++;
         }
@@ -588,6 +591,7 @@ void EpollClientLoginMaster::sendCurrentPlayer()
             index++;
         }
     }
+    return numberOfPlayer;
 }
 
 void EpollClientLoginMaster::disconnectForDuplicateConnexionDetected(const uint32_t &characterId)

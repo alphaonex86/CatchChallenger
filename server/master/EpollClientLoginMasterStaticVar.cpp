@@ -42,4 +42,5 @@ uint32_t EpollClientLoginMaster::maxAccountId=0;
 std::vector<EpollClientLoginMaster *> EpollClientLoginMaster::gameServers;
 std::vector<EpollClientLoginMaster *> EpollClientLoginMaster::loginServers;
 FILE *EpollClientLoginMaster::fpRandomFile=NULL;
+bool EpollClientLoginMaster::havePlayerCountChange=false;
 
