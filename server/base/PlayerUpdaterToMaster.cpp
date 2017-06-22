@@ -25,7 +25,7 @@ void PlayerUpdaterToMaster::exec()
                 frequencyUpdate=FrequencyUpdate_slow;
                 setInterval(60*1000);
             }
-            else if(PlayerUpdater::connected_players>50)
+            else if(PlayerUpdater::connected_players>30)
             {
                 frequencyUpdate=FrequencyUpdate_medium;
                 setInterval(15*1000);
@@ -37,14 +37,14 @@ void PlayerUpdaterToMaster::exec()
                 frequencyUpdate=FrequencyUpdate_slow;
                 setInterval(60*1000);
             }
-            else if(PlayerUpdater::connected_players<50)
+            else if(PlayerUpdater::connected_players<30)
             {
                 frequencyUpdate=FrequencyUpdate_fast;
                 setInterval(500);
             }
             break;
             case FrequencyUpdate_slow:
-            if(PlayerUpdater::connected_players<50)
+            if(PlayerUpdater::connected_players<30)
             {
                 frequencyUpdate=FrequencyUpdate_fast;
                 setInterval(500);

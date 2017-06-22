@@ -156,7 +156,11 @@ bool EpollClientLoginMaster::parseMessage(const uint8_t &mainCodeType, const cha
                 parseNetworkReadError("charactersGroupForGameServerInformation->currentPlayer > charactersGroupForGameServerInformation->maxPlayer main ident: "+std::to_string(mainCodeType));
                 return false;
             }
-            charactersGroupForGameServerInformation->currentPlayer=newPlayerCount;
+            if(charactersGroupForGameServerInformation->currentPlayer!=newPlayerCount)
+            {
+                charactersGroupForGameServerInformation->currentPlayer=newPlayerCount;
+                EpollClientLoginMaster::havePlayerCountChange=true;
+            }
             {
                 /*do the partial alteration of:
                 EpollServerLoginMaster::epollServerLoginMaster->doTheServerList();
@@ -331,6 +335,7 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                 pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
             }
             //flags|=0x08;
+            EpollClientLoginMaster::havePlayerCountChange=true;
 
             std::string charactersGroup;
             std::string host;
