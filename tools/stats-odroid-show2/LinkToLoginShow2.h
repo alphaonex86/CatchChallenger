@@ -16,6 +16,9 @@ public:
     void updateJsonFile();
     void tryReconnect();
     static LinkToLoginShow2 *linkToLogin;
+    unsigned int displayedServerNumber;
+    unsigned int displayedPlayer;
+    unsigned int displayedMaxPlayer;
 };
 
 #endif // LINKTOLOGINSHOW2_H
