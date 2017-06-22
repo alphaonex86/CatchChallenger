@@ -13,6 +13,14 @@ public:
     explicit PlayerUpdaterToLogin();
 private:
     void exec();
+    enum FrequencyUpdate
+    {
+        FrequencyUpdate_slow,
+        FrequencyUpdate_medium,
+        FrequencyUpdate_fast,
+    };
+    FrequencyUpdate frequencyUpdate;
+    int oldnumberOfPlayer;
 };
 }
 
