@@ -66,9 +66,15 @@ public:
     static unsigned char header_magic_number[5];
     static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 
+    #ifndef STATSODROIDSHOW2
     static FILE * pFile;
+    #else
+    static int usbdev;
+    #endif
     static std::string pFilePath;
+    #ifndef STATSODROIDSHOW2
     static LinkToLogin *linkToLogin;
+    #endif
     static int linkToLoginSocketFd;
     static bool haveTheFirstSslHeader;
     std::vector<uint8_t> queryNumberList;
@@ -79,11 +85,17 @@ public:
     void setConnexionSettings(const uint8_t &tryInterval, const uint8_t &considerDownAfterNumberOfTry);
     bool registerStatsClient(const char * const dynamicToken);
     void sendProtocolHeader();
-    void tryReconnect();
+    virtual void tryReconnect();
     void readTheFirstSslHeader();
     void moveClientFastPath(const uint8_t &, const uint8_t &);
-    void updateJsonFile();
+    virtual void updateJsonFile();
+    #ifndef STATSODROIDSHOW2
     static void removeJsonFile();
+    #else
+    static void writeData(const char * const str);
+    static void writeData(const std::string &str);
+    #endif
+    static void displayErrorAndQuit(const char * errorString);
 protected:
     void disconnectClient();
     void errorParsingLayer(const std::string &error);
@@ -106,6 +118,7 @@ private:
     uint8_t considerDownAfterNumberOfTry;
     static char host[255];
     static uint16_t port;
+protected:
     std::vector<ServerFromPoolForDisplay> serverList;
 };
 }
