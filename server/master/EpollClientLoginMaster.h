@@ -108,8 +108,9 @@ public:
     static std::vector<EpollClientLoginMaster *> loginServers;
 
     BaseClassSwitch::EpollObjectType getType() const;
-    static void sendCurrentPlayer();
+    static int sendCurrentPlayer();//return the number if player
     static uint32_t maxAccountId;
+    static bool havePlayerCountChange;
 
     struct DataForUpdatedServers
     {
