@@ -178,21 +178,21 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
         if((autoCreateCharacter() || multipleConnexion()) && serverIsSelected)
         {
             if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
-            {
-                qDebug() << "Profile list is empty";
-                return;
-            }
-            qDebug() << client->login << "create new character";
-            quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
-            QString pseudo=QString::fromStdString(getNewPseudo());
-            uint8_t skinId;
-            const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
-            if(!profile.forcedskin.empty())
-                skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
+                qDebug() << "Profile list is empty for initial creation";
             else
-                skinId=rand()%skinsList.size();
-            uint8_t monstergroupId=rand()%profile.monstergroup.size();
-            client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo,monstergroupId,skinId);
+            {
+                qDebug() << client->login << "create new character";
+                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
+                QString pseudo=QString::fromStdString(getNewPseudo());
+                uint8_t skinId;
+                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
+                if(!profile.forcedskin.empty())
+                    skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
+                else
+                    skinId=rand()%skinsList.size();
+                uint8_t monstergroupId=rand()%profile.monstergroup.size();
+                client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo,monstergroupId,skinId);
+            }
         }
         return;
     }
@@ -260,7 +260,11 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
             }
         }
         else
-            qDebug() << client->login << "have not character but no server selected";
+        {
+            qDebug() << client->login << "have no character and no server selected: " << client->charactersList.size() << ", charactersGroupIndex: " << charactersGroupIndex;
+            if(client->charactersList.count()>0 && charactersGroupIndex<client->charactersList.size())
+                qDebug() << client->login << "client->charactersList.at(charactersGroupIndex).empty()";
+        }
         return;
     }
     //ifMultipleConnexionStartCreation();
@@ -520,11 +524,11 @@ void MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * cli
         abort();
     if(apiToCatchChallengerClient.isEmpty())
     {
-        if(!connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapack,         this,&MultipleBotConnection::haveTheDatapack))
+        if(!connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapack,         this,&MultipleBotConnection::haveTheDatapack,Qt::QueuedConnection/*Qt::QueuedConnection need the fix the order of event, need datapack vs already have datapack*/))
             abort();
-        if(!connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapackMainSub,  this,&MultipleBotConnection::haveTheDatapackMainSub))
+        if(!connect(client->api,&CatchChallenger::Api_client_real::haveTheDatapackMainSub,  this,&MultipleBotConnection::haveTheDatapackMainSub,Qt::QueuedConnection))
             abort();
-        if(!connect(client->api,&CatchChallenger::Api_client_real::haveDatapackMainSubCode,  this,&MultipleBotConnection::haveTheDatapackMainSubCode))
+        if(!connect(client->api,&CatchChallenger::Api_client_real::haveDatapackMainSubCode,  this,&MultipleBotConnection::haveTheDatapackMainSubCode,Qt::QueuedConnection))
             abort();
     }
     client->haveShowDisconnectionReason=false;

@@ -32,7 +32,7 @@ private:
     QList<QList<CatchChallenger::CharacterEntry> > characterEntryList;
 
     QString login,pass,host,proxy,character;
-    uint32_t serverUniqueKey,charactersGroupIndex,port,proxyport,character_id,timeout;
+    uint32_t serverUniqueKey,charactersGroupIndex,port,proxyport,character_id,timeout,char_count;
 public slots:
     void detectSlowDown(uint32_t, uint32_t worseTime);
 private slots:
