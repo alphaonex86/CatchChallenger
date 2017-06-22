@@ -603,6 +603,7 @@ void EpollClientLoginMaster::disconnectForDuplicateConnexionDetected(const uint3
 /// \todo check the 255> size
 void EpollClientLoginMaster::addToRemoveList()
 {
+    EpollClientLoginMaster::havePlayerCountChange=true;
     if(!charactersGroupForGameServerInformation->addSend)
         return;
     bool foundIntoAdd=false;
@@ -664,6 +665,7 @@ void EpollClientLoginMaster::addToRemoveList()
 /// \todo check the 255> size
 void EpollClientLoginMaster::addToInserList()
 {
+    EpollClientLoginMaster::havePlayerCountChange=true;
     charactersGroupForGameServerInformation->addSend=true;
     bool foundIntoAdd=false;
     unsigned int index=0;
