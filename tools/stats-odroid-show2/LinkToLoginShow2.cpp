@@ -15,6 +15,9 @@ LinkToLoginShow2::LinkToLoginShow2(
         LinkToLogin(infd)
     #endif
 {
+    displayedServerNumber=0;
+    displayedPlayer=0;
+    displayedMaxPlayer=0;
 }
 
 void LinkToLoginShow2::tryReconnect()
@@ -26,8 +29,6 @@ void LinkToLoginShow2::tryReconnect()
 
 void LinkToLoginShow2::updateJsonFile()
 {
-    LinkToLoginShow2::writeData("\ec\e[2s\e[1r\e[37m");
-
     unsigned int connectedPlayer=0;
     unsigned int maxPlayer=0;
     unsigned int index=0;
@@ -41,6 +42,14 @@ void LinkToLoginShow2::updateJsonFile()
         }
         index++;
     }
+    if(displayedServerNumber==serverList.size() &&
+        displayedPlayer==connectedPlayer &&
+        displayedMaxPlayer==maxPlayer)
+        return;
+    displayedServerNumber=serverList.size();
+    displayedPlayer=connectedPlayer;
+    displayedMaxPlayer=maxPlayer;
+    LinkToLoginShow2::writeData("\ec\e[2s\e[1r\e[37m");
     LinkToLogin::writeData("Number of server: \e[32m"+std::to_string(serverList.size())+"\e[37m\n\r");
     LinkToLogin::writeData("\n\r");
     LinkToLogin::writeData("Players: \e[32m"+std::to_string(connectedPlayer)+"\e[37m\n\r");
