@@ -18,7 +18,9 @@
 
 using namespace CatchChallenger;
 
+#ifndef STATSODROIDSHOW2
 LinkToLogin *LinkToLogin::linkToLogin=NULL;
+#endif
 int LinkToLogin::linkToLoginSocketFd=-1;
 bool LinkToLogin::haveTheFirstSslHeader=false;
 char LinkToLogin::host[]="localhost";
@@ -64,6 +66,18 @@ LinkToLogin::~LinkToLogin()
     abort();
 }
 
+void LinkToLogin::displayErrorAndQuit(const char * errorString)
+{
+    #ifndef STATSODROIDSHOW2
+    removeJsonFile();
+    #else
+    LinkToLogin::writeData("\ec\e[2s\e[1r\e[31m");
+    LinkToLogin::writeData(errorString);
+    #endif
+    std::cerr << errorString << std::endl;
+    abort();
+}
+
 int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const uint8_t &tryInterval,const uint8_t &considerDownAfterNumberOfTry)
 {
     if(port==0)
@@ -84,11 +98,7 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
     struct hostent *server;
     server=gethostbyname(host);
     if(server==NULL)
-    {
-        removeJsonFile();
-        std::cerr << "ERROR, no such host to login server (abort)" << std::endl;
-        abort();
-    }
+        displayErrorAndQuit("ERROR, no such host to login server (abort)");
     sockaddr_in serv_addr;
     bzero((char *)&serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
@@ -117,11 +127,7 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
             }
         }
         if(connStatusType<0)
-        {
-            removeJsonFile();
-            std::cerr << "ERROR connecting to login server (abort)" << std::endl;
-            abort();
-        }
+            displayErrorAndQuit("ERROR connecting to login server (abort)");
     }
     std::cout << "Connected to login " << host << ":" << port << std::endl;
     haveTheFirstSslHeader=false;
@@ -142,7 +148,7 @@ void LinkToLogin::setConnexionSettings(const uint8_t &tryInterval,const uint8_t 
     }
     {
         epoll_event event;
-        event.data.ptr = LinkToLogin::linkToLogin;
+        event.data.ptr = this;
         event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
         int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, LinkToLogin::linkToLoginSocketFd, &event);
         if(s == -1)
@@ -235,12 +241,7 @@ void LinkToLogin::readTheFirstSslHeader()
     std::cout << "LoginLinkToLogin::readTheFirstSslHeader()" << std::endl;
     char buffer[1];
     if(::read(LinkToLogin::linkToLoginSocketFd,buffer,1)<0)
-    {
-        removeJsonFile();
-        std::cerr << "ERROR reading from socket to login server (abort)" << std::endl;
-        abort();
-        return;
-    }
+        displayErrorAndQuit("ERROR reading from socket to login server (abort)");
     #ifdef SERVERSSL
     if(buffer[0]!=0x01)
     {
@@ -352,7 +353,9 @@ void LinkToLogin::tryReconnect()
     else
     {
         std::cout << "Try reconnect to login..." << std::endl;
+        #ifndef STATSODROIDSHOW2
         removeJsonFile();
+        #endif
         if(tryInterval<=0 || tryInterval>=60)
             this->tryInterval=5;
         if(considerDownAfterNumberOfTry<=0 && considerDownAfterNumberOfTry>=60)
@@ -405,6 +408,7 @@ void LinkToLogin::moveClientFastPath(const uint8_t &,const uint8_t &)
 
 void LinkToLogin::updateJsonFile()
 {
+    #ifndef STATSODROIDSHOW2
     //std::cout << "Update the json file..." << std::endl;
 
     if(pFile==NULL)
@@ -473,8 +477,10 @@ void LinkToLogin::updateJsonFile()
             abort();
         }
     }
+    #endif
 }
 
+#ifndef STATSODROIDSHOW2
 void LinkToLogin::removeJsonFile()
 {
     if(pFile!=NULL)
@@ -491,3 +497,26 @@ void LinkToLogin::removeJsonFile()
         }
     }
 }
+#endif
+
+#ifdef STATSODROIDSHOW2
+void LinkToLogin::writeData(const char * const str)
+{
+    const int fd=usbdev;
+    ::write(fd, "\006", 1);
+    int length = strlen(str) + 48;
+    ::write(fd, &length, 1);
+    int isbusy=0;
+    while (isbusy != '6') {
+        ::read(fd, &isbusy, 1);
+        usleep(10000);
+    }
+    ::write(fd, str, length - 48);
+    isbusy = 0;
+}
+
+void LinkToLogin::writeData(const std::string &str)
+{
+    writeData(str.c_str());
+}
+#endif
