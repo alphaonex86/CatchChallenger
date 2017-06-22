@@ -7,20 +7,27 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap)
 
     //list the layer name to parse
     QHash<QString,LoadMap::Terrain> transition;
+    QStringList transitionList;
     for(int height=0;height<5;height++)
         for(int moisure=0;moisure<6;moisure++)
         {
             LoadMap::Terrain &terrain=LoadMap::terrainList[height][moisure];
             if(!terrain.tmp_layerString.isEmpty())
-                transition[terrain.terrainName]=terrain;
+            {
+                if(!transitionList.contains(terrain.terrainName))
+                {
+                    transition[terrain.terrainName]=terrain;
+                    transitionList << terrain.terrainName;
+                }
+            }
         }
 
     {
-        QHashIterator<QString,LoadMap::Terrain> i(transition);
-        while (i.hasNext()) {
-            i.next();
-            Tiled::TileLayer * const transitionLayerMask=LoadMap::searchTileLayerByName(tiledMap,"OnGrass");
-            const LoadMap::Terrain &terrain=i.value();
+        Tiled::TileLayer * const transitionLayerMask=LoadMap::searchTileLayerByName(tiledMap,"OnGrass");
+        unsigned int index=0;
+        while(index<(unsigned int)transitionList.size())
+        {
+            const LoadMap::Terrain &terrain=transition.value(transitionList.at(index));
             Tiled::TileLayer * terrainLayer=terrain.tileLayer;
             Tiled::TileLayer * transitionLayer=NULL;
             bool XORop;
@@ -172,6 +179,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap)
                 }
                 y++;
             }
+            index++;
         }
     }
 }
