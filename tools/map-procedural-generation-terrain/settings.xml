@@ -78,3 +78,9 @@ water\tsx=animation.tsx
 water\outsideBorder=false
 water\transition_tile="184,185,186,218,250,249,248,216,281,282,314,313"
 water\transition_tsx=terra.tsx
+
+[terrainGroup]
+snowmountain\terrain=snow,mountain
+snowmountain\transition_tile="21,22,23,55,87,86,85,53,82,83,115,114"
+snowmountain\transition_tsx=terra.tsx
+snowmountain\layer=Collisions

@@ -38,6 +38,7 @@ GlobalControler::GlobalControler(QObject *parent) :
     timeoutTimer.setSingleShot(true);
 
     character_id=0;
+    char_count=99999999;
 
     multipleBotConnexion.botInterface=NULL;
 
@@ -140,6 +141,7 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
         qDebug() << "GlobalControler::logged(): qobject_cast<CatchChallenger::Api_client_real *>(sender())==NULL";
         return;
     }
+    std::cout << "GlobalControler::logged()" << std::endl;
 
     this->serverOrdenedList=serverOrdenedList;
     this->characterEntryList=characterEntryList;
@@ -164,42 +166,22 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
             return;
         }
 
-        QList<CatchChallenger::CharacterEntry> characterEntryListNew=characterEntryList.at(charactersGroupIndex);
-        //add char to test
-        if(rand()%100<20)
+        //char count
         {
-            if(characterEntryListNew.size()<CommonSettingsCommon::commonSettingsCommon.max_character)
+            char_count=0;
+            unsigned int charactersGroupIndexTemp=0;
+            while(charactersGroupIndexTemp<(unsigned int)characterEntryList.size())
             {
-                if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
-                {
-                    qDebug() << "Profile list is empty";
-                    return;
-                }
-                //load the datapack
-                QFileInfoList skinsList;
-                {
-                    CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());
-                    //load the skins list
-                    QDir dir(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/skin/fighter/"));
-                    skinsList=dir.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
-                }
-
-                qDebug() << "create new character";
-                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
-                QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
-                uint8_t skinId;
-                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
-                if(!profile.forcedskin.empty())
-                    skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
-                else
-                    skinId=rand()%skinsList.size();
-                uint8_t monstergroupId=rand()%profile.monstergroup.size();
-                api->addCharacter(charactersGroupIndex,profileIndex,pseudo,monstergroupId,skinId);
+                char_count+=characterEntryList.at(charactersGroupIndexTemp).size();
+                charactersGroupIndexTemp++;
             }
         }
+
+        QList<CatchChallenger::CharacterEntry> characterEntryListNew=characterEntryList.at(charactersGroupIndex);
         //delete char to test
         if(rand()%100<20)
         {
+            std::cout << "\e[1mdelete character triggered\e[0m" << std::endl;
             int index=0;
             while(index<characterEntryListNew.size())
             {
@@ -221,6 +203,12 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
             if(characterEntry.pseudo==character.toStdString() && characterEntry.charactersGroupIndex==charactersGroupIndex)
             {
                 character_id=characterEntry.character_id;
+                if(character_id==0)
+                {
+                    std::cerr << "GlobalControler::logged()) character_id==0" << std::endl;
+                    abort();
+                }
+                std::cout << "character_id set for:" << character_id << ", charactersGroupIndex: " << charactersGroupIndex << std::endl;
                 //multipleBotConnexion.characterSelectForFirstCharacter(characterEntry.character_id);-> do into datapackIsReady
                 return;
             }
@@ -228,6 +216,7 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
                 std::cerr << "character not match: \"" << characterEntry.pseudo << "\"!=\"" << character.toStdString() << "\", charactersGroupIndex: " << std::to_string(characterEntry.charactersGroupIndex) << "!=" << std::to_string(charactersGroupIndex) << std::endl;
             index++;
         }
+
         //not found
         {
             std::cerr << "character not found: \"" << character.toStdString() << "\", charactersGroupIndex: " << std::to_string(charactersGroupIndex) << std::endl;
@@ -247,6 +236,7 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
 
 void GlobalControler::updateServerList(CatchChallenger::Api_client_real *)
 {
+    std::cout << "GlobalControler::updateServerList()" << std::endl;
     //do the grouping for characterGroup count
     {
         serverByCharacterGroup.clear();
@@ -273,7 +263,14 @@ void GlobalControler::updateServerList(CatchChallenger::Api_client_real *)
             const CatchChallenger::ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
             if(server.charactersGroupIndex==charactersGroupIndex && server.uniqueKey==serverUniqueKey)
             {
-                //multipleBotConnexion.serverSelect(characterEntry.character_id);-> do into datapackIsReady
+                if(CatchChallenger::CommonDatapack::commonDatapack.isParsedContent())
+                {
+                    multipleBotConnexion.serverSelect(charactersGroupIndex,serverUniqueKey);
+                    if(character_id!=0)
+                        multipleBotConnexion.characterSelectForFirstCharacter(character_id);
+                    else
+                        std::cerr << "GlobalControler::datapackIsReady() character_id==0" << std::endl;
+                }
                 return;
             }
             index++;
@@ -348,12 +345,64 @@ void GlobalControler::datapackIsReady()
 {
     qDebug() << "GlobalControler::datapackIsReady()";
     multipleBotConnexion.serverSelect(charactersGroupIndex,serverUniqueKey);
-    multipleBotConnexion.characterSelectForFirstCharacter(character_id);
+    if(character_id==0)
+        std::cerr << "GlobalControler::datapackIsReady() character_id==0" << std::endl;
+    else
+        multipleBotConnexion.characterSelectForFirstCharacter(character_id);
+
+    //add char to test, need have datapack loaded before all
+    if(rand()%100<20)
+    {
+        if(char_count<CommonSettingsCommon::commonSettingsCommon.max_character)
+        {
+            CatchChallenger::Api_client_real * api=NULL;
+            QHashIterator<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> i(multipleBotConnexion.apiToCatchChallengerClient);
+            if(i.hasNext())
+            {
+                i.next();
+                api=i.value()->api;
+            }
+            else
+            {
+                qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): BUG: no api";
+                return;
+            }
+
+            if(!CatchChallenger::CommonDatapack::commonDatapack.isParsedContent())
+                std::cerr << "CatchChallenger::CommonDatapack::commonDatapack.isParsedContent() then unable to create character" << std::endl;
+            else if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
+                std::cerr << "Profile list is empty" << std::endl;
+            else
+            {
+                std::cout << "\e[1madd character triggered\e[0m" << std::endl;
+                //load the datapack
+                QFileInfoList skinsList;
+                {
+                    CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());
+                    //load the skins list
+                    QDir dir(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/skin/fighter/"));
+                    skinsList=dir.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
+                }
+
+                qDebug() << "create new character";
+                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
+                QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
+                uint8_t skinId;
+                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
+                if(!profile.forcedskin.empty())
+                    skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
+                else
+                    skinId=rand()%skinsList.size();
+                uint8_t monstergroupId=rand()%profile.monstergroup.size();
+                api->addCharacter(charactersGroupIndex,profileIndex,pseudo,monstergroupId,skinId);
+            }
+        }
+    }
 }
 
 void GlobalControler::datapackMainSubIsReady()
 {
-    qDebug() << "GlobalControler::datapackMainSubIsReady()";
+    qDebug() << "\e[1mGlobalControler::datapackMainSubIsReady()\e[0m";
     QCoreApplication::exit(0);
 }
 

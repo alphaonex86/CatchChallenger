@@ -138,6 +138,9 @@ void MultipleBotConnectionImplForGui::characterSelectForFirstCharacter(const qui
 
 void MultipleBotConnectionImplForGui::serverSelect(const uint8_t &charactersGroupIndex,const quint32 &uniqueKey)
 {
+    #ifdef BOTTESTCONNECT
+    qDebug() << "MultipleBotConnectionImplForGui::serverSelect(): " << charactersGroupIndex << ", uniqueKey: " << uniqueKey;
+    #endif
     if(uniqueKey==0)
         qDebug() << "MultipleBotConnectionImplFoprGui::serverSelect(): uniqueKey==0, suspect bug";
     this->charactersGroupIndex=charactersGroupIndex;
