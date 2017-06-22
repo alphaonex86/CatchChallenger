@@ -6,7 +6,8 @@ using namespace CatchChallenger;
 PlayerUpdaterToMaster::PlayerUpdaterToMaster() :
     sended_connected_players(0)
 {
-    setInterval(15*1000);
+    setInterval(500);
+    frequencyUpdate=FrequencyUpdate_fast;
 }
 
 void PlayerUpdaterToMaster::exec()
@@ -15,5 +16,46 @@ void PlayerUpdaterToMaster::exec()
     {
         sended_connected_players=PlayerUpdater::connected_players;
         LinkToMaster::linkToMaster->currentPlayerChange(PlayerUpdater::connected_players);
+        //update frequencyUpdate if needed
+        switch(frequencyUpdate)
+        {
+            case FrequencyUpdate_fast:
+            if(PlayerUpdater::connected_players>1000)
+            {
+                frequencyUpdate=FrequencyUpdate_slow;
+                setInterval(60*1000);
+            }
+            else if(PlayerUpdater::connected_players>50)
+            {
+                frequencyUpdate=FrequencyUpdate_medium;
+                setInterval(15*1000);
+            }
+            break;
+            case FrequencyUpdate_medium:
+            if(PlayerUpdater::connected_players>1000)
+            {
+                frequencyUpdate=FrequencyUpdate_slow;
+                setInterval(60*1000);
+            }
+            else if(PlayerUpdater::connected_players<50)
+            {
+                frequencyUpdate=FrequencyUpdate_fast;
+                setInterval(500);
+            }
+            break;
+            case FrequencyUpdate_slow:
+            if(PlayerUpdater::connected_players<50)
+            {
+                frequencyUpdate=FrequencyUpdate_fast;
+                setInterval(500);
+            }
+            else if(PlayerUpdater::connected_players<1000)
+            {
+                frequencyUpdate=FrequencyUpdate_medium;
+                setInterval(15*1000);
+            }
+            break;
+            default:abort();break;
+        }
     }
 }

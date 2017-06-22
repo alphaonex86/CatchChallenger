@@ -15,6 +15,13 @@ private:
     void exec();
 private:
     unsigned short int sended_connected_players;
+    enum FrequencyUpdate
+    {
+        FrequencyUpdate_slow,
+        FrequencyUpdate_medium,
+        FrequencyUpdate_fast,
+    };
+    FrequencyUpdate frequencyUpdate;
 };
 }
 
