@@ -1349,7 +1349,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                             serverUniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(rawData+pos)));
                             pos+=4;
                             posTempBuffer+=4;
-                            //if same than current mean error: update is with remove before
+                            /*disabled, can update via add if needed//if same than current mean error: update is with remove before
                             if(CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
                             {
                                 std::cerr << "CharactersGroupForLogin::list.at(" << std::to_string(charactersGroupIndex) << ")->containsServerUniqueKey(" << std::to_string(serverUniqueKey) << "), charactersGroupIndex: " << std::to_string(charactersGroupIndex) << ", pos: " << pos << " (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
@@ -1362,7 +1362,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char *rawData,
                                 }
                                 std::cerr << "Data:" << binarytoHexa(rawData,pos) << " " << binarytoHexa(rawData+pos,(size-pos)) << std::endl;
                                 abort();
-                            }
+                            }*/
                         }
 
                         //skip the host + port
