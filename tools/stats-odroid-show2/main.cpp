@@ -133,6 +133,16 @@ int main(int argc, char *argv[])
         if(!Epoll::epoll.init())
             return EPOLLERR;
 
+        if(LinkToLoginShow2::linkToLogin->pFilePath.empty())
+        {
+            std::cerr << "The output file can't be emtpy" << std::endl;
+            abort();
+        }
+        LinkToLoginShow2::linkToLogin->usbdev=::serialSetup(LinkToLoginShow2::linkToLogin->pFilePath.c_str());
+        LinkToLoginShow2::writeData("\ec\e[2s\e[1r\e[37m");
+        LinkToLoginShow2::writeData("Connecting to\n\r\e[32m");
+        LinkToLoginShow2::writeData(host+"\e[37m:\e[34m"+std::to_string(port));
+
         const int &linkfd=LinkToLogin::tryConnect(
                     host.c_str(),
                     port,
@@ -158,12 +168,6 @@ int main(int argc, char *argv[])
     }
 
     {
-        if(LinkToLoginShow2::linkToLogin->pFilePath.empty())
-        {
-            std::cerr << "The output file can't be emtpy" << std::endl;
-            abort();
-        }
-        LinkToLoginShow2::linkToLogin->usbdev=::serialSetup(LinkToLoginShow2::linkToLogin->pFilePath.c_str());
         LinkToLoginShow2::writeData("\ec\e[2s\e[1r\e[37m");
         LinkToLoginShow2::writeData("Starting");
 /*        if(LinkToLoginShow2::linkToLogin->pFile==NULL)
