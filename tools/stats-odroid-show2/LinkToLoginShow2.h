@@ -19,6 +19,7 @@ public:
     unsigned int displayedServerNumber;
     unsigned int displayedPlayer;
     unsigned int displayedMaxPlayer;
+    unsigned int displayedMaxServer;
 };
 
 #endif // LINKTOLOGINSHOW2_H

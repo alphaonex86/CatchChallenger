@@ -18,12 +18,20 @@ LinkToLoginShow2::LinkToLoginShow2(
     displayedServerNumber=0;
     displayedPlayer=0;
     displayedMaxPlayer=0;
+    displayedMaxServer=0;
 }
 
 void LinkToLoginShow2::tryReconnect()
 {
-    LinkToLoginShow2::writeData("\ec\e[2s\e[1r\e[33m");
-    writeData("Try reconnect...");
+    LinkToLogin::writeData("\ec\e[2s\e[1r\e[37m");
+    LinkToLogin::writeData("Servers: \e[31m?\e[37m/\e[32m"+std::to_string(displayedMaxServer)+"\e[37m\n\r");
+    LinkToLogin::writeData("\n\r");
+    LinkToLogin::writeData("Players: \e[32m?\e[37m\n\r");
+    LinkToLogin::writeData("Max players: \e[33m"+std::to_string(displayedMaxPlayer)+"\e[37m\n\r");
+    LinkToLogin::writeData("\n\r");
+    LinkToLogin::writeData("CatchChallenger ----------\n\r");
+    LinkToLogin::writeData("Services: \e[33mTry reconnect...\e[37m\n\r");
+
     LinkToLogin::tryReconnect();
     displayedServerNumber=0;
     displayedPlayer=0;
@@ -52,11 +60,17 @@ void LinkToLoginShow2::updateJsonFile()
     displayedServerNumber=serverList.size();
     displayedPlayer=connectedPlayer;
     displayedMaxPlayer=maxPlayer;
+    if(displayedMaxServer<serverList.size())
+        displayedMaxServer=serverList.size();
     LinkToLoginShow2::writeData("\ec\e[2s\e[1r\e[37m");
-    LinkToLogin::writeData("Number of server: \e[32m"+std::to_string(serverList.size())+"\e[37m\n\r");
+    if(serverList.size()<displayedMaxServer)
+        LinkToLogin::writeData("Servers: \e[31m"+std::to_string(serverList.size())+"\e[37m/\e[32m"+std::to_string(displayedMaxServer)+"\e[37m\n\r");
+    else
+        LinkToLogin::writeData("Servers: \e[32m"+std::to_string(serverList.size())+"\e[37m/\e[32m"+std::to_string(displayedMaxServer)+"\e[37m\n\r");
     LinkToLogin::writeData("\n\r");
     LinkToLogin::writeData("Players: \e[32m"+std::to_string(connectedPlayer)+"\e[37m\n\r");
     LinkToLogin::writeData("Max players: \e[33m"+std::to_string(maxPlayer)+"\e[37m\n\r");
     LinkToLogin::writeData("\n\r");
-    LinkToLogin::writeData("CatchChallenger ----------\n\rServices: \e[32mUP\e[37m\n\r");
+    LinkToLogin::writeData("CatchChallenger ----------\n\r");
+    LinkToLogin::writeData("Services: \e[32mUP\e[37m\n\r");
 }
