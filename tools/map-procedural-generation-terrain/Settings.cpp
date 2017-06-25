@@ -148,6 +148,70 @@ void Settings::loadSettings(QSettings &settings, unsigned int &mapWidth, unsigne
         settings.endGroup();
     }
     {
+        settings.beginGroup("terrainGroup");
+        const QStringList &groupsNames=settings.childGroups();
+        unsigned int index=0;
+        while(index<(unsigned int)groupsNames.size())
+        {
+            const QString &terrainName=groupsNames.at(index);
+            settings.beginGroup(terrainName);
+                LoadMap::GroupedTerrain groupedTerrain;
+                groupedTerrain.height=0;
+                groupedTerrain.tileLayer=NULL;
+
+                const unsigned int &height=settings.value("height").toUInt(&ok);
+                if(!ok)
+                {
+                    std::cerr << "height not a number" << std::endl;
+                    abort();
+                }
+                if(height<0 || height>4)
+                {
+                    std::cerr << "height out of range" << std::endl;
+                    abort();
+                }
+                const QString &layerString=settings.value("layer").toString();
+
+                //tempory value
+                const QString &tmp_transition_tsx=settings.value("transition_tsx").toString();
+                std::vector<uint32_t> tmp_transition_tile;
+                {
+                    bool ok;
+                    const QString &tmp_transition_tile_settings=settings.value("transition_tile").toString();
+                    if(!tmp_transition_tile_settings.isEmpty())
+                    {
+                        const QStringList &tmp_transition_tile_list=tmp_transition_tile_settings.split(',');
+                        unsigned int tmp_transition_tile_index=0;
+                        while(tmp_transition_tile_index<(unsigned int)tmp_transition_tile_list.size())
+                        {
+                            const QString &s=tmp_transition_tile_list.at(tmp_transition_tile_index);
+                            tmp_transition_tile.push_back(s.toInt(&ok));
+                            if(!ok)
+                            {
+                                std::cerr << "into transition_tile some is not a number: " << s.toStdString() << " from: " << tmp_transition_tile_settings.toStdString() << " (abort)" << std::endl;
+                                abort();
+                            }
+                            tmp_transition_tile_index++;
+                        }
+                    }
+                    if(tmp_transition_tile.size()!=12)
+                    {
+                        std::cerr << "into transition_tile number should be 12, 8 border + 4 curved border (abort)" << std::endl;
+                        abort();
+                    }
+                }
+
+                groupedTerrain.height=height;
+                groupedTerrain.tmp_layerString=layerString;
+                groupedTerrain.tmp_transition_tsx=tmp_transition_tsx;
+                groupedTerrain.tmp_transition_tile=tmp_transition_tile;
+
+            settings.endGroup();
+            index++;
+        }
+        settings.endGroup();
+    }
+    {
         settings.beginGroup("plants");
         const QStringList &groupsNames=settings.childGroups();
         unsigned int index=0;

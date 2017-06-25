@@ -8,6 +8,7 @@ class TransitionTerrain
 {
 public:
     static void addTransitionOnMap(Tiled::Map &tiledMap);
+    static void addTransitionGroupOnMap(Tiled::Map &tiledMap);
 };
 
 #endif // TRANSITIONTERRAIN_H
