@@ -31,6 +31,17 @@ public:
     };
     static Terrain terrainList[5][6];
     static QHash<QString,Terrain *> terrainNameToObject;
+    struct GroupedTerrain
+    {
+        uint8_t height;
+        Tiled::TileLayer *tileLayer;
+        std::vector<Tiled::Tile *> transition_tile;
+        //temporary values
+        QString tmp_layerString;
+        std::vector<uint32_t> tmp_transition_tile;
+        QString tmp_transition_tsx;
+    };
+    static std::vector<GroupedTerrain> groupedTerrainList;
 
     static unsigned int floatToHigh(const float f);
     static unsigned int floatToMoisure(const float f);

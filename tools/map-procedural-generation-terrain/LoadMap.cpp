@@ -13,6 +13,7 @@
 
 LoadMap::Terrain LoadMap::terrainList[5][6];
 QHash<QString,LoadMap::Terrain *> LoadMap::terrainNameToObject;
+std::vector<LoadMap::GroupedTerrain> LoadMap::groupedTerrainList;
 
 unsigned int LoadMap::floatToHigh(const float f)
 {
@@ -142,6 +143,31 @@ void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tile
                 LoadMap::terrainNameToObject.insert(terrain.terrainName,&terrain);
             }
         }
+    unsigned int groupedTerrainIndex=0;
+    while(groupedTerrainIndex<groupedTerrainList.size())
+    {
+        GroupedTerrain &groupedTerrain=groupedTerrainList[groupedTerrainIndex];
+
+        groupedTerrain.tileLayer=searchTileLayerByName(tiledMap,groupedTerrain.tmp_layerString);
+
+        //load the transition tile
+        Tiled::Tileset *tilesetTransition;
+        if(cachedTileset.contains(groupedTerrain.tmp_transition_tsx))
+            tilesetTransition=cachedTileset.value(groupedTerrain.tmp_transition_tsx);
+        else
+        {
+            tilesetTransition=readTileset(groupedTerrain.tmp_transition_tsx,&tiledMap);
+            cachedTileset[groupedTerrain.tmp_transition_tsx]=tilesetTransition;
+        }
+        unsigned int index=0;
+        while(index<groupedTerrain.tmp_transition_tile.size())
+        {
+            groupedTerrain.transition_tile.push_back(tilesetTransition->tileAt(groupedTerrain.tmp_transition_tile.at(index)));
+            index++;
+        }
+
+        groupedTerrainIndex++;
+    }
 }
 
 Tiled::ObjectGroup *LoadMap::addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain,bool polygon)
