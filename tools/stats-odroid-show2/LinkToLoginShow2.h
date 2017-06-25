@@ -15,6 +15,7 @@ public:
             );
     void updateJsonFile();
     void tryReconnect();
+    static std::string numberToStringWithK(unsigned int number);
     static LinkToLoginShow2 *linkToLogin;
     unsigned int displayedServerNumber;
     unsigned int displayedPlayer;

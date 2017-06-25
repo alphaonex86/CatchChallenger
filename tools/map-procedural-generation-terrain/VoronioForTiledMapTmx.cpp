@@ -17,6 +17,7 @@ using boost::polygon::voronoi_diagram;
 typedef boost::polygon::segment_data<int> Segment;
 
 const int VoronioForTiledMapTmx::SCALE = 1000;
+VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::voronoiMap;
 
 double VoronioForTiledMapTmx::area(const QPolygonF &p) {
     double a = 0.0;
@@ -56,7 +57,7 @@ Grid VoronioForTiledMapTmx::generateGrid(const unsigned int w, const unsigned in
     return g;
 }
 
-VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h,const unsigned int tileStep) {
+void VoronioForTiledMapTmx::computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h,const unsigned int tileStep) {
     QPolygonF rect(QRectF(0.0, 0.0, w, h));
 
     if(w%tileStep!=0)
@@ -473,5 +474,5 @@ VoronioForTiledMapTmx::PolygonZoneMap VoronioForTiledMapTmx::computeVoronoi(cons
         }
     }
 
-    return polygonZoneMap;
+    voronoiMap=polygonZoneMap;
 }

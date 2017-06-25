@@ -168,8 +168,8 @@ int main(int argc, char *argv[])
     }
 
     {
-        LinkToLoginShow2::writeData("\ec\e[2s\e[1r\e[37m");
-        LinkToLoginShow2::writeData("Starting");
+        /*LinkToLoginShow2::writeData("\ec\e[2s\e[1r\e[37m");
+        LinkToLoginShow2::writeData("Starting");*/
 /*        if(LinkToLoginShow2::linkToLogin->pFile==NULL)
         {
             std::cerr << "Unable to open the output file: " << LinkToLoginShow2::linkToLogin->pFilePath << std::endl;

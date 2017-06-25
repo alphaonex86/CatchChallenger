@@ -30,8 +30,10 @@ public:
         std::vector<PolygonZone> zones;
         PolygonZoneIndex *tileToPolygonZoneIndex;
     };
+    static VoronioForTiledMapTmx::PolygonZoneMap voronoiMap;
+
     static Grid generateGrid(const unsigned int w, const unsigned int h, const unsigned int seed, const int num);
-    static PolygonZoneMap computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h, const unsigned int tileStep=1);
+    static void computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h, const unsigned int tileStep=1);
     static const int SCALE;
     static double area(const QPolygonF &p);
 };
