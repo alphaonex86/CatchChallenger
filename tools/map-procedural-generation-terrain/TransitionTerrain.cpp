@@ -272,7 +272,7 @@ void TransitionTerrain::addTransitionGroupOnMap(Tiled::Map &tiledMap)
                         }
                         if(x<(w-1) && y<(h-1))
                         {
-                            const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+1+y*w].index);
+                            const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+1+(y+1)*w].index);
                             if(zone.height>=groupedTerrain.height)
                                 to_type_match|=128;
                         }
