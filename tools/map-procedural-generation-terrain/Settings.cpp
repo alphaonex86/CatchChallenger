@@ -165,7 +165,7 @@ void Settings::loadSettings(QSettings &settings, unsigned int &mapWidth, unsigne
                     std::cerr << "height not a number" << std::endl;
                     abort();
                 }
-                if(height<0 || height>4)
+                if(height>4)
                 {
                     std::cerr << "height out of range" << std::endl;
                     abort();
@@ -205,6 +205,7 @@ void Settings::loadSettings(QSettings &settings, unsigned int &mapWidth, unsigne
                 groupedTerrain.tmp_layerString=layerString;
                 groupedTerrain.tmp_transition_tsx=tmp_transition_tsx;
                 groupedTerrain.tmp_transition_tile=tmp_transition_tile;
+                LoadMap::groupedTerrainList.push_back(groupedTerrain);
 
             settings.endGroup();
             index++;
