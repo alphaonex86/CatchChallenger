@@ -69,8 +69,8 @@ int main(int argc, char *argv[])
         Simplex moisuremap(seed+5200);
 
         t.start();
-        VoronioForTiledMapTmx::PolygonZoneMap vd = VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,tileStep);
-        if(vd.zones.size()!=grid.size())
+        VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,tileStep);
+        if(VoronioForTiledMapTmx::voronoiMap.zones.size()!=grid.size())
             abort();
         qDebug("computeVoronoi took %d ms", t.elapsed());
 
@@ -85,23 +85,24 @@ int main(int argc, char *argv[])
                 Tiled::ObjectGroup *layerZoneWaterPolygon=LoadMap::addDebugLayer(tiledMap,arrayTerrainPolygon,true);
                 std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainTile;
                 Tiled::ObjectGroup *layerZoneWaterTile=LoadMap::addDebugLayer(tiledMap,arrayTerrainTile,false);
-                LoadMap::addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height());
+                LoadMap::addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,VoronioForTiledMapTmx::voronoiMap,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height());
             }
             {
                 t.start();
-                LoadMap::addTerrain(grid,vd,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height());
+                LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height());
                 qDebug("Add terrain took %d ms", t.elapsed());
                 if(dotransition)
                 {
                     t.start();
                     TransitionTerrain::addTransitionOnMap(tiledMap);
+                    TransitionTerrain::addTransitionGroupOnMap(tiledMap);
                     qDebug("Transitions took %d ms", t.elapsed());
                 }
             }
             if(dovegetation)
             {
                 t.start();
-                MapPlants::addVegetation(tiledMap,vd);
+                MapPlants::addVegetation(tiledMap,VoronioForTiledMapTmx::voronoiMap);
                 qDebug("Vegetation took %d ms", t.elapsed());
             }
             {
