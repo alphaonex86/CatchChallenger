@@ -30,6 +30,7 @@ public:
         QString tmp_transition_tsx;
     };
     static Terrain terrainList[5][6];
+    static QStringList terrainFlatList;
     static QHash<QString,Terrain *> terrainNameToObject;
     struct GroupedTerrain
     {

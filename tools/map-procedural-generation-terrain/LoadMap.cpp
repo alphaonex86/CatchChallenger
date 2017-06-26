@@ -12,6 +12,7 @@
 #include "../../general/base/cpp11addition.h"
 
 LoadMap::Terrain LoadMap::terrainList[5][6];
+QStringList LoadMap::terrainFlatList;
 QHash<QString,LoadMap::Terrain *> LoadMap::terrainNameToObject;
 std::vector<LoadMap::GroupedTerrain> LoadMap::groupedTerrainList;
 
@@ -141,6 +142,8 @@ void LoadMap::loadAllTileset(QHash<QString,Tiled::Tileset *> &cachedTileset,Tile
                 }
 
                 LoadMap::terrainNameToObject.insert(terrain.terrainName,&terrain);
+                if(!terrainFlatList.contains(terrain.terrainName))
+                    terrainFlatList << terrain.terrainName;
             }
         }
     unsigned int groupedTerrainIndex=0;
@@ -267,6 +270,10 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
     tiledMap.addLayer(layerZoneWalkable);
     Tiled::TileLayer *layerZoneOnGrass=new Tiled::TileLayer("OnGrass",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneOnGrass);
+    Tiled::TileLayer *layerZoneOnGrass2=new Tiled::TileLayer("OnGrass2",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneOnGrass2);
+    Tiled::TileLayer *layerZoneOnGrass3=new Tiled::TileLayer("OnGrass3",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneOnGrass3);
     Tiled::TileLayer *layerZoneGrass=new Tiled::TileLayer("Grass",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneGrass);
     Tiled::TileLayer *layerZoneCollisions=new Tiled::TileLayer("Collisions",0,0,tiledMap.width(),tiledMap.height());
