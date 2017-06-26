@@ -94,8 +94,8 @@ int main(int argc, char *argv[])
                 if(dotransition)
                 {
                     t.start();
-                    TransitionTerrain::addTransitionOnMap(tiledMap);
                     TransitionTerrain::addTransitionGroupOnMap(tiledMap);
+                    TransitionTerrain::addTransitionOnMap(tiledMap,false);
                     qDebug("Transitions took %d ms", t.elapsed());
                 }
             }
