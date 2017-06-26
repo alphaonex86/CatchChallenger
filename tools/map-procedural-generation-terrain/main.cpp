@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
                 {
                     t.start();
                     TransitionTerrain::addTransitionGroupOnMap(tiledMap);
-                    TransitionTerrain::addTransitionOnMap(tiledMap,false);
+                    TransitionTerrain::addTransitionOnMap(tiledMap,true);
                     qDebug("Transitions took %d ms", t.elapsed());
                 }
             }

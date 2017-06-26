@@ -77,7 +77,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const bool merge
         }
 
     {
-        Tiled::TileLayer * const transitionLayerMask=LoadMap::searchTileLayerByName(tiledMap,"OnGrass");
+        Tiled::TileLayer * transitionLayerMask=LoadMap::searchTileLayerByName(tiledMap,"OnGrass");
         Tiled::TileLayer * const colisionLayerMask=LoadMap::searchTileLayerByName(tiledMap,"Collisions");
         unsigned int index=0;
         while(index<(unsigned int)transitionList.size())
@@ -93,7 +93,15 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const bool merge
             }
             else
             {
-                transitionLayer=LoadMap::searchTileLayerByName(tiledMap,"OnGrass");
+                const unsigned int index=LoadMap::searchTileIndexByName(tiledMap,terrain.tmp_layerString);
+                Tiled::Layer * rawLayer=tiledMap.layerAt(index+1);
+                if(!rawLayer->isTileLayer())
+                {
+                    std::cerr << "Next layer after " << terrain.tmp_layerString.toStdString() << "is not tile layer (abort)" << std::endl;
+                    abort();
+                }
+                transitionLayer=static_cast<Tiled::TileLayer *>(rawLayer);
+                transitionLayerMask=transitionLayer;
                 XORop=0x0000;
             }
             unsigned int y=0;

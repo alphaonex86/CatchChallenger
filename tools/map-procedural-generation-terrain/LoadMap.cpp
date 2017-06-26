@@ -266,6 +266,8 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
     (void)dotransition;
     Tiled::TileLayer *layerZoneWater=new Tiled::TileLayer("Water",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneWater);
+    Tiled::TileLayer *layerZoneOnWater=new Tiled::TileLayer("OnWater",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneOnWater);
     Tiled::TileLayer *layerZoneWalkable=new Tiled::TileLayer("Walkable",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneWalkable);
     Tiled::TileLayer *layerZoneOnGrass=new Tiled::TileLayer("OnGrass",0,0,tiledMap.width(),tiledMap.height());
@@ -400,6 +402,20 @@ Tiled::TileLayer * LoadMap::searchTileLayerByName(const Tiled::Map &tiledMap,con
         Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
         if(layer->isTileLayer() && layer->name()==name)
             return static_cast<Tiled::TileLayer *>(layer);
+        tileLayerIndex++;
+    }
+    std::cerr << "Unable to found layer with name: " << name.toStdString() << std::endl;
+    abort();
+}
+
+unsigned int LoadMap::searchTileIndexByName(const Tiled::Map &tiledMap,const QString &name)
+{
+    unsigned int tileLayerIndex=0;
+    while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
+    {
+        Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
+        if(layer->isTileLayer() && layer->name()==name)
+            return tileLayerIndex;
         tileLayerIndex++;
     }
     std::cerr << "Unable to found layer with name: " << name.toStdString() << std::endl;
