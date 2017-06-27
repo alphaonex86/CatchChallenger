@@ -390,7 +390,10 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const bool merge
         while(index<layerToDelete.size())
         {
             Tiled::TileLayer * layer=layerToDelete.at(index);
-            layer->setVisible(false);
+            //layer->setVisible(false);
+            const int indexOfLayer=tiledMap.indexOfLayer(layer->name());
+            if(indexOfLayer>=0)
+                delete tiledMap.takeLayerAt(indexOfLayer);
             index++;
         }
     }
@@ -535,4 +538,16 @@ void TransitionTerrain::addTransitionGroupOnMap(Tiled::Map &tiledMap)
             index++;
         }
     }
+}
+
+void TransitionTerrain::changeTileLayerOrder(Tiled::Map &tiledMap)
+{
+    const int indexOfLayerWalkable=tiledMap.indexOfLayer("Walkable");
+    if(indexOfLayerWalkable<0)
+        return;
+    const int indexOfLayerGrass=tiledMap.indexOfLayer("Grass");
+    if(indexOfLayerGrass<0)
+        return;
+    Tiled::Layer *layerZoneGrass=tiledMap.takeLayerAt(indexOfLayerGrass);
+    tiledMap.insertLayer(indexOfLayerWalkable+1,layerZoneGrass);
 }
