@@ -293,9 +293,43 @@ void MapPlants::addVegetation(Tiled::Map &worldMap,const VoronioForTiledMapTmx::
             }
         }
 
+    Tiled::TileLayer * layerWalkable=LoadMap::searchTileLayerByName(worldMap,"Walkable");
+    Tiled::TileLayer * layerCollisions=LoadMap::searchTileLayerByName(worldMap,"Collisions");
     const unsigned int mapMaskSize=(worldMap.width()*worldMap.height()/8+1);
     uint8_t mapMask[mapMaskSize];
     memset(mapMask,0x00,mapMaskSize);
+    {
+        unsigned int y=0;
+        while(y<(unsigned int)worldMap.height())
+        {
+            unsigned int x=0;
+            while(x<(unsigned int)worldMap.width())
+            {
+                //unmask the zone walkable and not collision
+                if(layerWalkable->cellAt(x,y).tile!=NULL)
+                {
+                    if(layerCollisions->cellAt(x,y).tile!=NULL)
+                    {
+                        const unsigned int &bitMask=x+y*worldMap.width();
+                        const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                        if(bitMask/8>=maxMapSize)
+                            abort();
+                        mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                    }
+                }
+                else
+                {
+                    const unsigned int &bitMask=x+y*worldMap.width();
+                    const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                    if(bitMask/8>=maxMapSize)
+                        abort();
+                    mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                }
+                x++;
+            }
+            y++;
+        }
+    }
     unsigned int y=0;
     while(y<(unsigned int)worldMap.height())
     {
@@ -316,37 +350,7 @@ void MapPlants::addVegetation(Tiled::Map &worldMap,const VoronioForTiledMapTmx::
                     if(x%selectedTemplate.width==0 && y%selectedTemplate.height==0)
                     {
                         //check if all the collions layer is into the zone
-                        bool collionsIsIntoZone=brushHaveCollision(worldMap,selectedTemplate,x,y,mapMask);
-                        /*{
-                            const Tiled::Map *brush=selectedTemplate.tiledMap;
-                            int index_y=0;
-                            while(index_y<brush->height())
-                            {
-                                const int y_world=index_y-selectedTemplate.y+y;
-                                if(y_world>=0 && y_world<worldMap.height())
-                                {
-                                    int index_x=0;
-                                    while(index_x<brush->width())
-                                    {
-                                        const int x_world=index_x-selectedTemplate.x+x;
-                                        if(x_world>=0 && x_world<worldMap.width())
-                                        {
-                                            const VoronioForTiledMapTmx::PolygonZoneIndex &exploredZoneIndex=vd.tileToPolygonZoneIndex[x_world+y_world*worldMap.height()];
-                                            const VoronioForTiledMapTmx::PolygonZone &exploredZone=vd.zones[exploredZoneIndex.index];
-                                            if(LoadMap::heightAndMoisureToZoneType(exploredZone.height,exploredZone.moisure)!=LoadMap::heightAndMoisureToZoneType(zone.height,zone.moisure))
-                                            {
-                                                collionsIsIntoZone=false;
-                                                break;
-                                            }
-                                        }
-                                        index_x++;
-                                    }
-                                    if(index_x<brush->width())
-                                        break;
-                                }
-                                index_y++;
-                            }
-                        }*/
+                        const bool collionsIsIntoZone=brushHaveCollision(worldMap,selectedTemplate,x,y,mapMask);
                         if(collionsIsIntoZone)
                             brushTheMap(worldMap,selectedTemplate,x,y,mapMask);
                     }
