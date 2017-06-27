@@ -8,12 +8,12 @@
  </layer>
  <layer name="WalkBehind" width="1" height="3">
   <data encoding="base64" compression="zlib">
-   eJxjYmBgUGKAAAABNAAl
+   eJxjYGBgUGKAAAABHAAj
   </data>
  </layer>
  <layer name="WalkBehind" width="1" height="3">
   <data encoding="base64" compression="zlib">
-   eJxjYEAAAAAMAAE=
+   eJxjYkAAAAAkAAM=
   </data>
  </layer>
 </map>

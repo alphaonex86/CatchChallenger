@@ -98,6 +98,7 @@ int main(int argc, char *argv[])
                     TransitionTerrain::addTransitionOnMap(tiledMap,true);
                     qDebug("Transitions took %d ms", t.elapsed());
                 }
+                TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
             if(dovegetation)
             {
