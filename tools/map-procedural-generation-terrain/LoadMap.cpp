@@ -307,7 +307,8 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
 void LoadMap::addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainPolygon,Tiled::ObjectGroup *layerZoneWaterPolygon,
                         std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainTile,Tiled::ObjectGroup *layerZoneWaterTile,
                         const Grid &grid,
-                        const VoronioForTiledMapTmx::PolygonZoneMap &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
+                        const VoronioForTiledMapTmx::PolygonZoneMap &vd,const Simplex &heightmap,const Simplex &moisuremap,
+                        const float &noiseMapScaleMoisure,const float &noiseMapScaleMap,
                         const int widthMap,const int heightMap,
                         const int offsetX,const int offsetY)
 {
@@ -336,9 +337,9 @@ void LoadMap::addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> >
         if(!edges.isEmpty())
         {
             //const QPointF &edge=edges.first();
-            const unsigned int &heigh=floatToHigh(heighmap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale));
-            const unsigned int &moisure=floatToMoisure(moisuremap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale*10));
-            if(heigh==0)
+            const unsigned int &height=floatToHigh(heightmap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScaleMap));
+            const unsigned int &moisure=floatToMoisure(moisuremap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScaleMoisure));
+            if(height==0)
             {
                 layerZoneWaterPolygon->addObject(objectPolygon);
                 if(!polyTile.isEmpty())
@@ -346,9 +347,9 @@ void LoadMap::addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> >
             }
             else
             {
-                arrayTerrainPolygon[heigh-1][moisure-1]->addObject(objectPolygon);
+                arrayTerrainPolygon[height-1][moisure-1]->addObject(objectPolygon);
                 if(!polyTile.isEmpty())
-                    arrayTerrainTile[heigh-1][moisure-1]->addObject(objectTile);
+                    arrayTerrainTile[height-1][moisure-1]->addObject(objectTile);
             }
         }
         index++;
@@ -356,9 +357,9 @@ void LoadMap::addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> >
 }
 
 void LoadMap::addTerrain(const Grid &grid,
-                        VoronioForTiledMapTmx::PolygonZoneMap &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
-                        const int widthMap,const int heightMap,
-                        const int offsetX,const int offsetY)
+                        VoronioForTiledMapTmx::PolygonZoneMap &vd, const Simplex &heightmap, const Simplex &moisuremap, const float &noiseMapScaleMoisure, const float &noiseMapScaleMap,
+                        const int widthMap, const int heightMap,
+                        const int offsetX, const int offsetY, bool draw)
 {
     const QPolygonF polyMap(QRectF(-offsetX,-offsetY,widthMap,heightMap));
     unsigned int index=0;
@@ -375,19 +376,26 @@ void LoadMap::addTerrain(const Grid &grid,
         if(!edges.isEmpty())
         {
             //const QPointF &edge=edges.first();
-            zone.height=floatToHigh(heighmap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale));
-            zone.moisure=floatToMoisure(moisuremap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScale*10));
-            unsigned int pointIndex=0;
-            while(pointIndex<zone.points.size())
+            float xMap=(float)centroid.x();
+            float yMap=(float)centroid.y();
+            zone.heightFloat=heightmap.Get({xMap/100,yMap/100},noiseMapScaleMap);
+            zone.moisureFloat=moisuremap.Get({xMap/100,yMap/100},noiseMapScaleMoisure);
+            zone.height=floatToHigh(zone.heightFloat);
+            zone.moisure=floatToMoisure(zone.moisureFloat);
+            if(draw)
             {
-                const Point &point=zone.points.at(pointIndex);
-                Tiled::Cell cell;
-                cell.flippedHorizontally=false;
-                cell.flippedVertically=false;
-                cell.flippedAntiDiagonally=false;
-                cell.tile=LoadMap::terrainList[zone.height][zone.moisure-1].tile;
-                LoadMap::terrainList[zone.height][zone.moisure-1].tileLayer->setCell(point.x(),point.y(),cell);
-                pointIndex++;
+                unsigned int pointIndex=0;
+                while(pointIndex<zone.points.size())
+                {
+                    const Point &point=zone.points.at(pointIndex);
+                    Tiled::Cell cell;
+                    cell.flippedHorizontally=false;
+                    cell.flippedVertically=false;
+                    cell.flippedAntiDiagonally=false;
+                    cell.tile=LoadMap::terrainList[zone.height][zone.moisure-1].tile;
+                    LoadMap::terrainList[zone.height][zone.moisure-1].tileLayer->setCell(point.x(),point.y(),cell);
+                    pointIndex++;
+                }
             }
         }
         index++;

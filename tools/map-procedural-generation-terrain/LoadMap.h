@@ -53,16 +53,18 @@ public:
     static Tiled::ObjectGroup *addDebugLayer(Tiled::Map &tiledMap,std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrain,bool polygon);
     //static ZoneType heightAndMoisureToZoneType(const uint8_t &height,const uint8_t &moisure);
     static Tiled::TileLayer *addTerrainLayer(Tiled::Map &tiledMap, const bool dotransition);
-    static void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainPolygon,Tiled::ObjectGroup *layerZoneWaterPolygon,
-                            std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainTile,Tiled::ObjectGroup *layerZoneWaterTile,
+    static void addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainPolygon, Tiled::ObjectGroup *layerZoneWaterPolygon,
+                            std::vector<std::vector<Tiled::ObjectGroup *> > &arrayTerrainTile, Tiled::ObjectGroup *layerZoneWaterTile,
                             const Grid &grid,
-                            const VoronioForTiledMapTmx::PolygonZoneMap &vd,const Simplex &heighmap,const Simplex &moisuremap,const float &noiseMapScale,
-                            const int widthMap,const int heightMap,
-                            const int offsetX=0,const int offsetY=0);
-    static void addTerrain(const Grid &grid,
-                            VoronioForTiledMapTmx::PolygonZoneMap &vd, const Simplex &heighmap, const Simplex &moisuremap, const float &noiseMapScale,
+                            const VoronioForTiledMapTmx::PolygonZoneMap &vd, const Simplex &heighmap, const Simplex &moisuremap,
+                            const float &noiseMapScaleMoisure, const float &noiseMapScaleMap,
                             const int widthMap, const int heightMap,
                             const int offsetX=0, const int offsetY=0);
+    static void addTerrain(const Grid &grid,
+                            VoronioForTiledMapTmx::PolygonZoneMap &vd, const Simplex &heighmap, const Simplex &moisuremap,
+                            const float &noiseMapScaleHeat,const float &noiseMapScaleMap,
+                            const int widthMap, const int heightMap,
+                            const int offsetX=0, const int offsetY=0, bool draw=true);
     static Tiled::TileLayer *searchTileLayerByName(const Tiled::Map &tiledMap,const QString &name);
     static unsigned int searchTileIndexByName(const Tiled::Map &tiledMap,const QString &name);
     static std::vector<Tiled::Tile *> getTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y);
