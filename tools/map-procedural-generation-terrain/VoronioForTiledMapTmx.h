@@ -24,6 +24,8 @@ public:
         QPolygonF pixelizedPolygon;
         unsigned int height;//0-4 (0 is water)
         unsigned int moisure;//1-6
+        float heightFloat;
+        float moisureFloat;
     };
     struct PolygonZoneMap
     {
@@ -31,9 +33,10 @@ public:
         PolygonZoneIndex *tileToPolygonZoneIndex;
     };
     static VoronioForTiledMapTmx::PolygonZoneMap voronoiMap;
+    static VoronioForTiledMapTmx::PolygonZoneMap voronoiMap1px;
 
     static Grid generateGrid(const unsigned int w, const unsigned int h, const unsigned int seed, const int num);
-    static void computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h, const unsigned int tileStep=1);
+    static VoronioForTiledMapTmx::PolygonZoneMap computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h, const unsigned int tileStep=1);
     static const int SCALE;
     static double area(const QPolygonF &p);
 };

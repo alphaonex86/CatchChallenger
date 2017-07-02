@@ -14,6 +14,7 @@
 #include "TransitionTerrain.h"
 #include "Settings.h"
 #include "MapPlants.h"
+#include "MiniMap.h"
 
 /*To do: Tree/Grass, Rivers
 http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/*/
@@ -43,33 +44,31 @@ int main(int argc, char *argv[])
     unsigned int mapXCount;
     unsigned int mapYCount;
     unsigned int seed;
-    bool displayzone,dotransition,dovegetation;
+    float scale_TerrainMap;
+    float scale_TerrainMoisure;
+    float scale_Zone;
+    float miniMapDivisor;
+    bool displayzone,dotransition,dovegetation,dominimap;
     unsigned int tileStep;
-    Settings::loadSettings(settings,mapWidth,mapHeight,mapXCount,mapYCount,seed,displayzone,dotransition,dovegetation,tileStep);
+    Settings::loadSettings(settings,mapWidth,mapHeight,mapXCount,mapYCount,seed,displayzone,dotransition,dovegetation,tileStep,scale_TerrainMap,scale_TerrainMoisure,
+                           scale_Zone,dominimap,miniMapDivisor);
     srand(seed);
 
     {
         const unsigned int totalWidth=mapWidth*mapXCount;
         const unsigned int totalHeight=mapHeight*mapYCount;
         t.start();
-        const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,seed,1000);
+        const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,seed,30*mapXCount*mapYCount*scale_Zone);
         qDebug("generateGrid took %d ms", t.elapsed());
 
-        /*t.start();Tiled::ObjectGroup *layerPoint=new Tiled::ObjectGroup("Point",0,0,tiledMap.width(),tiledMap.height());
-        tiledMap.addLayer(layerPoint);layerPoint->setVisible(false);for (const auto &p : grid)
-        {
-            Tiled::MapObject *object = new Tiled::MapObject("P","",QPointF(((float)p.x()/VoronioForTiledMapTmx::SCALE),((float)p.y()/VoronioForTiledMapTmx::SCALE)),QSizeF(0.0,0.0));
-            object->setPolygon(QPolygonF(QVector<QPointF>()<<QPointF(0.05,0.0)<<QPointF(0.05,0.0)<<QPointF(0.05,0.05)<<QPointF(0.0,0.05)));
-            object->setShape(Tiled::MapObject::Polygon);
-            layerPoint->addObject(object);
-        }        qDebug("do point took %d ms", t.elapsed());*/
-
-        const float noiseMapScale=0.005f/((mapXCount+mapYCount)/2);
+        const float noiseMapScaleMoisure=0.005f/((mapXCount+mapYCount)/2)*scale_TerrainMoisure*((mapXCount+mapYCount)/2);
+        const float noiseMapScaleMap=0.005f/((mapXCount+mapYCount)/2)*scale_TerrainMap*((mapXCount+mapYCount)/2);
         Simplex heighmap(seed+500);
         Simplex moisuremap(seed+5200);
 
         t.start();
-        VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,tileStep);
+        VoronioForTiledMapTmx::voronoiMap=VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,tileStep);
+        VoronioForTiledMapTmx::voronoiMap1px=VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,1);
         if(VoronioForTiledMapTmx::voronoiMap.zones.size()!=grid.size())
             abort();
         qDebug("computeVoronoi took %d ms", t.elapsed());
@@ -85,11 +84,12 @@ int main(int argc, char *argv[])
                 Tiled::ObjectGroup *layerZoneWaterPolygon=LoadMap::addDebugLayer(tiledMap,arrayTerrainPolygon,true);
                 std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainTile;
                 Tiled::ObjectGroup *layerZoneWaterTile=LoadMap::addDebugLayer(tiledMap,arrayTerrainTile,false);
-                LoadMap::addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,VoronioForTiledMapTmx::voronoiMap,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height());
+                LoadMap::addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,VoronioForTiledMapTmx::voronoiMap,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height());
             }
             {
                 t.start();
-                LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap,heighmap,moisuremap,noiseMapScale,tiledMap.width(),tiledMap.height());
+                LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height());
+                LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),0,0,false);
                 qDebug("Add terrain took %d ms", t.elapsed());
                 if(dotransition)
                 {
@@ -99,6 +99,13 @@ int main(int argc, char *argv[])
                     qDebug("Transitions took %d ms", t.elapsed());
                 }
                 TransitionTerrain::changeTileLayerOrder(tiledMap);
+            }
+            if(dominimap)
+            {
+                t.start();
+                MiniMap::makeMap(heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),miniMapDivisor);
+                MiniMap::makeMapTiled(tiledMap.width(),tiledMap.height());
+                qDebug("dominimap %d ms", t.elapsed());
             }
             if(dovegetation)
             {

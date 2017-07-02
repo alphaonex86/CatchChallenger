@@ -7,14 +7,12 @@
 void Settings::putDefaultSettings(QSettings &settings)
 {
     //do tile to zone converter
-    if(!settings.contains("resize_TerrainMap"))
-        settings.setValue("resize_TerrainMap",4);
-    if(!settings.contains("resize_TerrainHeat"))
-        settings.setValue("resize_TerrainHeat",4);
     if(!settings.contains("scale_TerrainMap"))
-        settings.setValue("scale_TerrainMap",(double)0.01f);
-    if(!settings.contains("scale_TerrainHeat"))
-        settings.setValue("scale_TerrainHeat",(double)0.01f);
+        settings.setValue("scale_TerrainMap",(double)1.0f);
+    if(!settings.contains("scale_TerrainMoisure"))
+        settings.setValue("scale_TerrainMoisure",(double)1.0f);
+    if(!settings.contains("scale_Zone"))
+        settings.setValue("scale_Zone",(double)1.0f);
     if(!settings.contains("mapWidth"))
         settings.setValue("mapWidth",44);
     if(!settings.contains("mapHeight"))
@@ -31,6 +29,10 @@ void Settings::putDefaultSettings(QSettings &settings)
         settings.setValue("dotransition",true);
     if(!settings.contains("dovegetation"))
         settings.setValue("dovegetation",true);
+    if(!settings.contains("dominimap"))
+        settings.setValue("dominimap",true);
+    if(!settings.contains("miniMapDivisor"))
+        settings.setValue("miniMapDivisor",4.0);
     if(!settings.contains("tileStep"))
         settings.setValue("tileStep",4);
 
@@ -38,7 +40,7 @@ void Settings::putDefaultSettings(QSettings &settings)
 }
 
 void Settings::loadSettings(QSettings &settings, unsigned int &mapWidth, unsigned int &mapHeight, unsigned int &mapXCount, unsigned int &mapYCount, unsigned int &seed, bool &displayzone,
-                  bool &dotransition, bool &dovegetation, unsigned int &tileStep)
+                  bool &dotransition, bool &dovegetation, unsigned int &tileStep, float &scale_TerrainMap, float &scale_TerrainMoisure, float &scale_Zone,bool &dominimap, float &miniMapDivisor)
 {
     bool ok;
     {
@@ -311,4 +313,10 @@ void Settings::loadSettings(QSettings &settings, unsigned int &mapWidth, unsigne
     displayzone=settings.value("displayzone").toBool();
     dotransition=settings.value("dotransition").toBool();
     dovegetation=settings.value("dovegetation").toBool();
+    dominimap=settings.value("dominimap").toBool();
+
+    scale_TerrainMap=settings.value("scale_TerrainMap").toFloat();
+    scale_TerrainMoisure=settings.value("scale_TerrainMoisure").toFloat();
+    scale_Zone=settings.value("scale_Zone").toFloat();
+    miniMapDivisor=settings.value("miniMapDivisor").toFloat();
 }

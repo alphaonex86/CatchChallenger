@@ -18,40 +18,42 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 }
 
 SOURCES += \
-    main.cpp \
-    znoise/cpp/FBM.cpp \
-    znoise/cpp/HybridMultiFractal.cpp \
-    znoise/cpp/MixerBase.cpp \
-    znoise/cpp/NoiseBase.cpp \
-    znoise/cpp/NoiseTools.cpp \
-    znoise/cpp/Perlin.cpp \
-    znoise/cpp/Simplex.cpp \
-    znoise/cpp/Worley.cpp \
-    VoronioForTiledMapTmx.cpp \
-    LoadMap.cpp \
-    TransitionTerrain.cpp \
-    Settings.cpp \
-    MapPlants.cpp
+    $$PWD/main.cpp \
+    $$PWD/znoise/cpp/FBM.cpp \
+    $$PWD/znoise/cpp/HybridMultiFractal.cpp \
+    $$PWD/znoise/cpp/MixerBase.cpp \
+    $$PWD/znoise/cpp/NoiseBase.cpp \
+    $$PWD/znoise/cpp/NoiseTools.cpp \
+    $$PWD/znoise/cpp/Perlin.cpp \
+    $$PWD/znoise/cpp/Simplex.cpp \
+    $$PWD/znoise/cpp/Worley.cpp \
+    $$PWD/VoronioForTiledMapTmx.cpp \
+    $$PWD/LoadMap.cpp \
+    $$PWD/TransitionTerrain.cpp \
+    $$PWD/Settings.cpp \
+    $$PWD/MapPlants.cpp \
+    MiniMap.cpp
 
 RESOURCES += \
-    resources.qrc
+    $$PWD/resources.qrc
 
 HEADERS += \
-    PoissonGenerator.h \
-    znoise/headers/Enums.hpp \
-    znoise/headers/FBM.hpp \
-    znoise/headers/HybridMultiFractal.hpp \
-    znoise/headers/MixerBase.hpp \
-    znoise/headers/NoiseBase.hpp \
-    znoise/headers/NoiseTools.hpp \
-    znoise/headers/Perlin.hpp \
-    znoise/headers/Simplex.hpp \
-    znoise/headers/Worley.hpp \
-    VoronioForTiledMapTmx.h \
-    LoadMap.h \
-    TransitionTerrain.h \
-    Settings.h \
-    MapPlants.h
+    $$PWD/PoissonGenerator.h \
+    $$PWD/znoise/headers/Enums.hpp \
+    $$PWD/znoise/headers/FBM.hpp \
+    $$PWD/znoise/headers/HybridMultiFractal.hpp \
+    $$PWD/znoise/headers/MixerBase.hpp \
+    $$PWD/znoise/headers/NoiseBase.hpp \
+    $$PWD/znoise/headers/NoiseTools.hpp \
+    $$PWD/znoise/headers/Perlin.hpp \
+    $$PWD/znoise/headers/Simplex.hpp \
+    $$PWD/znoise/headers/Worley.hpp \
+    $$PWD/VoronioForTiledMapTmx.h \
+    $$PWD/LoadMap.h \
+    $$PWD/TransitionTerrain.h \
+    $$PWD/Settings.h \
+    $$PWD/MapPlants.h \
+    MiniMap.h
 
 LIBS += -lboost_system
 
