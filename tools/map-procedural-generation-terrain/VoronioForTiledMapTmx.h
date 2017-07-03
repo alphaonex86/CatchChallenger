@@ -35,7 +35,7 @@ public:
     static VoronioForTiledMapTmx::PolygonZoneMap voronoiMap;
     static VoronioForTiledMapTmx::PolygonZoneMap voronoiMap1px;
 
-    static Grid generateGrid(const unsigned int w, const unsigned int h, const unsigned int seed, const int num);
+    static Grid generateGrid(const unsigned int w, const unsigned int h, const unsigned int seed, const int num, const int scale);
     static VoronioForTiledMapTmx::PolygonZoneMap computeVoronoi(const Grid &g, const unsigned int w, const unsigned int h, const unsigned int tileStep=1);
     static const int SCALE;
     static double area(const QPolygonF &p);
