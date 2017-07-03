@@ -27,7 +27,7 @@ double VoronioForTiledMapTmx::area(const QPolygonF &p) {
     return 0.5 * a;
 }
 
-Grid VoronioForTiledMapTmx::generateGrid(const unsigned int w, const unsigned int h, const unsigned int seed, const int num) {
+Grid VoronioForTiledMapTmx::generateGrid(const unsigned int w, const unsigned int h, const unsigned int seed, const int num,const int scale) {
     std::mt19937 gen(seed);
     /*std::uniform_real_distribution<double> disw(0,w);
     std::uniform_real_distribution<double> dish(0,h);*/
@@ -52,7 +52,7 @@ Grid VoronioForTiledMapTmx::generateGrid(const unsigned int w, const unsigned in
             y = h;
         if (y < 0)
             y = 0;
-        g.emplace_back(SCALE*x, SCALE*y);
+        g.emplace_back(scale*x, scale*y);
     }
 
     return g;
