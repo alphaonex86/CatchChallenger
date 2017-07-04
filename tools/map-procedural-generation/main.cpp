@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
             QHash<QString,Tiled::Tileset *> cachedTileset;
             LoadMap::addTerrainLayer(tiledMap,dotransition);
             LoadMap::loadAllTileset(cachedTileset,tiledMap);
-            LoadMapAll::addCity(gridCity,citiesNames);
+            LoadMapAll::addCity(gridCity,citiesNames,mapXCount,mapYCount);
             if(displayzone)
             {
                 std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainPolygon;
