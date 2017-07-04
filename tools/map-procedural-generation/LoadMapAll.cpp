@@ -4,8 +4,11 @@
 #include "../../client/tiled/tiled_objectgroup.h"
 #include "../../general/base/cpp11addition.h"
 
+#include "../map-procedural-generation-terrain/LoadMap.h"
+
 #include <unordered_set>
 #include <unordered_map>
+#include <iostream>
 
 std::vector<LoadMapAll::City> LoadMapAll::cities;
 
@@ -55,7 +58,7 @@ bool LoadMapAll::haveCityEntry(const std::unordered_map<uint32_t, std::unordered
     return true;
 }
 
-void LoadMapAll::addCity(const Grid &grid, const std::vector<std::string> &citiesNames,const unsigned int &w, const unsigned int &h)
+void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std::vector<std::string> &citiesNames,const unsigned int &w, const unsigned int &h)
 {
     if(grid.empty())
         return;
@@ -72,6 +75,7 @@ void LoadMapAll::addCity(const Grid &grid, const std::vector<std::string> &citie
         if(!haveCityEntry(positionsAndIndex,x,y))
         {
             CityInternal *city=new CityInternal();
+            //do the random value
             city->name=citiesNames.at(index);
             switch(rand()%3) {
             case 0:
@@ -87,7 +91,28 @@ void LoadMapAll::addCity(const Grid &grid, const std::vector<std::string> &citie
             city->x=x;
             city->y=y;
             positionsAndIndex[x][y]=city;
-            citiesInternal.push_back(city);
+            //count walkable tile
+            unsigned int countWalkable=0;
+            const unsigned int singleMapWitdh=worldMap.width()/w;
+            const unsigned int singleMapHeight=worldMap.height()/h;
+            {
+                Tiled::TileLayer * tileLayer=LoadMap::searchTileLayerByName(worldMap,"Walkable");
+                unsigned int yMap=y*singleMapHeight;
+                while(yMap<(y*singleMapHeight+singleMapHeight))
+                {
+                    unsigned int xMap=x*singleMapWitdh;
+                    while(xMap<(x*singleMapWitdh+singleMapWitdh))
+                    {
+                        if(tileLayer->cellAt(xMap,yMap).tile!=NULL)
+                            countWalkable++;
+                        xMap++;
+                    }
+                    yMap++;
+                }
+            }
+            //add
+            if(countWalkable*100/(singleMapWitdh*singleMapHeight)>75)
+                citiesInternal.push_back(city);
         }
 
         index++;
@@ -131,7 +156,7 @@ void LoadMapAll::addCity(const Grid &grid, const std::vector<std::string> &citie
         index++;
     }
     //drop the first and decremente their neighbor
-    while(citiesByNeighbor.size()>1 || citiesByNeighbor.find(0)==citiesByNeighbor.cend())
+    while(citiesByNeighbor.size()>1 || (citiesByNeighbor.find(0)==citiesByNeighbor.cend() && citiesByNeighbor.size()==1))
     {
         std::map<uint32_t,std::vector<CityInternal *> >::reverse_iterator rit;
         for(rit=citiesByNeighbor.rbegin(); rit!=citiesByNeighbor.rend(); ++rit) {
