@@ -382,6 +382,7 @@ void LoadMap::addTerrain(const Grid &grid,
             zone.moisureFloat=moisuremap.Get({xMap/100,yMap/100},noiseMapScaleMoisure);
             zone.height=floatToHigh(zone.heightFloat);
             zone.moisure=floatToMoisure(zone.moisureFloat);
+            Terrain &terrain=LoadMap::terrainList[zone.height][zone.moisure-1];
             if(draw)
             {
                 unsigned int pointIndex=0;
@@ -392,8 +393,8 @@ void LoadMap::addTerrain(const Grid &grid,
                     cell.flippedHorizontally=false;
                     cell.flippedVertically=false;
                     cell.flippedAntiDiagonally=false;
-                    cell.tile=LoadMap::terrainList[zone.height][zone.moisure-1].tile;
-                    LoadMap::terrainList[zone.height][zone.moisure-1].tileLayer->setCell(point.x(),point.y(),cell);
+                    cell.tile=terrain.tile;
+                    terrain.tileLayer->setCell(point.x(),point.y(),cell);
                     pointIndex++;
                 }
             }

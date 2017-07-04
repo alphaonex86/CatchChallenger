@@ -54,7 +54,7 @@ uint16_t TransitionTerrain::layerMask(const Tiled::TileLayer * const terrainLaye
     return to_type_match;
 }
 
-void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const bool mergeDown)
+void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap)
 {
     const unsigned int w=tiledMap.width();
     const unsigned int h=tiledMap.height();
@@ -292,110 +292,114 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap,const bool merge
             index++;
         }
     }
+}
 
-    if(mergeDown)
+
+void TransitionTerrain::mergeDown(Tiled::Map &tiledMap)
+{
+    const unsigned int w=tiledMap.width();
+    const unsigned int h=tiledMap.height();
+
+    std::vector<Tiled::TileLayer *> layerToDelete;
+    unsigned int terrainIndex=0;
+    while(terrainIndex<(unsigned int)LoadMap::terrainFlatList.size())
     {
-        std::vector<Tiled::TileLayer *> layerToDelete;
-        unsigned int terrainIndex=0;
-        while(terrainIndex<(unsigned int)LoadMap::terrainFlatList.size())
+        const QString &terrainName=LoadMap::terrainFlatList.at(terrainIndex);
+        LoadMap::Terrain * terrain=LoadMap::terrainNameToObject.value(terrainName);
+        if(terrain->outsideBorder)
         {
-            const QString &terrainName=LoadMap::terrainFlatList.at(terrainIndex);
-            LoadMap::Terrain * terrain=LoadMap::terrainNameToObject.value(terrainName);
-            if(terrain->outsideBorder)
+            Tiled::TileLayer * const transitionLayerMask=LoadMap::searchTileLayerByName(tiledMap,"[T]"+terrainName);
+            layerToDelete.push_back(transitionLayerMask);
+
+            //search the layer
+            int tileLayerIndex=0;
+            while(true)
             {
-                Tiled::TileLayer * const transitionLayerMask=LoadMap::searchTileLayerByName(tiledMap,"[T]"+terrainName);
-                layerToDelete.push_back(transitionLayerMask);
-
-                //search the layer
-                int tileLayerIndex=0;
-                while(true)
+                if(tiledMap.layerCount()<tileLayerIndex)
                 {
-                    if(tiledMap.layerCount()<tileLayerIndex)
-                    {
-                        std::cerr << "tiledMap.layerCount()<tileLayerIndexTemp (abort)" << std::endl;
-                        abort();
-                    }
-                    Tiled::Layer * tempLayer=tiledMap.layerAt(tileLayerIndex);
-                    if(tempLayer->isTileLayer() &&
-                            //tempLayer==transitionLayerMask
-                            tempLayer->name()==terrain->tmp_layerString
-                            )
-                        break;
-                    else
-                        tileLayerIndex++;
+                    std::cerr << "tiledMap.layerCount()<tileLayerIndexTemp (abort)" << std::endl;
+                    abort();
                 }
-
-                unsigned int y=0;
-                while(y<h)
-                {
-                    unsigned int x=0;
-                    while(x<w)
-                    {
-                        const Tiled::Cell &cell=transitionLayerMask->cellAt(x,y);
-                        if(cell.tile!=NULL)
-                        {
-                            int tileLayerIndexTemp=tileLayerIndex;
-                            while(true)
-                            {
-                                if(tiledMap.layerCount()<tileLayerIndexTemp)
-                                {
-                                    std::cerr << "tiledMap.layerCount()<tileLayerIndexTemp (abort)" << std::endl;
-                                    abort();
-                                }
-                                Tiled::Layer * tempLayer=tiledMap.layerAt(tileLayerIndexTemp);
-                                if(!tempLayer->isTileLayer())
-                                {
-                                    std::cerr << "!tempLayer->isTileLayer() (abort)" << std::endl;
-                                    abort();
-                                }
-                                if(static_cast<Tiled::TileLayer *>(tempLayer)->cellAt(x,y).tile!=NULL)
-                                {
-                                    if(cell.tile!=terrain->tile)
-                                        tileLayerIndexTemp++;
-                                    else
-                                    {
-                                        tileLayerIndexTemp++;
-                                        //clean the upper layer
-                                        while(tileLayerIndexTemp<(tileLayerIndex+3))
-                                        {
-                                            Tiled::TileLayer * tileLayer=static_cast<Tiled::TileLayer *>(tiledMap.layerAt(tileLayerIndexTemp));
-                                            Tiled::Cell cell;
-                                            cell.tile=NULL;
-                                            cell.flippedHorizontally=false;
-                                            cell.flippedVertically=false;
-                                            cell.flippedAntiDiagonally=false;
-                                            tileLayer->setCell(x,y,cell);
-                                            tileLayerIndexTemp++;
-                                        }
-                                        tileLayerIndexTemp=tileLayerIndex;
-                                        break;
-                                    }
-                                }
-                                else
-                                    break;
-                            }
-                            Tiled::TileLayer * tileLayer=static_cast<Tiled::TileLayer *>(tiledMap.layerAt(tileLayerIndexTemp));
-                            tileLayer->setCell(x,y,cell);
-                            /*if(x==11 && y==3)
-                                std::cout << "x==11 && y==3 tag " << terrainName.toStdString() << " at " << tileLayer->name().toStdString() << std::endl;*/
-                        }
-                        x++;
-                    }
-                    y++;
-                }
+                Tiled::Layer * tempLayer=tiledMap.layerAt(tileLayerIndex);
+                if(tempLayer->isTileLayer() &&
+                        //tempLayer==transitionLayerMask
+                        tempLayer->name()==terrain->tmp_layerString
+                        )
+                    break;
+                else
+                    tileLayerIndex++;
             }
-            terrainIndex++;
+
+            unsigned int y=0;
+            while(y<h)
+            {
+                unsigned int x=0;
+                while(x<w)
+                {
+                    const Tiled::Cell &cell=transitionLayerMask->cellAt(x,y);
+                    if(cell.tile!=NULL)
+                    {
+                        int tileLayerIndexTemp=tileLayerIndex;
+                        while(true)
+                        {
+                            if(tiledMap.layerCount()<tileLayerIndexTemp)
+                            {
+                                std::cerr << "tiledMap.layerCount()<tileLayerIndexTemp (abort)" << std::endl;
+                                abort();
+                            }
+                            Tiled::Layer * tempLayer=tiledMap.layerAt(tileLayerIndexTemp);
+                            if(!tempLayer->isTileLayer())
+                            {
+                                std::cerr << "!tempLayer->isTileLayer() (abort)" << std::endl;
+                                abort();
+                            }
+                            if(static_cast<Tiled::TileLayer *>(tempLayer)->cellAt(x,y).tile!=NULL)
+                            {
+                                if(cell.tile!=terrain->tile)
+                                    tileLayerIndexTemp++;
+                                else
+                                {
+                                    tileLayerIndexTemp++;
+                                    //clean the upper layer
+                                    while(tileLayerIndexTemp<(tileLayerIndex+3))
+                                    {
+                                        Tiled::TileLayer * tileLayer=static_cast<Tiled::TileLayer *>(tiledMap.layerAt(tileLayerIndexTemp));
+                                        Tiled::Cell cell;
+                                        cell.tile=NULL;
+                                        cell.flippedHorizontally=false;
+                                        cell.flippedVertically=false;
+                                        cell.flippedAntiDiagonally=false;
+                                        tileLayer->setCell(x,y,cell);
+                                        tileLayerIndexTemp++;
+                                    }
+                                    tileLayerIndexTemp=tileLayerIndex;
+                                    break;
+                                }
+                            }
+                            else
+                                break;
+                        }
+                        Tiled::TileLayer * tileLayer=static_cast<Tiled::TileLayer *>(tiledMap.layerAt(tileLayerIndexTemp));
+                        tileLayer->setCell(x,y,cell);
+                        /*if(x==11 && y==3)
+                            std::cout << "x==11 && y==3 tag " << terrainName.toStdString() << " at " << tileLayer->name().toStdString() << std::endl;*/
+                    }
+                    x++;
+                }
+                y++;
+            }
         }
-        unsigned int index=0;
-        while(index<layerToDelete.size())
-        {
-            Tiled::TileLayer * layer=layerToDelete.at(index);
-            //layer->setVisible(false);
-            const int indexOfLayer=tiledMap.indexOfLayer(layer->name());
-            if(indexOfLayer>=0)
-                delete tiledMap.takeLayerAt(indexOfLayer);
-            index++;
-        }
+        terrainIndex++;
+    }
+    unsigned int index=0;
+    while(index<layerToDelete.size())
+    {
+        Tiled::TileLayer * layer=layerToDelete.at(index);
+        //layer->setVisible(false);
+        const int indexOfLayer=tiledMap.indexOfLayer(layer->name());
+        if(indexOfLayer>=0)
+            delete tiledMap.takeLayerAt(indexOfLayer);
+        index++;
     }
 }
 

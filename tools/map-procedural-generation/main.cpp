@@ -89,7 +89,6 @@ int main(int argc, char *argv[])
             QHash<QString,Tiled::Tileset *> cachedTileset;
             LoadMap::addTerrainLayer(tiledMap,dotransition);
             LoadMap::loadAllTileset(cachedTileset,tiledMap);
-            LoadMapAll::addCity(gridCity,citiesNames,mapXCount,mapYCount);
             if(displayzone)
             {
                 std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainPolygon;
@@ -97,10 +96,6 @@ int main(int argc, char *argv[])
                 std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainTile;
                 Tiled::ObjectGroup *layerZoneWaterTile=LoadMap::addDebugLayer(tiledMap,arrayTerrainTile,false);
                 LoadMap::addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,VoronioForTiledMapTmx::voronoiMap,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height());
-            }
-            if(displaycity)
-            {
-                LoadMapAll::addDebugCity(tiledMap,mapWidth,mapHeight);
             }
             {
                 t.start();
@@ -111,11 +106,19 @@ int main(int argc, char *argv[])
                 {
                     t.start();
                     TransitionTerrain::addTransitionGroupOnMap(tiledMap);
-                    TransitionTerrain::addTransitionOnMap(tiledMap,true);
+                    TransitionTerrain::addTransitionOnMap(tiledMap);
                     qDebug("Transitions took %d ms", t.elapsed());
                 }
+                t.start();
+                TransitionTerrain::mergeDown(tiledMap);
+                qDebug("mergeDown took %d ms", t.elapsed());
+                t.start();
+                LoadMapAll::addCity(tiledMap,gridCity,citiesNames,mapXCount,mapYCount);
+                qDebug("place cities took %d ms", t.elapsed());
                 TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
+            if(displaycity)
+                LoadMapAll::addDebugCity(tiledMap,mapWidth,mapHeight);
             if(dominimap)
             {
                 t.start();
