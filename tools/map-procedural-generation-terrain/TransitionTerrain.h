@@ -7,10 +7,11 @@
 class TransitionTerrain
 {
 public:
-    static void addTransitionOnMap(Tiled::Map &tiledMap,const bool mergeDown);
+    static void addTransitionOnMap(Tiled::Map &tiledMap);
     static void addTransitionGroupOnMap(Tiled::Map &tiledMap);
     static uint16_t layerMask(const Tiled::TileLayer * const terrainLayer, const unsigned int &x, const unsigned int &y, Tiled::Tile *tile, const bool XORop);
     static void changeTileLayerOrder(Tiled::Map &tiledMap);
+    static void mergeDown(Tiled::Map &tiledMap);
 };
 
 #endif // TRANSITIONTERRAIN_H
