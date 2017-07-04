@@ -94,7 +94,7 @@ void LoadMapAll::addCity(const Grid &grid, const std::vector<std::string> &citie
     }
 
     //do top list of map with number of direct neighbor
-    std::unordered_map<uint32_t,std::vector<CityInternal *> > citiesByNeighbor;
+    std::map<uint32_t,std::vector<CityInternal *> > citiesByNeighbor;
     index=0;
     while(index<citiesInternal.size())
     {
@@ -133,12 +133,15 @@ void LoadMapAll::addCity(const Grid &grid, const std::vector<std::string> &citie
     //drop the first and decremente their neighbor
     while(citiesByNeighbor.size()>1 || citiesByNeighbor.find(0)==citiesByNeighbor.cend())
     {
-        for(const auto& n:citiesByNeighbor) {
-            uint32_t indexCity=n.first;
-            std::vector<CityInternal *> citiesList=n.second;
+        std::map<uint32_t,std::vector<CityInternal *> >::reverse_iterator rit;
+        for(rit=citiesByNeighbor.rbegin(); rit!=citiesByNeighbor.rend(); ++rit) {
+            uint32_t indexCity=rit->first;
+            std::vector<CityInternal *> citiesList=rit->second;
             if(!citiesList.empty())
             {
                 CityInternal * city=citiesList.front();
+                if(city->citiesNeighbor.empty())
+                    abort();
                 unsigned int index=0;
                 while(index<city->citiesNeighbor.size())
                 {
@@ -148,12 +151,12 @@ void LoadMapAll::addCity(const Grid &grid, const std::vector<std::string> &citie
                     if(!vectorremoveOne(cityNeighbor->citiesNeighbor,city))
                         abort();
                     //remove into the global list
-                    if(!vectorremoveOne(citiesByNeighbor[oldCount],city))
+                    if(!vectorremoveOne(citiesByNeighbor[oldCount],cityNeighbor))
                         abort();
                     if(citiesByNeighbor[oldCount].empty())
                         citiesByNeighbor.erase(oldCount);
                     const unsigned int newCount=cityNeighbor->citiesNeighbor.size();
-                    citiesByNeighbor[newCount].push_back(city);
+                    citiesByNeighbor[newCount].push_back(cityNeighbor);
                     index++;
                 }
                 if(!vectorremoveOne(citiesByNeighbor[indexCity],city))
@@ -168,13 +171,20 @@ void LoadMapAll::addCity(const Grid &grid, const std::vector<std::string> &citie
     }
     //happen
     for(const auto& n:citiesByNeighbor) {
-        const CityInternal * cityInternal=n.second.front();
-        City city;
-        city.name=cityInternal->name;
-        city.type=cityInternal->type;
-        city.x=cityInternal->x;
-        city.y=cityInternal->y;
-        cities.push_back(city);
+        const std::vector<CityInternal *> &citiesList=n.second;
+        unsigned int index=0;
+        while(index<citiesList.size())
+        {
+            const CityInternal *cityInternal=citiesList.at(index);
+            City city;
+            city.name=cityInternal->name;
+            city.type=cityInternal->type;
+            city.x=cityInternal->x;
+            city.y=cityInternal->y;
+            cities.push_back(city);
+            delete cityInternal;
+            index++;
+        }
         break;
     }
 }
