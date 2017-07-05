@@ -3,14 +3,43 @@
 
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"
 #include "../../client/tiled/tiled_map.h"
+#include "../../general/base/cpp11addition.h"
 
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <string>
+#include <cstdint>
 
 class LoadMapAll
 {
 public:
+    enum Orientation : uint8_t
+    {
+        Orientation_none = 0,//where the target orientation don't matter
+        Orientation_top = 1,
+        Orientation_right = 2,
+        Orientation_bottom = 3,
+        Orientation_left = 4
+    };
+    struct SimplifiedMapForPathFinding
+    {
+        struct PathToGo
+        {
+            std::vector<std::pair<Orientation,uint8_t/*step number*/> > left;
+            std::vector<std::pair<Orientation,uint8_t/*step number*/> > right;
+            std::vector<std::pair<Orientation,uint8_t/*step number*/> > top;
+            std::vector<std::pair<Orientation,uint8_t/*step number*/> > bottom;
+        };
+        std::unordered_map<std::pair<uint8_t,uint8_t>,PathToGo,pairhash> pathToGo;
+        std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> pointQueued;
+    };
+
+    struct MapPointToParse
+    {
+        uint8_t x,y;
+    };
+
     enum CityType
     {
         CityType_small,
