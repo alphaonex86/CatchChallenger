@@ -212,4 +212,276 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
         }
         break;
     }
+    //calculate the zone
+    {
+        uint8_t cityRadius=4;
+        unsigned int indexCities=0;
+        while(indexCities<cities.size())
+        {
+            const City &city=cities.at(indexCities);
+            int minX=(int)city.x-cityRadius;
+            int maxX=(int)city.x+cityRadius;
+            int minY=(int)city.y-cityRadius;
+            int maxY=(int)city.y+cityRadius;
+            if(minX<0)
+                minX=0;
+            if(maxX>w)
+                maxX=w;
+            if(minY<0)
+                minY=0;
+            if(maxY>h)
+                maxY=h;
+
+            QHash<QString,SimplifiedMapForPathFinding> simplifiedMapList;
+            //resolv the path
+            QList<MapPointToParse> mapPointToParseList;
+
+            //init the first case
+            {
+                MapPointToParse tempPoint;
+                tempPoint.x=x;
+                tempPoint.y=y;
+                mapPointToParseList <<  tempPoint;
+
+                QPair<uint8_t,uint8_t> coord(tempPoint.x,tempPoint.y);
+                SimplifiedMapForPathFinding &tempMap=simplifiedMapList[current_map];
+                tempMap.pathToGo[coord].left <<
+                        QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(Orientation_left,1);
+                tempMap.pathToGo[coord].right <<
+                        QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(Orientation_right,1);
+                tempMap.pathToGo[coord].bottom <<
+                        QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(Orientation_bottom,1);
+                tempMap.pathToGo[coord].top <<
+                        QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(Orientation_top,1);
+            }
+
+            QPair<uint8_t,uint8_t> coord;
+            while(!mapPointToParseList.isEmpty())
+            {
+                const MapPointToParse &tempPoint=mapPointToParseList.takeFirst();
+                SimplifiedMapForPathFinding::PathToGo pathToGo;
+                if(destination_map==current_map && tempPoint.x==destination_x && tempPoint.y==destination_y)
+                    std::cout << "final dest" << std::endl;
+                //resolv the own point
+                int index=0;
+                while(index<1)/*2*/
+                {
+                    {
+                        //if the right case have been parsed
+                        coord=QPair<uint8_t,uint8_t>(tempPoint.x+1,tempPoint.y);
+                        if(simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                        {
+                            const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapList.value(current_map).pathToGo.value(coord);
+                            if(pathToGo.left.isEmpty() || pathToGo.left.size()>nearPathToGo.left.size())
+                            {
+                                pathToGo.left=nearPathToGo.left;
+                                pathToGo.left.last().second++;
+                            }
+                            if(pathToGo.top.isEmpty() || pathToGo.top.size()>(nearPathToGo.left.size()+1))
+                            {
+                                pathToGo.top=nearPathToGo.left;
+                                pathToGo.top << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1);
+                            }
+                            if(pathToGo.bottom.isEmpty() || pathToGo.bottom.size()>(nearPathToGo.left.size()+1))
+                            {
+                                pathToGo.bottom=nearPathToGo.left;
+                                pathToGo.bottom << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1);
+                            }
+                        }
+                        //if the left case have been parsed
+                        coord=QPair<uint8_t,uint8_t>(tempPoint.x-1,tempPoint.y);
+                        if(simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                        {
+                            const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapList.value(current_map).pathToGo.value(coord);
+                            if(pathToGo.right.isEmpty() || pathToGo.right.size()>nearPathToGo.right.size())
+                            {
+                                pathToGo.right=nearPathToGo.right;
+                                pathToGo.right.last().second++;
+                            }
+                            if(pathToGo.top.isEmpty() || pathToGo.top.size()>(nearPathToGo.right.size()+1))
+                            {
+                                pathToGo.top=nearPathToGo.right;
+                                pathToGo.top << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1);
+                            }
+                            if(pathToGo.bottom.isEmpty() || pathToGo.bottom.size()>(nearPathToGo.right.size()+1))
+                            {
+                                pathToGo.bottom=nearPathToGo.right;
+                                pathToGo.bottom << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1);
+                            }
+                        }
+                        //if the top case have been parsed
+                        coord=QPair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y+1);
+                        if(simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                        {
+                            const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapList.value(current_map).pathToGo.value(coord);
+                            if(pathToGo.top.isEmpty() || pathToGo.top.size()>nearPathToGo.top.size())
+                            {
+                                pathToGo.top=nearPathToGo.top;
+                                pathToGo.top.last().second++;
+                            }
+                            if(pathToGo.left.isEmpty() || pathToGo.left.size()>(nearPathToGo.top.size()+1))
+                            {
+                                pathToGo.left=nearPathToGo.top;
+                                pathToGo.left << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1);
+                            }
+                            if(pathToGo.right.isEmpty() || pathToGo.right.size()>(nearPathToGo.top.size()+1))
+                            {
+                                pathToGo.right=nearPathToGo.top;
+                                pathToGo.right << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1);
+                            }
+                        }
+                        //if the bottom case have been parsed
+                        coord=QPair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y-1);
+                        if(simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                        {
+                            const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapList.value(current_map).pathToGo.value(coord);
+                            if(pathToGo.bottom.isEmpty() || pathToGo.bottom.size()>nearPathToGo.bottom.size())
+                            {
+                                pathToGo.bottom=nearPathToGo.bottom;
+                                pathToGo.bottom.last().second++;
+                            }
+                            if(pathToGo.left.isEmpty() || pathToGo.left.size()>(nearPathToGo.bottom.size()+1))
+                            {
+                                pathToGo.left=nearPathToGo.bottom;
+                                pathToGo.left << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1);
+                            }
+                            if(pathToGo.right.isEmpty() || pathToGo.right.size()>(nearPathToGo.bottom.size()+1))
+                            {
+                                pathToGo.right=nearPathToGo.bottom;
+                                pathToGo.right << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1);
+                            }
+                        }
+                    }
+                    index++;
+                }
+                coord=QPair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y);
+                if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    extraControlOnData(pathToGo.left,CatchChallenger::Orientation_left);
+                    extraControlOnData(pathToGo.right,CatchChallenger::Orientation_right);
+                    extraControlOnData(pathToGo.top,CatchChallenger::Orientation_top);
+                    extraControlOnData(pathToGo.bottom,CatchChallenger::Orientation_bottom);
+                    #endif
+                    simplifiedMapList[current_map].pathToGo[coord]=pathToGo;
+                }
+                if(destination_map==current_map && tempPoint.x==destination_x && tempPoint.y==destination_y)
+                {
+                    QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar;
+                    if(returnedVar.isEmpty() || pathToGo.bottom.size()<returnedVar.size())
+                        if(!pathToGo.bottom.isEmpty())
+                            returnedVar=pathToGo.bottom;
+                    if(returnedVar.isEmpty() || pathToGo.top.size()<returnedVar.size())
+                        if(!pathToGo.top.isEmpty())
+                            returnedVar=pathToGo.top;
+                    if(returnedVar.isEmpty() || pathToGo.right.size()<returnedVar.size())
+                        if(!pathToGo.right.isEmpty())
+                            returnedVar=pathToGo.right;
+                    if(returnedVar.isEmpty() || pathToGo.left.size()<returnedVar.size())
+                        if(!pathToGo.left.isEmpty())
+                            returnedVar=pathToGo.left;
+                    if(!returnedVar.isEmpty())
+                    {
+                        if(returnedVar.last().second<=1)
+                        {
+                            std::cerr << "Bug due for last step" << std::endl;
+                            abort();
+                        }
+                        else
+                        {
+                            returnedVar.last().second--;
+                            emit result(current_map,x,y,returnedVar);
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        returnedVar.clear();
+                        std::cerr << "Bug due to resolved path is empty" << std::endl;
+                        return;
+                    }
+                }
+                //revers resolv
+                //add to point to parse
+                {
+                    //if the right case have been parsed
+                    coord=QPair<uint8_t,uint8_t>(tempPoint.x+1,tempPoint.y);
+                    if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                    {
+                        MapPointToParse newPoint=tempPoint;
+                        newPoint.x++;
+                        if(newPoint.x<simplifiedMapList.value(current_map).width)
+                            if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
+                            {
+                                QPair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
+                                if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
+                                {
+                                    simplifiedMapList[current_map].pointQueued << point;
+                                    mapPointToParseList <<  newPoint;
+                                }
+                            }
+                    }
+                    //if the left case have been parsed
+                    coord=QPair<uint8_t,uint8_t>(tempPoint.x-1,tempPoint.y);
+                    if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                    {
+                        MapPointToParse newPoint=tempPoint;
+                        if(newPoint.x>0)
+                        {
+                            newPoint.x--;
+                            if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
+                            {
+                                QPair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
+                                if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
+                                {
+                                    simplifiedMapList[current_map].pointQueued << point;
+                                    mapPointToParseList <<  newPoint;
+                                }
+                            }
+                        }
+                    }
+                    //if the bottom case have been parsed
+                    coord=QPair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y+1);
+                    if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                    {
+                        MapPointToParse newPoint=tempPoint;
+                        newPoint.y++;
+                        if(newPoint.y<simplifiedMapList.value(current_map).height)
+                            if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
+                            {
+                                QPair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
+                                if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
+                                {
+                                    simplifiedMapList[current_map].pointQueued << point;
+                                    mapPointToParseList <<  newPoint;
+                                }
+                            }
+                    }
+                    //if the top case have been parsed
+                    coord=QPair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y-1);
+                    if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
+                    {
+                        MapPointToParse newPoint=tempPoint;
+                        if(newPoint.y>0)
+                        {
+                            newPoint.y--;
+                            if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
+                            {
+                                QPair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
+                                if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
+                                {
+                                    simplifiedMapList[current_map].pointQueued << point;
+                                    mapPointToParseList <<  newPoint;
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+            }
+
+            indexCities++;
+        }
+    }
 }
