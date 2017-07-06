@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
         const unsigned int totalWidth=mapWidth*mapXCount;
         const unsigned int totalHeight=mapHeight*mapYCount;
         t.start();
-        const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,seed,30*mapXCount*mapYCount*scale_Zone);
+        const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,seed,30*mapXCount*mapYCount*scale_Zone,VoronioForTiledMapTmx::SCALE);
         qDebug("generateGrid took %d ms", t.elapsed());
 
         const float noiseMapScaleMoisure=0.005f/((mapXCount+mapYCount)/2)*scale_TerrainMoisure*((mapXCount+mapYCount)/2);
@@ -95,9 +95,12 @@ int main(int argc, char *argv[])
                 {
                     t.start();
                     TransitionTerrain::addTransitionGroupOnMap(tiledMap);
-                    TransitionTerrain::addTransitionOnMap(tiledMap,true);
+                    TransitionTerrain::addTransitionOnMap(tiledMap);
                     qDebug("Transitions took %d ms", t.elapsed());
                 }
+                t.start();
+                TransitionTerrain::mergeDown(tiledMap);
+                qDebug("mergeDown took %d ms", t.elapsed());
                 TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
             if(dominimap)
