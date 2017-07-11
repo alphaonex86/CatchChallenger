@@ -36,6 +36,11 @@ std::size_t pairhash::operator()(const std::pair<uint8_t, uint8_t> &x) const
     return (x.first << 8) + x.second;
 }
 
+std::size_t pairhash::operator()(const std::pair<uint16_t, uint16_t> &x) const
+{
+    return (x.first << 16) + x.second;
+}
+
 bool stringreplaceOne(std::string& str, const std::string& from, const std::string& to)
 {
     const size_t start_pos = str.find(from);
