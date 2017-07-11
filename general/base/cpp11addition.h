@@ -20,6 +20,7 @@
 struct pairhash {
 public:
   std::size_t operator()(const std::pair<uint8_t, uint8_t> &x) const;
+  std::size_t operator()(const std::pair<uint16_t, uint16_t> &x) const;
 };
 
 bool stringreplaceOne(std::string& str, const std::string& from, const std::string& to);
