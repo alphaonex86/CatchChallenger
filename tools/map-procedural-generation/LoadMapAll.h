@@ -31,13 +31,13 @@ public:
             std::vector<std::pair<Orientation,uint8_t/*step number*/> > top;
             std::vector<std::pair<Orientation,uint8_t/*step number*/> > bottom;
         };
-        std::unordered_map<std::pair<uint8_t,uint8_t>,PathToGo,pairhash> pathToGo;
-        std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> pointQueued;
+        std::unordered_map<std::pair<uint16_t,uint16_t>,PathToGo,pairhash> pathToGo;
+        std::unordered_set<std::pair<uint16_t,uint16_t>,pairhash> pointQueued;
     };
 
     struct MapPointToParse
     {
-        uint8_t x,y;
+        uint16_t x,y;
     };
 
     enum CityType
@@ -64,6 +64,9 @@ public:
     static void addCity(const Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames, const unsigned int &w, const unsigned int &h);
     static bool haveCityEntry(const std::unordered_map<uint32_t,std::unordered_map<uint32_t,CityInternal *> > &positionsAndIndex,
                               const unsigned int &x, const unsigned int &y);
+    static bool haveCityPath(const std::unordered_map<uint32_t,std::unordered_map<uint32_t,std::unordered_map<uint32_t,std::unordered_set<uint32_t> > > > &resolvedPath,
+                                  const unsigned int &x1, const unsigned int &y1,
+                                  const unsigned int &x2, const unsigned int &y2);
     static std::vector<City> cities;
 };
 
