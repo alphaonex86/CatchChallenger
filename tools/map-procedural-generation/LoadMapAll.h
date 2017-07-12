@@ -19,8 +19,8 @@ public:
         Orientation_none = 0,//where the target orientation don't matter
         Orientation_top = 1,
         Orientation_right = 2,
-        Orientation_bottom = 3,
-        Orientation_left = 4
+        Orientation_bottom = 4,
+        Orientation_left = 8
     };
     struct SimplifiedMapForPathFinding
     {
@@ -62,12 +62,17 @@ public:
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     static void addCity(const Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames, const unsigned int &w, const unsigned int &h);
-    static bool haveCityEntry(const std::unordered_map<uint32_t,std::unordered_map<uint32_t,CityInternal *> > &positionsAndIndex,
+    static bool haveCityEntryInternal(const std::unordered_map<uint32_t,std::unordered_map<uint32_t,CityInternal *> > &positionsAndIndex,
+                              const unsigned int &x, const unsigned int &y);
+    static bool haveCityEntry(const std::unordered_map<uint16_t, std::unordered_map<uint16_t, unsigned int> > &positionsAndIndex,
                               const unsigned int &x, const unsigned int &y);
     static bool haveCityPath(const std::unordered_map<uint32_t,std::unordered_map<uint32_t,std::unordered_map<uint32_t,std::unordered_set<uint32_t> > > > &resolvedPath,
                                   const unsigned int &x1, const unsigned int &y1,
                                   const unsigned int &x2, const unsigned int &y2);
+    static Orientation reverseOrientation(const Orientation &orientation);
     static std::vector<City> cities;
+    static std::unordered_map<uint16_t,std::unordered_map<uint16_t,unsigned int> > citiesCoordToIndex;
+    static uint8_t *mapPathDirection;
 };
 
 #endif // LOADMAPALL_H

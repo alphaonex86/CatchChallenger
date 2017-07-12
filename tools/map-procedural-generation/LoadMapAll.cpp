@@ -11,6 +11,8 @@
 #include <iostream>
 
 std::vector<LoadMapAll::City> LoadMapAll::cities;
+std::unordered_map<uint16_t,std::unordered_map<uint16_t,unsigned int> > LoadMapAll::citiesCoordToIndex;
+uint8_t * LoadMapAll::mapPathDirection=NULL;
 
 void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight)
 {
@@ -45,14 +47,61 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
 
         index++;
     }
+
+    Tiled::ObjectGroup *layerRoad=new Tiled::ObjectGroup("Road",0,0,worldMap.width(),worldMap.height());
+    layerRoad->setColor(QColor("#ffcc22"));
+    worldMap.addLayer(layerRoad);
+    const unsigned int w=worldMap.width()/mapWidth;
+    const unsigned int h=worldMap.height()/mapHeight;
+    {
+        unsigned int y=0;
+        while(y<h)
+        {
+            unsigned int x=0;
+            while(x<w)
+            {
+                const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
+                if(zoneOrientation!=0)
+                {
+                    std::string str;
+                    if(zoneOrientation&Orientation_bottom)
+                        str+=" bottom";
+                    if(zoneOrientation&Orientation_top)
+                        str+=" top";
+                    if(zoneOrientation&Orientation_left)
+                        str+=" left";
+                    if(zoneOrientation&Orientation_right)
+                        str+=" right";
+                    QPolygonF poly(QRectF(0,0,mapWidth,mapHeight));
+                    Tiled::MapObject *objectPolygon = new Tiled::MapObject(QString::fromStdString(str),"",QPointF(mapWidth*x,mapHeight*y), QSizeF(0.0,0.0));
+                    objectPolygon->setPolygon(poly);
+                    objectPolygon->setShape(Tiled::MapObject::Polygon);
+                    layerRoad->addObject(objectPolygon);
+                }
+                x++;
+            }
+            y++;
+        }
+    }
 }
 
-bool LoadMapAll::haveCityEntry(const std::unordered_map<uint32_t, std::unordered_map<uint32_t,CityInternal *> > &positionsAndIndex,
+bool LoadMapAll::haveCityEntryInternal(const std::unordered_map<uint32_t,std::unordered_map<uint32_t,CityInternal *> > &positionsAndIndex,
                               const unsigned int &x, const unsigned int &y)
 {
     if(positionsAndIndex.find(x)==positionsAndIndex.cend())
         return false;
     const std::unordered_map<uint32_t,CityInternal *> &subEntry=positionsAndIndex.at(x);
+    if(subEntry.find(y)==subEntry.cend())
+        return false;
+    return true;
+}
+
+bool LoadMapAll::haveCityEntry(const std::unordered_map<uint16_t,std::unordered_map<uint16_t,unsigned int> > &positionsAndIndex,
+                              const unsigned int &x, const unsigned int &y)
+{
+    if(positionsAndIndex.find(x)==positionsAndIndex.cend())
+        return false;
+    const std::unordered_map<uint16_t,unsigned int> &subEntry=positionsAndIndex.at(x);
     if(subEntry.find(y)==subEntry.cend())
         return false;
     return true;
@@ -75,6 +124,22 @@ bool LoadMapAll::haveCityPath(const std::unordered_map<uint32_t,std::unordered_m
     return false;
 }
 
+LoadMapAll::Orientation LoadMapAll::reverseOrientation(const Orientation &orientation)
+{
+    switch (orientation) {
+    case Orientation_bottom:
+            return Orientation_top;
+    case Orientation_top:
+            return Orientation_bottom;
+    case Orientation_left:
+            return Orientation_right;
+    case Orientation_right:
+            return Orientation_left;
+    default:
+        return orientation;
+    }
+}
+
 void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std::vector<std::string> &citiesNames,const unsigned int &w, const unsigned int &h)
 {
     if(grid.empty())
@@ -86,6 +151,15 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
     const unsigned int sWH=singleMapWitdh*singleMapHeight;
 
     uint16_t mapWalkable[w][h];
+    for(unsigned int i = 0; i < h; i++)
+        for(unsigned int j = 0; j < w; j++)
+            mapWalkable[j][i]=0;
+    if(LoadMapAll::mapPathDirection!=NULL)
+        delete LoadMapAll::mapPathDirection;
+    LoadMapAll::mapPathDirection=new uint8_t[w*h];
+    for(unsigned int i = 0; i < h; i++)
+        for(unsigned int j = 0; j < w; j++)
+            mapPathDirection[j+i*w]=0;
     {
         unsigned int y=0;
         while(y<h)
@@ -123,7 +197,7 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
 
         const uint32_t x=centroid.x();
         const uint32_t y=centroid.y();
-        if(!haveCityEntry(positionsAndIndex,x,y))
+        if(!haveCityEntryInternal(positionsAndIndex,x,y))
         {
             CityInternal *city=new CityInternal();
             //do the random value
@@ -161,29 +235,29 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
         if(city->x>0)
         {
             if(city->y>0)
-                if(haveCityEntry(positionsAndIndex,city->x-1,city->y-1))
+                if(haveCityEntryInternal(positionsAndIndex,city->x-1,city->y-1))
                     city->citiesNeighbor.push_back(positionsAndIndex.at(city->x-1).at(city->y-1));
-            if(haveCityEntry(positionsAndIndex,city->x-1,city->y))
+            if(haveCityEntryInternal(positionsAndIndex,city->x-1,city->y))
                 city->citiesNeighbor.push_back(positionsAndIndex.at(city->x-1).at(city->y));
             if(city->y<(h-1))
-                if(haveCityEntry(positionsAndIndex,city->x-1,city->y+1))
+                if(haveCityEntryInternal(positionsAndIndex,city->x-1,city->y+1))
                     city->citiesNeighbor.push_back(positionsAndIndex.at(city->x-1).at(city->y+1));
         }
         if(city->y>0)
-            if(haveCityEntry(positionsAndIndex,city->x,city->y-1))
+            if(haveCityEntryInternal(positionsAndIndex,city->x,city->y-1))
                 city->citiesNeighbor.push_back(positionsAndIndex.at(city->x).at(city->y-1));
         if(city->y<(h-1))
-            if(haveCityEntry(positionsAndIndex,city->x,city->y+1))
+            if(haveCityEntryInternal(positionsAndIndex,city->x,city->y+1))
                 city->citiesNeighbor.push_back(positionsAndIndex.at(city->x).at(city->y+1));
         if(city->x<(w-1))
         {
             if(city->y>0)
-                if(haveCityEntry(positionsAndIndex,city->x+1,city->y-1))
+                if(haveCityEntryInternal(positionsAndIndex,city->x+1,city->y-1))
                     city->citiesNeighbor.push_back(positionsAndIndex.at(city->x+1).at(city->y-1));
-            if(haveCityEntry(positionsAndIndex,city->x+1,city->y))
+            if(haveCityEntryInternal(positionsAndIndex,city->x+1,city->y))
                 city->citiesNeighbor.push_back(positionsAndIndex.at(city->x+1).at(city->y));
             if(city->y<(h-1))
-                if(haveCityEntry(positionsAndIndex,city->x+1,city->y+1))
+                if(haveCityEntryInternal(positionsAndIndex,city->x+1,city->y+1))
                     city->citiesNeighbor.push_back(positionsAndIndex.at(city->x+1).at(city->y+1));
         }
         citiesByNeighbor[city->citiesNeighbor.size()].push_back(city);
@@ -229,6 +303,8 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
         }
     }
     //happen
+    citiesCoordToIndex.clear();
+    cities.clear();
     for(const auto& n:citiesByNeighbor) {
         const std::vector<CityInternal *> &citiesList=n.second;
         unsigned int index=0;
@@ -240,6 +316,7 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
             city.type=cityInternal->type;
             city.x=cityInternal->x;
             city.y=cityInternal->y;
+            citiesCoordToIndex[city.x][city.y]=cities.size();
             cities.push_back(city);
             delete cityInternal;
             index++;
@@ -298,8 +375,6 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                 const MapPointToParse tempPoint=mapPointToParseList.at(0);
                 mapPointToParseList.erase(mapPointToParseList.begin());
                 SimplifiedMapForPathFinding::PathToGo pathToGo;
-                if(haveCityEntry(positionsAndIndex,tempPoint.x,tempPoint.y))
-                    std::cout << "city at " << tempPoint.x << "," << tempPoint.y << std::endl;
                 //resolv the own point
                 int index=0;
                 while(index<1)/*2*/
@@ -415,7 +490,7 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                     #endif
                     tempMap.pathToGo[coord]=pathToGo;
                 }
-                if(haveCityEntry(positionsAndIndex,tempPoint.x,tempPoint.y))
+                if(haveCityEntry(citiesCoordToIndex,tempPoint.x,tempPoint.y) && (tempPoint.x!=city.x || tempPoint.y!=city.y))
                 {
                     std::vector<std::pair<Orientation,uint8_t/*step number*/> > returnedVar;
                     if(returnedVar.empty() || pathToGo.bottom.size()<returnedVar.size())
@@ -441,7 +516,39 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                         {
                             returnedVar.back().second--;
                             if(!haveCityPath(resolvedPath,city.x,city.y,tempPoint.x,tempPoint.y))
+                            {
                                 resolvedPath[city.x][city.y][tempPoint.x].insert(tempPoint.y);
+                                if(haveCityEntry(citiesCoordToIndex,tempPoint.x,tempPoint.y) && (tempPoint.x!=city.x || tempPoint.y!=city.y))
+                                {
+                                    std::cout << "city from " << city.x << "," << city.y << " to " << tempPoint.x << "," << tempPoint.y << std::endl;
+                                    uint16_t x=city.x;
+                                    uint16_t y=city.y;
+                                    unsigned int index=0;
+                                    while(index<returnedVar.size())
+                                    {
+                                        std::pair<Orientation,uint8_t/*step number*/> &returnedLine=returnedVar[index];
+                                        while(returnedLine.second>0)
+                                        {
+                                            mapPathDirection[x+y*w]|=returnedLine.first;
+                                            //change tile
+                                            if(returnedLine.first!=Orientation_none)
+                                            {
+                                                switch(returnedLine.first)
+                                                {
+                                                    case Orientation_bottom:y++;break;
+                                                    case Orientation_top:y--;break;
+                                                    case Orientation_right:x++;break;
+                                                    case Orientation_left:x--;break;
+                                                    default:abort();
+                                                }
+                                                mapPathDirection[x+y*w]|=LoadMapAll::reverseOrientation(returnedLine.first);
+                                                returnedLine.second--;
+                                            }
+                                        }
+                                        index++;
+                                    }
+                                }
+                            }
                             /// \todo the city path
                         }
                     }
@@ -464,7 +571,7 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                             MapPointToParse newPoint=tempPoint;
                             newPoint.x++;
                             if(newPoint.x<maxX)
-                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(positionsAndIndex,newPoint.x,newPoint.y))
+                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
                                 {
                                     std::pair<uint16_t,uint16_t> point(newPoint.x,newPoint.y);
                                     if(tempMap.pointQueued.find(point)==tempMap.pointQueued.cend())
@@ -485,7 +592,7 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                             if(newPoint.x>0)
                             {
                                 newPoint.x--;
-                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(positionsAndIndex,newPoint.x,newPoint.y))
+                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
                                 {
                                     std::pair<uint16_t,uint16_t> point(newPoint.x,newPoint.y);
                                     if(tempMap.pointQueued.find(point)==tempMap.pointQueued.cend())
@@ -506,7 +613,7 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                             MapPointToParse newPoint=tempPoint;
                             newPoint.y++;
                             if(newPoint.y<maxY)
-                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(positionsAndIndex,newPoint.x,newPoint.y))
+                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
                                 {
                                     std::pair<uint16_t,uint16_t> point(newPoint.x,newPoint.y);
                                     if(tempMap.pointQueued.find(point)==tempMap.pointQueued.cend())
@@ -527,7 +634,7 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                             if(newPoint.y>0)
                             {
                                 newPoint.y--;
-                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(positionsAndIndex,newPoint.x,newPoint.y))
+                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
                                 {
                                     std::pair<uint16_t,uint16_t> point(newPoint.x,newPoint.y);
                                     if(tempMap.pointQueued.find(point)==tempMap.pointQueued.cend())
