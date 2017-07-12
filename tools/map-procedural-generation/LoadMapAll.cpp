@@ -81,6 +81,9 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
         return;
     std::vector<CityInternal *> citiesInternal;
     std::unordered_map<uint32_t,std::unordered_map<uint32_t,std::unordered_map<uint32_t,std::unordered_set<uint32_t> > > > resolvedPath;
+    const unsigned int singleMapWitdh=worldMap.width()/w;
+    const unsigned int singleMapHeight=worldMap.height()/h;
+    const unsigned int sWH=singleMapWitdh*singleMapHeight;
 
     uint16_t mapWalkable[w][h];
     {
@@ -91,8 +94,6 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
             while(x<w)
             {
                 unsigned int countWalkable=0;
-                const unsigned int singleMapWitdh=worldMap.width()/w;
-                const unsigned int singleMapHeight=worldMap.height()/h;
                 {
                     Tiled::TileLayer * tileLayer=LoadMap::searchTileLayerByName(worldMap,"Walkable");
                     unsigned int yMap=y*singleMapHeight;
@@ -143,10 +144,8 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
             positionsAndIndex[x][y]=city;
             //count walkable tile
             unsigned int countWalkable=mapWalkable[x][y];
-            const unsigned int singleMapWitdh=worldMap.width()/w;
-            const unsigned int singleMapHeight=worldMap.height()/h;
             //add
-            if(countWalkable*100/(singleMapWitdh*singleMapHeight)>75)
+            if(countWalkable*100/(sWH)>75)
                 citiesInternal.push_back(city);
         }
 
@@ -260,11 +259,11 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
             int maxY=(int)city.y+cityRadius;
             if(minX<0)
                 minX=0;
-            if(maxX>w)
+            if(maxX>(int)w)
                 maxX=w;
             if(minY<0)
                 minY=0;
-            if(maxY>h)
+            if(maxY>(int)h)
                 maxY=h;
 
             //resolv the path
@@ -464,13 +463,13 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                         {
                             MapPointToParse newPoint=tempPoint;
                             newPoint.x++;
-                            if(newPoint.x<tempMap.width)
-                                if(PathFinding::canGoOn(tempMap,newPoint.x,newPoint.y) || (newPoint.x==destination_x && newPoint.y==destination_y))
+                            if(newPoint.x<maxX)
+                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(positionsAndIndex,newPoint.x,newPoint.y))
                                 {
                                     std::pair<uint16_t,uint16_t> point(newPoint.x,newPoint.y);
-                                    if(!tempMap.pointQueued.contains(point))
+                                    if(tempMap.pointQueued.find(point)==tempMap.pointQueued.cend())
                                     {
-                                        tempMap.pointQueued.push_back(point);
+                                        tempMap.pointQueued.insert(point);
                                         mapPointToParseList.push_back(newPoint);
                                     }
                                 }
@@ -486,12 +485,12 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                             if(newPoint.x>0)
                             {
                                 newPoint.x--;
-                                if(PathFinding::canGoOn(tempMap,newPoint.x,newPoint.y) || (newPoint.x==destination_x && newPoint.y==destination_y))
+                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(positionsAndIndex,newPoint.x,newPoint.y))
                                 {
                                     std::pair<uint16_t,uint16_t> point(newPoint.x,newPoint.y);
-                                    if(!tempMap.pointQueued.contains(point))
+                                    if(tempMap.pointQueued.find(point)==tempMap.pointQueued.cend())
                                     {
-                                        tempMap.pointQueued.push_back(point);
+                                        tempMap.pointQueued.insert(point);
                                         mapPointToParseList.push_back(newPoint);
                                     }
                                 }
@@ -506,13 +505,13 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                         {
                             MapPointToParse newPoint=tempPoint;
                             newPoint.y++;
-                            if(newPoint.y<tempMap.height)
-                                if(PathFinding::canGoOn(tempMap,newPoint.x,newPoint.y) || (newPoint.x==destination_x && newPoint.y==destination_y))
+                            if(newPoint.y<maxY)
+                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(positionsAndIndex,newPoint.x,newPoint.y))
                                 {
                                     std::pair<uint16_t,uint16_t> point(newPoint.x,newPoint.y);
-                                    if(!tempMap.pointQueued.contains(point))
+                                    if(tempMap.pointQueued.find(point)==tempMap.pointQueued.cend())
                                     {
-                                        tempMap.pointQueued.push_back(point);
+                                        tempMap.pointQueued.insert(point);
                                         mapPointToParseList.push_back(newPoint);
                                     }
                                 }
@@ -528,12 +527,12 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                             if(newPoint.y>0)
                             {
                                 newPoint.y--;
-                                if(PathFinding::canGoOn(tempMap,newPoint.x,newPoint.y) || (newPoint.x==destination_x && newPoint.y==destination_y))
+                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(positionsAndIndex,newPoint.x,newPoint.y))
                                 {
                                     std::pair<uint16_t,uint16_t> point(newPoint.x,newPoint.y);
-                                    if(!tempMap.pointQueued.contains(point))
+                                    if(tempMap.pointQueued.find(point)==tempMap.pointQueued.cend())
                                     {
-                                        tempMap.pointQueued.push_back(point);
+                                        tempMap.pointQueued.insert(point);
                                         mapPointToParseList.push_back(newPoint);
                                     }
                                 }
