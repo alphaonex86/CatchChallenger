@@ -7,7 +7,8 @@ DEFINES += MAPPROCEDURALGENFULL
 SOURCES += \
     $$PWD/main.cpp \
     SettingsAll.cpp \
-    LoadMapAll.cpp
+    LoadMapAll.cpp \
+    LoadMapCity.cpp
 
 HEADERS += \
     SettingsAll.h \

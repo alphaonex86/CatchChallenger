@@ -140,32 +140,32 @@ LoadMapAll::Orientation LoadMapAll::reverseOrientation(const Orientation &orient
     }
 }
 
-void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std::vector<std::string> &citiesNames,const unsigned int &w, const unsigned int &h)
+void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames, const unsigned int &mapXCount, const unsigned int &mapYCount)
 {
     if(grid.empty())
         return;
     std::vector<CityInternal *> citiesInternal;
     std::unordered_map<uint32_t,std::unordered_map<uint32_t,std::unordered_map<uint32_t,std::unordered_set<uint32_t> > > > resolvedPath;
-    const unsigned int singleMapWitdh=worldMap.width()/w;
-    const unsigned int singleMapHeight=worldMap.height()/h;
+    const unsigned int singleMapWitdh=worldMap.width()/mapXCount;
+    const unsigned int singleMapHeight=worldMap.height()/mapYCount;
     const unsigned int sWH=singleMapWitdh*singleMapHeight;
 
-    uint16_t mapWalkable[w][h];
-    for(unsigned int i = 0; i < h; i++)
-        for(unsigned int j = 0; j < w; j++)
+    uint16_t mapWalkable[mapXCount][mapYCount];
+    for(unsigned int i = 0; i < mapYCount; i++)
+        for(unsigned int j = 0; j < mapXCount; j++)
             mapWalkable[j][i]=0;
     if(LoadMapAll::mapPathDirection!=NULL)
         delete LoadMapAll::mapPathDirection;
-    LoadMapAll::mapPathDirection=new uint8_t[w*h];
-    for(unsigned int i = 0; i < h; i++)
-        for(unsigned int j = 0; j < w; j++)
-            mapPathDirection[j+i*w]=0;
+    LoadMapAll::mapPathDirection=new uint8_t[mapXCount*mapYCount];
+    for(unsigned int i = 0; i < mapYCount; i++)
+        for(unsigned int j = 0; j < mapXCount; j++)
+            mapPathDirection[j+i*mapXCount]=0;
     {
         unsigned int y=0;
-        while(y<h)
+        while(y<mapYCount)
         {
             unsigned int x=0;
-            while(x<w)
+            while(x<mapXCount)
             {
                 unsigned int countWalkable=0;
                 {
@@ -239,24 +239,24 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                     city->citiesNeighbor.push_back(positionsAndIndex.at(city->x-1).at(city->y-1));
             if(haveCityEntryInternal(positionsAndIndex,city->x-1,city->y))
                 city->citiesNeighbor.push_back(positionsAndIndex.at(city->x-1).at(city->y));
-            if(city->y<(h-1))
+            if(city->y<(mapYCount-1))
                 if(haveCityEntryInternal(positionsAndIndex,city->x-1,city->y+1))
                     city->citiesNeighbor.push_back(positionsAndIndex.at(city->x-1).at(city->y+1));
         }
         if(city->y>0)
             if(haveCityEntryInternal(positionsAndIndex,city->x,city->y-1))
                 city->citiesNeighbor.push_back(positionsAndIndex.at(city->x).at(city->y-1));
-        if(city->y<(h-1))
+        if(city->y<(mapYCount-1))
             if(haveCityEntryInternal(positionsAndIndex,city->x,city->y+1))
                 city->citiesNeighbor.push_back(positionsAndIndex.at(city->x).at(city->y+1));
-        if(city->x<(w-1))
+        if(city->x<(mapXCount-1))
         {
             if(city->y>0)
                 if(haveCityEntryInternal(positionsAndIndex,city->x+1,city->y-1))
                     city->citiesNeighbor.push_back(positionsAndIndex.at(city->x+1).at(city->y-1));
             if(haveCityEntryInternal(positionsAndIndex,city->x+1,city->y))
                 city->citiesNeighbor.push_back(positionsAndIndex.at(city->x+1).at(city->y));
-            if(city->y<(h-1))
+            if(city->y<(mapYCount-1))
                 if(haveCityEntryInternal(positionsAndIndex,city->x+1,city->y+1))
                     city->citiesNeighbor.push_back(positionsAndIndex.at(city->x+1).at(city->y+1));
         }
@@ -336,12 +336,12 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
             int maxY=(int)city.y+cityRadius;
             if(minX<0)
                 minX=0;
-            if(maxX>(int)w)
-                maxX=w;
+            if(maxX>(int)mapXCount)
+                maxX=mapXCount;
             if(minY<0)
                 minY=0;
-            if(maxY>(int)h)
-                maxY=h;
+            if(maxY>(int)mapYCount)
+                maxY=mapYCount;
 
             //resolv the path
             std::vector<MapPointToParse> mapPointToParseList;
@@ -529,7 +529,7 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                                         std::pair<Orientation,uint8_t/*step number*/> &returnedLine=returnedVar[index];
                                         while(returnedLine.second>0)
                                         {
-                                            mapPathDirection[x+y*w]|=returnedLine.first;
+                                            mapPathDirection[x+y*mapXCount]|=returnedLine.first;
                                             //change tile
                                             if(returnedLine.first!=Orientation_none)
                                             {
@@ -541,7 +541,7 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
                                                     case Orientation_left:x--;break;
                                                     default:abort();
                                                 }
-                                                mapPathDirection[x+y*w]|=LoadMapAll::reverseOrientation(returnedLine.first);
+                                                mapPathDirection[x+y*mapXCount]|=LoadMapAll::reverseOrientation(returnedLine.first);
                                                 returnedLine.second--;
                                             }
                                         }
@@ -654,4 +654,6 @@ void LoadMapAll::addCity(const Tiled::Map &worldMap,const Grid &grid, const std:
             indexCities++;
         }
     }
+
+    addCityContent(worldMap,mapXCount,mapYCount);
 }

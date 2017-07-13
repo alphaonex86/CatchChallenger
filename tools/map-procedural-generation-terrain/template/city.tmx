@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="24" height="24" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" source="../building-small.tsx"/>
+ <tileset firstgid="1025" source="../terra.tsx"/>
+ <tileset firstgid="2049" source="../animation.tsx"/>
+ <layer name="Walkable" width="24" height="24">
+  <data encoding="base64" compression="zlib">
+   eJw7zcLAcIZG+CwQvwbiNzTCb0fNHzV/1PxR80fNx8AngZiHFT/mZSXffJDbiAGj5o+aT4n53ATSML60TQwAAFqywIU=
+  </data>
+ </layer>
+ <layer name="Collisions" width="24" height="24">
+  <data encoding="base64" compression="zlib">
+   eJzt07UNA0EQRuHRXSXmOsx1mJsxQxdm6MIMXZgh98t9ljYYXbS/9GWrF82K2Nn9X8sVaaODLnqubn9Cb4oZ5lgY9AOOSBAhhBFBFDHn9+2O3h4HHHEy6MfpJJBECmlkkPXoP+g98cIbH4N+jk4eBRRRQhkVj76dnZ+rcr811NFAU/m/9+kNMMQIY+X+kt4Ka2ywVe6f6V1wxQ135b6dv/sCTDskSw==
+  </data>
+ </layer>
+ <layer name="OnGrass" width="24" height="24">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AU4AKsHLQ1X5XG5o+CUTAKRsEowA4ATN8AOw==
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="24" height="24">
+  <data encoding="base64" compression="zlib">
+   eJzt0zkOgDAMBdGfhOWy7IEDs1+DOQASFGkQHumVttxYsr5cH6QBESOm8DwzO2nBig07DpwuzU3OSx4BGXIUKH2a/Zb11yr+u0aDFt2Lf7cs674L19EK8Q==
+  </data>
+ </layer>
+</map>
