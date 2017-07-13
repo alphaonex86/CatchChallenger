@@ -91,6 +91,7 @@ int main(int argc, char *argv[])
                 LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height());
                 LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),0,0,false);
                 qDebug("Add terrain took %d ms", t.elapsed());
+                MapBrush::initialiseMapMask(tiledMap);
                 if(dotransition)
                 {
                     t.start();

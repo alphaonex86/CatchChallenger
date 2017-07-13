@@ -31,7 +31,8 @@ SOURCES += \
     $$PWD/TransitionTerrain.cpp \
     $$PWD/Settings.cpp \
     $$PWD/MapPlants.cpp \
-    $$PWD/MiniMap.cpp
+    $$PWD/MiniMap.cpp \
+    $$PWD/MapBrush.cpp
 
 RESOURCES += \
     $$PWD/resources.qrc
@@ -52,7 +53,8 @@ HEADERS += \
     $$PWD/TransitionTerrain.h \
     $$PWD/Settings.h \
     $$PWD/MapPlants.h \
-    $$PWD/MiniMap.h
+    $$PWD/MiniMap.h \
+    $$PWD/MapBrush.h
 
 LIBS += -lboost_system
 
