@@ -59,9 +59,12 @@ public:
         CityType type;
         std::vector<CityInternal *> citiesNeighbor;
     };
+    static std::vector<City> cities;
+    static std::unordered_map<uint16_t,std::unordered_map<uint16_t,unsigned int> > citiesCoordToIndex;
+    static uint8_t *mapPathDirection;
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
-    static void addCity(const Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames, const unsigned int &w, const unsigned int &h);
+    static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames, const unsigned int &mapXCount, const unsigned int &mapYCount);
     static bool haveCityEntryInternal(const std::unordered_map<uint32_t,std::unordered_map<uint32_t,CityInternal *> > &positionsAndIndex,
                               const unsigned int &x, const unsigned int &y);
     static bool haveCityEntry(const std::unordered_map<uint16_t, std::unordered_map<uint16_t, unsigned int> > &positionsAndIndex,
@@ -70,9 +73,7 @@ public:
                                   const unsigned int &x1, const unsigned int &y1,
                                   const unsigned int &x2, const unsigned int &y2);
     static Orientation reverseOrientation(const Orientation &orientation);
-    static std::vector<City> cities;
-    static std::unordered_map<uint16_t,std::unordered_map<uint16_t,unsigned int> > citiesCoordToIndex;
-    static uint8_t *mapPathDirection;
+    static void addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
 };
 
 #endif // LOADMAPALL_H
