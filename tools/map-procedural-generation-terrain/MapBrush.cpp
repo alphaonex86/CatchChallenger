@@ -131,6 +131,7 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(const Tiled::Map *template
             QFileInfo tilesetFile(tileset->fileName());
             QString tilesetPath=tilesetFile.absoluteFilePath();
             uint8_t templateTilesetWorldIndex=0;
+            //search into current tileset
             while(templateTilesetWorldIndex<worldMap.tilesetCount())
             {
                 Tiled::Tileset * tilesetWorld=worldMap.tilesetAt(templateTilesetWorldIndex);
@@ -143,7 +144,8 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(const Tiled::Map *template
                 }
                 templateTilesetWorldIndex++;
             }
-            if(templateTilesetWorldIndex>=templateMap->tilesetCount())
+            //if not found
+            if(templateTilesetWorldIndex>=worldMap.tilesetCount())
             {
                 QDir templateDir(QCoreApplication::applicationDirPath()+"/dest/template/");
                 const QString &tilesetTemplateRelativePath=templateDir.relativeFilePath(tilesetPath);
@@ -183,7 +185,8 @@ void MapBrush::brushTheMap(Tiled::Map &worldMap,const MapTemplate &selectedTempl
                             if(!cell.isEmpty())
                             {
                                 const unsigned int &tileId=cell.tile->id();
-                                Tiled::Tileset *worldTileset=selectedTemplate.templateTilesetToMapTileset.at(cell.tile->tileset());
+                                Tiled::Tileset *oldTileset=cell.tile->tileset();
+                                Tiled::Tileset *worldTileset=selectedTemplate.templateTilesetToMapTileset.at(oldTileset);
                                 Tiled::Cell cell;
                                 cell.flippedHorizontally=false;
                                 cell.flippedVertically=false;
