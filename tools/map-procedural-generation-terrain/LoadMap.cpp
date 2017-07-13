@@ -431,6 +431,19 @@ unsigned int LoadMap::searchTileIndexByName(const Tiled::Map &tiledMap,const QSt
     abort();
 }
 
+bool LoadMap::haveTileLayer(const Tiled::Map &tiledMap,const QString &name)
+{
+    unsigned int tileLayerIndex=0;
+    while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
+    {
+        Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
+        if(layer->isTileLayer() && layer->name()==name)
+            return true;
+        tileLayerIndex++;
+    }
+    return false;
+}
+
 std::vector<Tiled::Tile *> LoadMap::getTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y)
 {
     std::vector<Tiled::Tile *> tiles;
