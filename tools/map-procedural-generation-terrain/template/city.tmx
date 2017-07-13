@@ -3,19 +3,14 @@
  <tileset firstgid="1" source="../building-small.tsx"/>
  <tileset firstgid="1025" source="../terra.tsx"/>
  <tileset firstgid="2049" source="../animation.tsx"/>
- <layer name="Walkable" width="24" height="24">
+ <layer name="OnGrass" width="24" height="24">
   <data encoding="base64" compression="zlib">
    eJw7zcLAcIZG+CwQvwbiNzTCb0fNHzV/1PxR80fNx8AngZiHFT/mZSXffJDbiAGj5o+aT4n53ATSML60TQwAAFqywIU=
   </data>
  </layer>
  <layer name="Collisions" width="24" height="24">
   <data encoding="base64" compression="zlib">
-   eJzt07UNA0EQRuHRXSXmOsx1mJsxQxdm6MIMXZgh98t9ljYYXbS/9GWrF82K2Nn9X8sVaaODLnqubn9Cb4oZ5lgY9AOOSBAhhBFBFDHn9+2O3h4HHHEy6MfpJJBECmlkkPXoP+g98cIbH4N+jk4eBRRRQhkVj76dnZ+rcr811NFAU/m/9+kNMMQIY+X+kt4Ka2ywVe6f6V1wxQ135b6dv/sCTDskSw==
-  </data>
- </layer>
- <layer name="OnGrass" width="24" height="24">
-  <data encoding="base64" compression="zlib">
-   eJxjYBgFo2AU4AKsHLQ1X5XG5o+CUTAKRsEowA4ATN8AOw==
+   eJzt07cNAkEURdGv3YQ28HXg6wAENIM3XeBNF3jTBd7k3JxFmuBro3nS0SSjG82I2Nn9X8sVaaODLnqubn9Cb4oZ5lgY9IOOSAhhRBBFDHHn9+6O3h4HHHEy6CfoJJFCGhlkkfPoP+g98cIbH4N+nk4BRZQC4Cyj4tG3s/NzVd5vDXU00FT+7316Awwxwli5v6S3whobbJX7Z3oXXHHDXblv5+++crUkUg==
   </data>
  </layer>
  <layer name="WalkBehind" width="24" height="24">

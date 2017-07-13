@@ -26,6 +26,23 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
         abort();
     }
     MapBrush::MapTemplate mapTemplate=MapBrush::tiledMapToMapTemplate(map,worldMap);
+    //reset the auto detection to grab ALL
+    mapTemplate.x=0;
+    mapTemplate.y=0;
+    mapTemplate.width=map->width();
+    mapTemplate.height=map->height();
+    //force collision layer
+    if(LoadMap::haveTileLayer(*map,"Walkable"))
+        mapTemplate.baseLayerIndex=LoadMap::searchTileIndexByName(*map,"Walkable");
+    else if(LoadMap::haveTileLayer(*map,"OnGrass"))
+        mapTemplate.baseLayerIndex=LoadMap::searchTileIndexByName(*map,"OnGrass");
+    //else don nothing
+
+    if(mapTemplate.templateTilesetToMapTileset.empty())
+    {
+        std::cerr << "LoadMapAll::addCityContent(): mapTemplate.templateTilesetToMapTileset.empty()" << std::endl;
+        abort();
+    }
     unsigned int index=0;
     while(index<cities.size())
     {
