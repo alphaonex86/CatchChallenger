@@ -158,7 +158,7 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(const Tiled::Map *template
 }
 
 //brush down/right to the point
-void MapBrush::brushTheMap(Tiled::Map &worldMap,const MapTemplate &selectedTemplate,const int x,const int y,uint8_t * const mapMask)
+void MapBrush::brushTheMap(Tiled::Map &worldMap, const MapTemplate &selectedTemplate, const int x, const int y, uint8_t * const mapMask, const bool &allTileIsMask)
 {
     const Tiled::Map *brush=selectedTemplate.tiledMap;
     unsigned int layerIndex=0;
@@ -193,12 +193,12 @@ void MapBrush::brushTheMap(Tiled::Map &worldMap,const MapTemplate &selectedTempl
                                 cell.flippedAntiDiagonally=false;
                                 cell.tile=worldTileset->tileAt(tileId);
                                 worldLayer->setCell(x_world,y_world,cell);
-                                if(layerIndex==selectedTemplate.baseLayerIndex)
+                                if(layerIndex==selectedTemplate.baseLayerIndex || allTileIsMask)
                                 {
                                     const unsigned int &bitMask=x_world+y_world*worldMap.width();
-                                    const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                                    /*const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
                                     if(bitMask/8>=maxMapSize)
-                                        abort();
+                                        abort();*/
                                     mapMask[bitMask/8]|=(1<<(7-bitMask%8));
                                 }
                             }
