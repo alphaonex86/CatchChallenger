@@ -103,6 +103,10 @@ int main(int argc, char *argv[])
                 LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),0,0,false);
                 qDebug("Add terrain took %d ms", t.elapsed());
                 MapBrush::initialiseMapMask(tiledMap);
+                t.start();
+                LoadMapAll::addCity(tiledMap,gridCity,citiesNames,mapXCount,mapYCount);
+                LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount);
+                qDebug("place cities took %d ms", t.elapsed());
                 if(dotransition)
                 {
                     t.start();
@@ -114,8 +118,8 @@ int main(int argc, char *argv[])
                 TransitionTerrain::mergeDown(tiledMap);
                 qDebug("mergeDown took %d ms", t.elapsed());
                 t.start();
-                LoadMapAll::addCity(tiledMap,gridCity,citiesNames,mapXCount,mapYCount);
-                qDebug("place cities took %d ms", t.elapsed());
+                LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount);
+                qDebug("add city content took %d ms", t.elapsed());
                 TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
             if(displaycity)

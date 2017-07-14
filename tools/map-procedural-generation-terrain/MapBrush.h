@@ -21,7 +21,7 @@ public:
     static void initialiseMapMask(Tiled::Map &worldMap);
     static bool detectBorder(Tiled::TileLayer *layer,MapTemplate *templateMap);
     static MapTemplate tiledMapToMapTemplate(const Tiled::Map *templateMap,Tiled::Map &worldMap);
-    static void brushTheMap(Tiled::Map &worldMap,const MapTemplate &selectedTemplate,const int x,const int y,uint8_t * const mapMask);
+    static void brushTheMap(Tiled::Map &worldMap, const MapTemplate &selectedTemplate, const int x, const int y, uint8_t * const mapMask, const bool &allTileIsMask=false);
     static bool brushHaveCollision(Tiled::Map &worldMap,const MapTemplate &selectedTemplate,const int x,const int y,const uint8_t * const mapMask);
 
 };

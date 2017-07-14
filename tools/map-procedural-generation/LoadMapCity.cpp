@@ -52,7 +52,108 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
         const uint32_t y=city.y;
         const uint8_t xoffset=(mapWidth-map->width())/2;
         const uint8_t yoffset=(mapHeight-map->height())/2;
-        MapBrush::brushTheMap(worldMap,mapTemplate,x*mapWidth+xoffset,y*mapHeight+yoffset,MapBrush::mapMask);
+        MapBrush::brushTheMap(worldMap,mapTemplate,x*mapWidth+xoffset,y*mapHeight+yoffset,MapBrush::mapMask,true);
         index++;
     }
+
+    //do the path
+    const unsigned int w=worldMap.width()/mapWidth;
+    const unsigned int h=worldMap.height()/mapHeight;
+    {
+        unsigned int y=0;
+        while(y<h)
+        {
+            unsigned int x=0;
+            while(x<w)
+            {
+                const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
+                if(zoneOrientation!=0)
+                {
+                    if(zoneOrientation&Orientation_bottom)
+                    {
+                        const unsigned int minX=x*mapWidth+mapWidth/2-2;
+                        const unsigned int maxX=x*mapWidth+mapWidth/2+2;
+                        unsigned int yTile=y*mapHeight+mapHeight/2;
+                        while(yTile<(y+1)*mapHeight)
+                        {
+                            unsigned int xTile=minX;
+                            while(xTile<maxX)
+                            {
+                                const unsigned int &bitMask=xTile+yTile*worldMap.width();
+                                const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                                if(bitMask/8>=maxMapSize)
+                                    abort();
+                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                xTile++;
+                            }
+                            yTile++;
+                        }
+                    }
+                    if(zoneOrientation&Orientation_top)
+                    {
+                        const unsigned int minX=x*mapWidth+mapWidth/2-2;
+                        const unsigned int maxX=x*mapWidth+mapWidth/2+2;
+                        unsigned int yTile=y*mapHeight;
+                        while(yTile<y*mapHeight+mapHeight/2)
+                        {
+                            unsigned int xTile=minX;
+                            while(xTile<maxX)
+                            {
+                                const unsigned int &bitMask=xTile+yTile*worldMap.width();
+                                const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                                if(bitMask/8>=maxMapSize)
+                                    abort();
+                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                xTile++;
+                            }
+                            yTile++;
+                        }
+                    }
+                    if(zoneOrientation&Orientation_left)
+                    {
+                        const unsigned int minX=x*mapWidth;
+                        const unsigned int maxX=x*mapWidth+mapWidth/2;
+                        unsigned int yTile=y*mapHeight+mapHeight/2-2;
+                        while(yTile<y*mapHeight+mapHeight/2+2)
+                        {
+                            unsigned int xTile=minX;
+                            while(xTile<maxX)
+                            {
+                                const unsigned int &bitMask=xTile+yTile*worldMap.width();
+                                const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                                if(bitMask/8>=maxMapSize)
+                                    abort();
+                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                xTile++;
+                            }
+                            yTile++;
+                        }
+                    }
+                    if(zoneOrientation&Orientation_right)
+                    {
+                        const unsigned int minX=x*mapWidth+mapWidth/2;
+                        const unsigned int maxX=(x+1)*mapWidth;
+                        unsigned int yTile=y*mapHeight+mapHeight/2-2;
+                        while(yTile<y*mapHeight+mapHeight/2+2)
+                        {
+                            unsigned int xTile=minX;
+                            while(xTile<maxX)
+                            {
+                                const unsigned int &bitMask=xTile+yTile*worldMap.width();
+                                const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                                if(bitMask/8>=maxMapSize)
+                                    abort();
+                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                xTile++;
+                            }
+                            yTile++;
+                        }
+                    }
+                }
+                x++;
+            }
+            y++;
+        }
+    }
+    delete map;
 }
