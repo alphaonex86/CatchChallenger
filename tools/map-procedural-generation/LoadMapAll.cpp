@@ -169,14 +169,20 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             {
                 unsigned int countWalkable=0;
                 {
-                    Tiled::TileLayer * tileLayer=LoadMap::searchTileLayerByName(worldMap,"Walkable");
+                    //Tiled::TileLayer * tileLayer=LoadMap::searchTileLayerByName(worldMap,"Walkable");
                     unsigned int yMap=y*singleMapHeight;
                     while(yMap<(y*singleMapHeight+singleMapHeight))
                     {
                         unsigned int xMap=x*singleMapWitdh;
                         while(xMap<(x*singleMapWitdh+singleMapWitdh))
                         {
+                            const VoronioForTiledMapTmx::PolygonZone &polygonZone=VoronioForTiledMapTmx::voronoiMap.zones.at(
+                                        VoronioForTiledMapTmx::voronoiMap.tileToPolygonZoneIndex[x+y*singleMapWitdh].index
+                                    );
+                            /*
                             if(tileLayer->cellAt(xMap,yMap).tile!=NULL)
+                                countWalkable++;walkable not fill at this call*/
+                            if(polygonZone.height>0)
                                 countWalkable++;
                             xMap++;
                         }
@@ -654,6 +660,4 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             indexCities++;
         }
     }
-
-    addCityContent(worldMap,mapXCount,mapYCount);
 }
