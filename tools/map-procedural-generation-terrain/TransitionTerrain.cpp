@@ -1,4 +1,5 @@
 #include "TransitionTerrain.h"
+#include "MapBrush.h"
 
 #include <iostream>
 
@@ -111,7 +112,8 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap)
                 while(x<w)
                 {
                     const bool innerBool=!XORop && (terrainLayer->cellAt(x,y).tile==terrain.tile);
-                    const bool outerBool=XORop && terrainLayer->cellAt(x,y).tile!=terrain.tile;
+                    const unsigned int &bitMask=x+y*w;
+                    const bool outerBool=XORop && terrainLayer->cellAt(x,y).tile!=terrain.tile && !(MapBrush::mapMask[bitMask/8] & (1<<(7-bitMask%8)));
                     if(
                             //inner
                             innerBool ||
@@ -381,8 +383,6 @@ void TransitionTerrain::mergeDown(Tiled::Map &tiledMap)
                         }
                         Tiled::TileLayer * tileLayer=static_cast<Tiled::TileLayer *>(tiledMap.layerAt(tileLayerIndexTemp));
                         tileLayer->setCell(x,y,cell);
-                        /*if(x==11 && y==3)
-                            std::cout << "x==11 && y==3 tag " << terrainName.toStdString() << " at " << tileLayer->name().toStdString() << std::endl;*/
                     }
                     x++;
                 }
@@ -425,7 +425,7 @@ void TransitionTerrain::addTransitionGroupOnMap(Tiled::Map &tiledMap)
             }
         }
 
-    //inner border
+    //outer border
     {
         unsigned int index=0;
         while(index<(unsigned int)LoadMap::groupedTerrainList.size())
@@ -439,100 +439,104 @@ void TransitionTerrain::addTransitionGroupOnMap(Tiled::Map &tiledMap)
                 while(x<w)
                 {
                     const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+y*w].index);
-                    if(zone.height<groupedTerrain.height)
+                    const unsigned int &bitMask=x+y*w;
+                    if(!(MapBrush::mapMask[bitMask/8] & (1<<(7-bitMask%8))))
                     {
-                        //check the near tile and determine what transition use
-                        uint8_t to_type_match=0;//9 bits used-1=8bit, the center bit is the current tile
-                        if(x>0 && y>0)
+                        if(zone.height<groupedTerrain.height)
                         {
-                            const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x-1+(y-1)*w].index);
-                            if(zone.height>=groupedTerrain.height)
-                                to_type_match|=1;
-                        }
-                        if(y>0)
-                        {
-                            const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+(y-1)*w].index);
-                            if(zone.height>=groupedTerrain.height)
-                                to_type_match|=2;
-                        }
-                        if(x<(w-1) && y>0)
-                        {
-                            const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+1+(y-1)*w].index);
-                            if(zone.height>=groupedTerrain.height)
-                                to_type_match|=4;
-                        }
-                        if(x>0)
-                        {
-                            const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x-1+y*w].index);
-                            if(zone.height>=groupedTerrain.height)
-                                to_type_match|=8;
-                        }
-                        if(x<(w-1))
-                        {
-                            const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+1+y*w].index);
-                            if(zone.height>=groupedTerrain.height)
-                                to_type_match|=16;
-                        }
-                        if(x>0 && y<(h-1))
-                        {
-                            const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x-1+(y+1)*w].index);
-                            if(zone.height>=groupedTerrain.height)
-                                to_type_match|=32;
-                        }
-                        if(y<(h-1))
-                        {
-                            const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+(y+1)*w].index);
-                            if(zone.height>=groupedTerrain.height)
-                                to_type_match|=64;
-                        }
-                        if(x<(w-1) && y<(h-1))
-                        {
-                            const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+1+(y+1)*w].index);
-                            if(zone.height>=groupedTerrain.height)
-                                to_type_match|=128;
-                        }
-
-                        if(to_type_match!=0)
-                        {
-                            unsigned int indexTile=0;
-
-                            if(to_type_match&2)
+                            //check the near tile and determine what transition use
+                            uint8_t to_type_match=0;//9 bits used-1=8bit, the center bit is the current tile
+                            if(x>0 && y>0)
                             {
-                                if(to_type_match&8)
-                                    indexTile=8;
-                                else if(to_type_match&16)
-                                    indexTile=9;
-                                else
-                                    indexTile=5;
+                                const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x-1+(y-1)*w].index);
+                                if(zone.height>=groupedTerrain.height)
+                                    to_type_match|=1;
                             }
-                            else if(to_type_match&64)
+                            if(y>0)
                             {
-                                if(to_type_match&8)
-                                    indexTile=11;
-                                else if(to_type_match&16)
-                                    indexTile=10;
-                                else
-                                    indexTile=1;
+                                const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+(y-1)*w].index);
+                                if(zone.height>=groupedTerrain.height)
+                                    to_type_match|=2;
                             }
-                            else if(to_type_match&8)
-                                indexTile=3;
-                            else if(to_type_match&16)
-                                indexTile=7;
-                            else if(to_type_match&128)
-                                indexTile=0;
-                            else if(to_type_match&32)
-                                indexTile=2;
-                            else if(to_type_match&1)
-                                indexTile=4;
-                            else if(to_type_match&4)
-                                indexTile=6;
+                            if(x<(w-1) && y>0)
+                            {
+                                const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+1+(y-1)*w].index);
+                                if(zone.height>=groupedTerrain.height)
+                                    to_type_match|=4;
+                            }
+                            if(x>0)
+                            {
+                                const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x-1+y*w].index);
+                                if(zone.height>=groupedTerrain.height)
+                                    to_type_match|=8;
+                            }
+                            if(x<(w-1))
+                            {
+                                const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+1+y*w].index);
+                                if(zone.height>=groupedTerrain.height)
+                                    to_type_match|=16;
+                            }
+                            if(x>0 && y<(h-1))
+                            {
+                                const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x-1+(y+1)*w].index);
+                                if(zone.height>=groupedTerrain.height)
+                                    to_type_match|=32;
+                            }
+                            if(y<(h-1))
+                            {
+                                const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+(y+1)*w].index);
+                                if(zone.height>=groupedTerrain.height)
+                                    to_type_match|=64;
+                            }
+                            if(x<(w-1) && y<(h-1))
+                            {
+                                const vd::PolygonZone &zone=vd::voronoiMap.zones.at(vd::voronoiMap.tileToPolygonZoneIndex[x+1+(y+1)*w].index);
+                                if(zone.height>=groupedTerrain.height)
+                                    to_type_match|=128;
+                            }
 
-                            Tiled::Cell cell;
-                            cell.tile=groupedTerrain.transition_tile.at(indexTile);
-                            cell.flippedHorizontally=false;
-                            cell.flippedVertically=false;
-                            cell.flippedAntiDiagonally=false;
-                            transitionLayer->setCell(x,y,cell);
+                            if(to_type_match!=0)
+                            {
+                                unsigned int indexTile=0;
+
+                                if(to_type_match&2)
+                                {
+                                    if(to_type_match&8)
+                                        indexTile=8;
+                                    else if(to_type_match&16)
+                                        indexTile=9;
+                                    else
+                                        indexTile=5;
+                                }
+                                else if(to_type_match&64)
+                                {
+                                    if(to_type_match&8)
+                                        indexTile=11;
+                                    else if(to_type_match&16)
+                                        indexTile=10;
+                                    else
+                                        indexTile=1;
+                                }
+                                else if(to_type_match&8)
+                                    indexTile=3;
+                                else if(to_type_match&16)
+                                    indexTile=7;
+                                else if(to_type_match&128)
+                                    indexTile=0;
+                                else if(to_type_match&32)
+                                    indexTile=2;
+                                else if(to_type_match&1)
+                                    indexTile=4;
+                                else if(to_type_match&4)
+                                    indexTile=6;
+
+                                Tiled::Cell cell;
+                                cell.tile=groupedTerrain.transition_tile.at(indexTile);
+                                cell.flippedHorizontally=false;
+                                cell.flippedVertically=false;
+                                cell.flippedAntiDiagonally=false;
+                                transitionLayer->setCell(x,y,cell);
+                            }
                         }
                     }
                     x++;
