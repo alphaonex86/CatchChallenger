@@ -37,10 +37,10 @@
 
 using namespace Tiled;
 
-QString Map::text_unknown=QLatin1Literal("unknown");
-QString Map::text_orthogonal=QLatin1Literal("orthogonal");
-QString Map::text_isometric=QLatin1Literal("isometric");
-QString Map::text_staggered=QLatin1Literal("staggered");
+QString Map::text_unknown="unknown";
+QString Map::text_orthogonal="orthogonal";
+QString Map::text_isometric="isometric";
+QString Map::text_staggered="staggered";
 
 Map::Map(Orientation orientation,
          int width, int height, int tileWidth, int tileHeight):
