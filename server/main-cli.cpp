@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 
     QCoreApplication a(argc, argv);
 
-    QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/informations.xml"));
+    QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/informations.xml"));
     if(!datapackFolder.isFile())
     {
         qDebug() << "No datapack found into: " << datapackFolder.absoluteFilePath();
