@@ -11,6 +11,8 @@
 
 language: cpp
 dist: xenial
+notifications:
+  email: false
 
 os:
   - linux
