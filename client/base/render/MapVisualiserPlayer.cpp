@@ -13,13 +13,13 @@
 #include <QMessageBox>
 #include <QDebug>
 
-QString MapVisualiserPlayer::text_slashtrainerpng=QLatin1Literal("/trainer.png");
-QString MapVisualiserPlayer::text_slash=QLatin1Literal("/");
-QString MapVisualiserPlayer::text_antislash=QLatin1Literal("\\");
-QString MapVisualiserPlayer::text_dotpng=QLatin1Literal(".png");
-QString MapVisualiserPlayer::text_type=QLatin1Literal("type");
-QString MapVisualiserPlayer::text_zone=QLatin1Literal("zone");
-QString MapVisualiserPlayer::text_backgroundsound=QLatin1Literal("backgroundsound");
+QString MapVisualiserPlayer::text_slashtrainerpng=QStringLiteral("/trainer.png");
+QString MapVisualiserPlayer::text_slash=QStringLiteral("/");
+QString MapVisualiserPlayer::text_antislash=QStringLiteral("\\");
+QString MapVisualiserPlayer::text_dotpng=QStringLiteral(".png");
+QString MapVisualiserPlayer::text_type=QStringLiteral("type");
+QString MapVisualiserPlayer::text_zone=QStringLiteral("zone");
+QString MapVisualiserPlayer::text_backgroundsound=QStringLiteral("backgroundsound");
 
 /* why send the look at because blocked into the wall?
 to be sync if connexion is stop, but use more bandwith
@@ -66,7 +66,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
     stepAlternance=false;
-    animationTileset=new Tiled::Tileset(QLatin1Literal("animation"),16,16);
+    animationTileset=new Tiled::Tileset(QStringLiteral("animation"),16,16);
     nextCurrentObject=new Tiled::MapObject();
     grassCurrentObject=new Tiled::MapObject();
     grassCurrentObject->setName("grassCurrentObject");
@@ -78,7 +78,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     grassCurrentObject->setName("playerMapObject");
 
     lastTileset=defaultTileset;
-    playerTileset = new Tiled::Tileset(QLatin1Literal("player"),16,24);
+    playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
     playerTilesetCache[lastTileset]=playerTileset;
 
     lastAction.restart();
@@ -1230,7 +1230,7 @@ void MapVisualiserPlayer::resetAll()
         playerTilesetCache.clear();
     }
     lastTileset=defaultTileset;
-    playerTileset = new Tiled::Tileset(QLatin1Literal("player"),16,24);
+    playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
     playerTilesetCache[lastTileset]=playerTileset;
 }
 

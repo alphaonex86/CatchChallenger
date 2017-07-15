@@ -37,10 +37,10 @@
 
 using namespace CatchChallenger;
 
-QString BaseWindow::text_type=QLatin1Literal("type");
-QString BaseWindow::text_lang=QLatin1Literal("lang");
-QString BaseWindow::text_en=QLatin1Literal("en");
-QString BaseWindow::text_text=QLatin1Literal("text");
+QString BaseWindow::text_type=QStringLiteral("type");
+QString BaseWindow::text_lang=QStringLiteral("lang");
+QString BaseWindow::text_en=QStringLiteral("en");
+QString BaseWindow::text_text=QStringLiteral("text");
 QFile BaseWindow::debugFile;
 uint8_t BaseWindow::debugFileStatus=0;
 

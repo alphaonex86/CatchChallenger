@@ -380,7 +380,7 @@ void GlobalControler::datapackIsReady()
                 {
                     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());
                     //load the skins list
-                    QDir dir(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/skin/fighter/"));
+                    QDir dir(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/skin/fighter/"));
                     skinsList=dir.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
                 }
 
