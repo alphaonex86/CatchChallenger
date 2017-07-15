@@ -46,6 +46,7 @@
 #include <QFileInfo>
 #include <QVector>
 #include <QXmlStreamReader>
+#include <QString>
 
 using namespace Tiled;
 using namespace Tiled::Internal;

@@ -44,6 +44,7 @@
 #include <QBuffer>
 #include <QDir>
 #include <QXmlStreamWriter>
+#include <QString>
 
 using namespace Tiled;
 using namespace Tiled::Internal;
