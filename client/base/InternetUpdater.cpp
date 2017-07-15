@@ -97,7 +97,7 @@ void InternetUpdater::httpFinished()
         return;
     }
     newVersion.remove("\n");
-    if(!newVersion.contains(QRegularExpression(QLatin1Literal("^[0-9]+(\\.[0-9]+)+$"))))
+    if(!newVersion.contains(QRegularExpression(QStringLiteral("^[0-9]+(\\.[0-9]+)+$"))))
     {
         qDebug() << (QStringLiteral("version string don't match: %1").arg(newVersion));
         reply->deleteLater();

@@ -6,21 +6,21 @@
 #include "../../../general/base/CommonSettingsServer.h"
 #include "../../../general/base/GeneralStructures.h"
 
-QString MapController::text_random=QLatin1Literal("random");
-QString MapController::text_loop=QLatin1Literal("loop");
-QString MapController::text_move=QLatin1Literal("move");
-QString MapController::text_left=QLatin1Literal("left");
-QString MapController::text_right=QLatin1Literal("right");
-QString MapController::text_top=QLatin1Literal("top");
-QString MapController::text_bottom=QLatin1Literal("bottom");
-QString MapController::text_slash=QLatin1Literal("/");
-QString MapController::text_type=QLatin1Literal("type");
-QString MapController::text_fightRange=QLatin1Literal("fightRange");
-QString MapController::text_fight=QLatin1Literal("fight");
-QString MapController::text_fightid=QLatin1Literal("fightid");
-QString MapController::text_bot=QLatin1Literal("bot");
-QString MapController::text_slashtrainerpng=QLatin1Literal("/trainer.png");
-QString MapController::text_DATAPACK_BASE_PATH_SKIN=QLatin1Literal(DATAPACK_BASE_PATH_SKIN);
+QString MapController::text_random=QStringLiteral("random");
+QString MapController::text_loop=QStringLiteral("loop");
+QString MapController::text_move=QStringLiteral("move");
+QString MapController::text_left=QStringLiteral("left");
+QString MapController::text_right=QStringLiteral("right");
+QString MapController::text_top=QStringLiteral("top");
+QString MapController::text_bottom=QStringLiteral("bottom");
+QString MapController::text_slash=QStringLiteral("/");
+QString MapController::text_type=QStringLiteral("type");
+QString MapController::text_fightRange=QStringLiteral("fightRange");
+QString MapController::text_fight=QStringLiteral("fight");
+QString MapController::text_fightid=QStringLiteral("fightid");
+QString MapController::text_bot=QStringLiteral("bot");
+QString MapController::text_slashtrainerpng=QStringLiteral("/trainer.png");
+QString MapController::text_DATAPACK_BASE_PATH_SKIN=QStringLiteral(DATAPACK_BASE_PATH_SKIN);
 
 #define IMAGEOVERSIZEWITDH 800*2*2
 #define IMAGEOVERSIZEHEIGHT 600*2*2
@@ -362,7 +362,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         //add flags
         if(botFlags==NULL)
         {
-            botFlags=new Tiled::Tileset(QLatin1Literal("botflags"),16,16);
+            botFlags=new Tiled::Tileset(QStringLiteral("botflags"),16,16);
             botFlags->loadFromImage(QImage(QStringLiteral(":/images/flags.png")),QStringLiteral(":/images/flags.png"));
             TemporaryTile::empty=botFlags->tileAt(15);
         }

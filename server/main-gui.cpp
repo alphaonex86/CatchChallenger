@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
     CatchChallenger::GlobalServerData::serverSettings.datapack_basePath=CatchChallenger::FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/";
 
-    QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/informations.xml"));
+    QFileInfo datapackFolder(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/informations.xml"));
     if(!datapackFolder.isFile())
     {
         QMessageBox::critical(NULL,"Critical error",QString("No datapack found, look at file: ")+datapackFolder.absoluteFilePath());

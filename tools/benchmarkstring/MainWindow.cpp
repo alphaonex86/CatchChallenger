@@ -118,9 +118,9 @@ void MainWindow::on_pushButton_2_clicked()
         quint64 index=0;
         while(index<6553500)
         {
-            if(testString!=QLatin1String("test bis"))
+            if(testString!=QStringLiteral("test bis"))
             {}
-            if(testString==QLatin1String("test bis"))
+            if(testString==QStringLiteral("test bis"))
             {}
             index++;
         }
@@ -132,7 +132,7 @@ void MainWindow::on_pushButton_2_clicked()
         quint64 index=0;
         while(index<6553500)
         {
-            item.hasAttribute(QLatin1String("test bis"));
+            item.hasAttribute(QStringLiteral("test bis"));
             index++;
         }
         times << QString("QDomElement::hasAttribute(): %1ms").arg(time.elapsed());
@@ -143,7 +143,7 @@ void MainWindow::on_pushButton_2_clicked()
         quint64 index=0;
         while(index<6553500)
         {
-            testString+QLatin1String("test bis");
+            testString+QStringLiteral("test bis");
             index++;
         }
         times << QString("concat by +: %1ms").arg(time.elapsed());
@@ -154,7 +154,7 @@ void MainWindow::on_pushButton_2_clicked()
         quint64 index=0;
         while(index<6553500)
         {
-            testString.replace(QLatin1String("test bis"),testString);
+            testString.replace(QStringLiteral("test bis"),testString);
             index++;
         }
         times << QString("replace format to QString: %1ms").arg(time.elapsed());
@@ -165,7 +165,7 @@ void MainWindow::on_pushButton_2_clicked()
         quint64 index=0;
         while(index<6553500)
         {
-            testString.replace(QLatin1String("test bis"),QLatin1String("test bis2"));
+            testString.replace(QStringLiteral("test bis"),QStringLiteral("test bis2"));
             index++;
         }
         times << QString("replace format to format: %1ms").arg(time.elapsed());
@@ -177,7 +177,7 @@ void MainWindow::on_pushButton_2_clicked()
         quint64 index=0;
         while(index<6553500)
         {
-            testString.replace(s,QLatin1String("test bis2"));
+            testString.replace(s,QStringLiteral("test bis2"));
             index++;
         }
         times << QString("search remplace string to format: %1ms").arg(time.elapsed());
@@ -186,7 +186,7 @@ void MainWindow::on_pushButton_2_clicked()
         times << QString("search remplace format to string: NA");
     }
 
-    qDebug() << QString("QLatin1String: \n%1").arg(times.join("\n"));
+    qDebug() << QString("QStringLiteral: \n%1").arg(times.join("\n"));
 }
 
 void MainWindow::on_pushButton_3_clicked()
@@ -291,9 +291,9 @@ void MainWindow::on_pushButton_4_clicked()
         quint64 index=0;
         while(index<6553500)
         {
-            if(testString!=QLatin1Literal("test bis"))
+            if(testString!=QStringLiteral("test bis"))
             {}
-            if(testString==QLatin1Literal("test bis"))
+            if(testString==QStringLiteral("test bis"))
             {}
             index++;
         }
@@ -305,7 +305,7 @@ void MainWindow::on_pushButton_4_clicked()
         quint64 index=0;
         while(index<6553500)
         {
-            item.hasAttribute(QLatin1Literal("test bis"));
+            item.hasAttribute(QStringLiteral("test bis"));
             index++;
         }
         times << QString("QDomElement::hasAttribute(): %1ms").arg(time.elapsed());
@@ -316,7 +316,7 @@ void MainWindow::on_pushButton_4_clicked()
         quint64 index=0;
         while(index<6553500)
         {
-            testString+QLatin1Literal("test bis");
+            testString+QStringLiteral("test bis");
             index++;
         }
         times << QString("concat by +: %1ms").arg(time.elapsed());
@@ -327,7 +327,7 @@ void MainWindow::on_pushButton_4_clicked()
         quint64 index=0;
         while(index<6553500)
         {
-            testString.replace(QLatin1Literal("test bis"),testString);
+            testString.replace(QStringLiteral("test bis"),testString);
             index++;
         }
         times << QString("replace format to QString: %1ms").arg(time.elapsed());
@@ -338,7 +338,7 @@ void MainWindow::on_pushButton_4_clicked()
         quint64 index=0;
         while(index<6553500)
         {
-            testString.replace(QLatin1Literal("test bis"),QLatin1Literal("test bis2"));
+            testString.replace(QStringLiteral("test bis"),QStringLiteral("test bis2"));
             index++;
         }
         times << QString("replace format to format: %1ms").arg(time.elapsed());
@@ -350,7 +350,7 @@ void MainWindow::on_pushButton_4_clicked()
         quint64 index=0;
         while(index<6553500)
         {
-            testString.replace(s,QLatin1Literal("test bis2"));
+            testString.replace(s,QStringLiteral("test bis2"));
             index++;
         }
         times << QString("search remplace string to format: %1ms").arg(time.elapsed());
@@ -359,7 +359,7 @@ void MainWindow::on_pushButton_4_clicked()
         times << QString("search remplace format to string: NA");
     }
 
-    qDebug() << QString("QLatin1Literal: \n%1").arg(times.join("\n"));
+    qDebug() << QString("QStringLiteral: \n%1").arg(times.join("\n"));
 }
 
 void MainWindow::on_pushButton_5_clicked()

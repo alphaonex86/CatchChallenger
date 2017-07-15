@@ -118,7 +118,7 @@ void Client::internalBattleCanceled(const bool &send)
 {
     if(otherPlayerBattle==NULL)
     {
-        //normalOutput(QLatin1String("Battle already canceled"));
+        //normalOutput(QStringLiteral("Battle already canceled"));
         return;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE

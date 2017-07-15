@@ -16,7 +16,7 @@ ProcessControler::ProcessControler()
     need_be_restarted=false;
     need_be_closed=false;
 
-    settings=new TinyXMLSettings((QCoreApplication::applicationDirPath()+QLatin1Literal("/server-properties.xml")).toStdString());
+    settings=new TinyXMLSettings((QCoreApplication::applicationDirPath()+QStringLiteral("/server-properties.xml")).toStdString());
     NormalServer::checkSettingsFile(settings,FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/");
     send_settings();
     server.start_server();

@@ -22,8 +22,8 @@ using namespace CatchChallenger;
 
 //need host + port here to have datapack base
 
-QString Api_client_real::text_slash=QLatin1Literal("/");
-QString Api_client_real::text_dotcoma=QLatin1Literal(";");
+QString Api_client_real::text_slash=QStringLiteral("/");
+QString Api_client_real::text_dotcoma=QStringLiteral(";");
 QRegularExpression Api_client_real::regex_DATAPACK_FILE_REGEX=QRegularExpression(DATAPACK_FILE_REGEX);
 std::regex Api_client_real::excludePathBase("^map[/\\\\]main[/\\\\]");
 std::regex Api_client_real::excludePathMain("^sub[/\\\\]");
@@ -41,7 +41,7 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     index_mirror_base=0;
     index_mirror_main=0;
     index_mirror_sub=0;
-    host=QLatin1Literal("localhost");
+    host=QStringLiteral("localhost");
     port=42489;
     connect(socket, &ConnectedSocket::disconnected,	this,&Api_client_real::disconnected);
     connect(this,   &Api_client_real::newFileBase,      this,&Api_client_real::writeNewFileBase);

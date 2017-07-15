@@ -133,7 +133,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
                         {
                             if(fightCollisionBot==NULL)
                             {
-                                fightCollisionBot=new Tiled::Tileset(QLatin1Literal("fightCollisionBot"),16,16);
+                                fightCollisionBot=new Tiled::Tileset(QStringLiteral("fightCollisionBot"),16,16);
                                 fightCollisionBot->loadFromImage(QImage(QStringLiteral(":/images/fightCollisionBot.png")),QStringLiteral(":/images/fightCollisionBot.png"));
                             }
                         }

@@ -22,7 +22,7 @@ MainClass::MainClass()
     int index=1;
     while(index<arguments.size())
     {
-        if(arguments.at(index)==QLatin1Literal("--help"))
+        if(arguments.at(index)==QStringLiteral("--help"))
         {
             help();
             QCoreApplication::exit(1);
@@ -35,17 +35,17 @@ MainClass::MainClass()
             QCoreApplication::exit(1);
             return;
         }
-        if(arguments.at(index)==QLatin1Literal("--login"))
+        if(arguments.at(index)==QStringLiteral("--login"))
             login=arguments.at(index+1);
-        else if(arguments.at(index)==QLatin1Literal("--pass"))
+        else if(arguments.at(index)==QStringLiteral("--pass"))
             pass=arguments.at(index+1);
-        else if(arguments.at(index)==QLatin1Literal("--proxy"))
+        else if(arguments.at(index)==QStringLiteral("--proxy"))
             proxy=arguments.at(index+1);
-        else if(arguments.at(index)==QLatin1Literal("--proxy_port"))
+        else if(arguments.at(index)==QStringLiteral("--proxy_port"))
             proxy_port=arguments.at(index+1);
-        else if(arguments.at(index)==QLatin1Literal("--host"))
+        else if(arguments.at(index)==QStringLiteral("--host"))
             host=arguments.at(index+1);
-        else if(arguments.at(index)==QLatin1Literal("--port"))
+        else if(arguments.at(index)==QStringLiteral("--port"))
             port=arguments.at(index+1);
         else
         {
@@ -74,7 +74,7 @@ MainClass::MainClass()
         return;
     }
     if(port.isEmpty())
-        port=QLatin1Literal("42489");
+        port=QStringLiteral("42489");
     if(login.size()<3)
     {
         qDebug() << "Login need be longer";
@@ -117,7 +117,7 @@ MainClass::MainClass()
     client.api=new CatchChallenger::Api_client_real(client.socket,false);
     client.sslSocket->ignoreSslErrors();
     client.sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
-    client.api->setDatapackPath(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/"));
+    client.api->setDatapackPath(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"));
     connect(client.sslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainClass::sslErrors,Qt::QueuedConnection);
     connect(client.api,&CatchChallenger::Api_client_real::logged,                   this,&MainClass::logged);
     connect(client.api,&CatchChallenger::Api_client_real::newError,                 this,&MainClass::newError);
