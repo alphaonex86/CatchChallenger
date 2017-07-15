@@ -28,7 +28,11 @@ addons:
       - qt-sdk
       - qt5-qmake
       - qt5-default
-
+      - qml-module-qtquick2
+      - libqt5network5
+      - libqt5sql5-sqlite
+      - libqt5sql5-mysql
+      - libqt5sql5-psql
 script:
   - cd client/ultimate/
   - qmake catchchallenger-ultimate.pro
