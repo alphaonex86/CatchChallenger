@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    settings=new TinyXMLSettings((QCoreApplication::applicationDirPath()+QLatin1Literal("/server-properties.xml")).toStdString());
+    settings=new TinyXMLSettings((QCoreApplication::applicationDirPath()+QStringLiteral("/server-properties.xml")).toStdString());
     NormalServer::checkSettingsFile(settings,FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/");
     ui->setupUi(this);
     updateActionButton();
@@ -185,13 +185,13 @@ void MainWindow::new_player_is_connected(Player_private_and_public_informations 
     switch(player.public_informations.type)
     {
         case Player_type_premium:
-            icon=QIcon(QLatin1Literal(":/images/chat/premium.png"));
+            icon=QIcon(QStringLiteral(":/images/chat/premium.png"));
         break;
         case Player_type_gm:
-            icon=QIcon(QLatin1Literal(":/images/chat/admin.png"));
+            icon=QIcon(QStringLiteral(":/images/chat/admin.png"));
         break;
         case Player_type_dev:
-            icon=QIcon(QLatin1Literal(":/images/chat/developer.png"));
+            icon=QIcon(QStringLiteral(":/images/chat/developer.png"));
         break;
         default:
         break;
@@ -770,10 +770,10 @@ void MainWindow::load_settings()
     ui->teleportIfMapNotFoundOrOutOfMap->setChecked(formatedServerSettings.teleportIfMapNotFoundOrOutOfMap);
     ui->max_player->setValue(formatedServerSettings.max_players);
     ui->server_ip->setText(QString::fromStdString(formatedServerNormalSettings.server_ip));
-    //ui->pvp->setChecked(settings->value(QLatin1Literal("pvp")).toBool());
+    //ui->pvp->setChecked(settings->value(QStringLiteral("pvp")).toBool());
     ui->sendPlayerNumber->setChecked(formatedServerSettings.sendPlayerNumber);
     ui->server_port->setValue(formatedServerNormalSettings.server_port);
-    //ui->tolerantMode->setChecked(settings->value(QLatin1Literal("tolerantMode")).toBool());
+    //ui->tolerantMode->setChecked(settings->value(QStringLiteral("tolerantMode")).toBool());
     ui->forceClientToSendAtMapChange->setChecked(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange);
     ui->useSsl->setChecked(formatedServerNormalSettings.useSsl);
     ui->autoLearn->setChecked(CommonSettingsServer::commonSettingsServer.autoLearn);
@@ -925,25 +925,25 @@ void MainWindow::load_settings()
         {
             std::cerr << "Reshow number corrected" << std::endl;
             formatedServerSettings.mapVisibility.withBorder.reshow=formatedServerSettings.mapVisibility.withBorder.max;
-            //settings->setValue(QLatin1Literal("Reshow"),formatedServerSettings.mapVisibility.withBorder.reshow);
+            //settings->setValue(QStringLiteral("Reshow"),formatedServerSettings.mapVisibility.withBorder.reshow);
         }
         if(formatedServerSettings.mapVisibility.withBorder.reshowWithBorder>formatedServerSettings.mapVisibility.withBorder.maxWithBorder)
         {
             std::cerr << "ReshowWithBorder number corrected" << std::endl;
             formatedServerSettings.mapVisibility.withBorder.reshowWithBorder=formatedServerSettings.mapVisibility.withBorder.maxWithBorder;
-            //settings->setValue(QLatin1Literal("ReshowWithBorder"),formatedServerSettings.mapVisibility.withBorder.reshow);
+            //settings->setValue(QStringLiteral("ReshowWithBorder"),formatedServerSettings.mapVisibility.withBorder.reshow);
         }
         if(formatedServerSettings.mapVisibility.withBorder.maxWithBorder>formatedServerSettings.mapVisibility.withBorder.max)
         {
             std::cerr << "MaxWithBorder number corrected" << std::endl;
             formatedServerSettings.mapVisibility.withBorder.maxWithBorder=formatedServerSettings.mapVisibility.withBorder.max;
-            //settings->setValue(QLatin1Literal("MaxWithBorder"),formatedServerSettings.mapVisibility.withBorder.reshow);
+            //settings->setValue(QStringLiteral("MaxWithBorder"),formatedServerSettings.mapVisibility.withBorder.reshow);
         }
         if(formatedServerSettings.mapVisibility.withBorder.reshowWithBorder>formatedServerSettings.mapVisibility.withBorder.reshow)
         {
             std::cerr << "ReshowWithBorder number corrected" << std::endl;
             formatedServerSettings.mapVisibility.withBorder.reshowWithBorder=formatedServerSettings.mapVisibility.withBorder.reshow;
-            //settings->setValue(QLatin1Literal("ReshowWithBorder"),formatedServerSettings.mapVisibility.withBorder.reshow);
+            //settings->setValue(QStringLiteral("ReshowWithBorder"),formatedServerSettings.mapVisibility.withBorder.reshow);
         }
         ui->MapVisibilityAlgorithmWithBorderMaxWithBorder->setValue(formatedServerSettings.mapVisibility.withBorder.maxWithBorder);
         ui->MapVisibilityAlgorithmWithBorderReshowWithBorder->setValue(formatedServerSettings.mapVisibility.withBorder.reshowWithBorder);

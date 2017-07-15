@@ -128,8 +128,8 @@ void MultipleBotConnection::tryLink(CatchChallengerClient * client)
     {
         QString loginString=login();
         QString passString=pass();
-        loginString.replace(QLatin1Literal("%NUMBER%"),QString::number(client->number));
-        passString.replace(QLatin1Literal("%NUMBER%"),QString::number(client->number));
+        loginString.replace(QStringLiteral("%NUMBER%"),QString::number(client->number));
+        passString.replace(QStringLiteral("%NUMBER%"),QString::number(client->number));
         client->login=loginString;
         client->pass=passString;
     }
@@ -224,7 +224,7 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
     {
         CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());//load always after the rates
         //load the skins list
-        QDir dir(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/skin/fighter/"));
+        QDir dir(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/skin/fighter/"));
         QFileInfoList entryList=dir.entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot);
         int index=0;
         while(index<entryList.size())
@@ -499,7 +499,7 @@ MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClie
 
 void MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * client)
 {
-    client->api->setDatapackPath(QCoreApplication::applicationDirPath()+QLatin1Literal("/datapack/"));
+    client->api->setDatapackPath(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"));
     if(!connect(client->api,&CatchChallenger::Api_client_real::insert_player,            this,&MultipleBotConnection::insert_player))
         abort();
     if(!connect(client->api,&CatchChallenger::Api_client_real::remove_player,            this,&MultipleBotConnection::remove_player))

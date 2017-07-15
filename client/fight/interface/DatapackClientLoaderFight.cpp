@@ -15,13 +15,13 @@
 
 void DatapackClientLoader::parseMonstersExtra()
 {
-    QString STATIC_DATAPACK_BASE_PATH_MONSTERS=QLatin1Literal(DATAPACK_BASE_PATH_MONSTERS);
-    const QString &frontgif=QLatin1Literal("/front.gif");
-    const QString &frontpng=QLatin1Literal("/front.png");
-    const QString &backgif=QLatin1Literal("/back.gif");
-    const QString &backpng=QLatin1Literal("/back.png");
-    const QString &smallgif=QLatin1Literal("/small.gif");
-    const QString &smallpng=QLatin1Literal("/small.png");
+    QString STATIC_DATAPACK_BASE_PATH_MONSTERS=QStringLiteral(DATAPACK_BASE_PATH_MONSTERS);
+    const QString &frontgif=QStringLiteral("/front.gif");
+    const QString &frontpng=QStringLiteral("/front.png");
+    const QString &backgif=QStringLiteral("/back.gif");
+    const QString &backpng=QStringLiteral("/back.png");
+    const QString &smallgif=QStringLiteral("/small.gif");
+    const QString &smallpng=QStringLiteral("/small.png");
     QDir dir(datapackPath+STATIC_DATAPACK_BASE_PATH_MONSTERS);
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
@@ -447,8 +447,8 @@ void DatapackClientLoader::parseBuffExtra()
             file_index++;
             continue;
         }
-        const QString &dotpng=QLatin1Literal(".png");
-        const QString &dotgif=QLatin1Literal(".gif");
+        const QString &dotpng=QStringLiteral(".png");
+        const QString &dotgif=QStringLiteral(".gif");
         QDomDocument domDocument;
         //open and quick check the file
         if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())

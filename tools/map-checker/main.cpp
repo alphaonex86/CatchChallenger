@@ -36,14 +36,14 @@ int main(int argc, char *argv[])
 {
     // Avoid performance issues with X11 engine when rendering objects
 #ifdef Q_WS_X11
-    QApplication::setGraphicsSystem(QLatin1String("raster"));
+    QApplication::setGraphicsSystem(QStringLiteral("raster"));
 #endif
 
     QApplication a(argc, argv);
 
-    a.setOrganizationDomain(QLatin1String("catchchallenger"));
-    a.setApplicationName(QLatin1String("map-checker"));
-    a.setApplicationVersion(QLatin1String("1.0"));
+    a.setOrganizationDomain(QStringLiteral("catchchallenger"));
+    a.setApplicationName(QStringLiteral("map-checker"));
+    a.setApplicationVersion(QStringLiteral("1.0"));
     QString folderToOpen;
     if(folderToOpen.isEmpty())
     {

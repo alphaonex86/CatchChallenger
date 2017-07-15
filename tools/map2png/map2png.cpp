@@ -39,28 +39,28 @@
 
 #include "../../general/base/MoveOnTheMap.h"
 
-QString Map2Png::text_slash=QLatin1Literal("/");
-QString Map2Png::text_dottmx=QLatin1Literal(".tmx");
-QString Map2Png::text_dotpng=QLatin1Literal(".png");
-QString Map2Png::text_Moving=QLatin1Literal("Moving");
-QString Map2Png::text_door=QLatin1Literal("door");
-QString Map2Png::text_Object=QLatin1Literal("Object");
-QString Map2Png::text_bot=QLatin1Literal("bot");
-QString Map2Png::text_skin=QLatin1Literal("skin");
+QString Map2Png::text_slash=QStringLiteral("/");
+QString Map2Png::text_dottmx=QStringLiteral(".tmx");
+QString Map2Png::text_dotpng=QStringLiteral(".png");
+QString Map2Png::text_Moving=QStringLiteral("Moving");
+QString Map2Png::text_door=QStringLiteral("door");
+QString Map2Png::text_Object=QStringLiteral("Object");
+QString Map2Png::text_bot=QStringLiteral("bot");
+QString Map2Png::text_skin=QStringLiteral("skin");
 QString Map2Png::text_fightertrainer=QStringLiteral("%2/skin/fighter/%1/trainer.png");
-QString Map2Png::text_lookAt=QLatin1Literal("lookAt");
+QString Map2Png::text_lookAt=QStringLiteral("lookAt");
 QString Map2Png::text_empty;
-QString Map2Png::text_top=QLatin1Literal("top");
-QString Map2Png::text_right=QLatin1Literal("right");
-QString Map2Png::text_left=QLatin1Literal("left");
-QString Map2Png::text_Collisions=QLatin1Literal("Collisions");
-QString Map2Png::text_animation=QLatin1Literal("animation");
-QString Map2Png::text_dotcomma=QLatin1Literal(";");
-QString Map2Png::text_ms=QLatin1Literal("ms");
-QString Map2Png::text_frames=QLatin1Literal("frames");
-QString Map2Png::text_visible=QLatin1Literal("visible");
-QString Map2Png::text_false=QLatin1Literal("false");
-QString Map2Png::text_object=QLatin1Literal("object");
+QString Map2Png::text_top=QStringLiteral("top");
+QString Map2Png::text_right=QStringLiteral("right");
+QString Map2Png::text_left=QStringLiteral("left");
+QString Map2Png::text_Collisions=QStringLiteral("Collisions");
+QString Map2Png::text_animation=QStringLiteral("animation");
+QString Map2Png::text_dotcomma=QStringLiteral(";");
+QString Map2Png::text_ms=QStringLiteral("ms");
+QString Map2Png::text_frames=QStringLiteral("frames");
+QString Map2Png::text_visible=QStringLiteral("visible");
+QString Map2Png::text_false=QStringLiteral("false");
+QString Map2Png::text_object=QStringLiteral("object");
 
 using namespace Tiled;
 

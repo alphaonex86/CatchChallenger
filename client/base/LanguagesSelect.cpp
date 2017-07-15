@@ -165,7 +165,7 @@ QString LanguagesSelect::getTheRightLanguage() const
 {
     const QString &language=Options::options.getLanguage();
     if(languagesByShortName.size()==0)
-        return QLatin1Literal("en");
+        return QStringLiteral("en");
     else if(language.isEmpty() || !languagesByMainCode.contains(language))
     {
         if(languagesByShortName.contains(QLocale::languageToString(QLocale::system().language())))
@@ -173,11 +173,11 @@ QString LanguagesSelect::getTheRightLanguage() const
         else if(languagesByShortName.contains(QLocale::system().name()))
             return languagesByShortName.value(QLocale::system().name());
         else
-            return QLatin1Literal("en");
+            return QStringLiteral("en");
     }
     else
         return language;
-    return QLatin1Literal("en");
+    return QStringLiteral("en");
 }
 
 void LanguagesSelect::setCurrentLanguage(const QString &newLanguage)
