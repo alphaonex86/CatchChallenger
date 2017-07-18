@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="7" height="5" tilewidth="16" tileheight="16" nextobjectid="9">
+ <tileset firstgid="1" source="../building-small.tsx"/>
+ <tileset firstgid="1025" source="../terra.tsx"/>
+ <tileset firstgid="2049" source="../animation.tsx"/>
+ <tileset firstgid="3073" source="../door.tsx"/>
+ <layer name="Collisions" width="7" height="5">
+  <data encoding="base64" compression="zlib">
+   eJydzNkJgDAURNFHOnFNHa6pw4jafwcesAMHDvN3I/6tSREtHT0DI5mJmYWVjZ3CQeVMX+fyNw8vxFwFWQ==
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="7" height="5">
+  <data encoding="base64" compression="zlib">
+   eJy1w4cNACAMBLFPQtl/REJbg1sCSx4mJScXNw8vzSVnsLCysfOHBzGsBm4=
+  </data>
+ </layer>
+ <objectgroup name="Moving">
+  <object id="8" gid="3109" x="48" y="80" width="16" height="32"/>
+ </objectgroup>
+</map>
