@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="16" height="16" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" source="../building-small.tsx"/>
+ <tileset firstgid="1025" source="../terra.tsx"/>
+ <tileset firstgid="2049" source="../animation.tsx"/>
+ <layer name="Walkable" width="16" height="16">
+  <data encoding="base64" compression="zlib">
+   eJxjYKAcMLGSh0f1j+of1U+5fkoAAMN6BV0=
+  </data>
+ </layer>
+ <layer name="OnGrass" width="16" height="16">
+  <data encoding="base64" compression="zlib">
+   eJx7yMLA8IhM/BiIGVkZyAbMrKP6R/WP6qdEvyIQK5GJlYEYAK+jEZU=
+  </data>
+ </layer>
+</map>
