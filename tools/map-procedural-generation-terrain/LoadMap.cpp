@@ -284,6 +284,8 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
     tiledMap.addLayer(layerZoneWalkBehind);
     Tiled::TileLayer *layerZoneWalkBehind2=new Tiled::TileLayer("WalkBehind",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneWalkBehind2);
+    Tiled::ObjectGroup *layerMoving=new Tiled::ObjectGroup("Moving",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerMoving);
 
     //add temporary layer
     QSet<QString> terrainLayerNameAlreadySet;
