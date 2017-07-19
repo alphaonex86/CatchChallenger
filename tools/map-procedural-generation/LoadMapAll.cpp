@@ -526,7 +526,7 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                                 resolvedPath[city.x][city.y][tempPoint.x].insert(tempPoint.y);
                                 if(haveCityEntry(citiesCoordToIndex,tempPoint.x,tempPoint.y) && (tempPoint.x!=city.x || tempPoint.y!=city.y))
                                 {
-                                    std::cout << "city from " << city.x << "," << city.y << " to " << tempPoint.x << "," << tempPoint.y << std::endl;
+                                    //std::cout << "city from " << city.x << "," << city.y << " to " << tempPoint.x << "," << tempPoint.y << std::endl;
                                     uint16_t x=city.x;
                                     uint16_t y=city.y;
                                     unsigned int index=0;
