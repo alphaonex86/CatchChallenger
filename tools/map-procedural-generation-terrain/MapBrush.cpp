@@ -166,7 +166,7 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(const Tiled::Map *template
             while(templateTilesetWorldIndex<worldMap.tilesetCount())
             {
                 Tiled::Tileset * tilesetWorld=worldMap.tilesetAt(templateTilesetWorldIndex);
-                QFileInfo tilesetWorldFile(tilesetWorld->fileName());
+                QFileInfo tilesetWorldFile(QCoreApplication::applicationDirPath()+"/dest/main/official/"+tilesetWorld->fileName());
                 QString tilesetWorldPath=tilesetWorldFile.absoluteFilePath();
                 if(tilesetPath==tilesetWorldPath)
                 {
@@ -178,9 +178,9 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(const Tiled::Map *template
             //if not found
             if(templateTilesetWorldIndex>=worldMap.tilesetCount())
             {
-                QDir templateDir(QCoreApplication::applicationDirPath()+"/dest/template/");
+                QDir templateDir(QCoreApplication::applicationDirPath()+"/dest/main/official/");
                 const QString &tilesetTemplateRelativePath=templateDir.relativeFilePath(tilesetPath);
-                returnedVar.templateTilesetToMapTileset[tileset]=LoadMap::readTileset("map/"+tilesetTemplateRelativePath,&worldMap);
+                returnedVar.templateTilesetToMapTileset[tileset]=LoadMap::readTileset("main/official/"+tilesetTemplateRelativePath,&worldMap);
             }
             templateTilesetIndex++;
         }
