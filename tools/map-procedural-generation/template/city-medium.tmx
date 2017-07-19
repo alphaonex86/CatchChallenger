@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="16" tileheight="16">
- <tileset firstgid="1" source="../building-small.tsx"/>
- <tileset firstgid="1025" source="../terra.tsx"/>
- <tileset firstgid="2049" source="../animation.tsx"/>
+ <tileset firstgid="1" source="../tileset/building-small.tsx"/>
+ <tileset firstgid="1025" source="../tileset/terra.tsx"/>
+ <tileset firstgid="2049" source="../tileset/animation.tsx"/>
  <layer name="Walkable" width="20" height="20">
   <data encoding="base64" compression="zlib">
    eJxjYKA+6GGhDh41b9S8UfNGzRs1j7rmURMAABcltkE=
