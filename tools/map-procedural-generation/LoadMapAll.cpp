@@ -39,8 +39,8 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
         }
         const uint32_t x=city.x;
         const uint32_t y=city.y;
-        QPolygonF poly(QRectF(0,0,mapWidth,mapHeight));
-        Tiled::MapObject *objectPolygon = new Tiled::MapObject(QString::fromStdString(city.name+" ("+citySize+")"),"",QPointF(mapWidth*x,mapHeight*y), QSizeF(0.0,0.0));
+        QPolygonF poly(QRectF(0,0,mapWidth-4,mapHeight-4));
+        Tiled::MapObject *objectPolygon = new Tiled::MapObject(QString::fromStdString(city.name+" ("+citySize+")"),"",QPointF(mapWidth*x+2,mapHeight*y+2), QSizeF(0.0,0.0));
         objectPolygon->setPolygon(poly);
         objectPolygon->setShape(Tiled::MapObject::Polygon);
         layerCity->addObject(objectPolygon);

@@ -57,7 +57,7 @@ Tiled::Tileset *LoadMap::readTileset(const QString &tsx,Tiled::Map *tiledMap)
         std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString() << "/" << tsx.toStdString() << std::endl;
         abort();
     }
-    if(tilesetBase->tileWidth()!=tiledMap->tileWidth())
+    /*if(tilesetBase->tileWidth()!=tiledMap->tileWidth())
     {
         std::cerr << "tile Width not match with map tile Width" << std::endl;
         abort();
@@ -66,7 +66,7 @@ Tiled::Tileset *LoadMap::readTileset(const QString &tsx,Tiled::Map *tiledMap)
     {
         std::cerr << "tile height not match with map tile height" << std::endl;
         abort();
-    }
+    }*/
     tiledMap->addTileset(tilesetBase);
     tilesetBase->setFileName(mapDir.relativeFilePath(tilesetBase->fileName()));
     return tilesetBase;
