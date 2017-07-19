@@ -5,16 +5,9 @@
 
 #include <iostream>
 
-void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount)
+Tiled::Map * LoadMapAll::loadMapTemplate(MapBrush::MapTemplate &mapTemplate, const char * fileName, const unsigned int mapWidth, const unsigned int mapHeight, Tiled::Map &worldMap)
 {
-    if(MapBrush::mapMask==NULL)
-    {
-        std::cerr << "MapBrush::mapMask==NULL (abort) into LoadMapAll::addCityContent" << std::endl;
-        abort();
-    }
-    const unsigned int mapWidth=worldMap.width()/mapXCount;
-    const unsigned int mapHeight=worldMap.height()/mapYCount;
-    const Tiled::Map *map=LoadMap::readMap("template/city.tmx");
+    Tiled::Map *map=LoadMap::readMap(fileName);
     if((unsigned int)map->width()>mapWidth)
     {
         std::cout << "map->width()>mapWitdh for city" << std::endl;
@@ -25,7 +18,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
         std::cout << "map->height()>mapHeight for city" << std::endl;
         abort();
     }
-    MapBrush::MapTemplate mapTemplate=MapBrush::tiledMapToMapTemplate(map,worldMap);
+    mapTemplate=MapBrush::tiledMapToMapTemplate(map,worldMap);
     //reset the auto detection to grab ALL
     mapTemplate.x=0;
     mapTemplate.y=0;
@@ -43,6 +36,42 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
         std::cerr << "LoadMapAll::addCityContent(): mapTemplate.templateTilesetToMapTileset.empty()" << std::endl;
         abort();
     }
+
+    return map;
+}
+
+void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount,bool full)
+{
+    if(MapBrush::mapMask==NULL)
+    {
+        std::cerr << "MapBrush::mapMask==NULL (abort) into LoadMapAll::addCityContent" << std::endl;
+        abort();
+    }
+    const unsigned int mapWidth=worldMap.width()/mapXCount;
+    const unsigned int mapHeight=worldMap.height()/mapYCount;
+    MapBrush::MapTemplate mapTemplateBig;
+    MapBrush::MapTemplate mapTemplateMedium;
+    MapBrush::MapTemplate mapTemplateSmall;
+    Tiled::Map *mapBig=loadMapTemplate(mapTemplateBig,"template/city-big.tmx",mapWidth,mapHeight,worldMap);
+    Tiled::Map *mapMedium=loadMapTemplate(mapTemplateMedium,"template/city-medium.tmx",mapWidth,mapHeight,worldMap);
+    Tiled::Map *mapSmall=loadMapTemplate(mapTemplateSmall,"template/city-small.tmx",mapWidth,mapHeight,worldMap);
+
+    MapBrush::MapTemplate mapTemplatebuildingshop;
+    MapBrush::MapTemplate mapTemplatebuildingheal;
+    MapBrush::MapTemplate mapTemplatebuilding1;
+    MapBrush::MapTemplate mapTemplatebuilding2;
+    Tiled::Map *mapbuildingshop=NULL;
+    Tiled::Map *mapbuildingheal=NULL;
+    Tiled::Map *mapbuilding1=NULL;
+    Tiled::Map *mapbuilding2=NULL;
+    if(full)
+    {
+        mapbuildingshop=loadMapTemplate(mapTemplatebuildingshop,"template/building-shop.tmx",mapWidth,mapHeight,worldMap);
+        mapbuildingheal=loadMapTemplate(mapTemplatebuildingheal,"template/building-heal.tmx",mapWidth,mapHeight,worldMap);
+        mapbuilding1=loadMapTemplate(mapTemplatebuilding1,"template/building-1.tmx",mapWidth,mapHeight,worldMap);
+        mapbuilding2=loadMapTemplate(mapTemplatebuilding2,"template/building-2.tmx",mapWidth,mapHeight,worldMap);
+    }
+
     unsigned int index=0;
     while(index<cities.size())
     {
@@ -50,9 +79,64 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
 
         const uint32_t x=city.x;
         const uint32_t y=city.y;
+        Tiled::Map *map=NULL;
+        MapBrush::MapTemplate mapTemplate;
+        std::vector<std::pair<uint8_t,uint8_t> > positionBuilding;
+        switch(city.type) {
+        case CityType_small:
+            map=mapSmall;
+            mapTemplate=mapTemplateSmall;
+            if(full)
+            {
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(15,15));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(24,15));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(24,22));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(15,22));
+            }
+            break;
+        case CityType_medium:
+            map=mapMedium;
+            mapTemplate=mapTemplateMedium;
+            break;
+        default:
+            map=mapBig;
+            mapTemplate=mapTemplateBig;
+            break;
+        }
         const uint8_t xoffset=(mapWidth-map->width())/2;
         const uint8_t yoffset=(mapHeight-map->height())/2;
         MapBrush::brushTheMap(worldMap,mapTemplate,x*mapWidth+xoffset,y*mapHeight+yoffset,MapBrush::mapMask,true);
+        bool haveHeal=false;
+        bool haveShop=false;
+        while(!positionBuilding.empty())
+        {
+            unsigned int randomIndex=rand()%positionBuilding.size();
+            std::pair<uint8_t,uint8_t> pos=positionBuilding.at(randomIndex);
+            positionBuilding.erase(positionBuilding.cbegin()+randomIndex);
+            if(!haveHeal)
+            {
+                haveHeal=true;
+                MapBrush::brushTheMap(worldMap,mapTemplatebuildingheal,x*mapWidth+pos.first,y*mapHeight+pos.second,MapBrush::mapMask,true);
+            }
+            else if(!haveShop)
+            {
+                haveShop=true;
+                MapBrush::brushTheMap(worldMap,mapTemplatebuildingshop,x*mapWidth+pos.first,y*mapHeight+pos.second,MapBrush::mapMask,true);
+            }
+            else
+            {
+                haveHeal=true;
+                switch(rand()%2)
+                {
+                case 0:
+                    MapBrush::brushTheMap(worldMap,mapTemplatebuilding1,x*mapWidth+pos.first,y*mapHeight+pos.second,MapBrush::mapMask,true);
+                    break;
+                default:
+                    MapBrush::brushTheMap(worldMap,mapTemplatebuilding2,x*mapWidth+pos.first,y*mapHeight+pos.second,MapBrush::mapMask,true);
+                    break;
+                }
+            }
+        }
         index++;
     }
 
@@ -155,5 +239,14 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
             y++;
         }
     }
-    delete map;
+    delete mapBig;
+    delete mapMedium;
+    delete mapSmall;
+    if(full)
+    {
+        delete mapbuildingshop;
+        delete mapbuildingheal;
+        delete mapbuilding1;
+        delete mapbuilding2;
+    }
 }
