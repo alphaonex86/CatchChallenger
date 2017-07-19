@@ -48,13 +48,13 @@ unsigned int LoadMap::floatToMoisure(const float f)
 
 Tiled::Tileset *LoadMap::readTileset(const QString &tsx,Tiled::Map *tiledMap)
 {
-    QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/");
+    QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/main/official/");
 
     Tiled::MapReader reader;
     Tiled::Tileset *tilesetBase=reader.readTileset(QCoreApplication::applicationDirPath()+"/dest/"+tsx);
     if(tilesetBase==NULL)
     {
-        std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString() << "/" << tsx.toStdString() << std::endl;
+        std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString() << "/dest/" << tsx.toStdString() << std::endl;
         abort();
     }
     /*if(tilesetBase->tileWidth()!=tiledMap->tileWidth())
