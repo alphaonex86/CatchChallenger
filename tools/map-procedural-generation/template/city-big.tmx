@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="24" height="24" tilewidth="16" tileheight="16">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="24" height="24" tilewidth="16" tileheight="16" nextobjectid="1">
  <tileset firstgid="1" source="../building-small.tsx"/>
  <tileset firstgid="1025" source="../terra.tsx"/>
  <tileset firstgid="2049" source="../animation.tsx"/>
  <layer name="Walkable" width="24" height="24">
   <data encoding="base64" compression="zlib">
-   eJxjYKA9eMNCGzxq/qj5o+aPmj9qPn79hMCo+aPmD2bzaQkAd42J0A==
+   eJxjYKA9eMNCGzxq/qj5o+aPmj9q/qj5o+YPX/NpCQDkw8XQ
   </data>
  </layer>
  <layer name="OnGrass" width="24" height="24">
   <data encoding="base64" compression="zlib">
-   eJw7zcLAcIZG+CwQvwZiWoG3o+aPmj9q/qj5o+ZjBSeBenlYcWNeVsrMf0uE3lHzR82nxHxuPOmXEAalb0IAAHA0PjY=
+   eJw7zcLAcIZG+CwQvwZiWoG3o+aPmj9q/qj5o+aPmj9q/rA0n5uVgYGHRpgXiAFVAj5Z
   </data>
  </layer>
 </map>
