@@ -4,6 +4,7 @@
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"
 #include "../../client/tiled/tiled_map.h"
 #include "../../general/base/cpp11addition.h"
+#include "../map-procedural-generation-terrain/MapBrush.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -73,7 +74,8 @@ public:
                                   const unsigned int &x1, const unsigned int &y1,
                                   const unsigned int &x2, const unsigned int &y2);
     static Orientation reverseOrientation(const Orientation &orientation);
-    static void addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
+    static void addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount,bool full);
+    static Tiled::Map * loadMapTemplate(MapBrush::MapTemplate &mapTemplate,const char * fileName,const unsigned int mapWidth,const unsigned int mapHeight,Tiled::Map &worldMap);
 };
 
 #endif // LOADMAPALL_H
