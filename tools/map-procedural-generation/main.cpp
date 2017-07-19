@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
                 MapBrush::initialiseMapMask(tiledMap);
                 t.start();
                 LoadMapAll::addCity(tiledMap,gridCity,citiesNames,mapXCount,mapYCount);
-                LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount);
+                LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount,false);
                 qDebug("place cities took %d ms", t.elapsed());
                 if(dotransition)
                 {
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
                 TransitionTerrain::mergeDown(tiledMap);
                 qDebug("mergeDown took %d ms", t.elapsed());
                 t.start();
-                LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount);
+                LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount,true);
                 qDebug("add city content took %d ms", t.elapsed());
                 TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
