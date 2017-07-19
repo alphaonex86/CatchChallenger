@@ -1,6 +1,8 @@
 #include "MapBrush.h"
 #include "../../client/tiled/tiled_tileset.h"
 #include "../../client/tiled/tiled_tilelayer.h"
+#include "../../client/tiled/tiled_objectgroup.h"
+#include "../../client/tiled/tiled_mapobject.h"
 #include "../../client/tiled/tiled_tile.h"
 #include "LoadMap.h"
 
@@ -120,6 +122,35 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(const Tiled::Map *template
                     }
                 }
             }
+            else if(layer->isObjectGroup())
+            {
+                const Tiled::ObjectGroup * const castedLayer=static_cast<const Tiled::ObjectGroup * const>(layer);
+                //search into the world map
+                uint8_t worldLayerIndex=0;
+                while(worldLayerIndex<worldMap.layerCount())
+                {
+                    Tiled::Layer * layer=worldMap.layerAt(worldLayerIndex);
+                    if(layer->isObjectGroup())
+                    {
+                        Tiled::TileLayer * worldTileLayer=static_cast<Tiled::TileLayer *>(layer);
+                        //search into the world map
+                        if(alreadyBlockedLayer.find(worldLayerIndex)==alreadyBlockedLayer.cend() && worldTileLayer->name()==castedLayer->name())
+                        {
+                            alreadyBlockedLayer.insert(worldLayerIndex);
+                            returnedVar.templateLayerNumberToMapLayerNumber[templateLayerIndex]=worldLayerIndex;
+                            break;
+                        }
+                    }
+                    worldLayerIndex++;
+                }
+                if(worldLayerIndex>=worldMap.layerCount())
+                {
+                    std::cerr << "a template layer is not found: " << castedLayer->name().toStdString() << " (abort)" << std::endl;
+                    abort();
+                }
+            }
+            else
+                std::cerr << "Warning, not supported layer type: " << layer->name().toStdString() << std::endl;
             templateLayerIndex++;
         }
     }
@@ -209,6 +240,33 @@ void MapBrush::brushTheMap(Tiled::Map &worldMap, const MapTemplate &selectedTemp
                 index_y++;
             }
         }
+        else if(layer->isObjectGroup())
+        {
+            const Tiled::ObjectGroup * const castedLayer=static_cast<const Tiled::ObjectGroup * const>(layer);
+            Tiled::ObjectGroup * const worldLayer=static_cast<Tiled::ObjectGroup *>(worldMap.layerAt(selectedTemplate.templateLayerNumberToMapLayerNumber.at(layerIndex)));
+            const QList<Tiled::MapObject*> objects=castedLayer->objects();
+            unsigned int index=0;
+            while(index<(unsigned int)objects.size())
+            {
+                const Tiled::MapObject* const object=objects.at(index);
+                const int x_world=selectedTemplate.x+x+object->x();
+                const int y_world=selectedTemplate.y+y+object->y();
+                Tiled::MapObject* const newobject=new Tiled::MapObject(object->name(),object->type(),QPoint(x_world,y_world),object->size());
+
+                const unsigned int &tileId=object->cell().tile->id();
+                Tiled::Tileset *oldTileset=object->cell().tile->tileset();
+                Tiled::Tileset *worldTileset=selectedTemplate.templateTilesetToMapTileset.at(oldTileset);
+
+                Tiled::Cell cell=newobject->cell();
+                cell.tile=worldTileset->tileAt(tileId);
+                newobject->setCell(cell);
+                newobject->setProperties(object->properties());
+                worldLayer->addObject(newobject);
+                index++;
+            }
+        }
+        else
+            std::cerr << "Warning, not supported layer type: " << layer->name().toStdString() << std::endl;
         layerIndex++;
     }
 }
