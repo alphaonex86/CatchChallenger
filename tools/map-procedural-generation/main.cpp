@@ -161,6 +161,20 @@ int main(int argc, char *argv[])
             Tiled::MapWriter maprwriter;maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/main/official/all.tmx");
         }
         //do tmx split
+        /*{
+            unsigned int mapY=0;
+            while(mapY<mapYCount)
+            {
+                unsigned int mapX=0;
+                while(mapX<mapXCount)
+                {
+                    Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth/mapXCount,totalHeight/mapYCount,16,16);
+Tiled::MapWriter maprwriter;maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/main/official/all.tmx");
+                    mapX++;
+                }
+                mapY++;
+            }
+        }*/
     }
 
     return 0;

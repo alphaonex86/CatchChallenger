@@ -13,6 +13,8 @@
 std::vector<LoadMapAll::City> LoadMapAll::cities;
 std::unordered_map<uint16_t,std::unordered_map<uint16_t,unsigned int> > LoadMapAll::citiesCoordToIndex;
 uint8_t * LoadMapAll::mapPathDirection=NULL;
+std::vector<LoadMapAll::Road> LoadMapAll::roads;
+std::unordered_map<uint16_t,std::unordered_map<uint16_t,LoadMapAll::RoadIndex> > LoadMapAll::roadCoordToIndex;
 
 void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight)
 {
@@ -63,15 +65,41 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
                 const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
                 if(zoneOrientation!=0)
                 {
-                    std::string str;
+                    //orientation
+                    std::vector<std::string> orientationList;
                     if(zoneOrientation&Orientation_bottom)
-                        str+=" bottom";
+                        orientationList.push_back("bottom");
                     if(zoneOrientation&Orientation_top)
-                        str+=" top";
+                        orientationList.push_back("top");
                     if(zoneOrientation&Orientation_left)
-                        str+=" left";
+                        orientationList.push_back("left");
                     if(zoneOrientation&Orientation_right)
-                        str+=" right";
+                        orientationList.push_back("right");
+
+                    //road info
+                    const RoadIndex &indexRoad=roadCoordToIndex[x][y];
+                    const Road &road=roads.at(indexRoad.roadIndex);
+
+                    //compose string
+                    std::string str;
+                    if(road.haveOnlySegmentNearCity)
+                    {
+                        if(indexRoad.cityIndex.empty())
+                        {
+                            std::cerr << "road.haveOnlySegmentNearCity and indexRoad.cityIndex.empty()" << std::endl;
+                            abort();
+                        }
+                        str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+","+cities.at(indexRoad.cityIndex.front()).name+")";
+                    }
+                    else
+                    {
+                        if(!indexRoad.cityIndex.empty())
+                            str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+","+cities.at(indexRoad.cityIndex.front()).name+")";
+                        else
+                            str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+")";
+                    }
+
+                    //paint it
                     QPolygonF poly(QRectF(0,0,mapWidth,mapHeight));
                     Tiled::MapObject *objectPolygon = new Tiled::MapObject(QString::fromStdString(str),"",QPointF(mapWidth*x,mapHeight*y), QSizeF(0.0,0.0));
                     objectPolygon->setPolygon(poly);
@@ -658,6 +686,123 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             }
 
             indexCities++;
+        }
+    }
+    //Do the road group
+    {
+        unsigned int mapY=0;
+        while(mapY<mapYCount)
+        {
+            unsigned int mapX=0;
+            while(mapX<mapXCount)
+            {
+                if(mapPathDirection[mapX+mapY*mapXCount]!=0 &&
+                        !haveCityEntry(citiesCoordToIndex,mapX,mapY) &&
+                        (roadCoordToIndex.find(mapX)==roadCoordToIndex.cend() || roadCoordToIndex.at(mapX).find(mapY)==roadCoordToIndex.at(mapX).cend())
+                        )
+                {
+                    unsigned int roadIntIndex=roads.size();;
+                    {
+                        Road road;
+                        road.haveOnlySegmentNearCity=true;
+                        roads.push_back(road);
+                    }
+                    Road &road=roads.back();
+                    std::vector<uint32_t> pointToScan;
+                    std::vector<uint32_t> pointDone;
+                    pointToScan.push_back(mapX+mapY*mapXCount);
+                    while(!pointToScan.empty())
+                    {
+                        const uint16_t x=pointToScan.front()%mapXCount;
+                        const uint16_t y=(pointToScan.front()-x)/mapXCount;
+                        pointDone.push_back(pointToScan.front());
+                        pointToScan.erase(pointToScan.cbegin());
+
+                        RoadIndex roadIndex;
+                        roadIndex.roadIndex=roadIntIndex;
+
+                        //left tile
+                        if(x>0)
+                        {
+                            const uint16_t newX=x-1;
+                            const uint16_t newY=y;
+                            if(!haveCityEntry(citiesCoordToIndex,newX,newY))
+                            {
+                                if(mapPathDirection[newX+newY*mapXCount]!=0)
+                                    if(!vectorcontainsAtLeastOne(pointToScan,newX+newY*mapXCount) && !vectorcontainsAtLeastOne(pointDone,newX+newY*mapXCount))
+                                        pointToScan.push_back(newX+newY*mapXCount);
+                            }
+                            else
+                            {
+                                const unsigned int cityIndex=citiesCoordToIndex.at(newX).at(newY);
+                                roadIndex.cityIndex.push_back(cityIndex);
+                                cities[cityIndex].nearRoad[roadIntIndex].push_back(Orientation_right);
+                            }
+                        }
+                        //right tile
+                        if(x<(mapXCount-1))
+                        {
+                            const uint16_t newX=x+1;
+                            const uint16_t newY=y;
+                            if(!haveCityEntry(citiesCoordToIndex,newX,newY))
+                            {
+                                if(mapPathDirection[newX+newY*mapXCount]!=0)
+                                    if(!vectorcontainsAtLeastOne(pointToScan,newX+newY*mapXCount) && !vectorcontainsAtLeastOne(pointDone,newX+newY*mapXCount))
+                                        pointToScan.push_back(newX+newY*mapXCount);
+                            }
+                            else
+                            {
+                                const unsigned int cityIndex=citiesCoordToIndex.at(newX).at(newY);
+                                roadIndex.cityIndex.push_back(cityIndex);
+                                cities[cityIndex].nearRoad[roadIntIndex].push_back(Orientation_left);
+                            }
+                        }
+                        //top tile
+                        if(y>0)
+                        {
+                            const uint16_t newX=x;
+                            const uint16_t newY=y-1;
+                            if(!haveCityEntry(citiesCoordToIndex,newX,newY))
+                            {
+                                if(mapPathDirection[newX+newY*mapXCount]!=0)
+                                    if(!vectorcontainsAtLeastOne(pointToScan,newX+newY*mapXCount) && !vectorcontainsAtLeastOne(pointDone,newX+newY*mapXCount))
+                                        pointToScan.push_back(newX+newY*mapXCount);
+                            }
+                            else
+                            {
+                                const unsigned int cityIndex=citiesCoordToIndex.at(newX).at(newY);
+                                roadIndex.cityIndex.push_back(cityIndex);
+                                cities[cityIndex].nearRoad[roadIntIndex].push_back(Orientation_bottom);
+                            }
+                        }
+                        //bottom tile
+                        if(y<(mapYCount-1))
+                        {
+                            const uint16_t newX=x;
+                            const uint16_t newY=y+1;
+                            if(!haveCityEntry(citiesCoordToIndex,newX,newY))
+                            {
+                                if(mapPathDirection[newX+newY*mapXCount]!=0)
+                                    if(!vectorcontainsAtLeastOne(pointToScan,newX+newY*mapXCount) && !vectorcontainsAtLeastOne(pointDone,newX+newY*mapXCount))
+                                        pointToScan.push_back(newX+newY*mapXCount);
+                            }
+                            else
+                            {
+                                const unsigned int cityIndex=citiesCoordToIndex.at(newX).at(newY);
+                                roadIndex.cityIndex.push_back(cityIndex);
+                                cities[cityIndex].nearRoad[roadIntIndex].push_back(Orientation_top);
+                            }
+                        }
+
+                        road.coord.push_back(std::pair<uint16_t,uint16_t>(x,y));
+                        roadCoordToIndex[x][y]=roadIndex;
+                        if(roadIndex.cityIndex.empty())
+                            road.haveOnlySegmentNearCity=false;
+                    }
+                }
+                mapX++;
+            }
+            mapY++;
         }
     }
 }
