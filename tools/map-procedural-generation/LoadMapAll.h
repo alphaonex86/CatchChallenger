@@ -52,6 +52,7 @@ public:
         unsigned int x,y;
         std::string name;
         CityType type;
+        std::unordered_map<uint16_t,std::vector<Orientation> > nearRoad;//road number, Orientation
     };
     struct CityInternal
     {
@@ -63,6 +64,18 @@ public:
     static std::vector<City> cities;
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,unsigned int> > citiesCoordToIndex;
     static uint8_t *mapPathDirection;
+    struct Road
+    {
+        std::vector<std::pair<uint16_t,uint16_t> > coord;
+        bool haveOnlySegmentNearCity;
+    };
+    static std::vector<Road> roads;
+    struct RoadIndex
+    {
+        unsigned int roadIndex;
+        std::vector<unsigned int> cityIndex;
+    };
+    static std::unordered_map<uint16_t,std::unordered_map<uint16_t,RoadIndex> > roadCoordToIndex;
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames, const unsigned int &mapXCount, const unsigned int &mapYCount);
