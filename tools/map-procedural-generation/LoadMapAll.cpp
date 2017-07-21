@@ -92,7 +92,8 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
                             std::cerr << "road.haveOnlySegmentNearCity and indexRoad.cityIndex.empty()" << std::endl;
                             abort();
                         }
-                        str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+","+cities.at(indexRoad.cityIndex.front()).name+")";
+                        const RoadToCity &cityIndex=indexRoad.cityIndex.front();
+                        str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+","+cities.at(cityIndex.cityIndex).name+")";
                     }
                     else
                         str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+")";
@@ -164,6 +165,22 @@ LoadMapAll::Orientation LoadMapAll::reverseOrientation(const Orientation &orient
             return Orientation_left;
     default:
         return orientation;
+    }
+}
+
+std::string LoadMapAll::orientationToString(const Orientation &orientation)
+{
+    switch (orientation) {
+    case Orientation_bottom:
+            return "bottom";
+    case Orientation_top:
+            return "top";
+    case Orientation_left:
+            return "left";
+    case Orientation_right:
+            return "right";
+    default:
+        return "unknown";
     }
 }
 
@@ -734,7 +751,10 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                             else
                             {
                                 const unsigned int cityIndex=citiesCoordToIndex.at(newX).at(newY);
-                                roadIndex.cityIndex.push_back(cityIndex);
+                                RoadToCity roadToCity;
+                                roadToCity.cityIndex=cityIndex;
+                                roadToCity.orientation=Orientation_left;
+                                roadIndex.cityIndex.push_back(roadToCity);
                                 cities[cityIndex].nearRoad[roadIntIndex].push_back(Orientation_right);
                             }
                         }
@@ -752,7 +772,10 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                             else
                             {
                                 const unsigned int cityIndex=citiesCoordToIndex.at(newX).at(newY);
-                                roadIndex.cityIndex.push_back(cityIndex);
+                                RoadToCity roadToCity;
+                                roadToCity.cityIndex=cityIndex;
+                                roadToCity.orientation=Orientation_right;
+                                roadIndex.cityIndex.push_back(roadToCity);
                                 cities[cityIndex].nearRoad[roadIntIndex].push_back(Orientation_left);
                             }
                         }
@@ -770,7 +793,10 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                             else
                             {
                                 const unsigned int cityIndex=citiesCoordToIndex.at(newX).at(newY);
-                                roadIndex.cityIndex.push_back(cityIndex);
+                                RoadToCity roadToCity;
+                                roadToCity.cityIndex=cityIndex;
+                                roadToCity.orientation=Orientation_top;
+                                roadIndex.cityIndex.push_back(roadToCity);
                                 cities[cityIndex].nearRoad[roadIntIndex].push_back(Orientation_bottom);
                             }
                         }
@@ -788,7 +814,10 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                             else
                             {
                                 const unsigned int cityIndex=citiesCoordToIndex.at(newX).at(newY);
-                                roadIndex.cityIndex.push_back(cityIndex);
+                                RoadToCity roadToCity;
+                                roadToCity.cityIndex=cityIndex;
+                                roadToCity.orientation=Orientation_bottom;
+                                roadIndex.cityIndex.push_back(roadToCity);
                                 cities[cityIndex].nearRoad[roadIntIndex].push_back(Orientation_top);
                             }
                         }
