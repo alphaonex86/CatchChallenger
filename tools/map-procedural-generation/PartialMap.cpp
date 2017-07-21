@@ -5,10 +5,12 @@
 #include "../../client/tiled/tiled_mapobject.h"
 #include "../../client/tiled/tiled_objectgroup.h"
 #include "../../client/tiled/tiled_tileset.h"
+#include "../../client/tiled/tiled_tile.h"
 
 #include <QDir>
 #include <QCoreApplication>
 #include <iostream>
+#include <unordered_map>
 
 bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const unsigned int &minY, const unsigned int &maxX, const unsigned int &maxY, const std::string &file)
 {
@@ -24,6 +26,7 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
     }
 
     //add external tileset
+    std::unordered_map<const Tiled::Tileset *,Tiled::Tileset *> templateTilesetToMapTileset;
     unsigned int indexTileset=0;
     while(indexTileset<(unsigned int)world.tilesetCount())
     {
@@ -39,6 +42,8 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
         }
         tiledMap.addTileset(tilesetBase);
         tilesetBase->setFileName(mapDir.relativeFilePath(tilesetPath));
+        templateTilesetToMapTileset[tileset]=tilesetBase;
+        indexTileset++;
     }
 
     unsigned int indexLayer=0;
@@ -50,14 +55,79 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
             const Tiled::TileLayer * const castedLayer=static_cast<const Tiled::TileLayer * const>(layer);
             //add zone of layer
             Tiled::TileLayer * tileLayer=new Tiled::TileLayer(castedLayer->name(),0,0,mapWidth,mapHeight);
+            bool haveContent=false;
+            unsigned int y=0;
+            while(y<mapHeight)
+            {
+                unsigned int x=0;
+                while(x<mapWidth)
+                {
+                    const Tiled::Cell &oldCell=castedLayer->cellAt(minX+x,minY+y);
+                    if(!oldCell.isEmpty())
+                    {
+                        haveContent=true;
+                        Tiled::Cell newCell;
+                        newCell.flippedAntiDiagonally=oldCell.flippedAntiDiagonally;
+                        newCell.flippedHorizontally=oldCell.flippedHorizontally;
+                        newCell.flippedVertically=oldCell.flippedVertically;
+                        const unsigned int &oldTileId=oldCell.tile->id();
+                        Tiled::Tileset *oldTileset=oldCell.tile->tileset();
+                        Tiled::Tileset *newTileset=templateTilesetToMapTileset.at(oldTileset);
+                        newCell.tile=newTileset->tileAt(oldTileId);
+                        tileLayer->setCell(x,y,newCell);
+                    }
+                    x++;
+                }
+                y++;
+            }
             //if zone of the layer is not empty
-            /*if()
+            if(haveContent)
                 tiledMap.addLayer(tileLayer);
             else
-                delete tileLayer;*/
+                delete tileLayer;
         }
         else if(layer->isObjectGroup())
         {
+            const Tiled::ObjectGroup * const castedLayer=static_cast<const Tiled::ObjectGroup * const>(layer);
+            const QList<Tiled::MapObject*> &objects=castedLayer->objects();
+            Tiled::ObjectGroup * objectGroup=new Tiled::ObjectGroup(castedLayer->name(),0,0,mapWidth,mapHeight);
+            bool haveContent=false;
+            unsigned int objectIndex=0;
+            while(objectIndex<(unsigned int)objects.size())
+            {
+                const Tiled::MapObject* oldobject=objects.at(objectIndex);
+                const unsigned int objectx=oldobject->x();
+                const unsigned int objecty=oldobject->y();
+                if(objectx>=minX && objectx<maxX && objecty>=minY && objecty<maxY)
+                {
+                    const Tiled::Cell &oldCell=oldobject->cell();
+                    if(!oldCell.isEmpty())
+                    {
+                        haveContent=true;
+                        QPointF position=oldobject->position();
+                        position.setX(position.x()-minX);
+                        position.setY(position.y()-minY);
+                        Tiled::MapObject* newobject=new Tiled::MapObject(oldobject->name(),oldobject->type(),position,oldobject->size());
+                        Tiled::Cell newCell;
+                        newCell.flippedAntiDiagonally=oldCell.flippedAntiDiagonally;
+                        newCell.flippedHorizontally=oldCell.flippedHorizontally;
+                        newCell.flippedVertically=oldCell.flippedVertically;
+                        const unsigned int &oldTileId=oldCell.tile->id();
+                        Tiled::Tileset *oldTileset=oldCell.tile->tileset();
+                        Tiled::Tileset *newTileset=templateTilesetToMapTileset.at(oldTileset);
+                        newCell.tile=newTileset->tileAt(oldTileId);
+                        newobject->setCell(newCell);
+
+                        objectGroup->addObject(newobject);
+                    }
+                }
+                objectIndex++;
+            }
+            //if zone of the layer is not empty
+            if(haveContent)
+                tiledMap.addLayer(objectGroup);
+            else
+                delete objectGroup;
         }
         else
             abort();
