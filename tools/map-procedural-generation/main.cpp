@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
                 indexCity++;
             }
 
-            /*unsigned int indexIntRoad=0;
+            unsigned int indexIntRoad=0;
             while(indexIntRoad<roads.size())
             {
                 const Road &road=roads.at(indexIntRoad);
@@ -205,21 +205,10 @@ int main(int argc, char *argv[])
                     const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
                     if(zoneOrientation!=0)
                     {
-                        //orientation
-                        std::vector<std::string> orientationList;
-                        if(zoneOrientation&Orientation_bottom)
-                            orientationList.push_back("bottom");
-                        if(zoneOrientation&Orientation_top)
-                            orientationList.push_back("top");
-                        if(zoneOrientation&Orientation_left)
-                            orientationList.push_back("left");
-                        if(zoneOrientation&Orientation_right)
-                            orientationList.push_back("right");
-
                         const RoadIndex &indexRoad=roadCoordToIndex[x][y];
 
                         //compose string
-                        std::string str;
+                        std::string file;
                         if(road.haveOnlySegmentNearCity)
                         {
                             if(indexRoad.cityIndex.empty())
@@ -227,17 +216,29 @@ int main(int argc, char *argv[])
                                 std::cerr << "road.haveOnlySegmentNearCity and indexRoad.cityIndex.empty()" << std::endl;
                                 abort();
                             }
-                            str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+","+cities.at(indexRoad.cityIndex.front()).name+")";
+                            file=QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+
+                                    cities.at(indexRoad.cityIndex.front()).name+"/road-"+std::to_string(indexRoad.roadIndex+1)+
+                                    "-"+indexRoad.cityIndex.front().orientation+".tmx";
                         }
                         else
-                            str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+")";
+                            file=QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/road-"+
+                                    std::to_string(indexRoad.roadIndex+1)+"/"+std::to_string(i)+".tmx";
 
+                        if(!PartialMap::save(tiledMap,
+                                         x*singleMapWitdh,y*singleMapHeight,
+                                         x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
+                                         file
+                                         ))
+                        {
+                            std::cerr << "Unable to write " << file << "" << std::endl;
+                            abort();
+                        }
                     }
 
                     indexCoord++;
                 }
                 indexIntRoad++;
-            }*/
+            }
         }
     }
 

@@ -70,10 +70,15 @@ public:
         bool haveOnlySegmentNearCity;
     };
     static std::vector<Road> roads;
+    struct RoadToCity
+    {
+        Orientation orientation;
+        unsigned int cityIndex;
+    };
     struct RoadIndex
     {
         unsigned int roadIndex;
-        std::vector<unsigned int> cityIndex;
+        std::vector<RoadToCity> cityIndex;
     };
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,RoadIndex> > roadCoordToIndex;
 
