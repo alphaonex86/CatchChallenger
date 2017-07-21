@@ -17,6 +17,7 @@
 #include "../map-procedural-generation-terrain/MiniMap.h"
 #include "SettingsAll.h"
 #include "LoadMapAll.h"
+#include "PartialMap.h"
 
 /*To do: Tree/Grass, Rivers
 http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/*/
@@ -84,8 +85,8 @@ int main(int argc, char *argv[])
             abort();
         qDebug("computeVoronoi took %d ms", t.elapsed());
 
+        Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth,totalHeight,16,16);
         {
-            Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth,totalHeight,16,16);
             QHash<QString,Tiled::Tileset *> cachedTileset;
             LoadMap::addTerrainLayer(tiledMap,dotransition);
             LoadMap::loadAllTileset(cachedTileset,tiledMap);
@@ -158,23 +159,86 @@ int main(int argc, char *argv[])
                 }
                 layerZoneChunk->setVisible(false);
             }
-            Tiled::MapWriter maprwriter;maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/main/official/all.tmx");
+            Tiled::MapWriter maprwriter;
+            if(!maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/main/official/all.tmx"))
+            {
+                std::cerr << "Unable to write " << QCoreApplication::applicationDirPath().toStdString() << "/dest/main/official/all.tmx" << std::endl;
+                abort();
+            }
         }
         //do tmx split
-        /*{
-            unsigned int mapY=0;
-            while(mapY<mapYCount)
+        {
+            const unsigned int singleMapWitdh=tiledMap.width()/mapXCount;
+            const unsigned int singleMapHeight=tiledMap.height()/mapYCount;
+
+            unsigned int indexCity=0;
+            while(indexCity<LoadMapAll::cities.size())
             {
-                unsigned int mapX=0;
-                while(mapX<mapXCount)
+                const LoadMapAll::City &city=LoadMapAll::cities.at(indexCity);
+                const uint32_t x=city.x;
+                const uint32_t y=city.y;
+                const std::string &file=QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+city.name+"/"+city.name+".tmx";
+                if(!PartialMap::save(tiledMap,
+                                 x*singleMapWitdh,y*singleMapHeight,
+                                 x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
+                                 file
+                                 ))
                 {
-                    Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth/mapXCount,totalHeight/mapYCount,16,16);
-Tiled::MapWriter maprwriter;maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/main/official/all.tmx");
-                    mapX++;
+                    std::cerr << "Unable to write " << file << "" << std::endl;
+                    abort();
                 }
-                mapY++;
+
+                indexCity++;
             }
-        }*/
+
+            /*unsigned int indexIntRoad=0;
+            while(indexIntRoad<roads.size())
+            {
+                const Road &road=roads.at(indexIntRoad);
+                unsigned int indexCoord=0;
+                while(indexCoord<road.coords.size())
+                {
+                    const std::pair<uint16_t,uint16_t> &coord=road.coords.at(indexCoord);
+                    const unsigned int &x=coord.first;
+                    const unsigned int &y=coord.second;
+
+                    const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
+                    if(zoneOrientation!=0)
+                    {
+                        //orientation
+                        std::vector<std::string> orientationList;
+                        if(zoneOrientation&Orientation_bottom)
+                            orientationList.push_back("bottom");
+                        if(zoneOrientation&Orientation_top)
+                            orientationList.push_back("top");
+                        if(zoneOrientation&Orientation_left)
+                            orientationList.push_back("left");
+                        if(zoneOrientation&Orientation_right)
+                            orientationList.push_back("right");
+
+                        const RoadIndex &indexRoad=roadCoordToIndex[x][y];
+
+                        //compose string
+                        std::string str;
+                        if(road.haveOnlySegmentNearCity)
+                        {
+                            if(indexRoad.cityIndex.empty())
+                            {
+                                std::cerr << "road.haveOnlySegmentNearCity and indexRoad.cityIndex.empty()" << std::endl;
+                                abort();
+                            }
+                            str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+","+cities.at(indexRoad.cityIndex.front()).name+")";
+                        }
+                        else
+                            str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+")";
+
+                    }
+
+                    indexCoord++;
+                }
+                indexIntRoad++;
+            }*/
+        }
     }
 
     return 0;
