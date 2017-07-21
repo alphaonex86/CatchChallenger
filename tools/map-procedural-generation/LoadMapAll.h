@@ -66,7 +66,7 @@ public:
     static uint8_t *mapPathDirection;
     struct Road
     {
-        std::vector<std::pair<uint16_t,uint16_t> > coord;
+        std::vector<std::pair<uint16_t,uint16_t> > coords;
         bool haveOnlySegmentNearCity;
     };
     static std::vector<Road> roads;

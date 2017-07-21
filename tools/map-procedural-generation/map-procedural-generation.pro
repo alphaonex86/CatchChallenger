@@ -8,8 +8,10 @@ SOURCES += \
     $$PWD/main.cpp \
     SettingsAll.cpp \
     LoadMapAll.cpp \
-    LoadMapCity.cpp
+    LoadMapCity.cpp \
+    PartialMap.cpp
 
 HEADERS += \
     SettingsAll.h \
-    LoadMapAll.h
+    LoadMapAll.h \
+    PartialMap.h

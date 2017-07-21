@@ -54,14 +54,19 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
     layerRoad->setColor(QColor("#ffcc22"));
     worldMap.addLayer(layerRoad);
     const unsigned int w=worldMap.width()/mapWidth;
-    const unsigned int h=worldMap.height()/mapHeight;
+    //const unsigned int h=worldMap.height()/mapHeight;
     {
-        unsigned int y=0;
-        while(y<h)
+        unsigned int indexIntRoad=0;
+        while(indexIntRoad<roads.size())
         {
-            unsigned int x=0;
-            while(x<w)
+            const Road &road=roads.at(indexIntRoad);
+            unsigned int indexCoord=0;
+            while(indexCoord<road.coords.size())
             {
+                const std::pair<uint16_t,uint16_t> &coord=road.coords.at(indexCoord);
+                const unsigned int &x=coord.first;
+                const unsigned int &y=coord.second;
+
                 const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
                 if(zoneOrientation!=0)
                 {
@@ -76,9 +81,7 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
                     if(zoneOrientation&Orientation_right)
                         orientationList.push_back("right");
 
-                    //road info
                     const RoadIndex &indexRoad=roadCoordToIndex[x][y];
-                    const Road &road=roads.at(indexRoad.roadIndex);
 
                     //compose string
                     std::string str;
@@ -92,12 +95,7 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
                         str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+","+cities.at(indexRoad.cityIndex.front()).name+")";
                     }
                     else
-                    {
-                        if(!indexRoad.cityIndex.empty())
-                            str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+","+cities.at(indexRoad.cityIndex.front()).name+")";
-                        else
-                            str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+")";
-                    }
+                        str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+")";
 
                     //paint it
                     QPolygonF poly(QRectF(0,0,mapWidth,mapHeight));
@@ -106,9 +104,10 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
                     objectPolygon->setShape(Tiled::MapObject::Polygon);
                     layerRoad->addObject(objectPolygon);
                 }
-                x++;
+
+                indexCoord++;
             }
-            y++;
+            indexIntRoad++;
         }
     }
 }
@@ -794,7 +793,7 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                             }
                         }
 
-                        road.coord.push_back(std::pair<uint16_t,uint16_t>(x,y));
+                        road.coords.push_back(std::pair<uint16_t,uint16_t>(x,y));
                         roadCoordToIndex[x][y]=roadIndex;
                         if(roadIndex.cityIndex.empty())
                             road.haveOnlySegmentNearCity=false;
