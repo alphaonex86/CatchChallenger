@@ -92,6 +92,7 @@ public:
                                   const unsigned int &x1, const unsigned int &y1,
                                   const unsigned int &x2, const unsigned int &y2);
     static Orientation reverseOrientation(const Orientation &orientation);
+    static std::string orientationToString(const Orientation &orientation);
     static void addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount,bool full);
     static Tiled::Map * loadMapTemplate(MapBrush::MapTemplate &mapTemplate,const char * fileName,const unsigned int mapWidth,const unsigned int mapHeight,Tiled::Map &worldMap);
 };
