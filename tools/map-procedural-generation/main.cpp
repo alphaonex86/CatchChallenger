@@ -120,6 +120,7 @@ int main(int argc, char *argv[])
                 qDebug("mergeDown took %d ms", t.elapsed());
                 t.start();
                 LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount,true);
+                LoadMapAll::addMapChange(tiledMap,mapXCount,mapYCount);
                 qDebug("add city content took %d ms", t.elapsed());
                 TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
@@ -177,7 +178,7 @@ int main(int argc, char *argv[])
                 const LoadMapAll::City &city=LoadMapAll::cities.at(indexCity);
                 const uint32_t x=city.x;
                 const uint32_t y=city.y;
-                const std::string &file=QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+city.name+"/"+city.name+".tmx";
+                const std::string &file=QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+LoadMapAll::lowerCase(city.name)+".tmx";
                 if(!PartialMap::save(tiledMap,
                                  x*singleMapWitdh,y*singleMapHeight,
                                  x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
@@ -205,25 +206,25 @@ int main(int argc, char *argv[])
                     const uint8_t &zoneOrientation=LoadMapAll::mapPathDirection[x+y*mapXCount];
                     if(zoneOrientation!=0)
                     {
-                        const LoadMapAll::RoadIndex &indexRoad=LoadMapAll::roadCoordToIndex[x][y];
+                        const LoadMapAll::RoadIndex &roadIndex=LoadMapAll::roadCoordToIndex.at(x).at(y);
 
                         //compose string
                         std::string file;
                         if(road.haveOnlySegmentNearCity)
                         {
-                            if(indexRoad.cityIndex.empty())
+                            if(roadIndex.cityIndex.empty())
                             {
                                 std::cerr << "road.haveOnlySegmentNearCity and indexRoad.cityIndex.empty()" << std::endl;
                                 abort();
                             }
-                            const LoadMapAll::RoadToCity &cityIndex=indexRoad.cityIndex.front();
+                            const LoadMapAll::RoadToCity &cityIndex=roadIndex.cityIndex.front();
                             file=QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+
-                                    LoadMapAll::cities.at(cityIndex.cityIndex).name+"/road-"+std::to_string(indexRoad.roadIndex+1)+
+                                    LoadMapAll::lowerCase(LoadMapAll::cities.at(cityIndex.cityIndex).name)+"/road-"+std::to_string(roadIndex.roadIndex+1)+
                                     "-"+LoadMapAll::orientationToString(LoadMapAll::reverseOrientation(cityIndex.orientation))+".tmx";
                         }
                         else
                             file=QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/road-"+
-                                    std::to_string(indexRoad.roadIndex+1)+"/"+std::to_string(indexCoord+1)+".tmx";
+                                    std::to_string(roadIndex.roadIndex+1)+"/"+std::to_string(indexCoord+1)+".tmx";
 
                         if(!PartialMap::save(tiledMap,
                                          x*singleMapWitdh,y*singleMapHeight,

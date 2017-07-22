@@ -66,6 +66,8 @@ public:
                             const int widthMap, const int heightMap,
                             const int offsetX=0, const int offsetY=0, bool draw=true);
     static Tiled::TileLayer *searchTileLayerByName(const Tiled::Map &tiledMap,const QString &name);
+    static Tiled::ObjectGroup *searchObjectGroupByName(const Tiled::Map &tiledMap,const QString &name);
+    static Tiled::Tileset *searchTilesetByName(const Tiled::Map &tiledMap,const QString &name);
     static unsigned int searchTileIndexByName(const Tiled::Map &tiledMap,const QString &name);
     static bool haveTileLayer(const Tiled::Map &tiledMap,const QString &name);
     static std::vector<Tiled::Tile *> getTileAt(const Tiled::Map &tiledMap,const unsigned int x,const unsigned int y);
