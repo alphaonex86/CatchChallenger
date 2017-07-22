@@ -298,13 +298,13 @@ void Client::characterIsRightFinalStep()
         //bot
         if(public_and_private_informations.bot_already_beaten!=NULL)
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            /*Can be normal, generated map, test map, ... #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId==0)
             {
                 errorOutput("CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId==0");
                 return;
             }
-            #endif
+            #endif*/
             const auto &binarySize=CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1;
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
             posOutputTemp+=2;
