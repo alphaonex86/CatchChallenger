@@ -1143,6 +1143,8 @@ QString MapVisualiserPlayer::currentMapType() const
     if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_type))
         if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_type).isEmpty())
             return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_type);
+    if(all_map.value(current_map)->logicalMap.xmlRoot==NULL)
+        return QString();
     if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("type")!=NULL)
         //if(!std::string(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("type")->empty()) if empty return empty or empty?
         #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
@@ -1160,6 +1162,8 @@ QString MapVisualiserPlayer::currentZone() const
     if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_zone))
         if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_zone).isEmpty())
             return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_zone);
+    if(all_map.value(current_map)->logicalMap.xmlRoot==NULL)
+        return QString();
     if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("zone"))
         //if(!all_map.value(current_map)->logicalMap.xmlRoot->Attribute("zone")->empty()) if empty return empty or empty?
         #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
@@ -1177,6 +1181,8 @@ QString MapVisualiserPlayer::currentBackgroundsound() const
     if(all_map.value(current_map)->tiledMap->properties().contains(MapVisualiserPlayer::text_backgroundsound))
         if(!all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_backgroundsound).isEmpty())
             return all_map.value(current_map)->tiledMap->properties().value(MapVisualiserPlayer::text_backgroundsound);
+    if(all_map.value(current_map)->logicalMap.xmlRoot==NULL)
+        return QString();
     if(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("backgroundsound"))
         //if(!all_map.value(current_map)->logicalMap.xmlRoot->Attribute(std::string("backgroundsound"))->empty()) if empty return empty or empty?
         #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
