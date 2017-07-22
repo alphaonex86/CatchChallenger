@@ -303,6 +303,19 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
                 }
         }
 
+    //add invisible tileset
+    QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/main/official/");
+    QString tilesetPath(QFileInfo(QCoreApplication::applicationDirPath()+"/dest/tileset/invisible.tsx").absoluteFilePath());
+    Tiled::MapReader reader;
+    Tiled::Tileset *tilesetBase=reader.readTileset(tilesetPath);
+    if(tilesetBase==NULL)
+    {
+        std::cerr << "File not found: " << tilesetPath.toStdString() << std::endl;
+        abort();
+    }
+    tiledMap.addTileset(tilesetBase);
+    tilesetBase->setFileName(mapDir.relativeFilePath(tilesetPath));
+
     return layerZoneWater;
 }
 
@@ -414,6 +427,34 @@ Tiled::TileLayer * LoadMap::searchTileLayerByName(const Tiled::Map &tiledMap,con
         if(layer->isTileLayer() && layer->name()==name)
             return static_cast<Tiled::TileLayer *>(layer);
         tileLayerIndex++;
+    }
+    std::cerr << "Unable to found layer with name: " << name.toStdString() << std::endl;
+    abort();
+}
+
+Tiled::ObjectGroup * LoadMap::searchObjectGroupByName(const Tiled::Map &tiledMap,const QString &name)
+{
+    unsigned int tileLayerIndex=0;
+    while(tileLayerIndex<(unsigned int)tiledMap.layerCount())
+    {
+        Tiled::Layer * const layer=tiledMap.layerAt(tileLayerIndex);
+        if(layer->isObjectGroup() && layer->name()==name)
+            return static_cast<Tiled::ObjectGroup *>(layer);
+        tileLayerIndex++;
+    }
+    std::cerr << "Unable to found layer with name: " << name.toStdString() << std::endl;
+    abort();
+}
+
+Tiled::Tileset *LoadMap::searchTilesetByName(const Tiled::Map &tiledMap,const QString &name)
+{
+    unsigned int tilesetIndex=0;
+    while(tilesetIndex<(unsigned int)tiledMap.tilesetCount())
+    {
+        Tiled::Tileset * const layer=tiledMap.tilesetAt(tilesetIndex);
+        if(layer->name()==name)
+            return layer;
+        tilesetIndex++;
     }
     std::cerr << "Unable to found layer with name: " << name.toStdString() << std::endl;
     abort();
