@@ -3,7 +3,15 @@
 #include "../map-procedural-generation-terrain/LoadMap.h"
 #include "../map-procedural-generation-terrain/MapBrush.h"
 
+#include "../../client/tiled/tiled_tileset.h"
+#include "../../client/tiled/tiled_tile.h"
+#include "../../client/tiled/tiled_objectgroup.h"
+#include "../../client/tiled/tiled_mapobject.h"
+
 #include <iostream>
+#include <QFileInfo>
+#include <QDir>
+#include <QCoreApplication>
 
 Tiled::Map * LoadMapAll::loadMapTemplate(MapBrush::MapTemplate &mapTemplate, const char * fileName, const unsigned int mapWidth, const unsigned int mapHeight, Tiled::Map &worldMap)
 {
@@ -249,4 +257,102 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
         delete mapbuilding1;
         delete mapbuilding2;
     }
+}
+
+void LoadMapAll::addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount)
+{
+    Tiled::ObjectGroup * const movingLayer=LoadMap::searchObjectGroupByName(worldMap,"Moving");
+    const Tiled::Tileset * const invisibleTileset=LoadMap::searchTilesetByName(worldMap,"invisible");
+
+    Tiled::Cell newCell;
+    newCell.flippedAntiDiagonally=false;
+    newCell.flippedHorizontally=false;
+    newCell.flippedVertically=false;
+    newCell.tile=invisibleTileset->tileAt(3);
+
+    const unsigned int mapWidth=worldMap.width()/mapXCount;
+    const unsigned int mapHeight=worldMap.height()/mapYCount;
+    unsigned int y=0;
+    while(y<mapYCount)
+    {
+        unsigned int x=0;
+        while(x<mapXCount)
+        {
+            const uint8_t &zoneOrientation=LoadMapAll::mapPathDirection[x+y*mapXCount];
+            if(zoneOrientation!=0)
+            {
+                QDir mapDir(QFileInfo(QString::fromStdString(LoadMapAll::getMapFile(x,y))).absoluteDir());
+                if(zoneOrientation&Orientation_left)
+                {
+                    Tiled::MapObject* newobject=new Tiled::MapObject("","border-left",QPointF(x*mapWidth,y*mapHeight+mapHeight/2),QSizeF(1,1));
+                    const QString nextMap(mapDir.relativeFilePath(QString::fromStdString(LoadMapAll::getMapFile(x-1,y))));
+                    newobject->setProperty("map",nextMap);
+                    newobject->setCell(newCell);
+                    movingLayer->addObject(newobject);
+                }
+                if(zoneOrientation&Orientation_right)
+                {
+                    Tiled::MapObject* newobject=new Tiled::MapObject("","border-right",QPointF(x*mapWidth+mapWidth-1,y*mapHeight+mapHeight/2),QSizeF(1,1));
+                    const QString nextMap(mapDir.relativeFilePath(QString::fromStdString(LoadMapAll::getMapFile(x+1,y))));
+                    newobject->setProperty("map",nextMap);
+                    newobject->setCell(newCell);
+                    movingLayer->addObject(newobject);
+                }
+                if(zoneOrientation&Orientation_top)
+                {
+                    Tiled::MapObject* newobject=new Tiled::MapObject("","border-top",QPointF(x*mapWidth+mapWidth/2,-0.001/*not exact float representation correction*/+y*mapHeight+1),QSizeF(1,1));
+                    const QString nextMap(mapDir.relativeFilePath(QString::fromStdString(LoadMapAll::getMapFile(x,y-1))));
+                    newobject->setProperty("map",nextMap);
+                    newobject->setCell(newCell);
+                    movingLayer->addObject(newobject);
+                }
+                if(zoneOrientation&Orientation_bottom)
+                {
+                    Tiled::MapObject* newobject=new Tiled::MapObject("","border-bottom",QPointF(x*mapWidth+mapWidth/2,-0.001/*not exact float representation correction*/+y*mapHeight+mapHeight),QSizeF(1,1));
+                    const QString nextMap(mapDir.relativeFilePath(QString::fromStdString(LoadMapAll::getMapFile(x,y+1))));
+                    newobject->setProperty("map",nextMap);
+                    newobject->setCell(newCell);
+                    movingLayer->addObject(newobject);
+                }
+            }
+            x++;
+        }
+        y++;
+    }
+}
+
+std::string LoadMapAll::getMapFile(const unsigned int &x, const unsigned int &y)
+{
+    if(haveCityEntry(citiesCoordToIndex,x,y))
+    {
+        const LoadMapAll::City &city=LoadMapAll::cities.at(LoadMapAll::citiesCoordToIndex.at(x).at(y));
+        return QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+LoadMapAll::lowerCase(city.name);
+    }
+
+    const RoadIndex &roadIndex=roadCoordToIndex.at(x).at(y);
+    const LoadMapAll::Road &road=LoadMapAll::roads.at(roadIndex.roadIndex);
+    if(road.haveOnlySegmentNearCity)
+    {
+        if(roadIndex.cityIndex.empty())
+        {
+            std::cerr << "road.haveOnlySegmentNearCity and roadIndex.cityIndex.empty()" << std::endl;
+            abort();
+        }
+        const LoadMapAll::RoadToCity &cityIndex=roadIndex.cityIndex.front();
+        return QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+
+                LoadMapAll::lowerCase(LoadMapAll::cities.at(cityIndex.cityIndex).name)+"/road-"+std::to_string(roadIndex.roadIndex+1)+
+                "-"+LoadMapAll::orientationToString(LoadMapAll::reverseOrientation(cityIndex.orientation));
+    }
+    else
+    {
+        const unsigned int &indexCoord=vectorindexOf(road.coords,std::pair<uint16_t,uint16_t>(x,y));
+        return QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/road-"+
+                std::to_string(roadIndex.roadIndex+1)+"/"+std::to_string(indexCoord+1);
+    }
+}
+
+std::string LoadMapAll::lowerCase(std::string str)
+{
+    std::transform(str.begin(),str.end(),str.begin(),::tolower);
+    return str;
 }

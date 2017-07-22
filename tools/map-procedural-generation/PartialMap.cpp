@@ -117,6 +117,7 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
                         Tiled::Tileset *newTileset=templateTilesetToMapTileset.at(oldTileset);
                         newCell.tile=newTileset->tileAt(oldTileId);
                         newobject->setCell(newCell);
+                        newobject->setProperties(oldobject->properties());
 
                         objectGroup->addObject(newobject);
                     }
