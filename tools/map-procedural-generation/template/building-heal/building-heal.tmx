@@ -1,20 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="5" height="5" tilewidth="16" tileheight="16" nextobjectid="3">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="5" height="6" tilewidth="16" tileheight="16" nextobjectid="3">
  <tileset firstgid="1" source="../../tileset/building-small.tsx"/>
  <tileset firstgid="1025" source="../../tileset/terra.tsx"/>
  <tileset firstgid="2049" source="../../tileset/animation.tsx"/>
  <tileset firstgid="3073" source="../../tileset/door.tsx"/>
- <layer name="Collisions" width="5" height="5" offsetx="128" offsety="480">
+ <layer name="Collisions" width="5" height="6" offsetx="128" offsety="480">
   <data encoding="base64" compression="zlib">
-   eJxlw9kNgCAUALCXsL7XIKgM4jWIoCPYf5s04q9LEb2Do5PZ2cXV4ubu4enlbbX5+PoBOm4PFQ==
+   eJxtzbkNgDAQAMGT3D5fIRgoBDCFmKcEJoeVJt6Ib02KaOnoGRjJTMwsrGzsFA4qJxc3T/oZ6AVoIQ8V
   </data>
  </layer>
- <layer name="WalkBehind" width="5" height="5" offsetx="128" offsety="480">
+ <layer name="WalkBehind" width="5" height="6" offsetx="128" offsety="480">
   <data encoding="base64" compression="zlib">
-   eJzLYWZgyAXiPCDOB+ICIKY2AADLOQI2
+   eJzLYWZgyAXiPCDOB+ICIKYHAAD3cQI2
   </data>
  </layer>
  <objectgroup name="Moving" offsetx="128" offsety="480">
-  <object id="2" type="door" gid="3109" x="32" y="80" width="16" height="32"/>
+  <object id="2" type="door" gid="3109" x="32" y="80" width="16" height="32">
+   <properties>
+    <property name="map" value="floor-0"/>
+    <property name="x" type="int" value="5"/>
+    <property name="y" type="int" value="10"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>
