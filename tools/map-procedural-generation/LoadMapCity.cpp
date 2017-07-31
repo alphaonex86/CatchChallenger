@@ -9,13 +9,14 @@
 #include "../../client/tiled/tiled_mapobject.h"
 
 #include <iostream>
+#include <unordered_map>
 #include <QFileInfo>
 #include <QDir>
 #include <QCoreApplication>
 
-Tiled::Map * LoadMapAll::loadMapTemplate(MapBrush::MapTemplate &mapTemplate, const char * fileName, const unsigned int mapWidth, const unsigned int mapHeight, Tiled::Map &worldMap)
+std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(MapBrush::MapTemplate &mapTemplate, const char * fileName, const unsigned int mapWidth, const unsigned int mapHeight, Tiled::Map &worldMap)
 {
-    Tiled::Map *map=LoadMap::readMap(fileName);
+    Tiled::Map *map=LoadMap::readMap(QString("template/")+fileName+".tmx");
     if((unsigned int)map->width()>mapWidth)
     {
         std::cout << "map->width()>mapWitdh for city" << std::endl;
@@ -37,7 +38,7 @@ Tiled::Map * LoadMapAll::loadMapTemplate(MapBrush::MapTemplate &mapTemplate, con
         mapTemplate.baseLayerIndex=LoadMap::searchTileIndexByName(*map,"Walkable");
     else if(LoadMap::haveTileLayer(*map,"OnGrass"))
         mapTemplate.baseLayerIndex=LoadMap::searchTileIndexByName(*map,"OnGrass");
-    //else don nothing
+    //else do nothing
 
     if(mapTemplate.templateTilesetToMapTileset.empty())
     {
@@ -45,7 +46,53 @@ Tiled::Map * LoadMapAll::loadMapTemplate(MapBrush::MapTemplate &mapTemplate, con
         abort();
     }
 
-    return map;
+    //now search the next map
+    std::vector<std::string> mapToLoad;
+    mapToLoad.push_back(fileName);
+    while(!mapToLoad.empty())
+    {
+        const std::string mapFile=mapToLoad.front();
+        mapToLoad.erase(mapToLoad.cbegin());
+        Tiled::Map *mapPointer;
+        if(mapFile==fileName)
+            mapPointer=map;
+        else
+            mapPointer=LoadMap::readMap(QString("template/")+fileName+".tmx");
+        const Tiled::ObjectGroup * const objectGroup=LoadMap::searchObjectGroupByName(*mapPointer,"Moving");
+        if(objectGroup!=NULL)
+        {
+            std::unordered_map<std::string,unsigned int> fileToIndex;
+            fileToIndex[fileName]=0;
+            const QList<Tiled::MapObject*> &objects=objectGroup->objects();
+            unsigned int index=0;
+            while(index<(unsigned int)objects.size())
+            {
+                Tiled::MapObject* object=objects.at(index);
+                if(object->type()=="door")
+                {
+                    Tiled::Properties properties=object->properties();
+                    if(properties.contains("map"))
+                    {
+                        const std::string &mapString=properties.value("map").toStdString();
+                        if(fileToIndex.find(mapString)==fileToIndex.cend())
+                            properties["map"]=QString::fromStdString(mapString);
+                        else
+                        {
+                            unsigned int newIndex=fileToIndex.size();
+                            fileToIndex[mapString]=newIndex;
+                            mapToLoad.push_back(mapString);
+                        }
+                        object->setProperties(properties);
+                    }
+                }
+                index++;
+            }
+        }
+    }
+
+    std::vector<Tiled::Map *> mapList;
+    mapList.push_back(map);
+    return mapList;
 }
 
 void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount,bool full)
@@ -60,24 +107,24 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
     MapBrush::MapTemplate mapTemplateBig;
     MapBrush::MapTemplate mapTemplateMedium;
     MapBrush::MapTemplate mapTemplateSmall;
-    Tiled::Map *mapBig=loadMapTemplate(mapTemplateBig,"template/city-big.tmx",mapWidth,mapHeight,worldMap);
-    Tiled::Map *mapMedium=loadMapTemplate(mapTemplateMedium,"template/city-medium.tmx",mapWidth,mapHeight,worldMap);
-    Tiled::Map *mapSmall=loadMapTemplate(mapTemplateSmall,"template/city-small.tmx",mapWidth,mapHeight,worldMap);
+    std::vector<Tiled::Map *> mapBig=loadMapTemplate(mapTemplateBig,"city-big",mapWidth,mapHeight,worldMap);
+    std::vector<Tiled::Map *> mapMedium=loadMapTemplate(mapTemplateMedium,"city-medium",mapWidth,mapHeight,worldMap);
+    std::vector<Tiled::Map *> mapSmall=loadMapTemplate(mapTemplateSmall,"city-small",mapWidth,mapHeight,worldMap);
 
     MapBrush::MapTemplate mapTemplatebuildingshop;
     MapBrush::MapTemplate mapTemplatebuildingheal;
     MapBrush::MapTemplate mapTemplatebuilding1;
     MapBrush::MapTemplate mapTemplatebuilding2;
-    Tiled::Map *mapbuildingshop=NULL;
-    Tiled::Map *mapbuildingheal=NULL;
-    Tiled::Map *mapbuilding1=NULL;
-    Tiled::Map *mapbuilding2=NULL;
+    std::vector<Tiled::Map *> mapbuildingshop;
+    std::vector<Tiled::Map *> mapbuildingheal;
+    std::vector<Tiled::Map *> mapbuilding1;
+    std::vector<Tiled::Map *> mapbuilding2;
     if(full)
     {
-        mapbuildingshop=loadMapTemplate(mapTemplatebuildingshop,"template/building-shop.tmx",mapWidth,mapHeight,worldMap);
-        mapbuildingheal=loadMapTemplate(mapTemplatebuildingheal,"template/building-heal.tmx",mapWidth,mapHeight,worldMap);
-        mapbuilding1=loadMapTemplate(mapTemplatebuilding1,"template/building-1.tmx",mapWidth,mapHeight,worldMap);
-        mapbuilding2=loadMapTemplate(mapTemplatebuilding2,"template/building-2.tmx",mapWidth,mapHeight,worldMap);
+        mapbuildingshop=loadMapTemplate(mapTemplatebuildingshop,"building-shop",mapWidth,mapHeight,worldMap);
+        mapbuildingheal=loadMapTemplate(mapTemplatebuildingheal,"building-heal",mapWidth,mapHeight,worldMap);
+        mapbuilding1=loadMapTemplate(mapTemplatebuilding1,"building-1",mapWidth,mapHeight,worldMap);
+        mapbuilding2=loadMapTemplate(mapTemplatebuilding2,"building-2",mapWidth,mapHeight,worldMap);
     }
 
     unsigned int index=0;
@@ -92,7 +139,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
         std::vector<std::pair<uint8_t,uint8_t> > positionBuilding;
         switch(city.type) {
         case CityType_small:
-            map=mapSmall;
+            map=mapSmall.front();
             mapTemplate=mapTemplateSmall;
             if(full)
             {
@@ -103,11 +150,11 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
             }
             break;
         case CityType_medium:
-            map=mapMedium;
+            map=mapMedium.front();
             mapTemplate=mapTemplateMedium;
             break;
         default:
-            map=mapBig;
+            map=mapBig.front();
             mapTemplate=mapTemplateBig;
             break;
         }
@@ -247,15 +294,25 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
             y++;
         }
     }
-    delete mapBig;
-    delete mapMedium;
-    delete mapSmall;
+    LoadMapAll::deleteMapList(mapBig);
+    LoadMapAll::deleteMapList(mapMedium);
+    LoadMapAll::deleteMapList(mapSmall);
     if(full)
     {
-        delete mapbuildingshop;
-        delete mapbuildingheal;
-        delete mapbuilding1;
-        delete mapbuilding2;
+        LoadMapAll::deleteMapList(mapbuildingshop);
+        LoadMapAll::deleteMapList(mapbuildingheal);
+        LoadMapAll::deleteMapList(mapbuilding1);
+        LoadMapAll::deleteMapList(mapbuilding2);
+    }
+}
+
+void LoadMapAll::deleteMapList(const std::vector<Tiled::Map *> &mapList)
+{
+    unsigned int index=0;
+    while(index<mapList.size())
+    {
+        delete mapList.at(index);
+        index++;
     }
 }
 
