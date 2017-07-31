@@ -442,8 +442,9 @@ Tiled::ObjectGroup * LoadMap::searchObjectGroupByName(const Tiled::Map &tiledMap
             return static_cast<Tiled::ObjectGroup *>(layer);
         tileLayerIndex++;
     }
-    std::cerr << "Unable to found layer with name: " << name.toStdString() << std::endl;
-    abort();
+    /*std::cerr << "Unable to found layer with name: " << name.toStdString() << std::endl;
+    abort();*/
+    return NULL;
 }
 
 Tiled::Tileset *LoadMap::searchTilesetByName(const Tiled::Map &tiledMap,const QString &name)
