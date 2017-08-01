@@ -94,7 +94,7 @@ public:
     static Orientation reverseOrientation(const Orientation &orientation);
     static std::string orientationToString(const Orientation &orientation);
     static void addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount,bool full);
-    static std::vector<Tiled::Map *> loadMapTemplate(MapBrush::MapTemplate &mapTemplate,const char * fileName,const unsigned int mapWidth,const unsigned int mapHeight,Tiled::Map &worldMap);
+    static std::vector<Tiled::Map *> loadMapTemplate(const char * folderName,MapBrush::MapTemplate &mapTemplate,const char * fileName,const unsigned int mapWidth,const unsigned int mapHeight,Tiled::Map &worldMap);
     static void addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
     static std::string getMapFile(const unsigned int &x, const unsigned int &y);
     static std::string lowerCase(std::string str);
