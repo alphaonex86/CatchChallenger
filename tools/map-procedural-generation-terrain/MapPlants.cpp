@@ -55,7 +55,7 @@ void MapPlants::addVegetation(Tiled::Map &worldMap,const VoronioForTiledMapTmx::
             MapPlantsOptions &mapPlantsOption=mapPlantsOptions[height][moisure];
             if(!mapPlantsOption.tmx.isEmpty())
             {
-                const Tiled::Map *map=LoadMap::readMap("template/"+mapPlantsOption.tmx+".tmx");
+                Tiled::Map *map=LoadMap::readMap("template/"+mapPlantsOption.tmx+".tmx");
                 mapPlantsOption.mapTemplate=MapBrush::tiledMapToMapTemplate(map,worldMap);
                 loadTypeToMap(templateResolver,height-1,moisure,mapPlantsOption.mapTemplate);
             }

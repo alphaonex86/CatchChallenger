@@ -3,6 +3,7 @@
 
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"
 #include "../../client/tiled/tiled_map.h"
+#include "../../client/tiled/tiled_mapobject.h"
 #include "../../general/base/cpp11addition.h"
 #include "../map-procedural-generation-terrain/MapBrush.h"
 
@@ -99,6 +100,7 @@ public:
     static std::string getMapFile(const unsigned int &x, const unsigned int &y);
     static std::string lowerCase(std::string str);
     static void deleteMapList(const std::vector<Tiled::Map *> &mapList);
+    static std::vector<Tiled::MapObject*> getDoorsList(Tiled::Map * map);
 };
 
 #endif // LOADMAPALL_H

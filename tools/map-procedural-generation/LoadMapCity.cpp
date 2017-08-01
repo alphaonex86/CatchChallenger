@@ -61,36 +61,49 @@ std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(const char * folderName,Ma
         else
             mapPointer=LoadMap::readMap(QString("template/")+QString(folderName)+fileName+".tmx");
         mapList.push_back(mapPointer);
-        const Tiled::ObjectGroup * const objectGroup=LoadMap::searchObjectGroupByName(*mapPointer,"Moving");
-        if(objectGroup!=NULL)
+        std::vector<Tiled::MapObject*> doors=getDoorsList(mapPointer);
+        unsigned int index=0;
+        while(index<(unsigned int)doors.size())
         {
-            const QList<Tiled::MapObject*> &objects=objectGroup->objects();
-            unsigned int index=0;
-            while(index<(unsigned int)objects.size())
+            Tiled::MapObject* object=doors.at(index);
+            Tiled::Properties properties=object->properties();
+            const std::string &mapString=properties.value("map").toStdString();
+            if(fileToIndex.find(mapString)!=fileToIndex.cend())
+            {}//properties["map"]=QString::fromStdString(mapString);
+            else
             {
-                Tiled::MapObject* object=objects.at(index);
-                if(object->type()=="door")
-                {
-                    Tiled::Properties properties=object->properties();
-                    if(properties.contains("map"))
-                    {
-                        const std::string &mapString=properties.value("map").toStdString();
-                        if(fileToIndex.find(mapString)!=fileToIndex.cend())
-                            properties["map"]=QString::fromStdString(mapString);
-                        else
-                        {
-                            unsigned int newIndex=fileToIndex.size();
-                            fileToIndex[mapString]=newIndex;
-                            mapToLoad.push_back(mapString);
-                        }
-                        object->setProperties(properties);
-                    }
-                }
-                index++;
+                unsigned int newIndex=fileToIndex.size();
+                fileToIndex[mapString]=newIndex;
+                mapToLoad.push_back(mapString);
             }
+            object->setProperties(properties);
+            index++;
         }
     }
     return mapList;
+}
+
+std::vector<Tiled::MapObject*> LoadMapAll::getDoorsList(Tiled::Map * map)
+{
+    std::vector<Tiled::MapObject*> doors;
+    const Tiled::ObjectGroup * const objectGroup=LoadMap::searchObjectGroupByName(*map,"Moving");
+    if(objectGroup!=NULL)
+    {
+        const QList<Tiled::MapObject*> &objects=objectGroup->objects();
+        unsigned int index=0;
+        while(index<(unsigned int)objects.size())
+        {
+            Tiled::MapObject* object=objects.at(index);
+            if(object->type()=="door")
+            {
+                Tiled::Properties properties=object->properties();
+                if(properties.contains("map"))
+                    doors.push_back(object);
+            }
+            index++;
+        }
+    }
+    return doors;
 }
 
 void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount,bool full)
@@ -169,7 +182,54 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
             if(!haveHeal)
             {
                 haveHeal=true;
+                const std::string baseName("heal");
+                //search the brush door and retarget
+                std::unordered_map<Tiled::MapObject*,Tiled::Properties> oldValue;
+                std::vector<Tiled::MapObject*> doors=getDoorsList(mapTemplatebuildingheal.tiledMap);
+                unsigned int index=0;
+                while(index<(unsigned int)doors.size())
+                {
+                    Tiled::MapObject* object=doors.at(index);
+                    Tiled::Properties properties=object->properties();
+                    oldValue[object]=properties.value("map").toStdString();
+                    properties["map"]=QString::fromStdString(baseName);
+                    object->setProperties(properties);
+                    index++;
+                }
                 MapBrush::brushTheMap(worldMap,mapTemplatebuildingheal,x*mapWidth+pos.first,y*mapHeight+pos.second,MapBrush::mapMask,true);
+                index=0;
+                while(index<(unsigned int)doors.size())//reset to the old value
+                {
+                    Tiled::MapObject* object=doors.at(index);
+                    object->setProperties(oldValue.at(object);
+                    index++;
+                }
+                doors.clear();
+                //search next hop door and retarget
+                doors=getDoorsList(mapbuildingheal.at(1));
+                index=0;
+                while(index<(unsigned int)doors.size())
+                {
+                    Tiled::MapObject* object=doors.at(index);
+                    Tiled::Properties properties=object->properties();
+                    oldValue[object]=properties.value("map").toStdString();
+                    properties["map"]=QString::fromStdString(city.name);
+                    properties["x"]= + ?
+                                properties["y"]= + ?
+                    object->setProperties(properties);
+                    index++;
+                }
+                //write all next hop
+to do
+                //reset next hop
+                index=0;
+                while(index<(unsigned int)doors.size())//reset to the old value
+                {
+                    Tiled::MapObject* object=doors.at(index);
+                    object->setProperties(oldValue.at(object));
+                    index++;
+                }
+                doors.clear();
             }
             else if(!haveShop)
             {
@@ -178,7 +238,6 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
             }
             else
             {
-                haveHeal=true;
                 switch(rand()%2)
                 {
                 case 0:
