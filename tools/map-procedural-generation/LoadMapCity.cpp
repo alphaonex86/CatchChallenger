@@ -14,9 +14,9 @@
 #include <QDir>
 #include <QCoreApplication>
 
-std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(MapBrush::MapTemplate &mapTemplate, const char * fileName, const unsigned int mapWidth, const unsigned int mapHeight, Tiled::Map &worldMap)
+std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(const char * folderName,MapBrush::MapTemplate &mapTemplate, const char * fileName, const unsigned int mapWidth, const unsigned int mapHeight, Tiled::Map &worldMap)
 {
-    Tiled::Map *map=LoadMap::readMap(QString("template/")+fileName+".tmx");
+    Tiled::Map *map=LoadMap::readMap(QString("template/")+QString(folderName)+fileName+".tmx");
     if((unsigned int)map->width()>mapWidth)
     {
         std::cout << "map->width()>mapWitdh for city" << std::endl;
@@ -47,7 +47,9 @@ std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(MapBrush::MapTemplate &map
     }
 
     //now search the next map
+    std::vector<Tiled::Map *> mapList;
     std::vector<std::string> mapToLoad;
+    std::unordered_map<std::string,unsigned int> fileToIndex;
     mapToLoad.push_back(fileName);
     while(!mapToLoad.empty())
     {
@@ -57,12 +59,11 @@ std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(MapBrush::MapTemplate &map
         if(mapFile==fileName)
             mapPointer=map;
         else
-            mapPointer=LoadMap::readMap(QString("template/")+fileName+".tmx");
+            mapPointer=LoadMap::readMap(QString("template/")+QString(folderName)+fileName+".tmx");
+        mapList.push_back(mapPointer);
         const Tiled::ObjectGroup * const objectGroup=LoadMap::searchObjectGroupByName(*mapPointer,"Moving");
         if(objectGroup!=NULL)
         {
-            std::unordered_map<std::string,unsigned int> fileToIndex;
-            fileToIndex[fileName]=0;
             const QList<Tiled::MapObject*> &objects=objectGroup->objects();
             unsigned int index=0;
             while(index<(unsigned int)objects.size())
@@ -74,7 +75,7 @@ std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(MapBrush::MapTemplate &map
                     if(properties.contains("map"))
                     {
                         const std::string &mapString=properties.value("map").toStdString();
-                        if(fileToIndex.find(mapString)==fileToIndex.cend())
+                        if(fileToIndex.find(mapString)!=fileToIndex.cend())
                             properties["map"]=QString::fromStdString(mapString);
                         else
                         {
@@ -89,9 +90,6 @@ std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(MapBrush::MapTemplate &map
             }
         }
     }
-
-    std::vector<Tiled::Map *> mapList;
-    mapList.push_back(map);
     return mapList;
 }
 
@@ -107,9 +105,9 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
     MapBrush::MapTemplate mapTemplateBig;
     MapBrush::MapTemplate mapTemplateMedium;
     MapBrush::MapTemplate mapTemplateSmall;
-    std::vector<Tiled::Map *> mapBig=loadMapTemplate(mapTemplateBig,"city-big",mapWidth,mapHeight,worldMap);
-    std::vector<Tiled::Map *> mapMedium=loadMapTemplate(mapTemplateMedium,"city-medium",mapWidth,mapHeight,worldMap);
-    std::vector<Tiled::Map *> mapSmall=loadMapTemplate(mapTemplateSmall,"city-small",mapWidth,mapHeight,worldMap);
+    std::vector<Tiled::Map *> mapBig=loadMapTemplate("",mapTemplateBig,"city-big",mapWidth,mapHeight,worldMap);
+    std::vector<Tiled::Map *> mapMedium=loadMapTemplate("",mapTemplateMedium,"city-medium",mapWidth,mapHeight,worldMap);
+    std::vector<Tiled::Map *> mapSmall=loadMapTemplate("",mapTemplateSmall,"city-small",mapWidth,mapHeight,worldMap);
 
     MapBrush::MapTemplate mapTemplatebuildingshop;
     MapBrush::MapTemplate mapTemplatebuildingheal;
@@ -121,10 +119,10 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
     std::vector<Tiled::Map *> mapbuilding2;
     if(full)
     {
-        mapbuildingshop=loadMapTemplate(mapTemplatebuildingshop,"building-shop",mapWidth,mapHeight,worldMap);
-        mapbuildingheal=loadMapTemplate(mapTemplatebuildingheal,"building-heal",mapWidth,mapHeight,worldMap);
-        mapbuilding1=loadMapTemplate(mapTemplatebuilding1,"building-1",mapWidth,mapHeight,worldMap);
-        mapbuilding2=loadMapTemplate(mapTemplatebuilding2,"building-2",mapWidth,mapHeight,worldMap);
+        mapbuildingshop=loadMapTemplate("building-shop/",mapTemplatebuildingshop,"building-shop",mapWidth,mapHeight,worldMap);
+        mapbuildingheal=loadMapTemplate("building-heal/",mapTemplatebuildingheal,"building-heal",mapWidth,mapHeight,worldMap);
+        mapbuilding1=loadMapTemplate("building-1/",mapTemplatebuilding1,"building-1",mapWidth,mapHeight,worldMap);
+        mapbuilding2=loadMapTemplate("building-2/",mapTemplatebuilding2,"building-2",mapWidth,mapHeight,worldMap);
     }
 
     unsigned int index=0;
