@@ -56,7 +56,7 @@ bool MapBrush::detectBorder(Tiled::TileLayer *layer,MapTemplate *templateMap)
     return true;
 }
 
-MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(const Tiled::Map *templateMap,Tiled::Map &worldMap)
+MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(Tiled::Map *templateMap,Tiled::Map &worldMap)
 {
     uint8_t lastDimensionLayerUsed=99;
     MapTemplate returnedVar;
