@@ -2,6 +2,7 @@
 #include <QSettings>
 #include <QTime>
 #include <QFile>
+#include <QDir>
 #include <iostream>
 
 #include "../../client/tiled/tiled_mapwriter.h"
@@ -41,6 +42,14 @@ int main(int argc, char *argv[])
     if(!QFile::exists(QCoreApplication::applicationDirPath()+"/settings.xml"))
         QFile::copy(":/settings.xml",QCoreApplication::applicationDirPath()+"/settings.xml");
     QSettings settings(QCoreApplication::applicationDirPath()+"/settings.xml",QSettings::NativeFormat);
+
+    QDir dir(QCoreApplication::applicationDirPath()+"/dest/main/official/");
+    dir.removeRecursively();
+    if(!dir.mkpath(dir.path()))
+    {
+        std::cerr << "Unable to create path: " << dir.path().toStdString() << std::endl;
+        abort();
+    }
 
     Settings::putDefaultSettings(settings);
     unsigned int mapWidth;
