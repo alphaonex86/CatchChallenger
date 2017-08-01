@@ -7,6 +7,7 @@
 #include "../../client/tiled/tiled_tile.h"
 #include "../../client/tiled/tiled_objectgroup.h"
 #include "../../client/tiled/tiled_mapobject.h"
+#include "../../client/tiled/tiled_mapwriter.h"
 
 #include <iostream>
 #include <unordered_map>
@@ -59,7 +60,8 @@ std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(const char * folderName,Ma
         if(mapFile==fileName)
             mapPointer=map;
         else
-            mapPointer=LoadMap::readMap(QString("template/")+QString(folderName)+fileName+".tmx");
+            mapPointer=LoadMap::readMap(QString("template/")+QString(folderName)+QString::fromStdString(mapFile)+".tmx");
+        fileToIndex[mapFile]=mapList.size();
         mapList.push_back(mapPointer);
         std::vector<Tiled::MapObject*> doors=getDoorsList(mapPointer);
         unsigned int index=0;
@@ -174,6 +176,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
         MapBrush::brushTheMap(worldMap,mapTemplate,x*mapWidth+xoffset,y*mapHeight+yoffset,MapBrush::mapMask,true);
         bool haveHeal=false;
         bool haveShop=false;
+        bool ok;
         while(!positionBuilding.empty())
         {
             unsigned int randomIndex=rand()%positionBuilding.size();
@@ -191,7 +194,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                 {
                     Tiled::MapObject* object=doors.at(index);
                     Tiled::Properties properties=object->properties();
-                    oldValue[object]=properties.value("map").toStdString();
+                    oldValue[object]=object->properties();
                     properties["map"]=QString::fromStdString(baseName);
                     object->setProperties(properties);
                     index++;
@@ -201,7 +204,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                 while(index<(unsigned int)doors.size())//reset to the old value
                 {
                     Tiled::MapObject* object=doors.at(index);
-                    object->setProperties(oldValue.at(object);
+                    object->setProperties(oldValue.at(object));
                     index++;
                 }
                 doors.clear();
@@ -212,15 +215,45 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                 {
                     Tiled::MapObject* object=doors.at(index);
                     Tiled::Properties properties=object->properties();
-                    oldValue[object]=properties.value("map").toStdString();
-                    properties["map"]=QString::fromStdString(city.name);
-                    properties["x"]= + ?
-                                properties["y"]= + ?
+                    oldValue[object]=properties;
+                    properties["map"]=QString::fromStdString(LoadMapAll::lowerCase(city.name));
+                    properties["x"]=QString::number(properties.value("x").toUInt(&ok)+pos.first);
+                    if(!ok)
+                    {
+                        std::cerr << "For one tmx map, x is not a number: " << properties.value("x").toStdString() << std::endl;
+                        abort();
+                    }
+                    properties["y"]=QString::number(properties.value("y").toUInt(&ok)+pos.second);
+                    if(!ok)
+                    {
+                        std::cerr << "For one tmx map, y is not a number: " << properties.value("y").toStdString() << std::endl;
+                        abort();
+                    }
                     object->setProperties(properties);
                     index++;
                 }
                 //write all next hop
-to do
+                index=1;
+                while(index<(unsigned int)mapbuildingheal.size())
+                {
+                    Tiled::Map *nextHopMap=mapbuildingheal.at(index);
+                    const std::string &filePath="/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+".tmx";
+
+                    QFileInfo fileInfo(QCoreApplication::applicationDirPath()+QString::fromStdString(filePath));
+                    QDir mapDir(fileInfo.absolutePath());
+                    if(!mapDir.mkpath(fileInfo.absolutePath()))
+                    {
+                        std::cerr << "Unable to create path: " << fileInfo.absolutePath().toStdString() << std::endl;
+                        abort();
+                    }
+                    Tiled::MapWriter maprwriter;
+                    if(!maprwriter.writeMap(nextHopMap,fileInfo.absoluteFilePath()))
+                    {
+                        std::cerr << "Unable to write " << fileInfo.absoluteFilePath().toStdString() << std::endl;
+                        abort();
+                    }
+                    index++;
+                }
                 //reset next hop
                 index=0;
                 while(index<(unsigned int)doors.size())//reset to the old value
