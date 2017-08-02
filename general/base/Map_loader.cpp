@@ -227,7 +227,9 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                 std::cerr << "Object out of the map: child->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
                                             << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild)
                                             << "), file: " << file << std::endl;
-                            else if(SubChild->Attribute(XMLCACHEDSTRING_type)!=NULL)
+                            else if(SubChild->Attribute(XMLCACHEDSTRING_type)==NULL)
+                                std::cerr << "Missing attribute type missing: SubChild->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                            else
                             {
                                 const std::string &type=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(SubChild->Attribute(XMLCACHEDSTRING_type));
 
@@ -405,8 +407,6 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                               << "), file: " << file << std::endl;
                                 }
                             }
-                            else
-                                std::cerr << "Missing attribute type missing: SubChild->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
                         }
                     }
                     else

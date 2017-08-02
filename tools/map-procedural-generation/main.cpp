@@ -50,6 +50,34 @@ int main(int argc, char *argv[])
         std::cerr << "Unable to create path: " << dir.path().toStdString() << std::endl;
         abort();
     }
+    QFile info(QCoreApplication::applicationDirPath()+"/dest/main/official/informations.xml");
+    if(info.open(QFile::WriteOnly))
+    {
+        QString content("<?xml version='1.0'?>\n"
+                            "<informations color=\"#688BFF\">\n"
+                            "    <name>Generated map</name>\n"
+                            "    <name lang=\"fr\">Map généré</name>\n"
+                            "    <initial>T</initial>\n"
+                            "    <options>\n");
+        QFile optionsFile(QCoreApplication::applicationDirPath()+"/settings.xml");
+        if(!optionsFile.open(QFile::ReadOnly))
+        {
+            std::cerr << "!optionsFile.open(QFile::ReadOnly)" << std::endl;
+            abort();
+        }
+        content+=optionsFile.readAll();
+        optionsFile.close();
+        content+="    </options>\n";
+        content+="</informations>";
+        QByteArray contentData(content.toUtf8());
+        info.write(contentData.constData(),contentData.size());
+        info.close();
+    }
+    else
+    {
+        std::cerr << "Unable to write informations.xml" << std::endl;
+        abort();
+    }
 
     Settings::putDefaultSettings(settings);
     unsigned int mapWidth;
@@ -177,6 +205,7 @@ int main(int argc, char *argv[])
             }
         }
         //do tmx split
+        std::vector<PartialMap::RecuesPoint> recuesPoints;
         {
             const unsigned int singleMapWitdh=tiledMap.width()/mapXCount;
             const unsigned int singleMapHeight=tiledMap.height()/mapYCount;
@@ -187,11 +216,12 @@ int main(int argc, char *argv[])
                 const LoadMapAll::City &city=LoadMapAll::cities.at(indexCity);
                 const uint32_t x=city.x;
                 const uint32_t y=city.y;
-                const std::string &file=QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+LoadMapAll::lowerCase(city.name)+".tmx";
+                const std::string &file=LoadMapAll::lowerCase(city.name)+"/"+LoadMapAll::lowerCase(city.name)+".tmx";
                 if(!PartialMap::save(tiledMap,
                                  x*singleMapWitdh,y*singleMapHeight,
                                  x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
-                                 file
+                                 file,
+                                 recuesPoints
                                  ))
                 {
                     std::cerr << "Unable to write " << file << "" << std::endl;
@@ -227,8 +257,7 @@ int main(int argc, char *argv[])
                                 abort();
                             }
                             const LoadMapAll::RoadToCity &cityIndex=roadIndex.cityIndex.front();
-                            file=QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+
-                                    LoadMapAll::lowerCase(LoadMapAll::cities.at(cityIndex.cityIndex).name)+"/road-"+std::to_string(roadIndex.roadIndex+1)+
+                            file=LoadMapAll::lowerCase(LoadMapAll::cities.at(cityIndex.cityIndex).name)+"/road-"+std::to_string(roadIndex.roadIndex+1)+
                                     "-"+LoadMapAll::orientationToString(LoadMapAll::reverseOrientation(cityIndex.orientation))+".tmx";
                         }
                         else
@@ -238,7 +267,8 @@ int main(int argc, char *argv[])
                         if(!PartialMap::save(tiledMap,
                                          x*singleMapWitdh,y*singleMapHeight,
                                          x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
-                                         file
+                                         file,
+                                         recuesPoints
                                          ))
                         {
                             std::cerr << "Unable to write " << file << "" << std::endl;
@@ -255,6 +285,34 @@ int main(int argc, char *argv[])
                 }
                 indexIntRoad++;
             }
+        }
+        //do the start point
+        QFile start(QCoreApplication::applicationDirPath()+"/dest/main/official/start.xml");
+        if(start.open(QFile::WriteOnly))
+        {
+            const PartialMap::RecuesPoint &recuesPoint=recuesPoints.front();
+            if(recuesPoints.empty())
+            {
+                std::cerr << "recuesPoints.empty() then can't do start.xml (abort)" << std::endl;
+                abort();
+            }
+            QString content("<!--\n"
+                            "/!\\ warning, directly put this information into db\n"
+                            "/!\\ not check if x,y is into the range of the map\n"
+                            "-->\n"
+                            "<profile>\n"
+                            "  <start id=\"normal\">\n"
+                            "    <map x=\""+QString::number(recuesPoint.x)+"\" y=\""+QString::number(recuesPoint.y)+"\" file=\""+QString::fromStdString(recuesPoint.map)+"\"/>\n"
+                            "  </start>\n"
+                            "</profile>");
+            QByteArray contentData(content.toUtf8());
+            start.write(contentData.constData(),contentData.size());
+            start.close();
+        }
+        else
+        {
+            std::cerr << "Unable to write informations.xml" << std::endl;
+            abort();
         }
     }
 
