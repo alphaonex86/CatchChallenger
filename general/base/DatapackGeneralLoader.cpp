@@ -2766,12 +2766,13 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileList(cons
             if(serverProfileId.find(profile.databaseId)==serverProfileId.cend())
             {
                 std::cerr << "Profile xml file: " << file << ", found common id \"" << profile.databaseId << "\" but not found in server, add it" << std::endl;
-                ServerSpecProfile serverProfileTemp;
+                std::cerr << "Mostly due datapack/player/start.xml entry not found into datapack/internal/map/main/official/start.xml" << std::endl;
+                /*ServerSpecProfile serverProfileTemp;
                 serverProfileTemp.databaseId=profile.databaseId;
                 serverProfileTemp.orientation=Orientation_bottom;
                 serverProfileTemp.x=0;
                 serverProfileTemp.y=0;
-                serverProfile.push_back(serverProfileTemp);
+                serverProfile.push_back(serverProfileTemp);*/
             }
             index++;
         }
