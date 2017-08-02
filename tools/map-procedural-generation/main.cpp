@@ -301,7 +301,7 @@ int main(int argc, char *argv[])
                             "/!\\ not check if x,y is into the range of the map\n"
                             "-->\n"
                             "<profile>\n"
-                            "  <start id=\"normal\">\n"
+                            "  <start id=\"Normal\">\n"
                             "    <map x=\""+QString::number(recuesPoint.x)+"\" y=\""+QString::number(recuesPoint.y)+"\" file=\""+QString::fromStdString(recuesPoint.map)+"\"/>\n"
                             "  </start>\n"
                             "</profile>");
