@@ -12,7 +12,9 @@ public:
         std::string map;
         uint8_t x,y;
     };
-    static bool save(const Tiled::Map &world, const unsigned int &minX, const unsigned int &minY, const unsigned int &maxX, const unsigned int &maxY, const std::string &file, std::vector<RecuesPoint> &recuesPoints);
+    static bool save(const Tiled::Map &world, const unsigned int &minX, const unsigned int &minY,
+                     const unsigned int &maxX, const unsigned int &maxY, const std::string &file, std::vector<RecuesPoint> &recuesPoints,
+                     const std::string &type,const std::string &zone,const std::string &name);
 };
 
 #endif // PARTIALMAP_H

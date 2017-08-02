@@ -14,7 +14,9 @@
 #include <unordered_map>
 #include <cmath>
 
-bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const unsigned int &minY, const unsigned int &maxX, const unsigned int &maxY, const std::string &file,std::vector<PartialMap::RecuesPoint> &recuesPoints)
+bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const unsigned int &minY,
+                      const unsigned int &maxX, const unsigned int &maxY, const std::string &file, std::vector<RecuesPoint> &recuesPoints,
+                      const std::string &type,const std::string &zone,const std::string &name)
 {
     const unsigned int mapWidth=maxX-minX;
     const unsigned int mapHeight=maxY-minY;
@@ -149,8 +151,30 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
     }
 
     Tiled::MapWriter maprwriter;
-    const bool &returnVar=maprwriter.writeMap(&tiledMap,fileInfo.absoluteFilePath());
+    bool returnVar=maprwriter.writeMap(&tiledMap,fileInfo.absoluteFilePath());
     if(!returnVar)
         std::cerr << maprwriter.errorString().toStdString() << std::endl;
+
+    QString xmlPath(fileInfo.absoluteFilePath());
+    xmlPath.remove(xmlPath.size()-4,4);
+    xmlPath+=".xml";
+    QFile xmlinfo(xmlPath);
+    if(xmlinfo.open(QFile::WriteOnly))
+    {
+        QString content("<map type=\""+QString::fromStdString(type)+"\"");
+        if(!zone.empty())
+            content+=" zone=\""+QString::fromStdString(zone)+"\"";
+        content+=">\n"
+        "  <name>"+QString::fromStdString(name)+"</name>\n"
+        "</map>";
+        QByteArray contentData(content.toUtf8());
+        xmlinfo.write(contentData.constData(),contentData.size());
+        xmlinfo.close();
+    }
+    else
+    {
+        std::cerr << "Unable to write " << xmlPath.toStdString() << std::endl;
+        returnVar=false;
+    }
     return returnVar;
 }
