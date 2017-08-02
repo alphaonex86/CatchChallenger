@@ -211,6 +211,8 @@ protected:
     std::vector<CATCHCHALLENGER_XMLDOCUMENT *> toDeleteAfterBotLoad;
     #endif
     bool preload_market_monsters_prices_call;
+    bool preload_industries_call;
+    bool preload_market_items_call;
 
     static std::regex regexXmlFile;
 };
