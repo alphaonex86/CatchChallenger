@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" renderorder="right-down" width="11" height="12" tilewidth="16" tileheight="16" nextobjectid="2">
+ <properties>
+  <property name="type" value="indoor"/>
+ </properties>
  <tileset firstgid="1" source="../../tileset/inside-terra.tsx"/>
  <tileset firstgid="1025" source="../../tileset/invisible.tsx"/>
  <tileset firstgid="1041" source="../../tileset/inside-decoration.tsx"/>
