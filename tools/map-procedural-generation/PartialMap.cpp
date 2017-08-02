@@ -6,18 +6,20 @@
 #include "../../client/tiled/tiled_objectgroup.h"
 #include "../../client/tiled/tiled_tileset.h"
 #include "../../client/tiled/tiled_tile.h"
+#include "../../general/base/cpp11addition.h"
 
 #include <QDir>
 #include <QCoreApplication>
 #include <iostream>
 #include <unordered_map>
+#include <cmath>
 
-bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const unsigned int &minY, const unsigned int &maxX, const unsigned int &maxY, const std::string &file)
+bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const unsigned int &minY, const unsigned int &maxX, const unsigned int &maxY, const std::string &file,std::vector<PartialMap::RecuesPoint> &recuesPoints)
 {
     const unsigned int mapWidth=maxX-minX;
     const unsigned int mapHeight=maxY-minY;
     Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,mapWidth,mapHeight,16,16);
-    QFileInfo fileInfo(QString::fromStdString(file));
+    QFileInfo fileInfo(QString::fromStdString(QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+file));
     QDir mapDir(fileInfo.absolutePath());
     if(!mapDir.mkpath(fileInfo.absolutePath()))
     {
@@ -120,6 +122,17 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
                         newobject->setProperties(oldobject->properties());
 
                         objectGroup->addObject(newobject);
+
+                        if(objectGroup->name()=="Moving" && newobject->type()=="rescue")
+                        {
+                            PartialMap::RecuesPoint recuesPoint;
+                            recuesPoint.x=floor(position.x());
+                            recuesPoint.y=floor(position.y())-1;//I don't know why it have this offset
+                            recuesPoint.map=file;
+                            if(stringEndsWith(recuesPoint.map,".tmx"))
+                                recuesPoint.map.erase(recuesPoint.map.size()-4);
+                            recuesPoints.push_back(recuesPoint);
+                        }
                     }
                 }
                 objectIndex++;

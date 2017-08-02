@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="5" height="6" tilewidth="16" tileheight="16" nextobjectid="3">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="5" height="6" tilewidth="16" tileheight="16" nextobjectid="4">
  <tileset firstgid="1" source="../../tileset/building-small.tsx"/>
  <tileset firstgid="1025" source="../../tileset/terra.tsx"/>
  <tileset firstgid="2049" source="../../tileset/animation.tsx"/>
  <tileset firstgid="3073" source="../../tileset/door.tsx"/>
+ <tileset firstgid="3585" source="../../tileset/invisible.tsx"/>
  <layer name="Collisions" width="5" height="6" offsetx="128" offsety="480">
   <data encoding="base64" compression="zlib">
-   eJxtzbkNgDAQAMGT3D5fIRgoBDCFmKcEJoeVJt6Ib02KaOnoGRjJTMwsrGzsFA4qJxc3T/oZ6AVoIQ8V
+   eJxtzcsJgFAQA8CFbd9fIf4KUZ+FKFqCAx41MOSWRHxTZURNQ0tHz8DIxMzCykZh5+DMd+fSd/4cyANKBA4k
   </data>
  </layer>
  <layer name="WalkBehind" width="5" height="6" offsetx="128" offsety="480">
@@ -22,5 +23,6 @@
     <property name="y" type="int" value="10"/>
    </properties>
   </object>
+  <object id="3" type="rescue" gid="3586" x="32" y="96" width="16" height="16"/>
  </objectgroup>
 </map>
