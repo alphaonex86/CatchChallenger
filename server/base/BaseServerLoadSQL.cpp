@@ -88,8 +88,8 @@ void BaseServer::preload_zone_sql()
             else
                 return;
         }
+        preload_market_monsters_sql();
     }
-    preload_market_monsters_sql();
 }
 #endif
 
@@ -545,6 +545,12 @@ void BaseServer::preload_industries()
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     std::cout << GlobalServerData::serverPrivateVariables.maxClanId << " SQL clan max id" << std::endl;
     #endif
+    if(preload_industries_call!=false)
+    {
+        std::cerr << "preload_industries_call!=false, double call (abort)" << std::endl;
+        abort();
+    }
+    preload_industries_call=true;
 
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
@@ -902,6 +908,12 @@ void BaseServer::preload_market_monsters_return()
 
 void BaseServer::preload_market_items()
 {
+    if(preload_market_items_call!=false)
+    {
+        std::cerr << "BaseServer::preload_market_items() double call detected" << std::endl;
+        abort();
+    }
+    preload_market_items_call=true;
     std::cout << GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size() << " SQL monster list loaded" << std::endl;
 
     Client::marketObjectIdList.clear();
