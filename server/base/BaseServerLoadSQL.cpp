@@ -46,43 +46,48 @@ void BaseServer::preload_zone_return()
 
 void BaseServer::preload_zone_sql()
 {
-    const int &listsize=entryListZone.size();
-    while(entryListIndex<listsize)
+    if(entryListZone.empty())
+        preload_market_monsters_prices_sql();
+    else
     {
-        std::string zoneCodeName=entryListZone.at(entryListIndex).name;
-        stringreplaceOne(zoneCodeName,".xml","");
-        std::string queryText;
-        switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
+        const int &listsize=entryListZone.size();
+        while(entryListIndex<listsize)
         {
-            default:
-            abort();
-            break;
-            #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
-            case DatabaseBase::DatabaseType::Mysql:
-                queryText="SELECT `clan` FROM `city` WHERE `city`='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
-            break;
+            std::string zoneCodeName=entryListZone.at(entryListIndex).name;
+            stringreplaceOne(zoneCodeName,".xml","");
+            std::string queryText;
+            switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
+            {
+                default:
+                abort();
+                break;
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
+                case DatabaseBase::DatabaseType::Mysql:
+                    queryText="SELECT `clan` FROM `city` WHERE `city`='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
+                break;
+                    #endif
+                #ifndef EPOLLCATCHCHALLENGERSERVER
+                case DatabaseBase::DatabaseType::SQLite:
+                    queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
+                break;
                 #endif
-            #ifndef EPOLLCATCHCHALLENGERSERVER
-            case DatabaseBase::DatabaseType::SQLite:
-                queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
-            break;
-            #endif
-            #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
-            case DatabaseBase::DatabaseType::PostgreSQL:
-                queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
-            break;
-            #endif
+                #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
+                case DatabaseBase::DatabaseType::PostgreSQL:
+                    queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
+                break;
+                #endif
+            }
+            if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_zone_static)==NULL)
+            {
+                std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
+                criticalDatabaseQueryFailed();return;//stop because can't do the first db access
+                entryListIndex++;
+                preload_market_monsters_sql();
+                return;
+            }
+            else
+                return;
         }
-        if(GlobalServerData::serverPrivateVariables.db_server->asyncRead(queryText,this,&BaseServer::preload_zone_static)==NULL)
-        {
-            std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
-            criticalDatabaseQueryFailed();return;//stop because can't do the first db access
-            entryListIndex++;
-            preload_market_monsters_sql();
-            return;
-        }
-        else
-            return;
     }
     preload_market_monsters_sql();
 }
