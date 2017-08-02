@@ -95,10 +95,10 @@ int main(int argc, char *argv[])
                            scale_Zone,dominimap,miniMapDivisor);
 
     SettingsAll::putDefaultSettings(settings);
-    bool displaycity;
+    bool displaycity,doallmap;
     float scale_City;
     std::vector<std::string> citiesNames;
-    SettingsAll::loadSettings(settings,displaycity,citiesNames,scale_City);
+    SettingsAll::loadSettings(settings,displaycity,citiesNames,scale_City,doallmap);
 
     srand(seed);
 
@@ -197,11 +197,14 @@ int main(int argc, char *argv[])
                 }
                 layerZoneChunk->setVisible(false);
             }
-            Tiled::MapWriter maprwriter;
-            if(!maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/main/official/all.tmx"))
+            if(doallmap)
             {
-                std::cerr << "Unable to write " << QCoreApplication::applicationDirPath().toStdString() << "/dest/main/official/all.tmx" << std::endl;
-                abort();
+                Tiled::MapWriter maprwriter;
+                if(!maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/main/official/all.tmx"))
+                {
+                    std::cerr << "Unable to write " << QCoreApplication::applicationDirPath().toStdString() << "/dest/main/official/all.tmx" << std::endl;
+                    abort();
+                }
             }
         }
         //do tmx split
@@ -221,7 +224,8 @@ int main(int argc, char *argv[])
                                  x*singleMapWitdh,y*singleMapHeight,
                                  x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
                                  file,
-                                 recuesPoints
+                                 recuesPoints,
+                                 "city","",city.name
                                  ))
                 {
                     std::cerr << "Unable to write " << file << "" << std::endl;
@@ -268,7 +272,8 @@ int main(int argc, char *argv[])
                                          x*singleMapWitdh,y*singleMapHeight,
                                          x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
                                          file,
-                                         recuesPoints
+                                         recuesPoints,
+                                         "outdoor","","Road "+std::to_string(roadIndex.roadIndex+1)
                                          ))
                         {
                             std::cerr << "Unable to write " << file << "" << std::endl;
