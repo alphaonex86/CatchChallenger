@@ -254,6 +254,8 @@ void QtDatabase::receiveReply(const QSqlQuery &queryReturn)
         delete sqlQuery;
         sqlQuery=NULL;
     }
+    if(queryReturn.lastError().type()!=QSqlError::NoError)
+        std::cerr << "error: " << queryReturn.lastError().driverText().toStdString() << std::endl;
     sqlQuery=new QSqlQuery(queryReturn);
     if(!queue.empty())
     {
