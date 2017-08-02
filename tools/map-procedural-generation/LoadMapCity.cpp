@@ -237,6 +237,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                 while(index<(unsigned int)mapbuildingheal.size())
                 {
                     Tiled::Map *nextHopMap=mapbuildingheal.at(index);
+                    Tiled::Properties properties=nextHopMap->properties();
                     const std::string &filePath="/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+".tmx";
 
                     QFileInfo fileInfo(QCoreApplication::applicationDirPath()+QString::fromStdString(filePath));
@@ -247,10 +248,38 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                         abort();
                     }
                     Tiled::MapWriter maprwriter;
+                    nextHopMap->setProperties(Tiled::Properties());
                     if(!maprwriter.writeMap(nextHopMap,fileInfo.absoluteFilePath()))
                     {
                         std::cerr << "Unable to write " << fileInfo.absoluteFilePath().toStdString() << std::endl;
                         abort();
+                    }
+                    nextHopMap->setProperties(properties);
+
+                    {
+                        QString xmlPath(fileInfo.absoluteFilePath());
+                        xmlPath.remove(xmlPath.size()-4,4);
+                        xmlPath+=".xml";
+                        QFile xmlinfo(xmlPath);
+                        if(xmlinfo.open(QFile::WriteOnly))
+                        {
+                            QString content("<map");
+                            if(properties.contains("type"))
+                                content+=" type=\""+properties.value("type")+"\"";
+                            /*if(!zone.empty())
+                                content+=" zone=\""+QString::fromStdString(zone)+"\"";*/
+                            content+=">\n"
+                            "  <name>Heal</name>\n"
+                            "</map>";
+                            QByteArray contentData(content.toUtf8());
+                            xmlinfo.write(contentData.constData(),contentData.size());
+                            xmlinfo.close();
+                        }
+                        else
+                        {
+                            std::cerr << "Unable to write " << xmlPath.toStdString() << std::endl;
+                            abort();
+                        }
                     }
                     index++;
                 }
