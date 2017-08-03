@@ -265,8 +265,7 @@ int main(int argc, char *argv[])
                                     "-"+LoadMapAll::orientationToString(LoadMapAll::reverseOrientation(cityIndex.orientation))+".tmx";
                         }
                         else
-                            file=QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/road-"+
-                                    std::to_string(roadIndex.roadIndex+1)+"/"+std::to_string(indexCoord+1)+".tmx";
+                            file="road-"+std::to_string(roadIndex.roadIndex+1)+"/"+std::to_string(indexCoord+1)+".tmx";
 
                         if(!PartialMap::save(tiledMap,
                                          x*singleMapWitdh,y*singleMapHeight,
