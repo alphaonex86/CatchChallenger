@@ -15,6 +15,119 @@
 #include <QDir>
 #include <QCoreApplication>
 
+void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap,
+                                  std::vector<Tiled::Map *> mapbuilding, const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
+                                  const std::pair<uint8_t, uint8_t> pos, const City &city)
+{
+    bool ok=false;
+    //search the brush door and retarget
+    std::unordered_map<Tiled::MapObject*,Tiled::Properties> oldValue;
+    std::vector<Tiled::MapObject*> doors=getDoorsList(mapTemplatebuilding.tiledMap);
+    unsigned int index=0;
+    while(index<(unsigned int)doors.size())
+    {
+        Tiled::MapObject* object=doors.at(index);
+        Tiled::Properties properties=object->properties();
+        oldValue[object]=object->properties();
+        properties["map"]=QString::fromStdString(baseName);
+        object->setProperties(properties);
+        index++;
+    }
+    MapBrush::brushTheMap(worldMap,mapTemplatebuilding,x*mapWidth+pos.first,y*mapHeight+pos.second,MapBrush::mapMask,true);
+    index=0;
+    while(index<(unsigned int)doors.size())//reset to the old value
+    {
+        Tiled::MapObject* object=doors.at(index);
+        object->setProperties(oldValue.at(object));
+        index++;
+    }
+    doors.clear();
+    //search next hop door and retarget
+    doors=getDoorsList(mapbuilding.at(1));
+    index=0;
+    while(index<(unsigned int)doors.size())
+    {
+        Tiled::MapObject* object=doors.at(index);
+        Tiled::Properties properties=object->properties();
+        oldValue[object]=properties;
+        properties["map"]=QString::fromStdString(LoadMapAll::lowerCase(city.name));
+        properties["x"]=QString::number(properties.value("x").toUInt(&ok)+pos.first);
+        if(!ok)
+        {
+            std::cerr << "For one tmx map, x is not a number: " << properties.value("x").toStdString() << std::endl;
+            abort();
+        }
+        properties["y"]=QString::number(properties.value("y").toUInt(&ok)+pos.second);
+        if(!ok)
+        {
+            std::cerr << "For one tmx map, y is not a number: " << properties.value("y").toStdString() << std::endl;
+            abort();
+        }
+        object->setProperties(properties);
+        index++;
+    }
+    //write all next hop
+    index=1;
+    while(index<(unsigned int)mapbuilding.size())
+    {
+        Tiled::Map *nextHopMap=mapbuilding.at(index);
+        Tiled::Properties properties=nextHopMap->properties();
+        const std::string &filePath="/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+".tmx";
+
+        QFileInfo fileInfo(QCoreApplication::applicationDirPath()+QString::fromStdString(filePath));
+        QDir mapDir(fileInfo.absolutePath());
+        if(!mapDir.mkpath(fileInfo.absolutePath()))
+        {
+            std::cerr << "Unable to create path: " << fileInfo.absolutePath().toStdString() << std::endl;
+            abort();
+        }
+        Tiled::MapWriter maprwriter;
+        nextHopMap->setProperties(Tiled::Properties());
+        if(!maprwriter.writeMap(nextHopMap,fileInfo.absoluteFilePath()))
+        {
+            std::cerr << "Unable to write " << fileInfo.absoluteFilePath().toStdString() << std::endl;
+            abort();
+        }
+        nextHopMap->setProperties(properties);
+
+        {
+            QString xmlPath(fileInfo.absoluteFilePath());
+            xmlPath.remove(xmlPath.size()-4,4);
+            xmlPath+=".xml";
+            QFile xmlinfo(xmlPath);
+            if(xmlinfo.open(QFile::WriteOnly))
+            {
+                QString content("<map");
+                if(properties.contains("type"))
+                    content+=" type=\""+properties.value("type")+"\"";
+                /*if(!zone.empty())
+                    content+=" zone=\""+QString::fromStdString(zone)+"\"";*/
+                content+=">\n"
+                "  <name>"+QString::fromStdString(description)+"</name>\n"
+                "</map>";
+                QByteArray contentData(content.toUtf8());
+                xmlinfo.write(contentData.constData(),contentData.size());
+                xmlinfo.close();
+            }
+            else
+            {
+                std::cerr << "Unable to write " << xmlPath.toStdString() << std::endl;
+                abort();
+            }
+        }
+        index++;
+    }
+    //reset next hop
+    index=0;
+    while(index<(unsigned int)doors.size())//reset to the old value
+    {
+        Tiled::MapObject* object=doors.at(index);
+        object->setProperties(oldValue.at(object));
+        index++;
+    }
+    doors.clear();
+}
+
 std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(const char * folderName,MapBrush::MapTemplate &mapTemplate, const char * fileName, const unsigned int mapWidth, const unsigned int mapHeight, Tiled::Map &worldMap)
 {
     Tiled::Map *map=LoadMap::readMap(QString("template/")+QString(folderName)+fileName+".tmx");
@@ -176,7 +289,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
         MapBrush::brushTheMap(worldMap,mapTemplate,x*mapWidth+xoffset,y*mapHeight+yoffset,MapBrush::mapMask,true);
         bool haveHeal=false;
         bool haveShop=false;
-        bool ok;
+        unsigned int housecount=0;
         while(!positionBuilding.empty())
         {
             unsigned int randomIndex=rand()%positionBuilding.size();
@@ -185,128 +298,24 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
             if(!haveHeal)
             {
                 haveHeal=true;
-                const std::string baseName("heal");
-                //search the brush door and retarget
-                std::unordered_map<Tiled::MapObject*,Tiled::Properties> oldValue;
-                std::vector<Tiled::MapObject*> doors=getDoorsList(mapTemplatebuildingheal.tiledMap);
-                unsigned int index=0;
-                while(index<(unsigned int)doors.size())
-                {
-                    Tiled::MapObject* object=doors.at(index);
-                    Tiled::Properties properties=object->properties();
-                    oldValue[object]=object->properties();
-                    properties["map"]=QString::fromStdString(baseName);
-                    object->setProperties(properties);
-                    index++;
-                }
-                MapBrush::brushTheMap(worldMap,mapTemplatebuildingheal,x*mapWidth+pos.first,y*mapHeight+pos.second,MapBrush::mapMask,true);
-                index=0;
-                while(index<(unsigned int)doors.size())//reset to the old value
-                {
-                    Tiled::MapObject* object=doors.at(index);
-                    object->setProperties(oldValue.at(object));
-                    index++;
-                }
-                doors.clear();
-                //search next hop door and retarget
-                doors=getDoorsList(mapbuildingheal.at(1));
-                index=0;
-                while(index<(unsigned int)doors.size())
-                {
-                    Tiled::MapObject* object=doors.at(index);
-                    Tiled::Properties properties=object->properties();
-                    oldValue[object]=properties;
-                    properties["map"]=QString::fromStdString(LoadMapAll::lowerCase(city.name));
-                    properties["x"]=QString::number(properties.value("x").toUInt(&ok)+pos.first);
-                    if(!ok)
-                    {
-                        std::cerr << "For one tmx map, x is not a number: " << properties.value("x").toStdString() << std::endl;
-                        abort();
-                    }
-                    properties["y"]=QString::number(properties.value("y").toUInt(&ok)+pos.second);
-                    if(!ok)
-                    {
-                        std::cerr << "For one tmx map, y is not a number: " << properties.value("y").toStdString() << std::endl;
-                        abort();
-                    }
-                    object->setProperties(properties);
-                    index++;
-                }
-                //write all next hop
-                index=1;
-                while(index<(unsigned int)mapbuildingheal.size())
-                {
-                    Tiled::Map *nextHopMap=mapbuildingheal.at(index);
-                    Tiled::Properties properties=nextHopMap->properties();
-                    const std::string &filePath="/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+".tmx";
-
-                    QFileInfo fileInfo(QCoreApplication::applicationDirPath()+QString::fromStdString(filePath));
-                    QDir mapDir(fileInfo.absolutePath());
-                    if(!mapDir.mkpath(fileInfo.absolutePath()))
-                    {
-                        std::cerr << "Unable to create path: " << fileInfo.absolutePath().toStdString() << std::endl;
-                        abort();
-                    }
-                    Tiled::MapWriter maprwriter;
-                    nextHopMap->setProperties(Tiled::Properties());
-                    if(!maprwriter.writeMap(nextHopMap,fileInfo.absoluteFilePath()))
-                    {
-                        std::cerr << "Unable to write " << fileInfo.absoluteFilePath().toStdString() << std::endl;
-                        abort();
-                    }
-                    nextHopMap->setProperties(properties);
-
-                    {
-                        QString xmlPath(fileInfo.absoluteFilePath());
-                        xmlPath.remove(xmlPath.size()-4,4);
-                        xmlPath+=".xml";
-                        QFile xmlinfo(xmlPath);
-                        if(xmlinfo.open(QFile::WriteOnly))
-                        {
-                            QString content("<map");
-                            if(properties.contains("type"))
-                                content+=" type=\""+properties.value("type")+"\"";
-                            /*if(!zone.empty())
-                                content+=" zone=\""+QString::fromStdString(zone)+"\"";*/
-                            content+=">\n"
-                            "  <name>Heal</name>\n"
-                            "</map>";
-                            QByteArray contentData(content.toUtf8());
-                            xmlinfo.write(contentData.constData(),contentData.size());
-                            xmlinfo.close();
-                        }
-                        else
-                        {
-                            std::cerr << "Unable to write " << xmlPath.toStdString() << std::endl;
-                            abort();
-                        }
-                    }
-                    index++;
-                }
-                //reset next hop
-                index=0;
-                while(index<(unsigned int)doors.size())//reset to the old value
-                {
-                    Tiled::MapObject* object=doors.at(index);
-                    object->setProperties(oldValue.at(object));
-                    index++;
-                }
-                doors.clear();
+                addBuildingChain("heal","Heal",mapTemplatebuildingheal,worldMap,mapbuildingheal,x,y,mapWidth,mapHeight,pos,city);
             }
             else if(!haveShop)
             {
                 haveShop=true;
-                MapBrush::brushTheMap(worldMap,mapTemplatebuildingshop,x*mapWidth+pos.first,y*mapHeight+pos.second,MapBrush::mapMask,true);
+                addBuildingChain("shop","Shop",mapTemplatebuildingshop,worldMap,mapbuildingshop,x,y,mapWidth,mapHeight,pos,city);
             }
             else
             {
                 switch(rand()%2)
                 {
                 case 0:
-                    MapBrush::brushTheMap(worldMap,mapTemplatebuilding1,x*mapWidth+pos.first,y*mapHeight+pos.second,MapBrush::mapMask,true);
+                    housecount++;
+                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuilding1,worldMap,mapbuilding1,x,y,mapWidth,mapHeight,pos,city);
                     break;
                 default:
-                    MapBrush::brushTheMap(worldMap,mapTemplatebuilding2,x*mapWidth+pos.first,y*mapHeight+pos.second,MapBrush::mapMask,true);
+                    housecount++;
+                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuilding2,worldMap,mapbuilding2,x,y,mapWidth,mapHeight,pos,city);
                     break;
                 }
             }
