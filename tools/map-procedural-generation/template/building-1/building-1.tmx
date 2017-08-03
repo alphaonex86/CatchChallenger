@@ -6,7 +6,7 @@
  <tileset firstgid="3073" source="../../tileset/door.tsx"/>
  <layer name="Collisions" width="7" height="6">
   <data encoding="base64" compression="zlib">
-   eJydzckJgAAQA8BlO/Guw7sOFbX/Dhzw78PAkF8S8S9FRpRU1DS0dPQMjEzMLKxs7Bz57pz64s7vvwdaJwVZ
+   eJydzccNgDAQAMGTOyHXYWIdBEP/HTAV8GCleW/Ev6oUUdPQ0tEzkBmZmFlY2dg5OLko3Dzp+/cCa60Fvw==
   </data>
  </layer>
  <layer name="WalkBehind" width="7" height="6">
@@ -14,7 +14,7 @@
    eJy9w4cNACAMBLFPQtl/REJbg5sCSx4mJScXNw8vzSVnsLCysfO3B+W0Bm4=
   </data>
  </layer>
- <objectgroup name="Moving">
+ <objectgroup name="Moving" visible="0">
   <object id="8" type="door" gid="3109" x="48" y="80" width="16" height="32">
    <properties>
     <property name="map" value="floor-0"/>
