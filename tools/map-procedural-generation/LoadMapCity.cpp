@@ -16,7 +16,7 @@
 #include <QCoreApplication>
 
 void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap,
-                                  std::vector<Tiled::Map *> mapbuilding, const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
+                                  const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
                                   const std::pair<uint8_t, uint8_t> pos, const City &city)
 {
     bool ok=false;
@@ -29,7 +29,10 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
         Tiled::MapObject* object=doors.at(index);
         Tiled::Properties properties=object->properties();
         oldValue[object]=object->properties();
-        properties["map"]=QString::fromStdString(baseName);
+        if(mapTemplatebuilding.otherMap.size()>1)
+            properties["map"]=QString::fromStdString(baseName)+"/"+properties.value("map");
+        else
+            properties["map"]=QString::fromStdString(baseName);
         object->setProperties(properties);
         index++;
     }
@@ -43,14 +46,17 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
     }
     doors.clear();
     //search next hop door and retarget
-    doors=getDoorsList(mapbuilding.at(1));
+    doors=getDoorsList(mapTemplatebuilding.otherMap.at(0));
     index=0;
     while(index<(unsigned int)doors.size())
     {
         Tiled::MapObject* object=doors.at(index);
         Tiled::Properties properties=object->properties();
         oldValue[object]=properties;
-        properties["map"]=QString::fromStdString(LoadMapAll::lowerCase(city.name));
+        if(mapTemplatebuilding.otherMap.size()>1)
+            properties["map"]="../"+QString::fromStdString(LoadMapAll::lowerCase(city.name));
+        else
+            properties["map"]=QString::fromStdString(LoadMapAll::lowerCase(city.name));
         properties["x"]=QString::number(properties.value("x").toUInt(&ok)+pos.first);
         if(!ok)
         {
@@ -67,12 +73,14 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
         index++;
     }
     //write all next hop
-    index=1;
-    while(index<(unsigned int)mapbuilding.size())
+    index=0;
+    while(index<(unsigned int)mapTemplatebuilding.otherMap.size())
     {
-        Tiled::Map *nextHopMap=mapbuilding.at(index);
+        Tiled::Map *nextHopMap=mapTemplatebuilding.otherMap.at(index);
         Tiled::Properties properties=nextHopMap->properties();
-        const std::string &filePath="/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+".tmx";
+        std::string filePath="/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+".tmx";
+        if(mapTemplatebuilding.otherMap.size()>1)
+            filePath="/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+"/"+mapTemplatebuilding.otherMapName.at(index)+".tmx";
 
         QFileInfo fileInfo(QCoreApplication::applicationDirPath()+QString::fromStdString(filePath));
         QDir mapDir(fileInfo.absolutePath());
@@ -128,7 +136,7 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
     doors.clear();
 }
 
-std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(const char * folderName,MapBrush::MapTemplate &mapTemplate, const char * fileName, const unsigned int mapWidth, const unsigned int mapHeight, Tiled::Map &worldMap)
+void LoadMapAll::loadMapTemplate(const char * folderName,MapBrush::MapTemplate &mapTemplate, const char * fileName, const unsigned int mapWidth, const unsigned int mapHeight, Tiled::Map &worldMap)
 {
     Tiled::Map *map=LoadMap::readMap(QString("template/")+QString(folderName)+fileName+".tmx");
     if((unsigned int)map->width()>mapWidth)
@@ -173,7 +181,10 @@ std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(const char * folderName,Ma
         if(mapFile==fileName)
             mapPointer=map;
         else
+        {
             mapPointer=LoadMap::readMap(QString("template/")+QString(folderName)+QString::fromStdString(mapFile)+".tmx");
+            mapTemplate.otherMapName.push_back(mapFile);
+        }
         fileToIndex[mapFile]=mapList.size();
         mapList.push_back(mapPointer);
         std::vector<Tiled::MapObject*> doors=getDoorsList(mapPointer);
@@ -195,7 +206,13 @@ std::vector<Tiled::Map *> LoadMapAll::loadMapTemplate(const char * folderName,Ma
             index++;
         }
     }
-    return mapList;
+    mapList.erase(mapList.cbegin());
+    mapTemplate.otherMap=mapList;
+    if(mapTemplate.otherMap.size()!=mapTemplate.otherMapName.size())
+    {
+        std::cerr << "mapTemplate.otherMap.size()!=mapTemplate.otherMapName.size()" << std::endl;
+        abort();
+    }
 }
 
 std::vector<Tiled::MapObject*> LoadMapAll::getDoorsList(Tiled::Map * map)
@@ -233,24 +250,22 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
     MapBrush::MapTemplate mapTemplateBig;
     MapBrush::MapTemplate mapTemplateMedium;
     MapBrush::MapTemplate mapTemplateSmall;
-    std::vector<Tiled::Map *> mapBig=loadMapTemplate("",mapTemplateBig,"city-big",mapWidth,mapHeight,worldMap);
-    std::vector<Tiled::Map *> mapMedium=loadMapTemplate("",mapTemplateMedium,"city-medium",mapWidth,mapHeight,worldMap);
-    std::vector<Tiled::Map *> mapSmall=loadMapTemplate("",mapTemplateSmall,"city-small",mapWidth,mapHeight,worldMap);
+    loadMapTemplate("",mapTemplateBig,"city-big",mapWidth,mapHeight,worldMap);
+    loadMapTemplate("",mapTemplateMedium,"city-medium",mapWidth,mapHeight,worldMap);
+    loadMapTemplate("",mapTemplateSmall,"city-small",mapWidth,mapHeight,worldMap);
 
     MapBrush::MapTemplate mapTemplatebuildingshop;
     MapBrush::MapTemplate mapTemplatebuildingheal;
     MapBrush::MapTemplate mapTemplatebuilding1;
     MapBrush::MapTemplate mapTemplatebuilding2;
-    std::vector<Tiled::Map *> mapbuildingshop;
-    std::vector<Tiled::Map *> mapbuildingheal;
-    std::vector<Tiled::Map *> mapbuilding1;
-    std::vector<Tiled::Map *> mapbuilding2;
+    MapBrush::MapTemplate mapTemplatebuildingbig1;
     if(full)
     {
-        mapbuildingshop=loadMapTemplate("building-shop/",mapTemplatebuildingshop,"building-shop",mapWidth,mapHeight,worldMap);
-        mapbuildingheal=loadMapTemplate("building-heal/",mapTemplatebuildingheal,"building-heal",mapWidth,mapHeight,worldMap);
-        mapbuilding1=loadMapTemplate("building-1/",mapTemplatebuilding1,"building-1",mapWidth,mapHeight,worldMap);
-        mapbuilding2=loadMapTemplate("building-2/",mapTemplatebuilding2,"building-2",mapWidth,mapHeight,worldMap);
+        loadMapTemplate("building-shop/",mapTemplatebuildingshop,"building-shop",mapWidth,mapHeight,worldMap);
+        loadMapTemplate("building-heal/",mapTemplatebuildingheal,"building-heal",mapWidth,mapHeight,worldMap);
+        loadMapTemplate("building-1/",mapTemplatebuilding1,"building-1",mapWidth,mapHeight,worldMap);
+        loadMapTemplate("building-2/",mapTemplatebuilding2,"building-2",mapWidth,mapHeight,worldMap);
+        loadMapTemplate("building-big-1/",mapTemplatebuildingbig1,"building-big-1",mapWidth,mapHeight,worldMap);
     }
 
     unsigned int index=0;
@@ -265,7 +280,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
         std::vector<std::pair<uint8_t,uint8_t> > positionBuilding;
         switch(city.type) {
         case CityType_small:
-            map=mapSmall.front();
+            map=mapTemplateSmall.tiledMap;
             mapTemplate=mapTemplateSmall;
             if(full)
             {
@@ -276,12 +291,31 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
             }
             break;
         case CityType_medium:
-            map=mapMedium.front();
+            map=mapTemplateMedium.tiledMap;
             mapTemplate=mapTemplateMedium;
+            if(full)
+            {
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(15,15));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(24,15));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(24,22));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(15,22));
+            }
             break;
         default:
-            map=mapBig.front();
+            map=mapTemplateBig.tiledMap;
             mapTemplate=mapTemplateBig;
+            if(full)
+            {
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(11,11));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(11,18));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(11,25));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(20,11));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(20,18));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(20,25));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(29,11));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(29,18));
+                positionBuilding.push_back(std::pair<uint8_t,uint8_t>(29,25));
+            }
             break;
         }
         const uint8_t xoffset=(mapWidth-map->width())/2;
@@ -298,24 +332,32 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
             if(!haveHeal)
             {
                 haveHeal=true;
-                addBuildingChain("heal","Heal",mapTemplatebuildingheal,worldMap,mapbuildingheal,x,y,mapWidth,mapHeight,pos,city);
+                addBuildingChain("heal","Heal",mapTemplatebuildingheal,worldMap,x,y,mapWidth,mapHeight,pos,city);
             }
             else if(!haveShop)
             {
                 haveShop=true;
-                addBuildingChain("shop","Shop",mapTemplatebuildingshop,worldMap,mapbuildingshop,x,y,mapWidth,mapHeight,pos,city);
+                addBuildingChain("shop","Shop",mapTemplatebuildingshop,worldMap,x,y,mapWidth,mapHeight,pos,city);
             }
             else
             {
+                unsigned int randmax=2;
+                if(city.type==CityType_big)
+                    randmax=3;
                 switch(rand()%2)
                 {
                 case 0:
                     housecount++;
-                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuilding1,worldMap,mapbuilding1,x,y,mapWidth,mapHeight,pos,city);
+                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuilding1,worldMap,x,y,mapWidth,mapHeight,pos,city);
                     break;
+                case 1:
                 default:
                     housecount++;
-                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuilding2,worldMap,mapbuilding2,x,y,mapWidth,mapHeight,pos,city);
+                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuilding2,worldMap,x,y,mapWidth,mapHeight,pos,city);
+                    break;
+                case 2:
+                    housecount++;
+                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuildingbig1,worldMap,x,y,mapWidth,mapHeight,pos,city);
                     break;
                 }
             }
@@ -422,26 +464,31 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
             y++;
         }
     }
-    LoadMapAll::deleteMapList(mapBig);
-    LoadMapAll::deleteMapList(mapMedium);
-    LoadMapAll::deleteMapList(mapSmall);
+    LoadMapAll::deleteMapList(mapTemplateBig);
+    LoadMapAll::deleteMapList(mapTemplateMedium);
+    LoadMapAll::deleteMapList(mapTemplateSmall);
     if(full)
     {
-        LoadMapAll::deleteMapList(mapbuildingshop);
-        LoadMapAll::deleteMapList(mapbuildingheal);
-        LoadMapAll::deleteMapList(mapbuilding1);
-        LoadMapAll::deleteMapList(mapbuilding2);
+        LoadMapAll::deleteMapList(mapTemplatebuildingshop);
+        LoadMapAll::deleteMapList(mapTemplatebuildingheal);
+        LoadMapAll::deleteMapList(mapTemplatebuilding1);
+        LoadMapAll::deleteMapList(mapTemplatebuilding2);
+        LoadMapAll::deleteMapList(mapTemplatebuildingbig1);
     }
 }
 
-void LoadMapAll::deleteMapList(const std::vector<Tiled::Map *> &mapList)
+void LoadMapAll::deleteMapList(MapBrush::MapTemplate &mapTemplatebuilding)
 {
+    delete mapTemplatebuilding.tiledMap;
+    mapTemplatebuilding.tiledMap=NULL;
     unsigned int index=0;
-    while(index<mapList.size())
+    while(index<mapTemplatebuilding.otherMap.size())
     {
-        delete mapList.at(index);
+        delete mapTemplatebuilding.otherMap.at(index);
         index++;
     }
+    mapTemplatebuilding.otherMap.clear();
+    mapTemplatebuilding.otherMapName.clear();
 }
 
 void LoadMapAll::addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount)

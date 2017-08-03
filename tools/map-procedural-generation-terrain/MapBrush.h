@@ -16,6 +16,8 @@ public:
         std::unordered_map<const Tiled::Tileset *,Tiled::Tileset *> templateTilesetToMapTileset;
         uint8_t width,height,x,y;
         uint8_t baseLayerIndex;
+        std::vector<Tiled::Map *> otherMap;
+        std::vector<std::string> otherMapName;
     };
     static uint8_t *mapMask;
     static void initialiseMapMask(Tiled::Map &worldMap);
