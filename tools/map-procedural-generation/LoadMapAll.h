@@ -95,15 +95,14 @@ public:
     static Orientation reverseOrientation(const Orientation &orientation);
     static std::string orientationToString(const Orientation &orientation);
     static void addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount,bool full);
-    static std::vector<Tiled::Map *> loadMapTemplate(const char * folderName,MapBrush::MapTemplate &mapTemplate,const char * fileName,const unsigned int mapWidth,const unsigned int mapHeight,Tiled::Map &worldMap);
+    static void loadMapTemplate(const char * folderName,MapBrush::MapTemplate &mapTemplate,const char * fileName,const unsigned int mapWidth,const unsigned int mapHeight,Tiled::Map &worldMap);
     static void addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
     static std::string getMapFile(const unsigned int &x, const unsigned int &y);
     static std::string lowerCase(std::string str);
-    static void deleteMapList(const std::vector<Tiled::Map *> &mapList);
+    static void deleteMapList(MapBrush::MapTemplate &mapTemplatebuilding);
     static std::vector<Tiled::MapObject*> getDoorsList(Tiled::Map * map);
-    static void addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap,
-                                 std::vector<Tiled::Map *> mapbuilding, const uint32_t &x, const uint32_t &y,const unsigned int mapWidth, const unsigned int mapHeight,
-                                 const std::pair<uint8_t,uint8_t> pos,const City &city);
+    static void addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap, const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
+                                 const std::pair<uint8_t,uint8_t> pos, const City &city);
 };
 
 #endif // LOADMAPALL_H
