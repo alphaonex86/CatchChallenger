@@ -7,7 +7,7 @@
  <tileset firstgid="3585" source="../../tileset/invisible.tsx"/>
  <layer name="Collisions" width="5" height="6" offsetx="128" offsety="480">
   <data encoding="base64" compression="zlib">
-   eJxtzcsJgFAQA8CFbd9fIf4KUZ+FKFqCAx41MOSWRHxTZURNQ0tHz8DIxMzCykZh5+DMd+fSd/4cyANKBA4k
+   eJxtzbkNgDAQAMGT3D5fIRgoBDCFmKcEJoeVJt6Ib02KaOnoGRjJTMwsrGzsFA4qJxc3T/oZ6AVoIQ8V
   </data>
  </layer>
  <layer name="WalkBehind" width="5" height="6" offsetx="128" offsety="480">
