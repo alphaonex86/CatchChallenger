@@ -6,7 +6,7 @@
  <tileset firstgid="3073" source="../../tileset/door.tsx"/>
  <layer name="Collisions" width="5" height="6">
   <data encoding="base64" compression="zlib">
-   eJxtzbsJgFAQBMCD6z/wV4i/QtRnIYrmDhjqwrDZbsQ3VUbUNLR09AyMTMwsrGwUdg7OfHcufefPgTxhnA6D
+   eJxtzbkNgDAQAMGT3H/AVwgGCgFMIebJmRxWmngjvjUpoqWjZ2AkMzGzsLKxUzionFzcPOlnoBeAWQ95
   </data>
  </layer>
  <layer name="WalkBehind" width="5" height="6">
