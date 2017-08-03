@@ -12,6 +12,7 @@ public:
     struct MapTemplate
     {
         Tiled::Map * tiledMap;
+        std::string name;
         std::vector<uint8_t> templateLayerNumberToMapLayerNumber;
         std::unordered_map<const Tiled::Tileset *,Tiled::Tileset *> templateTilesetToMapTileset;
         uint8_t width,height,x,y;

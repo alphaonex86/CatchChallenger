@@ -22,7 +22,7 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
     bool ok=false;
     //search the brush door and retarget
     std::unordered_map<Tiled::MapObject*,Tiled::Properties> oldValue;
-    std::vector<Tiled::MapObject*> doors=getDoorsList(mapTemplatebuilding.tiledMap);
+    std::vector<Tiled::MapObject*> doors=getDoorsListAndTp(mapTemplatebuilding.tiledMap);
     unsigned int index=0;
     while(index<(unsigned int)doors.size())
     {
@@ -46,31 +46,41 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
     }
     doors.clear();
     //search next hop door and retarget
-    doors=getDoorsList(mapTemplatebuilding.otherMap.at(0));
-    index=0;
-    while(index<(unsigned int)doors.size())
     {
-        Tiled::MapObject* object=doors.at(index);
-        Tiled::Properties properties=object->properties();
-        oldValue[object]=properties;
-        if(mapTemplatebuilding.otherMap.size()>1)
-            properties["map"]="../"+QString::fromStdString(LoadMapAll::lowerCase(city.name));
-        else
-            properties["map"]=QString::fromStdString(LoadMapAll::lowerCase(city.name));
-        properties["x"]=QString::number(properties.value("x").toUInt(&ok)+pos.first);
-        if(!ok)
+        unsigned int indexMap=0;
+        while(indexMap<mapTemplatebuilding.otherMap.size())
         {
-            std::cerr << "For one tmx map, x is not a number: " << properties.value("x").toStdString() << std::endl;
-            abort();
+            doors=getDoorsListAndTp(mapTemplatebuilding.otherMap.at(indexMap));
+            unsigned int index=0;
+            while(index<(unsigned int)doors.size())
+            {
+                Tiled::MapObject* object=doors.at(index);
+                Tiled::Properties properties=object->properties();
+                oldValue[object]=properties;
+                if(mapTemplatebuilding.otherMap.size()>1)
+                {
+                    if(properties.value("map").toStdString()==mapTemplatebuilding.name)
+                        properties["map"]="../"+QString::fromStdString(LoadMapAll::lowerCase(city.name));
+                }
+                else
+                    properties["map"]=QString::fromStdString(LoadMapAll::lowerCase(city.name));
+                properties["x"]=QString::number(properties.value("x").toUInt(&ok)+pos.first);
+                if(!ok)
+                {
+                    std::cerr << "For one tmx map, x is not a number: " << properties.value("x").toStdString() << std::endl;
+                    abort();
+                }
+                properties["y"]=QString::number(properties.value("y").toUInt(&ok)+pos.second);
+                if(!ok)
+                {
+                    std::cerr << "For one tmx map, y is not a number: " << properties.value("y").toStdString() << std::endl;
+                    abort();
+                }
+                object->setProperties(properties);
+                index++;
+            }
+            indexMap++;
         }
-        properties["y"]=QString::number(properties.value("y").toUInt(&ok)+pos.second);
-        if(!ok)
-        {
-            std::cerr << "For one tmx map, y is not a number: " << properties.value("y").toStdString() << std::endl;
-            abort();
-        }
-        object->setProperties(properties);
-        index++;
     }
     //write all next hop
     index=0;
@@ -153,6 +163,7 @@ void LoadMapAll::loadMapTemplate(const char * folderName,MapBrush::MapTemplate &
     //reset the auto detection to grab ALL
     mapTemplate.x=0;
     mapTemplate.y=0;
+    mapTemplate.name=fileName;
     mapTemplate.width=map->width();
     mapTemplate.height=map->height();
     //force collision layer
@@ -187,7 +198,7 @@ void LoadMapAll::loadMapTemplate(const char * folderName,MapBrush::MapTemplate &
         }
         fileToIndex[mapFile]=mapList.size();
         mapList.push_back(mapPointer);
-        std::vector<Tiled::MapObject*> doors=getDoorsList(mapPointer);
+        std::vector<Tiled::MapObject*> doors=getDoorsListAndTp(mapPointer);
         unsigned int index=0;
         while(index<(unsigned int)doors.size())
         {
@@ -215,7 +226,7 @@ void LoadMapAll::loadMapTemplate(const char * folderName,MapBrush::MapTemplate &
     }
 }
 
-std::vector<Tiled::MapObject*> LoadMapAll::getDoorsList(Tiled::Map * map)
+std::vector<Tiled::MapObject*> LoadMapAll::getDoorsListAndTp(Tiled::Map * map)
 {
     std::vector<Tiled::MapObject*> doors;
     const Tiled::ObjectGroup * const objectGroup=LoadMap::searchObjectGroupByName(*map,"Moving");
@@ -226,7 +237,7 @@ std::vector<Tiled::MapObject*> LoadMapAll::getDoorsList(Tiled::Map * map)
         while(index<(unsigned int)objects.size())
         {
             Tiled::MapObject* object=objects.at(index);
-            if(object->type()=="door")
+            if(object->type()=="door" || object->type()=="teleport on it" || object->type()=="teleport on push")
             {
                 Tiled::Properties properties=object->properties();
                 if(properties.contains("map"))
@@ -344,7 +355,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                 unsigned int randmax=2;
                 if(city.type==CityType_big)
                     randmax=3;
-                switch(rand()%2)
+                switch(rand()%randmax)
                 {
                 case 0:
                     housecount++;
