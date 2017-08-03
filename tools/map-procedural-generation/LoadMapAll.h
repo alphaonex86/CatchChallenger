@@ -100,7 +100,7 @@ public:
     static std::string getMapFile(const unsigned int &x, const unsigned int &y);
     static std::string lowerCase(std::string str);
     static void deleteMapList(MapBrush::MapTemplate &mapTemplatebuilding);
-    static std::vector<Tiled::MapObject*> getDoorsList(Tiled::Map * map);
+    static std::vector<Tiled::MapObject*> getDoorsListAndTp(Tiled::Map * map);
     static void addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap, const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
                                  const std::pair<uint8_t,uint8_t> pos, const City &city);
 };
