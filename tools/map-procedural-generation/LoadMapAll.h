@@ -101,6 +101,9 @@ public:
     static std::string lowerCase(std::string str);
     static void deleteMapList(const std::vector<Tiled::Map *> &mapList);
     static std::vector<Tiled::MapObject*> getDoorsList(Tiled::Map * map);
+    static void addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap,
+                                 std::vector<Tiled::Map *> mapbuilding, const uint32_t &x, const uint32_t &y,const unsigned int mapWidth, const unsigned int mapHeight,
+                                 const std::pair<uint8_t,uint8_t> pos,const City &city);
 };
 
 #endif // LOADMAPALL_H
