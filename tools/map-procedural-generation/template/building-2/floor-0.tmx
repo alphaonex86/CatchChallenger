@@ -41,8 +41,8 @@
   <object id="1" type="door" gid="1027" x="80" y="192" width="16" height="16">
    <properties>
     <property name="map" value="building-2"/>
-    <property name="x" type="int" value="5"/>
-    <property name="y" type="int" value="3"/>
+    <property name="x" type="int" value="3"/>
+    <property name="y" type="int" value="5"/>
    </properties>
   </object>
  </objectgroup>
