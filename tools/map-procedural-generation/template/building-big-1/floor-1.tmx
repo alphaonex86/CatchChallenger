@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="11" height="12" tilewidth="16" tileheight="16" nextobjectid="5">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="11" height="12" tilewidth="16" tileheight="16" nextobjectid="6">
  <properties>
   <property name="type" value="indoor"/>
  </properties>
@@ -15,7 +15,7 @@
  </layer>
  <layer name="Other" width="11" height="12">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFUziIV7uFBLVDEQAASd8BWQ==
+   eJxjYBgFUziIV7uFBLX0BrJUMAMAUZMBdg==
   </data>
  </layer>
  <layer name="Collisions" width="11" height="12">
@@ -51,6 +51,13 @@
     <property name="map" value="floor-2"/>
     <property name="x" type="int" value="4"/>
     <property name="y" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="5" type="teleport on push" gid="1027" x="80" y="192" width="16" height="16">
+   <properties>
+    <property name="map" value="building-big-1"/>
+    <property name="x" type="int" value="4"/>
+    <property name="y" type="int" value="7"/>
    </properties>
   </object>
  </objectgroup>

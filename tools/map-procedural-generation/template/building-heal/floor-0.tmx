@@ -38,7 +38,7 @@
   </data>
  </layer>
  <objectgroup name="Moving">
-  <object id="1" type="door" gid="1027" x="80" y="192" width="16" height="16">
+  <object id="1" type="teleport on push" gid="1027" x="80" y="192" width="16" height="16">
    <properties>
     <property name="map" value="building-heal"/>
     <property name="x" type="int" value="2"/>
