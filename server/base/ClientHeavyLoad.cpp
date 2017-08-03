@@ -128,9 +128,9 @@ std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> 
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         else
         {
-            std::cerr << "wrong file name: " << fileName << std::endl;
+            std::cerr << "For Client::datapack_file_list(" << path << "," << exclude << "," << withHash << ")" << std::endl;
+            std::cerr << "FacilityLibGeneral::getSuffixAndValidatePathFromFS(" << fileName << ") return empty result" << std::endl;
             const std::string &suffix2=FacilityLibGeneral::getSuffixAndValidatePathFromFS(fileName);
-            std::cerr << "output: " << suffix2 << std::endl;
         }
         #endif
         index++;
