@@ -176,6 +176,7 @@ int main(int argc, char *argv[])
                 MapPlants::addVegetation(tiledMap,VoronioForTiledMapTmx::voronoiMap);
                 qDebug("Vegetation took %d ms", t.elapsed());
             }
+            t.start();
             {
                 Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0,tiledMap.width(),tiledMap.height());
                 layerZoneChunk->setColor(QColor("#ffe000"));
@@ -206,8 +207,10 @@ int main(int argc, char *argv[])
                     abort();
                 }
             }
+            qDebug("Write all.tmx %d ms", t.elapsed());
         }
         //do tmx split
+        t.start();
         std::vector<PartialMap::RecuesPoint> recuesPoints;
         {
             const unsigned int singleMapWitdh=tiledMap.width()/mapXCount;
@@ -290,6 +293,7 @@ int main(int argc, char *argv[])
                 indexIntRoad++;
             }
         }
+        qDebug("Write chunk tmx %d ms", t.elapsed());
         //do the start point
         QFile start(QCoreApplication::applicationDirPath()+"/dest/main/official/start.xml");
         if(start.open(QFile::WriteOnly))
