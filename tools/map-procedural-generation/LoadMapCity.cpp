@@ -8,6 +8,7 @@
 #include "../../client/tiled/tiled_objectgroup.h"
 #include "../../client/tiled/tiled_mapobject.h"
 #include "../../client/tiled/tiled_mapwriter.h"
+#include "../../general/base/cpp11addition.h"
 
 #include <iostream>
 #include <unordered_map>
@@ -50,11 +51,12 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
         unsigned int indexMap=0;
         while(indexMap<mapTemplatebuilding.otherMap.size())
         {
-            doors=getDoorsListAndTp(mapTemplatebuilding.otherMap.at(indexMap));
+            std::vector<Tiled::MapObject*> doorsLocale=getDoorsListAndTp(mapTemplatebuilding.otherMap.at(indexMap));
+            doors.insert(doors.end(),doorsLocale.begin(),doorsLocale.end());
             unsigned int index=0;
-            while(index<(unsigned int)doors.size())
+            while(index<(unsigned int)doorsLocale.size())
             {
-                Tiled::MapObject* object=doors.at(index);
+                Tiled::MapObject* object=doorsLocale.at(index);
                 Tiled::Properties properties=object->properties();
                 oldValue[object]=properties;
                 if(properties.value("map").toStdString()==mapTemplatebuilding.name)
@@ -136,12 +138,14 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
         index++;
     }
     //reset next hop
-    index=0;
-    while(index<(unsigned int)doors.size())//reset to the old value
     {
-        Tiled::MapObject* object=doors.at(index);
-        object->setProperties(oldValue.at(object));
-        index++;
+        unsigned int index=0;
+        while(index<(unsigned int)doors.size())//reset to the old value
+        {
+            Tiled::MapObject* object=doors.at(index);
+            object->setProperties(oldValue.at(object));
+            index++;
+        }
     }
     doors.clear();
 }
