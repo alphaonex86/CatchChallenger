@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="11" height="12" tilewidth="16" tileheight="16" nextobjectid="3">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="11" height="12" tilewidth="16" tileheight="16" nextobjectid="4">
  <properties>
   <property name="type" value="indoor"/>
  </properties>
@@ -15,12 +15,12 @@
  </layer>
  <layer name="Other" width="11" height="12">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFUziIV7uFBLVDEQAASd8BWQ==
+   eJxjYCAfiODB6MAED6bETnyAWHumcBBv/xYS1A5FAADuywRx
   </data>
  </layer>
  <layer name="Collisions" width="11" height="12">
   <data encoding="base64" compression="zlib">
-   eJxbzMDAsJhMzI4Ho6tVx4PR1cLAVw4Ghm9ALMrJwCDGCRFDtwcfQLcHHUwCmj2ZA8K2A9L2HLjN2gSU24xHHhew4mBowCVnATTPkgNBR+FRSwkgJU4BVYwftg==
+   eJxbzMDAsJhMLIIHo6s9zMPAYMKAHaOrhYGvHAwM34BYlJOBQYwTIoZuDz6Abg86mAQ0ezIHhG0HpO05cJu1CSi3GY88LmDFwdCAS84CaJ4lB4KOwqOWEkBKnAIADpEhbw==
   </data>
  </layer>
  <layer name="Other" width="11" height="12">
@@ -39,7 +39,7 @@
   </data>
  </layer>
  <objectgroup name="Moving">
-  <object id="2" type="teleport on it" gid="389" x="64" y="48" width="16" height="16">
+  <object id="3" type="teleport on it" gid="1027" x="64" y="48" width="16" height="16">
    <properties>
     <property name="map" value="floor-1"/>
     <property name="x" type="int" value="4"/>
