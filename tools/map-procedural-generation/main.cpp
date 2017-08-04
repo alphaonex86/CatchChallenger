@@ -29,11 +29,12 @@ int main(int argc, char *argv[])
 {
     // Avoid performance issues with X11 engine when rendering objects
 #ifdef Q_WS_X11
-    QApplication::setGraphicsSystem(QStringLiteral("raster"));
+    QApplication::setGraphicsSystem(QStringLiteral("raster"));//now use: -platform offscreen
 #endif
-
     QApplication a(argc, argv);
     QTime t;
+    QTime total;
+    total.start();
 
     a.setOrganizationDomain(QStringLiteral("catchchallenger"));
     a.setApplicationName(QStringLiteral("map-procedural-generation"));
@@ -323,6 +324,7 @@ int main(int argc, char *argv[])
             abort();
         }
     }
+    qDebug("Total time %d ms", total.elapsed());
 
     return 0;
 }
