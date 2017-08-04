@@ -57,26 +57,26 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
                 Tiled::MapObject* object=doors.at(index);
                 Tiled::Properties properties=object->properties();
                 oldValue[object]=properties;
-                if(mapTemplatebuilding.otherMap.size()>1)
+                if(properties.value("map").toStdString()==mapTemplatebuilding.name)
                 {
-                    if(properties.value("map").toStdString()==mapTemplatebuilding.name)
+                    if(mapTemplatebuilding.otherMap.size()>1)
                         properties["map"]="../"+QString::fromStdString(LoadMapAll::lowerCase(city.name));
+                    else
+                        properties["map"]=QString::fromStdString(LoadMapAll::lowerCase(city.name));
+                    properties["x"]=QString::number(properties.value("x").toUInt(&ok)+pos.first);
+                    if(!ok)
+                    {
+                        std::cerr << "For one tmx map, x is not a number: " << properties.value("x").toStdString() << std::endl;
+                        abort();
+                    }
+                    properties["y"]=QString::number(properties.value("y").toUInt(&ok)+pos.second);
+                    if(!ok)
+                    {
+                        std::cerr << "For one tmx map, y is not a number: " << properties.value("y").toStdString() << std::endl;
+                        abort();
+                    }
+                    object->setProperties(properties);
                 }
-                else
-                    properties["map"]=QString::fromStdString(LoadMapAll::lowerCase(city.name));
-                properties["x"]=QString::number(properties.value("x").toUInt(&ok)+pos.first);
-                if(!ok)
-                {
-                    std::cerr << "For one tmx map, x is not a number: " << properties.value("x").toStdString() << std::endl;
-                    abort();
-                }
-                properties["y"]=QString::number(properties.value("y").toUInt(&ok)+pos.second);
-                if(!ok)
-                {
-                    std::cerr << "For one tmx map, y is not a number: " << properties.value("y").toStdString() << std::endl;
-                    abort();
-                }
-                object->setProperties(properties);
                 index++;
             }
             indexMap++;
