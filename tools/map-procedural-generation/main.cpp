@@ -202,9 +202,9 @@ int main(int argc, char *argv[])
             if(doallmap)
             {
                 Tiled::MapWriter maprwriter;
-                if(!maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/main/official/all.tmx"))
+                if(!maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/main/all.tmx"))
                 {
-                    std::cerr << "Unable to write " << QCoreApplication::applicationDirPath().toStdString() << "/dest/main/official/all.tmx" << std::endl;
+                    std::cerr << "Unable to write " << QCoreApplication::applicationDirPath().toStdString() << "/dest/main/all.tmx" << std::endl;
                     abort();
                 }
             }
