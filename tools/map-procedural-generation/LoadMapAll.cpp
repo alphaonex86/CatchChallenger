@@ -184,7 +184,9 @@ std::string LoadMapAll::orientationToString(const Orientation &orientation)
     }
 }
 
-void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames, const unsigned int &mapXCount, const unsigned int &mapYCount)
+void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
+                         const unsigned int &mapXCount, const unsigned int &mapYCount,
+                         const unsigned int &maxCityLinks,const unsigned int &cityRadius)
 {
     if(grid.empty())
         return;
@@ -375,7 +377,6 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
     }
     //calculate the zone
     {
-        uint8_t cityRadius=4;
         unsigned int indexCities=0;
         while(indexCities<cities.size())
         {
@@ -421,7 +422,7 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
 
             uint8_t citycount=0;
             std::pair<uint16_t,uint16_t> coord;
-            while(!mapPointToParseList.empty() && citycount<4)
+            while(!mapPointToParseList.empty() && citycount<maxCityLinks)
             {
                 const MapPointToParse tempPoint=mapPointToParseList.at(0);
                 mapPointToParseList.erase(mapPointToParseList.begin());
