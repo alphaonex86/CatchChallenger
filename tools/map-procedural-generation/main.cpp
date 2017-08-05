@@ -81,25 +81,27 @@ int main(int argc, char *argv[])
     }
 
     Settings::putDefaultSettings(settings);
-    unsigned int mapWidth;
-    unsigned int mapHeight;
-    unsigned int mapXCount;
-    unsigned int mapYCount;
-    unsigned int seed;
-    float scale_TerrainMap;
-    float scale_TerrainMoisure;
-    float scale_Zone;
-    float miniMapDivisor;
-    bool displayzone,dotransition,dovegetation,dominimap;
-    unsigned int tileStep;
+    unsigned int mapWidth=0;
+    unsigned int mapHeight=0;
+    unsigned int mapXCount=0;
+    unsigned int mapYCount=0;
+    unsigned int seed=0;
+    float scale_TerrainMap=0;
+    float scale_TerrainMoisure=0;
+    float scale_Zone=0;
+    float miniMapDivisor=0;
+    bool displayzone=false,dotransition=false,dovegetation=false,dominimap=false;
+    unsigned int tileStep=0;
     Settings::loadSettings(settings,mapWidth,mapHeight,mapXCount,mapYCount,seed,displayzone,dotransition,dovegetation,tileStep,scale_TerrainMap,scale_TerrainMoisure,
                            scale_Zone,dominimap,miniMapDivisor);
 
     SettingsAll::putDefaultSettings(settings);
-    bool displaycity,doallmap;
-    float scale_City;
+    bool displaycity=false,doallmap=false;
+    float scale_City=0;
     std::vector<std::string> citiesNames;
-    SettingsAll::loadSettings(settings,displaycity,citiesNames,scale_City,doallmap);
+    unsigned int maxCityLinks=0;
+    unsigned int cityRadius=0;
+    SettingsAll::loadSettings(settings,displaycity,citiesNames,scale_City,doallmap,maxCityLinks,cityRadius);
 
     srand(seed);
 
@@ -143,7 +145,7 @@ int main(int argc, char *argv[])
                 qDebug("Add terrain took %d ms", t.elapsed());
                 MapBrush::initialiseMapMask(tiledMap);
                 t.start();
-                LoadMapAll::addCity(tiledMap,gridCity,citiesNames,mapXCount,mapYCount);
+                LoadMapAll::addCity(tiledMap,gridCity,citiesNames,mapXCount,mapYCount,maxCityLinks,cityRadius);
                 LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount,false);
                 qDebug("place cities took %d ms", t.elapsed());
                 if(dotransition)
