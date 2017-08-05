@@ -419,115 +419,111 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                             );
             }
 
+            uint8_t citycount=0;
             std::pair<uint16_t,uint16_t> coord;
-            while(!mapPointToParseList.empty())
+            while(!mapPointToParseList.empty() && citycount<4)
             {
                 const MapPointToParse tempPoint=mapPointToParseList.at(0);
                 mapPointToParseList.erase(mapPointToParseList.begin());
                 SimplifiedMapForPathFinding::PathToGo pathToGo;
                 //resolv the own point
-                int index=0;
-                while(index<1)/*2*/
                 {
+                    //if the right case have been parsed
+                    if(tempPoint.x+1<maxX)
                     {
-                        //if the right case have been parsed
-                        if(tempPoint.x+1<maxX)
+                        coord=std::pair<uint16_t,uint16_t>(tempPoint.x+1,tempPoint.y);
+                        if(tempMap.pathToGo.find(coord)!=tempMap.pathToGo.cend())
                         {
-                            coord=std::pair<uint16_t,uint16_t>(tempPoint.x+1,tempPoint.y);
-                            if(tempMap.pathToGo.find(coord)!=tempMap.pathToGo.cend())
+                            const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=tempMap.pathToGo.at(coord);
+                            if(pathToGo.left.empty() || pathToGo.left.size()>nearPathToGo.left.size())
                             {
-                                const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=tempMap.pathToGo.at(coord);
-                                if(pathToGo.left.empty() || pathToGo.left.size()>nearPathToGo.left.size())
-                                {
-                                    pathToGo.left=nearPathToGo.left;
-                                    pathToGo.left.back().second++;
-                                }
-                                if(pathToGo.top.empty() || pathToGo.top.size()>(nearPathToGo.left.size()+1))
-                                {
-                                    pathToGo.top=nearPathToGo.left;
-                                    pathToGo.top.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_top,1));
-                                }
-                                if(pathToGo.bottom.empty() || pathToGo.bottom.size()>(nearPathToGo.left.size()+1))
-                                {
-                                    pathToGo.bottom=nearPathToGo.left;
-                                    pathToGo.bottom.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_bottom,1));
-                                }
+                                pathToGo.left=nearPathToGo.left;
+                                pathToGo.left.back().second++;
                             }
-                        }
-                        //if the left case have been parsed
-                        if(tempPoint.x>0)
-                        {
-                            coord=std::pair<uint16_t,uint16_t>(tempPoint.x-1,tempPoint.y);
-                            if(tempMap.pathToGo.find(coord)!=tempMap.pathToGo.cend())
+                            if(pathToGo.top.empty() || pathToGo.top.size()>(nearPathToGo.left.size()+1))
                             {
-                                const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=tempMap.pathToGo.at(coord);
-                                if(pathToGo.right.empty() || pathToGo.right.size()>nearPathToGo.right.size())
-                                {
-                                    pathToGo.right=nearPathToGo.right;
-                                    pathToGo.right.back().second++;
-                                }
-                                if(pathToGo.top.empty() || pathToGo.top.size()>(nearPathToGo.right.size()+1))
-                                {
-                                    pathToGo.top=nearPathToGo.right;
-                                    pathToGo.top.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_top,1));
-                                }
-                                if(pathToGo.bottom.empty() || pathToGo.bottom.size()>(nearPathToGo.right.size()+1))
-                                {
-                                    pathToGo.bottom=nearPathToGo.right;
-                                    pathToGo.bottom.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_bottom,1));
-                                }
+                                pathToGo.top=nearPathToGo.left;
+                                pathToGo.top.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_top,1));
                             }
-                        }
-                        //if the top case have been parsed
-                        if(tempPoint.y+1<maxY)
-                        {
-                            coord=std::pair<uint16_t,uint16_t>(tempPoint.x,tempPoint.y+1);
-                            if(tempMap.pathToGo.find(coord)!=tempMap.pathToGo.cend())
+                            if(pathToGo.bottom.empty() || pathToGo.bottom.size()>(nearPathToGo.left.size()+1))
                             {
-                                const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=tempMap.pathToGo.at(coord);
-                                if(pathToGo.top.empty() || pathToGo.top.size()>nearPathToGo.top.size())
-                                {
-                                    pathToGo.top=nearPathToGo.top;
-                                    pathToGo.top.back().second++;
-                                }
-                                if(pathToGo.left.empty() || pathToGo.left.size()>(nearPathToGo.top.size()+1))
-                                {
-                                    pathToGo.left=nearPathToGo.top;
-                                    pathToGo.left.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_left,1));
-                                }
-                                if(pathToGo.right.empty() || pathToGo.right.size()>(nearPathToGo.top.size()+1))
-                                {
-                                    pathToGo.right=nearPathToGo.top;
-                                    pathToGo.right.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_right,1));
-                                }
-                            }
-                        }
-                        //if the bottom case have been parsed
-                        if(tempPoint.y>0)
-                        {
-                            coord=std::pair<uint16_t,uint16_t>(tempPoint.x,tempPoint.y-1);
-                            if(tempMap.pathToGo.find(coord)!=tempMap.pathToGo.cend())
-                            {
-                                const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=tempMap.pathToGo.at(coord);
-                                if(pathToGo.bottom.empty() || pathToGo.bottom.size()>nearPathToGo.bottom.size())
-                                {
-                                    pathToGo.bottom=nearPathToGo.bottom;
-                                    pathToGo.bottom.back().second++;
-                                }
-                                if(pathToGo.left.empty() || pathToGo.left.size()>(nearPathToGo.bottom.size()+1))
-                                {
-                                    pathToGo.left=nearPathToGo.bottom;
-                                    pathToGo.left.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_left,1));
-                                }
-                                if(pathToGo.right.empty() || pathToGo.right.size()>(nearPathToGo.bottom.size()+1))
-                                {
-                                    pathToGo.right=nearPathToGo.bottom;
-                                    pathToGo.right.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_right,1));
-                                }
+                                pathToGo.bottom=nearPathToGo.left;
+                                pathToGo.bottom.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_bottom,1));
                             }
                         }
                     }
-                    index++;
+                    //if the left case have been parsed
+                    if(tempPoint.x>minX)
+                    {
+                        coord=std::pair<uint16_t,uint16_t>(tempPoint.x-1,tempPoint.y);
+                        if(tempMap.pathToGo.find(coord)!=tempMap.pathToGo.cend())
+                        {
+                            const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=tempMap.pathToGo.at(coord);
+                            if(pathToGo.right.empty() || pathToGo.right.size()>nearPathToGo.right.size())
+                            {
+                                pathToGo.right=nearPathToGo.right;
+                                pathToGo.right.back().second++;
+                            }
+                            if(pathToGo.top.empty() || pathToGo.top.size()>(nearPathToGo.right.size()+1))
+                            {
+                                pathToGo.top=nearPathToGo.right;
+                                pathToGo.top.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_top,1));
+                            }
+                            if(pathToGo.bottom.empty() || pathToGo.bottom.size()>(nearPathToGo.right.size()+1))
+                            {
+                                pathToGo.bottom=nearPathToGo.right;
+                                pathToGo.bottom.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_bottom,1));
+                            }
+                        }
+                    }
+                    //if the top case have been parsed
+                    if(tempPoint.y+1<maxY)
+                    {
+                        coord=std::pair<uint16_t,uint16_t>(tempPoint.x,tempPoint.y+1);
+                        if(tempMap.pathToGo.find(coord)!=tempMap.pathToGo.cend())
+                        {
+                            const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=tempMap.pathToGo.at(coord);
+                            if(pathToGo.top.empty() || pathToGo.top.size()>nearPathToGo.top.size())
+                            {
+                                pathToGo.top=nearPathToGo.top;
+                                pathToGo.top.back().second++;
+                            }
+                            if(pathToGo.left.empty() || pathToGo.left.size()>(nearPathToGo.top.size()+1))
+                            {
+                                pathToGo.left=nearPathToGo.top;
+                                pathToGo.left.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_left,1));
+                            }
+                            if(pathToGo.right.empty() || pathToGo.right.size()>(nearPathToGo.top.size()+1))
+                            {
+                                pathToGo.right=nearPathToGo.top;
+                                pathToGo.right.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_right,1));
+                            }
+                        }
+                    }
+                    //if the bottom case have been parsed
+                    if(tempPoint.y>minY)
+                    {
+                        coord=std::pair<uint16_t,uint16_t>(tempPoint.x,tempPoint.y-1);
+                        if(tempMap.pathToGo.find(coord)!=tempMap.pathToGo.cend())
+                        {
+                            const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=tempMap.pathToGo.at(coord);
+                            if(pathToGo.bottom.empty() || pathToGo.bottom.size()>nearPathToGo.bottom.size())
+                            {
+                                pathToGo.bottom=nearPathToGo.bottom;
+                                pathToGo.bottom.back().second++;
+                            }
+                            if(pathToGo.left.empty() || pathToGo.left.size()>(nearPathToGo.bottom.size()+1))
+                            {
+                                pathToGo.left=nearPathToGo.bottom;
+                                pathToGo.left.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_left,1));
+                            }
+                            if(pathToGo.right.empty() || pathToGo.right.size()>(nearPathToGo.bottom.size()+1))
+                            {
+                                pathToGo.right=nearPathToGo.bottom;
+                                pathToGo.right.push_back(std::pair<Orientation,uint8_t/*step number*/>(Orientation_right,1));
+                            }
+                        }
+                    }
                 }
                 coord=std::pair<uint16_t,uint16_t>(tempPoint.x,tempPoint.y);
                 if(tempMap.pathToGo.find(coord)==tempMap.pathToGo.cend())
@@ -542,6 +538,7 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                 }
                 if(haveCityEntry(citiesCoordToIndex,tempPoint.x,tempPoint.y) && (tempPoint.x!=city.x || tempPoint.y!=city.y))
                 {
+                    citycount++;
                     std::vector<std::pair<Orientation,uint8_t/*step number*/> > returnedVar;
                     if(returnedVar.empty() || pathToGo.bottom.size()<returnedVar.size())
                         if(!pathToGo.bottom.empty())
@@ -555,6 +552,34 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                     if(returnedVar.empty() || pathToGo.left.size()<returnedVar.size())
                         if(!pathToGo.left.empty())
                             returnedVar=pathToGo.left;
+                    //just display
+                    {
+                        std::cout << "city from " << city.x << "," << city.y << " to " << tempPoint.x << "," << tempPoint.y << ": ";
+                        unsigned int index=0;
+                        while(index<returnedVar.size())
+                        {
+                            std::pair<Orientation,uint8_t/*step number*/> &returnedLine=returnedVar[index];
+                            unsigned int indexSecond=0;
+                            while(indexSecond<returnedLine.second)
+                            {
+                                //change tile
+                                if(returnedLine.first!=Orientation_none)
+                                {
+                                    switch(returnedLine.first)
+                                    {
+                                        case Orientation_bottom:std::cout << "b";break;
+                                        case Orientation_top:std::cout << "t";break;
+                                        case Orientation_right:std::cout << "r";break;
+                                        case Orientation_left:std::cout << "l";break;
+                                        default:abort();
+                                    }
+                                }
+                                indexSecond++;
+                            }
+                            index++;
+                        }
+                        std::cout << std::endl;
+                    }
                     if(!returnedVar.empty())
                     {
                         if(returnedVar.back().second<=1)
@@ -570,7 +595,6 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                                 resolvedPath[city.x][city.y][tempPoint.x].insert(tempPoint.y);
                                 if(haveCityEntry(citiesCoordToIndex,tempPoint.x,tempPoint.y) && (tempPoint.x!=city.x || tempPoint.y!=city.y))
                                 {
-                                    //std::cout << "city from " << city.x << "," << city.y << " to " << tempPoint.x << "," << tempPoint.y << std::endl;
                                     uint16_t x=city.x;
                                     uint16_t y=city.y;
                                     unsigned int index=0;
@@ -633,13 +657,13 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                         }
                     }
                     //if the left case have been parsed
-                    if(tempPoint.x>0)
+                    if(tempPoint.x>minX)
                     {
                         coord=std::pair<uint16_t,uint16_t>(tempPoint.x-1,tempPoint.y);
                         if(tempMap.pathToGo.find(coord)==tempMap.pathToGo.cend())
                         {
                             MapPointToParse newPoint=tempPoint;
-                            if(newPoint.x>0)
+                            if(newPoint.x>minX)
                             {
                                 newPoint.x--;
                                 if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
@@ -675,13 +699,13 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                         }
                     }
                     //if the top case have been parsed
-                    if(tempPoint.y>0)
+                    if(tempPoint.y>minY)
                     {
                         coord=std::pair<uint16_t,uint16_t>(tempPoint.x,tempPoint.y-1);
                         if(tempMap.pathToGo.find(coord)==tempMap.pathToGo.cend())
                         {
                             MapPointToParse newPoint=tempPoint;
-                            if(newPoint.y>0)
+                            if(newPoint.y>minY)
                             {
                                 newPoint.y--;
                                 if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
