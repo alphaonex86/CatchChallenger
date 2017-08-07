@@ -395,13 +395,13 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                 const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
                 if(zoneOrientation!=0)
                 {
-
+                    const bool isCity=haveCityEntry(citiesCoordToIndex,x,y);
                     if(zoneOrientation&Orientation_bottom)
                     {
                         const unsigned int minX=x*mapWidth+mapWidth/2-2;
                         const unsigned int maxX=x*mapWidth+mapWidth/2+2;
                         unsigned int yTile=y*mapHeight+mapHeight/2;
-                        //const unsigned int maxY=y*mapHeight+mapHeight;
+                        const unsigned int maxYGrass=y*mapHeight+mapHeight-2;
                         while(yTile<(y+1)*mapHeight)
                         {
                             unsigned int xTile=minX;
@@ -412,8 +412,8 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                                 if(bitMask/8>=maxMapSize)
                                     abort();
                                 MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
-                                /*if(full && yTile<(maxY-2))
-                                    MapBrush::brushTheMap(worldMap,mapTemplategrass,x,y,MapBrush::mapMask);*/
+                                if(full && yTile<maxYGrass && !isCity)
+                                    MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
                                 xTile++;
                             }
                             yTile++;
@@ -424,7 +424,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                         const unsigned int minX=x*mapWidth+mapWidth/2-2;
                         const unsigned int maxX=x*mapWidth+mapWidth/2+2;
                         unsigned int yTile=y*mapHeight;
-                        //const unsigned int minY=y*mapHeight;
+                        const unsigned int minYGrass=y*mapHeight+2;
                         while(yTile<y*mapHeight+mapHeight/2)
                         {
                             unsigned int xTile=minX;
@@ -435,8 +435,8 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                                 if(bitMask/8>=maxMapSize)
                                     abort();
                                 MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
-                                /*if(full && yTile>(minY+2))
-                                    MapBrush::brushTheMap(worldMap,mapTemplategrass,x,y,MapBrush::mapMask);*/
+                                if(full && yTile>=minYGrass && !isCity)
+                                    MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
                                 xTile++;
                             }
                             yTile++;
@@ -447,6 +447,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                         const unsigned int minX=x*mapWidth;
                         const unsigned int maxX=x*mapWidth+mapWidth/2;
                         unsigned int yTile=y*mapHeight+mapHeight/2-2;
+                        const unsigned int minXGrass=x*mapWidth+2;
                         while(yTile<y*mapHeight+mapHeight/2+2)
                         {
                             unsigned int xTile=minX;
@@ -457,6 +458,8 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                                 if(bitMask/8>=maxMapSize)
                                     abort();
                                 MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                if(full && xTile>=minXGrass && !isCity)
+                                    MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
                                 xTile++;
                             }
                             yTile++;
@@ -467,6 +470,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                         const unsigned int minX=x*mapWidth+mapWidth/2;
                         const unsigned int maxX=(x+1)*mapWidth;
                         unsigned int yTile=y*mapHeight+mapHeight/2-2;
+                        const unsigned int maxXGrass=x*mapWidth+mapWidth-2;
                         while(yTile<y*mapHeight+mapHeight/2+2)
                         {
                             unsigned int xTile=minX;
@@ -477,6 +481,8 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                                 if(bitMask/8>=maxMapSize)
                                     abort();
                                 MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                                if(full && xTile<maxXGrass && !isCity)
+                                    MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
                                 xTile++;
                             }
                             yTile++;

@@ -22,7 +22,7 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
 }
 
 void SettingsAll::loadSettings(QSettings &settings, bool &displaycity, std::vector<std::string> &citiesNames, float &scale_City, bool &doallmap,
-                               unsigned int maxCityLinks,unsigned int cityRadius)
+                               unsigned int &maxCityLinks,unsigned int &cityRadius)
 {
     displaycity=settings.value("displaycity").toBool();
     scale_City=settings.value("scale_City").toFloat();

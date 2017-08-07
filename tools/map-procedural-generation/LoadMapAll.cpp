@@ -420,6 +420,11 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                             );
             }
 
+            if(maxCityLinks<2)
+            {
+                std::cerr << "maxCityLinks<2 abort" << std::endl;
+                abort();
+            }
             uint8_t citycount=0;
             std::pair<uint16_t,uint16_t> coord;
             while(!mapPointToParseList.empty() && citycount<maxCityLinks)
@@ -554,6 +559,8 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                         if(!pathToGo.left.empty())
                             returnedVar=pathToGo.left;
                     //just display
+                    const bool displayPath=false;
+                    if(displayPath)
                     {
                         std::cout << "city from " << city.x << "," << city.y << " to " << tempPoint.x << "," << tempPoint.y << ": ";
                         unsigned int index=0;
