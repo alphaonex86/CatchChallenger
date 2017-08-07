@@ -15,6 +15,7 @@ std::unordered_map<uint16_t,std::unordered_map<uint16_t,unsigned int> > LoadMapA
 uint8_t * LoadMapAll::mapPathDirection=NULL;
 std::vector<LoadMapAll::Road> LoadMapAll::roads;
 std::unordered_map<uint16_t,std::unordered_map<uint16_t,LoadMapAll::RoadIndex> > LoadMapAll::roadCoordToIndex;
+std::unordered_map<std::string,LoadMapAll::Zone> LoadMapAll::zones;
 
 void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight)
 {
