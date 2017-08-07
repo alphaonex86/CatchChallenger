@@ -18,7 +18,7 @@
 
 void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap,
                                   const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
-                                  const std::pair<uint8_t, uint8_t> pos, const City &city)
+                                  const std::pair<uint8_t, uint8_t> pos, const City &city,const std::string &zone)
 {
     bool ok=false;
     //search the brush door and retarget
@@ -120,8 +120,8 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
                 QString content("<map");
                 if(properties.contains("type"))
                     content+=" type=\""+properties.value("type")+"\"";
-                /*if(!zone.empty())
-                    content+=" zone=\""+QString::fromStdString(zone)+"\"";*/
+                if(!zone.empty())
+                    content+=" zone=\""+QString::fromStdString(zone)+"\"";
                 content+=">\n"
                 "  <name>"+QString::fromStdString(description)+"</name>\n"
                 "</map>";
@@ -289,7 +289,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
     while(index<cities.size())
     {
         const City &city=cities.at(index);
-
+        const std::string &cityLowerCaseName=LoadMapAll::lowerCase(city.name);
         const uint32_t x=city.x;
         const uint32_t y=city.y;
         Tiled::Map *map=NULL;
@@ -349,12 +349,12 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
             if(!haveHeal)
             {
                 haveHeal=true;
-                addBuildingChain("heal","Heal",mapTemplatebuildingheal,worldMap,x,y,mapWidth,mapHeight,pos,city);
+                addBuildingChain("heal","Heal",mapTemplatebuildingheal,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName);
             }
             else if(!haveShop)
             {
                 haveShop=true;
-                addBuildingChain("shop","Shop",mapTemplatebuildingshop,worldMap,x,y,mapWidth,mapHeight,pos,city);
+                addBuildingChain("shop","Shop",mapTemplatebuildingshop,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName);
             }
             else
             {
@@ -365,16 +365,16 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                 {
                 case 0:
                     housecount++;
-                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuilding1,worldMap,x,y,mapWidth,mapHeight,pos,city);
+                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuilding1,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName);
                     break;
                 case 1:
                 default:
                     housecount++;
-                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuilding2,worldMap,x,y,mapWidth,mapHeight,pos,city);
+                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuilding2,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName);
                     break;
                 case 2:
                     housecount++;
-                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuildingbig1,worldMap,x,y,mapWidth,mapHeight,pos,city);
+                    addBuildingChain("house-"+std::to_string(housecount),"House "+std::to_string(housecount),mapTemplatebuildingbig1,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName);
                     break;
                 }
             }

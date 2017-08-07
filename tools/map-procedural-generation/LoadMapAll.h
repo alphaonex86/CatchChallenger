@@ -82,6 +82,11 @@ public:
         std::vector<RoadToCity> cityIndex;
     };
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,RoadIndex> > roadCoordToIndex;
+    struct Zone
+    {
+        std::string name;
+    };
+    static std::unordered_map<std::string,Zone> zones;
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames, const unsigned int &mapXCount, const unsigned int &mapYCount, const unsigned int &maxCityLinks, const unsigned int &cityRadius);
@@ -102,7 +107,7 @@ public:
     static void deleteMapList(MapBrush::MapTemplate &mapTemplatebuilding);
     static std::vector<Tiled::MapObject*> getDoorsListAndTp(Tiled::Map * map);
     static void addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap, const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
-                                 const std::pair<uint8_t,uint8_t> pos, const City &city);
+                                 const std::pair<uint8_t,uint8_t> pos, const City &city, const std::string &zone);
 };
 
 #endif // LOADMAPALL_H

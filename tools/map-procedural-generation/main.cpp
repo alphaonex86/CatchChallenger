@@ -51,14 +51,20 @@ int main(int argc, char *argv[])
         std::cerr << "Unable to create path: " << dir.path().toStdString() << std::endl;
         abort();
     }
+    QDir dirZone(QCoreApplication::applicationDirPath()+"/dest/map/main/official/zone/");
+    if(!dir.mkpath(dirZone.path()))
+    {
+        std::cerr << "Unable to create path: " << dir.path().toStdString() << std::endl;
+        abort();
+    }
     QFile info(QCoreApplication::applicationDirPath()+"/dest/map/main/official/informations.xml");
     if(info.open(QFile::WriteOnly))
     {
         QString content("<?xml version='1.0'?>\n"
-                            "<informations color=\"#688BFF\">\n"
+                            "<informations color=\"#23c71f\">\n"
                             "    <name>Generated map</name>\n"
                             "    <name lang=\"fr\">Map généré</name>\n"
-                            "    <initial>T</initial>\n"
+                            "    <initial>G</initial>\n"
                             "    <options>\n");
         QFile optionsFile(QCoreApplication::applicationDirPath()+"/settings.xml");
         if(!optionsFile.open(QFile::ReadOnly))
@@ -223,19 +229,41 @@ int main(int argc, char *argv[])
             while(indexCity<LoadMapAll::cities.size())
             {
                 const LoadMapAll::City &city=LoadMapAll::cities.at(indexCity);
+                const std::string &cityLowerCaseName=LoadMapAll::lowerCase(city.name);
                 const uint32_t x=city.x;
                 const uint32_t y=city.y;
-                const std::string &file=LoadMapAll::lowerCase(city.name)+"/"+LoadMapAll::lowerCase(city.name)+".tmx";
+                const std::string &file=cityLowerCaseName+"/"+cityLowerCaseName+".tmx";
                 if(!PartialMap::save(tiledMap,
                                  x*singleMapWitdh,y*singleMapHeight,
                                  x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
                                  file,
                                  recuesPoints,
-                                 "city","",city.name
+                                 "city",cityLowerCaseName,city.name
                                  ))
                 {
                     std::cerr << "Unable to write " << file << "" << std::endl;
                     abort();
+                }
+                if(LoadMapAll::zones.find(cityLowerCaseName)==LoadMapAll::zones.cend())
+                {
+                    QFile xmlinfo(QCoreApplication::applicationDirPath()+"/dest/map/main/official/zone/"+QString::fromStdString(cityLowerCaseName)+".xml");
+                    if(xmlinfo.open(QFile::WriteOnly))
+                    {
+                        QString content("<zone>\n"
+                                        "  <name>"+QString::fromStdString(city.name)+"</name>\n"
+                                        "</zone>");
+                        QByteArray contentData(content.toUtf8());
+                        xmlinfo.write(contentData.constData(),contentData.size());
+                        xmlinfo.close();
+                    }
+                    else
+                    {
+                        std::cerr << "Unable to write zone " << cityLowerCaseName << std::endl;
+                        abort();
+                    }
+                    LoadMapAll::Zone zone;
+                    zone.name=city.name;
+                    LoadMapAll::zones[cityLowerCaseName]=zone;
                 }
 
                 indexCity++;
@@ -259,6 +287,7 @@ int main(int argc, char *argv[])
 
                         //compose string
                         std::string file;
+                        std::string zoneName;
                         if(road.haveOnlySegmentNearCity)
                         {
                             if(roadIndex.cityIndex.empty())
@@ -267,18 +296,45 @@ int main(int argc, char *argv[])
                                 abort();
                             }
                             const LoadMapAll::RoadToCity &cityIndex=roadIndex.cityIndex.front();
-                            file=LoadMapAll::lowerCase(LoadMapAll::cities.at(cityIndex.cityIndex).name)+"/road-"+std::to_string(roadIndex.roadIndex+1)+
+                            const std::string &cityLowerCaseName=LoadMapAll::lowerCase(LoadMapAll::cities.at(cityIndex.cityIndex).name);
+                            file=cityLowerCaseName+"/road-"+std::to_string(roadIndex.roadIndex+1)+
                                     "-"+LoadMapAll::orientationToString(LoadMapAll::reverseOrientation(cityIndex.orientation))+".tmx";
+                            zoneName=cityLowerCaseName;
                         }
                         else
+                        {
+                            std::string cityLowerCaseName="road-"+std::to_string(roadIndex.roadIndex+1);
                             file="road-"+std::to_string(roadIndex.roadIndex+1)+"/"+std::to_string(indexCoord+1)+".tmx";
+                            if(LoadMapAll::zones.find(cityLowerCaseName)==LoadMapAll::zones.cend())
+                            {
+                                QFile xmlinfo(QCoreApplication::applicationDirPath()+"/dest/map/main/official/zone/"+QString::fromStdString(cityLowerCaseName)+".xml");
+                                if(xmlinfo.open(QFile::WriteOnly))
+                                {
+                                    QString content("<zone>\n"
+                                                    "  <name>Road "+QString::number(roadIndex.roadIndex+1)+"</name>\n"
+                                                    "</zone>");
+                                    QByteArray contentData(content.toUtf8());
+                                    xmlinfo.write(contentData.constData(),contentData.size());
+                                    xmlinfo.close();
+                                }
+                                else
+                                {
+                                    std::cerr << "Unable to write zone " << cityLowerCaseName << std::endl;
+                                    abort();
+                                }
+                                LoadMapAll::Zone zone;
+                                zone.name="Road "+std::to_string(roadIndex.roadIndex+1);
+                                LoadMapAll::zones[cityLowerCaseName]=zone;
+                            }
+                            zoneName="road-"+std::to_string(roadIndex.roadIndex+1);
+                        }
 
                         if(!PartialMap::save(tiledMap,
                                          x*singleMapWitdh,y*singleMapHeight,
                                          x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
                                          file,
                                          recuesPoints,
-                                         "outdoor","","Road "+std::to_string(roadIndex.roadIndex+1)
+                                         "outdoor",zoneName,"Road "+std::to_string(roadIndex.roadIndex+1)
                                          ))
                         {
                             std::cerr << "Unable to write " << file << "" << std::endl;
