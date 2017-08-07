@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
                 }
                 layerZoneChunk->setVisible(false);
             }
-            Tiled::MapWriter maprwriter;maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/main/official/all.tmx");
+            Tiled::MapWriter maprwriter;maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/main/official/all.tmx");
         }
         //do tmx split
     }

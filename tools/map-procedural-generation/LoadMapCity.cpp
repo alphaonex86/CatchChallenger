@@ -90,9 +90,9 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
     {
         Tiled::Map *nextHopMap=mapTemplatebuilding.otherMap.at(index);
         Tiled::Properties properties=nextHopMap->properties();
-        std::string filePath="/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+".tmx";
+        std::string filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+".tmx";
         if(mapTemplatebuilding.otherMap.size()>1)
-            filePath="/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+"/"+mapTemplatebuilding.otherMapName.at(index)+".tmx";
+            filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+"/"+mapTemplatebuilding.otherMapName.at(index)+".tmx";
 
         QFileInfo fileInfo(QCoreApplication::applicationDirPath()+QString::fromStdString(filePath));
         QDir mapDir(fileInfo.absolutePath());
@@ -588,7 +588,7 @@ std::string LoadMapAll::getMapFile(const unsigned int &x, const unsigned int &y)
     if(haveCityEntry(citiesCoordToIndex,x,y))
     {
         const LoadMapAll::City &city=LoadMapAll::cities.at(LoadMapAll::citiesCoordToIndex.at(x).at(y));
-        return QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+LoadMapAll::lowerCase(city.name);
+        return QCoreApplication::applicationDirPath().toStdString()+"/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+LoadMapAll::lowerCase(city.name);
     }
 
     const RoadIndex &roadIndex=roadCoordToIndex.at(x).at(y);
@@ -601,14 +601,14 @@ std::string LoadMapAll::getMapFile(const unsigned int &x, const unsigned int &y)
             abort();
         }
         const LoadMapAll::RoadToCity &cityIndex=roadIndex.cityIndex.front();
-        return QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+
+        return QCoreApplication::applicationDirPath().toStdString()+"/dest/map/main/official/"+
                 LoadMapAll::lowerCase(LoadMapAll::cities.at(cityIndex.cityIndex).name)+"/road-"+std::to_string(roadIndex.roadIndex+1)+
                 "-"+LoadMapAll::orientationToString(LoadMapAll::reverseOrientation(cityIndex.orientation));
     }
     else
     {
         const unsigned int &indexCoord=vectorindexOf(road.coords,std::pair<uint16_t,uint16_t>(x,y));
-        return QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/road-"+
+        return QCoreApplication::applicationDirPath().toStdString()+"/dest/map/main/official/road-"+
                 std::to_string(roadIndex.roadIndex+1)+"/"+std::to_string(indexCoord+1);
     }
 }
