@@ -103,11 +103,13 @@ int main(int argc, char *argv[])
 
     SettingsAll::putDefaultSettings(settings);
     bool displaycity=false,doallmap=false;
-    float scale_City=0;
+    float scale_City=0,levelmapscale=0;
     std::vector<std::string> citiesNames;
     unsigned int maxCityLinks=0;
     unsigned int cityRadius=0;
-    SettingsAll::loadSettings(settings,displaycity,citiesNames,scale_City,doallmap,maxCityLinks,cityRadius);
+    unsigned int levelmapmin=0,levelmapmax=0;
+    SettingsAll::loadSettings(settings,displaycity,citiesNames,scale_City,doallmap,maxCityLinks,cityRadius,
+                              levelmapscale,levelmapmin,levelmapmax);
 
     srand(seed);
 
@@ -123,6 +125,7 @@ int main(int argc, char *argv[])
         const float noiseMapScaleMap=0.005f/((mapXCount+mapYCount)/2)*scale_TerrainMap*((mapXCount+mapYCount)/2);
         Simplex heighmap(seed+500);
         Simplex moisuremap(seed+5200);
+        Simplex levelmap(seed+212);
 
         t.start();
         VoronioForTiledMapTmx::voronoiMap=VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,tileStep);
@@ -151,7 +154,7 @@ int main(int argc, char *argv[])
                 qDebug("Add terrain took %d ms", t.elapsed());
                 MapBrush::initialiseMapMask(tiledMap);
                 t.start();
-                LoadMapAll::addCity(tiledMap,gridCity,citiesNames,mapXCount,mapYCount,maxCityLinks,cityRadius);
+                LoadMapAll::addCity(tiledMap,gridCity,citiesNames,mapXCount,mapYCount,maxCityLinks,cityRadius,levelmap,levelmapscale,levelmapmin,levelmapmax);
                 LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount,false);
                 qDebug("place cities took %d ms", t.elapsed());
                 if(dotransition)
@@ -220,6 +223,7 @@ int main(int argc, char *argv[])
         }
         //do tmx split
         t.start();
+        PartialMap::RecuesPoint startPoint;
         std::vector<PartialMap::RecuesPoint> recuesPoints;
         {
             const unsigned int singleMapWitdh=tiledMap.width()/mapXCount;
@@ -228,6 +232,7 @@ int main(int argc, char *argv[])
             unsigned int indexCity=0;
             while(indexCity<LoadMapAll::cities.size())
             {
+                std::vector<PartialMap::RecuesPoint> newRecuesPoints;
                 const LoadMapAll::City &city=LoadMapAll::cities.at(indexCity);
                 const std::string &cityLowerCaseName=LoadMapAll::lowerCase(city.name);
                 const uint32_t x=city.x;
@@ -237,13 +242,23 @@ int main(int argc, char *argv[])
                                  x*singleMapWitdh,y*singleMapHeight,
                                  x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
                                  file,
-                                 recuesPoints,
+                                 newRecuesPoints,
                                  "city",cityLowerCaseName,city.name
                                  ))
                 {
                     std::cerr << "Unable to write " << file << "" << std::endl;
                     abort();
                 }
+                if(levelmapmin==city.level)
+                {
+                    if(newRecuesPoints.empty())
+                    {
+                        std::cerr << "newRecuesPoints empty for city (abort)" << std::endl;
+                        abort();
+                    }
+                    startPoint=newRecuesPoints.front();
+                }
+                recuesPoints.insert(recuesPoints.cend(),newRecuesPoints.cbegin(),newRecuesPoints.cend());
                 if(LoadMapAll::zones.find(cityLowerCaseName)==LoadMapAll::zones.cend())
                 {
                     QFile xmlinfo(QCoreApplication::applicationDirPath()+"/dest/map/main/official/zone/"+QString::fromStdString(cityLowerCaseName)+".xml");
@@ -357,19 +372,19 @@ int main(int argc, char *argv[])
         QFile start(QCoreApplication::applicationDirPath()+"/dest/map/main/official/start.xml");
         if(start.open(QFile::WriteOnly))
         {
-            const PartialMap::RecuesPoint &recuesPoint=recuesPoints.front();
-            if(recuesPoints.empty())
+            //const PartialMap::RecuesPoint &startPoint=recuesPoints.front();
+            /*if(recuesPoints.empty())
             {
                 std::cerr << "recuesPoints.empty() then can't do start.xml (abort)" << std::endl;
                 abort();
-            }
+            }*/
             QString content("<!--\n"
                             "/!\\ warning, directly put this information into db\n"
                             "/!\\ not check if x,y is into the range of the map\n"
                             "-->\n"
                             "<profile>\n"
                             "  <start id=\"Normal\">\n"
-                            "    <map x=\""+QString::number(recuesPoint.x)+"\" y=\""+QString::number(recuesPoint.y)+"\" file=\""+QString::fromStdString(recuesPoint.map)+"\"/>\n"
+                            "    <map x=\""+QString::number(startPoint.x)+"\" y=\""+QString::number(startPoint.y)+"\" file=\""+QString::fromStdString(startPoint.map)+"\"/>\n"
                             "  </start>\n"
                             "</profile>");
             QByteArray contentData(content.toUtf8());
