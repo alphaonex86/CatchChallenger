@@ -43,7 +43,7 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
         const uint32_t x=city.x;
         const uint32_t y=city.y;
         QPolygonF poly(QRectF(0,0,mapWidth-4,mapHeight-4));
-        Tiled::MapObject *objectPolygon = new Tiled::MapObject(QString::fromStdString(city.name+" ("+citySize+")"),"",QPointF(mapWidth*x+2,mapHeight*y+2), QSizeF(0.0,0.0));
+        Tiled::MapObject *objectPolygon = new Tiled::MapObject(QString::fromStdString(city.name+" ("+citySize+", level: "+std::to_string(city.level)+")"),"",QPointF(mapWidth*x+2,mapHeight*y+2), QSizeF(0.0,0.0));
         objectPolygon->setPolygon(poly);
         objectPolygon->setShape(Tiled::MapObject::Polygon);
         layerCity->addObject(objectPolygon);
@@ -85,7 +85,7 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
                     const RoadIndex &indexRoad=roadCoordToIndex[x][y];
 
                     //compose string
-                    std::string str;
+                    std::string str="Road "+std::to_string(indexRoad.roadIndex+1)+" (";
                     if(road.haveOnlySegmentNearCity)
                     {
                         if(indexRoad.cityIndex.empty())
@@ -94,10 +94,11 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
                             abort();
                         }
                         const RoadToCity &cityIndex=indexRoad.cityIndex.front();
-                        str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+","+cities.at(cityIndex.cityIndex).name+")";
+                        str+=stringimplode(orientationList,",")+","+cities.at(cityIndex.cityIndex).name;
                     }
                     else
-                        str="Road "+std::to_string(indexRoad.roadIndex+1)+" ("+stringimplode(orientationList,",")+")";
+                        str+=stringimplode(orientationList,",");
+                    str+=", level: "+std::to_string(indexRoad.level)+")";
 
                     //paint it
                     QPolygonF poly(QRectF(0,0,mapWidth,mapHeight));
@@ -187,7 +188,8 @@ std::string LoadMapAll::orientationToString(const Orientation &orientation)
 
 void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
                          const unsigned int &mapXCount, const unsigned int &mapYCount,
-                         const unsigned int &maxCityLinks,const unsigned int &cityRadius)
+                         const unsigned int &maxCityLinks, const unsigned int &cityRadius, const Simplex &levelmap,
+                         const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax)
 {
     if(grid.empty())
         return;
@@ -355,6 +357,9 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             break;
         }
     }
+    //detect the min and max level
+    unsigned int maxLevel=0;
+    unsigned int minLevel=999999;
     //happen
     citiesCoordToIndex.clear();
     cities.clear();
@@ -369,6 +374,11 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             city.type=cityInternal->type;
             city.x=cityInternal->x;
             city.y=cityInternal->y;
+            city.level=(levelmap.Get({(float)city.x,(float)city.y},levelmapscale)+1.0)/2.0*(levelmapmax-levelmapmin)+levelmapmin;
+            if(city.level<minLevel)
+                minLevel=city.level;
+            if(city.level>maxLevel)
+                maxLevel=city.level;
             citiesCoordToIndex[city.x][city.y]=cities.size();
             cities.push_back(city);
             delete cityInternal;
@@ -381,7 +391,12 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
         unsigned int indexCities=0;
         while(indexCities<cities.size())
         {
-            const City &city=cities.at(indexCities);
+            City &city=cities[indexCities];
+            //Calibration
+            city.level=city.level-(minLevel-levelmapmin);
+            if(city.level<levelmapmin)
+                city.level=levelmapmin;
+
             int minX=(int)city.x-cityRadius;
             int maxX=(int)city.x+cityRadius;
             int minY=(int)city.y-cityRadius;
@@ -864,6 +879,21 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                 mapX++;
             }
             mapY++;
+        }
+    }
+
+    //set the road level
+    for(auto& p:LoadMapAll::roadCoordToIndex)
+    {
+        const unsigned int &x=p.first;
+        for(auto& q:p.second)
+        {
+            const unsigned int &y=q.first;
+            LoadMapAll::RoadIndex &roadIndex=q.second;
+            unsigned int tempLevel=(levelmap.Get({(float)x,(float)y},levelmapscale)+1.0)/2.0*(levelmapmax-levelmapmin)+levelmapmin;
+            roadIndex.level=tempLevel-(minLevel-levelmapmin);
+            if(roadIndex.level<levelmapmin)
+                roadIndex.level=levelmapmin;
         }
     }
 }

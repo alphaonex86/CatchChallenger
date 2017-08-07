@@ -17,18 +17,29 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
         settings.setValue("cityRadius",3);
     if(!settings.contains("maxCityLinks"))
         settings.setValue("maxCityLinks",3);
+    if(!settings.contains("levelmapscale"))
+        settings.setValue("levelmapscale",0.05);
+    if(!settings.contains("levelmapmin"))
+        settings.setValue("levelmapmin",2);
+    if(!settings.contains("levelmapmax"))
+        settings.setValue("levelmapmax",50);
 
     settings.sync();
 }
 
 void SettingsAll::loadSettings(QSettings &settings, bool &displaycity, std::vector<std::string> &citiesNames, float &scale_City, bool &doallmap,
-                               unsigned int &maxCityLinks,unsigned int &cityRadius)
+                               unsigned int &maxCityLinks,unsigned int &cityRadius,
+                               float &levelmapscale, unsigned int &levelmapmin, unsigned int &levelmapmax)
 {
     displaycity=settings.value("displaycity").toBool();
     scale_City=settings.value("scale_City").toFloat();
     doallmap=settings.value("doallmap").toBool();
     maxCityLinks=settings.value("maxCityLinks").toUInt();
     cityRadius=settings.value("cityRadius").toUInt();
+
+    levelmapscale=settings.value("levelmapscale").toFloat();
+    levelmapmin=settings.value("levelmapmin").toUInt();
+    levelmapmax=settings.value("levelmapmax").toUInt();
 
     {
         QFile inputFile("cities.txt");
