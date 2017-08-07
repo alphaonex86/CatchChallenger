@@ -44,14 +44,14 @@ int main(int argc, char *argv[])
         QFile::copy(":/settings.xml",QCoreApplication::applicationDirPath()+"/settings.xml");
     QSettings settings(QCoreApplication::applicationDirPath()+"/settings.xml",QSettings::NativeFormat);
 
-    QDir dir(QCoreApplication::applicationDirPath()+"/dest/main/official/");
+    QDir dir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
     dir.removeRecursively();
     if(!dir.mkpath(dir.path()))
     {
         std::cerr << "Unable to create path: " << dir.path().toStdString() << std::endl;
         abort();
     }
-    QFile info(QCoreApplication::applicationDirPath()+"/dest/main/official/informations.xml");
+    QFile info(QCoreApplication::applicationDirPath()+"/dest/map/main/official/informations.xml");
     if(info.open(QFile::WriteOnly))
     {
         QString content("<?xml version='1.0'?>\n"
@@ -204,9 +204,9 @@ int main(int argc, char *argv[])
             if(doallmap)
             {
                 Tiled::MapWriter maprwriter;
-                if(!maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/main/official/all.tmx"))
+                if(!maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/main/official/all.tmx"))
                 {
-                    std::cerr << "Unable to write " << QCoreApplication::applicationDirPath().toStdString() << "/dest/main/official/all.tmx" << std::endl;
+                    std::cerr << "Unable to write " << QCoreApplication::applicationDirPath().toStdString() << "/dest/map/main/official/all.tmx" << std::endl;
                     abort();
                 }
             }
@@ -298,7 +298,7 @@ int main(int argc, char *argv[])
         }
         qDebug("Write chunk tmx %d ms", t.elapsed());
         //do the start point
-        QFile start(QCoreApplication::applicationDirPath()+"/dest/main/official/start.xml");
+        QFile start(QCoreApplication::applicationDirPath()+"/dest/map/main/official/start.xml");
         if(start.open(QFile::WriteOnly))
         {
             const PartialMap::RecuesPoint &recuesPoint=recuesPoints.front();

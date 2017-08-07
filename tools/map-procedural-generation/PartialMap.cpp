@@ -21,7 +21,7 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
     const unsigned int mapWidth=maxX-minX;
     const unsigned int mapHeight=maxY-minY;
     Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,mapWidth,mapHeight,16,16);
-    QFileInfo fileInfo(QString::fromStdString(QCoreApplication::applicationDirPath().toStdString()+"/dest/main/official/"+file));
+    QFileInfo fileInfo(QString::fromStdString(QCoreApplication::applicationDirPath().toStdString()+"/dest/map/main/official/"+file));
     QDir mapDir(fileInfo.absolutePath());
     if(!mapDir.mkpath(fileInfo.absolutePath()))
     {
@@ -35,7 +35,7 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
     while(indexTileset<(unsigned int)world.tilesetCount())
     {
         const Tiled::Tileset * const tileset=world.tilesetAt(indexTileset);
-        QString tilesetPath(QFileInfo(QCoreApplication::applicationDirPath()+"/dest/main/official/"+tileset->fileName()).absoluteFilePath());
+        QString tilesetPath(QFileInfo(QCoreApplication::applicationDirPath()+"/dest/map/main/official/"+tileset->fileName()).absoluteFilePath());
 
         Tiled::MapReader reader;
         Tiled::Tileset *tilesetBase=reader.readTileset(tilesetPath);
