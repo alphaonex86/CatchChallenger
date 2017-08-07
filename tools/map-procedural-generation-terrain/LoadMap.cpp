@@ -48,13 +48,13 @@ unsigned int LoadMap::floatToMoisure(const float f)
 
 Tiled::Tileset *LoadMap::readTileset(const QString &tsx,Tiled::Map *tiledMap)
 {
-    QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/main/official/");
+    QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
 
     Tiled::MapReader reader;
-    Tiled::Tileset *tilesetBase=reader.readTileset(QCoreApplication::applicationDirPath()+"/dest/"+tsx);
+    Tiled::Tileset *tilesetBase=reader.readTileset(QCoreApplication::applicationDirPath()+"/dest/map/"+tsx);
     if(tilesetBase==NULL)
     {
-        std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString() << "/dest/" << tsx.toStdString() << std::endl;
+        std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString() << "/dest/map/" << tsx.toStdString() << std::endl;
         abort();
     }
     /*if(tilesetBase->tileWidth()!=tiledMap->tileWidth())
@@ -75,10 +75,10 @@ Tiled::Tileset *LoadMap::readTileset(const QString &tsx,Tiled::Map *tiledMap)
 Tiled::Map *LoadMap::readMap(const QString &tmx)
 {
     Tiled::MapReader reader;
-    Tiled::Map *map=reader.readMap(QCoreApplication::applicationDirPath()+"/dest/"+tmx);
+    Tiled::Map *map=reader.readMap(QCoreApplication::applicationDirPath()+"/"+tmx);
     if(map==NULL)
     {
-        std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString() << "/dest/" << tmx.toStdString() << std::endl;
+        std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString() << "/" << tmx.toStdString() << std::endl;
         abort();
     }
     return map;
@@ -304,8 +304,8 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
         }
 
     //add invisible tileset
-    QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/main/official/");
-    QString tilesetPath(QFileInfo(QCoreApplication::applicationDirPath()+"/dest/tileset/invisible.tsx").absoluteFilePath());
+    QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
+    QString tilesetPath(QFileInfo(QCoreApplication::applicationDirPath()+"/dest/map/tileset/invisible.tsx").absoluteFilePath());
     Tiled::MapReader reader;
     Tiled::Tileset *tilesetBase=reader.readTileset(tilesetPath);
     if(tilesetBase==NULL)

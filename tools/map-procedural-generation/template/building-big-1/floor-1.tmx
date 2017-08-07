@@ -3,11 +3,11 @@
  <properties>
   <property name="type" value="indoor"/>
  </properties>
- <tileset firstgid="1" source="../../tileset/inside-terra.tsx"/>
- <tileset firstgid="1025" source="../../tileset/invisible.tsx"/>
- <tileset firstgid="1041" source="../../tileset/inside-decoration.tsx"/>
- <tileset firstgid="2065" source="../../tileset/inside-mobilier.tsx"/>
- <tileset firstgid="3089" source="../../tileset/building-town.tsx"/>
+ <tileset firstgid="1" source="../../dest/map/tileset/inside-terra.tsx"/>
+ <tileset firstgid="1025" source="../../dest/map/tileset/invisible.tsx"/>
+ <tileset firstgid="1041" source="../../dest/map/tileset/inside-decoration.tsx"/>
+ <tileset firstgid="2065" source="../../dest/map/tileset/inside-mobilier.tsx"/>
+ <tileset firstgid="3089" source="../../dest/map/tileset/building-town.tsx"/>
  <layer name="Walkable" width="11" height="12">
   <data encoding="base64" compression="zlib">
    eJxbzMDAsBiI2YnAi6FYnQj8ZBQPGkwKAAAHwFxX

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" orientation="orthogonal" renderorder="right-down" width="7" height="6" tilewidth="16" tileheight="16" nextobjectid="10">
- <tileset firstgid="1" source="../../tileset/building-small.tsx"/>
- <tileset firstgid="1025" source="../../tileset/terra.tsx"/>
- <tileset firstgid="2049" source="../../tileset/animation.tsx"/>
- <tileset firstgid="3073" source="../../tileset/door.tsx"/>
- <tileset firstgid="3585" source="../../tileset/building-town.tsx"/>
+ <tileset firstgid="1" source="../../dest/map/tileset/building-small.tsx"/>
+ <tileset firstgid="1025" source="../../dest/map/tileset/terra.tsx"/>
+ <tileset firstgid="2049" source="../../dest/map/tileset/animation.tsx"/>
+ <tileset firstgid="3073" source="../../dest/map/tileset/door.tsx"/>
+ <tileset firstgid="3585" source="../../dest/map/tileset/building-town.tsx"/>
  <layer name="Collisions" width="7" height="6">
   <data encoding="base64" compression="zlib">
    eJxjYCAPNPIxMDRhwc1AvBCIF2HBi4H4IBAfwoIP8+G3DwDd5w5x
