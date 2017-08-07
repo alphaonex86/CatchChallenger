@@ -6,6 +6,7 @@
 #include "../../client/tiled/tiled_mapobject.h"
 #include "../../general/base/cpp11addition.h"
 #include "../map-procedural-generation-terrain/MapBrush.h"
+#include "../map-procedural-generation-terrain/znoise/headers/Simplex.hpp"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -54,6 +55,7 @@ public:
         std::string name;
         CityType type;
         std::unordered_map<uint16_t,std::vector<Orientation> > nearRoad;//road number, Orientation
+        uint8_t level;
     };
     struct CityInternal
     {
@@ -80,6 +82,7 @@ public:
     {
         unsigned int roadIndex;
         std::vector<RoadToCity> cityIndex;
+        uint8_t level;
     };
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,RoadIndex> > roadCoordToIndex;
     struct Zone
@@ -89,7 +92,10 @@ public:
     static std::unordered_map<std::string,Zone> zones;
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
-    static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames, const unsigned int &mapXCount, const unsigned int &mapYCount, const unsigned int &maxCityLinks, const unsigned int &cityRadius);
+    static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
+                        const unsigned int &mapXCount, const unsigned int &mapYCount,
+                        const unsigned int &maxCityLinks, const unsigned int &cityRadius,
+                        const Simplex &levelmap, const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax);
     static bool haveCityEntryInternal(const std::unordered_map<uint32_t,std::unordered_map<uint32_t,CityInternal *> > &positionsAndIndex,
                               const unsigned int &x, const unsigned int &y);
     static bool haveCityEntry(const std::unordered_map<uint16_t, std::unordered_map<uint16_t, unsigned int> > &positionsAndIndex,
@@ -99,7 +105,7 @@ public:
                                   const unsigned int &x2, const unsigned int &y2);
     static Orientation reverseOrientation(const Orientation &orientation);
     static std::string orientationToString(const Orientation &orientation);
-    static void addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount,bool full);
+    static void addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount, bool full);
     static void loadMapTemplate(const char * folderName,MapBrush::MapTemplate &mapTemplate,const char * fileName,const unsigned int mapWidth,const unsigned int mapHeight,Tiled::Map &worldMap);
     static void addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
     static std::string getMapFile(const unsigned int &x, const unsigned int &y);
