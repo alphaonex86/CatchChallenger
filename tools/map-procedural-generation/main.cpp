@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
             if(dominimap)
             {
                 t.start();
-                MiniMap::makeMap(heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),miniMapDivisor).save(QCoreApplication::applicationDirPath()+"/miniMapLinear.png","PNG");
+                //MiniMap::makeMap(heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),miniMapDivisor).save(QCoreApplication::applicationDirPath()+"/miniMapLinear.png","PNG");
                 MiniMapAll::makeMapTiled(tiledMap.width(),tiledMap.height(),mapWidth,mapHeight).save(QCoreApplication::applicationDirPath()+"/miniMapPixel.png","PNG");
                 qDebug("dominimap %d ms", t.elapsed());
             }
@@ -219,8 +219,8 @@ int main(int argc, char *argv[])
                     std::cerr << "Unable to write " << QCoreApplication::applicationDirPath().toStdString() << "/dest/map/main/official/all.tmx" << std::endl;
                     abort();
                 }
+                qDebug("Write all.tmx %d ms", t.elapsed());
             }
-            qDebug("Write all.tmx %d ms", t.elapsed());
         }
         //do tmx split
         t.start();
