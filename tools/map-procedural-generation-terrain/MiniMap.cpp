@@ -5,7 +5,7 @@
 
 #include "VoronioForTiledMapTmx.h"
 
-void MiniMap::makeMap(const Simplex &heightmap, const Simplex &moisuremap, const float &noiseMapScaleMoisure, const float &noiseMapScaleMap,
+QImage MiniMap::makeMap(const Simplex &heightmap, const Simplex &moisuremap, const float &noiseMapScaleMoisure, const float &noiseMapScaleMap,
                       const unsigned int widthMap, const unsigned int heightMap, const float miniMapDivisor)
 {
     QImage miniMapColor(QCoreApplication::applicationDirPath()+"/miniMapColor.png");
@@ -41,10 +41,10 @@ void MiniMap::makeMap(const Simplex &heightmap, const Simplex &moisuremap, const
         }
         y++;
     }
-    destination.save(QCoreApplication::applicationDirPath()+"/dest/map/miniMapLinear.png","PNG");
+    return destination;
 }
 
-void MiniMap::makeMapTiled(const unsigned int widthMap, const unsigned int heightMap)
+QImage MiniMap::makeMapTiled(const unsigned int widthMap, const unsigned int heightMap)
 {
     QImage miniMapColor(QCoreApplication::applicationDirPath()+"/miniMapColor.png");
     if(miniMapColor.isNull())
@@ -77,5 +77,5 @@ void MiniMap::makeMapTiled(const unsigned int widthMap, const unsigned int heigh
         }
         y++;
     }
-    destination.save(QCoreApplication::applicationDirPath()+"/dest/map/miniMapPixel.png","PNG");
+    return destination;
 }
