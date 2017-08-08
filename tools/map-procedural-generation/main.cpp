@@ -19,6 +19,7 @@
 #include "SettingsAll.h"
 #include "LoadMapAll.h"
 #include "PartialMap.h"
+#include "MiniMapAll.h"
 
 /*To do: Tree/Grass, Rivers
 http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/*/
@@ -178,8 +179,8 @@ int main(int argc, char *argv[])
             if(dominimap)
             {
                 t.start();
-                MiniMap::makeMap(heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),miniMapDivisor);
-                MiniMap::makeMapTiled(tiledMap.width(),tiledMap.height());
+                MiniMap::makeMap(heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),miniMapDivisor).save(QCoreApplication::applicationDirPath()+"/miniMapLinear.png","PNG");
+                MiniMapAll::makeMapTiled(tiledMap.width(),tiledMap.height(),mapWidth,mapHeight).save(QCoreApplication::applicationDirPath()+"/miniMapPixel.png","PNG");
                 qDebug("dominimap %d ms", t.elapsed());
             }
             if(dovegetation)

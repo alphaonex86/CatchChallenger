@@ -9,9 +9,11 @@ SOURCES += \
     SettingsAll.cpp \
     LoadMapAll.cpp \
     LoadMapCity.cpp \
-    PartialMap.cpp
+    PartialMap.cpp \
+    MiniMapAll.cpp
 
 HEADERS += \
     SettingsAll.h \
     LoadMapAll.h \
-    PartialMap.h
+    PartialMap.h \
+    MiniMapAll.h
