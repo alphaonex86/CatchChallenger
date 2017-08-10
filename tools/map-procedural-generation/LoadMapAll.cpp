@@ -894,6 +894,11 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             roadIndex.level=tempLevel-(minLevel-levelmapmin);
             if(roadIndex.level<levelmapmin)
                 roadIndex.level=levelmapmin;
+
+            //to fine grass use: VoronioForTiledMapTmx::voronoiMap;
+            //but to do simpler, do height,moisure by map, not 4x4
+            do to:
+            LoadMap::terrainList[height][moisure].terrainMonsters.push_back(terrainMonster);
         }
     }
 }
