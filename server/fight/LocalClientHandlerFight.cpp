@@ -245,11 +245,11 @@ bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TY
     std::pair<uint8_t,uint8_t> pos(x,y);
     if(static_cast<MapServer *>(map)->botsFightTrigger.find(pos)!=static_cast<MapServer *>(map)->botsFightTrigger.cend())
     {
-        const std::vector<uint32_t> &botList=static_cast<MapServer *>(map)->botsFightTrigger.at(pos);
+        const std::vector<uint16_t> &botList=static_cast<MapServer *>(map)->botsFightTrigger.at(pos);
         unsigned int index=0;
         while(index<botList.size())
         {
-            const uint32_t &botFightId=botList.at(index);
+            const uint16_t &botFightId=botList.at(index);
             if(public_and_private_informations.bot_already_beaten!=NULL)
             {
                 if(!haveBeatBot(botFightId))
