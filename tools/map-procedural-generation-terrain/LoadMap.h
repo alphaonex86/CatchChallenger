@@ -14,6 +14,12 @@
 class LoadMap
 {
 public:
+    struct TerrainMonster
+    {
+        uint16_t monster;
+        uint8_t mapweight;
+        uint8_t luckweight;
+    };
     struct Terrain
     {
         //final values
@@ -28,6 +34,8 @@ public:
         QString tmp_layerString;
         std::vector<uint32_t> tmp_transition_tile;
         QString tmp_transition_tsx;
+        //monster
+        std::vector<TerrainMonster> terrainMonsters;
     };
     static Terrain terrainList[5][6];
     static QStringList terrainFlatList;

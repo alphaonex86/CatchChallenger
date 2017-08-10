@@ -1,8 +1,10 @@
 #include "SettingsAll.h"
+#include "../map-procedural-generation-terrain/LoadMap.h"
 
 #include <iostream>
 #include <QFile>
 #include <QTextStream>
+#include <QDebug>
 
 void SettingsAll::putDefaultSettings(QSettings &settings)
 {
@@ -49,6 +51,72 @@ void SettingsAll::loadSettings(QSettings &settings, bool &displaycity, std::vect
     levelmapscale=settings.value("levelmapscale").toFloat();
     levelmapmin=settings.value("levelmapmin").toUInt();
     levelmapmax=settings.value("levelmapmax").toUInt();
+
+    settings.beginGroup("wildMonsters");
+    QStringList monsterId=settings.childGroups();
+    {
+        bool ok=false;
+        unsigned int indexGroupId=0;
+        while(indexGroupId<(unsigned int)monsterId.size())
+        {
+            QString idString=monsterId.at(indexGroupId);
+            const uint32_t monsterId=idString.toUInt(&ok);
+            if(!ok)
+                qDebug() << "Syntaxe error into: idString not number: " << idString;
+            if(monsterId!=0)
+            {
+                settings.beginGroup(idString);
+                if(settings.contains("heightmoisurelist"))
+                {
+                    QStringList heightmoisurelist=settings.value("heightmoisurelist").toString().split(";");
+                    unsigned int heightmoisureId=0;
+                    while(heightmoisureId<(unsigned int)heightmoisurelist.size())
+                    {
+                        QString heightmoisureEntry=heightmoisurelist.at(heightmoisureId);
+                        heightmoisureEntry.replace("->",",");
+                        QStringList heightmoisureSplit=heightmoisureEntry.split(",");
+                        if(heightmoisureSplit.size()!=4)
+                            qDebug() << "Syntaxe error into: heightmoisurelist: " << settings.value("heightmoisurelist").toString() << ": " << heightmoisureEntry;
+                        else
+                        {
+                            const uint32_t height=heightmoisureSplit.at(0).toUInt(&ok);
+                            if(!ok)
+                                qDebug() << "Syntaxe error into: height not number: " << heightmoisureSplit.at(0);
+                            else
+                            {
+                                const uint32_t moisure=heightmoisureSplit.at(1).toUInt(&ok);
+                                if(!ok)
+                                    qDebug() << "Syntaxe error into: moisure not number: " << heightmoisureSplit.at(1);
+                                else
+                                {
+                                    const uint32_t mapweight=heightmoisureSplit.at(2).toUInt(&ok);
+                                    if(!ok)
+                                        qDebug() << "Syntaxe error into: mapweight not number: " << heightmoisureSplit.at(2);
+                                    else
+                                    {
+                                        const uint32_t luckweight=heightmoisureSplit.at(3).toUInt(&ok);
+                                        if(!ok)
+                                            qDebug() << "Syntaxe error into: height not number: " << heightmoisureSplit.at(3);
+                                        else
+                                        {
+                                            LoadMap::TerrainMonster terrainMonster;
+                                            terrainMonster.luckweight=luckweight;
+                                            terrainMonster.mapweight=mapweight;
+                                            terrainMonster.monster=monsterId;
+                                            LoadMap::terrainList[height][moisure].terrainMonsters.push_back(terrainMonster);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                settings.endGroup();
+            }
+            indexGroupId++;
+        }
+    }
+    settings.endGroup();
 
     {
         QFile inputFile("cities.txt");
