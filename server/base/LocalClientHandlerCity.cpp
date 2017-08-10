@@ -427,7 +427,7 @@ void Client::previousCityCaptureNotFinished()
 
 
 //fightId == 0 if is in battle
-void Client::fightOrBattleFinish(const bool &win, const uint32_t &fightId)
+void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
 {
     if(clan!=NULL)
     {
