@@ -24,6 +24,15 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
     if(!settings.contains("levelmapmax"))
         settings.setValue("levelmapmax",50);
 
+    settings.beginGroup("wildMonsters");
+    settings.beginGroup("0");
+    if(!settings.contains("comment"))
+        settings.setValue("comment","key is the id, heightmoisurelist entries is height,moisure->mapweight,luckweight");
+    if(!settings.contains("heightmoisurelist"))
+        settings.setValue("heightmoisurelist","3,1->10,10;3,2->10,10;3,3->10,10;3,4->10,10;3,5->10,10;3,6->10,10");
+    settings.endGroup();
+    settings.endGroup();
+
     settings.sync();
 }
 

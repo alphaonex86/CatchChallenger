@@ -241,7 +241,7 @@ void Client::requestFight(const uint16_t &fightId)
     bool found=false;
     if(mapServer->botsFight.find(pos)!=mapServer->botsFight.cend())
     {
-        const std::vector<uint32_t> &botsFightList=mapServer->botsFight.at(pos);
+        const std::vector<uint16_t> &botsFightList=mapServer->botsFight.at(pos);
         if(vectorcontainsAtLeastOne(botsFightList,fightId))
             found=true;
     }
@@ -282,7 +282,7 @@ void Client::requestFight(const uint16_t &fightId)
         const std::pair<uint8_t,uint8_t> pos(x,y);
         if(mapServer->botsFight.find(pos)!=mapServer->botsFight.cend())
         {
-            const std::vector<uint32_t> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.at(pos);
+            const std::vector<uint16_t> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.at(pos);
             if(vectorcontainsAtLeastOne(botsFightList,fightId))
                 found=true;
         }

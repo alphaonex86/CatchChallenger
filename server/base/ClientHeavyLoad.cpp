@@ -130,7 +130,7 @@ std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> 
         {
             std::cerr << "For Client::datapack_file_list(" << path << "," << exclude << "," << withHash << ")" << std::endl;
             std::cerr << "FacilityLibGeneral::getSuffixAndValidatePathFromFS(" << fileName << ") return empty result" << std::endl;
-            const std::string &suffix2=FacilityLibGeneral::getSuffixAndValidatePathFromFS(fileName);
+            //const std::string &suffix2=FacilityLibGeneral::getSuffixAndValidatePathFromFS(fileName);
         }
         #endif
         index++;
