@@ -52,13 +52,13 @@ public:
     uint32_t group;
     uint32_t id;
 
-    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>, pairhash> shops;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
     std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>,pairhash> botsFight;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint32_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>,pairhash> botsFight;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight
 
     static void removeParsedLayer(const ParsedLayer &parsed_layer);
 };
