@@ -525,7 +525,7 @@ private:
     //map move
     bool captureCityInProgress();
     #endif
-    void fightOrBattleFinish(const bool &win,const uint32_t &fightId);//fightId == 0 if is in battle
+    void fightOrBattleFinish(const bool &win, const uint16_t &fightId);//fightId == 0 if is in battle
     void moveMonster(const bool &up,const uint8_t &number);
     //market
     void getMarketList(const uint32_t &query_id);

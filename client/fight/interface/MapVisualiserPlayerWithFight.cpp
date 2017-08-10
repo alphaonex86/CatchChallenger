@@ -109,7 +109,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         std::pair<uint8_t,uint8_t> pos(x,y);
         if(all_map.value(current_map)->logicalMap.botsFightTrigger.find(pos)!=all_map.value(current_map)->logicalMap.botsFightTrigger.cend())
         {
-            std::vector<uint32_t> botFightList=all_map.value(current_map)->logicalMap.botsFightTrigger.at(pos);
+            std::vector<uint16_t> botFightList=all_map.value(current_map)->logicalMap.botsFightTrigger.at(pos);
             QList<QPair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(QPair<uint8_t,uint8_t>(x,y));
             unsigned int index=0;
             while(index<botFightList.size())
@@ -254,7 +254,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         std::pair<uint8_t,uint8_t> pos(x,y);
         if(map_client.botsFightTrigger.find(pos)!=map_client.botsFightTrigger.cend())
         {
-            std::vector<uint32_t> botFightList=map_client.botsFightTrigger.at(pos);
+            std::vector<uint16_t> botFightList=map_client.botsFightTrigger.at(pos);
             unsigned int index=0;
             while(index<botFightList.size())
             {

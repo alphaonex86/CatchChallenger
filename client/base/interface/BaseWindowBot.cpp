@@ -11,7 +11,7 @@
 
 using namespace CatchChallenger;
 
-bool BaseWindow::botHaveQuest(const uint32_t &botId) const
+bool BaseWindow::botHaveQuest(const uint16_t &botId) const
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     #ifdef DEBUG_CLIENT_QUEST
@@ -505,7 +505,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     }
 }
 
-bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint32_t &botId, bool silent)
+bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint16_t &botId, bool silent)
 {
     if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
     {
@@ -940,7 +940,7 @@ bool BaseWindow::startQuest(const Quest &quest)
     return true;
 }
 
-QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint32_t &botId) const
+QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint16_t &botId) const
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     QList<QPair<uint32_t,QString> > entryList;
