@@ -28,7 +28,7 @@ NewGame::NewGame(const QString &skinPath, const QString &monsterPath, std::vecto
     unsigned int index=0;
     while(index<CatchChallenger::CommonDatapack::commonDatapack.skins.size())
     {
-        if(forcedSkin.empty() || vectorcontainsAtLeastOne(forcedSkin,index))
+        if(forcedSkin.empty() || vectorcontainsAtLeastOne(forcedSkin,(uint8_t)index))
         {
             const std::string &currentPath=skinPath.toStdString()+CatchChallenger::CommonDatapack::commonDatapack.skins.at(index);
             if(QFile::exists(QString::fromStdString(currentPath+"/back.png")) && QFile::exists(QString::fromStdString(currentPath+"/front.png")) && QFile::exists(QString::fromStdString(currentPath+"/trainer.png")))
