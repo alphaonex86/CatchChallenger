@@ -90,7 +90,7 @@ void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
             }
             else
             {
-                const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+                const std::vector<uint16_t> shops=mapServer->shops.at(pos);
                 if(!vectorcontainsAtLeastOne(shops,shopId))
                 {
                     errorOutput("not shop into this direction");
@@ -101,7 +101,7 @@ void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
     }
     else
     {
-        const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+        const std::vector<uint16_t> shops=mapServer->shops.at(pos);
         if(!vectorcontainsAtLeastOne(shops,shopId))
         {
             errorOutput("not shop into this direction");
@@ -244,7 +244,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
         }
         else
         {
-            const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+            const std::vector<uint16_t> shops=mapServer->shops.at(pos);
             if(!vectorcontainsAtLeastOne(shops,shopId))
             {
                 errorOutput("not shop into this direction");
@@ -254,7 +254,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
     }
     else
     {
-        const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+        const std::vector<uint16_t> shops=mapServer->shops.at(pos);
         if(!vectorcontainsAtLeastOne(shops,shopId))
         {
             errorOutput("not shop into this direction");
@@ -426,7 +426,7 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
         }
         else
         {
-            const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+            const std::vector<uint16_t> shops=mapServer->shops.at(pos);
             if(!vectorcontainsAtLeastOne(shops,shopId))
             {
                 errorOutput("not shop into this direction");
@@ -436,7 +436,7 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
     }
     else
     {
-        const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+        const std::vector<uint16_t> shops=mapServer->shops.at(pos);
         if(!vectorcontainsAtLeastOne(shops,shopId))
         {
             errorOutput("not shop into this direction");
