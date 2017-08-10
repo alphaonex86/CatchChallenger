@@ -337,11 +337,11 @@ private slots:
     void appendReputationRewards(const std::vector<ReputationRewards> &reputationList);
     void getTextEntryPoint();
     void showQuestText(const uint32_t &textId);
-    bool tryValidateQuestStep(const uint16_t &questId, const uint32_t &botId, bool silent=false);
+    bool tryValidateQuestStep(const uint16_t &questId, const uint16_t &botId, bool silent=false);
     bool nextStepQuest(const Quest &quest);
     bool startQuest(const Quest &quest);
-    bool botHaveQuest(const uint32_t &botId) const;
-    QList<QPair<uint32_t,QString> > getQuestList(const uint32_t &botId) const;
+    bool botHaveQuest(const uint16_t &botId) const;
+    QList<QPair<uint32_t,QString> > getQuestList(const uint16_t &botId) const;
     void updateDisplayedQuests();
     void appendReputationPoint(const QString &type,const int32_t &point);
 
