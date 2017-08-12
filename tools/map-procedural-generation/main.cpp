@@ -350,12 +350,29 @@ int main(int argc, char *argv[])
                             zoneName="road-"+std::to_string(roadIndex.roadIndex+1);
                         }
 
+                        std::string additionalXmlInfo;
+                        if(!roadIndex.roadMonsters.empty())
+                        {
+                            additionalXmlInfo+="  <grass>\n";
+                            unsigned int roadMonsterIndex=0;
+                            while(roadMonsterIndex<roadIndex.roadMonsters.size())
+                            {
+                                const LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters.at(roadMonsterIndex);
+                                additionalXmlInfo+="    <monster id=\""+std::to_string(roadMonster.monsterId)+
+                                        "\" minLevel=\""+std::to_string(roadMonster.minLevel)+
+                                        "\" maxLevel=\""+std::to_string(roadMonster.maxLevel)+
+                                        "\" luck=\""+std::to_string(roadMonster.luck)+
+                                        "\"/>\n";
+                            }
+                            additionalXmlInfo+="  </grass>\n";
+                        }
                         if(!PartialMap::save(tiledMap,
                                          x*singleMapWitdh,y*singleMapHeight,
                                          x*singleMapWitdh+singleMapWitdh,y*singleMapHeight+singleMapHeight,
                                          file,
                                          recuesPoints,
-                                         "outdoor",zoneName,"Road "+std::to_string(roadIndex.roadIndex+1)
+                                         "outdoor",zoneName,"Road "+std::to_string(roadIndex.roadIndex+1),
+                                         additionalXmlInfo
                                          ))
                         {
                             std::cerr << "Unable to write " << file << "" << std::endl;

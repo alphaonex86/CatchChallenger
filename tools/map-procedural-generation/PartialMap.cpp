@@ -16,7 +16,8 @@
 
 bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const unsigned int &minY,
                       const unsigned int &maxX, const unsigned int &maxY, const std::string &file, std::vector<RecuesPoint> &recuesPoints,
-                      const std::string &type,const std::string &zone,const std::string &name)
+                      const std::string &type,const std::string &zone,const std::string &name,
+                      const std::string &additionalXmlInfo)
 {
     const unsigned int mapWidth=maxX-minX;
     const unsigned int mapHeight=maxY-minY;
@@ -165,7 +166,8 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
         if(!zone.empty())
             content+=" zone=\""+QString::fromStdString(zone)+"\"";
         content+=">\n"
-        "  <name>"+QString::fromStdString(name)+"</name>\n"
+        "  <name>"+QString::fromStdString(name)+"</name>\n"+
+        QString::fromStdString(additionalXmlInfo)+
         "</map>";
         QByteArray contentData(content.toUtf8());
         xmlinfo.write(contentData.constData(),contentData.size());
