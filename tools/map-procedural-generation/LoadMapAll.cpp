@@ -895,9 +895,15 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             roadIndex.level=tempLevel-(minLevel-levelmapmin);
             if(roadIndex.level<levelmapmin)
                 roadIndex.level=levelmapmin;
-            uint8_t levelDiff=((int)roadIndex.level)*100/10;
+            float roadIndexLevel=roadIndex.level;
+            uint8_t levelDiff=roadIndexLevel*0.1;
             if(levelDiff<2)
                 levelDiff=2;
+            if(levelDiff>25)
+            {
+                std::cerr << "levelDiff>25" << std::endl;
+                abort();
+            }
             std::vector<uint8_t> levelRange;
             uint8_t inferiorLevel=roadIndex.level-levelDiff;
             if(inferiorLevel<2)
@@ -917,7 +923,7 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             while(minMaxLevelIndex<8)
             {
                 //fixed level
-                if(rand()%2==0)
+                if(minMaxLevelIndex%2==0)
                 {
                     uint8_t randomIndex=rand()%levelRange.size();
                     minMaxLevel.push_back(std::pair<uint8_t,uint8_t>(levelRange.at(randomIndex),levelRange.at(randomIndex)));
@@ -939,71 +945,101 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
 
             //for now fixed number of monster
             const unsigned int numberOfMonster=5;
-
-            float luckSum=0;
-            unsigned int numberOfMonsterIndex=0;
-            while(numberOfMonsterIndex<numberOfMonster)
+            //to fine grass use: VoronioForTiledMapTmx::voronoiMap;
+            //but to do simpler, do height,moisure by map, not 4x4
+            const unsigned int &height=LoadMap::floatToHigh(heightmap.Get({(float)x/100,(float)y/100},noiseMapScaleMap));
+            const unsigned int &moisure=LoadMap::floatToMoisure(moisuremap.Get({(float)x,(float)y/100},noiseMapScaleMoisure));
+            //take the monster list and clean it
+            /// \todo clean it
+            std::map<unsigned int,std::vector<LoadMap::TerrainMonster> > terrainMonsterMap=LoadMap::terrainList[height][moisure].terrainMonsters;
+            if(!terrainMonsterMap.empty())
             {
-                //to fine grass use: VoronioForTiledMapTmx::voronoiMap;
-                //but to do simpler, do height,moisure by map, not 4x4
-                const unsigned int &height=LoadMap::floatToHigh(heightmap.Get({(float)x/100,(float)y/100},noiseMapScaleMap));
-                const unsigned int &moisure=LoadMap::floatToMoisure(moisuremap.Get({(float)x,(float)y/100},noiseMapScaleMoisure));
-                //take the monster list and clean it
-                /// \todo clean it
-                std::map<unsigned int,std::vector<LoadMap::TerrainMonster> > terrainMonsterMap=LoadMap::terrainList[height][moisure].terrainMonsters;
                 //take proportional  random index into terrainMonsters
                 std::vector<unsigned int> indexesProportional;
                 for(auto const &it : terrainMonsterMap)
                     indexesProportional.insert(indexesProportional.cend(),it.first,it.first);
-                unsigned int index=indexesProportional.at(rand()%indexesProportional.size());
-                //take random monster
-                const uint8_t randomLevelIndex=rand()%minMaxLevel.size();
-                const std::vector<LoadMap::TerrainMonster> &localLuckMonster=terrainMonsterMap.at(index);
-                const LoadMap::TerrainMonster &terrainMonster=localLuckMonster.at(rand()%localLuckMonster.size());
-                LoadMapAll::RoadMonster roadMonster;
-                roadMonster.luck=index;
-                luckSum+=roadMonster.luck;
-                roadMonster.minLevel=minMaxLevel.at(randomLevelIndex).first;
-                roadMonster.maxLevel=minMaxLevel.at(randomLevelIndex).second;
-                roadMonster.monsterId=terrainMonster.monster;
-                roadIndex.roadMonsters.push_back(roadMonster);
 
-                numberOfMonsterIndex++;
-            }
-            //normalise the luck
-            {
-                const float &ratioLuck=(float)100.0/luckSum;
-                numberOfMonsterIndex=0;
-                unsigned int newLuckSum=0;
-                while(numberOfMonsterIndex<roadIndex.roadMonsters.size())
+                float luckSum=0;
+                unsigned int numberOfMonsterIndex=0;
+                while(numberOfMonsterIndex<numberOfMonster && !terrainMonsterMap.empty())
                 {
-                    LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[numberOfMonsterIndex];
-                    roadMonster.luck*=ratioLuck;
-                    if(roadMonster.luck<1)
-                        roadMonster.luck=1;
-                    newLuckSum+=roadMonster.luck;
+                    //take proportional  random index into terrainMonsters
+                    unsigned int indexGroupMonster=indexesProportional.at(rand()%indexesProportional.size());
+                    //take random monster
+                    const uint8_t randomLevelIndex=rand()%minMaxLevel.size();
+                    if(terrainMonsterMap.find(indexGroupMonster)==terrainMonsterMap.cend())
+                    {
+                        std::cerr << "terrainMonsterMap.find(indexGroupMonster)==terrainMonsterMap.cend()" << std::endl;
+                        abort();
+                    }
+                    std::vector<LoadMap::TerrainMonster> &localLuckMonster=terrainMonsterMap[indexGroupMonster];
+                    const uint8_t randomMonsterIndex=rand()%localLuckMonster.size();
+                    const LoadMap::TerrainMonster &terrainMonster=localLuckMonster.at(randomMonsterIndex);
+                    LoadMapAll::RoadMonster roadMonster;
+                    roadMonster.luck=indexGroupMonster;
+                    luckSum+=roadMonster.luck;
+                    roadMonster.minLevel=minMaxLevel.at(randomLevelIndex).first;
+                    roadMonster.maxLevel=minMaxLevel.at(randomLevelIndex).second;
+                    roadMonster.monsterId=terrainMonster.monster;
+                    roadIndex.roadMonsters.push_back(roadMonster);
+
+                    //remove the entry to drop duplicate
+                    localLuckMonster.erase(localLuckMonster.cbegin()+randomMonsterIndex);
+                    if(localLuckMonster.empty())
+                    {
+                        unsigned int index=0;
+                        while(index<indexesProportional.size())
+                        {
+                            if(indexesProportional.at(index)==indexGroupMonster)
+                                indexesProportional.erase(indexesProportional.cbegin()+index);
+                            else
+                                index++;
+                        }
+                        terrainMonsterMap.erase(terrainMonsterMap.find(indexGroupMonster));
+                    }
+
                     numberOfMonsterIndex++;
                 }
-                while(newLuckSum<100)
+                //normalise the luck
                 {
-                    LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[rand()%roadIndex.roadMonsters.size()];
-                    roadMonster.luck++;
-                    newLuckSum++;
-                }
-                while(newLuckSum>100)
-                {
-                    LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[rand()%roadIndex.roadMonsters.size()];
-                    if(roadMonster.luck>1)
+                    const float &ratioLuck=(float)100.0/luckSum;
+                    numberOfMonsterIndex=0;
+                    unsigned int newLuckSum=0;
+                    while(numberOfMonsterIndex<roadIndex.roadMonsters.size())
                     {
-                        roadMonster.luck--;
-                        newLuckSum--;
+                        LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[numberOfMonsterIndex];
+                        roadMonster.luck*=ratioLuck;
+                        if(roadMonster.luck<1)
+                            roadMonster.luck=1;
+                        newLuckSum+=roadMonster.luck;
+                        numberOfMonsterIndex++;
+                    }
+                    while(newLuckSum<100)
+                    {
+                        LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[rand()%roadIndex.roadMonsters.size()];
+                        roadMonster.luck++;
+                        newLuckSum++;
+                    }
+                    while(newLuckSum>100)
+                    {
+                        LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[rand()%roadIndex.roadMonsters.size()];
+                        if(roadMonster.luck>1)
+                        {
+                            roadMonster.luck--;
+                            newLuckSum--;
+                        }
                     }
                 }
+                //to drop random list and improve the compression ratio
+                std::sort(roadIndex.roadMonsters.begin(),roadIndex.roadMonsters.end(),[](LoadMapAll::RoadMonster a, LoadMapAll::RoadMonster b) {
+                    return b.monsterId < a.monsterId;
+                });
+                if(roadIndex.roadMonsters.empty())
+                {
+                    std::cerr << "!terrainMonsterMap.empty() && roadIndex.roadMonsters.empty() (abort)" << std::endl;
+                    abort();
+                }
             }
-            //to drop random list and improve the compression ratio
-            std::sort(roadIndex.roadMonsters.begin(),roadIndex.roadMonsters.end(),[](LoadMapAll::RoadMonster a, LoadMapAll::RoadMonster b) {
-                return b.monsterId < a.monsterId;
-            });
         }
     }
 }

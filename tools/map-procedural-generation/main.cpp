@@ -363,6 +363,7 @@ int main(int argc, char *argv[])
                                         "\" maxLevel=\""+std::to_string(roadMonster.maxLevel)+
                                         "\" luck=\""+std::to_string(roadMonster.luck)+
                                         "\"/>\n";
+                                roadMonsterIndex++;
                             }
                             additionalXmlInfo+="  </grass>\n";
                         }
