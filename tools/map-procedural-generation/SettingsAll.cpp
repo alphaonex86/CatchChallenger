@@ -79,12 +79,12 @@ void SettingsAll::loadSettings(QSettings &settings, bool &displaycity, std::vect
                             qDebug() << "Syntaxe error into: heightmoisurelist: " << settings.value("heightmoisurelist").toString() << ": " << heightmoisureEntry;
                         else
                         {
-                            const uint32_t height=heightmoisureSplit.at(0).toUInt(&ok);
+                            const uint32_t height=heightmoisureSplit.at(0).toUInt(&ok)-1;
                             if(!ok)
                                 qDebug() << "Syntaxe error into: height not number: " << heightmoisureSplit.at(0);
                             else
                             {
-                                const uint32_t moisure=heightmoisureSplit.at(1).toUInt(&ok);
+                                const uint32_t moisure=heightmoisureSplit.at(1).toUInt(&ok)-1;
                                 if(!ok)
                                     qDebug() << "Syntaxe error into: moisure not number: " << heightmoisureSplit.at(1);
                                 else
@@ -103,12 +103,27 @@ void SettingsAll::loadSettings(QSettings &settings, bool &displaycity, std::vect
                                             //terrainMonster.luckweight=luckweight;
                                             terrainMonster.mapweight=mapweight;
                                             terrainMonster.monster=monsterId;
-                                            LoadMap::terrainList[height][moisure].terrainMonsters[luckweight].push_back(terrainMonster);
+                                            if(height>=5)
+                                            {
+                                                std::cerr << "height>=5" << std::endl;
+                                                abort();
+                                            }
+                                            if(moisure>=6)
+                                            {
+                                                std::cerr << "moisure>=6" << std::endl;
+                                                abort();
+                                            }
+                                            std::map<unsigned int,std::vector<LoadMap::TerrainMonster> > &terrainMonsters=LoadMap::terrainList[height][moisure].terrainMonsters;
+                                            if(terrainMonsters.find(luckweight)==terrainMonsters.cend())
+                                                terrainMonsters.insert(std::pair<unsigned int,std::vector<LoadMap::TerrainMonster> >(luckweight,std::vector<LoadMap::TerrainMonster>()));
+                                            std::vector<LoadMap::TerrainMonster> &terrainMonstersVector=terrainMonsters[luckweight];
+                                            terrainMonstersVector.push_back(terrainMonster);
                                         }
                                     }
                                 }
                             }
                         }
+                        heightmoisureId++;
                     }
                 }
                 settings.endGroup();
