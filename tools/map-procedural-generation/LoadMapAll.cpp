@@ -895,10 +895,52 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             roadIndex.level=tempLevel-(minLevel-levelmapmin);
             if(roadIndex.level<levelmapmin)
                 roadIndex.level=levelmapmin;
+            uint8_t levelDiff=((int)roadIndex.level)*100/10;
+            if(levelDiff<2)
+                levelDiff=2;
+            std::vector<uint8_t> levelRange;
+            uint8_t inferiorLevel=roadIndex.level-levelDiff;
+            if(inferiorLevel<2)
+                inferiorLevel=2;
+            while(inferiorLevel<=(roadIndex.level+levelDiff))
+            {
+                levelRange.push_back(inferiorLevel);
+                inferiorLevel++;
+            }
+            if(levelRange.size()<2)
+            {
+                std::cerr << "levelRange.size()<2" << std::endl;
+                abort();
+            }
+            std::vector<std::pair<uint8_t,uint8_t> > minMaxLevel;
+            uint8_t minMaxLevelIndex=0;
+            while(minMaxLevelIndex<8)
+            {
+                //fixed level
+                if(rand()%2==0)
+                {
+                    uint8_t randomIndex=rand()%levelRange.size();
+                    minMaxLevel.push_back(std::pair<uint8_t,uint8_t>(levelRange.at(randomIndex),levelRange.at(randomIndex)));
+                }
+                else
+                {
+                    uint8_t randomIndexL=rand()%levelRange.size();
+                    uint8_t randomIndexT=0;
+                    do {
+                        randomIndexT=rand()%levelRange.size();
+                    } while(randomIndexT==randomIndexL);
+                    if(randomIndexL<randomIndexT)
+                        minMaxLevel.push_back(std::pair<uint8_t,uint8_t>(levelRange.at(randomIndexL),levelRange.at(randomIndexT)));
+                    else
+                        minMaxLevel.push_back(std::pair<uint8_t,uint8_t>(levelRange.at(randomIndexT),levelRange.at(randomIndexL)));
+                }
+                minMaxLevelIndex++;
+            }
 
             //for now fixed number of monster
             const unsigned int numberOfMonster=5;
 
+            float luckSum=0;
             unsigned int numberOfMonsterIndex=0;
             while(numberOfMonsterIndex<numberOfMonster)
             {
@@ -915,12 +957,53 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                     indexesProportional.insert(indexesProportional.cend(),it.first,it.first);
                 unsigned int index=indexesProportional.at(rand()%indexesProportional.size());
                 //take random monster
+                const uint8_t randomLevelIndex=rand()%minMaxLevel.size();
                 const std::vector<LoadMap::TerrainMonster> &localLuckMonster=terrainMonsterMap.at(index);
                 const LoadMap::TerrainMonster &terrainMonster=localLuckMonster.at(rand()%localLuckMonster.size());
-                append struct RoadMonster to std::vector<RoadMonster> roadMonsters;
+                LoadMapAll::RoadMonster roadMonster;
+                roadMonster.luck=index;
+                luckSum+=roadMonster.luck;
+                roadMonster.minLevel=minMaxLevel.at(randomLevelIndex).first;
+                roadMonster.maxLevel=minMaxLevel.at(randomLevelIndex).second;
+                roadMonster.monsterId=terrainMonster.monster;
+                roadIndex.roadMonsters.push_back(roadMonster);
 
                 numberOfMonsterIndex++;
             }
+            //normalise the luck
+            {
+                const float &ratioLuck=(float)100.0/luckSum;
+                numberOfMonsterIndex=0;
+                unsigned int newLuckSum=0;
+                while(numberOfMonsterIndex<roadIndex.roadMonsters.size())
+                {
+                    LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[numberOfMonsterIndex];
+                    roadMonster.luck*=ratioLuck;
+                    if(roadMonster.luck<1)
+                        roadMonster.luck=1;
+                    newLuckSum+=roadMonster.luck;
+                    numberOfMonsterIndex++;
+                }
+                while(newLuckSum<100)
+                {
+                    LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[rand()%roadIndex.roadMonsters.size()];
+                    roadMonster.luck++;
+                    newLuckSum++;
+                }
+                while(newLuckSum>100)
+                {
+                    LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[rand()%roadIndex.roadMonsters.size()];
+                    if(roadMonster.luck>1)
+                    {
+                        roadMonster.luck--;
+                        newLuckSum--;
+                    }
+                }
+            }
+            //to drop random list and improve the compression ratio
+            std::sort(roadIndex.roadMonsters.begin(),roadIndex.roadMonsters.end(),[](LoadMapAll::RoadMonster a, LoadMapAll::RoadMonster b) {
+                return b.monsterId < a.monsterId;
+            });
         }
     }
 }
