@@ -189,7 +189,8 @@ std::string LoadMapAll::orientationToString(const Orientation &orientation)
 void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
                          const unsigned int &mapXCount, const unsigned int &mapYCount,
                          const unsigned int &maxCityLinks, const unsigned int &cityRadius, const Simplex &levelmap,
-                         const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax)
+                         const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax,
+                         const Simplex &heightmap, const Simplex &moisuremap, const float &noiseMapScaleMoisure, const float &noiseMapScaleMap)
 {
     if(grid.empty())
         return;
@@ -895,10 +896,31 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             if(roadIndex.level<levelmapmin)
                 roadIndex.level=levelmapmin;
 
-            //to fine grass use: VoronioForTiledMapTmx::voronoiMap;
-            //but to do simpler, do height,moisure by map, not 4x4
-            do to:
-            LoadMap::terrainList[height][moisure].terrainMonsters.push_back(terrainMonster);
+            //for now fixed number of monster
+            const unsigned int numberOfMonster=5;
+
+            unsigned int numberOfMonsterIndex=0;
+            while(numberOfMonsterIndex<numberOfMonster)
+            {
+                //to fine grass use: VoronioForTiledMapTmx::voronoiMap;
+                //but to do simpler, do height,moisure by map, not 4x4
+                const unsigned int &height=LoadMap::floatToHigh(heightmap.Get({(float)x/100,(float)y/100},noiseMapScaleMap));
+                const unsigned int &moisure=LoadMap::floatToMoisure(moisuremap.Get({(float)x,(float)y/100},noiseMapScaleMoisure));
+                //take the monster list and clean it
+                /// \todo clean it
+                std::map<unsigned int,std::vector<LoadMap::TerrainMonster> > terrainMonsterMap=LoadMap::terrainList[height][moisure].terrainMonsters;
+                //take proportional  random index into terrainMonsters
+                std::vector<unsigned int> indexesProportional;
+                for(auto const &it : terrainMonsterMap)
+                    indexesProportional.insert(indexesProportional.cend(),it.first,it.first);
+                unsigned int index=indexesProportional.at(rand()%indexesProportional.size());
+                //take random monster
+                const std::vector<LoadMap::TerrainMonster> &localLuckMonster=terrainMonsterMap.at(index);
+                const LoadMap::TerrainMonster &terrainMonster=localLuckMonster.at(rand()%localLuckMonster.size());
+                append struct RoadMonster to std::vector<RoadMonster> roadMonsters;
+
+                numberOfMonsterIndex++;
+            }
         }
     }
 }
