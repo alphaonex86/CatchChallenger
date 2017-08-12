@@ -372,7 +372,8 @@ void LoadMap::addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> >
 }
 
 void LoadMap::addTerrain(const Grid &grid,
-                        VoronioForTiledMapTmx::PolygonZoneMap &vd, const Simplex &heightmap, const Simplex &moisuremap, const float &noiseMapScaleMoisure, const float &noiseMapScaleMap,
+                        VoronioForTiledMapTmx::PolygonZoneMap &vd, const Simplex &heightmap, const Simplex &moisuremap, const float &noiseMapScaleMoisure,
+                        const float &noiseMapScaleMap,
                         const int widthMap, const int heightMap,
                         const int offsetX, const int offsetY, bool draw)
 {

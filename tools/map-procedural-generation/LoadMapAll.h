@@ -78,11 +78,21 @@ public:
         Orientation orientation;
         unsigned int cityIndex;
     };
+    struct RoadMonster
+    {
+        uint16_t monsterId;
+        uint8_t minLevel;
+        uint8_t maxLevel;
+        uint8_t luck;
+    };
     struct RoadIndex
     {
         unsigned int roadIndex;
         std::vector<RoadToCity> cityIndex;
-        uint8_t level;
+        //monster ref
+        uint8_t level;//average zone level
+
+        std::vector<RoadMonster> roadMonsters;
     };
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,RoadIndex> > roadCoordToIndex;
     struct Zone
@@ -95,7 +105,8 @@ public:
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
                         const unsigned int &mapXCount, const unsigned int &mapYCount,
                         const unsigned int &maxCityLinks, const unsigned int &cityRadius,
-                        const Simplex &levelmap, const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax);
+                        const Simplex &levelmap, const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax,
+                        const Simplex &heightmap, const Simplex &moisuremap, const float &noiseMapScaleMoisure,const float &noiseMapScaleMap);
     static bool haveCityEntryInternal(const std::unordered_map<uint32_t,std::unordered_map<uint32_t,CityInternal *> > &positionsAndIndex,
                               const unsigned int &x, const unsigned int &y);
     static bool haveCityEntry(const std::unordered_map<uint16_t, std::unordered_map<uint16_t, unsigned int> > &positionsAndIndex,

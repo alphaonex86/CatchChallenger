@@ -100,10 +100,10 @@ void SettingsAll::loadSettings(QSettings &settings, bool &displaycity, std::vect
                                         else
                                         {
                                             LoadMap::TerrainMonster terrainMonster;
-                                            terrainMonster.luckweight=luckweight;
+                                            //terrainMonster.luckweight=luckweight;
                                             terrainMonster.mapweight=mapweight;
                                             terrainMonster.monster=monsterId;
-                                            LoadMap::terrainList[height][moisure].terrainMonsters.push_back(terrainMonster);
+                                            LoadMap::terrainList[height][moisure].terrainMonsters[luckweight].push_back(terrainMonster);
                                         }
                                     }
                                 }
