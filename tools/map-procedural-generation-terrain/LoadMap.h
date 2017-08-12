@@ -18,7 +18,7 @@ public:
     {
         uint16_t monster;
         uint8_t mapweight;
-        uint8_t luckweight;
+        //uint8_t luckweight;
     };
     struct Terrain
     {
@@ -35,7 +35,7 @@ public:
         std::vector<uint32_t> tmp_transition_tile;
         QString tmp_transition_tsx;
         //monster
-        std::vector<TerrainMonster> terrainMonsters;
+        std::map<unsigned int,std::vector<TerrainMonster> > terrainMonsters;
     };
     static Terrain terrainList[5][6];
     static QStringList terrainFlatList;

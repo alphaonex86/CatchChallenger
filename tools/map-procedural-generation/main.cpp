@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 
         const float noiseMapScaleMoisure=0.005f/((mapXCount+mapYCount)/2)*scale_TerrainMoisure*((mapXCount+mapYCount)/2);
         const float noiseMapScaleMap=0.005f/((mapXCount+mapYCount)/2)*scale_TerrainMap*((mapXCount+mapYCount)/2);
-        Simplex heighmap(seed+500);
+        Simplex heightmap(seed+500);
         Simplex moisuremap(seed+5200);
         Simplex levelmap(seed+212);
 
@@ -146,16 +146,21 @@ int main(int argc, char *argv[])
                 Tiled::ObjectGroup *layerZoneWaterPolygon=LoadMap::addDebugLayer(tiledMap,arrayTerrainPolygon,true);
                 std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainTile;
                 Tiled::ObjectGroup *layerZoneWaterTile=LoadMap::addDebugLayer(tiledMap,arrayTerrainTile,false);
-                LoadMap::addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,VoronioForTiledMapTmx::voronoiMap,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height());
+                LoadMap::addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,
+                                            VoronioForTiledMapTmx::voronoiMap,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
+                                            tiledMap.width(),tiledMap.height());
             }
             {
                 t.start();
-                LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height());
-                LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),0,0,false);
+                LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
+                                    tiledMap.width(),tiledMap.height());
+                LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
+                                    tiledMap.width(),tiledMap.height(),0,0,false);
                 qDebug("Add terrain took %d ms", t.elapsed());
                 MapBrush::initialiseMapMask(tiledMap);
                 t.start();
-                LoadMapAll::addCity(tiledMap,gridCity,citiesNames,mapXCount,mapYCount,maxCityLinks,cityRadius,levelmap,levelmapscale,levelmapmin,levelmapmax);
+                LoadMapAll::addCity(tiledMap,gridCity,citiesNames,mapXCount,mapYCount,maxCityLinks,cityRadius,
+                                    levelmap,levelmapscale,levelmapmin,levelmapmax,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap);
                 LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount,false);
                 qDebug("place cities took %d ms", t.elapsed());
                 if(dotransition)
