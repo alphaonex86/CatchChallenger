@@ -884,6 +884,8 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
     }
 
     //set the road level
+    std::unordered_map<unsigned int,unsigned int> monsterRoadSpawnCount;
+    unsigned int roadParsed=0;
     for(auto& p:LoadMapAll::roadCoordToIndex)
     {
         const unsigned int &x=p.first;
@@ -950,8 +952,61 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             const unsigned int &height=LoadMap::floatToHigh(heightmap.Get({(float)x/100,(float)y/100},noiseMapScaleMap));
             const unsigned int &moisure=LoadMap::floatToMoisure(moisuremap.Get({(float)x,(float)y/100},noiseMapScaleMoisure));
             //take the monster list and clean it
-            /// \todo clean it
-            std::map<unsigned int,std::vector<LoadMap::TerrainMonster> > terrainMonsterMap=LoadMap::terrainList[height][moisure].terrainMonsters;
+            std::map<unsigned int,std::vector<LoadMap::TerrainMonster> > terrainMonsterMap;
+            std::map<unsigned int,std::vector<LoadMap::TerrainMonster> > terrainMonsterMapBack;
+            //keep the higthest number with the percent at more than 30%
+            unsigned int hightestLuck=0;
+            for(const auto& z:LoadMap::terrainList[height][moisure].terrainMonsters)
+            {
+                const unsigned int luckWeight=z.first;
+                if(hightestLuck<luckWeight)
+                {
+                    hightestLuck=luckWeight;
+                    std::vector<LoadMap::TerrainMonster> monsters=z.second;
+                    unsigned int monsterIndex=0;
+                    while(monsterIndex<monsters.size())
+                    {
+                        const LoadMap::TerrainMonster &monster=monsters.at(monsterIndex);
+                        if(monster.mapweight>30)
+                            monsters.erase(monsters.cbegin()+monsterIndex);
+                        else
+                            monsterIndex++;
+                    }
+                    if(!monsters.empty())
+                    {
+                        terrainMonsterMapBack.clear();
+                        terrainMonsterMapBack[luckWeight]=monsters;
+                    }
+                    else if(terrainMonsterMapBack.empty())
+                        terrainMonsterMapBack[luckWeight]=z.second;
+                }
+            }
+            //drop if current spawn rate on populated map is > rate
+            for(const auto& z:LoadMap::terrainList[height][moisure].terrainMonsters)
+            {
+                const unsigned int luckWeight=z.first;
+                std::vector<LoadMap::TerrainMonster> monsters=z.second;
+                unsigned int monsterIndex=0;
+                while(monsterIndex<monsters.size())
+                {
+                    const LoadMap::TerrainMonster &monster=monsters.at(monsterIndex);
+                    if(monsterRoadSpawnCount.find(monster.monster)!=monsterRoadSpawnCount.cend())
+                    {
+                        unsigned int spawnCount=monsterRoadSpawnCount.at(monster.monster);
+                        if(spawnCount*100/roadParsed>monster.mapweight)
+                            monsters.erase(monsters.cbegin()+monsterIndex);
+                        else
+                            monsterIndex++;
+                    }
+                    else
+                        monsterIndex++;
+                }
+                if(!monsters.empty())
+                    terrainMonsterMap[luckWeight]=monsters;
+            }
+            if(terrainMonsterMap.empty())
+                terrainMonsterMap=terrainMonsterMapBack;
+
             if(!terrainMonsterMap.empty())
             {
                 //take proportional  random index into terrainMonsters
@@ -981,6 +1036,10 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                     roadMonster.minLevel=minMaxLevel.at(randomLevelIndex).first;
                     roadMonster.maxLevel=minMaxLevel.at(randomLevelIndex).second;
                     roadMonster.monsterId=terrainMonster.monster;
+                    if(monsterRoadSpawnCount.find(roadMonster.monsterId)!=monsterRoadSpawnCount.cend())
+                        monsterRoadSpawnCount[roadMonster.monsterId]++;
+                    else
+                        monsterRoadSpawnCount[roadMonster.monsterId]=1;
                     roadIndex.roadMonsters.push_back(roadMonster);
 
                     //remove the entry to drop duplicate
@@ -1041,5 +1100,6 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                 }
             }
         }
+        roadParsed++;
     }
 }
