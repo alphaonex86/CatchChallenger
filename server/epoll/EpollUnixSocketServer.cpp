@@ -25,9 +25,8 @@ EpollUnixSocketServer::~EpollUnixSocketServer()
     close();
 }
 
-bool EpollUnixSocketServer::tryListen()
+bool EpollUnixSocketServer::tryListen(const char * const path)
 {
-    abort();
     if(sfd != -1)
         return false;
 
@@ -40,7 +39,7 @@ bool EpollUnixSocketServer::tryListen()
 
     struct sockaddr_un local;
     local.sun_family = AF_UNIX;
-    strcpy(local.sun_path, "/tmp/catchchallenger-server.sock");
+    strcpy(local.sun_path,path);
     unlink(local.sun_path);
     int len = strlen(local.sun_path) + sizeof(local.sun_family);
     if(bind(sfd, (struct sockaddr *)&local, len)!=0)
@@ -56,21 +55,13 @@ bool EpollUnixSocketServer::tryListen()
         std::cerr << "Unable to listen, error (errno): " << errno << ", error string: " << strerror(errno) << std::endl;
         return false;
     }
-
-    if(EpollSocket::make_non_blocking(sfd) == -1)
-    {
-        close();
-        std::cerr << "Can't put in non blocking unix" << std::endl;
-        return false;
-    }
-
     epoll_event event;
     event.data.ptr = this;
     event.events = EPOLLIN | EPOLLOUT | EPOLLET;
     if(Epoll::epoll.ctl(EPOLL_CTL_ADD, sfd, &event) == -1)
     {
         close();
-        std::cerr << "epoll_ctl error" << std::endl;
+        std::cerr << "epoll_ctl error: " << errno << std::endl;
         return false;
     }
     return true;

@@ -27,7 +27,9 @@ SOURCES += main.cpp \
     ../../general/base/ProtocolParsingGeneral.cpp \
     ../../general/base/ProtocolParsingInput.cpp \
     ../../general/base/ProtocolParsingOutput.cpp \
-    ../../server/epoll/EpollClient.cpp
+    ../../server/epoll/EpollClient.cpp \
+    ../../server/epoll/EpollUnixSocketServer.cpp \
+    EpollServerStats.cpp
 
 HEADERS += \
     LinkToLogin.h \
@@ -41,7 +43,9 @@ HEADERS += \
     ../../general/base/ProtocolParsing.h \
     ../../general/base/ProtocolParsingCheck.h \
     ../../general/base/PortableEndian.h \
-    ../../server/epoll/EpollClient.h
+    ../../server/epoll/EpollClient.h \
+    ../../server/epoll/EpollUnixSocketServer.h \
+    EpollServerStats.h
 
 #choose one of:
 #DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1
