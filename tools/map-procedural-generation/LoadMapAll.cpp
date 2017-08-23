@@ -992,9 +992,14 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                     const LoadMap::TerrainMonster &monster=monsters.at(monsterIndex);
                     if(monsterRoadSpawnCount.find(monster.monster)!=monsterRoadSpawnCount.cend())
                     {
-                        unsigned int spawnCount=monsterRoadSpawnCount.at(monster.monster);
-                        if(spawnCount*100/roadParsed>monster.mapweight)
-                            monsters.erase(monsters.cbegin()+monsterIndex);
+                        if(roadParsed>0)
+                        {
+                            unsigned int spawnCount=monsterRoadSpawnCount.at(monster.monster);
+                            if(spawnCount*100/roadParsed>monster.mapweight)
+                                monsters.erase(monsters.cbegin()+monsterIndex);
+                            else
+                                monsterIndex++;
+                        }
                         else
                             monsterIndex++;
                     }
