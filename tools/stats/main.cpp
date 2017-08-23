@@ -14,6 +14,7 @@
 #include "../../server/epoll/EpollSocket.h"
 #include "../../server/VariableServer.h"
 #include "LinkToLogin.h"
+#include "EpollServerStats.h"
 
 #define MAXEVENTS 512
 
@@ -53,6 +54,9 @@ int main(int argc, char *argv[])
     srand(time(NULL));
     ProtocolParsing::initialiseTheVariable();
 
+    char replyNotConnected[]="{\"error\":\"Not connected to login server\"}";
+
+    EpollServerStats epollServerStats;
     LinkToLogin::linkToLogin=NULL;
     std::string outputFile;
     {
@@ -75,6 +79,9 @@ int main(int argc, char *argv[])
         if(!settings.contains("outputFile"))
             settings.setValue("outputFile","gameserver.json");
 
+        if(!settings.contains("unixSocket"))
+            settings.setValue("unixSocket","catchchallenger-stats.sock");
+
         if(!settings.contains("token"))
             generateTokenStatClient(settings);
         std::string token=settings.value("token");
@@ -83,6 +90,9 @@ int main(int argc, char *argv[])
         token=settings.value("token");
 
         settings.sync();
+
+        if(!epollServerStats.tryListen(settings.value("unixSocket").c_str()))
+        {}
 
         outputFile=settings.value("outputFile");
         LinkToLogin::linkToLogin->pFilePath=outputFile;
@@ -170,22 +180,6 @@ int main(int argc, char *argv[])
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
-/*                case BaseClassSwitch::EpollObjectType::Timer:
-                {
-                    #ifdef SERVERBENCHMARKFULL
-                    start_inter = std::chrono::high_resolution_clock::now();
-                    #endif
-                    #ifdef SERVERBENCHMARKFULL
-                    timerDisplayEventBySeconds.addTimerCount();
-                    #endif
-                    static_cast<EpollTimer *>(events[i].data.ptr)->exec();
-                    static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
-                    #ifdef SERVERBENCHMARKFULL
-                    std::chrono::duration<unsigned long long int,std::nano> elapsed_seconds = std::chrono::high_resolution_clock::now()-start_inter;
-                    EpollUnixSocketClientFinal::timeUsedForTimer+=elapsed_seconds.count();
-                    #endif
-                }
-                break;*/
                 case BaseClassSwitch::EpollObjectType::MasterLink:
                 {
                     LinkToLogin * const client=static_cast<LinkToLogin *>(events[i].data.ptr);
@@ -204,6 +198,51 @@ int main(int argc, char *argv[])
                     client->parseIncommingData();
                     if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
                         client->tryReconnect();
+                }
+                break;
+                case BaseClassSwitch::EpollObjectType::UnixServer:
+                {
+                    if((events[i].events & EPOLLERR) ||
+                    (events[i].events & EPOLLHUP) ||
+                    (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
+                    {
+                        /* An error has occured on this fd, or the socket is not
+                        ready for reading (why were we notified then?) */
+                        std::cerr << "server epoll error" << std::endl;
+                        continue;
+                    }
+                    /* We have a notification on the listening socket, which
+                    means one or more incoming connections. */
+                    while(1)
+                    {
+                        sockaddr in_addr;
+                        socklen_t in_len = sizeof(in_addr);
+                        const int &infd = epollServerStats.accept(&in_addr, &in_len);
+                        if(infd == -1)
+                        {
+                            if((errno == EAGAIN) ||
+                            (errno == EWOULDBLOCK))
+                            {
+                                /* We have processed all incoming
+                                connections. */
+                                break;
+                            }
+                            else
+                            {
+                                std::cout << "connexion accepted" << std::endl;
+                                break;
+                            }
+                        }
+
+                        if(::write(infd,replyNotConnected,sizeof(replyNotConnected))!=sizeof(replyNotConnected))
+                            std::cerr << "epoll_ctl on socket write error" << std::endl;
+
+                        /*if(::write(infd,replyNotConnected,sizeof(replyNotConnected))!=sizeof(replyNotConnected))
+                            std::cerr << "epoll_ctl on socket write error" << std::endl;*/
+
+                        ::close(infd);
+                    }
+                    continue;
                 }
                 break;
                 default:

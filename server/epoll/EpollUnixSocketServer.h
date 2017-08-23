@@ -11,7 +11,7 @@ class EpollUnixSocketServer : public BaseClassSwitch
 public:
     EpollUnixSocketServer();
     ~EpollUnixSocketServer();
-    bool tryListen();
+    bool tryListen(const char * const path);
     void close();
     int accept(sockaddr *in_addr,socklen_t *in_len);
     int getSfd();
