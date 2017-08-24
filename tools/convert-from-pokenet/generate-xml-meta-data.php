@@ -14,7 +14,7 @@ function filewrite($file,$content)
 
 $dir = "./";
 
-$file=file_get_contents('../monsters/species.xml');
+$file=file_get_contents('../species.xml');
 preg_match_all('#<pokemonSpecies>(.*)</pokemonSpecies>#isU',$file,$entry_list);
 $species=array();
 $name_to_id=array();
@@ -74,7 +74,7 @@ foreach($entry_list[1] as $entry)
 	);
 }
 
-$file=file_get_contents('../monsters/polrdb.xml');
+$file=file_get_contents('../polrdb.xml');
 preg_match_all('#<POLRDataEntry>(.*)</POLRDataEntry>#isU',$file,$entry_list);
 foreach($entry_list[1] as $entry)
 {
@@ -195,12 +195,14 @@ if(file_exists('../language/english/_MAPNAMES.txt'))
 		$values=preg_split('#,#',$content[$index]);
 		if(count($values)==3)
 		{
-			$values[2]=str_replace('Route ','Road ',$values[2]);
+			//$values[2]=str_replace('Route ','Road ',$values[2]);
 			$map_file_to_name[$values[0].'.'.$values[1].'.tmx']=$values[2];
 		}
 		$index++;
 	}
 }
+else
+    echo '../language/english/_MAPNAMES.txt not found'."\n";
 
 if ($dh = opendir($dir)) {
     while (($file = readdir($dh)) !== false) {
@@ -376,15 +378,26 @@ if ($dh = opendir($dir)) {
 			}
 		}
 		if(isset($property['pvp']) && $property['pvp']=='disabled')
+		{
 			$type='city';
+			$grassType='grass';
+        }
+		elseif(isset($property['isCave']) && $property['isCave']=='true')
+		{
+			$type='cave';
+			$grassType='cave';
+        }
 		else
+		{
 			$type='outdoor';
+			$grassType='grass';
+        }
 		$xmlcontent='<map type="'.$type.'">'."\n";
 		if(isset($map_file_to_name[$file]))
 			$xmlcontent.='	<name>'.$map_file_to_name[$file].'</name>'."\n";
 		if(count($grass)>0)
 		{
-			$xmlcontent.='	<grass>'."\n";
+			$xmlcontent.='	<'.$grassType.'>'."\n";
 			foreach($grass as $monster)
 			{
 				if($monster['minLevel']==$monster['maxLevel'])
@@ -392,11 +405,11 @@ if ($dh = opendir($dir)) {
 				else
 					$xmlcontent.='		<monster minLevel="'.$monster['minLevel'].'" maxLevel="'.$monster['maxLevel'].'" luck="'.$monster['luck'].'" id="'.$monster['id'].'" />'."\n";
 			}
-			$xmlcontent.='	</grass>'."\n";
+			$xmlcontent.='	</'.$grassType.'>'."\n";
 		}
 		if(count($grassNight)>0)
 		{
-			$xmlcontent.='	<grassNight>'."\n";
+			$xmlcontent.='	<'.$grassType.'Night>'."\n";
 			foreach($grassNight as $monster)
 			{
 				if($monster['minLevel']==$monster['maxLevel'])
@@ -404,7 +417,7 @@ if ($dh = opendir($dir)) {
 				else
 					$xmlcontent.='		<monster minLevel="'.$monster['minLevel'].'" maxLevel="'.$monster['maxLevel'].'" luck="'.$monster['luck'].'" id="'.$monster['id'].'" />'."\n";
 			}
-			$xmlcontent.='	</grassNight>'."\n";
+			$xmlcontent.='	</'.$grassType.'Night>'."\n";
 		}
 		if(count($water)>0)
 		{

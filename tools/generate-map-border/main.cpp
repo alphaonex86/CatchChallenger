@@ -6,6 +6,7 @@
 #include <QRegularExpression>
 #include <QDomDocument>
 #include <QDomElement>
+#include <iostream>
 
 #include "../../client/tiled/tiled_mapreader.h"
 #include "../../client/tiled/tiled_mapwriter.h"
@@ -14,6 +15,7 @@
 #include "../../client/tiled/tiled_objectgroup.h"
 #include "../../client/tiled/tiled_tileset.h"
 #include "../../client/tiled/tiled_mapobject.h"
+#include "../../client/tiled/tiled_tile.h"
 
 QHash<QString,int> mapWidth,mapHeight;
 QHash<QString,int> xOffsetModifier,yOffsetModifier;
@@ -100,11 +102,23 @@ int readMap(QString file)
     mapHeight[file]=map->height();
     xOffsetModifier[file]=map->property("xOffsetModifier").toInt()/map->tileWidth();
     yOffsetModifier[file]=map->property("yOffsetModifier").toInt()/map->tileHeight();
+    delete map;
+    {
+        QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
+        while (i.hasNext()) {
+            i.next();
+            delete i.value();
+        }
+        Tiled::Tileset::preloadedTileset.clear();
+    }
     return 0;
 }
 
-int createBorder(QString file)
+int createBorder(QString file,const bool addOneToY)
 {
+    unsigned int offsetToY=0;
+    if(addOneToY)
+        offsetToY=1;
     if(!QFile(file).exists())
         return 0;
 
@@ -137,7 +151,7 @@ int createBorder(QString file)
     int indexTileset=0;
     while(indexTileset<map->tilesetCount())
     {
-        if(map->tilesetAt(indexTileset)->imageSource()=="invisible.tsx")
+        if(map->tilesetAt(indexTileset)->imageSource().endsWith("invisible.tsx") || map->tilesetAt(indexTileset)->name()=="invisible.tsx")
             break;
         indexTileset++;
     }
@@ -151,6 +165,14 @@ int createBorder(QString file)
             map->addTileset(tileset);
         /*Tiled::Tileset *tileset=new Tiled::Tileset("invisible",map->tileWidth(),map->tileHeight());
         tileset->setFileName("invisible.tsx");*/
+    }
+    {
+        const Tiled::Tile * const tile=map->tilesetAt(indexTileset)->tileAt(3);
+        if(tile==NULL)
+        {
+            qDebug() << "Tile not found (" << __LINE__ << "), it's base tile, can't be missing";
+            abort();
+        }
     }
 
     //add the move layer if needed
@@ -177,39 +199,6 @@ int createBorder(QString file)
         {
             if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
             {
-                /*//if is the bigger, do the calcule
-                if(map->height()>mapHeight[mapBorderFile])
-                {
-                    quint32 yOnBorderMap=mapHeight[mapBorderFile]/2+1;
-                    QPointF point(0,yOnBorderMap+(mapY[file]-mapY[mapBorderFile]));
-                    if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
-                    {
-                        Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
-                        mapObject->setProperty("map",mapBorderFile);
-                        Tiled::Cell cell=mapObject->cell();
-                        cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-                        if(cell.tile==NULL)
-                            qDebug() << "Tile not found";
-                        mapObject->setCell(cell);
-                        map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
-                    }
-                }
-                //if is the smaller, just put at the middle
-                else
-                {
-                    QPointF point(0,map->height()/2+1);
-                    if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
-                    {
-                        Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
-                        mapObject->setProperty("map",mapBorderFile);
-                        Tiled::Cell cell=mapObject->cell();
-                        cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-                        if(cell.tile==NULL)
-                            qDebug() << "Tile not found";
-                        mapObject->setCell(cell);
-                        map->layerAt(indexLayer)->asObjectGroup()->addObject(mapObject);
-                    }
-                }*/
             }
             else
             {
@@ -219,9 +208,9 @@ int createBorder(QString file)
                     offset=mapHeight[mapBorderFile]-map->height();
                     offset/=2;
                 }
-                QPointF point(0,map->height()/2+1+yOffsetModifier[mapBorderFile]/2+offset);
+                QPointF point(0,map->height()/2+offsetToY+yOffsetModifier[mapBorderFile]/2+offset);
                 if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
-                    point=QPointF(0,map->height()/2+1);
+                    point=QPointF(0,map->height()/2+offsetToY);
                 if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                 {
                     Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
@@ -229,7 +218,7 @@ int createBorder(QString file)
                     Tiled::Cell cell=mapObject->cell();
                     cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
                     if(cell.tile==NULL)
-                        qDebug() << "Tile not found";
+                        qDebug() << "Tile not found (" << __LINE__ << ")";
                     mapObject->setCell(cell);
                     map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
                 }
@@ -250,9 +239,9 @@ int createBorder(QString file)
                     offset=mapHeight[mapBorderFile]-map->height();
                     offset/=2;
                 }
-                QPointF point(map->width()-1,map->height()/2+1+yOffsetModifier[mapBorderFile]/2+offset);
+                QPointF point(map->width()-1,map->height()/2+offsetToY+yOffsetModifier[mapBorderFile]/2+offset);
                 if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
-                    point=QPointF(map->width()-1,map->height()/2+1);
+                    point=QPointF(map->width()-1,map->height()/2+offsetToY);
                 if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                 {
                     Tiled::MapObject *mapObject=new Tiled::MapObject("","border-right",point,QSizeF(1,1));
@@ -260,7 +249,7 @@ int createBorder(QString file)
                     Tiled::Cell cell=mapObject->cell();
                     cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
                     if(cell.tile==NULL)
-                        qDebug() << "Tile not found";
+                        qDebug() << "Tile not found (" << __LINE__ << ")";
                     mapObject->setCell(cell);
                     map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
                 }
@@ -281,9 +270,9 @@ int createBorder(QString file)
                     offset=mapWidth[mapBorderFile]-map->width();
                     offset/=2;
                 }
-                QPointF point(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,0+1);
+                QPointF point(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,0+offsetToY);
                 if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
-                    point=QPointF(map->width()/2,0+1);
+                    point=QPointF(map->width()/2,0+offsetToY);
                 if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                 {
                     Tiled::MapObject *mapObject=new Tiled::MapObject("","border-top",point,QSizeF(1,1));
@@ -291,7 +280,7 @@ int createBorder(QString file)
                     Tiled::Cell cell=mapObject->cell();
                     cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
                     if(cell.tile==NULL)
-                        qDebug() << "Tile not found";
+                        qDebug() << "Tile not found (" << __LINE__ << ")";
                     mapObject->setCell(cell);
                     map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
                 }
@@ -312,9 +301,9 @@ int createBorder(QString file)
                     offset=mapWidth[mapBorderFile]-map->width();
                     offset/=2;
                 }
-                QPointF point(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,map->height()-1+1);
+                QPointF point(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,map->height()-1+offsetToY);
                 if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
-                    point=QPointF(map->width()/2,map->height()-1+1);
+                    point=QPointF(map->width()/2,map->height()-1+offsetToY);
                 if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                 {
                     Tiled::MapObject *mapObject=new Tiled::MapObject("","border-bottom",point,QSizeF(1,1));
@@ -322,7 +311,7 @@ int createBorder(QString file)
                     Tiled::Cell cell=mapObject->cell();
                     cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
                     if(cell.tile==NULL)
-                        qDebug() << "Tile not found";
+                        qDebug() << "Tile not found (" << __LINE__ << ")";
                     mapObject->setCell(cell);
                     map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
                 }
@@ -337,7 +326,8 @@ int createBorder(QString file)
     {
         QString npcFile=file;
         npcFile.replace(".tmx",".txt");
-        QFile tempFile("../language/english/NPC/"+npcFile);
+        QString filePath="../language/english/NPC/"+npcFile;
+        QFile tempFile(filePath);
         if(tempFile.open(QIODevice::ReadOnly))
         {
             while (!tempFile.atEnd()) {
@@ -345,17 +335,20 @@ int createBorder(QString file)
                 line.replace("\n","");
                 line.replace("\r","");
                 line.replace("\t","");
-                line.replace("Route ","Road ");
+                //line.replace("Route ","Road ");
                 line.replace(QRegularExpression(" +$"),"");
                 textList << line;
             }
             tempFile.close();
         }
+        else
+            std::cerr << "File not found to open NPC: " << filePath.toStdString() << std::endl;
     }
     bool ok;
     {
         QString npcFile=file;
         npcFile.replace(".tmx",".txt");
+        npcFile="../npc/"+npcFile;
         QFile tempFile(npcFile);
         if(tempFile.open(QIODevice::ReadOnly))
         {
@@ -477,6 +470,8 @@ int createBorder(QString file)
             }
             tempFile.close();
         }
+        else
+            std::cerr << "File not found to open npc ini: " << npcFile.toStdString() << std::endl;
     }
     if(!botList.isEmpty())
     {
@@ -512,9 +507,18 @@ int createBorder(QString file)
                     {
                         tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"text\">\n").arg(sub_index+1).toUtf8());
                         if(sub_index<(botList.at(index).text.size()-1))
-                            tempFile.write(QStringLiteral("      <text><![CDATA[%1<br /><br /><a href=\"%2\">[Next]</a>]]></text>\n").arg(botList.at(index).text.at(sub_index).arg(sub_index+2).toUtf8()));
+                            tempFile.write(
+                                        QStringLiteral("      <text><![CDATA[%1<br /><br /><a href=\"%2\">[Next]</a>]]></text>\n")
+                                           .arg(botList.at(index).text.at(sub_index))
+                                           .arg(sub_index+2)
+                                           .toUtf8()
+                                        );
                         else
-                            tempFile.write(QStringLiteral("      <text><![CDATA[%1]]></text>\n").arg(botList.at(index).text.at(sub_index).toUtf8()));
+                            tempFile.write(
+                                        QStringLiteral("      <text><![CDATA[%1]]></text>\n")
+                                           .arg(botList.at(index).text.at(sub_index))
+                                           .toUtf8()
+                                    );
                         tempFile.write(QStringLiteral("    </step>\n").toUtf8());
                         sub_index++;
                     }
@@ -540,7 +544,7 @@ int createBorder(QString file)
                 }
                 tempFile.write(QStringLiteral("  </bot>\n").toUtf8());
                 {
-                    Tiled::MapObject *mapObject=new Tiled::MapObject("","bot",QPointF(botList.at(index).x,botList.at(index).y+1),QSizeF(1,1));
+                    Tiled::MapObject *mapObject=new Tiled::MapObject("","bot",QPointF(botList.at(index).x,botList.at(index).y+offsetToY),QSizeF(1,1));
                     mapObject->setProperty("file",botsFile);
                     mapObject->setProperty("id",QString::number(botId));
                     if(!botList.at(index).skin.isEmpty())
@@ -560,7 +564,7 @@ int createBorder(QString file)
                     Tiled::Cell cell=mapObject->cell();
                     cell.tile=map->tilesetAt(indexTileset)->tileAt(0);
                     if(cell.tile==NULL)
-                        qDebug() << "Tile not found";
+                        qDebug() << "Tile not found (" << __LINE__ << ")";
                     mapObject->setCell(cell);
                     map->layerAt(indexLayerObject)->asObjectGroup()->addObject(mapObject);
                 }
@@ -570,13 +574,16 @@ int createBorder(QString file)
             tempFile.write(QStringLiteral("</bots>").toUtf8());
             tempFile.close();
         }
+        else
+            std::cerr << "File not found to open in write bot: " << botsFile.toStdString() << std::endl;
     }
 
     if(!fightList.isEmpty())
     {
         QString fightsFile=file;
         fightsFile.replace(".tmx",".xml");
-        QFile tempFile("../fight/"+fightsFile);
+        QString fightPath="../fight/"+fightsFile;
+        QFile tempFile(fightPath);
         if(tempFile.open(QIODevice::WriteOnly))
         {
             tempFile.write(QStringLiteral("<fights>\n").toUtf8());
@@ -600,19 +607,21 @@ int createBorder(QString file)
             tempFile.write(QStringLiteral("</fights>").toUtf8());
             tempFile.close();
         }
+        else
+            std::cerr << "File not found to open in write fight: " << fightPath.toStdString() << std::endl;
     }
 
     QHashIterator<QPair<int,int>, WarpDescriptor> i(warpList);
     while (i.hasNext()) {
         i.next();
-        Tiled::MapObject *mapObject=new Tiled::MapObject("","door",QPointF(i.key().first,i.key().second+1),QSizeF(1,1));
+        Tiled::MapObject *mapObject=new Tiled::MapObject("","door",QPointF(i.key().first,i.key().second+offsetToY),QSizeF(1,1));
         mapObject->setProperty("map",i.value().destMap);
         mapObject->setProperty("x",QString::number(i.value().destX));
         mapObject->setProperty("y",QString::number(i.value().destY));
         Tiled::Cell cell=mapObject->cell();
         cell.tile=map->tilesetAt(indexTileset)->tileAt(2);
         if(cell.tile==NULL)
-            qDebug() << "Tile not found";
+            qDebug() << "Tile not found (" << __LINE__ << ")";
         mapObject->setCell(cell);
         map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
     }
@@ -634,6 +643,15 @@ int createBorder(QString file)
     }
 
     write.writeMap(map,file);
+    delete map;
+    {
+        QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
+        while (i.hasNext()) {
+            i.next();
+            delete i.value();
+        }
+        Tiled::Tileset::preloadedTileset.clear();
+    }
     return 0;
 }
 
@@ -710,6 +728,8 @@ int main(int argc, char *argv[])
         }
         mapNames.close();
     }
+    else
+        std::cerr << "unable to open the city name: " << "../language/english/_MAPNAMES.txt" << std::endl;
     QFile mapPos("../language/english/UI/_MAP.txt");
     if(mapPos.open(QIODevice::ReadOnly))
     {
@@ -739,6 +759,8 @@ int main(int argc, char *argv[])
     while(index<fileInfoList.size())
     {
         const QString &fileName=fileInfoList.at(index).fileName();
+        if(index%1000==0)
+            std::cout << "Processing " << index << "/" << fileInfoList.size() << ": " << fileName.toStdString() << std::endl;
         if(fileName.contains(QRegularExpression("^-?[0-9]+\\.-?[0-9]+\\.tmx$")))
             if(fileInfoList.at(index).exists())
                 readMap(fileInfoList.at(index).fileName());
@@ -748,9 +770,11 @@ int main(int argc, char *argv[])
     while(index<fileInfoList.size())
     {
         const QString &fileName=fileInfoList.at(index).fileName();
+        if(index%1000==0)
+            std::cout << "Create border " << index << "/" << fileInfoList.size() << ": " << fileName.toStdString() << std::endl;
         if(fileName.contains(QRegularExpression("^-?[0-9]+\\.-?[0-9]+\\.tmx$")))
             if(fileInfoList.at(index).exists())
-                createBorder(fileInfoList.at(index).fileName());
+                createBorder(fileInfoList.at(index).fileName(),true);
         index++;
     }
     return 0;
