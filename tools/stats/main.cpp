@@ -132,19 +132,17 @@ int main(int argc, char *argv[])
     }
 
     {
-        if(LinkToLogin::linkToLogin->pFilePath.empty())
+        if(!LinkToLogin::linkToLogin->pFilePath.empty())
         {
-            std::cerr << "The output file can't be emtpy" << std::endl;
-            abort();
+            LinkToLogin::linkToLogin->pFile = fopen(LinkToLogin::linkToLogin->pFilePath.c_str(),"wb");
+            if(LinkToLogin::linkToLogin->pFile==NULL)
+            {
+                std::cerr << "Unable to open the output file: " << LinkToLogin::linkToLogin->pFilePath << std::endl;
+                abort();
+            }
+            else
+                std::cout << "Write the status to: " << LinkToLogin::linkToLogin->pFilePath << std::endl;
         }
-        LinkToLogin::linkToLogin->pFile = fopen(LinkToLogin::linkToLogin->pFilePath.c_str(),"wb");
-        if(LinkToLogin::linkToLogin->pFile==NULL)
-        {
-            std::cerr << "Unable to open the output file: " << LinkToLogin::linkToLogin->pFilePath << std::endl;
-            abort();
-        }
-        else
-            std::cout << "Write the status to: " << LinkToLogin::linkToLogin->pFilePath << std::endl;
     }
 
     char buf[4096];
