@@ -421,7 +421,7 @@ void LinkToLogin::updateJsonFile()
     #ifndef STATSODROIDSHOW2
     //std::cout << "Update the json file..." << std::endl;
 
-    if(pFile==NULL)
+    if(pFile==NULL && !LinkToLogin::linkToLogin->pFilePath.empty())
     {
         LinkToLogin::linkToLogin->pFile = fopen(LinkToLogin::linkToLogin->pFilePath.c_str(),"wb");
         if(LinkToLogin::linkToLogin->pFile==NULL)
@@ -430,43 +430,44 @@ void LinkToLogin::updateJsonFile()
             abort();
         }
     }
+
+    std::string content;
+
+    std::unordered_map<uint8_t/*group index*/,std::string > serverByGroup;
+    unsigned int index=0;
+    while(index<serverList.size())
+    {
+        const ServerFromPoolForDisplay &server=serverList.at(index);
+        std::string serverString;
+        serverString+="\""+std::to_string(server.uniqueKey)+"\":{";
+        std::string tempXml=server.xml;
+        stringreplaceAll(tempXml,"/","\\/");
+        stringreplaceAll(tempXml,"\"","\\\"");
+        serverString+="\"xml\":\""+tempXml+"\",";
+        serverString+="\"connectedPlayer\":"+std::to_string(server.currentPlayer)+",";
+        serverString+="\"maxPlayer\":"+std::to_string(server.maxPlayer)+"";
+        serverString+="}";
+        if(serverByGroup.find(server.groupIndex)==serverByGroup.cend())
+            serverByGroup[server.groupIndex]=serverString;
+        else
+            serverByGroup[server.groupIndex]+=","+serverString;
+        index++;
+    }
+
+    auto serverByGroupIndex=serverByGroup.begin();
+    while(serverByGroupIndex!=serverByGroup.cend())
+    {
+        if(content.empty())
+            content="\""+std::to_string(serverByGroupIndex->first)+"\":{"+serverByGroupIndex->second+"}";
+        else
+            content+=",\""+std::to_string(serverByGroupIndex->first)+"\":{"+serverByGroupIndex->second+"}";
+        ++serverByGroupIndex;
+    }
+    content="{"+content+"}";
+    jsonFileContent=content;
+
     if(pFile!=NULL)
     {
-        std::string content;
-
-        std::unordered_map<uint8_t/*group index*/,std::string > serverByGroup;
-        unsigned int index=0;
-        while(index<serverList.size())
-        {
-            const ServerFromPoolForDisplay &server=serverList.at(index);
-            std::string serverString;
-            serverString+="\""+std::to_string(server.uniqueKey)+"\":{";
-            std::string tempXml=server.xml;
-            stringreplaceAll(tempXml,"/","\\/");
-            stringreplaceAll(tempXml,"\"","\\\"");
-            serverString+="\"xml\":\""+tempXml+"\",";
-            serverString+="\"connectedPlayer\":"+std::to_string(server.currentPlayer)+",";
-            serverString+="\"maxPlayer\":"+std::to_string(server.maxPlayer)+"";
-            serverString+="}";
-            if(serverByGroup.find(server.groupIndex)==serverByGroup.cend())
-                serverByGroup[server.groupIndex]=serverString;
-            else
-                serverByGroup[server.groupIndex]+=","+serverString;
-            index++;
-        }
-
-        auto serverByGroupIndex=serverByGroup.begin();
-        while(serverByGroupIndex!=serverByGroup.cend())
-        {
-            if(content.empty())
-                content="\""+std::to_string(serverByGroupIndex->first)+"\":{"+serverByGroupIndex->second+"}";
-            else
-                content+=",\""+std::to_string(serverByGroupIndex->first)+"\":{"+serverByGroupIndex->second+"}";
-            ++serverByGroupIndex;
-        }
-        content="{"+content+"}";
-        jsonFileContent=content;
-
         if(fseek(pFile,0,SEEK_SET)!=0)
         {
             std::cerr << "unable to seek the output file: " << errno << std::endl;
