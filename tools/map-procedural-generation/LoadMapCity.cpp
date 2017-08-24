@@ -386,6 +386,7 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
     const unsigned int w=worldMap.width()/mapWidth;
     const unsigned int h=worldMap.height()/mapHeight;
     {
+        Tiled::TileLayer *waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
         unsigned int y=0;
         while(y<h)
         {
@@ -413,7 +414,8 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                                     abort();
                                 MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
                                 if(full && yTile<maxYGrass && !isCity)
-                                    MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
+                                    if(waterLayer->cellAt(xTile,yTile).isEmpty())
+                                        MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
                                 xTile++;
                             }
                             yTile++;
@@ -436,7 +438,8 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                                     abort();
                                 MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
                                 if(full && yTile>=minYGrass && !isCity)
-                                    MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
+                                    if(waterLayer->cellAt(xTile,yTile).isEmpty())
+                                        MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
                                 xTile++;
                             }
                             yTile++;
@@ -459,7 +462,8 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                                     abort();
                                 MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
                                 if(full && xTile>=minXGrass && !isCity)
-                                    MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
+                                    if(waterLayer->cellAt(xTile,yTile).isEmpty())
+                                        MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
                                 xTile++;
                             }
                             yTile++;
@@ -482,7 +486,8 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                                     abort();
                                 MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
                                 if(full && xTile<maxXGrass && !isCity)
-                                    MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
+                                    if(waterLayer->cellAt(xTile,yTile).isEmpty())
+                                        MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
                                 xTile++;
                             }
                             yTile++;
