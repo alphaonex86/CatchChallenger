@@ -353,6 +353,7 @@ void LinkToLogin::tryReconnect()
     else
     {
         std::cout << "Try reconnect to login..." << std::endl;
+        resetForReconnect();
         #ifndef STATSODROIDSHOW2
         removeJsonFile();
         #endif

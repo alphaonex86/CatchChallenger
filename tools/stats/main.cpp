@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
 
     EpollServerStats epollServerStats;
     LinkToLogin::linkToLogin=NULL;
+    std::string unixSocketPath;
     std::string outputFile;
     {
         TinyXMLSettings settings(FacilityLibGeneral::getFolderFromFile(applicationDirPath)+"/stats-client.xml");
@@ -91,9 +92,7 @@ int main(int argc, char *argv[])
 
         settings.sync();
 
-        if(!epollServerStats.tryListen(settings.value("unixSocket").c_str()))
-        {}
-
+        unixSocketPath=settings.value("unixSocket");
         outputFile=settings.value("outputFile");
         LinkToLogin::linkToLogin->pFilePath=outputFile;
 
@@ -152,6 +151,9 @@ int main(int argc, char *argv[])
     memset(buf,0,4096);
     /* Buffer where events are returned */
     epoll_event events[MAXEVENTS];
+
+    if(!epollServerStats.tryListen(unixSocketPath.c_str()))
+        std::cerr << "Unable to listen the unix socket, file: " << unixSocketPath << std::endl;
 
     /* The event loop */
     std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > elementsToDelete;
