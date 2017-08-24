@@ -78,6 +78,11 @@ void LinkToLogin::displayErrorAndQuit(const char * errorString)
     abort();
 }
 
+const std::string &LinkToLogin::getJsonFileContent() const
+{
+    return jsonFileContent;
+}
+
 int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const uint8_t &tryInterval,const uint8_t &considerDownAfterNumberOfTry)
 {
     if(port==0)
@@ -241,7 +246,10 @@ void LinkToLogin::readTheFirstSslHeader()
     std::cout << "LoginLinkToLogin::readTheFirstSslHeader()" << std::endl;
     char buffer[1];
     if(::read(LinkToLogin::linkToLoginSocketFd,buffer,1)<0)
+    {
+        jsonFileContent.clear();
         displayErrorAndQuit("ERROR reading from socket to login server (abort)");
+    }
     #ifdef SERVERSSL
     if(buffer[0]!=0x01)
     {
@@ -354,6 +362,7 @@ void LinkToLogin::tryReconnect()
     {
         std::cout << "Try reconnect to login..." << std::endl;
         resetForReconnect();
+        jsonFileContent.clear();
         #ifndef STATSODROIDSHOW2
         removeJsonFile();
         #endif
@@ -456,6 +465,7 @@ void LinkToLogin::updateJsonFile()
             ++serverByGroupIndex;
         }
         content="{"+content+"}";
+        jsonFileContent=content;
 
         if(fseek(pFile,0,SEEK_SET)!=0)
         {
