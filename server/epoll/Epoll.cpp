@@ -1,4 +1,5 @@
 #include "Epoll.h"
+#include "../../general/base/GeneralVariable.h"
 
 #include <iostream>
 
@@ -27,5 +28,12 @@ int Epoll::wait(epoll_event *events,const int &maxevents)
 
 int Epoll::ctl(int __op, int __fd,epoll_event *__event)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(efd==-1)
+    {
+        std::cerr << "Epoll::ctl failed, efd==-1, call Epoll::init() before" << std::endl;
+        abort();
+    }
+    #endif
     return epoll_ctl(efd, __op, __fd, __event);
 }
