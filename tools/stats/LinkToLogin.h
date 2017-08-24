@@ -25,13 +25,14 @@ public:
     ~LinkToLogin();
     enum Stat
     {
-        Unconnected,
-        Connecting,
-        Connected,
-        ProtocolSent,
-        ProtocolGood,
-        LoginInProgress,
-        Logged,
+        Unconnected=0,
+        Connecting=1,
+        Connected=2,
+        ProtocolSent=3,
+        ProtocolGood=4,
+        LoginInProgress=5,
+        Logged=6,
+        //can't be greater to 9 due replyNotConnected[41]=X for the unix socket
     };
     Stat stat;
     struct DataForSelectedCharacterReturn
@@ -96,6 +97,7 @@ public:
     static void writeData(const std::string &str);
     #endif
     static void displayErrorAndQuit(const char * errorString);
+    const std::string &getJsonFileContent() const;
 protected:
     void disconnectClient();
     void errorParsingLayer(const std::string &error);
@@ -118,6 +120,7 @@ private:
     uint8_t considerDownAfterNumberOfTry;
     static char host[255];
     static uint16_t port;
+    std::string jsonFileContent;
 protected:
     std::vector<ServerFromPoolForDisplay> serverList;
 };
