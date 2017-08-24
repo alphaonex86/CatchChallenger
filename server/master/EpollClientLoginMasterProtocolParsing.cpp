@@ -75,7 +75,8 @@ bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
                     /*don't send packet to prevent DDOS
                     *(EpollClientLoginMaster::protocolReplyProtocolNotSupported+1)=queryNumber;
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginMaster::protocolReplyProtocolNotSupported));*/
-                    errorParsingLayer("Wrong protocol magic number");
+                    //errorParsingLayer("Wrong protocol magic number");
+                    disconnectClient();
                     return false;
                 }
             }
@@ -84,7 +85,8 @@ bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
                 /*don't send packet to prevent DDOS
                 *(EpollClientLoginMaster::protocolReplyProtocolNotSupported+1)=queryNumber;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginMaster::protocolReplyProtocolNotSupported));*/
-                errorParsingLayer("Wrong protocol magic number size");
+                //errorParsingLayer("Wrong protocol magic number size");
+                disconnectClient();
                 return false;
             }
         break;
