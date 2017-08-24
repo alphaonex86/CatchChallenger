@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     srand(time(NULL));
     ProtocolParsing::initialiseTheVariable();
 
-    char replyNotConnected[]="{\"error\":\"Not connected to login server\"}";
+    char replyNotConnected[]="{\"error\":\"Not connected to login server (X)\"}";
 
     EpollServerStats epollServerStats;
     LinkToLogin::linkToLogin=NULL;
@@ -236,11 +236,18 @@ int main(int argc, char *argv[])
                             }
                         }
 
-                        if(::write(infd,replyNotConnected,sizeof(replyNotConnected))!=sizeof(replyNotConnected))
-                            std::cerr << "epoll_ctl on socket write error" << std::endl;
-
-                        /*if(::write(infd,replyNotConnected,sizeof(replyNotConnected))!=sizeof(replyNotConnected))
-                            std::cerr << "epoll_ctl on socket write error" << std::endl;*/
+                        if(LinkToLogin::linkToLogin->stat!=LinkToLogin::Stat::Logged)
+                        {
+                            replyNotConnected[41]=48+(uint8_t)LinkToLogin::linkToLogin->stat;
+                            if(::write(infd,replyNotConnected,sizeof(replyNotConnected))!=sizeof(replyNotConnected))
+                                std::cerr << "epoll_ctl on socket write error" << std::endl;
+                        }
+                        else
+                        {
+                            const std::string &jsonFileContent=LinkToLogin::linkToLogin->getJsonFileContent();
+                            if(::write(infd,jsonFileContent.data(),jsonFileContent.size())!=(ssize_t)jsonFileContent.size())
+                                std::cerr << "epoll_ctl on socket write error" << std::endl;
+                        }
 
                         ::close(infd);
                     }
