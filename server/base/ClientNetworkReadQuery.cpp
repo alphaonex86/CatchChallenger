@@ -19,7 +19,8 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             packetCode==0xA0 || //protocol header
             #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             packetCode==0xA8 || //login by login/pass
-            packetCode==0xA9 //Create account
+            packetCode==0xA9 || //Create account
+            packetCode==0xAD //Stat client
             #else
             packetCode==0x93 //login by token + Select character (Get first data and send the login)
             #endif
