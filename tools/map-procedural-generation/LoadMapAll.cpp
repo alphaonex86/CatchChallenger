@@ -200,10 +200,9 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
     const unsigned int singleMapHeight=worldMap.height()/mapYCount;
     const unsigned int sWH=singleMapWitdh*singleMapHeight;
 
-    uint16_t mapWalkable[mapXCount][mapYCount];
-    for(unsigned int i = 0; i < mapYCount; i++)
-        for(unsigned int j = 0; j < mapXCount; j++)
-            mapWalkable[j][i]=0;
+    std::vector<uint16_t> mapWalkable;
+    mapWalkable.resize(mapXCount*mapYCount);
+    std::fill(mapWalkable.begin(),mapWalkable.end(),0);
     if(LoadMapAll::mapPathDirection!=NULL)
         delete LoadMapAll::mapPathDirection;
     LoadMapAll::mapPathDirection=new uint8_t[mapXCount*mapYCount];
@@ -226,9 +225,8 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                         unsigned int xMap=x*singleMapWitdh;
                         while(xMap<(x*singleMapWitdh+singleMapWitdh))
                         {
-                            const VoronioForTiledMapTmx::PolygonZone &polygonZone=VoronioForTiledMapTmx::voronoiMap.zones.at(
-                                        VoronioForTiledMapTmx::voronoiMap.tileToPolygonZoneIndex[x+y*singleMapWitdh].index
-                                    );
+                            const unsigned int zoneIndex=VoronioForTiledMapTmx::voronoiMap.tileToPolygonZoneIndex[xMap+yMap*worldMap.width()].index;
+                            const VoronioForTiledMapTmx::PolygonZone &polygonZone=VoronioForTiledMapTmx::voronoiMap.zones.at(zoneIndex);
                             /*
                             if(tileLayer->cellAt(xMap,yMap).tile!=NULL)
                                 countWalkable++;walkable not fill at this call*/
@@ -239,11 +237,18 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                         yMap++;
                     }
                 }
-                mapWalkable[x][y]=countWalkable;
+                if(x+y*mapXCount>=mapWalkable.size())
+                    abort();
+                mapWalkable[x+y*mapXCount]=countWalkable;
                 x++;
             }
             y++;
         }
+    }
+    if(grid.size()>citiesNames.size())
+    {
+        std::cerr << "Need more cities name, have: " << citiesNames.size() << " but need " << grid.size() << std::endl;
+        abort();
     }
     std::unordered_map<uint32_t,std::unordered_map<uint32_t,CityInternal *> > positionsAndIndex;
     unsigned int index=0;
@@ -271,12 +276,14 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             }
             city->x=x;
             city->y=y;
-            positionsAndIndex[x][y]=city;
             //count walkable tile
-            unsigned int countWalkable=mapWalkable[x][y];
+            unsigned int countWalkable=mapWalkable.at(x+y*mapXCount);
             //add
             if(countWalkable*100/(sWH)>75)
+            {
+                positionsAndIndex[x][y]=city;
                 citiesInternal.push_back(city);
+            }
         }
 
         index++;
@@ -670,7 +677,10 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                             MapPointToParse newPoint=tempPoint;
                             newPoint.x++;
                             if(newPoint.x<maxX)
-                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
+                            {
+                                if(newPoint.x+newPoint.y*mapXCount>=mapWalkable.size())
+                                    abort();
+                                if(mapWalkable.at(newPoint.x+newPoint.y*mapXCount)*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
                                 {
                                     std::pair<uint16_t,uint16_t> point(newPoint.x,newPoint.y);
                                     if(tempMap.pointQueued.find(point)==tempMap.pointQueued.cend())
@@ -679,6 +689,7 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                                         mapPointToParseList.push_back(newPoint);
                                     }
                                 }
+                            }
                         }
                     }
                     //if the left case have been parsed
@@ -691,7 +702,9 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                             if(newPoint.x>minX)
                             {
                                 newPoint.x--;
-                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
+                                if(newPoint.x+newPoint.y*mapXCount>=mapWalkable.size())
+                                    abort();
+                                if(mapWalkable.at(newPoint.x+newPoint.y*mapXCount)*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
                                 {
                                     std::pair<uint16_t,uint16_t> point(newPoint.x,newPoint.y);
                                     if(tempMap.pointQueued.find(point)==tempMap.pointQueued.cend())
@@ -712,7 +725,10 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                             MapPointToParse newPoint=tempPoint;
                             newPoint.y++;
                             if(newPoint.y<maxY)
-                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
+                            {
+                                if(newPoint.x+newPoint.y*mapXCount>=mapWalkable.size())
+                                    abort();
+                                if(mapWalkable.at(newPoint.x+newPoint.y*mapXCount)*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
                                 {
                                     std::pair<uint16_t,uint16_t> point(newPoint.x,newPoint.y);
                                     if(tempMap.pointQueued.find(point)==tempMap.pointQueued.cend())
@@ -721,6 +737,7 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                                         mapPointToParseList.push_back(newPoint);
                                     }
                                 }
+                            }
                         }
                     }
                     //if the top case have been parsed
@@ -733,7 +750,9 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                             if(newPoint.y>minY)
                             {
                                 newPoint.y--;
-                                if(mapWalkable[newPoint.x][newPoint.y]*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
+                                if(newPoint.x+newPoint.y*mapXCount>=mapWalkable.size())
+                                    abort();
+                                if(mapWalkable.at(newPoint.x+newPoint.y*mapXCount)*100/(sWH)>75 || haveCityEntry(citiesCoordToIndex,newPoint.x,newPoint.y))
                                 {
                                     std::pair<uint16_t,uint16_t> point(newPoint.x,newPoint.y);
                                     if(tempMap.pointQueued.find(point)==tempMap.pointQueued.cend())
