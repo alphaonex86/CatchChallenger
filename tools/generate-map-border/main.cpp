@@ -31,7 +31,7 @@ struct BotDescriptor
     QString skin;
     int x;
     int y;
-    QStringList text;
+    QList<QHash<QString,QString> > text;
     QList<int> fightMonsterId;
     QList<int> fightMonsterLevel;
 };
@@ -39,8 +39,8 @@ struct BotDescriptor
 struct FightDescriptor
 {
     quint32 id;
-    QString start;
-    QString win;
+    QHash<QString,QString> start;
+    QHash<QString,QString> win;
     QList<int> fightMonsterId;
     QList<int> fightMonsterLevel;
 };
@@ -114,8 +114,37 @@ int readMap(QString file)
     return 0;
 }
 
+QStringList loadNPCText(const QString &npcFile,const QString &language)
+{
+    QStringList textList;
+    QString filePath="../language/"+language+"/NPC/"+npcFile;
+    QFile tempFile(filePath);
+    if(tempFile.open(QIODevice::ReadOnly))
+    {
+        while (!tempFile.atEnd()) {
+            QString line=QString::fromUtf8(tempFile.readLine());
+            line.replace("\n","");
+            line.replace("\r","");
+            line.replace("\t","");
+            //line.replace("Route ","Road ");
+            line.replace(QRegularExpression(" +$"),"");
+            textList << line;
+        }
+        tempFile.close();
+    }
+    else
+        std::cerr << "File not found to open NPC: " << filePath.toStdString() << std::endl;
+    return textList;
+}
+
 int createBorder(QString file,const bool addOneToY)
 {
+    if(monsterNameToMonsterId.empty())
+    {
+        std::cerr << "monsterNameToMonsterId.empty()" << std::endl;
+        abort();
+    }
+
     unsigned int offsetToY=0;
     if(addOneToY)
         offsetToY=1;
@@ -151,7 +180,8 @@ int createBorder(QString file,const bool addOneToY)
     int indexTileset=0;
     while(indexTileset<map->tilesetCount())
     {
-        if(map->tilesetAt(indexTileset)->imageSource().endsWith("invisible.tsx") || map->tilesetAt(indexTileset)->name()=="invisible.tsx")
+        const QString &imageSource=map->tilesetAt(indexTileset)->imageSource();
+        if(imageSource.endsWith("invisible.tsx") || map->tilesetAt(indexTileset)->name()=="invisible.tsx")
             break;
         indexTileset++;
     }
@@ -322,27 +352,54 @@ int createBorder(QString file,const bool addOneToY)
     QList<BotDescriptor> botList;
     QHash<QPair<int,int>,WarpDescriptor> warpList;
     QList<FightDescriptor> fightList;
-    QStringList textList;
+    QStringList textListNL,textListEN,textListFI,textListFR,textListDE,textListIT,textListPT,textListES;
     {
         QString npcFile=file;
         npcFile.replace(".tmx",".txt");
-        QString filePath="../language/english/NPC/"+npcFile;
-        QFile tempFile(filePath);
-        if(tempFile.open(QIODevice::ReadOnly))
+        textListNL=loadNPCText(npcFile,"dutch");
+        textListEN=loadNPCText(npcFile,"english");
+        textListFI=loadNPCText(npcFile,"finnish");
+        textListFR=loadNPCText(npcFile,"french");
+        textListDE=loadNPCText(npcFile,"german");
+        textListIT=loadNPCText(npcFile,"italian");
+        textListPT=loadNPCText(npcFile,"portuguese");
+        textListES=loadNPCText(npcFile,"spanish");
+
+        if(textListNL.size()!=textListEN.size())
         {
-            while (!tempFile.atEnd()) {
-                QString line=QString::fromUtf8(tempFile.readLine());
-                line.replace("\n","");
-                line.replace("\r","");
-                line.replace("\t","");
-                //line.replace("Route ","Road ");
-                line.replace(QRegularExpression(" +$"),"");
-                textList << line;
-            }
-            tempFile.close();
+            std::cerr << "NL size not match for translation, unload" << std::endl;
+            textListNL=textListEN;
         }
-        else
-            std::cerr << "File not found to open NPC: " << filePath.toStdString() << std::endl;
+        if(textListFI.size()!=textListEN.size())
+        {
+            std::cerr << "FI size not match for translation, unload" << std::endl;
+            textListFI=textListEN;
+        }
+        if(textListFR.size()!=textListEN.size())
+        {
+            std::cerr << "FR size not match for translation, unload" << std::endl;
+            textListFR=textListEN;
+        }
+        if(textListDE.size()!=textListEN.size())
+        {
+            std::cerr << "DE size not match for translation, unload" << std::endl;
+            textListDE=textListEN;
+        }
+        if(textListIT.size()!=textListEN.size())
+        {
+            std::cerr << "IT size not match for translation, unload" << std::endl;
+            textListIT=textListEN;
+        }
+        if(textListPT.size()!=textListEN.size())
+        {
+            std::cerr << "PT size not match for translation, unload" << std::endl;
+            textListPT=textListEN;
+        }
+        if(textListES.size()!=textListEN.size())
+        {
+            std::cerr << "NL size not match for translation, unload" << std::endl;
+            textListES=textListEN;
+        }
     }
     bool ok;
     {
@@ -389,9 +446,18 @@ int createBorder(QString file,const bool addOneToY)
                                 quint32 tempIndex=textIndex.at(index).toUInt(&ok);
                                 if(!ok)
                                     break;
-                                if((int)tempIndex>=textList.size())
+                                if((int)tempIndex>=textListEN.size())
                                     break;
-                                botDescriptor.text << textList.at(tempIndex);
+                                QHash<QString,QString> fullTextList;
+                                fullTextList["nl"]=textListNL.at(tempIndex);
+                                fullTextList["en"]=textListEN.at(tempIndex);
+                                fullTextList["fi"]=textListFI.at(tempIndex);
+                                fullTextList["fr"]=textListFR.at(tempIndex);
+                                fullTextList["de"]=textListDE.at(tempIndex);
+                                fullTextList["it"]=textListIT.at(tempIndex);
+                                fullTextList["pt"]=textListPT.at(tempIndex);
+                                fullTextList["es"]=textListES.at(tempIndex);
+                                botDescriptor.text << fullTextList;
                                 index++;
                             }
                             QStringList textIndexMonster=values.at(5).split(",");
@@ -412,6 +478,8 @@ int createBorder(QString file,const bool addOneToY)
                                                 botDescriptor.fightMonsterLevel << level;
                                             }
                                         }
+                                        else
+                                            std::cerr << "!monsterNameToMonsterId.contains(" << textIndexMonster.at(fightIndex).toStdString() << ")" << std::endl;
                                         fightIndex+=2;
                                     }
                                 }
@@ -500,25 +568,58 @@ int createBorder(QString file,const bool addOneToY)
             while(index<botList.size())
             {
                 tempFile.write(QStringLiteral("  <bot id=\"%1\">\n").arg(botId).toUtf8());
+                QList<QHash<QString,QString> > textFull=botList.at(index).text;
                 if(botList.at(index).fightMonsterId.isEmpty())
                 {
                     int sub_index=0;
-                    while(sub_index<botList.at(index).text.size())
+                    while(sub_index<textFull.size())
                     {
+                        const QHash<QString,QString> &text=textFull.at(sub_index);
                         tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"text\">\n").arg(sub_index+1).toUtf8());
-                        if(sub_index<(botList.at(index).text.size()-1))
-                            tempFile.write(
-                                        QStringLiteral("      <text><![CDATA[%1<br /><br /><a href=\"%2\">[Next]</a>]]></text>\n")
-                                           .arg(botList.at(index).text.at(sub_index))
-                                           .arg(sub_index+2)
-                                           .toUtf8()
-                                        );
-                        else
-                            tempFile.write(
-                                        QStringLiteral("      <text><![CDATA[%1]]></text>\n")
-                                           .arg(botList.at(index).text.at(sub_index))
-                                           .toUtf8()
-                                    );
+                        QHashIterator<QString,QString> i(text);
+                        while (i.hasNext()) {
+                            i.next();
+                            if(i.key()=="en" || i.value()!=text.value("en"))
+                            {
+                                QString lang;
+                                if(i.key()!="en")
+                                    lang=" lang=\""+i.key()+"\"";
+                                if(sub_index<(textFull.size()-1))
+                                {
+                                    QString next="Next";
+                                    if(i.key()=="nl")
+                                        next="Volgende";
+                                    else if(i.key()=="fi")
+                                        next="Seuraava";
+                                    else if(i.key()=="fr")
+                                        next="Suivant";
+                                    else if(i.key()=="de")
+                                        next="Nächster";
+                                    else if(i.key()=="it")
+                                        next="Prossimo";
+                                    else if(i.key()=="pt")
+                                        next="Próximo";
+                                    else if(i.key()=="es")
+                                        next="Siguiente";
+                                    tempFile.write(
+                                                QStringLiteral("      <text%1><![CDATA[%2<br /><br /><a href=\"%3\">[%4]</a>]]></text>\n")
+                                                    .arg(lang)
+                                                    .arg(i.value())
+                                                    .arg(sub_index+2)
+                                                    .arg(next)
+                                                    .toUtf8()
+                                                );
+                                }
+                                else
+                                    tempFile.write(
+                                                QStringLiteral("      <text%1><![CDATA[%2]]></text>\n")
+                                                    .arg(lang)
+                                                    .arg(i.value())
+                                                    .toUtf8()
+                                            );
+                            }
+                        }
+
                         tempFile.write(QStringLiteral("    </step>\n").toUtf8());
                         sub_index++;
                     }
@@ -527,10 +628,10 @@ int createBorder(QString file,const bool addOneToY)
                 {
                     tempFile.write(QStringLiteral("    <step type=\"fight\" id=\"1\" fightid=\"%1\" />\n").arg(fightid).toUtf8());
                     FightDescriptor fightDescriptor;
-                    if(botList.at(index).text.size()>=1)
-                        fightDescriptor.start=botList.at(index).text.first();
-                    if(botList.at(index).text.size()>=2)
-                        fightDescriptor.win=botList.at(index).text.last();
+                    if(textFull.size()>=1)
+                        fightDescriptor.start=textFull.first();
+                    if(textFull.size()>=2)
+                        fightDescriptor.win=textFull.last();
                     int sub_sub_index=0;
                     while(sub_sub_index<botList.at(index).fightMonsterId.size())
                     {
@@ -592,9 +693,45 @@ int createBorder(QString file,const bool addOneToY)
             {
                 tempFile.write(QStringLiteral("  <fight id=\"%1\">\n").arg(fightList.at(index).id).toUtf8());
                 if(!fightList.at(index).start.isEmpty())
-                    tempFile.write(QStringLiteral("    <start><![CDATA[%1]]></start>\n").arg(fightList.at(index).start).toUtf8());
+                {
+                    const QHash<QString,QString> &text=fightList.at(index).start;
+                    QHashIterator<QString,QString> i(text);
+                    while (i.hasNext()) {
+                        i.next();
+                        if(i.key()=="en" || i.value()!=text.value("en"))
+                        {
+                            QString lang;
+                            if(i.key()!="en")
+                                lang=" lang=\""+i.key()+"\"";
+                            tempFile.write(
+                                        QStringLiteral("      <start%1><![CDATA[%2]]></start>\n")
+                                            .arg(lang)
+                                            .arg(i.value())
+                                            .toUtf8()
+                                    );
+                        }
+                    }
+                }
                 if(!fightList.at(index).win.isEmpty())
-                    tempFile.write(QStringLiteral("    <win><![CDATA[%1]]></win>\n").arg(fightList.at(index).win).toUtf8());
+                {
+                    const QHash<QString,QString> &text=fightList.at(index).win;
+                    QHashIterator<QString,QString> i(text);
+                    while (i.hasNext()) {
+                        i.next();
+                        if(i.key()=="en" || i.value()!=text.value("en"))
+                        {
+                            QString lang;
+                            if(i.key()!="en")
+                                lang=" lang=\""+i.key()+"\"";
+                            tempFile.write(
+                                        QStringLiteral("      <win%1><![CDATA[%2]]></win>\n")
+                                            .arg(lang)
+                                            .arg(i.value())
+                                            .toUtf8()
+                                    );
+                        }
+                    }
+                }
                 int sub_index=0;
                 while(sub_index<fightList.at(index).fightMonsterId.size())
                 {
@@ -610,6 +747,8 @@ int createBorder(QString file,const bool addOneToY)
         else
             std::cerr << "File not found to open in write fight: " << fightPath.toStdString() << std::endl;
     }
+    else
+        std::cerr << "Warning no fight detected" << std::endl;
 
     QHashIterator<QPair<int,int>, WarpDescriptor> i(warpList);
     while (i.hasNext()) {
@@ -642,6 +781,8 @@ int createBorder(QString file,const bool addOneToY)
         }
     }
 
+    Tiled::Properties emptyProperties;
+    map->setProperties(emptyProperties);
     write.writeMap(map,file);
     delete map;
     {
@@ -658,7 +799,7 @@ int createBorder(QString file,const bool addOneToY)
 void loadMonster()
 {
     //open and quick check the file
-    QFile xmlFile("../monsters/monster.xml");
+    /*QFile xmlFile("../monsters/monster.xml");
     QByteArray xmlContent;
     if(!xmlFile.open(QIODevice::ReadOnly))
         return;
@@ -699,6 +840,13 @@ void loadMonster()
             }
         }
         item = item.nextSiblingElement("monster");
+    }*/
+    do this part from pokemon.ini
+
+    if(monsterNameToMonsterId.empty())
+    {
+        std::cerr << "monsterNameToMonsterId.empty()" << std::endl;
+        abort();
     }
 }
 
