@@ -7,6 +7,7 @@
 #include <QDomDocument>
 #include <QDomElement>
 #include <iostream>
+#include <QDirIterator>
 
 #include "../../client/tiled/tiled_mapreader.h"
 #include "../../client/tiled/tiled_mapwriter.h"
@@ -468,14 +469,26 @@ int createBorder(QString file,const bool addOneToY)
                                     int fightIndex=0;
                                     while(fightIndex<textIndexMonster.size())
                                     {
-                                        if(monsterNameToMonsterId.contains(textIndexMonster.at(fightIndex)))
+                                        const QString monsterString=textIndexMonster.at(fightIndex).toUpper();
+                                        if(monsterNameToMonsterId.contains(monsterString))
                                         {
                                             bool ok;
-                                            quint32 level=textIndexMonster.at(fightIndex+1).toUInt(&ok);
+                                            const quint32 level=textIndexMonster.at(fightIndex+1).toUInt(&ok);
+                                            const uint32_t monsterId=monsterNameToMonsterId.value(monsterString);
                                             if(ok)
                                             {
-                                                botDescriptor.fightMonsterId << monsterNameToMonsterId[textIndexMonster.at(fightIndex)];
+                                                botDescriptor.fightMonsterId << monsterId;
+                                                if(monsterId==0)
+                                                {
+                                                    std::cerr << "monsterId==0 for bot monster!" << std::endl;
+                                                    abort();
+                                                }
                                                 botDescriptor.fightMonsterLevel << level;
+                                                if(level==0)
+                                                {
+                                                    std::cerr << "level==0 for bot monster!" << std::endl;
+                                                    abort();
+                                                }
                                             }
                                         }
                                         else
@@ -567,9 +580,10 @@ int createBorder(QString file,const bool addOneToY)
             int index=0;
             while(index<botList.size())
             {
+                const BotDescriptor &botDescriptor=botList.at(index);
                 tempFile.write(QStringLiteral("  <bot id=\"%1\">\n").arg(botId).toUtf8());
-                QList<QHash<QString,QString> > textFull=botList.at(index).text;
-                if(botList.at(index).fightMonsterId.isEmpty())
+                QList<QHash<QString,QString> > textFull=botDescriptor.text;
+                if(botDescriptor.fightMonsterId.isEmpty())
                 {
                     int sub_index=0;
                     while(sub_index<textFull.size())
@@ -633,10 +647,22 @@ int createBorder(QString file,const bool addOneToY)
                     if(textFull.size()>=2)
                         fightDescriptor.win=textFull.last();
                     int sub_sub_index=0;
-                    while(sub_sub_index<botList.at(index).fightMonsterId.size())
+                    while(sub_sub_index<botDescriptor.fightMonsterId.size())
                     {
-                        fightDescriptor.fightMonsterId << botList.at(index).fightMonsterId.at(sub_sub_index);
-                        fightDescriptor.fightMonsterLevel << botList.at(index).fightMonsterLevel.at(sub_sub_index);
+                        const uint32_t monsterId=botDescriptor.fightMonsterId.at(sub_sub_index);
+                        if(monsterId==0)
+                        {
+                            std::cerr << "monsterId==0 for bot monster!" << std::endl;
+                            abort();
+                        }
+                        fightDescriptor.fightMonsterId << monsterId;
+                        const quint32 level=botDescriptor.fightMonsterLevel.at(sub_sub_index);
+                        if(level==0)
+                        {
+                            std::cerr << "level==0 for bot monster!" << std::endl;
+                            abort();
+                        }
+                        fightDescriptor.fightMonsterLevel << level;
                         sub_sub_index++;
                     }
                     fightDescriptor.id=fightid;
@@ -645,19 +671,19 @@ int createBorder(QString file,const bool addOneToY)
                 }
                 tempFile.write(QStringLiteral("  </bot>\n").toUtf8());
                 {
-                    Tiled::MapObject *mapObject=new Tiled::MapObject("","bot",QPointF(botList.at(index).x,botList.at(index).y+offsetToY),QSizeF(1,1));
+                    Tiled::MapObject *mapObject=new Tiled::MapObject("","bot",QPointF(botDescriptor.x,botDescriptor.y+offsetToY),QSizeF(1,1));
                     mapObject->setProperty("file",botsFile);
                     mapObject->setProperty("id",QString::number(botId));
-                    if(!botList.at(index).skin.isEmpty())
+                    if(!botDescriptor.skin.isEmpty())
                     {
-                        mapObject->setProperty("skin",botList.at(index).skin);
-                        if(botList.at(index).orientation=="bottom" || botList.at(index).orientation=="down")
+                        mapObject->setProperty("skin",botDescriptor.skin);
+                        if(botDescriptor.orientation=="bottom" || botDescriptor.orientation=="down")
                             mapObject->setProperty("lookAt","bottom");
-                        else if(botList.at(index).orientation=="top" || botList.at(index).orientation=="up")
+                        else if(botDescriptor.orientation=="top" || botDescriptor.orientation=="up")
                             mapObject->setProperty("lookAt","top");
-                        else if(botList.at(index).orientation=="right")
+                        else if(botDescriptor.orientation=="right")
                             mapObject->setProperty("lookAt","right");
-                        else if(botList.at(index).orientation=="left")
+                        else if(botDescriptor.orientation=="left")
                             mapObject->setProperty("lookAt","left");
                         else
                             mapObject->setProperty("lookAt","bottom");
@@ -735,7 +761,10 @@ int createBorder(QString file,const bool addOneToY)
                 int sub_index=0;
                 while(sub_index<fightList.at(index).fightMonsterId.size())
                 {
-                    tempFile.write(QStringLiteral("    <monster id=\"%1\" level=\"%2\" />\n").arg(fightList.at(index).fightMonsterId.at(sub_index)).arg(fightList.at(index).fightMonsterLevel.at(sub_index)).toUtf8());
+                    tempFile.write(QStringLiteral("    <monster id=\"%1\" level=\"%2\" />\n")
+                                   .arg(fightList.at(index).fightMonsterId.at(sub_index))
+                                   .arg(fightList.at(index).fightMonsterLevel.at(sub_index))
+                                   .toUtf8());
                     sub_index++;
                 }
                 tempFile.write(QStringLiteral("  </fight>\n").toUtf8());
@@ -799,53 +828,68 @@ int createBorder(QString file,const bool addOneToY)
 void loadMonster()
 {
     //open and quick check the file
-    /*QFile xmlFile("../monsters/monster.xml");
-    QByteArray xmlContent;
-    if(!xmlFile.open(QIODevice::ReadOnly))
-        return;
-    xmlContent=xmlFile.readAll();
-    xmlFile.close();
-    QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        return;
-    QDomElement root = domDocument.documentElement();
-    if(root.tagName()!="list")
-        return;
-
-    //load the content
-    bool ok;
-    QDomElement item = root.firstChildElement("monster");
-    while(!item.isNull())
-    {
-        if(item.isElement())
+    QDirIterator it("../monsters/", QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        QString filePath=it.next();
+        if(filePath!="." && filePath!=".." && filePath!="" && QFileInfo(filePath).isFile())
         {
-            if(item.hasAttribute("id"))
+            QFile xmlFile(filePath);
+            QByteArray xmlContent;
+            if(xmlFile.open(QIODevice::ReadOnly))
             {
-                quint32 id=item.attribute("id").toUInt(&ok);
-                if(ok)
+                xmlContent=xmlFile.readAll();
+                xmlFile.close();
+                QDomDocument domDocument;
+                QString errorStr;
+                int errorLine,errorColumn;
+                if(domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
                 {
-                    QDomElement itemName = item.firstChildElement("name");
-                    while(!itemName.isNull())
+                    QDomElement root = domDocument.documentElement();
+                    if(root.tagName()=="monsters")
                     {
-                        if(itemName.isElement())
+                        //load the content
+                        bool ok;
+                        QDomElement item = root.firstChildElement("monster");
+                        while(!item.isNull())
                         {
-                            monsterNameToMonsterId[itemName.text()]=id;
-                            break;
+                            if(item.isElement())
+                            {
+                                if(item.hasAttribute("id"))
+                                {
+                                    quint32 id=item.attribute("id").toUInt(&ok);
+                                    if(ok)
+                                    {
+                                        QDomElement itemName = item.firstChildElement("name");
+                                        while(!itemName.isNull())
+                                        {
+                                            if(itemName.isElement())
+                                            {
+                                                monsterNameToMonsterId[itemName.text().toUpper()]=id;
+                                                break;
+                                            }
+                                            itemName = itemName.nextSiblingElement("name");
+                                        }
+                                    }
+                                }
+                            }
+                            item = item.nextSiblingElement("monster");
                         }
-                        itemName = itemName.nextSiblingElement("name");
+                        std::cout << "Loaded monsters from: " << filePath.toStdString() << std::endl;
                     }
+                    else
+                        std::cerr << "Wrong root balise: " << filePath.toStdString() << std::endl;
                 }
+                else
+                    std::cerr << "Not xml file: " << filePath.toStdString() << std::endl;
             }
+            else
+                std::cerr << "Unable to read: " << filePath.toStdString() << std::endl;
         }
-        item = item.nextSiblingElement("monster");
-    }*/
-    do this part from pokemon.ini
+    }
 
     if(monsterNameToMonsterId.empty())
     {
-        std::cerr << "monsterNameToMonsterId.empty()" << std::endl;
+        std::cerr << "monsterNameToMonsterId.empty(): have you ../monsters/ at catchchallenger format?" << std::endl;
         abort();
     }
 }
