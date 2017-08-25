@@ -185,21 +185,21 @@ foreach($entry_list[1] as $entry)
 	}
 }
 
-$map_file_to_name=array();
+$map_file_to_nameEN=array();
 if(file_exists('../language/english/_MAPNAMES.txt'))
 {
-	$content=preg_split("#[\r\n]+#isU",file_get_contents('../language/english/_MAPNAMES.txt'));
-	$index=0;
-	while($index<count($content))
-	{
-		$values=preg_split('#,#',$content[$index]);
-		if(count($values)==3)
-		{
-			//$values[2]=str_replace('Route ','Road ',$values[2]);
-			$map_file_to_name[$values[0].'.'.$values[1].'.tmx']=$values[2];
-		}
-		$index++;
-	}
+    $content=preg_split("#[\r\n]+#isU",file_get_contents('../language/english/_MAPNAMES.txt'));
+    $index=0;
+    while($index<count($content))
+    {
+        $values=preg_split('#,#',$content[$index]);
+        if(count($values)==3)
+        {
+            //$values[2]=str_replace('Route ','Road ',$values[2]);
+            $map_file_to_nameEN[$values[0].'.'.$values[1].'.tmx']=preg_replace("#[ \n\r\t]+$#",'',$values[2]);
+        }
+        $index++;
+    }
 }
 else
     echo '../language/english/_MAPNAMES.txt not found'."\n";
@@ -393,8 +393,35 @@ if ($dh = opendir($dir)) {
 			$grassType='grass';
         }
 		$xmlcontent='<map type="'.$type.'">'."\n";
-		if(isset($map_file_to_name[$file]))
-			$xmlcontent.='	<name>'.$map_file_to_name[$file].'</name>'."\n";
+		
+		$fileNPC=str_replace('.tmx','',$file);
+		foreach(array('dutch'=>'nl','english'=>'en','finnish'=>'fi','french'=>'fr','german'=>'de','italian'=>'it','portuguese'=>'pt','spanish'=>'es') as $fullName=>$countryCode)
+            if(file_exists('../language/'.$fullName.'/NPC/'.$fileNPC.'.txt'))
+            {
+                $contentNPSFile=preg_split("#[\r\n]+#isU",file_get_contents('../language/'.$fullName.'/NPC/'.$fileNPC.'.txt'));
+                if(count($contentNPSFile)>0)
+                    $map_file_to_name[$file][$countryCode]=preg_replace("#[ \n\r\t]+$#",'',$contentNPSFile[0]);
+            }
+		if(isset($map_file_to_name[$file]['en']))
+		{
+            if(isset($map_file_to_name[$file]['en']) && isset($map_file_to_nameEN[$file]))
+            {
+                if($map_file_to_name[$file]['en']==$map_file_to_nameEN[$file])
+                {
+                    foreach($map_file_to_name[$file] as $countryCode=>$text)
+                    {
+                        if($countryCode=='en')
+                            $xmlcontent.='	<name>'.$text.'</name>'."\n";
+                        elseif($text!=$map_file_to_name[$file]['en'])
+                            $xmlcontent.='	<name lang="'.$countryCode.'">'.$text.'</name>'."\n";
+                    }
+                }
+                else
+                    $xmlcontent.='	<name>'.$map_file_to_nameEN[$file].'</name>'."\n";
+            }
+            elseif(isset($map_file_to_nameEN[$file]))
+                $xmlcontent.='	<name>'.$map_file_to_nameEN[$file].'</name>'."\n";
+        }
 		if(count($grass)>0)
 		{
 			$xmlcontent.='	<'.$grassType.'>'."\n";
@@ -445,11 +472,14 @@ if ($dh = opendir($dir)) {
 		}
 		$xmlcontent.='</map>';
 		$filexml=str_replace('.tmx','.xml',$file);
-		preg_match_all('#<layer[^>]*>'."[ \r\n\t]+".'<data[^>]*>'."[ \r\n\t]+(".preg_quote('H4sIAAAAAAAAAO3BMQEAAADCoPVPbQwfoAAAAAC+BmbyAUigEAAA')."|".preg_quote('eJztwQEBAAAAgiD/r25IQAEAAPBoDhAAAQ==')."|".preg_quote('eNrtwTEBAAAAwqD1T20MH6AAAAAAvgYQoAAB').")[ \r\n\t]+".'</data>'."[ \r\n\t]+".'</layer>#isU',$content,$empty_layer);
-		foreach($empty_layer as $layer_content)
-			$content=str_replace($layer_content,'',$content);
+		if(is_string($content))
+		{
+            preg_match_all('#<layer[^>]*>'."[ \r\n\t]+".'<data[^>]*>'."[ \r\n\t]+(".preg_quote('H4sIAAAAAAAAAO3BMQEAAADCoPVPbQwfoAAAAAC+BmbyAUigEAAA')."|".preg_quote('eJztwQEBAAAAgiD/r25IQAEAAPBoDhAAAQ==')."|".preg_quote('eNrtwTEBAAAAwqD1T20MH6AAAAAAvgYQoAAB').")[ \r\n\t]+".'</data>'."[ \r\n\t]+".'</layer>#isU',$content,$empty_layer);
+            foreach($empty_layer as $layer_content)
+                $content=str_replace($layer_content,'',$content);
+            filewrite($file,$content);
+        }
 		filewrite($filexml,$xmlcontent);
-		filewrite($file,$content);
 		unset($property);
 	}
     }
