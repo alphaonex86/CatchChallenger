@@ -12,6 +12,85 @@ function filewrite($file,$content)
 		die('Unable to write or create the file: '.$file);
 }
 
+//clean text and return string to "toto toto2 toto3", the word lower than X value are dropped
+function text_operation_clean_text($text,$minimum_word_length=4,$minimum_string_length=15,$maximum_string_length=64)
+{
+	$text=text_operation_lower_case($text);
+
+	$text=str_replace('â','a',str_replace('à','a',$text));
+	$text=str_replace('ã','a',str_replace('á','a',str_replace('ã','a',str_replace('ä','a',$text))));
+
+	$text=str_replace('ç','c',$text);
+
+	$text=str_replace('é','e',str_replace('è','e',str_replace('ê','e',str_replace('ë','e',$text))));
+
+	$text=str_replace('ì','i',str_replace('í','i',str_replace('î','i',str_replace('ï','i',$text))));
+
+	$text=str_replace('ñ','n',$text);
+	
+	$text=str_replace('õ','o',str_replace('ö','o',str_replace('ó','o',str_replace('ô','o',$text))));
+	$text=str_replace('ô','o',str_replace('ò','o',$text));
+	
+	$text=str_replace('û','u',str_replace('ü','u',str_replace('ú','u',str_replace('ù','u',$text))));
+	
+	$text=str_replace('ý','y',str_replace('ÿ','y',$text));
+	
+	if(strlen($text)>$maximum_string_length)
+		$text=substr($text,0,$maximum_string_length);
+	$text=preg_replace('#([0-9]+)(\.|-| )+#','$1 ',$text);
+	$text=preg_replace('#[^a-zA-Z0-9_-]+#',' ',$text);
+	$text=preg_replace('# +#',' ',$text);
+	if($minimum_word_length>2)
+	{
+		$a=$minimum_word_length-1;
+		do
+		{
+			$text_temp=preg_replace('#\b[a-zA-Z_-]{1,'.$a.'}\b#',' ',$text);
+			$text_temp=preg_replace('# +#',' ',$text_temp);
+			$text_temp=preg_replace('# +$#','',$text_temp);
+			$text_temp=preg_replace('#^ +#','',$text_temp);
+			$a--;
+		}
+		while(strlen($text_temp)<=$minimum_string_length && $a>1);
+		if(strlen($text_temp)>$minimum_string_length && $a>1)
+			$text=$text_temp;
+	}
+	$text=preg_replace('# +#',' ',$text);
+	$text=preg_replace('# +$#','',$text);
+	$text=preg_replace('#^ +#','',$text);
+	return $text;
+}
+
+function text_operation_do_for_url($text,$minimum_word_length=4,$minimum_string_length=15,$maximum_string_length=64)
+{
+	$text=text_operation_clean_text($text,$minimum_word_length,$minimum_string_length,$maximum_string_length);
+	$text=str_replace(' ','-',$text);
+	$text=preg_replace('#-+#','-',$text);
+	$text=preg_replace('#^-+#','',$text);
+	$text=preg_replace('#-+$#','',$text);
+	return $text;
+}
+
+function text_operation_lower_case($text)
+{
+	$text=strtolower($text);
+	$text=str_replace('Â','â',$text);
+	$text=str_replace('À','à',$text);
+	$text=str_replace('Ä','ä',$text);
+	$text=str_replace('Ç','ç',$text);
+	$text=str_replace('Ê','ê',$text);
+	$text=str_replace('È','è',$text);
+	$text=str_replace('Ë','ë',$text);
+	$text=str_replace('É','é',$text);
+	$text=str_replace('Ï','ï',$text);
+	$text=str_replace('Ö','ö',$text);
+	$text=str_replace('Ô','ô',$text);
+	$text=str_replace('Û','û',$text);
+	$text=str_replace('Ù','ù',$text);
+	$text=str_replace('Ü','ü',$text);
+	return $text;
+}
+
 $dir = "./";
 
 $file=file_get_contents('../species.xml');
@@ -72,6 +151,17 @@ foreach($entry_list[1] as $entry)
 		'base_spattack'=>$base_spattack,
 		'base_spdefense'=>$base_spdefense,
 	);
+}
+
+/// \note this function require -text-operation.php
+function url_remake_for_url($text,$minimum_word_length=4,$minimum_string_length=15,$maximum_string_length=64)
+{
+	$url=text_operation_clean_text($text,$minimum_word_length,$minimum_string_length,$maximum_string_length);
+	$url=str_replace(' ','-',$url);
+	$url=preg_replace('#-+#','-',$url);
+	$url=preg_replace('#-+$#','',$url);
+	$url=preg_replace('#^-+#','',$url);
+	return $url;
 }
 
 $file=file_get_contents('../polrdb.xml');
@@ -204,6 +294,80 @@ if(file_exists('../language/english/_MAPNAMES.txt'))
 else
     echo '../language/english/_MAPNAMES.txt not found'."\n";
 
+$dirtyNameToClean=array();
+$cleanNameToDirty=array();
+//clean the file name
+if ($dh = opendir($dir)) {
+    while (($file = readdir($dh)) !== false) {
+	if(preg_match('#-?[0-9]{1,2}.-?[0-9]{1,2}\.tmx$#',$file))
+	{
+        $content=file_get_contents($file);
+		preg_match_all('#source="([^"]+)"#isU',$content,$entry_list);
+		foreach($entry_list[1] as $base_key => $value)
+		{
+            if(preg_match('#\.tsx$#i',$value))
+                $ext='tsx';
+            else if(preg_match('#\.png$#i',$value))
+                $ext='png';
+            else
+                die('unknown file type: '.$value);
+            $value=preg_replace('#\.'.$ext.'$#i','',$value);
+            $cleanName=url_remake_for_url($value,0);
+            if(isset($dirtyNameToClean[$value]) && $cleanName!=$dirtyNameToClean[$value])
+                die('1 isset($dirtyNameToClean[$value]) && $cleanName!=$dirtyNameToClean[$value]: '.$value.' -> '.$cleanName.' for '.$file);
+            $value.='.'.$ext;
+            $cleanName.='.'.$ext;
+            $content=str_replace($value,$cleanName,$content);
+            $dirtyNameToClean[$value]=$cleanName;
+            $cleanNameToDirty[$cleanName]=$value;
+        }
+        filewrite($file,$content);
+        //extra for tmx
+        $dirtyNameToClean[$file]=$file;
+        $cleanNameToDirty[$file]=$file;
+	}
+	elseif(preg_match('#\.tsx$#',$file))
+	{
+        $content=file_get_contents($file);
+        preg_match_all('#source="([^"]+)"#isU',$content,$entry_list);
+		foreach($entry_list[1] as $base_key => $value)
+		{
+            $value=str_replace('.png','',$value);
+            $cleanName=url_remake_for_url($value,0);
+            if(isset($dirtyNameToClean[$value]) && $cleanName!=$dirtyNameToClean[$value])
+                die('2 isset($dirtyNameToClean[$value]) && $cleanName!=$dirtyNameToClean[$value]: '.$value.' -> '.$cleanName.' for '.$file);
+            $value.='.png';
+            $cleanName.='.png';
+            $content=str_replace($value,$cleanName,$content);
+            $dirtyNameToClean[$value]=$cleanName;
+            $cleanNameToDirty[$cleanName]=$value;
+        }
+        filewrite($file,$content);
+	}
+    }
+    closedir($dh);
+}
+//drop the not used file
+//rename to cleaner name the used file
+$fileList=array();
+if ($dh = opendir($dir)) {
+    while (($file = readdir($dh)) !== false) {
+	if(is_file($file))
+        $fileList[]=$file;
+    }
+    closedir($dh);
+}
+foreach($fileList as $file)
+{
+    if(isset($dirtyNameToClean[$file]))
+        rename($file,$dirtyNameToClean[$file]);
+    elseif(!isset($cleanNameToDirty[$file]))
+    {
+        echo 'Remove: '.$file."\n";
+        unlink($file);
+    }
+}
+    
 if ($dh = opendir($dir)) {
     while (($file = readdir($dh)) !== false) {
 	if(preg_match('#-?[0-9]{1,2}.-?[0-9]{1,2}\.tmx#',$file))
@@ -481,6 +645,9 @@ if ($dh = opendir($dir)) {
         }
 		filewrite($filexml,$xmlcontent);
 		unset($property);
+	}
+	elseif(preg_match('#-?[0-9]{1,2}.-?[0-9]{1,2}\.tsx#',$file))
+	{
 	}
     }
     closedir($dh);

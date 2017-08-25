@@ -368,37 +368,37 @@ int createBorder(QString file,const bool addOneToY)
 
         if(textListNL.size()!=textListEN.size())
         {
-            std::cerr << "NL size not match for translation, unload" << std::endl;
+            //std::cerr << "NL size not match for translation, unload" << std::endl;
             textListNL=textListEN;
         }
         if(textListFI.size()!=textListEN.size())
         {
-            std::cerr << "FI size not match for translation, unload" << std::endl;
+            //std::cerr << "FI size not match for translation, unload" << std::endl;
             textListFI=textListEN;
         }
         if(textListFR.size()!=textListEN.size())
         {
-            std::cerr << "FR size not match for translation, unload" << std::endl;
+            //std::cerr << "FR size not match for translation, unload" << std::endl;
             textListFR=textListEN;
         }
         if(textListDE.size()!=textListEN.size())
         {
-            std::cerr << "DE size not match for translation, unload" << std::endl;
+            //std::cerr << "DE size not match for translation, unload" << std::endl;
             textListDE=textListEN;
         }
         if(textListIT.size()!=textListEN.size())
         {
-            std::cerr << "IT size not match for translation, unload" << std::endl;
+            //std::cerr << "IT size not match for translation, unload" << std::endl;
             textListIT=textListEN;
         }
         if(textListPT.size()!=textListEN.size())
         {
-            std::cerr << "PT size not match for translation, unload" << std::endl;
+            //std::cerr << "PT size not match for translation, unload" << std::endl;
             textListPT=textListEN;
         }
         if(textListES.size()!=textListEN.size())
         {
-            std::cerr << "NL size not match for translation, unload" << std::endl;
+            //std::cerr << "NL size not match for translation, unload" << std::endl;
             textListES=textListEN;
         }
     }
