@@ -342,6 +342,11 @@ if ($dh = opendir($dir)) {
             $dirtyNameToClean[$value]=$cleanName;
             $cleanNameToDirty[$cleanName]=$value;
         }
+        
+        $fileTemp=str_replace('.tsx','',$file);
+        $cleanFile=url_remake_for_url($fileTemp,0);
+        $content=preg_replace('#tileset name="([^"]+)"#isU','tileset name="'.$cleanFile.'"',$content);
+        
         filewrite($file,$content);
 	}
     }
@@ -363,8 +368,12 @@ foreach($fileList as $file)
         rename($file,$dirtyNameToClean[$file]);
     elseif(!isset($cleanNameToDirty[$file]))
     {
-        echo 'Remove: '.$file."\n";
-        unlink($file);
+        if($file!='invisible.png' && $file!='invisible.tsx')
+        {
+            if(!preg_match('#\.xml$#',$file))
+                echo 'Remove: '.$file."\n";
+            unlink($file);
+        }
     }
 }
     

@@ -17,5 +17,6 @@ sprites.txt
 tms.ini
 
 into maps folder
+tools/datapack-compressor/png-compress.sh
 generate-xml-meta-data.php
 start ../generate-map-border 
