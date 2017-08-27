@@ -191,6 +191,7 @@ public:
     static QString text_value;
     static QString text_slash;
 
+    bool loadImage;
 private:
     friend class Internal::MapReaderPrivate;
     Internal::MapReaderPrivate *d;
