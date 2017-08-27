@@ -471,13 +471,16 @@ void MapReaderPrivate::readTilesetImage(Tileset *tileset)
     const int width = atts.value(MapReader::text_width).toString().toInt();
     mGidMapper.setTilesetWidth(tileset, width);
 
-    if (mLazy && !source.isEmpty()) {
-        // Don't load the image right now, but remember the source
-        tileset->setImageSource(source);
-        xml.skipCurrentElement();
-    } else {
-        if (!tileset->loadFromImage(readImage(), source))
-            xml.raiseError(tr("Error loading tileset image:\n'%1'").arg(source));
+    if(p->loadImage)
+    {
+        if (mLazy && !source.isEmpty()) {
+            // Don't load the image right now, but remember the source
+            tileset->setImageSource(source);
+            xml.skipCurrentElement();
+        } else {
+            if (!tileset->loadFromImage(readImage(), source))
+                xml.raiseError(tr("Error loading tileset image:\n'%1'").arg(source));
+        }
     }
 }
 
@@ -972,6 +975,7 @@ void MapReaderPrivate::readProperty(Properties *properties)
 MapReader::MapReader()
     : d(new MapReaderPrivate(this))
 {
+    loadImage=true;
 }
 
 MapReader::~MapReader()
