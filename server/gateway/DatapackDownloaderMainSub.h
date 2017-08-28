@@ -16,13 +16,14 @@
 #include "../../general/base/GeneralStructures.h"
 
 namespace CatchChallenger {
+class LinkToGameServer;
 class DatapackDownloaderMainSub
 {
 public:
     explicit DatapackDownloaderMainSub(const std::string &mDatapackBase, const std::string &mainDatapackCode, const std::string &subDatapackCode);
     virtual ~DatapackDownloaderMainSub();
     static std::unordered_map<std::string,std::unordered_map<std::string,DatapackDownloaderMainSub *> > datapackDownloaderMainSub;
-    std::vector<void *> clientInSuspend;
+    std::vector<LinkToGameServer *> clientInSuspend;
     void datapackDownloadError();
     void resetAll();
     void datapackFileList(const char * const data,const unsigned int &size);
