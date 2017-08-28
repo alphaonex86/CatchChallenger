@@ -546,6 +546,7 @@ int createBorder(QString file,const bool addOneToY)
         }
     }
     bool ok;
+    QSet<QPair<unsigned int,unsigned int> > dropBot;
     {
         QString npcFile=file;
         npcFile.replace(".tmx",".txt");
@@ -553,6 +554,85 @@ int createBorder(QString file,const bool addOneToY)
         QFile tempFile(npcFile);
         if(tempFile.open(QIODevice::ReadOnly))
         {
+            //load raw bot on coord
+            QHash<QPair<unsigned int,unsigned int>,BotDescriptor> rawBotDescriptorbyCoord;
+            {
+                QStringList values;
+                QString balise,baliseEnd;
+                while (!tempFile.atEnd()) {
+                    QString line=QString::fromUtf8(tempFile.readLine());
+                    line.replace("\n","");
+                    line.replace("\r","");
+                    line.replace("\t","");
+                    if(!baliseEnd.isEmpty() && baliseEnd==line)
+                    {
+                        if(balise=="[npc]")
+                        {
+                            if(values.count()==12)
+                            {
+                                BotDescriptor botDescriptor;
+                                botDescriptor.name=values.at(0);
+                                botDescriptor.orientation=values.at(1);
+                                botDescriptor.skin=values.at(2);
+                                botDescriptor.x=values.at(3).toInt(&ok);
+
+                                if(!ok)
+                                {
+                                    continue;
+                                    values.clear();
+                                }
+                                botDescriptor.y=values.at(4).toInt(&ok);
+                                if(!ok)
+                                {
+                                    continue;
+                                    values.clear();
+                                }
+                                QStringList textIndex=values.at(8).split(",");
+                                int index=0;
+                                while(index<textIndex.size())
+                                {
+                                    bool ok;
+                                    quint32 tempIndex=textIndex.at(index).toUInt(&ok);
+                                    if(!ok)
+                                        break;
+                                    if((int)tempIndex>=textListEN.size())
+                                        break;
+                                    QHash<QString,QString> fullTextList;
+                                    fullTextList["nl"]=textListNL.at(tempIndex);
+                                    fullTextList["en"]=textListEN.at(tempIndex);
+                                    fullTextList["fi"]=textListFI.at(tempIndex);
+                                    fullTextList["fr"]=textListFR.at(tempIndex);
+                                    fullTextList["de"]=textListDE.at(tempIndex);
+                                    fullTextList["it"]=textListIT.at(tempIndex);
+                                    fullTextList["pt"]=textListPT.at(tempIndex);
+                                    fullTextList["es"]=textListES.at(tempIndex);
+                                    botDescriptor.text << fullTextList;
+                                    index++;
+                                }
+
+                                rawBotDescriptorbyCoord[QPair<unsigned int,unsigned int>(botDescriptor.x,botDescriptor.y)]=botDescriptor;
+
+                                values.clear();
+                            }
+                            else
+                                qDebug() << file << "wrong warp count values";
+                        }
+                        balise.clear();
+                        baliseEnd.clear();
+                    }
+                    else if(!balise.isEmpty())
+                        values << line;
+                    else if(line.contains(QRegularExpression("^\\[[a-z]+\\]$")))
+                    {
+                        balise=line;
+                        baliseEnd=balise;
+                        baliseEnd.replace("[","[/");
+                    }
+                }
+            }
+
+            //load the final values
+            tempFile.seek(0);
             QStringList values;
             QString balise,baliseEnd;
             while (!tempFile.atEnd()) {
@@ -604,6 +684,137 @@ int createBorder(QString file,const bool addOneToY)
                                 fullTextList["es"]=textListES.at(tempIndex);
                                 botDescriptor.text << fullTextList;
                                 index++;
+                            }
+
+                            //try detect one near valid bot and clone some information
+                            if(!botDescriptor.text.isEmpty() && botDescriptor.text.at(0).value("en")=="Please report this bug!")
+                            {
+                                if(botDescriptor.x>0)
+                                {
+                                    const unsigned int newX=botDescriptor.x-1;
+                                    const unsigned int newY=botDescriptor.y;
+                                    if(rawBotDescriptorbyCoord.contains(QPair<unsigned int,unsigned int>(newX,newY)))
+                                    {
+                                        const BotDescriptor &nearBotDescriptor=rawBotDescriptorbyCoord.value(QPair<unsigned int,unsigned int>(newX,newY));
+                                        botDescriptor.text=nearBotDescriptor.text;
+                                        if(botDescriptor.name.isEmpty() && !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                            botDescriptor.name=nearBotDescriptor.name;
+                                        if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
+                                                !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                        {}
+                                        else
+                                            dropBot.insert(QPair<unsigned int,unsigned int>(newX,newY));
+                                    }
+                                }
+                                if(botDescriptor.y>0)
+                                {
+                                    const unsigned int newX=botDescriptor.x;
+                                    const unsigned int newY=botDescriptor.y-1;
+                                    if(rawBotDescriptorbyCoord.contains(QPair<unsigned int,unsigned int>(newX,newY)))
+                                    {
+                                        const BotDescriptor &nearBotDescriptor=rawBotDescriptorbyCoord.value(QPair<unsigned int,unsigned int>(newX,newY));
+                                        botDescriptor.text=nearBotDescriptor.text;
+                                        if(botDescriptor.name.isEmpty() && !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                            botDescriptor.name=nearBotDescriptor.name;
+                                        if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
+                                                !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                        {}
+                                        else
+                                            dropBot.insert(QPair<unsigned int,unsigned int>(newX,newY));
+                                    }
+                                }
+                                if(botDescriptor.x<(map->width()-1))
+                                {
+                                    const unsigned int newX=botDescriptor.x+1;
+                                    const unsigned int newY=botDescriptor.y;
+                                    if(rawBotDescriptorbyCoord.contains(QPair<unsigned int,unsigned int>(newX,newY)))
+                                    {
+                                        const BotDescriptor &nearBotDescriptor=rawBotDescriptorbyCoord.value(QPair<unsigned int,unsigned int>(newX,newY));
+                                        botDescriptor.text=nearBotDescriptor.text;
+                                        if(botDescriptor.name.isEmpty() && !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                            botDescriptor.name=nearBotDescriptor.name;
+                                        if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
+                                                !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                        {}
+                                        else
+                                            dropBot.insert(QPair<unsigned int,unsigned int>(newX,newY));
+                                    }
+                                }
+                                if(botDescriptor.y<(map->height()-1))
+                                {
+                                    const unsigned int newX=botDescriptor.x;
+                                    const unsigned int newY=botDescriptor.y+1;
+                                    if(rawBotDescriptorbyCoord.contains(QPair<unsigned int,unsigned int>(newX,newY)))
+                                    {
+                                        const BotDescriptor &nearBotDescriptor=rawBotDescriptorbyCoord.value(QPair<unsigned int,unsigned int>(newX,newY));
+                                        botDescriptor.text=nearBotDescriptor.text;
+                                        if(botDescriptor.name.isEmpty() && !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                            botDescriptor.name=nearBotDescriptor.name;
+                                        if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
+                                                !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                        {}
+                                        else
+                                            dropBot.insert(QPair<unsigned int,unsigned int>(newX,newY));
+                                    }
+                                }
+                            }
+
+                            //clean neightbors
+                            if(botDescriptor.x>0)
+                            {
+                                const unsigned int newX=botDescriptor.x-1;
+                                const unsigned int newY=botDescriptor.y;
+                                if(rawBotDescriptorbyCoord.contains(QPair<unsigned int,unsigned int>(newX,newY)))
+                                {
+                                    const BotDescriptor &nearBotDescriptor=rawBotDescriptorbyCoord.value(QPair<unsigned int,unsigned int>(newX,newY));
+                                    if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
+                                            !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                    {}
+                                    else
+                                        dropBot.insert(QPair<unsigned int,unsigned int>(newX,newY));
+                                }
+                            }
+                            if(botDescriptor.y>0)
+                            {
+                                const unsigned int newX=botDescriptor.x;
+                                const unsigned int newY=botDescriptor.y-1;
+                                if(rawBotDescriptorbyCoord.contains(QPair<unsigned int,unsigned int>(newX,newY)))
+                                {
+                                    const BotDescriptor &nearBotDescriptor=rawBotDescriptorbyCoord.value(QPair<unsigned int,unsigned int>(newX,newY));
+                                    if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
+                                            !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                    {}
+                                    else
+                                        dropBot.insert(QPair<unsigned int,unsigned int>(newX,newY));
+                                }
+                            }
+                            if(botDescriptor.x<(map->width()-1))
+                            {
+                                const unsigned int newX=botDescriptor.x+1;
+                                const unsigned int newY=botDescriptor.y;
+                                if(rawBotDescriptorbyCoord.contains(QPair<unsigned int,unsigned int>(newX,newY)))
+                                {
+                                    const BotDescriptor &nearBotDescriptor=rawBotDescriptorbyCoord.value(QPair<unsigned int,unsigned int>(newX,newY));
+                                    if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
+                                            !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                    {}
+                                    else
+                                        dropBot.insert(QPair<unsigned int,unsigned int>(newX,newY));
+                                }
+                            }
+                            if(botDescriptor.y<(map->height()-1))
+                            {
+                                const unsigned int newX=botDescriptor.x;
+                                const unsigned int newY=botDescriptor.y+1;
+                                if(rawBotDescriptorbyCoord.contains(QPair<unsigned int,unsigned int>(newX,newY)))
+                                {
+                                    const BotDescriptor &nearBotDescriptor=rawBotDescriptorbyCoord.value(QPair<unsigned int,unsigned int>(newX,newY));
+                                    if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
+                                            !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                    {}
+                                    else
+                                        dropBot.insert(QPair<unsigned int,unsigned int>(newX,newY));
+                                }
                             }
 
                             //add heal and warehouse step
@@ -804,6 +1015,11 @@ int createBorder(QString file,const bool addOneToY)
                 while(index<botList.size())
                 {
                     const BotDescriptor &botDescriptor=botList.at(index);
+                    if(dropBot.contains(QPair<unsigned int,unsigned int>(botDescriptor.x,botDescriptor.y)))
+                    {
+                        index++;
+                        continue;
+                    }
                     tempFile.write(QStringLiteral("  <bot id=\"%1\">\n").arg(botId).toUtf8());
                     if(botDescriptor.name!="NULL" && !botDescriptor.name.isEmpty())
                         tempFile.write(QStringLiteral("    <name>%1</name>\n").arg(botDescriptor.name).toUtf8());
