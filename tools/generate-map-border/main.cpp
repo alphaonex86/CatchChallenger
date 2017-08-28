@@ -18,7 +18,25 @@
 #include "../../client/tiled/tiled_mapobject.h"
 #include "../../client/tiled/tiled_tile.h"
 
+/*pokemium or pokenet npc file structure:
+[npc]
+NULL//name
+down//orientation
+157//skin
+15//x
+11//y
+NULL//possible Pokemons
+0//PartySize
+-1//Badge
+1//all speech
+true//healer
+false//box
+false//shop, false = 0 (none), true = 1, 2, 3, ...
+[/npc]
+*/
+
 //todo: use zopfli to improve the layer compression
+//load the shop content via itemdex.xml
 //split map part delimited with empty tile and adapt the tp (scan all the square)
 //drop not used tileset
 
