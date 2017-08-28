@@ -1132,6 +1132,7 @@ int createBorder(QString file,const bool addOneToY)
 
     Tiled::Properties emptyProperties;
     map->setProperties(emptyProperties);
+    map->setLayerDataFormat(Tiled::Map::LayerDataFormat::Base64Zlib);
     write.writeMap(map,file);
     delete map;
     {
