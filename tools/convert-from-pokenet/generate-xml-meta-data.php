@@ -362,20 +362,22 @@ if ($dh = opendir($dir)) {
     }
     closedir($dh);
 }
+$removedFile=0;
 foreach($fileList as $file)
 {
     if(isset($dirtyNameToClean[$file]))
         rename($file,$dirtyNameToClean[$file]);
     elseif(!isset($cleanNameToDirty[$file]))
     {
-        if($file!='invisible.png' && $file!='invisible.tsx')
+        if($file!='invisible.png' && $file!='invisible.tsx' && !preg_match('#\.xml$#',$file))
         {
-            if(!preg_match('#\.xml$#',$file))
-                echo 'Remove: '.$file."\n";
+            $removedFile++;
             unlink($file);
         }
     }
 }
+if($removedFile>0)
+    echo 'Removed files: '.$removedFile."\n";
     
 if ($dh = opendir($dir)) {
     while (($file = readdir($dh)) !== false) {
