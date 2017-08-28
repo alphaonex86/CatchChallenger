@@ -19,8 +19,8 @@
 #include "../../client/tiled/tiled_tile.h"
 
 //todo: use zopfli to improve the layer compression
-Detect map with heal and border tp on it with rescue point
-Detect map border, auto crop it and adapt the tp
+//split map part delimited with empty tile and adapt the tp (scan all the square)
+//drop not used tileset
 
 QHash<QString,int> mapWidth,mapHeight;
 QHash<QString,int> xOffsetModifier,yOffsetModifier;
@@ -51,6 +51,13 @@ struct FightDescriptor
     QList<int> fightMonsterLevel;
 };
 
+enum WarpType
+{
+    WarpType_Door,
+    WarpType_TpOnIt,
+    WarpType_TpOnPush
+};
+
 struct WarpDescriptor
 {
     int x;
@@ -58,6 +65,7 @@ struct WarpDescriptor
     int destX;
     int destY;
     QString destMap;
+    WarpType type;
 };
 
 QStringList loadNPCText(const QString &npcFile,const QString &language);
@@ -83,8 +91,9 @@ int readMap(QString file)
     bool healDetected=false;
     //detect if is heal map by map name
     {
-        QString metaDataFile=file;
-        metaDataFile.replace(".tmx",".xml");
+        QString metaDataPath=file;
+        metaDataPath.replace(".tmx",".xml");
+        QFile metaDataFile(metaDataPath);
         if(metaDataFile.open(QIODevice::ReadOnly))
         {
             QString content=QString::fromUtf8(metaDataFile.readAll());
@@ -94,7 +103,7 @@ int readMap(QString file)
         }
         else
         {
-            std::cerr << "You need start generate-xml-meta-data.php before to generated the metadata (" << metaDataFile << ")" << std::endl;
+            std::cerr << "You need start generate-xml-meta-data.php before to generated the metadata (" << metaDataPath.toStdString() << ")" << std::endl;
             abort();
         }
     }
@@ -109,7 +118,7 @@ int readMap(QString file)
             textListEN=loadNPCText(npcFile,"english");
 
             unsigned int index=0;
-            while(index<textListEN.size())
+            while(index<(unsigned int)textListEN.size())
             {
                 const QString &englishText=textListEN.at(index);
                 if(englishText.contains("Let me heal your Pokemon for you",Qt::CaseInsensitive))
@@ -158,7 +167,11 @@ int readMap(QString file)
         }
     }
     if(healDetected)
-        mapWithHeal.insert(file);
+    {
+        QString cleanFileName=file;
+        cleanFileName.remove(".tmx");
+        mapWithHeal.insert(cleanFileName);
+    }
 
     delete map;
     {
@@ -193,6 +206,23 @@ QStringList loadNPCText(const QString &npcFile,const QString &language)
     /*else
         std::cerr << "File not found to open NPC: " << filePath.toStdString() << std::endl;*/
     return textList;
+}
+
+bool haveContent(const Tiled::Map * const map,const std::vector<unsigned int> &layerIndexes,const int x,const int y)
+{
+    unsigned int index=0;
+    while(index<layerIndexes.size())
+    {
+        const Tiled::TileLayer * const tileLayer=static_cast<Tiled::TileLayer *>(map->layerAt(layerIndexes.at(index)));
+        if(x<0 || x>=map->width())
+            return false;
+        if(y<0 || y>=map->height())
+            return false;
+        if(!tileLayer->cellAt(x,y).isEmpty())
+            return true;
+        index++;
+    }
+    return false;
 }
 
 int createBorder(QString file,const bool addOneToY)
@@ -280,6 +310,57 @@ int createBorder(QString file,const bool addOneToY)
         indexLayerMoving=map->layerCount();
         Tiled::ObjectGroup *objectGroup=new Tiled::ObjectGroup("Moving",0,0,map->width(),map->height());
         map->addLayer(objectGroup);
+    }
+
+    //locate grass layer
+    std::vector<unsigned int> indexLayerWalkable;
+    int indexLayer=0;
+    while(indexLayer<map->layerCount())
+    {
+        if(map->layerAt(indexLayer)->isTileLayer() && map->layerAt(indexLayer)->name()=="Walkable")
+            indexLayerWalkable.push_back(indexLayer);
+        indexLayer++;
+    }
+    if(indexLayerWalkable.empty())
+    {
+        int indexLayer=0;
+        while(indexLayer<map->layerCount())
+        {
+            if(map->layerAt(indexLayer)->isTileLayer() && map->layerAt(indexLayer)->name()=="Grass")
+            {
+                indexLayerWalkable.push_back(indexLayer);
+                map->layerAt(indexLayer)->setName("Walkable");
+            }
+            indexLayer++;
+        }
+        if(indexLayerWalkable.empty())
+        {
+            int indexLayer=0;
+            while(indexLayer<map->layerCount())
+            {
+                if(map->layerAt(indexLayer)->isTileLayer() && map->layerAt(indexLayer)->name()=="Water")
+                    indexLayerWalkable.push_back(indexLayer);
+                indexLayer++;
+            }
+            if(indexLayerWalkable.empty())
+                abort();
+        }
+    }
+    std::vector<unsigned int> indexLayerCollisions;
+    indexLayer=0;
+    while(indexLayer<map->layerCount())
+    {
+        if(map->layerAt(indexLayer)->isTileLayer() && map->layerAt(indexLayer)->name()=="Collisions")
+            indexLayerCollisions.push_back(indexLayer);
+        indexLayer++;
+    }
+    std::vector<unsigned int> indexLayerWalkBehind;
+    indexLayer=0;
+    while(indexLayer<map->layerCount())
+    {
+        if(map->layerAt(indexLayer)->isTileLayer() && map->layerAt(indexLayer)->name()=="WalkBehind")
+            indexLayerWalkBehind.push_back(indexLayer);
+        indexLayer++;
     }
 
     if(!hadMovingLayer)
@@ -491,84 +572,6 @@ int createBorder(QString file,const bool addOneToY)
                             botDescriptor.skin=values.at(2);
                             botDescriptor.x=values.at(3).toInt(&ok);
 
-                            //add heal and warehouse step
-                            {
-                                bool healAdded=false,warehouseAdded=false;
-                                unsigned int index=0;
-                                while(index<textListEN.size())
-                                {
-                                    const QString &englishText=textListEN.at(index);
-                                    if(englishText.contains("Let me heal your Pokemon for you",Qt::CaseInsensitive))
-                                    {
-                                        textListNL.insert(index+1,"heal");
-                                        textListEN.insert(index+1,"heal");
-                                        textListFI.insert(index+1,"heal");
-                                        textListFR.insert(index+1,"heal");
-                                        textListDE.insert(index+1,"heal");
-                                        textListIT.insert(index+1,"heal");
-                                        textListPT.insert(index+1,"heal");
-                                        textListES.insert(index+1,"heal");
-                                        healAdded=true;
-                                        index++;
-                                    }
-                                    if(englishText.contains("Welcome to the Pokemon storage system",Qt::CaseInsensitive))
-                                    {
-                                        textListNL.insert(index+1,"warehouse");
-                                        textListEN.insert(index+1,"warehouse");
-                                        textListFI.insert(index+1,"warehouse");
-                                        textListFR.insert(index+1,"warehouse");
-                                        textListDE.insert(index+1,"warehouse");
-                                        textListIT.insert(index+1,"warehouse");
-                                        textListPT.insert(index+1,"warehouse");
-                                        textListES.insert(index+1,"warehouse");
-                                        warehouseAdded=true;
-                                        index++;
-                                    }
-                                    index++;
-                                }
-                                if(!healAdded && botDescriptor.name=="Nurse Joy")
-                                {
-                                    textListNL.push_back("heal");
-                                    textListEN.push_back("heal");
-                                    textListFI.push_back("heal");
-                                    textListFR.push_back("heal");
-                                    textListDE.push_back("heal");
-                                    textListIT.push_back("heal");
-                                    textListPT.push_back("heal");
-                                    textListES.push_back("heal");
-                                    healAdded=true;
-                                    index++;
-                                }
-                                if(!warehouseAdded && botDescriptor.name=="Pokemon storage system")
-                                {
-                                    textListNL.push_back("warehouse");
-                                    textListEN.push_back("warehouse");
-                                    textListFI.push_back("warehouse");
-                                    textListFR.push_back("warehouse");
-                                    textListDE.push_back("warehouse");
-                                    textListIT.push_back("warehouse");
-                                    textListPT.push_back("warehouse");
-                                    textListES.push_back("warehouse");
-                                    healAdded=true;
-                                    index++;
-                                }
-
-                                if(textListNL.size()!=textListEN.size())
-                                    abort();
-                                if(textListFI.size()!=textListEN.size())
-                                    abort();
-                                if(textListFR.size()!=textListEN.size())
-                                    abort();
-                                if(textListDE.size()!=textListEN.size())
-                                    abort();
-                                if(textListIT.size()!=textListEN.size())
-                                    abort();
-                                if(textListPT.size()!=textListEN.size())
-                                    abort();
-                                if(textListES.size()!=textListEN.size())
-                                    abort();
-                            }
-
                             if(!ok)
                             {
                                 continue;
@@ -602,42 +605,94 @@ int createBorder(QString file,const bool addOneToY)
                                 botDescriptor.text << fullTextList;
                                 index++;
                             }
-                            if(botDescriptor.text.isEmpty() || botDescriptor.text.at(1).value("en")=="Please report this bug!")
+
+                            //add heal and warehouse step
                             {
-                                QStringList textIndexMonster=values.at(5).split(",");
-                                if(textIndexMonster.size()>0)
+                                QHash<QString,QString> fullTextListHeal;
+                                fullTextListHeal["nl"]="heal";
+                                fullTextListHeal["en"]="heal";
+                                fullTextListHeal["fi"]="heal";
+                                fullTextListHeal["fr"]="heal";
+                                fullTextListHeal["de"]="heal";
+                                fullTextListHeal["it"]="heal";
+                                fullTextListHeal["pt"]="heal";
+                                fullTextListHeal["es"]="heal";
+                                QHash<QString,QString> fullTextListWarehouse;
+                                fullTextListWarehouse["nl"]="warehouse";
+                                fullTextListWarehouse["en"]="warehouse";
+                                fullTextListWarehouse["fi"]="warehouse";
+                                fullTextListWarehouse["fr"]="warehouse";
+                                fullTextListWarehouse["de"]="warehouse";
+                                fullTextListWarehouse["it"]="warehouse";
+                                fullTextListWarehouse["pt"]="warehouse";
+                                fullTextListWarehouse["es"]="warehouse";
+
+                                bool healAdded=false,warehouseAdded=false;
+                                unsigned int index=0;
+                                while(index<(unsigned int)botDescriptor.text.size())
                                 {
-                                    if((textIndexMonster.size()%2)==0)
+                                    const QString englishText=botDescriptor.text.at(index).value("en");
+                                    if(englishText.contains("Let me heal your Pokemon for you",Qt::CaseInsensitive))
                                     {
-                                        int fightIndex=0;
-                                        while(fightIndex<textIndexMonster.size())
+                                        botDescriptor.text.insert(index+1,fullTextListHeal);
+                                        healAdded=true;
+                                        index++;
+                                    }
+                                    if(englishText.contains("Welcome to the Pokemon storage system",Qt::CaseInsensitive))
+                                    {
+                                        botDescriptor.text.insert(index+1,fullTextListWarehouse);
+                                        warehouseAdded=true;
+                                        index++;
+                                    }
+                                    index++;
+                                }
+                                if(!healAdded && botDescriptor.name=="Nurse Joy" && !botDescriptor.text.empty())
+                                {
+                                    botDescriptor.text.insert(index+1,fullTextListHeal);
+                                    healAdded=true;
+                                    index++;
+                                }
+                                if(!warehouseAdded && botDescriptor.name=="Pokemon storage system" && !botDescriptor.text.empty())
+                                {
+                                    botDescriptor.text.insert(index+1,fullTextListWarehouse);
+                                    warehouseAdded=true;
+                                    index++;
+                                }
+                            }
+
+                            QStringList textIndexMonster=values.at(5).split(",");
+                            if(textIndexMonster.size()>0)
+                            {
+                                if((textIndexMonster.size()%2)==0)
+                                {
+                                    int fightIndex=0;
+                                    while(fightIndex<textIndexMonster.size())
+                                    {
+                                        const QString monsterString=textIndexMonster.at(fightIndex).toUpper();
+                                        if(monsterNameToMonsterId.contains(monsterString))
                                         {
-                                            const QString monsterString=textIndexMonster.at(fightIndex).toUpper();
-                                            if(monsterNameToMonsterId.contains(monsterString))
+                                            bool ok;
+                                            const quint32 level=textIndexMonster.at(fightIndex+1).toUInt(&ok);
+                                            const uint32_t monsterId=monsterNameToMonsterId.value(monsterString);
+                                            if(ok)
                                             {
-                                                bool ok;
-                                                const quint32 level=textIndexMonster.at(fightIndex+1).toUInt(&ok);
-                                                const uint32_t monsterId=monsterNameToMonsterId.value(monsterString);
-                                                if(ok)
+                                                botDescriptor.fightMonsterId << monsterId;
+                                                if(monsterId==0)
                                                 {
-                                                    botDescriptor.fightMonsterId << monsterId;
-                                                    if(monsterId==0)
-                                                    {
-                                                        std::cerr << "monsterId==0 for bot monster!" << std::endl;
-                                                        abort();
-                                                    }
-                                                    botDescriptor.fightMonsterLevel << level;
-                                                    if(level==0)
-                                                    {
-                                                        std::cerr << "level==0 for bot monster!" << std::endl;
-                                                        abort();
-                                                    }
+                                                    std::cerr << "monsterId==0 for bot monster!" << std::endl;
+                                                    abort();
+                                                }
+                                                botDescriptor.fightMonsterLevel << level;
+                                                if(level==0)
+                                                {
+                                                    std::cerr << "level==0 for bot monster!" << std::endl;
+                                                    abort();
                                                 }
                                             }
-                                            else
-                                                std::cerr << "!monsterNameToMonsterId.contains(" << textIndexMonster.at(fightIndex).toStdString() << ")" << std::endl;
-                                            fightIndex+=2;
                                         }
+                                        else
+                                            std::cerr << "!monsterNameToMonsterId.contains(" << textIndexMonster.at(fightIndex).toStdString() << ")" << std::endl;
+                                        fightIndex+=2;
                                     }
                                 }
                                 if(index==textIndex.size())
@@ -648,7 +703,8 @@ int createBorder(QString file,const bool addOneToY)
                                         botDescriptor.skin=QString();
                                         botDescriptor.orientation=QString();
                                     }
-                                    botList << botDescriptor;
+                                    if(!botDescriptor.text.isEmpty() && botDescriptor.text.at(0).value("en")!="Please report this bug!")
+                                        botList << botDescriptor;
                                 }
                             }
                             values.clear();
@@ -673,9 +729,26 @@ int createBorder(QString file,const bool addOneToY)
                             warpDescriptor.destY=values.at(3).toInt(&ok);
                             if(!ok)
                                 continue;
-                            warpDescriptor.destMap=QStringLiteral("%1.%2.tmx").arg(values.at(4)).arg(values.at(5));
+                            warpDescriptor.destMap=QStringLiteral("%1.%2").arg(values.at(4)).arg(values.at(5));
+                            const bool isWalkable=haveContent(map,indexLayerWalkable,warpDescriptor.x,warpDescriptor.y);
+                            const bool isColision=haveContent(map,indexLayerCollisions,warpDescriptor.x,warpDescriptor.y);
+                            bool haveTopTileWalkBehind=false;
+                            if(warpDescriptor.y>0)
+                                haveTopTileWalkBehind=haveContent(map,indexLayerWalkBehind,warpDescriptor.x,warpDescriptor.y-1);
+                            if(isWalkable && !isColision)
+                            {
+                                if(haveTopTileWalkBehind)//just pgreen do that's
+                                    warpDescriptor.type=WarpType_Door;
+                                else
+                                    warpDescriptor.type=WarpType_TpOnIt;
+                            }
+                            else
+                                warpDescriptor.type=WarpType_TpOnPush;
+
+                            //add to the list
                             if(!warpList.contains(QPair<int,int>(warpDescriptor.x,warpDescriptor.y)))
                                 warpList[QPair<int,int>(warpDescriptor.x,warpDescriptor.y)]=warpDescriptor;
+
                             values.clear();
                         }
                         else
@@ -732,7 +805,7 @@ int createBorder(QString file,const bool addOneToY)
                 {
                     const BotDescriptor &botDescriptor=botList.at(index);
                     tempFile.write(QStringLiteral("  <bot id=\"%1\">\n").arg(botId).toUtf8());
-                    if(botDescriptor.name!="NULL")
+                    if(botDescriptor.name!="NULL" && !botDescriptor.name.isEmpty())
                         tempFile.write(QStringLiteral("    <name>%1</name>\n").arg(botDescriptor.name).toUtf8());
                     QList<QHash<QString,QString> > textFull=botDescriptor.text;
                     if(botDescriptor.fightMonsterId.isEmpty())
@@ -741,9 +814,9 @@ int createBorder(QString file,const bool addOneToY)
                         while(sub_index<textFull.size())
                         {
                             const QHash<QString,QString> &text=textFull.at(sub_index);
-                            if(text['en']=='heal')
+                            if(text.value("en")=="heal")
                                 tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"heal\"/>\n").arg(sub_index+1).toUtf8());
-                            else if(text['en']=='warehouse')
+                            else if(text.value("en")=="warehouse")
                                 tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"warehouse\"/>\n").arg(sub_index+1).toUtf8());
                             else
                             {
@@ -942,16 +1015,95 @@ int createBorder(QString file,const bool addOneToY)
     QHashIterator<QPair<int,int>, WarpDescriptor> i(warpList);
     while (i.hasNext()) {
         i.next();
-        Tiled::MapObject *mapObject=new Tiled::MapObject("","door",QPointF(i.key().first,i.key().second+offsetToY),QSizeF(1,1));
-        mapObject->setProperty("map",i.value().destMap);
-        mapObject->setProperty("x",QString::number(i.value().destX));
-        mapObject->setProperty("y",QString::number(i.value().destY));
+        const QPair<int,int> &coord=i.key();
+        const WarpDescriptor &warpDescriptor=i.value();
+        const unsigned int x=coord.first;
+        const unsigned int y=coord.second;
+        Tiled::MapObject *mapObject=NULL;
+        switch(warpDescriptor.type)
+        {
+        case WarpType_Door:
+            mapObject=new Tiled::MapObject("","door",QPointF(x,y+offsetToY),QSizeF(1,1));
+        break;
+        default:
+        case WarpType_TpOnIt:
+            mapObject=new Tiled::MapObject("","teleport on it",QPointF(x,y+offsetToY),QSizeF(1,1));
+        break;
+        case WarpType_TpOnPush:
+            mapObject=new Tiled::MapObject("","teleport on push",QPointF(x,y+offsetToY),QSizeF(1,1));
+        break;
+        }
+        QString cleanMapName=warpDescriptor.destMap;
+        cleanMapName.remove(".tmx");
+        mapObject->setProperty("map",cleanMapName);
+        mapObject->setProperty("x",QString::number(warpDescriptor.destX));
+        mapObject->setProperty("y",QString::number(warpDescriptor.destY));
         Tiled::Cell cell=mapObject->cell();
         cell.tile=map->tilesetAt(indexTileset)->tileAt(2);
         if(cell.tile==NULL)
             qDebug() << "Tile not found (" << __LINE__ << ")";
         mapObject->setCell(cell);
         map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+
+        if(mapWithHeal.contains(warpDescriptor.destMap))
+        {
+            if(x>0)
+            {
+                unsigned int newX=x-1,newY=y;
+                if(haveContent(map,indexLayerWalkable,newX,newY) && !haveContent(map,indexLayerCollisions,newX,newY) && !haveContent(map,indexLayerWalkBehind,newX,newY))
+                {
+                    Tiled::MapObject *mapObject=new Tiled::MapObject("","rescue",QPointF(newX,newY+offsetToY),QSizeF(1,1));
+                    Tiled::Cell cell=mapObject->cell();
+                    cell.tile=map->tilesetAt(indexTileset)->tileAt(1);
+                    if(cell.tile==NULL)
+                        qDebug() << "Tile not found (" << __LINE__ << ")";
+                    mapObject->setCell(cell);
+                    map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                }
+            }
+            if(y>0)
+            {
+                unsigned int newX=x,newY=y-1;
+                if(haveContent(map,indexLayerWalkable,newX,newY) && !haveContent(map,indexLayerCollisions,newX,newY) && !haveContent(map,indexLayerWalkBehind,newX,newY))
+                {
+                    Tiled::MapObject *mapObject=new Tiled::MapObject("","rescue",QPointF(newX,newY+offsetToY),QSizeF(1,1));
+                    Tiled::Cell cell=mapObject->cell();
+                    cell.tile=map->tilesetAt(indexTileset)->tileAt(1);
+                    if(cell.tile==NULL)
+                        qDebug() << "Tile not found (" << __LINE__ << ")";
+                    mapObject->setCell(cell);
+                    map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                }
+            }
+            if(x<((unsigned int)map->width()-1))
+            {
+                unsigned int newX=x+1,newY=y;
+                if(haveContent(map,indexLayerWalkable,newX,newY) && !haveContent(map,indexLayerCollisions,newX,newY) && !haveContent(map,indexLayerWalkBehind,newX,newY))
+                {
+                    Tiled::MapObject *mapObject=new Tiled::MapObject("","rescue",QPointF(newX,newY+offsetToY),QSizeF(1,1));
+                    Tiled::Cell cell=mapObject->cell();
+                    cell.tile=map->tilesetAt(indexTileset)->tileAt(1);
+                    if(cell.tile==NULL)
+                        qDebug() << "Tile not found (" << __LINE__ << ")";
+                    mapObject->setCell(cell);
+                    map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                }
+            }
+            if(y<((unsigned int)map->height()-1))
+            {
+                unsigned int newX=x,newY=y+1;
+                if(haveContent(map,indexLayerWalkable,newX,newY) && !haveContent(map,indexLayerCollisions,newX,newY) && !haveContent(map,indexLayerWalkBehind,newX,newY))
+                {
+                    Tiled::MapObject *mapObject=new Tiled::MapObject("","rescue",QPointF(newX,newY+offsetToY),QSizeF(1,1));
+                    Tiled::Cell cell=mapObject->cell();
+                    cell.tile=map->tilesetAt(indexTileset)->tileAt(1);
+                    if(cell.tile==NULL)
+                        qDebug() << "Tile not found (" << __LINE__ << ")";
+                    mapObject->setCell(cell);
+                    map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                }
+            }
+        }
     }
     bool grassLayerDropped=false;
     {
@@ -1170,6 +1322,8 @@ int main(int argc, char *argv[])
                 readMap(fileInfoList.at(index).fileName());
         index++;
     }
+    if(mapWithHeal.isEmpty())
+        abort();
     index=0;
     while(index<fileInfoList.size())
     {
