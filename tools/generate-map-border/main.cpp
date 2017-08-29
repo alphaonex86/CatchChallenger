@@ -25,18 +25,18 @@
 
 /*pokemium or pokenet npc file structure:
 [npc]
-NULL//name
-down//orientation
-157//skin
-15//x
-11//y
-NULL//possible Pokemons
-0//PartySize
--1//Badge
-1//all speech
-true//healer
-false//box
-false//shop, false = 0 (none), true = 1, 2, 3, ...
+NULL//name, 0
+down//orientation, 1
+157//skin, 2
+15//x, 3
+11//y, 4
+NULL//possible Pokemons, 5
+0//PartySize, 6
+-1//Badge, 7
+1//all speech, 8
+true//healer, 9
+false//box, 10
+false//shop, 11, false = 0 (none), true = 1, 2, 3, ...
 [/npc]
 */
 
@@ -49,9 +49,10 @@ QHash<QString,int> mapWidth,mapHeight;
 QHash<QString,int> xOffsetModifier,yOffsetModifier;
 QHash<QString,int> mapX,mapY;
 QHash<QString,int> monsterNameToMonsterId;
-int botId;
-int fightid;
+int botId=0;
+int fightid=0;
 QSet<QString> mapWithHeal;
+unsigned int npcinicountValid=0;
 
 struct BotDescriptor
 {
@@ -60,7 +61,7 @@ struct BotDescriptor
     QString skin;
     int x;
     int y;
-    QList<QHash<QString,QString> > text;
+    QList<QMap<QString,QString> > text;
     QList<int> fightMonsterId;
     QList<int> fightMonsterLevel;
     unsigned int shopId;
@@ -69,8 +70,8 @@ struct BotDescriptor
 struct FightDescriptor
 {
     quint32 id;
-    QHash<QString,QString> start;
-    QHash<QString,QString> win;
+    QMap<QString,QString> start;
+    QMap<QString,QString> win;
     QList<int> fightMonsterId;
     QList<int> fightMonsterLevel;
 };
@@ -96,7 +97,7 @@ struct Shop
 {
     QList<int> itemsId;
 };
-QHash<unsigned int,Shop> shopList;
+QMap<unsigned int,Shop> shopList;
 
 QHash<QString,unsigned int> itemNameToId;
 
@@ -539,7 +540,7 @@ int createBorder(QString file,const bool addOneToY)
         }
 
     QList<BotDescriptor> botList;
-    QHash<QPair<int,int>,WarpDescriptor> warpList;
+    QMap<QPair<int,int>,WarpDescriptor> warpList;
     QList<FightDescriptor> fightList;
     QStringList textListNL,textListEN,textListFI,textListFR,textListDE,textListIT,textListPT,textListES;
     {
@@ -646,7 +647,7 @@ int createBorder(QString file,const bool addOneToY)
                                         break;
                                     if((int)tempIndex>=textListEN.size())
                                         break;
-                                    QHash<QString,QString> fullTextList;
+                                    QMap<QString,QString> fullTextList;
                                     fullTextList["nl"]=textListNL.at(tempIndex);
                                     fullTextList["en"]=textListEN.at(tempIndex);
                                     fullTextList["fi"]=textListFI.at(tempIndex);
@@ -657,6 +658,16 @@ int createBorder(QString file,const bool addOneToY)
                                     fullTextList["es"]=textListES.at(tempIndex);
                                     botDescriptor.text << fullTextList;
                                     index++;
+                                }
+
+                                botDescriptor.shopId=0;
+                                if(values.at(11).toUpper()=="TRUE")
+                                    botDescriptor.shopId=1;
+                                else
+                                {
+                                    unsigned int tempShopId=values.at(11).toUInt(&ok);
+                                    if(ok)
+                                        botDescriptor.shopId=tempShopId;
                                 }
 
                                 rawBotDescriptorbyCoord[QPair<unsigned int,unsigned int>(botDescriptor.x,botDescriptor.y)]=botDescriptor;
@@ -722,7 +733,7 @@ int createBorder(QString file,const bool addOneToY)
                                     break;
                                 if((int)tempIndex>=textListEN.size())
                                     break;
-                                QHash<QString,QString> fullTextList;
+                                QMap<QString,QString> fullTextList;
                                 fullTextList["nl"]=textListNL.at(tempIndex);
                                 fullTextList["en"]=textListEN.at(tempIndex);
                                 fullTextList["fi"]=textListFI.at(tempIndex);
@@ -748,6 +759,10 @@ int createBorder(QString file,const bool addOneToY)
                                         botDescriptor.text=nearBotDescriptor.text;
                                         if(botDescriptor.name.isEmpty() && !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
                                             botDescriptor.name=nearBotDescriptor.name;
+                                        if(nearBotDescriptor.shopId!=0)
+                                            botDescriptor.shopId=nearBotDescriptor.shopId;
+                                        if(botDescriptor.name.contains("Shop Keeper") && botDescriptor.shopId==0)
+                                            std::cerr << "1) botDescriptor.name.contains(\"Shop Keeper\") && botDescriptor.shopId==0" << std::endl;
                                         if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
                                                 !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
                                         {}
@@ -765,6 +780,10 @@ int createBorder(QString file,const bool addOneToY)
                                         botDescriptor.text=nearBotDescriptor.text;
                                         if(botDescriptor.name.isEmpty() && !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
                                             botDescriptor.name=nearBotDescriptor.name;
+                                        if(nearBotDescriptor.shopId!=0)
+                                            botDescriptor.shopId=nearBotDescriptor.shopId;
+                                        if(botDescriptor.name.contains("Shop Keeper") && botDescriptor.shopId==0)
+                                            std::cerr << "1) botDescriptor.name.contains(\"Shop Keeper\") && botDescriptor.shopId==0" << std::endl;
                                         if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
                                                 !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
                                         {}
@@ -782,6 +801,10 @@ int createBorder(QString file,const bool addOneToY)
                                         botDescriptor.text=nearBotDescriptor.text;
                                         if(botDescriptor.name.isEmpty() && !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
                                             botDescriptor.name=nearBotDescriptor.name;
+                                        if(nearBotDescriptor.shopId!=0)
+                                            botDescriptor.shopId=nearBotDescriptor.shopId;
+                                        if(botDescriptor.name.contains("Shop Keeper") && botDescriptor.shopId==0)
+                                            std::cerr << "1) botDescriptor.name.contains(\"Shop Keeper\") && botDescriptor.shopId==0" << std::endl;
                                         if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
                                                 !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
                                         {}
@@ -799,6 +822,10 @@ int createBorder(QString file,const bool addOneToY)
                                         botDescriptor.text=nearBotDescriptor.text;
                                         if(botDescriptor.name.isEmpty() && !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
                                             botDescriptor.name=nearBotDescriptor.name;
+                                        if(nearBotDescriptor.shopId!=0)
+                                            botDescriptor.shopId=nearBotDescriptor.shopId;
+                                        if(botDescriptor.name.contains("Shop Keeper") && botDescriptor.shopId==0)
+                                            std::cerr << "1) botDescriptor.name.contains(\"Shop Keeper\") && botDescriptor.shopId==0" << std::endl;
                                         if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
                                                 !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
                                         {}
@@ -868,7 +895,7 @@ int createBorder(QString file,const bool addOneToY)
 
                             //add heal, warehouse step, shop
                             {
-                                QHash<QString,QString> fullTextListHeal;
+                                QMap<QString,QString> fullTextListHeal;
                                 fullTextListHeal["nl"]="heal";
                                 fullTextListHeal["en"]="heal";
                                 fullTextListHeal["fi"]="heal";
@@ -877,7 +904,7 @@ int createBorder(QString file,const bool addOneToY)
                                 fullTextListHeal["it"]="heal";
                                 fullTextListHeal["pt"]="heal";
                                 fullTextListHeal["es"]="heal";
-                                QHash<QString,QString> fullTextListWarehouse;
+                                QMap<QString,QString> fullTextListWarehouse;
                                 fullTextListWarehouse["nl"]="warehouse";
                                 fullTextListWarehouse["en"]="warehouse";
                                 fullTextListWarehouse["fi"]="warehouse";
@@ -923,13 +950,77 @@ int createBorder(QString file,const bool addOneToY)
                                 }
 
                                 botDescriptor.shopId=0;
-                                if(values.at(10).toUpper()=="TRUE")
+                                if(values.at(11).toUpper()=="TRUE")
                                     botDescriptor.shopId=1;
                                 else
                                 {
-                                    unsigned int tempShopId=values.at(10).toUInt(&ok);
+                                    unsigned int tempShopId=values.at(11).toUInt(&ok);
                                     if(ok)
                                         botDescriptor.shopId=tempShopId;
+                                }
+
+                                if(botDescriptor.shopId==0)
+                                {
+                                    if(botDescriptor.x>0)
+                                    {
+                                        const unsigned int newX=botDescriptor.x-1;
+                                        const unsigned int newY=botDescriptor.y;
+                                        if(rawBotDescriptorbyCoord.contains(QPair<unsigned int,unsigned int>(newX,newY)))
+                                        {
+                                            const BotDescriptor &nearBotDescriptor=rawBotDescriptorbyCoord.value(QPair<unsigned int,unsigned int>(newX,newY));
+                                            if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
+                                                    !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                            {}
+                                            else
+                                                if(nearBotDescriptor.shopId!=0)
+                                                    botDescriptor.shopId=nearBotDescriptor.shopId;
+                                        }
+                                    }
+                                    if(botDescriptor.y>0)
+                                    {
+                                        const unsigned int newX=botDescriptor.x;
+                                        const unsigned int newY=botDescriptor.y-1;
+                                        if(rawBotDescriptorbyCoord.contains(QPair<unsigned int,unsigned int>(newX,newY)))
+                                        {
+                                            const BotDescriptor &nearBotDescriptor=rawBotDescriptorbyCoord.value(QPair<unsigned int,unsigned int>(newX,newY));
+                                            if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
+                                                    !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                            {}
+                                            else
+                                                if(nearBotDescriptor.shopId!=0)
+                                                    botDescriptor.shopId=nearBotDescriptor.shopId;
+                                        }
+                                    }
+                                    if(botDescriptor.x<(map->width()-1))
+                                    {
+                                        const unsigned int newX=botDescriptor.x+1;
+                                        const unsigned int newY=botDescriptor.y;
+                                        if(rawBotDescriptorbyCoord.contains(QPair<unsigned int,unsigned int>(newX,newY)))
+                                        {
+                                            const BotDescriptor &nearBotDescriptor=rawBotDescriptorbyCoord.value(QPair<unsigned int,unsigned int>(newX,newY));
+                                            if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
+                                                    !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                            {}
+                                            else
+                                                if(nearBotDescriptor.shopId!=0)
+                                                    botDescriptor.shopId=nearBotDescriptor.shopId;
+                                        }
+                                    }
+                                    if(botDescriptor.y<(map->height()-1))
+                                    {
+                                        const unsigned int newX=botDescriptor.x;
+                                        const unsigned int newY=botDescriptor.y+1;
+                                        if(rawBotDescriptorbyCoord.contains(QPair<unsigned int,unsigned int>(newX,newY)))
+                                        {
+                                            const BotDescriptor &nearBotDescriptor=rawBotDescriptorbyCoord.value(QPair<unsigned int,unsigned int>(newX,newY));
+                                            if(nearBotDescriptor.skin!="" && nearBotDescriptor.skin!="NULL" && nearBotDescriptor.skin!="0" &&
+                                                    !nearBotDescriptor.name.isEmpty() && nearBotDescriptor.name!="NULL")
+                                            {}
+                                            else
+                                                if(nearBotDescriptor.shopId!=0)
+                                                    botDescriptor.shopId=nearBotDescriptor.shopId;
+                                        }
+                                    }
                                 }
                             }
 
@@ -1103,6 +1194,7 @@ int createBorder(QString file,const bool addOneToY)
                 }
             }
             tempFile.close();
+            npcinicountValid++;
         }
         else
             std::cerr << "File not found to open npc ini: " << npcFile.toStdString() << std::endl;
@@ -1148,7 +1240,7 @@ int createBorder(QString file,const bool addOneToY)
                     tempFile.write(QStringLiteral("  <bot id=\"%1\">\n").arg(botId).toUtf8());
                     if(botDescriptor.name!="NULL" && !botDescriptor.name.isEmpty())
                         tempFile.write(QStringLiteral("    <name>%1</name>\n").arg(botDescriptor.name).toUtf8());
-                    QList<QHash<QString,QString> > textFull=botDescriptor.text;
+                    QList<QMap<QString,QString> > textFull=botDescriptor.text;
                     if(botDescriptor.fightMonsterId.isEmpty())
                     {
                         bool additionalStep=false;
@@ -1157,7 +1249,7 @@ int createBorder(QString file,const bool addOneToY)
                         int sub_index=0;
                         while(sub_index<textFull.size())
                         {
-                            const QHash<QString,QString> &text=textFull.at(sub_index);
+                            const QMap<QString,QString> &text=textFull.at(sub_index);
                             if(text.value("en")=="heal")
                                 tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"heal\"/>\n").arg(sub_index+1).toUtf8());
                             else if(text.value("en")=="warehouse")
@@ -1165,7 +1257,7 @@ int createBorder(QString file,const bool addOneToY)
                             else
                             {
                                 tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"text\">\n").arg(sub_index+1).toUtf8());
-                                QHashIterator<QString,QString> i(text);
+                                QMapIterator<QString,QString> i(text);
                                 while (i.hasNext()) {
                                     i.next();
                                     if(i.key()=="en" || i.value()!=text.value("en"))
@@ -1213,25 +1305,27 @@ int createBorder(QString file,const bool addOneToY)
                             }
                             sub_index++;
                         }
+                        if(botDescriptor.name.contains("Shop Keeper") && botDescriptor.shopId==0)
+                            std::cerr << "2) botDescriptor.name.contains(\"Shop Keeper\") && botDescriptor.shopId==0" << std::endl;
                         if(botDescriptor.shopId!=0)
                         {
                             tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"text\">\n"
-                            "      <text><![CDATA[<a href=\"%2\">Buy</a><br />"
-                            "      <a href=\"%3\">Sell</a>]]></text>"
-                            "    </step>")
+                            "      <text><![CDATA[<a href=\"%2\">Buy</a><br />\n"
+                            "      <a href=\"%3\">Sell</a>]]></text>\n"
+                            "    </step>\n")
                                            .arg(sub_index+1)
                                            .arg(sub_index+2)
                                            .arg(sub_index+3)
                                            .toUtf8()
                                            );
                             sub_index++;
-                            tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"shop\" shop=\"%2\"/>")
+                            tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"shop\" shop=\"%2\"/>\n")
                                            .arg(sub_index+1)
                                            .arg(botDescriptor.shopId)
                                            .toUtf8()
                                            );
                             sub_index++;
-                            tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"sell\" shop=\"%2\"/>")
+                            tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"sell\" shop=\"%2\"/>\n")
                                            .arg(sub_index+1)
                                            .arg(botDescriptor.shopId)
                                            .toUtf8()
@@ -1322,8 +1416,8 @@ int createBorder(QString file,const bool addOneToY)
                 tempFile.write(QStringLiteral("  <fight id=\"%1\">\n").arg(fightList.at(index).id).toUtf8());
                 if(!fightList.at(index).start.isEmpty())
                 {
-                    const QHash<QString,QString> &text=fightList.at(index).start;
-                    QHashIterator<QString,QString> i(text);
+                    const QMap<QString,QString> &text=fightList.at(index).start;
+                    QMapIterator<QString,QString> i(text);
                     while (i.hasNext()) {
                         i.next();
                         if(i.key()=="en" || i.value()!=text.value("en"))
@@ -1342,8 +1436,8 @@ int createBorder(QString file,const bool addOneToY)
                 }
                 if(!fightList.at(index).win.isEmpty())
                 {
-                    const QHash<QString,QString> &text=fightList.at(index).win;
-                    QHashIterator<QString,QString> i(text);
+                    const QMap<QString,QString> &text=fightList.at(index).win;
+                    QMapIterator<QString,QString> i(text);
                     while (i.hasNext()) {
                         i.next();
                         if(i.key()=="en" || i.value()!=text.value("en"))
@@ -1379,7 +1473,7 @@ int createBorder(QString file,const bool addOneToY)
             std::cerr << "File not found to open in write fight: " << fightPath.toStdString() << std::endl;
     }
 
-    QHashIterator<QPair<int,int>, WarpDescriptor> i(warpList);
+    QMapIterator<QPair<int,int>, WarpDescriptor> i(warpList);
     while (i.hasNext()) {
         i.next();
         const QPair<int,int> &coord=i.key();
@@ -1691,13 +1785,14 @@ void loadShop()
                             {
                                 if(!itemNameToId.contains(name))
                                 {
-                                    std::cerr << "item not found for shop: " << name.toStdString() << std::endl;
-                                    abort();
+                                    //std::cerr << "item not found for shop: " << name.toStdString() << std::endl;
+                                    //abort();
                                 }
-                                shopList[shopId].itemsId.push_back(itemNameToId.value(name));
+                                else
+                                    shopList[shopId].itemsId.push_back(itemNameToId.value(name));
                             }
                         }
-                        item = items.nextSiblingElement("item");
+                        item = item.nextSiblingElement("item");
                     }
                     items = items.nextSiblingElement("items");
                 }
@@ -1712,7 +1807,7 @@ void loadShop()
     else
         std::cerr << "Unable to read: " << "../itemdex.xml" << std::endl;
 
-    if(shopList.empty())
+    if(shopList.size()<2)
     {
         std::cerr << "shopList.empty(): have you ../itemdex.xml at catchchallenger format?" << std::endl;
         abort();
@@ -1772,7 +1867,7 @@ int main(int argc, char *argv[])
         return 90;
     }
     bool okX,okY;
-    QHash<QString,QString> fileToName;
+    QMap<QString,QString> fileToName;
     QFile mapNames("../language/english/_MAPNAMES.txt");
     if(mapNames.open(QIODevice::ReadOnly))
     {
@@ -1857,7 +1952,7 @@ int main(int argc, char *argv[])
         if(tempFile.open(QIODevice::WriteOnly))
         {
             tempFile.write(QStringLiteral("<shops>\n").toUtf8());
-            QHashIterator<unsigned int,Shop> i(shopList);
+            QMapIterator<unsigned int,Shop> i(shopList);
             while (i.hasNext()) {
                 i.next();
                 const unsigned int shopId=i.key();
@@ -1877,7 +1972,10 @@ int main(int argc, char *argv[])
             tempFile.close();
         }
         else
-            std::cerr << "File not found to open in write fight: " << shopPath.toStdString() << std::endl;
+            std::cerr << "File not found to open in write shop: " << shopPath.toStdString() << std::endl;
     }
+
+    if(npcinicountValid==0)
+        std::cerr << "npcinicountValid==0" << std::endl;
     return 0;
 }
