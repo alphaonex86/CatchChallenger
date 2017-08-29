@@ -18,6 +18,11 @@
 #include "../../client/tiled/tiled_mapobject.h"
 #include "../../client/tiled/tiled_tile.h"
 
+#include "../../client/base/interface/DatapackClientLoader.h"
+#include "../../client/base/LanguagesSelect.h"
+
+#include "../../general/base/CommonDatapack.h"
+
 /*pokemium or pokenet npc file structure:
 [npc]
 NULL//name
@@ -58,6 +63,7 @@ struct BotDescriptor
     QList<QHash<QString,QString> > text;
     QList<int> fightMonsterId;
     QList<int> fightMonsterLevel;
+    unsigned int shopId;
 };
 
 struct FightDescriptor
@@ -86,7 +92,24 @@ struct WarpDescriptor
     WarpType type;
 };
 
+struct Shop
+{
+    QList<int> itemsId;
+};
+QHash<unsigned int,Shop> shopList;
+
+QHash<QString,unsigned int> itemNameToId;
+
 QStringList loadNPCText(const QString &npcFile,const QString &language);
+
+QString simplifyItemName(QString name)
+{
+    name.remove(' ');
+    name.remove('-');
+    name.remove('_');
+    name=name.toUpper();
+    return name;
+}
 
 //get the x/y offset modifier, heal point
 int readMap(QString file)
@@ -255,7 +278,11 @@ int createBorder(QString file,const bool addOneToY)
     if(addOneToY)
         offsetToY=1;
     if(!QFile(file).exists())
-        return 0;
+    {
+        std::cout << file.toStdString() << " file not exists" << std::endl;
+        //return 0;
+        abort();
+    }
 
     Tiled::MapReader reader;
     Tiled::MapWriter write;
@@ -263,7 +290,7 @@ int createBorder(QString file,const bool addOneToY)
     if(map==NULL)
     {
         qDebug() << "Can't open to create the border" << file << reader.errorString();
-        return 86;
+        abort();//return 86;
     }
     QString xString=file;
     QString yString=file;
@@ -313,8 +340,8 @@ int createBorder(QString file,const bool addOneToY)
 
     //add the move layer if needed
     bool hadMovingLayer=false;
-    int indexLayerMoving=0;
-    while(indexLayerMoving<map->layerCount())
+    unsigned int indexLayerMoving=0;
+    while(indexLayerMoving<(unsigned int)map->layerCount())
     {
         if(map->layerAt(indexLayerMoving)->isObjectGroup() && map->layerAt(indexLayerMoving)->name()=="Moving")
         {
@@ -323,7 +350,7 @@ int createBorder(QString file,const bool addOneToY)
         }
         indexLayerMoving++;
     }
-    if(indexLayerMoving>=map->layerCount())
+    if(indexLayerMoving>=(unsigned int)map->layerCount())
     {
         indexLayerMoving=map->layerCount();
         Tiled::ObjectGroup *objectGroup=new Tiled::ObjectGroup("Moving",0,0,map->width(),map->height());
@@ -584,7 +611,11 @@ int createBorder(QString file,const bool addOneToY)
                     line.replace("\t","");
                     if(!baliseEnd.isEmpty() && baliseEnd==line)
                     {
-                        if(balise=="[npc]")
+                        if(balise=="[warp]")
+                        {}
+                        else if(balise=="[hmobject]")
+                        {}
+                        else if(balise=="[npc]")
                         {
                             if(values.count()==12)
                             {
@@ -629,12 +660,11 @@ int createBorder(QString file,const bool addOneToY)
                                 }
 
                                 rawBotDescriptorbyCoord[QPair<unsigned int,unsigned int>(botDescriptor.x,botDescriptor.y)]=botDescriptor;
-
-                                values.clear();
                             }
                             else
-                                qDebug() << file << "wrong warp count values";
+                                qDebug() << file << "wrong npc count values: " << values.count() << ": " << values.join(", ");
                         }
+                        values.clear();
                         balise.clear();
                         baliseEnd.clear();
                     }
@@ -668,6 +698,7 @@ int createBorder(QString file,const bool addOneToY)
                             botDescriptor.name=values.at(0);
                             botDescriptor.orientation=values.at(1);
                             botDescriptor.skin=values.at(2);
+                            botDescriptor.shopId=0;
                             botDescriptor.x=values.at(3).toInt(&ok);
 
                             if(!ok)
@@ -835,7 +866,7 @@ int createBorder(QString file,const bool addOneToY)
                                 }
                             }
 
-                            //add heal and warehouse step
+                            //add heal, warehouse step, shop
                             {
                                 QHash<QString,QString> fullTextListHeal;
                                 fullTextListHeal["nl"]="heal";
@@ -879,13 +910,26 @@ int createBorder(QString file,const bool addOneToY)
                                 {
                                     botDescriptor.text.insert(index+1,fullTextListHeal);
                                     healAdded=true;
-                                    index++;
                                 }
                                 if(!warehouseAdded && botDescriptor.name=="Pokemon storage system" && !botDescriptor.text.empty())
                                 {
                                     botDescriptor.text.insert(index+1,fullTextListWarehouse);
                                     warehouseAdded=true;
-                                    index++;
+                                }
+                                if(!healAdded && values.at(9).toUpper()=="TRUE")
+                                {
+                                    botDescriptor.text.insert(index+1,fullTextListHeal);
+                                    healAdded=true;
+                                }
+
+                                botDescriptor.shopId=0;
+                                if(values.at(10).toUpper()=="TRUE")
+                                    botDescriptor.shopId=1;
+                                else
+                                {
+                                    unsigned int tempShopId=values.at(10).toUInt(&ok);
+                                    if(ok)
+                                        botDescriptor.shopId=tempShopId;
                                 }
                             }
 
@@ -897,7 +941,7 @@ int createBorder(QString file,const bool addOneToY)
                                     int fightIndex=0;
                                     while(fightIndex<textIndexMonster.size())
                                     {
-                                        const QString monsterString=textIndexMonster.at(fightIndex).toUpper();
+                                        const QString monsterString=simplifyItemName(textIndexMonster.at(fightIndex));
                                         if(monsterNameToMonsterId.contains(monsterString))
                                         {
                                             bool ok;
@@ -936,14 +980,13 @@ int createBorder(QString file,const bool addOneToY)
                                         botList << botDescriptor;
                                 }
                             }
-                            values.clear();
                         }
                         else
                             qDebug() << file << "wrong npc count values";
                     }
-                    if(balise=="[warp]")
+                    else if(balise=="[warp]")
                     {
-                        if(values.count()==7)
+                        if(values.count()>5)
                         {
                             WarpDescriptor warpDescriptor;
                             warpDescriptor.x=values.at(0).toInt(&ok);
@@ -977,12 +1020,76 @@ int createBorder(QString file,const bool addOneToY)
                             //add to the list
                             if(!warpList.contains(QPair<int,int>(warpDescriptor.x,warpDescriptor.y)))
                                 warpList[QPair<int,int>(warpDescriptor.x,warpDescriptor.y)]=warpDescriptor;
-
-                            values.clear();
                         }
                         else
-                            qDebug() << file << "wrong warp count values";
+                            qDebug() << file << "wrong warp count values: " << values.count() << ": " << values.join(", ");
                     }
+                    else if(balise=="[hmobject]")
+                    {
+                        const unsigned int x=values.at(1).toInt(&ok);
+                        if(!ok)
+                            continue;
+                        const unsigned int y=values.at(2).toInt(&ok);
+                        if(!ok)
+                            continue;
+                        //add tile layer
+                        int indexLayerCutTree=0;
+                        while(indexLayerCutTree<map->layerCount())
+                        {
+                            if(map->layerAt(indexLayerCutTree)->isTileLayer() && map->layerAt(indexLayerCutTree)->name()=="CutTree")
+                                break;
+                            indexLayerCutTree++;
+                        }
+                        if(indexLayerCutTree>=map->layerCount())
+                        {
+                            Tiled::TileLayer *tileLayer=new Tiled::TileLayer("CutTree",0,0,map->width(),map->height());
+                            if(!indexLayerCollisions.empty())
+                            {
+                                const unsigned int newIndex=indexLayerCollisions.front();
+                                for (unsigned int i=0; i < indexLayerCollisions.size(); i++)
+                                    if(indexLayerCollisions.at(i)>=newIndex)
+                                        indexLayerCollisions[i]++;
+                                if(indexLayerMoving>=newIndex)
+                                    indexLayerMoving++;
+                                for (unsigned int i=0; i < indexLayerWalkable.size(); i++)
+                                    if(indexLayerWalkable.at(i)>=newIndex)
+                                        indexLayerWalkable[i]++;
+                                for (unsigned int i=0; i < indexLayerWalkBehind.size(); i++)
+                                    if(indexLayerWalkBehind.at(i)>=newIndex)
+                                        indexLayerWalkBehind[i]++;
+                                indexLayerCutTree=newIndex;
+                            }
+                            else
+                            {
+                                indexLayerCutTree=map->layerCount();
+                                map->addLayer(tileLayer);
+                            }
+                        }
+                        //add tileset
+                        int indexTileset=0;
+                        while(indexTileset<map->tilesetCount())
+                        {
+                            const QString &imageSource=map->tilesetAt(indexTileset)->imageSource();
+                            if(imageSource.endsWith("normal1.tsx") || map->tilesetAt(indexTileset)->name()=="normal1.tsx")
+                                break;
+                            indexTileset++;
+                        }
+                        if(indexTileset>=map->tilesetCount())
+                        {
+                            indexTileset=map->tilesetCount();
+                            Tiled::Tileset *tileset = reader.readTileset("normal1.tsx");
+                            if (!tileset)
+                                qDebug() << "Unable to open the tilset" << reader.errorString();
+                            else
+                                map->addTileset(tileset);
+                        }
+                        //add the tile
+                        Tiled::Cell cell;
+                        cell.tile=map->tilesetAt(indexTileset)->tileAt(33);
+                        Tiled::TileLayer * tileLayer=static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerCutTree));
+                        tileLayer->setCell(x,y,cell);
+                    }
+                    values.clear();
                     balise.clear();
                     baliseEnd.clear();
                 }
@@ -1044,6 +1151,9 @@ int createBorder(QString file,const bool addOneToY)
                     QList<QHash<QString,QString> > textFull=botDescriptor.text;
                     if(botDescriptor.fightMonsterId.isEmpty())
                     {
+                        bool additionalStep=false;
+                        if(botDescriptor.shopId!=0)
+                            additionalStep=true;
                         int sub_index=0;
                         while(sub_index<textFull.size())
                         {
@@ -1063,7 +1173,7 @@ int createBorder(QString file,const bool addOneToY)
                                         QString lang;
                                         if(i.key()!="en")
                                             lang=" lang=\""+i.key()+"\"";
-                                        if(sub_index<(textFull.size()-1))
+                                        if(sub_index<(textFull.size()-1) || additionalStep)
                                         {
                                             QString next="Next";
                                             if(i.key()=="nl")
@@ -1101,6 +1211,31 @@ int createBorder(QString file,const bool addOneToY)
 
                                 tempFile.write(QStringLiteral("    </step>\n").toUtf8());
                             }
+                            sub_index++;
+                        }
+                        if(botDescriptor.shopId!=0)
+                        {
+                            tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"text\">\n"
+                            "      <text><![CDATA[<a href=\"%2\">Buy</a><br />"
+                            "      <a href=\"%3\">Sell</a>]]></text>"
+                            "    </step>")
+                                           .arg(sub_index+1)
+                                           .arg(sub_index+2)
+                                           .arg(sub_index+3)
+                                           .toUtf8()
+                                           );
+                            sub_index++;
+                            tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"shop\" shop=\"%2\"/>")
+                                           .arg(sub_index+1)
+                                           .arg(botDescriptor.shopId)
+                                           .toUtf8()
+                                           );
+                            sub_index++;
+                            tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"sell\" shop=\"%2\"/>")
+                                           .arg(sub_index+1)
+                                           .arg(botDescriptor.shopId)
+                                           .toUtf8()
+                                           );
                             sub_index++;
                         }
                     }
@@ -1243,8 +1378,6 @@ int createBorder(QString file,const bool addOneToY)
         else
             std::cerr << "File not found to open in write fight: " << fightPath.toStdString() << std::endl;
     }
-    else
-        std::cerr << "Warning no fight detected" << std::endl;
 
     QHashIterator<QPair<int,int>, WarpDescriptor> i(warpList);
     while (i.hasNext()) {
@@ -1457,7 +1590,7 @@ void loadMonster()
                                         {
                                             if(itemName.isElement())
                                             {
-                                                monsterNameToMonsterId[itemName.text().toUpper()]=id;
+                                                monsterNameToMonsterId[simplifyItemName(itemName.text())]=id;
                                                 break;
                                             }
                                             itemName = itemName.nextSiblingElement("name");
@@ -1487,13 +1620,120 @@ void loadMonster()
     }
 }
 
+void loadShop()
+{
+    //open and quick check the file
+    QFile xmlFile("../itemdex.xml");
+    QByteArray xmlContent;
+    if(xmlFile.open(QIODevice::ReadOnly))
+    {
+        xmlContent=xmlFile.readAll();
+        xmlFile.close();
+        QDomDocument domDocument;
+        QString errorStr;
+        int errorLine,errorColumn;
+        if(domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+        {
+            QDomElement root = domDocument.documentElement();
+            if(root.tagName()=="itemDatabase")
+            {
+                //load the content
+                bool ok;
+                QDomElement items = root.firstChildElement("items");
+                while(!items.isNull())
+                {
+                    QDomElement item = items.firstChildElement("item");
+                    while(!item.isNull())
+                    {
+                        if(item.isElement())
+                        {
+                            QString name;
+                            QDomElement nameXml = item.firstChildElement("name");
+                            if(!nameXml.isNull())
+                                name=nameXml.text();
+                            name=simplifyItemName(name);
+                            QString shop;
+                            QDomElement shopXml = item.firstChildElement("shop");
+                            if(!shopXml.isNull())
+                                shop=shopXml.text();
+                            const unsigned int shopId=shop.toUInt(&ok);
+                            if(!ok)
+                            {
+                                std::cerr << "shop id is not number" << std::endl;
+                                abort();
+                            }
+                            if(shopId!=0)
+                            {
+                                if(!itemNameToId.contains(name))
+                                {
+                                    std::cerr << "item not found for shop: " << name.toStdString() << std::endl;
+                                    abort();
+                                }
+                                shopList[shopId].itemsId.push_back(itemNameToId.value(name));
+                            }
+                        }
+                        item = items.nextSiblingElement("item");
+                    }
+                    items = items.nextSiblingElement("items");
+                }
+                std::cout << "Loaded item from: " << "../itemdex.xml" << std::endl;
+            }
+            else
+                std::cerr << "Wrong root balise: " << "../itemdex.xml" << std::endl;
+        }
+        else
+            std::cerr << "Not xml file: " << "../itemdex.xml" << std::endl;
+    }
+    else
+        std::cerr << "Unable to read: " << "../itemdex.xml" << std::endl;
 
+    if(shopList.empty())
+    {
+        std::cerr << "shopList.empty(): have you ../itemdex.xml at catchchallenger format?" << std::endl;
+        abort();
+    }
+}
+
+void loadCatchChallengerDatapack()
+{
+    //open and quick check the file
+    CatchChallenger::CommonDatapack::commonDatapack.parseDatapack("../datapack/");
+    if(CatchChallenger::CommonDatapack::commonDatapack.items.item.empty())
+    {
+        std::cerr << "CatchChallenger::CommonDatapack::commonDatapack.items.item.empty(): have you ../datapack/ at catchchallenger format?" << std::endl;
+        abort();
+    }
+
+    DatapackClientLoader::datapackLoader.parseDatapack("../datapack/");
+    if(DatapackClientLoader::datapackLoader.itemsExtra.empty())
+    {
+        std::cerr << "DatapackClientLoader::datapackLoader.itemsExtra.empty(): have you ../datapack/ at catchchallenger format?" << std::endl;
+        abort();
+    }
+
+    QHashIterator<uint32_t,DatapackClientLoader::ItemExtra> i(DatapackClientLoader::datapackLoader.itemsExtra);
+    while (i.hasNext()) {
+        i.next();
+        const CATCHCHALLENGER_TYPE_ITEM &item=i.key();
+        const DatapackClientLoader::ItemExtra &itemExtra=i.value();
+        itemNameToId[simplifyItemName(itemExtra.name)]=item;
+    }
+
+    if(itemNameToId.isEmpty())
+    {
+        std::cerr << "itemNameToId.isEmpty(): have you ../datapack/ at catchchallenger format?" << std::endl;
+        abort();
+    }
+}
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+    LanguagesSelect::languagesSelect=new LanguagesSelect();
     loadMonster();
+    loadCatchChallengerDatapack();
+    loadShop();
     botId=1;
     fightid=1;
     if(!QFile("invisible.tsx").exists())
@@ -1549,12 +1789,19 @@ int main(int argc, char *argv[])
     while(index<fileInfoList.size())
     {
         const QString &fileName=fileInfoList.at(index).fileName();
-        if(index%1000==0)
+        if(index%100==0)
             std::cout << "Processing " << index << "/" << fileInfoList.size() << ": " << fileName.toStdString() << std::endl;
         if(fileName.contains(QRegularExpression("^-?[0-9]+\\.-?[0-9]+\\.tmx$")))
+        {
             if(fileInfoList.at(index).exists())
                 //get the x/y offset modifier, heal point
                 readMap(fileInfoList.at(index).fileName());
+            else
+            {
+                std::cerr << fileName.toStdString() << " not exists" << std::endl;
+                abort();
+            }
+        }
         index++;
     }
     if(mapWithHeal.isEmpty())
@@ -1563,12 +1810,49 @@ int main(int argc, char *argv[])
     while(index<fileInfoList.size())
     {
         const QString &fileName=fileInfoList.at(index).fileName();
-        if(index%1000==0)
+        if(index%100==0)
             std::cout << "Create border " << index << "/" << fileInfoList.size() << ": " << fileName.toStdString() << std::endl;
         if(fileName.contains(QRegularExpression("^-?[0-9]+\\.-?[0-9]+\\.tmx$")))
+        {
             if(fileInfoList.at(index).exists())
                 createBorder(fileInfoList.at(index).fileName(),true);
+            else
+            {
+                std::cerr << fileName.toStdString() << " not exists" << std::endl;
+                abort();
+            }
+        }
         index++;
+    }
+
+    if(!shopList.isEmpty())
+    {
+        QString shopPath="../shop/shop.xml";
+        QFile tempFile(shopPath);
+        if(tempFile.open(QIODevice::WriteOnly))
+        {
+            tempFile.write(QStringLiteral("<shops>\n").toUtf8());
+            QHashIterator<unsigned int,Shop> i(shopList);
+            while (i.hasNext()) {
+                i.next();
+                const unsigned int shopId=i.key();
+                const Shop shop=i.value();
+                tempFile.write(QStringLiteral("  <shop id=\"%1\">\n").arg(shopId).toUtf8());
+                int sub_index=0;
+                while(sub_index<shop.itemsId.size())
+                {
+                    tempFile.write(QStringLiteral("    <product itemId=\"%1\" />\n")
+                                   .arg(shop.itemsId.at(sub_index))
+                                   .toUtf8());
+                    sub_index++;
+                }
+                tempFile.write(QStringLiteral("  </shop>\n").toUtf8());
+            }
+            tempFile.write(QStringLiteral("</shops>").toUtf8());
+            tempFile.close();
+        }
+        else
+            std::cerr << "File not found to open in write fight: " << shopPath.toStdString() << std::endl;
     }
     return 0;
 }
