@@ -1043,7 +1043,7 @@ int createBorder(QString file,const bool addOneToY)
                         if(indexLayerCutTree>=map->layerCount())
                         {
                             Tiled::TileLayer *tileLayer=new Tiled::TileLayer("CutTree",0,0,map->width(),map->height());
-                            if(!indexLayerCollisions.empty())
+                            /*buggy if(!indexLayerCollisions.empty())
                             {
                                 const unsigned int newIndex=indexLayerCollisions.front();
                                 for (unsigned int i=0; i < indexLayerCollisions.size(); i++)
@@ -1059,7 +1059,7 @@ int createBorder(QString file,const bool addOneToY)
                                         indexLayerWalkBehind[i]++;
                                 indexLayerCutTree=newIndex;
                             }
-                            else
+                            else*/
                             {
                                 indexLayerCutTree=map->layerCount();
                                 map->addLayer(tileLayer);
@@ -1497,6 +1497,31 @@ int createBorder(QString file,const bool addOneToY)
     bool mapIsCave=map->hasProperty("isCave") && map->property("isCave")=="true";
     bool havePvPAttribute=map->hasProperty("pvp");
 
+    if(!indexLayerCollisions.empty())
+    {
+        int indexLayerCutTree=0;
+        while(indexLayerCutTree<map->layerCount())
+        {
+            if(map->layerAt(indexLayerCutTree)->isTileLayer() && map->layerAt(indexLayerCutTree)->name()=="CutTree")
+                break;
+            indexLayerCutTree++;
+        }
+        if(indexLayerCutTree<map->layerCount())
+        {
+            Tiled::Layer *layer=map->takeLayerAt(indexLayerCutTree);
+            int indexLayerCollisions=0;
+            while(indexLayerCollisions<map->layerCount())
+            {
+                if(map->layerAt(indexLayerCollisions)->isTileLayer() && map->layerAt(indexLayerCollisions)->name()=="Collisions")
+                    break;
+                indexLayerCollisions++;
+            }
+            if(indexLayerCollisions<map->layerCount())
+                map->insertLayer(indexLayerCollisions,layer);
+            else
+                abort();
+        }
+    }
     Tiled::Properties emptyProperties;
     map->setProperties(emptyProperties);
     map->setLayerDataFormat(Tiled::Map::LayerDataFormat::Base64Zlib);
