@@ -1,6 +1,7 @@
 #ifndef SSLCERT_H
 #define SSLCERT_H
 
+#if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(BOTTESTCONNECT)
 #include <QDialog>
 
 namespace Ui {
@@ -22,5 +23,6 @@ private:
     Ui::SslCert *ui;
     bool mValidated;
 };
+#endif
 
 #endif // SSLCERT_H
