@@ -311,16 +311,16 @@ if ($dh = opendir($dir)) {
                 $ext='png';
             else
                 die('unknown file type: '.$value);
-            $value=preg_replace('#\.'.$ext.'$#i','',$value);
-            $cleanName=url_remake_for_url($value,0);
-            if(isset($dirtyNameToClean[$value]) && $cleanName!=$dirtyNameToClean[$value])
-                die('1 isset($dirtyNameToClean[$value]) && $cleanName!=$dirtyNameToClean[$value]: '.$value.' -> '.$cleanName.' for '.$file);
-            $value.='.'.$ext;
+            $valueClean=preg_replace('#\.'.$ext.'$#i','',$value);
+            $cleanName=url_remake_for_url($valueClean,0);
             $cleanName.='.'.$ext;
+            if(isset($dirtyNameToClean[$value]) && $cleanName!=$dirtyNameToClean[$value])
+                die('1 isset($dirtyNameToClean[$value]) && $cleanName!=$dirtyNameToClean[$value]: '.$value.' -> '.$cleanName.' for '.$file.' =! '.$dirtyNameToClean[$value]);
             $content=str_replace($value,$cleanName,$content);
             $dirtyNameToClean[$value]=$cleanName;
             $cleanNameToDirty[$cleanName]=$value;
         }
+
         filewrite($file,$content);
         //extra for tmx
         $dirtyNameToClean[$file]=$file;
@@ -332,12 +332,15 @@ if ($dh = opendir($dir)) {
         preg_match_all('#source="([^"]+)"#isU',$content,$entry_list);
 		foreach($entry_list[1] as $base_key => $value)
 		{
-            $value=str_replace('.png','',$value);
-            $cleanName=url_remake_for_url($value,0);
-            if(isset($dirtyNameToClean[$value]) && $cleanName!=$dirtyNameToClean[$value])
-                die('2 isset($dirtyNameToClean[$value]) && $cleanName!=$dirtyNameToClean[$value]: '.$value.' -> '.$cleanName.' for '.$file);
-            $value.='.png';
+            if(preg_match('#\.png$#i',$value))
+                $ext='png';
+            else
+                die('unknown file type: '.$value);
+            $valueClean=preg_replace('#\.'.$ext.'$#i','',$value);
+            $cleanName=url_remake_for_url($valueClean,0);
             $cleanName.='.png';
+            if(isset($dirtyNameToClean[$value]) && $cleanName!=$dirtyNameToClean[$value])
+                die('2 isset($dirtyNameToClean[$value]) && $cleanName!=$dirtyNameToClean[$value]: '.$value.' -> '.$cleanName.' for '.$file.' =! '.$dirtyNameToClean[$value]);
             $content=str_replace($value,$cleanName,$content);
             $dirtyNameToClean[$value]=$cleanName;
             $cleanNameToDirty[$cleanName]=$value;
