@@ -124,7 +124,9 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                                 }
                                 else
                                 {
+                                    #ifndef ONLYMAPRENDER
                                     qDebug() << "animation properties not found for the door at " << x << "," << y;
+                                    #endif
                                     objectGroup->removeObject(objects.at(index2));
                                     delete objects.at(index2);
                                 }

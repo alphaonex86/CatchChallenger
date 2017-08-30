@@ -917,7 +917,11 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
         {
             while(index<map_to_send_temp.teleport.size())
             {
-                map_to_send_temp.parsed_layer.walkable[map_to_send_temp.teleport.at(index).source_x+map_to_send_temp.teleport.at(index).source_y*map_to_send_temp.width]=true;
+                const Map_semi_teleport &map_semi_teleport=map_to_send_temp.teleport.at(index);
+                if(map_semi_teleport.source_x<map_to_send_temp.width && map_semi_teleport.source_y<map_to_send_temp.height)
+                    map_to_send_temp.parsed_layer.walkable[map_semi_teleport.source_x+map_semi_teleport.source_y*map_to_send_temp.width]=true;
+                else
+                    std::cerr << "teleporter out of map on " << file << ", source: " << map_semi_teleport.source_x << "," << map_semi_teleport.source_y << std::endl;
                 index++;
             }
         }
@@ -927,16 +931,26 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             while(index<map_to_send_temp.bots.size())
             {
                 const Map_to_send::Bot_Semi &bot=map_to_send_temp.bots.at(index);
-                if(bot.property_text.find(CACHEDSTRING_skin)!=bot.property_text.cend() && (bot.property_text.find(CACHEDSTRING_lookAt)==bot.property_text.cend() || bot.property_text.at(CACHEDSTRING_lookAt)!=CACHEDSTRING_move))
-                    map_to_send_temp.parsed_layer.walkable[bot.point.x+bot.point.y*map_to_send_temp.width]=false;
+                if(bot.point.x<map_to_send_temp.width && bot.point.y<map_to_send_temp.height)
+                {
+                    if(bot.property_text.find(CACHEDSTRING_skin)!=bot.property_text.cend() && (bot.property_text.find(CACHEDSTRING_lookAt)==bot.property_text.cend() || bot.property_text.at(CACHEDSTRING_lookAt)!=CACHEDSTRING_move))
+                        map_to_send_temp.parsed_layer.walkable[bot.point.x+bot.point.y*map_to_send_temp.width]=false;
+                }
+                else
+                    std::cerr << "bot out of map on " << file << ", source: " << bot.point.x << "," << bot.point.y << std::endl;
                 index++;
             }
             index=0;
             while(index<map_to_send_temp.items.size())
             {
                 const Map_to_send::ItemOnMap_Semi &item_semi=map_to_send_temp.items.at(index);
-                if(item_semi.visible && item_semi.infinite)
-                    map_to_send_temp.parsed_layer.walkable[item_semi.point.x+item_semi.point.y*map_to_send_temp.width]=false;
+                if(item_semi.point.x<map_to_send_temp.width && item_semi.point.y<map_to_send_temp.height)
+                {
+                    if(item_semi.visible && item_semi.infinite)
+                        map_to_send_temp.parsed_layer.walkable[item_semi.point.x+item_semi.point.y*map_to_send_temp.width]=false;
+                }
+                else
+                    std::cerr << "item out of map on " << file << ", source: " << item_semi.point.x << "," << item_semi.point.y << std::endl;
                 index++;
             }
         }
