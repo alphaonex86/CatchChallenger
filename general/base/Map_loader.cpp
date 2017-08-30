@@ -921,7 +921,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 if(map_semi_teleport.source_x<map_to_send_temp.width && map_semi_teleport.source_y<map_to_send_temp.height)
                     map_to_send_temp.parsed_layer.walkable[map_semi_teleport.source_x+map_semi_teleport.source_y*map_to_send_temp.width]=true;
                 else
-                    std::cerr << "teleporter out of map on " << file << ", source: " << map_semi_teleport.source_x << "," << map_semi_teleport.source_y << std::endl;
+                    std::cerr << "teleporter out of map on " << file << ", source: " << std::to_string(map_semi_teleport.source_x) << "," << std::to_string(map_semi_teleport.source_y) << std::endl;
                 index++;
             }
         }
@@ -937,7 +937,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                         map_to_send_temp.parsed_layer.walkable[bot.point.x+bot.point.y*map_to_send_temp.width]=false;
                 }
                 else
-                    std::cerr << "bot out of map on " << file << ", source: " << bot.point.x << "," << bot.point.y << std::endl;
+                    std::cerr << "bot out of map on " << file << ", source: " << std::to_string(bot.point.x) << "," << std::to_string(bot.point.y) << std::endl;
                 index++;
             }
             index=0;
@@ -950,7 +950,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                         map_to_send_temp.parsed_layer.walkable[item_semi.point.x+item_semi.point.y*map_to_send_temp.width]=false;
                 }
                 else
-                    std::cerr << "item out of map on " << file << ", source: " << item_semi.point.x << "," << item_semi.point.y << std::endl;
+                    std::cerr << "item out of map on " << file << ", source: " << std::to_string(item_semi.point.x) << "," << std::to_string(item_semi.point.y) << std::endl;
                 index++;
             }
         }
