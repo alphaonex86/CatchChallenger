@@ -53,58 +53,58 @@ using namespace Tiled::Internal;
 
 namespace Tiled {
 
-QString MapReader::text_map=QStringLiteral("map");
-QString MapReader::text_width=QStringLiteral("width");
-QString MapReader::text_height=QStringLiteral("height");
-QString MapReader::text_tilewidth=QStringLiteral("tilewidth");
-QString MapReader::text_tileheight=QStringLiteral("tileheight");
-QString MapReader::text_orientation=QStringLiteral("orientation");
-QString MapReader::text_backgroundcolor=QStringLiteral("backgroundcolor");
-QString MapReader::text_properties=QStringLiteral("properties");
-QString MapReader::text_tileset=QStringLiteral("tileset");
-QString MapReader::text_layer=QStringLiteral("layer");
-QString MapReader::text_objectgroup=QStringLiteral("objectgroup");
-QString MapReader::text_imagelayer=QStringLiteral("imagelayer");
-QString MapReader::text_source=QStringLiteral("source");
-QString MapReader::text_name=QStringLiteral("name");
-QString MapReader::text_spacing=QStringLiteral("spacing");
-QString MapReader::text_margin=QStringLiteral("margin");
-QString MapReader::text_tile=QStringLiteral("tile");
-QString MapReader::text_tileoffset=QStringLiteral("tileoffset");
-QString MapReader::text_x=QStringLiteral("x");
-QString MapReader::text_y=QStringLiteral("y");
-QString MapReader::text_image=QStringLiteral("image");
-QString MapReader::text_terraintypes=QStringLiteral("terraintypes");
-QString MapReader::text_id=QStringLiteral("id");
-QString MapReader::text_comma=QStringLiteral(",");
-QString MapReader::text_probability=QStringLiteral("probability");
-QString MapReader::text_trans=QStringLiteral("trans");
-QString MapReader::text_dies=QStringLiteral("#");
-QString MapReader::text_format=QStringLiteral("format");
-QString MapReader::text_data=QStringLiteral("data");
-QString MapReader::text_encoding=QStringLiteral("encoding");
-QString MapReader::text_base64=QStringLiteral("base64");
-QString MapReader::text_firstgid=QStringLiteral("firstgid");
-QString MapReader::text_terrain=QStringLiteral("terrain");
-QString MapReader::text_opacity=QStringLiteral("opacity");
-QString MapReader::text_visible=QStringLiteral("visible");
-QString MapReader::text_compression=QStringLiteral("compression");
-QString MapReader::text_csv=QStringLiteral("csv");
-QString MapReader::text_gzip=QStringLiteral("gzip");
-QString MapReader::text_zlib=QStringLiteral("zlib");
-QString MapReader::text_gid=QStringLiteral("gid");
-QString MapReader::text_color=QStringLiteral("color");
-QString MapReader::text_object=QStringLiteral("object");
-QString MapReader::text_type=QStringLiteral("type");
-QString MapReader::text_rotation=QStringLiteral("rotation");
-QString MapReader::text_polygon=QStringLiteral("polygon");
-QString MapReader::text_polyline=QStringLiteral("polyline");
-QString MapReader::text_ellipse=QStringLiteral("ellipse");
-QString MapReader::text_points=QStringLiteral("points");
-QString MapReader::text_space=QStringLiteral("space");
-QString MapReader::text_property=QStringLiteral("property");
-QString MapReader::text_value=QStringLiteral("value");
-QString MapReader::text_slash=QStringLiteral("/");
+const QString MapReader::text_map=QStringLiteral("map");
+const QString MapReader::text_width=QStringLiteral("width");
+const QString MapReader::text_height=QStringLiteral("height");
+const QString MapReader::text_tilewidth=QStringLiteral("tilewidth");
+const QString MapReader::text_tileheight=QStringLiteral("tileheight");
+const QString MapReader::text_orientation=QStringLiteral("orientation");
+const QString MapReader::text_backgroundcolor=QStringLiteral("backgroundcolor");
+const QString MapReader::text_properties=QStringLiteral("properties");
+const QString MapReader::text_tileset=QStringLiteral("tileset");
+const QString MapReader::text_layer=QStringLiteral("layer");
+const QString MapReader::text_objectgroup=QStringLiteral("objectgroup");
+const QString MapReader::text_imagelayer=QStringLiteral("imagelayer");
+const QString MapReader::text_source=QStringLiteral("source");
+const QString MapReader::text_name=QStringLiteral("name");
+const QString MapReader::text_spacing=QStringLiteral("spacing");
+const QString MapReader::text_margin=QStringLiteral("margin");
+const QString MapReader::text_tile=QStringLiteral("tile");
+const QString MapReader::text_tileoffset=QStringLiteral("tileoffset");
+const QString MapReader::text_x=QStringLiteral("x");
+const QString MapReader::text_y=QStringLiteral("y");
+const QString MapReader::text_image=QStringLiteral("image");
+const QString MapReader::text_terraintypes=QStringLiteral("terraintypes");
+const QString MapReader::text_id=QStringLiteral("id");
+const QString MapReader::text_comma=QStringLiteral(",");
+const QString MapReader::text_probability=QStringLiteral("probability");
+const QString MapReader::text_trans=QStringLiteral("trans");
+const QString MapReader::text_dies=QStringLiteral("#");
+const QString MapReader::text_format=QStringLiteral("format");
+const QString MapReader::text_data=QStringLiteral("data");
+const QString MapReader::text_encoding=QStringLiteral("encoding");
+const QString MapReader::text_base64=QStringLiteral("base64");
+const QString MapReader::text_firstgid=QStringLiteral("firstgid");
+const QString MapReader::text_terrain=QStringLiteral("terrain");
+const QString MapReader::text_opacity=QStringLiteral("opacity");
+const QString MapReader::text_visible=QStringLiteral("visible");
+const QString MapReader::text_compression=QStringLiteral("compression");
+const QString MapReader::text_csv=QStringLiteral("csv");
+const QString MapReader::text_gzip=QStringLiteral("gzip");
+const QString MapReader::text_zlib=QStringLiteral("zlib");
+const QString MapReader::text_gid=QStringLiteral("gid");
+const QString MapReader::text_color=QStringLiteral("color");
+const QString MapReader::text_object=QStringLiteral("object");
+const QString MapReader::text_type=QStringLiteral("type");
+const QString MapReader::text_rotation=QStringLiteral("rotation");
+const QString MapReader::text_polygon=QStringLiteral("polygon");
+const QString MapReader::text_polyline=QStringLiteral("polyline");
+const QString MapReader::text_ellipse=QStringLiteral("ellipse");
+const QString MapReader::text_points=QStringLiteral("points");
+const QString MapReader::text_space=QStringLiteral("space");
+const QString MapReader::text_property=QStringLiteral("property");
+const QString MapReader::text_value=QStringLiteral("value");
+const QString MapReader::text_slash=QStringLiteral("/");
 
 
 namespace Internal {
@@ -471,16 +471,13 @@ void MapReaderPrivate::readTilesetImage(Tileset *tileset)
     const int width = atts.value(MapReader::text_width).toString().toInt();
     mGidMapper.setTilesetWidth(tileset, width);
 
-    if(p->loadImage)
-    {
-        if (mLazy && !source.isEmpty()) {
-            // Don't load the image right now, but remember the source
-            tileset->setImageSource(source);
-            xml.skipCurrentElement();
-        } else {
-            if (!tileset->loadFromImage(readImage(), source))
-                xml.raiseError(tr("Error loading tileset image:\n'%1'").arg(source));
-        }
+    if (mLazy && !source.isEmpty()) {
+        // Don't load the image right now, but remember the source
+        tileset->setImageSource(source);
+        xml.skipCurrentElement();
+    } else {
+        if (!tileset->loadFromImage(readImage(), source))
+            xml.raiseError(tr("Error loading tileset image:\n'%1'").arg(source));
     }
 }
 
@@ -975,7 +972,6 @@ void MapReaderPrivate::readProperty(Properties *properties)
 MapReader::MapReader()
     : d(new MapReaderPrivate(this))
 {
-    loadImage=true;
 }
 
 MapReader::~MapReader()
