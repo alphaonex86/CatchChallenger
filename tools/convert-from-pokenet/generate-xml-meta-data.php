@@ -624,7 +624,7 @@ if ($dh = opendir($dir)) {
 			}
 			$xmlcontent.='	</'.$grassType.'Night>'."\n";
 		}
-		if(count($water)>0)
+		if(count($water)>0 && preg_match('#layer[^>] name="Water"#isU',$file))
 		{
 			$xmlcontent.='	<water>'."\n";
 			foreach($water as $monster)
@@ -636,7 +636,7 @@ if ($dh = opendir($dir)) {
 			}
 			$xmlcontent.='	</water>'."\n";
 		}
-		if(count($fish)>0)
+		if(count($fish)>0 && preg_match('#layer[^>] name="Water"#isU',$file))
 		{
 			$xmlcontent.='	<fish>'."\n";
 			foreach($fish as $monster)
