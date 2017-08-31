@@ -22,6 +22,9 @@
 #include "../../client/base/LanguagesSelect.h"
 
 #include "../../general/base/CommonDatapack.h"
+#include "../../general/base/GeneralVariable.h"
+#include "../../general/base/GeneralType.h"
+#include "../../general/base/GeneralStructures.h"
 
 /*pokemium or pokenet npc file structure:
 [npc]
@@ -38,6 +41,35 @@ true//healer, 9
 false//box, 10
 false//shop, 11, false = 0 (none), true = 1, 2, 3, ...
 [/npc]
+[warp]
+setX(Integer.parseInt(reader.nextLine()));
+setY(Integer.parseInt(reader.nextLine()));
+setWarpX(Integer.parseInt(reader.nextLine()) * 32);
+setWarpY(Integer.parseInt(reader.nextLine()) * 32 - 8);
+setWarpMapX(Integer.parseInt(reader.nextLine()));
+setWarpMapY(Integer.parseInt(reader.nextLine()));
+setBadgeRequirement(Integer.parseInt(reader.nextLine()));
+[/warp]
+[hmobject]
+setName(reader.nextLine());
+setType(HMObject.parseHMObject(hmObject.getName()));//CUT_TREE (Only this for now), HEADBUTT_TREE, ROCKSMASH_ROCK, STRENGTH_BOULDER, WHIRLPOOL
+setX(Integer.parseInt(reader.nextLine()) * 32);
+setOriginalX(hmObject.getX());
+setY(Integer.parseInt(reader.nextLine()) * 32 - 8);
+setOriginalY(hmObject.getY());
+[/hmobject]
+
+Todo:
+not supported by catchchallenger for now:
+[trade]
+t.setName(reader.nextLine());
+Direction
+t.setSprite(Integer.parseInt(reader.nextLine()));
+t.setX(Integer.parseInt(reader.nextLine()) * 32);
+t.setY(Integer.parseInt(reader.nextLine()) * 32 - 8);
+t.setRequestedPokemon(reader.nextLine(), Integer.parseInt(reader.nextLine()), reader.nextLine());
+t.setOfferedSpecies(reader.nextLine(), Integer.parseInt(reader.nextLine()));
+[/trade]
 */
 
 //todo: use zopfli to improve the layer compression
@@ -53,6 +85,9 @@ int botId=0;
 int fightid=0;
 QSet<QString> mapWithHeal;
 unsigned int npcinicountValid=0;
+QHash<QString,Tiled::Map *> mapLoaded;//keep in memory for intermap link management
+Tiled::Tileset *tilesetinvisible=NULL;
+Tiled::Tileset *tilesetnormal1=NULL;
 
 struct BotDescriptor
 {
@@ -103,6 +138,194 @@ QHash<QString,unsigned int> itemNameToId;
 
 QStringList loadNPCText(const QString &npcFile,const QString &language);
 
+bool haveBorderHole(const QString &file,const CatchChallenger::Orientation &orientation)
+{
+    const Tiled::Map * const map=mapLoaded.value(file);
+    //detect the layer
+    std::vector<unsigned int> indexLayerWalkable;
+    int indexLayer=0;
+    while(indexLayer<map->layerCount())
+    {
+        if(map->layerAt(indexLayer)->layerType()==Tiled::Layer::TileLayerType)
+        {
+            Tiled::TileLayer *tileLayer=map->layerAt(indexLayer)->asTileLayer();
+            if(tileLayer->name()=="Walkable")
+                indexLayerWalkable.push_back(indexLayer);
+        }
+        indexLayer++;
+    }
+    if(indexLayerWalkable.empty())
+    {
+        indexLayer=0;
+        while(indexLayer<map->layerCount())
+        {
+            if(map->layerAt(indexLayer)->layerType()==Tiled::Layer::TileLayerType)
+            {
+                Tiled::TileLayer *tileLayer=map->layerAt(indexLayer)->asTileLayer();
+                if(tileLayer->name()=="Grass")
+                    indexLayerWalkable.push_back(indexLayer);
+            }
+            indexLayer++;
+        }
+    }
+    if(indexLayerWalkable.empty())
+    {
+        indexLayer=0;
+        while(indexLayer<map->layerCount())
+        {
+            if(map->layerAt(indexLayer)->layerType()==Tiled::Layer::TileLayerType)
+            {
+                Tiled::TileLayer *tileLayer=map->layerAt(indexLayer)->asTileLayer();
+                if(tileLayer->name()=="Water")
+                    indexLayerWalkable.push_back(indexLayer);
+            }
+            indexLayer++;
+        }
+    }
+    if(indexLayerWalkable.empty())
+        return false;
+    //detect the collisions
+    std::vector<unsigned int> indexLayerCollisions;
+    indexLayer=0;
+    while(indexLayer<map->layerCount())
+    {
+        if(map->layerAt(indexLayer)->isTileLayer() && map->layerAt(indexLayer)->name()=="Collisions")
+            indexLayerCollisions.push_back(indexLayer);
+        indexLayer++;
+    }
+    //test the tile line
+    switch (orientation) {
+    case CatchChallenger::Orientation_bottom:
+    {
+        const unsigned int y=map->height()-1;
+        unsigned int x=0;
+        while(x<(unsigned int)map->width())
+        {
+            unsigned int indexLayer=0;
+            while(indexLayer<indexLayerWalkable.size())
+            {
+                if(static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerWalkable.at(indexLayer)))->cellAt(x,y).isEmpty())
+                    break;
+                indexLayer++;
+            }
+            if(indexLayer<indexLayerWalkable.size())
+            {
+                indexLayer=0;
+                while(indexLayer<indexLayerCollisions.size())
+                {
+                    const Tiled::TileLayer * const tileLayer=static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerCollisions.at(indexLayer)));
+                    const Tiled::Cell &cell=tileLayer->cellAt(x,y);
+                    if(!cell.isEmpty())
+                        break;
+                    indexLayer++;
+                }
+                if(indexLayer>=indexLayerCollisions.size())
+                    return true;
+            }
+            x++;
+        }
+    }
+    break;
+    case CatchChallenger::Orientation_top:
+    {
+        const unsigned int y=0;
+        unsigned int x=0;
+        while(x<(unsigned int)map->width())
+        {
+            unsigned int indexLayer=0;
+            while(indexLayer<indexLayerWalkable.size())
+            {
+                if(static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerWalkable.at(indexLayer)))->cellAt(x,y).isEmpty())
+                    break;
+                indexLayer++;
+            }
+            if(indexLayer<indexLayerWalkable.size())
+            {
+                indexLayer=0;
+                while(indexLayer<indexLayerCollisions.size())
+                {
+                    const Tiled::TileLayer * const tileLayer=static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerCollisions.at(indexLayer)));
+                    const Tiled::Cell &cell=tileLayer->cellAt(x,y);
+                    if(!cell.isEmpty())
+                        break;
+                    indexLayer++;
+                }
+                if(indexLayer>=indexLayerCollisions.size())
+                    return true;
+            }
+            x++;
+        }
+    }
+    break;
+    case CatchChallenger::Orientation_left:
+    {
+        const unsigned int x=0;
+        unsigned int y=0;
+        while(y<(unsigned int)map->height())
+        {
+            unsigned int indexLayer=0;
+            while(indexLayer<indexLayerWalkable.size())
+            {
+                if(static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerWalkable.at(indexLayer)))->cellAt(x,y).isEmpty())
+                    break;
+                indexLayer++;
+            }
+            if(indexLayer<indexLayerWalkable.size())
+            {
+                indexLayer=0;
+                while(indexLayer<indexLayerCollisions.size())
+                {
+                    const Tiled::TileLayer * const tileLayer=static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerCollisions.at(indexLayer)));
+                    const Tiled::Cell &cell=tileLayer->cellAt(x,y);
+                    if(!cell.isEmpty())
+                        break;
+                    indexLayer++;
+                }
+                if(indexLayer>=indexLayerCollisions.size())
+                    return true;
+            }
+            y++;
+        }
+    }
+    break;
+    case CatchChallenger::Orientation_right:
+    {
+        const unsigned int x=map->width()-1;
+        unsigned int y=0;
+        while(y<(unsigned int)map->height())
+        {
+            unsigned int indexLayer=0;
+            while(indexLayer<indexLayerWalkable.size())
+            {
+                if(static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerWalkable.at(indexLayer)))->cellAt(x,y).isEmpty())
+                    break;
+                indexLayer++;
+            }
+            if(indexLayer<indexLayerWalkable.size())
+            {
+                indexLayer=0;
+                while(indexLayer<indexLayerCollisions.size())
+                {
+                    const Tiled::TileLayer * const tileLayer=static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerCollisions.at(indexLayer)));
+                    const Tiled::Cell &cell=tileLayer->cellAt(x,y);
+                    if(!cell.isEmpty())
+                        break;
+                    indexLayer++;
+                }
+                if(indexLayer>=indexLayerCollisions.size())
+                    return true;
+            }
+            y++;
+        }
+    }
+    break;
+    default:
+        return false;
+        break;
+    }
+    return false;
+}
+
 QString simplifyItemName(QString name)
 {
     name.remove(' ');
@@ -118,8 +341,9 @@ int readMap(QString file)
     if(!QFile(file).exists())
         return 0;
     Tiled::MapReader reader;
-    reader.loadImage=false;
     Tiled::Map *map=reader.readMap(file);
+    if(map->layerCount()==0)
+        abort();
     if(map==NULL)
     {
         qDebug() << "Can't read" << file << reader.errorString();
@@ -215,7 +439,7 @@ int readMap(QString file)
         mapWithHeal.insert(cleanFileName);
     }
 
-    delete map;
+    mapLoaded[file]=map;
     {
         QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
         while (i.hasNext()) {
@@ -285,12 +509,11 @@ int createBorder(QString file,const bool addOneToY)
         abort();
     }
 
-    Tiled::MapReader reader;
     Tiled::MapWriter write;
-    Tiled::Map *map=reader.readMap(file);
+    Tiled::Map *map=mapLoaded.value(file);
     if(map==NULL)
     {
-        qDebug() << "Can't open to create the border" << file << reader.errorString();
+        qDebug() << "Can't open to create the border" << file;
         abort();//return 86;
     }
     QString xString=file;
@@ -322,11 +545,7 @@ int createBorder(QString file,const bool addOneToY)
     if(indexTileset>=map->tilesetCount())
     {
         indexTileset=map->tilesetCount();
-        Tiled::Tileset *tileset = reader.readTileset("invisible.tsx");
-        if (!tileset)
-            qDebug() << "Unable to open the tilset" << reader.errorString();
-        else
-            map->addTileset(tileset);
+        map->addTileset(tilesetinvisible);
         /*Tiled::Tileset *tileset=new Tiled::Tileset("invisible",map->tileWidth(),map->tileHeight());
         tileset->setFileName("invisible.tsx");*/
     }
@@ -433,16 +652,19 @@ int createBorder(QString file,const bool addOneToY)
                         point=QPointF(0,map->height()/2+offsetToY);
                     if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                     {
-                        Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
-                        QString mapBorderFileClean=mapBorderFile;
-                        mapBorderFileClean.remove(".tmx");
-                        mapObject->setProperty("map",mapBorderFileClean);
-                        Tiled::Cell cell=mapObject->cell();
-                        cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-                        if(cell.tile==NULL)
-                            qDebug() << "Tile not found (" << __LINE__ << ")";
-                        mapObject->setCell(cell);
-                        map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                        if(haveBorderHole(file,CatchChallenger::Orientation_left) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_right))
+                        {
+                            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
+                            QString mapBorderFileClean=mapBorderFile;
+                            mapBorderFileClean.remove(".tmx");
+                            mapObject->setProperty("map",mapBorderFileClean);
+                            Tiled::Cell cell=mapObject->cell();
+                            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+                            if(cell.tile==NULL)
+                                qDebug() << "Tile not found (" << __LINE__ << ")";
+                            mapObject->setCell(cell);
+                            map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                        }
                     }
                 }
             }
@@ -466,16 +688,19 @@ int createBorder(QString file,const bool addOneToY)
                         point=QPointF(map->width()-1,map->height()/2+offsetToY);
                     if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                     {
-                        Tiled::MapObject *mapObject=new Tiled::MapObject("","border-right",point,QSizeF(1,1));
-                        QString mapBorderFileClean=mapBorderFile;
-                        mapBorderFileClean.remove(".tmx");
-                        mapObject->setProperty("map",mapBorderFileClean);
-                        Tiled::Cell cell=mapObject->cell();
-                        cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-                        if(cell.tile==NULL)
-                            qDebug() << "Tile not found (" << __LINE__ << ")";
-                        mapObject->setCell(cell);
-                        map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                        if(haveBorderHole(file,CatchChallenger::Orientation_right) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_left))
+                        {
+                            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-right",point,QSizeF(1,1));
+                            QString mapBorderFileClean=mapBorderFile;
+                            mapBorderFileClean.remove(".tmx");
+                            mapObject->setProperty("map",mapBorderFileClean);
+                            Tiled::Cell cell=mapObject->cell();
+                            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+                            if(cell.tile==NULL)
+                                qDebug() << "Tile not found (" << __LINE__ << ")";
+                            mapObject->setCell(cell);
+                            map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                        }
                     }
                 }
             }
@@ -499,16 +724,19 @@ int createBorder(QString file,const bool addOneToY)
                         point=QPointF(map->width()/2,0+offsetToY);
                     if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                     {
-                        Tiled::MapObject *mapObject=new Tiled::MapObject("","border-top",point,QSizeF(1,1));
-                        QString mapBorderFileClean=mapBorderFile;
-                        mapBorderFileClean.remove(".tmx");
-                        mapObject->setProperty("map",mapBorderFileClean);
-                        Tiled::Cell cell=mapObject->cell();
-                        cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-                        if(cell.tile==NULL)
-                            qDebug() << "Tile not found (" << __LINE__ << ")";
-                        mapObject->setCell(cell);
-                        map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                        if(haveBorderHole(file,CatchChallenger::Orientation_top) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_bottom))
+                        {
+                            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-top",point,QSizeF(1,1));
+                            QString mapBorderFileClean=mapBorderFile;
+                            mapBorderFileClean.remove(".tmx");
+                            mapObject->setProperty("map",mapBorderFileClean);
+                            Tiled::Cell cell=mapObject->cell();
+                            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+                            if(cell.tile==NULL)
+                                qDebug() << "Tile not found (" << __LINE__ << ")";
+                            mapObject->setCell(cell);
+                            map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                        }
                     }
                 }
             }
@@ -532,16 +760,19 @@ int createBorder(QString file,const bool addOneToY)
                         point=QPointF(map->width()/2,map->height()-1+offsetToY);
                     if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                     {
-                        Tiled::MapObject *mapObject=new Tiled::MapObject("","border-bottom",point,QSizeF(1,1));
-                        QString mapBorderFileClean=mapBorderFile;
-                        mapBorderFileClean.remove(".tmx");
-                        mapObject->setProperty("map",mapBorderFileClean);
-                        Tiled::Cell cell=mapObject->cell();
-                        cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-                        if(cell.tile==NULL)
-                            qDebug() << "Tile not found (" << __LINE__ << ")";
-                        mapObject->setCell(cell);
-                        map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                        if(haveBorderHole(file,CatchChallenger::Orientation_bottom) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_top))
+                        {
+                            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-bottom",point,QSizeF(1,1));
+                            QString mapBorderFileClean=mapBorderFile;
+                            mapBorderFileClean.remove(".tmx");
+                            mapObject->setProperty("map",mapBorderFileClean);
+                            Tiled::Cell cell=mapObject->cell();
+                            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+                            if(cell.tile==NULL)
+                                qDebug() << "Tile not found (" << __LINE__ << ")";
+                            mapObject->setCell(cell);
+                            map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                        }
                     }
                 }
             }
@@ -1176,11 +1407,7 @@ int createBorder(QString file,const bool addOneToY)
                         if(indexTileset>=map->tilesetCount())
                         {
                             indexTileset=map->tilesetCount();
-                            Tiled::Tileset *tileset = reader.readTileset("normal1.tsx");
-                            if (!tileset)
-                                qDebug() << "Unable to open the tilset" << reader.errorString();
-                            else
-                                map->addTileset(tileset);
+                            map->addTileset(tilesetnormal1);
                         }
                         //add the tile
                         Tiled::Cell cell;
@@ -1204,8 +1431,8 @@ int createBorder(QString file,const bool addOneToY)
             tempFile.close();
             npcinicountValid++;
         }
-        else
-            std::cerr << "File not found to open npc ini: " << npcFile.toStdString() << std::endl;
+        /*else
+            std::cerr << "File not found to open npc ini: " << npcFile.toStdString() << std::endl;*/
     }
     if(!botList.isEmpty())
     {
@@ -1633,7 +1860,7 @@ int createBorder(QString file,const bool addOneToY)
     map->setProperties(emptyProperties);
     map->setLayerDataFormat(Tiled::Map::LayerDataFormat::Base64Zlib);
     write.writeMap(map,file);
-    delete map;
+    //delete map;
     {
         QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
         while (i.hasNext()) {
@@ -1874,6 +2101,26 @@ int main(int argc, char *argv[])
         qDebug() << "Tileset invisible.tsx not found";
         return 90;
     }
+    Tiled::MapReader reader;
+    tilesetinvisible = reader.readTileset("invisible.tsx");
+    if (!tilesetinvisible)
+    {
+        qDebug() << "Unable to open the tilset" << reader.errorString();
+        abort();
+    }
+
+    if(!QFile("normal1.tsx").exists())
+    {
+        qDebug() << "Tileset normal1.tsx not found";
+        return 90;
+    }
+    tilesetnormal1 = reader.readTileset("normal1.tsx");
+    if (!tilesetnormal1)
+    {
+        qDebug() << "Unable to open the tilset" << reader.errorString();
+        abort();
+    }
+
     if(!QDir("../language/english/NPC").exists())
     {
         qDebug() << "!QDir(\"../language/english/NPC\").exists()";
@@ -1991,6 +2238,6 @@ int main(int argc, char *argv[])
     if(npcinicountValid==0)
         std::cerr << "npcinicountValid==0" << std::endl;
 
-    std::cerr << "Correctly finished" << std::endl;
+    std::cout << "Correctly finished" << std::endl;
     return 0;
 }
