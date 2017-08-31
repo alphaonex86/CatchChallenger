@@ -434,7 +434,9 @@ int createBorder(QString file,const bool addOneToY)
                     if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                     {
                         Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
-                        mapObject->setProperty("map",mapBorderFile);
+                        QString mapBorderFileClean=mapBorderFile;
+                        mapBorderFileClean.remove(".tmx");
+                        mapObject->setProperty("map",mapBorderFileClean);
                         Tiled::Cell cell=mapObject->cell();
                         cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
                         if(cell.tile==NULL)
@@ -465,7 +467,9 @@ int createBorder(QString file,const bool addOneToY)
                     if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                     {
                         Tiled::MapObject *mapObject=new Tiled::MapObject("","border-right",point,QSizeF(1,1));
-                        mapObject->setProperty("map",mapBorderFile);
+                        QString mapBorderFileClean=mapBorderFile;
+                        mapBorderFileClean.remove(".tmx");
+                        mapObject->setProperty("map",mapBorderFileClean);
                         Tiled::Cell cell=mapObject->cell();
                         cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
                         if(cell.tile==NULL)
@@ -496,7 +500,9 @@ int createBorder(QString file,const bool addOneToY)
                     if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                     {
                         Tiled::MapObject *mapObject=new Tiled::MapObject("","border-top",point,QSizeF(1,1));
-                        mapObject->setProperty("map",mapBorderFile);
+                        QString mapBorderFileClean=mapBorderFile;
+                        mapBorderFileClean.remove(".tmx");
+                        mapObject->setProperty("map",mapBorderFileClean);
                         Tiled::Cell cell=mapObject->cell();
                         cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
                         if(cell.tile==NULL)
@@ -527,7 +533,9 @@ int createBorder(QString file,const bool addOneToY)
                     if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                     {
                         Tiled::MapObject *mapObject=new Tiled::MapObject("","border-bottom",point,QSizeF(1,1));
-                        mapObject->setProperty("map",mapBorderFile);
+                        QString mapBorderFileClean=mapBorderFile;
+                        mapBorderFileClean.remove(".tmx");
+                        mapObject->setProperty("map",mapBorderFileClean);
                         Tiled::Cell cell=mapObject->cell();
                         cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
                         if(cell.tile==NULL)
@@ -1367,7 +1375,9 @@ int createBorder(QString file,const bool addOneToY)
                     tempFile.write(QStringLiteral("  </bot>\n").toUtf8());
                     {
                         Tiled::MapObject *mapObject=new Tiled::MapObject("","bot",QPointF(botDescriptor.x,botDescriptor.y+offsetToY),QSizeF(1,1));
-                        mapObject->setProperty("file",botsFile);
+                        QString botsFileClean=botsFile;
+                        botsFileClean.remove(".tmx");
+                        mapObject->setProperty("file",botsFileClean);
                         mapObject->setProperty("id",QString::number(botId));
                         if(!botDescriptor.skin.isEmpty())
                         {
@@ -1567,6 +1577,7 @@ int createBorder(QString file,const bool addOneToY)
         }
     }
     bool grassLayerDropped=false;
+    bool haveGrassLayer=false;
     {
         int indexLayer=0;
         while(indexLayer<map->layerCount())
@@ -1574,6 +1585,8 @@ int createBorder(QString file,const bool addOneToY)
             if(map->layerAt(indexLayer)->layerType()==Tiled::Layer::TileLayerType)
             {
                 Tiled::TileLayer *tileLayer=map->layerAt(indexLayer)->asTileLayer();
+                if(tileLayer->name()=="Grass")
+                    haveGrassLayer=true;
                 if(tileLayer->isEmpty())
                 {
                     if(tileLayer->name()=="Grass")
@@ -1630,7 +1643,7 @@ int createBorder(QString file,const bool addOneToY)
         Tiled::Tileset::preloadedTileset.clear();
     }
 
-    if(grassLayerDropped && mapHaveGrassMonster)
+    if((grassLayerDropped || !haveGrassLayer) && mapHaveGrassMonster)
     {
         QString botsFile=file;
         botsFile.replace(".tmx",".xml");
@@ -1977,5 +1990,7 @@ int main(int argc, char *argv[])
 
     if(npcinicountValid==0)
         std::cerr << "npcinicountValid==0" << std::endl;
+
+    std::cerr << "Correctly finished" << std::endl;
     return 0;
 }
