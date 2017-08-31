@@ -204,7 +204,7 @@ bool haveBorderHole(const QString &file,const CatchChallenger::Orientation &orie
             unsigned int indexLayer=0;
             while(indexLayer<indexLayerWalkable.size())
             {
-                if(static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerWalkable.at(indexLayer)))->cellAt(x,y).isEmpty())
+                if(!static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerWalkable.at(indexLayer)))->cellAt(x,y).isEmpty())
                     break;
                 indexLayer++;
             }
@@ -235,7 +235,7 @@ bool haveBorderHole(const QString &file,const CatchChallenger::Orientation &orie
             unsigned int indexLayer=0;
             while(indexLayer<indexLayerWalkable.size())
             {
-                if(static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerWalkable.at(indexLayer)))->cellAt(x,y).isEmpty())
+                if(!static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerWalkable.at(indexLayer)))->cellAt(x,y).isEmpty())
                     break;
                 indexLayer++;
             }
@@ -259,6 +259,8 @@ bool haveBorderHole(const QString &file,const CatchChallenger::Orientation &orie
     break;
     case CatchChallenger::Orientation_left:
     {
+        if(file=="2.0.tmx")
+            std::cout << std::endl;
         const unsigned int x=0;
         unsigned int y=0;
         while(y<(unsigned int)map->height())
@@ -266,7 +268,7 @@ bool haveBorderHole(const QString &file,const CatchChallenger::Orientation &orie
             unsigned int indexLayer=0;
             while(indexLayer<indexLayerWalkable.size())
             {
-                if(static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerWalkable.at(indexLayer)))->cellAt(x,y).isEmpty())
+                if(!static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerWalkable.at(indexLayer)))->cellAt(x,y).isEmpty())
                     break;
                 indexLayer++;
             }
@@ -290,6 +292,8 @@ bool haveBorderHole(const QString &file,const CatchChallenger::Orientation &orie
     break;
     case CatchChallenger::Orientation_right:
     {
+        if(file=="1.0.tmx")
+            std::cout << std::endl;
         const unsigned int x=map->width()-1;
         unsigned int y=0;
         while(y<(unsigned int)map->height())
@@ -297,7 +301,7 @@ bool haveBorderHole(const QString &file,const CatchChallenger::Orientation &orie
             unsigned int indexLayer=0;
             while(indexLayer<indexLayerWalkable.size())
             {
-                if(static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerWalkable.at(indexLayer)))->cellAt(x,y).isEmpty())
+                if(!static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerWalkable.at(indexLayer)))->cellAt(x,y).isEmpty())
                     break;
                 indexLayer++;
             }
@@ -351,8 +355,8 @@ int readMap(QString file)
     }
     mapWidth[file]=map->width();
     mapHeight[file]=map->height();
-    xOffsetModifier[file]=map->property("xOffsetModifier").toInt()/map->tileWidth();
-    yOffsetModifier[file]=map->property("yOffsetModifier").toInt()/map->tileHeight();
+    xOffsetModifier[file]=map->property("xOffsetModifier").toInt()/32;//*map->tileWidth(), 32 I don't known why, get from pokenet, mabe you have +-1 offset*/
+    yOffsetModifier[file]=map->property("yOffsetModifier").toInt()/32;//map->tileHeight(), 32 I don't known why, get from pokenet, mabe you have +-1 offset*/
 
     bool healDetected=false;
     //detect if is heal map by map name
@@ -641,31 +645,56 @@ int createBorder(QString file,const bool addOneToY)
                 }
                 else
                 {
-                    int offset=0;
-                    if(map->height()>mapHeight[mapBorderFile])
+                    int topBorder=0;
+                    int bottomBorder=0;
+                    const int offset=yOffsetModifier.value(mapBorderFile)-yOffsetModifier.value(file);
+                    const int mapBorderHeight=mapHeight.value(mapBorderFile);
+                    if(offset<0)
                     {
-                        offset=mapHeight[mapBorderFile]-map->height();
-                        offset/=2;
-                    }
-                    QPointF point(0,map->height()/2+offsetToY+yOffsetModifier[mapBorderFile]/2+offset);
-                    if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
-                        point=QPointF(0,map->height()/2+offsetToY);
-                    if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
-                    {
-                        if(haveBorderHole(file,CatchChallenger::Orientation_left) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_right))
+                        if(-offset<=mapBorderHeight)
                         {
-                            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
-                            QString mapBorderFileClean=mapBorderFile;
-                            mapBorderFileClean.remove(".tmx");
-                            mapObject->setProperty("map",mapBorderFileClean);
-                            Tiled::Cell cell=mapObject->cell();
-                            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-                            if(cell.tile==NULL)
-                                qDebug() << "Tile not found (" << __LINE__ << ")";
-                            mapObject->setCell(cell);
-                            map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                            topBorder=0;
+                            if((mapBorderHeight-(-offset))<=map->height())
+                                bottomBorder=mapBorderHeight-(-offset);
+                            else
+                                bottomBorder=map->height();
                         }
                     }
+                    else
+                    {
+                        if(offset<map->height())
+                        {
+                            topBorder=offset;
+                            if((map->height()-offset)<=mapBorderHeight)
+                                bottomBorder=map->height();
+                            else
+                                bottomBorder=mapBorderHeight+offset;
+                        }
+                    }
+                    if(topBorder!=0 || bottomBorder!=0)
+                    {
+                        QPointF point(0,(bottomBorder-topBorder)/2+topBorder+offsetToY);
+                        if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+                        {
+                            if(haveBorderHole(file,CatchChallenger::Orientation_left) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_right))
+                            {
+                                Tiled::MapObject *mapObject=new Tiled::MapObject("","border-left",point,QSizeF(1,1));
+                                QString mapBorderFileClean=mapBorderFile;
+                                mapBorderFileClean.remove(".tmx");
+                                mapObject->setProperty("map",mapBorderFileClean);
+                                Tiled::Cell cell=mapObject->cell();
+                                cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+                                if(cell.tile==NULL)
+                                    qDebug() << "Tile not found (" << __LINE__ << ")";
+                                mapObject->setCell(cell);
+                                map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                            }
+                        }
+                        else
+                            std::cerr << "For " << file.toStdString() << " border left is out of range" << std::endl;
+                    }
+                    else
+                        std::cerr << "For " << file.toStdString() << " border left detected is out of range" << std::endl;
                 }
             }
             //check the right map
@@ -677,31 +706,56 @@ int createBorder(QString file,const bool addOneToY)
                 }
                 else
                 {
-                    int offset=0;
-                    if(map->height()>mapHeight[mapBorderFile])
+                    int topBorder=0;
+                    int bottomBorder=0;
+                    const int offset=yOffsetModifier.value(mapBorderFile)-yOffsetModifier.value(file);
+                    const int mapBorderHeight=mapHeight.value(mapBorderFile);
+                    if(offset<0)
                     {
-                        offset=mapHeight[mapBorderFile]-map->height();
-                        offset/=2;
-                    }
-                    QPointF point(map->width()-1,map->height()/2+offsetToY+yOffsetModifier[mapBorderFile]/2+offset);
-                    if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
-                        point=QPointF(map->width()-1,map->height()/2+offsetToY);
-                    if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
-                    {
-                        if(haveBorderHole(file,CatchChallenger::Orientation_right) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_left))
+                        if(-offset<=mapBorderHeight)
                         {
-                            Tiled::MapObject *mapObject=new Tiled::MapObject("","border-right",point,QSizeF(1,1));
-                            QString mapBorderFileClean=mapBorderFile;
-                            mapBorderFileClean.remove(".tmx");
-                            mapObject->setProperty("map",mapBorderFileClean);
-                            Tiled::Cell cell=mapObject->cell();
-                            cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
-                            if(cell.tile==NULL)
-                                qDebug() << "Tile not found (" << __LINE__ << ")";
-                            mapObject->setCell(cell);
-                            map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                            topBorder=0;
+                            if((mapBorderHeight-(-offset))<=map->height())
+                                bottomBorder=mapBorderHeight-(-offset);
+                            else
+                                bottomBorder=map->height();
                         }
                     }
+                    else
+                    {
+                        if(offset<map->height())
+                        {
+                            topBorder=offset;
+                            if((mapBorderHeight+offset)<=map->height())
+                                bottomBorder=mapBorderHeight+offset;
+                            else
+                                bottomBorder=map->height();
+                        }
+                    }
+                    if(topBorder!=0 || bottomBorder!=0)
+                    {
+                        QPointF point(map->width()-1,(bottomBorder-topBorder)/2+topBorder+offsetToY);
+                        if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+                        {
+                            if(haveBorderHole(file,CatchChallenger::Orientation_right) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_left))
+                            {
+                                Tiled::MapObject *mapObject=new Tiled::MapObject("","border-right",point,QSizeF(1,1));
+                                QString mapBorderFileClean=mapBorderFile;
+                                mapBorderFileClean.remove(".tmx");
+                                mapObject->setProperty("map",mapBorderFileClean);
+                                Tiled::Cell cell=mapObject->cell();
+                                cell.tile=map->tilesetAt(indexTileset)->tileAt(3);
+                                if(cell.tile==NULL)
+                                    qDebug() << "Tile not found (" << __LINE__ << ")";
+                                mapObject->setCell(cell);
+                                map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
+                            }
+                        }
+                        else
+                            std::cerr << "For " << file.toStdString() << " border right is out of range" << std::endl;
+                    }
+                    else
+                        std::cerr << "For " << file.toStdString() << " border right detected is out of range" << std::endl;
                 }
             }
             //check the top map
@@ -713,17 +767,35 @@ int createBorder(QString file,const bool addOneToY)
                 }
                 else
                 {
-                    int offset=0;
-                    if(map->width()>mapWidth[mapBorderFile])
+                    int leftBorder=0;
+                    int rightBorder=0;
+                    const int offset=xOffsetModifier.value(file)-xOffsetModifier.value(mapBorderFile);
+                    const int mapBorderWidth=mapWidth.value(mapBorderFile);
+                    if(offset<0)
                     {
-                        offset=mapWidth[mapBorderFile]-map->width();
-                        offset/=2;
+                        if(-offset<=map->width())
+                        {
+                            leftBorder=-offset;
+                            if((-offset+mapBorderWidth)<=map->width())
+                                rightBorder=mapBorderWidth+(-offset);
+                            else
+                                rightBorder=map->width();
+                        }
                     }
-                    QPointF point(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,0+offsetToY);
-                    if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
-                        point=QPointF(map->width()/2,0+offsetToY);
-                    if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+                    else
                     {
+                        if(offset<mapBorderWidth)
+                        {
+                            leftBorder=0;
+                            if((mapBorderWidth-offset)<=map->width())
+                                rightBorder=mapBorderWidth-offset;
+                            else
+                                rightBorder=map->width();
+                        }
+                    }
+                    if(leftBorder!=0 || rightBorder!=0)
+                    {
+                        QPointF point((leftBorder-rightBorder)/2+rightBorder,0+offsetToY);
                         if(haveBorderHole(file,CatchChallenger::Orientation_top) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_bottom))
                         {
                             Tiled::MapObject *mapObject=new Tiled::MapObject("","border-top",point,QSizeF(1,1));
@@ -738,6 +810,8 @@ int createBorder(QString file,const bool addOneToY)
                             map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
                         }
                     }
+                    else
+                        std::cerr << "For " << file.toStdString() << " border top is out of range" << std::endl;
                 }
             }
             //check the bottom map
@@ -749,17 +823,37 @@ int createBorder(QString file,const bool addOneToY)
                 }
                 else
                 {
-                    int offset=0;
-                    if(map->width()>mapWidth[mapBorderFile])
+                    if(file=="-1.-1.tmx")
+                        std::cout << std::endl;
+                    int leftBorder=0;
+                    int rightBorder=0;
+                    const int offset=xOffsetModifier.value(file)-xOffsetModifier.value(mapBorderFile);
+                    const int mapBorderWidth=mapWidth.value(mapBorderFile);
+                    if(offset<0)
                     {
-                        offset=mapWidth[mapBorderFile]-map->width();
-                        offset/=2;
+                        if(-offset<=map->width())
+                        {
+                            leftBorder=-offset;
+                            if((-offset+mapBorderWidth)<=map->width())
+                                rightBorder=mapBorderWidth+(-offset);
+                            else
+                                rightBorder=map->width();
+                        }
                     }
-                    QPointF point(map->width()/2+xOffsetModifier[mapBorderFile]/2+offset,map->height()-1+offsetToY);
-                    if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
-                        point=QPointF(map->width()/2,map->height()-1+offsetToY);
-                    if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
+                    else
                     {
+                        if(offset<map->width())
+                        {
+                            leftBorder=0;
+                            if((offset+mapBorderWidth)<=map->width())
+                                rightBorder=mapBorderWidth-offset;
+                            else
+                                rightBorder=map->width();
+                        }
+                    }
+                    if(leftBorder!=0 || rightBorder!=0)
+                    {
+                        QPointF point((leftBorder-rightBorder)/2+rightBorder,map->height()-1+offsetToY);
                         if(haveBorderHole(file,CatchChallenger::Orientation_bottom) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_top))
                         {
                             Tiled::MapObject *mapObject=new Tiled::MapObject("","border-bottom",point,QSizeF(1,1));
@@ -774,6 +868,8 @@ int createBorder(QString file,const bool addOneToY)
                             map->layerAt(indexLayerMoving)->asObjectGroup()->addObject(mapObject);
                         }
                     }
+                    else
+                        std::cerr << "For " << file.toStdString() << " border bottom is out of range" << std::endl;
                 }
             }
         }
