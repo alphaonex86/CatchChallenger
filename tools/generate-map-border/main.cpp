@@ -1035,6 +1035,7 @@ int createBorder(QString file,const bool addOneToY)
                 line.replace("\n","");
                 line.replace("\r","");
                 line.replace("\t","");
+                line.replace("] ","]");
                 if(!baliseEnd.isEmpty() && baliseEnd==line)
                 {
                     if(balise=="[npc]")
@@ -1453,64 +1454,123 @@ int createBorder(QString file,const bool addOneToY)
                     }
                     else if(balise=="[hmobject]")
                     {
+                        const QString &type=values.at(0);
                         const unsigned int x=values.at(1).toInt(&ok);
                         if(!ok)
                             continue;
                         const unsigned int y=values.at(2).toInt(&ok);
                         if(!ok)
                             continue;
-                        //add tile layer
-                        int indexLayerCutTree=0;
-                        while(indexLayerCutTree<map->layerCount())
+                        if(type=="CUT_TREE" || type=="HEADBUTT_TREE" || type=="ROCKSMASH_ROCK" || type=="WHIRLPOOL")
                         {
-                            if(map->layerAt(indexLayerCutTree)->isTileLayer() && map->layerAt(indexLayerCutTree)->name()=="CutTree")
-                                break;
-                            indexLayerCutTree++;
-                        }
-                        if(indexLayerCutTree>=map->layerCount())
-                        {
-                            Tiled::TileLayer *tileLayer=new Tiled::TileLayer("CutTree",0,0,map->width(),map->height());
-                            /*buggy if(!indexLayerCollisions.empty())
+                            QString tileLayerName;
+                            QString tilesetName;
+                            unsigned int tiledIndex;
+                            if(type=="CUT_TREE")
                             {
-                                const unsigned int newIndex=indexLayerCollisions.front();
-                                for (unsigned int i=0; i < indexLayerCollisions.size(); i++)
-                                    if(indexLayerCollisions.at(i)>=newIndex)
-                                        indexLayerCollisions[i]++;
-                                if(indexLayerMoving>=newIndex)
-                                    indexLayerMoving++;
-                                for (unsigned int i=0; i < indexLayerWalkable.size(); i++)
-                                    if(indexLayerWalkable.at(i)>=newIndex)
-                                        indexLayerWalkable[i]++;
-                                for (unsigned int i=0; i < indexLayerWalkBehind.size(); i++)
-                                    if(indexLayerWalkBehind.at(i)>=newIndex)
-                                        indexLayerWalkBehind[i]++;
-                                indexLayerCutTree=newIndex;
+                                tileLayerName="CutTree";
+                                tilesetName="normal1";
+                                tiledIndex=33;
                             }
-                            else*/
+                            else if(type=="HEADBUTT_TREE")
                             {
+                                tileLayerName="HeadButtTree";
+                                tilesetName="normal1";
+                                tiledIndex=34;
+                            }
+                            else if(type=="ROCKSMASH_ROCK")
+                            {
+                                tileLayerName="RockMash";
+                                tilesetName="normal1";
+                                tiledIndex=35;
+                            }
+                            else if(type=="WHIRLPOOL")
+                            {
+                                tileLayerName="WhirlPool";
+                                tilesetName="normal16";
+                                tiledIndex=428;
+                            }
+                            else
+                            {
+                                std::cerr << "unknown [hmobject] type for tile mode" << std::endl;
+                                abort();
+                            }
+                            //add tile layer
+                            int indexLayerCutTree=0;
+                            while(indexLayerCutTree<map->layerCount())
+                            {
+                                if(map->layerAt(indexLayerCutTree)->isTileLayer() && map->layerAt(indexLayerCutTree)->name()==tileLayerName)
+                                    break;
+                                indexLayerCutTree++;
+                            }
+                            if(indexLayerCutTree>=map->layerCount())
+                            {
+                                Tiled::TileLayer *tileLayer=new Tiled::TileLayer(tileLayerName,0,0,map->width(),map->height());
                                 indexLayerCutTree=map->layerCount();
                                 map->addLayer(tileLayer);
                             }
+                            //add tileset
+                            int indexTileset=0;
+                            while(indexTileset<map->tilesetCount())
+                            {
+                                const QString &imageSource=map->tilesetAt(indexTileset)->imageSource();
+                                if(imageSource.endsWith(tilesetName+".tsx") || map->tilesetAt(indexTileset)->name()==tilesetName+".tsx" || map->tilesetAt(indexTileset)->name()==tilesetName)
+                                    break;
+                                indexTileset++;
+                            }
+                            if(indexTileset>=map->tilesetCount())
+                            {
+                                indexTileset=map->tilesetCount();
+                                map->addTileset(tilesetnormal1);
+                            }
+                            //add the tile
+                            Tiled::Cell cell;
+                            cell.tile=map->tilesetAt(indexTileset)->tileAt(tiledIndex);
+                            Tiled::TileLayer * tileLayer=static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerCutTree));
+                            tileLayer->setCell(x,y,cell);
                         }
-                        //add tileset
-                        int indexTileset=0;
-                        while(indexTileset<map->tilesetCount())
+                        else if(type=="STRENGTH_BOULDER")
                         {
-                            const QString &imageSource=map->tilesetAt(indexTileset)->imageSource();
-                            if(imageSource.endsWith("normal1.tsx") || map->tilesetAt(indexTileset)->name()=="normal1.tsx")
-                                break;
-                            indexTileset++;
+                            //add tile layer
+                            int indexLayerCutTree=0;
+                            while(indexLayerCutTree<map->layerCount())
+                            {
+                                if(map->layerAt(indexLayerCutTree)->isObjectGroup() && map->layerAt(indexLayerCutTree)->name()=="Object")
+                                    break;
+                                indexLayerCutTree++;
+                            }
+                            if(indexLayerCutTree>=map->layerCount())
+                            {
+                                Tiled::ObjectGroup *objectGroup=new Tiled::ObjectGroup("Object",0,0,map->width(),map->height());
+                                indexLayerCutTree=map->layerCount();
+                                map->addLayer(objectGroup);
+                            }
+                            //add tileset
+                            int indexTileset=0;
+                            while(indexTileset<map->tilesetCount())
+                            {
+                                const QString &imageSource=map->tilesetAt(indexTileset)->imageSource();
+                                if(imageSource.endsWith("normal1.tsx") || map->tilesetAt(indexTileset)->name()=="normal1.tsx" || map->tilesetAt(indexTileset)->name()=="normal1")
+                                    break;
+                                indexTileset++;
+                            }
+                            if(indexTileset>=map->tilesetCount())
+                            {
+                                indexTileset=map->tilesetCount();
+                                map->addTileset(tilesetnormal1);
+                            }
+                            //add the tile
+                            Tiled::Cell cell;
+                            cell.tile=map->tilesetAt(indexTileset)->tileAt(67);
+                            Tiled::MapObject *mapObject=new Tiled::MapObject("","StrengthBoulder",QPointF(x,y+offsetToY),QSizeF(1,1));
+                            mapObject->setCell(cell);
+                            map->layerAt(indexLayerCutTree)->asObjectGroup()->addObject(mapObject);
                         }
-                        if(indexTileset>=map->tilesetCount())
+                        else
                         {
-                            indexTileset=map->tilesetCount();
-                            map->addTileset(tilesetnormal1);
+                            std::cerr << "unknown [hmobject] type" << std::endl;
+                            abort();
                         }
-                        //add the tile
-                        Tiled::Cell cell;
-                        cell.tile=map->tilesetAt(indexTileset)->tileAt(33);
-                        Tiled::TileLayer * tileLayer=static_cast<Tiled::TileLayer *>(map->layerAt(indexLayerCutTree));
-                        tileLayer->setCell(x,y,cell);
                     }
                     values.clear();
                     balise.clear();
@@ -1930,27 +1990,31 @@ int createBorder(QString file,const bool addOneToY)
 
     if(!indexLayerCollisions.empty())
     {
-        int indexLayerCutTree=0;
-        while(indexLayerCutTree<map->layerCount())
-        {
-            if(map->layerAt(indexLayerCutTree)->isTileLayer() && map->layerAt(indexLayerCutTree)->name()=="CutTree")
-                break;
-            indexLayerCutTree++;
-        }
-        if(indexLayerCutTree<map->layerCount())
-        {
-            Tiled::Layer *layer=map->takeLayerAt(indexLayerCutTree);
-            int indexLayerCollisions=0;
-            while(indexLayerCollisions<map->layerCount())
+        QStringList list;
+        list << "CutTree" << "HeadButtTree" << "RockMash" << "WhirlPool";
+        foreach (const QString &str, list) {
+            int indexLayerCutTree=0;
+            while(indexLayerCutTree<map->layerCount())
             {
-                if(map->layerAt(indexLayerCollisions)->isTileLayer() && map->layerAt(indexLayerCollisions)->name()=="Collisions")
+                if(map->layerAt(indexLayerCutTree)->isTileLayer() && map->layerAt(indexLayerCutTree)->name()==str)
                     break;
-                indexLayerCollisions++;
+                indexLayerCutTree++;
             }
-            if(indexLayerCollisions<map->layerCount())
-                map->insertLayer(indexLayerCollisions,layer);
-            else
-                abort();
+            if(indexLayerCutTree<map->layerCount())
+            {
+                Tiled::Layer *layer=map->takeLayerAt(indexLayerCutTree);
+                int indexLayerCollisions=0;
+                while(indexLayerCollisions<map->layerCount())
+                {
+                    if(map->layerAt(indexLayerCollisions)->isTileLayer() && map->layerAt(indexLayerCollisions)->name()=="Collisions")
+                        break;
+                    indexLayerCollisions++;
+                }
+                if(indexLayerCollisions<map->layerCount())
+                    map->insertLayer(indexLayerCollisions,layer);
+                else
+                    abort();
+            }
         }
     }
     Tiled::Properties emptyProperties;
