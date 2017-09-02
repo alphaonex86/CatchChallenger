@@ -841,8 +841,8 @@ int createBorder(QString file,const bool addOneToY)
                         if(offset<mapBorderWidth)
                         {
                             leftBorder=0;
-                            if((map->width()+offset)<=map->width())
-                                rightBorder=map->width()+offset;
+                            if((mapBorderWidth-offset)<=map->width())
+                                rightBorder=(mapBorderWidth-offset);
                             else
                                 rightBorder=map->width();
                         }
