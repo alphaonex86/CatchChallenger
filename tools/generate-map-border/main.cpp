@@ -434,6 +434,17 @@ int readMap(QString file)
         mapWithHeal.insert(cleanFileName);
     }
 
+    {//clean layer name
+        unsigned int index=0;
+        while(index<(unsigned int)map->layerCount())
+        {
+            QString name=map->layerAt(index)->name();
+            name.remove(" ");
+            map->layerAt(index)->setName(name);
+            index++;
+        }
+    }
+
     mapLoaded[file]=map;
     {
         QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
@@ -510,16 +521,6 @@ int createBorder(QString file,const bool addOneToY)
     {
         qDebug() << "Can't open to create the border" << file;
         abort();//return 86;
-    }
-    {//clean layer name
-        unsigned int index=0;
-        while(index<(unsigned int)map->layerCount())
-        {
-            QString name=map->layerAt(index)->name();
-            name.remove(" ");
-            map->layerAt(index)->setName(name);
-            index++;
-        }
     }
     QString xString=file;
     QString yString=file;
