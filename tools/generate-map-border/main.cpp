@@ -842,6 +842,8 @@ int createBorder(QString file,const bool addOneToY)
                 {}
                 else
                 {
+                    if(file=="3.0.tmx")
+                        std::cout << std::endl;
                     int leftBorder=0;
                     int rightBorder=0;
                     const int offset=xOffsetModifier.value(file)-xOffsetModifier.value(mapBorderFile);
@@ -1422,6 +1424,11 @@ int createBorder(QString file,const bool addOneToY)
                                     if(values.at(0)=="NULL")
                                     {
                                         botDescriptor.name=QString();
+                                        botDescriptor.skin=QString();
+                                        botDescriptor.orientation=QString();
+                                    }
+                                    if(botDescriptor.skin=="0")
+                                    {
                                         botDescriptor.skin=QString();
                                         botDescriptor.orientation=QString();
                                     }
