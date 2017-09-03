@@ -511,6 +511,16 @@ int createBorder(QString file,const bool addOneToY)
         qDebug() << "Can't open to create the border" << file;
         abort();//return 86;
     }
+    {//clean layer name
+        unsigned int index=0;
+        while(index<(unsigned int)map->layerCount())
+        {
+            QString name=map->layerAt(index)->name();
+            name.remove(" ");
+            map->layerAt(index)->setName(name);
+            index++;
+        }
+    }
     QString xString=file;
     QString yString=file;
     xString.replace(QRegularExpression("^(-?[0-9]{1,2}).(-?[0-9]{1,2})\\.tmx$"),"\\1");
