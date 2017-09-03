@@ -843,8 +843,6 @@ int createBorder(QString file,const bool addOneToY)
                 {}
                 else
                 {
-                    if(file=="3.0.tmx")
-                        std::cout << std::endl;
                     int leftBorder=0;
                     int rightBorder=0;
                     const int offset=xOffsetModifier.value(file)-xOffsetModifier.value(mapBorderFile);
