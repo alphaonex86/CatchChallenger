@@ -72,10 +72,10 @@ t.setOfferedSpecies(reader.nextLine(), Integer.parseInt(reader.nextLine()));
 [/trade]
 */
 
-//todo: use zopfli to improve the layer compression
-//load the shop content via itemdex.xml
+load map translation and cat: /language/spanish/UI/_MAP.txt
 //split map part delimited with empty tile and adapt the tp (scan all the square)
-//drop not used tileset
+//sort map by user + graphviz to show the link
+//todo: use zopfli to improve the layer compression
 
 QHash<QString,int> mapWidth,mapHeight;
 QHash<QString,int> xOffsetModifier,yOffsetModifier;
@@ -445,6 +445,103 @@ int readMap(QString file)
         }
     }
 
+    QSet<QPair<unsigned int,unsigned int> > warpSource;
+    {
+        QString npcFile=file;
+        npcFile.replace(".tmx",".txt");
+        npcFile="../npc/"+npcFile;
+        QFile tempFile(npcFile);
+        if(tempFile.open(QIODevice::ReadOnly))
+        {
+            //load raw bot on coord
+            QStringList values;
+            QString balise,baliseEnd;
+            while (!tempFile.atEnd()) {
+                QString line=QString::fromUtf8(tempFile.readLine());
+                line.replace("\n","");
+                line.replace("\r","");
+                line.replace("\t","");
+                line.replace("] ","]");
+                if(!baliseEnd.isEmpty() && baliseEnd==line)
+                {
+                    if(balise=="[warp]")
+                    {
+                        if(values.count()>5)
+                        {
+                            WarpDescriptor warpDescriptor;
+                            warpDescriptor.x=values.at(0).toInt(&ok);
+                            if(!ok)
+                                continue;
+                            warpDescriptor.y=values.at(1).toInt(&ok);
+                            if(!ok)
+                                continue;
+                            warpSource.insert(QPair<int,int>(warpDescriptor.x,warpDescriptor.y));
+                        }
+                        else
+                            qDebug() << file << "wrong warp count values: " << values.count() << ": " << values.join(", ");
+                    }
+                    values.clear();
+                    balise.clear();
+                    baliseEnd.clear();
+                }
+                else if(!balise.isEmpty())
+                    values << line;
+                else if(line.contains(QRegularExpression("^\\[[a-z]+\\]$")))
+                {
+                    balise=line;
+                    baliseEnd=balise;
+                    baliseEnd.replace("[","[/");
+                }
+            }
+            tempFile.close();
+        }
+    }
+
+    std::vector<unsigned int> zones;
+    zones.resize(map->width()*map->height());
+    std::fill(zones.begin(),zones.cend(),0);
+    unsigned int lastUsedZone=0;
+    //detect zone
+    {
+        unsigned int y=0;
+        while(y<zones.size())
+        {
+            unsigned int x=0;
+            while(x<zones.size())
+            {
+                if(zones.at(x+y*map->width())==0 && (haveContent(map,x,y) || warpSource.contains(QPair<int,int>(x,y))))
+                {
+                    unsigned int minX=x;
+                    unsigned int maxX=x+1;
+                    unsigned int minY=y;
+                    unsigned int maxY=y+1;
+                    //start the zone marking
+                    check right border
+                    check bottom border
+                    check left border
+                    check top border
+                    //fill the zone
+                    lastUsedZone++;
+                    {
+                        unsigned int y=minY;
+                        while(y<maxY)
+                        {
+                            unsigned int x=minX;
+                            while(x<maxX)
+                            {
+                                zones[x+y*map->width()]=lastUsedZone;
+                                x++;
+                            }
+                            y++;
+                        }
+                    }
+                }
+                x++;
+            }
+            y++;
+        }
+    }
+
     mapLoaded[file]=map;
     {
         QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
@@ -492,6 +589,31 @@ bool haveContent(const Tiled::Map * const map,const std::vector<unsigned int> &l
             return false;
         if(!tileLayer->cellAt(x,y).isEmpty())
             return true;
+        index++;
+    }
+    return false;
+}
+
+bool haveContent(const Tiled::Map * const map,const int x,const int y)
+{
+    unsigned int index=0;
+    while(index<map->layerCount().size())
+    {
+        Tiled::Layer *layer=map->layerAt(index);
+        if(layer->isTileLayer())
+        {
+            const Tiled::TileLayer * const tileLayer=static_cast<Tiled::TileLayer *>(layer);
+            if(!tileLayer->cellAt(x,y).isEmpty())
+                return true;
+        }
+        else if(layer->isObjectGroup())
+        {//ignore due to some wrong content
+        }
+        else
+        {
+            std::cerr << "Unsupported layer type" << std::endl;
+            abort();
+        }
         index++;
     }
     return false;
@@ -1784,6 +1906,7 @@ int createBorder(QString file,const bool addOneToY)
                         fightid++;
                     }
                     tempFile.write(QStringLiteral("  </bot>\n").toUtf8());
+                    if(botDescriptor.x>=0 && botDescriptor.x<map->width() && botDescriptor.y>=0 && botDescriptor.y<map->height())
                     {
                         Tiled::MapObject *mapObject=new Tiled::MapObject("","bot",QPointF(botDescriptor.x,botDescriptor.y+offsetToY),QSizeF(1,1));
                         QString botsFileClean=botsFile;
