@@ -133,9 +133,7 @@ struct Shop
     QList<int> itemsId;
 };
 QMap<unsigned int,Shop> shopList;
-
 QHash<QString,unsigned int> itemNameToId;
-
 QStringList loadNPCText(const QString &npcFile,const QString &language);
 
 bool haveBorderHole(const QString &file,const CatchChallenger::Orientation &orientation)
@@ -625,17 +623,21 @@ int createBorder(QString file,const bool addOneToY)
         indexLayer++;
     }
 
+    bool mapIsCave=map->hasProperty("isCave") && map->property("isCave")=="true";
     if(!hadMovingLayer)
-        if(x<=30 && x>=-30 && y<=30 && y>=-30)
+        //if(x<=30 && x>=-30 && y<=30 && y>=-30)
         {
             QString mapBorderFile;
             //check the left map
             mapBorderFile=QStringLiteral("%1.%2.tmx").arg(x-1).arg(y);
             if(mapHeight.contains(mapBorderFile))
             {
+                bool mapBorderIsCave=mapLoaded.value(mapBorderFile)->hasProperty("isCave") && mapLoaded.value(mapBorderFile)->property("isCave")=="true";
                 if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
                 {
                 }
+                else if(mapBorderIsCave || mapIsCave)
+                {}
                 else
                 {
                     int topBorder=0;
@@ -694,9 +696,12 @@ int createBorder(QString file,const bool addOneToY)
             mapBorderFile=QStringLiteral("%1.%2.tmx").arg(x+1).arg(y);
             if(mapHeight.contains(mapBorderFile))
             {
+                bool mapBorderIsCave=mapLoaded.value(mapBorderFile)->hasProperty("isCave") && mapLoaded.value(mapBorderFile)->property("isCave")=="true";
                 if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
                 {
                 }
+                else if(mapBorderIsCave || mapIsCave)
+                {}
                 else
                 {
                     int topBorder=0;
@@ -755,9 +760,12 @@ int createBorder(QString file,const bool addOneToY)
             mapBorderFile=QStringLiteral("%1.%2.tmx").arg(x).arg(y-1);
             if(mapWidth.contains(mapBorderFile))
             {
+                bool mapBorderIsCave=mapLoaded.value(mapBorderFile)->hasProperty("isCave") && mapLoaded.value(mapBorderFile)->property("isCave")=="true";
                 if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
                 {
                 }
+                else if(mapBorderIsCave || mapIsCave)
+                {}
                 else
                 {
                     int leftBorder=0;
@@ -816,9 +824,12 @@ int createBorder(QString file,const bool addOneToY)
             mapBorderFile=QStringLiteral("%1.%2.tmx").arg(x).arg(y+1);
             if(mapWidth.contains(mapBorderFile))
             {
+                bool mapBorderIsCave=mapLoaded.value(mapBorderFile)->hasProperty("isCave") && mapLoaded.value(mapBorderFile)->property("isCave")=="true";
                 if(false && mapX.contains(file) && mapX.contains(mapBorderFile))
                 {
                 }
+                else if(mapBorderIsCave || mapIsCave)
+                {}
                 else
                 {
                     int leftBorder=0;
@@ -1985,7 +1996,6 @@ int createBorder(QString file,const bool addOneToY)
     bool mapHaveGrassMonster=map->hasProperty("dayPokemonChances") && !map->property("dayPokemonChances").isEmpty();
     bool mapHaveWaterMonster=map->hasProperty("waterPokemonChances") && !map->property("waterPokemonChances").isEmpty();
     bool mapHaveFishMonster=map->hasProperty("fishPokemonChances") && !map->property("fishPokemonChances").isEmpty();
-    bool mapIsCave=map->hasProperty("isCave") && map->property("isCave")=="true";
     bool havePvPAttribute=map->hasProperty("pvp");
 
     if(!indexLayerCollisions.empty())
