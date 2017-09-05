@@ -79,6 +79,7 @@ t.setOfferedSpecies(reader.nextLine(), Integer.parseInt(reader.nextLine()));
 //split map part delimited with empty tile and adapt the tp (scan all the square), do the map edit before set the border-left, ...
 //sort map by user + graphviz to show the link
 //todo: use zopfli to improve the layer compression
+//when split map, drop the not used meta data like: Grass monster if don't have Grass layer, Water monster if don't have Water layer, ...
 
 struct BotDescriptor
 {
@@ -1831,7 +1832,10 @@ int createBorder(QString file,const bool addOneToY)
                                             Tiled::MapObject *mapObject=new Tiled::MapObject("","bot",QPointF(botDescriptor.x,botDescriptor.y+offsetToY),QSizeF(1,1));
                                             QString botsFileClean=botsFile;
                                             botsFileClean.remove(".tmx");
-                                            mapObject->setProperty("file",botsFileClean);
+                                            if(mapZone.folder.isEmpty())
+                                                mapObject->setProperty("file",botsFileClean);
+                                            else
+                                                mapObject->setProperty("file","../"+botsFileClean);
                                             mapObject->setProperty("id",QString::number(botDescriptor.id));
                                             if(!botDescriptor.skin.isEmpty())
                                             {
@@ -2472,9 +2476,9 @@ int createBorder(QString file,const bool addOneToY)
     bool havePvPAttribute=map->hasProperty("pvp");
     if((grassLayerDropped || !haveGrassLayer) && mapHaveGrassMonster)
     {
-        QString botsFile=file;
-        botsFile.replace(".tmx",".xml");
-        QFile tempFile(botsFile);
+        QString metadataFile=file;
+        metadataFile.replace(".tmx",".xml");
+        QFile tempFile(metadataFile);
         if(tempFile.open(QIODevice::ReadWrite))
         {
             QString content=QString::fromUtf8(tempFile.readAll());
@@ -2495,9 +2499,9 @@ int createBorder(QString file,const bool addOneToY)
     }
     if(!mapHaveGrassMonster && !mapHaveWaterMonster && !mapHaveFishMonster && !mapIsCave && !havePvPAttribute)
     {
-        QString botsFile=file;
-        botsFile.replace(".tmx",".xml");
-        QFile tempFile(botsFile);
+        QString metadataFile=file;
+        metadataFile.replace(".tmx",".xml");
+        QFile tempFile(metadataFile);
         if(tempFile.open(QIODevice::ReadWrite))
         {
             QString content=QString::fromUtf8(tempFile.readAll());
@@ -2506,6 +2510,27 @@ int createBorder(QString file,const bool addOneToY)
             tempFile.write(content.toUtf8());
             tempFile.close();
         }
+    }
+    if(mapZoneList.size()>1)
+    {
+        QString metadataFileBase=file;
+        metadataFileBase.replace(".tmx",".xml");
+        unsigned int indexZone=0;
+        while(indexZone<(unsigned int)mapZoneList.size())
+        {
+            const MapZone &mapZone=mapZoneList.at(indexZone);
+            QString finalPath;
+            if(mapZone.folder.isEmpty())
+                finalPath=mapZone.destMap;
+            else
+                finalPath=mapZone.folder+"/"+mapZone.destMap;
+            QString metadataFile=finalPath;
+            metadataFile.replace(".tmx",".xml");
+            if(!QFile::copy(metadataFileBase,metadataFile))
+                abort();
+            indexZone++;
+        }
+        QFile::remove(metadataFileBase);
     }
     return 0;
 }
