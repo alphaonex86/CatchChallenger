@@ -82,6 +82,7 @@ t.setOfferedSpecies(reader.nextLine(), Integer.parseInt(reader.nextLine()));
 
 struct BotDescriptor
 {
+    unsigned int id;
     QString name;
     QString orientation;
     QString skin;
@@ -128,6 +129,7 @@ struct MapDestination
 {
     QString map;
     unsigned int x,y;
+    unsigned int mapZoneIndex;
 };
 struct MapZone
 {
@@ -685,6 +687,7 @@ int readMap(QString file)
                 mapDestination.map=mapSplitEntry.destMap;
             else
                 mapDestination.map=mapSplitEntry.folder+"/"+mapSplitEntry.destMap;
+            mapDestination.mapZoneIndex=mapSplitIndex;
             unsigned int y=mapSplitEntry.minY;
             while(y<mapSplitEntry.maxY)
             {
@@ -836,6 +839,53 @@ int createBorder(QString file,const bool addOneToY)
     bool grassLayerDropped=false;
     bool haveGrassLayer=false;
     bool mapIsCave=map->hasProperty("isCave") && map->property("isCave")=="true";
+    QList<FightDescriptor> fightList;
+    QHash<QString/*file path*/,QList<BotDescriptor> > botList;
+
+    //add the tileset if needed
+    int indexTileset=0;
+    while(indexTileset<map->tilesetCount())
+    {
+        const QString &imageSource=map->tilesetAt(indexTileset)->imageSource();
+        if(imageSource.endsWith("invisible.tsx") || map->tilesetAt(indexTileset)->name()=="invisible.tsx")
+            break;
+        indexTileset++;
+    }
+    if(indexTileset>=map->tilesetCount())
+    {
+        indexTileset=map->tilesetCount();
+        map->addTileset(tilesetinvisible);
+        /*Tiled::Tileset *tileset=new Tiled::Tileset("invisible",map->tileWidth(),map->tileHeight());
+        tileset->setFileName("invisible.tsx");*/
+    }
+    {
+        const Tiled::Tile * const tile=map->tilesetAt(indexTileset)->tileAt(3);
+        if(tile==NULL)
+        {
+            qDebug() << "Tile not found (" << __LINE__ << "), it's base tile, can't be missing";
+            abort();
+        }
+    }
+
+    //add the move layer if needed
+    bool hadObjectLayer=false;
+    int indexLayerObject=0;
+    while(indexLayerObject<map->layerCount())
+    {
+        if(map->layerAt(indexLayerObject)->isObjectGroup() && map->layerAt(indexLayerObject)->name()=="Object")
+        {
+            hadObjectLayer=true;
+            break;
+        }
+        indexLayerObject++;
+    }
+    if(indexLayerObject>=map->layerCount())
+    {
+        indexLayerObject=map->layerCount();
+        Tiled::ObjectGroup *objectGroup=new Tiled::ObjectGroup("Object",0,0,map->width(),map->height());
+        map->addLayer(objectGroup);
+    }
+
     const QVector<MapZone> &mapZoneList=mapSplit.value(file);
     {
         QString xString=file;
@@ -853,30 +903,6 @@ int createBorder(QString file,const bool addOneToY)
                     if(map->layerAt(index)->asTileLayer()->width()!=map->width() || map->layerAt(index)->asTileLayer()->height()!=map->height())
                         map->layerAt(index)->asTileLayer()->resize(QSize(map->width(),map->height()),QPoint(0,0));
                 index++;
-            }
-        }
-        //add the tileset if needed
-        int indexTileset=0;
-        while(indexTileset<map->tilesetCount())
-        {
-            const QString &imageSource=map->tilesetAt(indexTileset)->imageSource();
-            if(imageSource.endsWith("invisible.tsx") || map->tilesetAt(indexTileset)->name()=="invisible.tsx")
-                break;
-            indexTileset++;
-        }
-        if(indexTileset>=map->tilesetCount())
-        {
-            indexTileset=map->tilesetCount();
-            map->addTileset(tilesetinvisible);
-            /*Tiled::Tileset *tileset=new Tiled::Tileset("invisible",map->tileWidth(),map->tileHeight());
-            tileset->setFileName("invisible.tsx");*/
-        }
-        {
-            const Tiled::Tile * const tile=map->tilesetAt(indexTileset)->tileAt(3);
-            if(tile==NULL)
-            {
-                qDebug() << "Tile not found (" << __LINE__ << "), it's base tile, can't be missing";
-                abort();
             }
         }
 
@@ -1216,9 +1242,7 @@ int createBorder(QString file,const bool addOneToY)
                 }
             }
 
-        QList<BotDescriptor> botList;
         QMap<QPair<int,int>,WarpDescriptor> warpList;
-        QList<FightDescriptor> fightList;
         QStringList textListNL,textListEN,textListFI,textListFR,textListDE,textListIT,textListPT,textListES;
         {
             QString npcFile=file;
@@ -1750,8 +1774,86 @@ int createBorder(QString file,const bool addOneToY)
                                             botDescriptor.skin=QString();
                                             botDescriptor.orientation=QString();
                                         }
-                                        if(!botDescriptor.text.isEmpty() && botDescriptor.text.at(0).value("en")!="Please report this bug!")
-                                            botList << botDescriptor;
+                                        if(!botDescriptor.text.isEmpty() &&
+                                                botDescriptor.text.at(0).value("en")!="Please report this bug!" &&
+                                                !dropBot.contains(QPair<unsigned int,unsigned int>(botDescriptor.x,botDescriptor.y)))
+                                        {
+                                            const unsigned int zoneIndex=mapRelation.value(file).value(QPair<unsigned int,unsigned int>(botDescriptor.x,botDescriptor.y)).mapZoneIndex;
+                                            botId++;
+
+                                            botDescriptor.id=botId;
+                                            const MapZone &mapZone=mapZoneList.at(zoneIndex);
+                                            QString finalPath;
+                                            if(mapZone.folder.isEmpty())
+                                                finalPath=mapZone.destMap;
+                                            else
+                                                finalPath=mapZone.folder+"/"+mapZone.destMap;
+                                            QString botsFile=finalPath;
+                                            botsFile.replace(".tmx","-bots.xml");
+
+                                            botList[botsFile] << botDescriptor;
+
+                                            QList<QMap<QString,QString> > textFull=botDescriptor.text;
+                                            if(botDescriptor.fightMonsterId.isEmpty())
+                                            {
+                                            }
+                                            else
+                                            {
+                                                FightDescriptor fightDescriptor;
+                                                if(textFull.size()>=1)
+                                                    fightDescriptor.start=textFull.first();
+                                                if(textFull.size()>=2)
+                                                    fightDescriptor.win=textFull.last();
+                                                int sub_sub_index=0;
+                                                while(sub_sub_index<botDescriptor.fightMonsterId.size())
+                                                {
+                                                    const uint32_t monsterId=botDescriptor.fightMonsterId.at(sub_sub_index);
+                                                    if(monsterId==0)
+                                                    {
+                                                        std::cerr << "monsterId==0 for bot monster!" << std::endl;
+                                                        abort();
+                                                    }
+                                                    fightDescriptor.fightMonsterId << monsterId;
+                                                    const quint32 level=botDescriptor.fightMonsterLevel.at(sub_sub_index);
+                                                    if(level==0)
+                                                    {
+                                                        std::cerr << "level==0 for bot monster!" << std::endl;
+                                                        abort();
+                                                    }
+                                                    fightDescriptor.fightMonsterLevel << level;
+                                                    sub_sub_index++;
+                                                }
+                                                fightDescriptor.id=fightid;
+                                                fightList << fightDescriptor;
+                                                fightid++;
+                                            }
+
+                                            Tiled::MapObject *mapObject=new Tiled::MapObject("","bot",QPointF(botDescriptor.x,botDescriptor.y+offsetToY),QSizeF(1,1));
+                                            QString botsFileClean=botsFile;
+                                            botsFileClean.remove(".tmx");
+                                            mapObject->setProperty("file",botsFileClean);
+                                            mapObject->setProperty("id",QString::number(botDescriptor.id));
+                                            if(!botDescriptor.skin.isEmpty())
+                                            {
+                                                mapObject->setProperty("skin",botDescriptor.skin);
+                                                if(botDescriptor.orientation=="bottom" || botDescriptor.orientation=="down")
+                                                    mapObject->setProperty("lookAt","bottom");
+                                                else if(botDescriptor.orientation=="top" || botDescriptor.orientation=="up")
+                                                    mapObject->setProperty("lookAt","top");
+                                                else if(botDescriptor.orientation=="right")
+                                                    mapObject->setProperty("lookAt","right");
+                                                else if(botDescriptor.orientation=="left")
+                                                    mapObject->setProperty("lookAt","left");
+                                                else
+                                                    mapObject->setProperty("lookAt","bottom");
+                                            }
+                                            Tiled::Cell cell=mapObject->cell();
+                                            cell.tile=map->tilesetAt(indexTileset)->tileAt(0);
+                                            if(cell.tile==NULL)
+                                                qDebug() << "Tile not found (" << __LINE__ << ")";
+                                            mapObject->setCell(cell);
+                                            map->layerAt(indexLayerObject)->asObjectGroup()->addObject(mapObject);
+                                        }
                                     }
                                 }
                             }
@@ -1936,210 +2038,6 @@ int createBorder(QString file,const bool addOneToY)
             }
             /*else
                 std::cerr << "File not found to open npc ini: " << npcFile.toStdString() << std::endl;*/
-        }
-        if(!botList.isEmpty())
-        {
-            //add the move layer if needed
-            bool hadObjectLayer=false;
-            int indexLayerObject=0;
-            while(indexLayerObject<map->layerCount())
-            {
-                if(map->layerAt(indexLayerObject)->isObjectGroup() && map->layerAt(indexLayerObject)->name()=="Object")
-                {
-                    hadObjectLayer=true;
-                    break;
-                }
-                indexLayerObject++;
-            }
-            if(indexLayerObject>=map->layerCount())
-            {
-                indexLayerObject=map->layerCount();
-                Tiled::ObjectGroup *objectGroup=new Tiled::ObjectGroup("Object",0,0,map->width(),map->height());
-                map->addLayer(objectGroup);
-            }
-
-            if(!hadObjectLayer)
-            {
-                QString botsFile=file;
-                botsFile.replace(".tmx","-bots.xml");
-                QFile tempFile(botsFile);
-                if(tempFile.open(QIODevice::WriteOnly))
-                {
-                    tempFile.write(QStringLiteral("<bots>\n").toUtf8());
-                    int index=0;
-                    while(index<botList.size())
-                    {
-                        const BotDescriptor &botDescriptor=botList.at(index);
-                        if(dropBot.contains(QPair<unsigned int,unsigned int>(botDescriptor.x,botDescriptor.y)))
-                        {
-                            index++;
-                            continue;
-                        }
-                        tempFile.write(QStringLiteral("  <bot id=\"%1\">\n").arg(botId).toUtf8());
-                        if(botDescriptor.name!="NULL" && !botDescriptor.name.isEmpty())
-                            tempFile.write(QStringLiteral("    <name>%1</name>\n").arg(botDescriptor.name).toUtf8());
-                        QList<QMap<QString,QString> > textFull=botDescriptor.text;
-                        if(botDescriptor.fightMonsterId.isEmpty())
-                        {
-                            bool additionalStep=false;
-                            if(botDescriptor.shopId!=0)
-                                additionalStep=true;
-                            int sub_index=0;
-                            while(sub_index<textFull.size())
-                            {
-                                const QMap<QString,QString> &text=textFull.at(sub_index);
-                                if(text.value("en")=="heal")
-                                    tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"heal\"/>\n").arg(sub_index+1).toUtf8());
-                                else if(text.value("en")=="warehouse")
-                                    tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"warehouse\"/>\n").arg(sub_index+1).toUtf8());
-                                else
-                                {
-                                    tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"text\">\n").arg(sub_index+1).toUtf8());
-                                    QMapIterator<QString,QString> i(text);
-                                    while (i.hasNext()) {
-                                        i.next();
-                                        if(i.key()=="en" || i.value()!=text.value("en"))
-                                        {
-                                            QString lang;
-                                            if(i.key()!="en")
-                                                lang=" lang=\""+i.key()+"\"";
-                                            if(sub_index<(textFull.size()-1) || additionalStep)
-                                            {
-                                                QString next="Next";
-                                                if(i.key()=="nl")
-                                                    next="Volgende";
-                                                else if(i.key()=="fi")
-                                                    next="Seuraava";
-                                                else if(i.key()=="fr")
-                                                    next="Suivant";
-                                                else if(i.key()=="de")
-                                                    next="Nächster";
-                                                else if(i.key()=="it")
-                                                    next="Prossimo";
-                                                else if(i.key()=="pt")
-                                                    next="Próximo";
-                                                else if(i.key()=="es")
-                                                    next="Siguiente";
-                                                tempFile.write(
-                                                            QStringLiteral("      <text%1><![CDATA[%2<br /><br /><a href=\"%3\">[%4]</a>]]></text>\n")
-                                                                .arg(lang)
-                                                                .arg(i.value())
-                                                                .arg(sub_index+2)
-                                                                .arg(next)
-                                                                .toUtf8()
-                                                            );
-                                            }
-                                            else
-                                                tempFile.write(
-                                                            QStringLiteral("      <text%1><![CDATA[%2]]></text>\n")
-                                                                .arg(lang)
-                                                                .arg(i.value())
-                                                                .toUtf8()
-                                                        );
-                                        }
-                                    }
-
-                                    tempFile.write(QStringLiteral("    </step>\n").toUtf8());
-                                }
-                                sub_index++;
-                            }
-                            if(botDescriptor.name.contains("Shop Keeper") && botDescriptor.shopId==0)
-                                std::cerr << "2) botDescriptor.name.contains(\"Shop Keeper\") && botDescriptor.shopId==0" << std::endl;
-                            if(botDescriptor.shopId!=0)
-                            {
-                                tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"text\">\n"
-                                "      <text><![CDATA[<a href=\"%2\">Buy</a><br />\n"
-                                "      <a href=\"%3\">Sell</a>]]></text>\n"
-                                "    </step>\n")
-                                               .arg(sub_index+1)
-                                               .arg(sub_index+2)
-                                               .arg(sub_index+3)
-                                               .toUtf8()
-                                               );
-                                sub_index++;
-                                tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"shop\" shop=\"%2\"/>\n")
-                                               .arg(sub_index+1)
-                                               .arg(botDescriptor.shopId)
-                                               .toUtf8()
-                                               );
-                                sub_index++;
-                                tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"sell\" shop=\"%2\"/>\n")
-                                               .arg(sub_index+1)
-                                               .arg(botDescriptor.shopId)
-                                               .toUtf8()
-                                               );
-                                sub_index++;
-                            }
-                        }
-                        else
-                        {
-                            tempFile.write(QStringLiteral("    <step type=\"fight\" id=\"1\" fightid=\"%1\" />\n").arg(fightid).toUtf8());
-                            FightDescriptor fightDescriptor;
-                            if(textFull.size()>=1)
-                                fightDescriptor.start=textFull.first();
-                            if(textFull.size()>=2)
-                                fightDescriptor.win=textFull.last();
-                            int sub_sub_index=0;
-                            while(sub_sub_index<botDescriptor.fightMonsterId.size())
-                            {
-                                const uint32_t monsterId=botDescriptor.fightMonsterId.at(sub_sub_index);
-                                if(monsterId==0)
-                                {
-                                    std::cerr << "monsterId==0 for bot monster!" << std::endl;
-                                    abort();
-                                }
-                                fightDescriptor.fightMonsterId << monsterId;
-                                const quint32 level=botDescriptor.fightMonsterLevel.at(sub_sub_index);
-                                if(level==0)
-                                {
-                                    std::cerr << "level==0 for bot monster!" << std::endl;
-                                    abort();
-                                }
-                                fightDescriptor.fightMonsterLevel << level;
-                                sub_sub_index++;
-                            }
-                            fightDescriptor.id=fightid;
-                            fightList << fightDescriptor;
-                            fightid++;
-                        }
-                        tempFile.write(QStringLiteral("  </bot>\n").toUtf8());
-                        if(botDescriptor.x>=0 && botDescriptor.x<map->width() && botDescriptor.y>=0 && botDescriptor.y<map->height())
-                        {
-                            Tiled::MapObject *mapObject=new Tiled::MapObject("","bot",QPointF(botDescriptor.x,botDescriptor.y+offsetToY),QSizeF(1,1));
-                            QString botsFileClean=botsFile;
-                            botsFileClean.remove(".tmx");
-                            mapObject->setProperty("file",botsFileClean);
-                            mapObject->setProperty("id",QString::number(botId));
-                            if(!botDescriptor.skin.isEmpty())
-                            {
-                                mapObject->setProperty("skin",botDescriptor.skin);
-                                if(botDescriptor.orientation=="bottom" || botDescriptor.orientation=="down")
-                                    mapObject->setProperty("lookAt","bottom");
-                                else if(botDescriptor.orientation=="top" || botDescriptor.orientation=="up")
-                                    mapObject->setProperty("lookAt","top");
-                                else if(botDescriptor.orientation=="right")
-                                    mapObject->setProperty("lookAt","right");
-                                else if(botDescriptor.orientation=="left")
-                                    mapObject->setProperty("lookAt","left");
-                                else
-                                    mapObject->setProperty("lookAt","bottom");
-                            }
-                            Tiled::Cell cell=mapObject->cell();
-                            cell.tile=map->tilesetAt(indexTileset)->tileAt(0);
-                            if(cell.tile==NULL)
-                                qDebug() << "Tile not found (" << __LINE__ << ")";
-                            mapObject->setCell(cell);
-                            map->layerAt(indexLayerObject)->asObjectGroup()->addObject(mapObject);
-                        }
-                        botId++;
-                        index++;
-                    }
-                    tempFile.write(QStringLiteral("</bots>").toUtf8());
-                    tempFile.close();
-                }
-                else
-                    std::cerr << "File not found to open in write bot: " << botsFile.toStdString() << std::endl;
-            }
         }
 
         if(!fightList.isEmpty())
@@ -2400,12 +2298,163 @@ int createBorder(QString file,const bool addOneToY)
         indexZone++;
     }
 
+    QHashIterator<QString/*file path*/,QList<BotDescriptor> > i(botList);
+    while (i.hasNext()) {
+        i.next();
+        const QString &botsFile=i.key();
+        const QList<BotDescriptor> &botListList=i.value();
+        //bot file
+        QFile tempFile(botsFile);
+        if(tempFile.open(QIODevice::WriteOnly))
+        {
+            tempFile.write(QStringLiteral("<bots>\n").toUtf8());
+            int index=0;
+            while(index<botListList.size())
+            {
+                const BotDescriptor &botDescriptor=botListList.at(index);
+                tempFile.write(QStringLiteral("  <bot id=\"%1\">\n").arg(botDescriptor.id).toUtf8());
+                if(botDescriptor.name!="NULL" && !botDescriptor.name.isEmpty())
+                    tempFile.write(QStringLiteral("    <name>%1</name>\n").arg(botDescriptor.name).toUtf8());
+                QList<QMap<QString,QString> > textFull=botDescriptor.text;
+                if(botDescriptor.fightMonsterId.isEmpty())
+                {
+                    bool additionalStep=false;
+                    if(botDescriptor.shopId!=0)
+                        additionalStep=true;
+                    int sub_index=0;
+                    while(sub_index<textFull.size())
+                    {
+                        const QMap<QString,QString> &text=textFull.at(sub_index);
+                        if(text.value("en")=="heal")
+                            tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"heal\"/>\n").arg(sub_index+1).toUtf8());
+                        else if(text.value("en")=="warehouse")
+                            tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"warehouse\"/>\n").arg(sub_index+1).toUtf8());
+                        else
+                        {
+                            tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"text\">\n").arg(sub_index+1).toUtf8());
+                            QMapIterator<QString,QString> i(text);
+                            while (i.hasNext()) {
+                                i.next();
+                                if(i.key()=="en" || i.value()!=text.value("en"))
+                                {
+                                    QString lang;
+                                    if(i.key()!="en")
+                                        lang=" lang=\""+i.key()+"\"";
+                                    if(sub_index<(textFull.size()-1) || additionalStep)
+                                    {
+                                        QString next="Next";
+                                        if(i.key()=="nl")
+                                            next="Volgende";
+                                        else if(i.key()=="fi")
+                                            next="Seuraava";
+                                        else if(i.key()=="fr")
+                                            next="Suivant";
+                                        else if(i.key()=="de")
+                                            next="Nächster";
+                                        else if(i.key()=="it")
+                                            next="Prossimo";
+                                        else if(i.key()=="pt")
+                                            next="Próximo";
+                                        else if(i.key()=="es")
+                                            next="Siguiente";
+                                        tempFile.write(
+                                                    QStringLiteral("      <text%1><![CDATA[%2<br /><br /><a href=\"%3\">[%4]</a>]]></text>\n")
+                                                        .arg(lang)
+                                                        .arg(i.value())
+                                                        .arg(sub_index+2)
+                                                        .arg(next)
+                                                        .toUtf8()
+                                                    );
+                                    }
+                                    else
+                                        tempFile.write(
+                                                    QStringLiteral("      <text%1><![CDATA[%2]]></text>\n")
+                                                        .arg(lang)
+                                                        .arg(i.value())
+                                                        .toUtf8()
+                                                );
+                                }
+                            }
+
+                            tempFile.write(QStringLiteral("    </step>\n").toUtf8());
+                        }
+                        sub_index++;
+                    }
+                    if(botDescriptor.name.contains("Shop Keeper") && botDescriptor.shopId==0)
+                        std::cerr << "2) botDescriptor.name.contains(\"Shop Keeper\") && botDescriptor.shopId==0" << std::endl;
+                    if(botDescriptor.shopId!=0)
+                    {
+                        tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"text\">\n"
+                        "      <text><![CDATA[<a href=\"%2\">Buy</a><br />\n"
+                        "      <a href=\"%3\">Sell</a>]]></text>\n"
+                        "    </step>\n")
+                                       .arg(sub_index+1)
+                                       .arg(sub_index+2)
+                                       .arg(sub_index+3)
+                                       .toUtf8()
+                                       );
+                        sub_index++;
+                        tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"shop\" shop=\"%2\"/>\n")
+                                       .arg(sub_index+1)
+                                       .arg(botDescriptor.shopId)
+                                       .toUtf8()
+                                       );
+                        sub_index++;
+                        tempFile.write(QStringLiteral("    <step id=\"%1\" type=\"sell\" shop=\"%2\"/>\n")
+                                       .arg(sub_index+1)
+                                       .arg(botDescriptor.shopId)
+                                       .toUtf8()
+                                       );
+                        sub_index++;
+                    }
+                }
+                else
+                {
+                    tempFile.write(QStringLiteral("    <step type=\"fight\" id=\"1\" fightid=\"%1\" />\n").arg(fightid).toUtf8());
+                    FightDescriptor fightDescriptor;
+                    if(textFull.size()>=1)
+                        fightDescriptor.start=textFull.first();
+                    if(textFull.size()>=2)
+                        fightDescriptor.win=textFull.last();
+                    int sub_sub_index=0;
+                    while(sub_sub_index<botDescriptor.fightMonsterId.size())
+                    {
+                        const uint32_t monsterId=botDescriptor.fightMonsterId.at(sub_sub_index);
+                        if(monsterId==0)
+                        {
+                            std::cerr << "monsterId==0 for bot monster!" << std::endl;
+                            abort();
+                        }
+                        fightDescriptor.fightMonsterId << monsterId;
+                        const quint32 level=botDescriptor.fightMonsterLevel.at(sub_sub_index);
+                        if(level==0)
+                        {
+                            std::cerr << "level==0 for bot monster!" << std::endl;
+                            abort();
+                        }
+                        fightDescriptor.fightMonsterLevel << level;
+                        sub_sub_index++;
+                    }
+                    fightDescriptor.id=fightid;
+                    fightList << fightDescriptor;
+                    fightid++;
+                }
+                tempFile.write(QStringLiteral("  </bot>\n").toUtf8());
+                index++;
+            }
+            tempFile.write(QStringLiteral("</bots>").toUtf8());
+            tempFile.close();
+        }
+        else
+            std::cerr << "File not found to open in write bot: " << botsFile.toStdString() << std::endl;
+    }
+
     //keep the remake
-    QDir().mkdir("semi");
+    /*QDir().mkdir("semi");
     {
         Tiled::MapWriter writer;
         writer.writeMap(map,"semi/"+file);
-    }
+    }*/
 
     //delete map
     {
@@ -2735,8 +2784,8 @@ int main(int argc, char *argv[])
         }
         index++;
     }
-    if(mapWithHeal.isEmpty())
-        abort();
+    /*if(mapWithHeal.isEmpty())
+        abort();*/
     index=0;
     while(index<fileInfoList.size())
     {
