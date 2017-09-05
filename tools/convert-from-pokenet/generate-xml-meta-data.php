@@ -372,7 +372,7 @@ foreach($fileList as $file)
         rename($file,$dirtyNameToClean[$file]);
     elseif(!isset($cleanNameToDirty[$file]))
     {
-        if($file!='invisible.png' && $file!='invisible.tsx' && !preg_match('#\.xml$#',$file))
+        if($file!='invisible.png' && $file!='invisible.tsx' && $file!='normal1.png' && $file!='normal1.tsx' && $file!='normal16.png' && $file!='normal16.tsx' && !preg_match('#\.xml$#',$file))
         {
             $removedFile++;
             unlink($file);

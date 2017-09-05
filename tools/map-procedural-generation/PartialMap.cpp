@@ -17,18 +17,23 @@
 bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const unsigned int &minY,
                       const unsigned int &maxX, const unsigned int &maxY, const std::string &file, std::vector<RecuesPoint> &recuesPoints,
                       const std::string &type,const std::string &zone,const std::string &name,
-                      const std::string &additionalXmlInfo)
+                      const std::string &additionalXmlInfo,const bool writeAdditionalData,const bool appendPath)
 {
     const unsigned int mapWidth=maxX-minX;
     const unsigned int mapHeight=maxY-minY;
     Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,mapWidth,mapHeight,16,16);
-    QFileInfo fileInfo(QString::fromStdString(QCoreApplication::applicationDirPath().toStdString()+"/dest/map/main/official/"+file));
+    QFileInfo fileInfo;
+    if(appendPath)
+        fileInfo=QFileInfo(QString::fromStdString(QCoreApplication::applicationDirPath().toStdString()+"/dest/map/main/official/"+file));
+    else
+        fileInfo=QFileInfo(QString::fromStdString(file));
     QDir mapDir(fileInfo.absolutePath());
-    if(!mapDir.mkpath(fileInfo.absolutePath()))
-    {
-        std::cerr << "Unable to create path: " << fileInfo.absolutePath().toStdString() << std::endl;
-        abort();
-    }
+    if(appendPath)
+        if(!mapDir.mkpath(fileInfo.absolutePath()))
+        {
+            std::cerr << "Unable to create path: " << fileInfo.absolutePath().toStdString() << std::endl;
+            abort();
+        }
 
     //add external tileset
     std::unordered_map<const Tiled::Tileset *,Tiled::Tileset *> templateTilesetToMapTileset;
@@ -36,7 +41,20 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
     while(indexTileset<(unsigned int)world.tilesetCount())
     {
         const Tiled::Tileset * const tileset=world.tilesetAt(indexTileset);
-        QString tilesetPath(QFileInfo(QCoreApplication::applicationDirPath()+"/dest/map/main/official/"+tileset->fileName()).absoluteFilePath());
+        QString tilesetFileName=tileset->fileName();
+        if(tilesetFileName.isEmpty())
+        {
+            std::cerr << "tileset->fileName() is empty, internal tileset not supported" << std::endl;
+            abort();
+        }
+        if(appendPath)
+            if(!QFile::exists(tilesetFileName))
+            {
+                QString pathAppend=QCoreApplication::applicationDirPath()+"/dest/map/main/official/";
+                if(!tilesetFileName.startsWith("/"))
+                    tilesetFileName=pathAppend+tilesetFileName;
+            }
+        QString tilesetPath(QFileInfo(tilesetFileName).absoluteFilePath());
 
         Tiled::MapReader reader;
         Tiled::Tileset *tilesetBase=reader.readTileset(tilesetPath);
@@ -102,7 +120,11 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
             {
                 const Tiled::MapObject* oldobject=objects.at(objectIndex);
                 const unsigned int objectx=oldobject->x();
-                const unsigned int objecty=oldobject->y();
+                const unsigned int objecty=oldobject->y()
+        #ifdef GENERATEMAPBORDER
+                        -1//less the y offset, why?
+        #endif
+                        ;
                 if(objectx>=minX && objectx<maxX && objecty>=minY && objecty<maxY)
                 {
                     const Tiled::Cell &oldCell=oldobject->cell();
@@ -156,27 +178,62 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
     if(!returnVar)
         std::cerr << maprwriter.errorString().toStdString() << std::endl;
 
-    QString xmlPath(fileInfo.absoluteFilePath());
-    xmlPath.remove(xmlPath.size()-4,4);
-    xmlPath+=".xml";
-    QFile xmlinfo(xmlPath);
-    if(xmlinfo.open(QFile::WriteOnly))
+    if(writeAdditionalData)
     {
-        QString content("<map type=\""+QString::fromStdString(type)+"\"");
-        if(!zone.empty())
-            content+=" zone=\""+QString::fromStdString(zone)+"\"";
-        content+=">\n"
-        "  <name>"+QString::fromStdString(name)+"</name>\n"+
-        QString::fromStdString(additionalXmlInfo)+
-        "</map>";
-        QByteArray contentData(content.toUtf8());
-        xmlinfo.write(contentData.constData(),contentData.size());
-        xmlinfo.close();
+        QString xmlPath(fileInfo.absoluteFilePath());
+        xmlPath.remove(xmlPath.size()-4,4);
+        xmlPath+=".xml";
+        QFile xmlinfo(xmlPath);
+        if(xmlinfo.open(QFile::WriteOnly))
+        {
+            QString content("<map type=\""+QString::fromStdString(type)+"\"");
+            if(!zone.empty())
+                content+=" zone=\""+QString::fromStdString(zone)+"\"";
+            content+=">\n"
+            "  <name>"+QString::fromStdString(name)+"</name>\n"+
+            QString::fromStdString(additionalXmlInfo)+
+            "</map>";
+            QByteArray contentData(content.toUtf8());
+            xmlinfo.write(contentData.constData(),contentData.size());
+            xmlinfo.close();
+        }
+        else
+        {
+            std::cerr << "Unable to write " << xmlPath.toStdString() << std::endl;
+            returnVar=false;
+        }
     }
-    else
+
+    //delete map
     {
-        std::cerr << "Unable to write " << xmlPath.toStdString() << std::endl;
-        returnVar=false;
+        QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
+        while (i.hasNext()) {
+            i.next();
+            delete i.value();
+        }
+        Tiled::Tileset::preloadedTileset.clear();
+    }
+    {
+        unsigned int index=0;
+        while(index<(unsigned int)tiledMap.tilesetCount())
+        {
+            Tiled::Tileset * tileset=tiledMap.tilesetAt(index);
+            if(!tileset->isExternal())
+            {
+                QString tsxPath=tileset->imageSource();
+                tsxPath.replace(".png",".tsx");
+                if(!QFile::exists(tsxPath))
+                {
+                    Tiled::MapWriter writer;
+                    //write external tileset
+                    writer.writeTileset(tileset,tsxPath);
+                    std::cout << "Write new tileset: " << tsxPath.toStdString() << std::endl;
+                }
+                //use the external tileset
+                tileset->setFileName(tsxPath);
+            }
+            index++;
+        }
     }
     return returnVar;
 }
