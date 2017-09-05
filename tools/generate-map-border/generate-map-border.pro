@@ -11,4 +11,8 @@ TEMPLATE = app
 
 LIBS += -lz
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    ../map-procedural-generation/PartialMap.cpp
+
+HEADERS += \
+    ../map-procedural-generation/PartialMap.h
