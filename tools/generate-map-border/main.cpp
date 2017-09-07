@@ -1056,41 +1056,44 @@ int createBorder(QString file,const bool addOneToY)
                     }
                     else if(mapBorderIsCave || mapIsCave)
                     {}
-                    else
+                    else if(mapZoneList.size()==1 && mapSplit.value(mapBorderFile).size()==1)
                     {
+                        const int minY=mapSplit.value(file).at(0).minY;
+                        const int maxY=mapSplit.value(file).at(0).maxY;
                         int topBorder=0;
                         int bottomBorder=0;
-                        const int offset=yOffsetModifier.value(mapBorderFile)-yOffsetModifier.value(file);
-                        const int mapBorderHeight=mapHeight.value(mapBorderFile);
+                        const int offset=yOffsetModifier.value(mapBorderFile)-yOffsetModifier.value(file)+minY-mapSplit.value(mapBorderFile).at(0).minY;
+                        const int mapBorderHeight=mapSplit.value(mapBorderFile).at(0).maxY;
                         if(offset<0)
                         {
                             if(-offset<=mapBorderHeight)
                             {
-                                topBorder=0;
-                                if((mapBorderHeight-(-offset))<=map->height())
+                                topBorder=0+minY;
+                                if((mapBorderHeight-(-offset))<=maxY)
                                     bottomBorder=mapBorderHeight-(-offset);
                                 else
-                                    bottomBorder=map->height();
+                                    bottomBorder=maxY;
                             }
                         }
                         else
                         {
                             if(offset<map->height())
                             {
-                                topBorder=offset;
-                                if((mapBorderHeight+offset)<=map->height())
+                                topBorder=offset-minY;
+                                if((mapBorderHeight+offset)<=maxY)
                                     bottomBorder=mapBorderHeight+offset;
                                 else
-                                    bottomBorder=map->height();
+                                    bottomBorder=maxY;
                             }
                         }
-                        if(topBorder!=0 || bottomBorder!=0)
+                        if((topBorder!=0 || bottomBorder!=0) &&
+                                (map->width()==(int)mapSplit.value(file).at(0).maxX && mapSplit.value(mapBorderFile).at(0).minX==0)
+                                )
                         {
                             QPointF point(map->width()-1,(bottomBorder-topBorder)/2+topBorder+offsetToY);
                             if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                             {
-                                if(haveBorderHole(file,CatchChallenger::Orientation_right) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_left) &&
-                                        mapZoneList.size()==1 && mapSplit.value(mapBorderFile).size()==1)
+                                if(haveBorderHole(file,CatchChallenger::Orientation_right) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_left))
                                 {
                                     Tiled::MapObject *mapObject=new Tiled::MapObject("","border-right",point,QSizeF(1,1));
                                     QString mapBorderFileClean=mapBorderFile;
