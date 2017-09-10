@@ -471,7 +471,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                             {
                                 std::string ratio_gender=std::string(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_ratio_gender)));
                                 stringreplaceOne(ratio_gender,CACHEDSTRING_percent,"");
-                                monster.ratio_gender=stringtouint8(ratio_gender,&ok2);
+                                monster.ratio_gender=stringtoint8(ratio_gender,&ok2);
                                 if(!ok2)
                                 {
                                     std::cerr << "Unable to open the xml file: " << file << ", ratio_gender is not number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;

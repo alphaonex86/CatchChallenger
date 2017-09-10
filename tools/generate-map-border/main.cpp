@@ -1308,6 +1308,7 @@ int createBorder(QString file,const bool addOneToY)
         bool ok;
         QSet<QPair<unsigned int,unsigned int> > dropBot;
         {
+            unsigned int fightidTemp=fightid;
             QString npcFile=file;
             npcFile.replace(".tmx",".txt");
             npcFile="../npc/"+npcFile;
@@ -1763,6 +1764,12 @@ int createBorder(QString file,const bool addOneToY)
                                                 if(monsterNameToMonsterId.contains(monsterString))
                                                     monsterId=monsterNameToMonsterId.value(monsterString);
                                             }
+                                            else if(monsterString==simplifyItemName("Minum"))
+                                            {
+                                                const QString monsterString=simplifyItemName("Minun");
+                                                if(monsterNameToMonsterId.contains(monsterString))
+                                                    monsterId=monsterNameToMonsterId.value(monsterString);
+                                            }
                                             if(monsterId>0)
                                             {
                                                 bool ok;
@@ -1850,9 +1857,9 @@ int createBorder(QString file,const bool addOneToY)
                                                     fightDescriptor.fightMonsterLevel << level;
                                                     sub_sub_index++;
                                                 }
-                                                fightDescriptor.id=fightid;
+                                                fightDescriptor.id=fightidTemp;
                                                 fightList << fightDescriptor;
-                                                fightid++;
+                                                fightidTemp++;
                                             }
 
                                             Tiled::MapObject *mapObject=new Tiled::MapObject("","bot",QPointF(botDescriptor.x,botDescriptor.y+offsetToY),QSizeF(1,1));
