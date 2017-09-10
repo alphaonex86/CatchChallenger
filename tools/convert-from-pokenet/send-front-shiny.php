@@ -10,8 +10,8 @@ if ($dh = opendir($dir)) {
 		$number=(int)str_replace('-3.png','',$file);
 		if(!is_dir($dest.$number.'/'))
 			mkdir($dest.$number.'/');
-		if(!file_exists($dest.$number.'/front.png'))
-			copy($file,$dest.$number.'/front.png');
+		if(!file_exists($dest.$number.'/front-shiny.png'))
+			copy($file,$dest.$number.'/front-shiny.png');
 //        	echo "filename: $file : filetype: " . filetype($dir . $file) . "\n";
 	}
     }

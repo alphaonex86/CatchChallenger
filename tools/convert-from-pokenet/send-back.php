@@ -1,7 +1,7 @@
 <?php
 
 $dir = "./";
-$dest='/mnt/system/encrypted/datapack/monsters/';
+$dest='/home/user/Desktop/CatchChallenger/Grab-test/monsters/';
 
 if ($dh = opendir($dir)) {
     while (($file = readdir($dh)) !== false) {

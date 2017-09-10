@@ -8,64 +8,32 @@ second line is stat at level 100
 if level is 0, it's base attack, default: attack_level=\"1\"
 evolution type can be: level (attribute level is the level), item (attribute level is the item id), trade (attribute level is useless)
 -->
-<list>\n";
+<monsters>\n";
 
-
-$file=file_get_contents('../items/items2.xml');
-preg_match_all('#<entry>(.*)</entry>#isU',$file,$entry_list);
-$general_items_list=array();
-foreach($entry_list[1] as $entry)
+function simplifedName($string)
 {
-	if(!preg_match('#<m_id>[0-9]+</m_id>#isU',$entry))
-		continue;
-	$id=preg_replace('#^.*<m_id>([0-9]+)</m_id>.*$#isU','$1',$entry);
-	if(file_exists('../items/'.$id.'.png'))
-	{
-		if(!preg_match('#<m_name>[^<]+</m_name>#isU',$entry))
-			continue;
-		$name=preg_replace('#^.*<m_name>([^<]+)</m_name>.*$#isU','$1',$entry);
-		if(!preg_match('#<m_description>[^<]+</m_description>#isU',$entry))
-			continue;
-		$description=preg_replace('#^.*<m_description>([^<]+)</m_description>.*$#isU','$1',$entry);
-		$description=preg_replace("#[\n\r\t]+.*$#isU",'',$description);
-		if(!preg_match('#<m_price>[0-9]+</m_price>#isU',$entry))
-			continue;
-		$price=preg_replace('#^.*<m_price>([0-9]+)</m_price>.*$#isU','$1',$entry);
-		$general_items_list[$id]=array('name'=>$name,'description'=>$description,'price'=>$price);
-	}
+    $string=str_replace(' ','',$string);
+    $string=str_replace('-','',$string);
+    $string=str_replace('_','',$string);
+    $string=strtoupper($string);
+    return $string;
 }
 
-$item_name_to_id=array();
-$file=file_get_contents('../item/items2.xml');
-preg_match_all('#<entry>(.*)</entry>#isU',$file,$entry_list);
-foreach($entry_list[1] as $entry)
-{
-	if(!preg_match('#<m_id>[0-9]+</m_id>#isU',$entry))
-		continue;
-	$id=preg_replace('#^.*<m_id>([0-9]+)</m_id>.*$#isU','$1',$entry);
-	if(!preg_match('#<m_category>[^<]+</m_category>#isU',$entry))
-		continue;
-	$category=preg_replace('#^.*<m_category>([^<]+)</m_category>.*$#isU','$1',$entry);
-	if($category!='TM')
-		$image=$id.'.png';
-	else
-		$image='TM.png';
-	if(file_exists($image))
-	{
-		if(!preg_match('#<m_name>[^<]+</m_name>#isU',$entry))
-			continue;
-		$name=preg_replace('#^.*<m_name>([^<]+)</m_name>.*$#isU','$1',$entry);
-		if(!preg_match('#<m_description>[^<]+</m_description>#isU',$entry))
-			continue;
-		$description=preg_replace('#^.*<m_description>([^<]+)</m_description>.*$#isU','$1',$entry);
-		$description=preg_replace("#[\n\r\t]+.*$#isU",'',$description);
-		if(!preg_match('#<m_price>[0-9]+</m_price>#isU',$entry))
-			continue;
-		$price=preg_replace('#^.*<m_price>([0-9]+)</m_price>.*$#isU','$1',$entry);
-		$item_name_to_id[str_replace(' ','',strtolower($name))]=$id;
-	}
-}
+$datapackexplorergeneratorinclude=true;
+$lang_to_load=array('en');
+$datapack_path='/home/user/Desktop/CatchChallenger/Grab-test/datapack/';
+require '/home/user/Desktop/www/catchchallenger.first-world.info/official-server/datapack-explorer-generator/function.php';
 
+require '/home/user/Desktop/www/catchchallenger.first-world.info/official-server/datapack-explorer-generator/load/items.php';
+foreach($item_meta as $id=>$item)
+    $item_name_to_id[simplifedName($item['name']['en'])]=$id;
+
+require '/home/user/Desktop/www/catchchallenger.first-world.info/official-server/datapack-explorer-generator/load/skill.php';
+foreach($skill_meta as $id=>$skill)
+    $movetypes_name_to_id[simplifedName($skill['name']['en'])]=$id;
+
+require '/home/user/Desktop/www/catchchallenger.first-world.info/official-server/datapack-explorer-generator/load/monster.php';
+    
 $file=file_get_contents('species.xml');
 preg_match_all('#<pokemonSpecies>(.*)</pokemonSpecies>#isU',$file,$entry_list);
 $species=array();
@@ -130,6 +98,7 @@ $file=file_get_contents('polrdb.xml');
 preg_match_all('#<POLRDataEntry>(.*)</POLRDataEntry>#isU',$file,$entry_list);
 foreach($entry_list[1] as $entry)
 {
+	$type=$entry_list_type[1];
 	if(!preg_match('#<name>[^<]+</name>#isU',$entry))
 		continue;
 	$name=preg_replace('#^.*<name>([^<]+)</name>.*$#isU','$1',$entry);
@@ -163,9 +132,10 @@ foreach($entry_list[1] as $entry)
 	if(!preg_match('#<color>[^<]+</color>#isU',$entry))
 		continue;
 	$color=preg_replace('#^.*<color>([^<]+)</color>.*$#isU','$1',$entry);
-	if(!preg_match('#<habitat>[^<]+</habitat>#isU',$entry))
-		continue;
-	$habitat=preg_replace('#^.*<habitat>([^<]+)</habitat>.*$#isU','$1',$entry);
+	if(preg_match('#<habitat>[^<]+</habitat>#isU',$entry))
+        $habitat=preg_replace('#^.*<habitat>([^<]+)</habitat>.*$#isU','$1',$entry);
+    else
+        $habitat='';
 	if(!preg_match('#<height>[0-9]+(\.[0-9]+)?</height>#isU',$entry))
 		continue;
 	$height=preg_replace('#^.*<height>([0-9]+(\.[0-9]+)?)</height>.*$#isU','$1',$entry);
@@ -187,12 +157,13 @@ foreach($entry_list[1] as $entry)
 		$string=preg_replace('#^.*<string>([^<]+)</string>.*$#isU','$1',$move);
 		$moves[]=array($level,$string);
 	}
-	if(!preg_match('#<starterMoves>.*</starterMoves>#isU',$entry))
-		continue;
-	$temp_starterMoves=preg_replace('#^.*<starterMoves>(.*)</starterMoves>.*$#isU','$1',$entry);
-	preg_match_all('#<string>(.*)</string>#isU',$temp_starterMoves,$temp_starterMoves_list);
-	foreach($temp_starterMoves_list[1] as $starterMove)
-		$moves[]=array(0,$starterMove);
+	if(preg_match('#<starterMoves>.*</starterMoves>#isU',$entry))
+	{
+        $temp_starterMoves=preg_replace('#^.*<starterMoves>(.*)</starterMoves>.*$#isU','$1',$entry);
+        preg_match_all('#<string>(.*)</string>#isU',$temp_starterMoves,$temp_starterMoves_list);
+        foreach($temp_starterMoves_list[1] as $starterMove)
+            $moves[]=array(0,$starterMove);
+    }
 	$evolutions=array();
 	if(preg_match('#<POLREvolution>.*</POLREvolution>#isU',$entry))
 	{
@@ -220,9 +191,9 @@ foreach($entry_list[1] as $entry)
 					continue;
 				$m_level=preg_replace('#^.*<m_attribute>([^<]+)</m_attribute>.*$#isU','$1',$evolution_text);
 				$m_level=str_replace(' ','',strtolower($m_level));
-				if(!isset($item_name_to_id[$m_level]))
+				if(!isset($item_name_to_id[simplifedName($m_level)]))
 					continue;
-				$m_level=$item_name_to_id[$m_level];
+				$m_level=$item_name_to_id[simplifedName($m_level)];
 			}
 			else if($m_type=='Trade')
 			{
@@ -236,9 +207,9 @@ foreach($entry_list[1] as $entry)
 					continue;
 				$m_level=preg_replace('#^.*<m_attribute>([^<]+)</m_attribute>.*$#isU','$1',$evolution_text);
 				$m_level=str_replace(' ','',strtolower($m_level));
-				if(!isset($item_name_to_id[$m_level]))
+				if(!isset($item_name_to_id[simplifedName($m_level)]))
 					continue;
-				$m_level=$item_name_to_id[$m_level];
+				$m_level=$item_name_to_id[simplifedName($m_level)];
 			}*/
 			/*else if($m_type=='Happiness' || $m_type=='HappinessDay' || $m_type=='HappinessNight')
 			{
@@ -256,7 +227,6 @@ foreach($entry_list[1] as $entry)
 		}
 	}
 
-	$type=$entry_list_type[1];
 	if(isset($name_to_id[$name]))
 	{
 		$species[$name_to_id[$name]]=array_merge(array(
@@ -275,6 +245,8 @@ foreach($entry_list[1] as $entry)
 			'evolutions'=>$evolutions,
 		),$species[$name_to_id[$name]]);
 	}
+	/*else
+        echo 'Monster not found: '.$name."\n";*/
 }
 
 $file=file_get_contents('itemdrops.txt');
@@ -301,72 +273,13 @@ foreach($entry_list as $entry)
 	}
 }
 
-$file=file_get_contents('movetypes.xml');
-preg_match_all('#<entry>(.*)</entry>#isU',$file,$entry_list);
-$movetypes=array();
-$movetypes_name_to_id=array();
-foreach($entry_list[1] as $entry)
-{
-	$applyOn='aloneEnemy';
-	if(!preg_match('#<id>[0-9]+</id>#isU',$entry))
-		continue;
-	$id=preg_replace('#^.*<id>([0-9]+)</id>.*$#isU','$1',$entry);
-	if(!preg_match('#<name>[^<]+</name>#isU',$entry))
-		continue;
-	$name=preg_replace('#^.*<name>([^<]+)</name>.*$#isU','$1',$entry);
-	if(!preg_match('#<description>[^<]*</description>#isU',$entry))
-		continue;
-	$description=preg_replace('#^.*<description>([^<]*)</description>.*$#isU','$1',$entry);
-	if(!preg_match('#<type>[^<]+</type>#isU',$entry))
-		continue;
-	$type=preg_replace('#^.*<type>([^<]+)</type>.*$#isU','$1',$entry);
-	if(!preg_match('#<category>[^<]+</category>#isU',$entry))
-		continue;
-	$category=preg_replace('#^.*<category>([^<]+)</category>.*$#isU','$1',$entry);
-	if(!preg_match('#<pp>[0-9]+</pp>#isU',$entry))
-		continue;
-	$pp=preg_replace('#^.*<pp>([0-9]+)</pp>.*$#isU','$1',$entry);
-	if(!preg_match('#<power>[0-9]+</power>#isU',$entry))
-	{
-		if(preg_match('#heal#isU',$name))
-		{
-			$applyOn='themself';
-			$power='+100%';
-		}
-		else if(preg_match('#<power>Varies</power>#isU',$name))
-		{
-			if($description=='')
-				$description='Touch the target multiple times';
-			$power='60';
-		}
-		else
-			$power='0';
-	}
-	$power='-'.preg_replace('#^.*<power>([0-9]+)</power>.*$#isU','$1',$entry);
-	if(!preg_match('#<accuracy>[0-9]+</accuracy>#isU',$entry))
-		$accuracy='100';
-	else
-		$accuracy=preg_replace('#^.*<accuracy>([0-9]+)</accuracy>.*$#isU','$1',$entry);
-	$movetypes[$id]=array(
-		'name'=>$name,
-		'description'=>$description,
-		'type'=>$type,
-		'category'=>$category,
-		'pp'=>$pp,
-		'power'=>$power,
-		'accuracy'=>$accuracy,
-		'applyOn'=>$applyOn,
-	);
-	$movetypes_name_to_id[$name]=$id;
-}
-
-
 foreach($species as $id=>$specie)
 {
 	if(isset($specie['name']) && isset($specie['height'])
- && (file_exists($id.'/small.png') || file_exists($id.'/small.gif'))
- && (file_exists($id.'/front.png') || file_exists($id.'/front.gif'))
- && (file_exists($id.'/back.png') || file_exists($id.'/back.gif'))
+ && (file_exists('monsters/'.$id.'/small.png') || file_exists('monsters/'.$id.'/small.gif'))
+ && (file_exists('monsters/'.$id.'/front.png') || file_exists('monsters/'.$id.'/front.gif'))
+ && (file_exists('monsters/'.$id.'/back.png') || file_exists('monsters/'.$id.'/back.gif'))
+ && !isset($monster_meta[$id])
 )
 	{
 	?>
@@ -390,11 +303,11 @@ $temp_attack_list_duplicate=array();
 $temp_move=$specie['moves'];
 foreach($temp_move as $move)
 {
-	if(isset($movetypes_name_to_id[$move[1]]))
-		if(!isset($temp_attack_list_duplicate[$movetypes_name_to_id[$move[1]]]))
+	if(isset($movetypes_name_to_id[simplifedName($move[1])]))
+		if(!isset($temp_attack_list_duplicate[$movetypes_name_to_id[simplifedName($move[1])]]))
 		{
-			$temp_attack_list_duplicate[$movetypes_name_to_id[$move[1]]]=0;
-			echo '			<attack level="'.$move[0].'" id="'.$movetypes_name_to_id[$move[1]].'" />'."\n";
+			$temp_attack_list_duplicate[$movetypes_name_to_id[simplifedName($move[1])]]=0;
+			echo '			<attack level="'.$move[0].'" id="'.$movetypes_name_to_id[simplifedName($move[1])].'" />'."\n";
 		}
 }
 ?>
@@ -407,7 +320,7 @@ if(isset($specie['drops']) && count($specie['drops'])>0)
 <?php
 $temp_drops=$specie['drops'];
 foreach($temp_drops as $item=>$luck)
-	if(isset($general_items_list[$item]))
+	if(isset($item_meta[$item]))
 		echo '			<drop item="'.$item.'" luck="'.$luck.'" />'."\n";
 ?>
 		</drops>
@@ -443,6 +356,17 @@ foreach($temp_evolutions as $evolution)
 	</monster>
 <?php
 	}
+	else
+	{
+        /*if(!isset($specie['name']))
+            echo 'No name: '.$id;
+        if(!isset($specie['height']))
+            echo 'No height: '.$id;
+        if(!(file_exists('monsters/'.$id.'/small.png') || file_exists('monsters/'.$id.'/small.gif')))
+            echo 'No small.png: '.$id;*/
+        /*if(isset($monster_meta[$id]))
+            echo 'No $monster_meta: '.$id;*/
+	}
 }
 
-echo "</list>\n";
+echo "</monsters>\n";
