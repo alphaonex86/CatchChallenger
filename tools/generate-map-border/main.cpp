@@ -1025,7 +1025,7 @@ int createBorder(QString file,const bool addOneToY)
                                 (mapLoaded.value(mapBorderFile)->width()==(int)mapSplit.value(mapBorderFile).at(0).maxX && mapSplit.value(file).at(0).minX==0)
                                 )
                         {
-                            QPointF point(0,(bottomBorder-topBorder)/2+topBorder+offsetToY);
+                            QPointF point(0,(bottomBorder-topBorder)/2+topBorder+minY+offsetToY);
                             if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                             {
                                 if(haveBorderHole(file,CatchChallenger::Orientation_left) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_right))
@@ -1093,7 +1093,7 @@ int createBorder(QString file,const bool addOneToY)
                                 (map->width()==(int)mapSplit.value(file).at(0).maxX && mapSplit.value(mapBorderFile).at(0).minX==0)
                                 )
                         {
-                            QPointF point(map->width()-1,(bottomBorder-topBorder)/2+topBorder+offsetToY);
+                            QPointF point(map->width()-1,(bottomBorder-topBorder)/2+topBorder+minY+offsetToY);
                             if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                             {
                                 if(haveBorderHole(file,CatchChallenger::Orientation_right) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_left))
@@ -1161,7 +1161,7 @@ int createBorder(QString file,const bool addOneToY)
                                 (mapLoaded.value(mapBorderFile)->height()==(int)mapSplit.value(mapBorderFile).at(0).maxY && mapSplit.value(file).at(0).minY==0)
                                 )
                         {
-                            QPointF point((rightBorder-leftBorder)/2+leftBorder,0+offsetToY);
+                            QPointF point((rightBorder-leftBorder)/2+leftBorder+minX,0+offsetToY);
                             if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                             {
                                 if(haveBorderHole(file,CatchChallenger::Orientation_top) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_bottom))
@@ -1229,7 +1229,7 @@ int createBorder(QString file,const bool addOneToY)
                                 (map->height()==(int)mapSplit.value(file).at(0).maxY && mapSplit.value(mapBorderFile).at(0).minY==0)
                                 )
                         {
-                            QPointF point((rightBorder-leftBorder)/2+leftBorder,map->height()-1+offsetToY);
+                            QPointF point((rightBorder-leftBorder)/2+leftBorder+minX,map->height()-1+offsetToY);
                             if(point.x()>=0 && point.x()<map->width() && point.y()>=1 && point.y()<=map->height())
                             {
                                 if(haveBorderHole(file,CatchChallenger::Orientation_bottom) && haveBorderHole(mapBorderFile,CatchChallenger::Orientation_top))
@@ -1747,12 +1747,26 @@ int createBorder(QString file,const bool addOneToY)
                                         int fightIndex=0;
                                         while(fightIndex<textIndexMonster.size())
                                         {
+                                            uint32_t monsterId=0;
                                             const QString monsterString=simplifyItemName(textIndexMonster.at(fightIndex));
                                             if(monsterNameToMonsterId.contains(monsterString))
+                                                monsterId=monsterNameToMonsterId.value(monsterString);
+                                            else if(monsterString==simplifyItemName("Nidoran f"))
+                                            {
+                                                const QString monsterString=simplifyItemName("Nidoran female");
+                                                if(monsterNameToMonsterId.contains(monsterString))
+                                                    monsterId=monsterNameToMonsterId.value(monsterString);
+                                            }
+                                            else if(monsterString==simplifyItemName("Nidoran m"))
+                                            {
+                                                const QString monsterString=simplifyItemName("Nidoran male");
+                                                if(monsterNameToMonsterId.contains(monsterString))
+                                                    monsterId=monsterNameToMonsterId.value(monsterString);
+                                            }
+                                            if(monsterId>0)
                                             {
                                                 bool ok;
                                                 const quint32 level=textIndexMonster.at(fightIndex+1).toUInt(&ok);
-                                                const uint32_t monsterId=monsterNameToMonsterId.value(monsterString);
                                                 if(ok)
                                                 {
                                                     botDescriptor.fightMonsterId << monsterId;
@@ -2553,7 +2567,7 @@ void loadMonster()
     QDirIterator it("../monsters/", QDirIterator::Subdirectories);
     while (it.hasNext()) {
         QString filePath=it.next();
-        if(filePath!="." && filePath!=".." && filePath!="" && QFileInfo(filePath).isFile())
+        if(filePath!="." && filePath!=".." && filePath!="" && QFileInfo(filePath).isFile() && filePath.endsWith(".xml"))
         {
             QFile xmlFile(filePath);
             QByteArray xmlContent;
@@ -2598,8 +2612,8 @@ void loadMonster()
                         }
                         std::cout << "Loaded monsters from: " << filePath.toStdString() << std::endl;
                     }
-                    else
-                        std::cerr << "Wrong root balise: " << filePath.toStdString() << std::endl;
+                    /*else
+                       std::cerr << "Wrong root balise: " << filePath.toStdString() << std::endl;*/
                 }
                 else
                     std::cerr << "Not xml file: " << filePath.toStdString() << std::endl;

@@ -5,22 +5,24 @@ $dest='/home/user/Desktop/CatchChallenger/Grab-test/monsters/';
 
 if ($dh = opendir($dir)) {
     while (($file = readdir($dh)) !== false) {
-	if(preg_match('#[0-9]{3}\.gif#',$file))
+	if(preg_match('#[0-9]+\.gif#isU',$file))
 	{
 		$number=(int)str_replace('.gif','',$file);
+		$number=(int)str_replace('.GIF','',$file);
 		if(!is_dir($dest.$number.'/'))
 			mkdir($dest.$number.'/');
-		if(!file_exists($dest.$number.'/small.gif') && !file_exists($dest.$number.'/small.png'))
-			copy($file,$dest.$number.'/small.gif');
+		if(!file_exists($dest.$number.'/overworld-shiny.gif') && !file_exists($dest.$number.'/overworld-shiny.png'))
+			copy($file,$dest.$number.'/overworld-shiny.gif');
 //        	echo "filename: $file : filetype: " . filetype($dir . $file) . "\n";
 	}
-	if(preg_match('#[0-9]{3}\.png#',$file))
+	else if(preg_match('#[0-9]+\.png#isU',$file))
 	{
 		$number=(int)str_replace('.png','',$file);
+		$number=(int)str_replace('.PNG','',$file);
 		if(!is_dir($dest.$number.'/'))
 			mkdir($dest.$number.'/');
-		if(!file_exists($dest.$number.'/small.gif') && !file_exists($dest.$number.'/small.png'))
-			copy($file,$dest.$number.'/small.png');
+		if(!file_exists($dest.$number.'/overworld-shiny.gif') && !file_exists($dest.$number.'/overworld-shiny.png'))
+			copy($file,$dest.$number.'/overworld-shiny.png');
 //        	echo "filename: $file : filetype: " . filetype($dir . $file) . "\n";
 	}
     }

@@ -1,4 +1,6 @@
 <?php
+//start into ?
+die('make this more clean');
 $dir='./';
 if ($dh = opendir($dir)) {
     while (($file = readdir($dh)) !== false) {
@@ -39,9 +41,9 @@ if ($dh = opendir($dir)) {
 		imagecolordeallocate($dst,$col);
 		imagealphablending($dst, true);
 
-		if(!is_dir($index))
+		/*if(!is_dir($index))
 			mkdir($index);
-		imagepng($dst,$index.'/trainer.png');
+		imagepng($dst,$index.'/trainer.png');*/
 		//unlink($file);
 	}
     }
