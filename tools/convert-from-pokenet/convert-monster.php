@@ -10,6 +10,27 @@ evolution type can be: level (attribute level is the level), item (attribute lev
 -->
 <monsters>\n";
 
+$type_convert=array(0=>"normal",1=>"fire",2=>"water",3=>"electric",4=>"grass",5=>"ice",6=>"fighting",7=>"poison",8=>"ground",9=>"flying",10=>"psychic",11=>"bug",12=>"rock",13=>"ghost",14=>"dragon",15=>"dark",16=>"steel");
+
+function convertType($types)
+{
+    global $type_convert;
+	//print_r($type);exit;
+	if(is_string($types))
+        if(preg_match('#^[0-9]+$#',$types))
+            if(isset($type_convert[(int)$types]))
+                return $type_convert[(int)$types];
+    if(is_array($types))
+    {
+        foreach($types as $id=>$type)
+            if(preg_match('#^[0-9]+$#',$type))
+                if(isset($type_convert[(int)$type]))
+                    $types[$id]=$type_convert[(int)$type];
+        return $types;
+    }
+    return $types;
+}
+
 function simplifedName($string)
 {
     $string=str_replace(' ','',$string);
@@ -33,7 +54,8 @@ foreach($skill_meta as $id=>$skill)
     $movetypes_name_to_id[simplifedName($skill['name']['en'])]=$id;
 
 require '/home/user/Desktop/www/catchchallenger.first-world.info/official-server/datapack-explorer-generator/load/monster.php';
-    
+
+$finalerror=array();
 $file=file_get_contents('species.xml');
 preg_match_all('#<pokemonSpecies>(.*)</pokemonSpecies>#isU',$file,$entry_list);
 $species=array();
@@ -41,17 +63,29 @@ $name_to_id=array();
 foreach($entry_list[1] as $entry)
 {
 	if(!preg_match('#<m_species>[0-9]+</m_species>#isU',$entry))
+	{
+        $finalerror[]='m_species not found';
 		continue;
+    }
 	$id=preg_replace('#^.*<m_species>([0-9]+)</m_species>.*$#isU','$1',$entry);
 	if(!preg_match('#<m_name>[^<]+</m_name>#isU',$entry))
+	{
+        $finalerror[]='m_name not found';
 		continue;
+    }
 	$name=preg_replace('#^.*<m_name>([^<]+)</m_name>.*$#isU','$1',$entry);
 	if(!preg_match('#<m_type>[0-9]+</m_type>#isU',$entry))
+	{
+        $finalerror[]='m_type not found';
 		continue;
+	}
 	preg_match_all('#<m_type>([0-9]+)</m_type>#isU',$entry,$entry_list_type);
 	$type=$entry_list_type[1];
 	if(!preg_match('#<m_genders>[0-9]+</m_genders>#isU',$entry))
+	{
+        $finalerror[]='m_genders not found';
 		continue;
+    }
 	$gender=preg_replace('#^.*<m_genders>([0-9]+)</m_genders>.*$#isU','$1',$entry);
 	switch($gender)
 	{
@@ -71,7 +105,10 @@ foreach($entry_list[1] as $entry)
 	}
 	preg_match_all('#<int>([0-9]+)</int>#isU',$entry,$entry_list_stat);
 	if(count($entry_list_stat[1])!=6)
+	{
+        $finalerror[]='m_genders int not found';
 		continue;
+    }
 	$base_hp=$entry_list_stat[1][0];
 	$base_attack=$entry_list_stat[1][1];
 	$base_defense=$entry_list_stat[1][2];
@@ -79,6 +116,7 @@ foreach($entry_list[1] as $entry)
 	$base_spattack=$entry_list_stat[1][4];
 	$base_spdefense=$entry_list_stat[1][5];
 	
+	$type=convertType($type);
 	$name_to_id[$name]=$id;
 	$species[$id]=array(
 		'name'=>$name,
@@ -100,60 +138,102 @@ foreach($entry_list[1] as $entry)
 {
 	$type=$entry_list_type[1];
 	if(!preg_match('#<name>[^<]+</name>#isU',$entry))
+	{
+        $finalerror[]='name int not found';
 		continue;
+    }
 	$name=preg_replace('#^.*<name>([^<]+)</name>.*$#isU','$1',$entry);
 	$name=preg_replace('#POK.{1,3}MON#','POKEMON',$name);
 	$name=htmlentities($name);
 	if(!preg_match('#<kind>[^<]+</kind>#isU',$entry))
+	{
+        $finalerror[]='kind int not found: '.$name;
 		continue;
+    }
 	$kind=preg_replace('#^.*<kind>([^<]+)</kind>.*$#isU','$1',$entry);
 	if(!preg_match('#<pokedex>[^<]+</pokedex>#isU',$entry))
+	{
+        $finalerror[]='pokedex int not found';
 		continue;
+    }
 	$description=preg_replace('#^.*<pokedex>([^<]+)</pokedex>.*$#isU','$1',$entry);
 	$description=preg_replace("#[\r\t\n]+#isU",' ',$description);
 	$description=preg_replace('# +#',' ',$description);
 	$description=preg_replace('#POK.{1,3}MON#','POKEMON',$description);
 	$description=htmlentities($description);
 	if(!preg_match('#<type[0-9]>[^<]+</type[0-9]>#isU',$entry))
+	{
+        $finalerror[]='type int not found: '.$name;
 		continue;
+    }
 	preg_match_all('#<type[0-9]>([^<]+)</type[0-9]>#isU',$entry,$entry_list_type);
 	if(!preg_match('#<rareness>[0-9]+</rareness>#isU',$entry))
+	{
+        $finalerror[]='rareness int not found: '.$name;
 		continue;
+    }
 	$rareness=preg_replace('#^.*<rareness>([0-9]+)</rareness>.*$#isU','$1',$entry);
 	if(!preg_match('#<baseEXP>[0-9]+</baseEXP>#isU',$entry))
+	{
+        $finalerror[]='baseEXP int not found: '.$name;
 		continue;
+    }
 	$baseEXP=preg_replace('#^.*<baseEXP>([0-9]+)</baseEXP>.*$#isU','$1',$entry);
 	if(!preg_match('#<happiness>[0-9]+</happiness>#isU',$entry))
+	{
+        $finalerror[]='happiness int not found: '.$name;
 		continue;
+    }
 	$happiness=preg_replace('#^.*<happiness>([0-9]+)</happiness>.*$#isU','$1',$entry);
 	if(!preg_match('#<stepsToHatch>[0-9]+</stepsToHatch>#isU',$entry))
+	{
+        $finalerror[]='stepsToHatch int not found: '.$name;
 		continue;
+    }
 	$stepsToHatch=preg_replace('#^.*<stepsToHatch>([0-9]+)</stepsToHatch>.*$#isU','$1',$entry);
 	if(!preg_match('#<color>[^<]+</color>#isU',$entry))
+	{
+        $finalerror[]='color int not found: '.$name;
 		continue;
+    }
 	$color=preg_replace('#^.*<color>([^<]+)</color>.*$#isU','$1',$entry);
 	if(preg_match('#<habitat>[^<]+</habitat>#isU',$entry))
         $habitat=preg_replace('#^.*<habitat>([^<]+)</habitat>.*$#isU','$1',$entry);
     else
         $habitat='';
 	if(!preg_match('#<height>[0-9]+(\.[0-9]+)?</height>#isU',$entry))
+	{
+        $finalerror[]='height int not found: '.$name;
 		continue;
+    }
 	$height=preg_replace('#^.*<height>([0-9]+(\.[0-9]+)?)</height>.*$#isU','$1',$entry);
 	if(!preg_match('#<weight>[0-9]+(\.[0-9]+)?</weight>#isU',$entry))
+	{
+        $finalerror[]='weight int not found: '.$name;
 		continue;
+    }
 	$weight=preg_replace('#^.*<weight>([0-9]+(\.[0-9]+)?)</weight>.*$#isU','$1',$entry);
 	if(!preg_match('#<moves>.*</moves>#isU',$entry))
-		continue;
+	{
+        /*$finalerror[]='moves int not found: '.$name;
+		continue;*/
+    }
 	$temp_move=preg_replace('#^.*<moves>([0-9]+(\.[0-9]+)?)</moves>.*$#isU','$1',$entry);
 	preg_match_all('#<entry>(.*)</entry>#isU',$temp_move,$entry_list_moves);
 	$moves=array();
 	foreach($entry_list_moves[1] as $move)
 	{
 		if(!preg_match('#<integer>[0-9]+</integer>#isU',$move))
-			continue;
+        {
+            $finalerror[]='moves integer int not found: '.$name;
+            continue;
+        }
 		$level=preg_replace('#^.*<integer>([0-9]+)</integer>.*$#isU','$1',$move);
 		if(!preg_match('#<string>[^<]+</string>#isU',$move))
-			continue;
+        {
+            $finalerror[]='moves string int not found: '.$name;
+            continue;
+        }
 		$string=preg_replace('#^.*<string>([^<]+)</string>.*$#isU','$1',$move);
 		$moves[]=array($level,$string);
 	}
@@ -171,28 +251,47 @@ foreach($entry_list[1] as $entry)
 		foreach($entry_list_evolutions[1] as $evolution_text)
 		{
 			if(!preg_match('#<m_type>[^<]+</m_type>#isU',$evolution_text))
-				continue;
+            {
+                $finalerror[]='POLREvolution m_type int not found: '.$name;
+                continue;
+            }
 			$m_type=preg_replace('#^.*<m_type>([^<]+)</m_type>.*$#isU','$1',$evolution_text);
 			if(!preg_match('#<m_level>[0-9]+</m_level>#isU',$evolution_text))
-				continue;
+            {
+                $finalerror[]='POLREvolution m_level int not found: '.$name;
+                continue;
+            }
 			$m_level=preg_replace('#^.*<m_level>([0-9]+)</m_level>.*$#isU','$1',$evolution_text);
 			if(!preg_match('#<m_evolveTo>[^<]+</m_evolveTo>#isU',$evolution_text))
-				continue;
+            {
+                $finalerror[]='POLREvolution m_evolveTo int not found: '.$name;
+                continue;
+            }
 			if($m_type=='Level')
 			{
 				$m_type='level';
 				if($m_level>100)
-					continue;
+                {
+                    $finalerror[]='level int not found: '.$name;
+                    continue;
+                }
 			}
 			else if($m_type=='Item')
 			{
 				$m_type='item';
 				if(!preg_match('#<m_attribute>[^<]+</m_attribute>#isU',$evolution_text))
-					continue;
+                {
+                    $finalerror[]='m_attribute int not found: '.$name;
+                    continue;
+                }
 				$m_level=preg_replace('#^.*<m_attribute>([^<]+)</m_attribute>.*$#isU','$1',$evolution_text);
 				$m_level=str_replace(' ','',strtolower($m_level));
 				if(!isset($item_name_to_id[simplifedName($m_level)]))
-					continue;
+                {
+                    $finalerror[]='m_attribute attr int not found: '.$name.' not found: '.simplifedName($m_level).' into item list';
+                    //print_r($item_name_to_id);
+                    continue;
+                }
 				$m_level=$item_name_to_id[simplifedName($m_level)];
 			}
 			else if($m_type=='Trade')
@@ -200,7 +299,7 @@ foreach($entry_list[1] as $entry)
 				$m_type='trade';
 				$m_level='0';
 			}
-			/*else if($m_type=='TradeItem')
+			else if($m_type=='TradeItem')
 			{
 				$m_type='tradeWithItem';
 				if(!preg_match('#<m_attribute>[^<]+</m_attribute>#isU',$evolution_text))
@@ -208,16 +307,27 @@ foreach($entry_list[1] as $entry)
 				$m_level=preg_replace('#^.*<m_attribute>([^<]+)</m_attribute>.*$#isU','$1',$evolution_text);
 				$m_level=str_replace(' ','',strtolower($m_level));
 				if(!isset($item_name_to_id[simplifedName($m_level)]))
+				{
+                    $finalerror[]='m_attribute attr int not found: '.$name.' not found: '.simplifedName($m_level).' into item list';
 					continue;
+                }
 				$m_level=$item_name_to_id[simplifedName($m_level)];
-			}*/
+			}
 			/*else if($m_type=='Happiness' || $m_type=='HappinessDay' || $m_type=='HappinessNight')
 			{
 				$m_type='happiness';
 				$m_level='3';
 			}*/
 			else
-				continue;
+            {
+                $finalerror[]='evol Trade not found: '.$name.' type: '.$m_type;
+                $m_type=$m_type;
+                if(!preg_match('#<m_attribute>[^<]+</m_attribute>#isU',$evolution_text))
+					continue;
+				$m_level=preg_replace('#^.*<m_attribute>([^<]+)</m_attribute>.*$#isU','$1',$evolution_text);
+				$m_level=str_replace(' ','',strtolower($m_level));
+                //continue;
+            }
 			$m_evolveTo=preg_replace('#^.*<m_evolveTo>([^<]+)</m_evolveTo>.*$#isU','$1',$evolution_text);
 			$evolutions[]=array(
 				'type'=>$m_type,
@@ -227,6 +337,8 @@ foreach($entry_list[1] as $entry)
 		}
 	}
 
+	//print_r($type);exit;
+	$type=convertType($type);
 	if(isset($name_to_id[$name]))
 	{
 		$species[$name_to_id[$name]]=array_merge(array(
@@ -337,7 +449,7 @@ $temp_evolutions=$specie['evolutions'];
 foreach($temp_evolutions as $evolution)
 {
 	$level='';
-	if($evolution['type']!='trade')
+	if($evolution['type']!='trade' && $evolution['level']!='')
 		$level=' level="'.$evolution['level'].'"';
 	if(isset($name_to_id[$evolution['evolveTo']]))
 		echo '			<evolution type="'.$evolution['type'].'"'.$level.' evolveTo="'.$name_to_id[$evolution['evolveTo']].'" />'."\n";
@@ -370,3 +482,6 @@ foreach($temp_evolutions as $evolution)
 }
 
 echo "</monsters>\n";
+
+if(count($finalerror)>0)
+    echo implode("\n",$finalerror);
