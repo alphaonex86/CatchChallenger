@@ -76,7 +76,8 @@ t.setOfferedSpecies(reader.nextLine(), Integer.parseInt(reader.nextLine()));
 [/trade]
 */
 
-//split map part delimited with empty tile and adapt the tp (scan all the square), do the map edit before set the border-left, ...
+Fix -49.-39 bug (not rewriten)
+deduplicate the tile on same tileset
 //sort map by user + graphviz to show the link
 //todo: use zopfli to improve the layer compression
 //when split map, drop the not used meta data like: Grass monster if don't have Grass layer, Water monster if don't have Water layer, ...
@@ -1829,6 +1830,12 @@ int createBorder(QString file,const bool addOneToY)
                                                 if(monsterNameToMonsterId.contains(monsterString))
                                                     monsterId=monsterNameToMonsterId.value(monsterString);
                                             }
+                                            else if(monsterString==simplifyItemName("Ninetails"))
+                                            {
+                                                const QString monsterString=simplifyItemName("Ninetales");
+                                                if(monsterNameToMonsterId.contains(monsterString))
+                                                    monsterId=monsterNameToMonsterId.value(monsterString);
+                                            }
                                             if(monsterId>0)
                                             {
                                                 bool ok;
@@ -2823,6 +2830,7 @@ void moveIntoRegion()
 {
     {
         unsigned int zone=1;
+        bool consumed=false;
         QHashIterator<QString, MapDetails> i(mapSplit);
         while (i.hasNext()) {
             i.next();
@@ -2846,6 +2854,7 @@ void moveIntoRegion()
                 {
                     //std::cout << "Mark the map: " << file.toStdString() << std::endl;
                     mapDetails.region=zone;
+                    consumed=true;
                     QSetIterator<QString> i(mapDetails.links);
                     while(i.hasNext())
                     {
@@ -2855,7 +2864,11 @@ void moveIntoRegion()
                     }
                 }
             }
-            zone++;
+            if(consumed)
+            {
+                zone++;
+                consumed=false;
+            }
         }
     }
 
@@ -2864,7 +2877,7 @@ void moveIntoRegion()
     while (i.hasNext()) {
         i.next();
         //do the zone
-        std::cout << i.key().toStdString() << ":" << i.value().region << std::endl;
+        //std::cout << i.key().toStdString() << ":" << i.value().region << std::endl;
         QString file=i.key();
         QFile tempFile(file);
         if(tempFile.exists())
@@ -2896,7 +2909,9 @@ void moveIntoRegion()
         QString bots=i.key();
         bots.replace(".tmx","-bots.xml");
 
-        QString region="region-"+QString::number(i.value().region);
+
+        //QString region="region-"+QString::number(i.value().region);
+        QString region="region-"+first alphabetical map;
         QDir().mkdir(region);
 
         QFile::rename(file,region+"/"+file);

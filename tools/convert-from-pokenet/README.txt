@@ -18,6 +18,6 @@ tms.ini
 
 into maps folder
 (backup)
-tools/datapack-compressor/png-compress.sh
 generate-xml-meta-data.php
 start ../generate-map-border 
+tools/datapack-compressor/png-compress.sh
