@@ -106,6 +106,8 @@ const QString MapReader::text_property=QStringLiteral("property");
 const QString MapReader::text_value=QStringLiteral("value");
 const QString MapReader::text_slash=QStringLiteral("/");
 
+QHash<QString/*source*/,QImage> MapReader::imageCache;
+QHash<QString/*source*/,QPixmap> MapReader::pixmapCache;
 
 namespace Internal {
 
@@ -142,6 +144,7 @@ private:
     void readTilesetImage(Tileset *tileset);
     void readTilesetTerrainTypes(Tileset *tileset);
     QImage readImage();
+    QPixmap readPixmap();
 
     TileLayer *readLayer();
     void readLayerData(TileLayer *tileLayer);
@@ -178,7 +181,6 @@ private:
     QList<Tileset*> mCreatedTilesets;
     GidMapper mGidMapper;
     bool mReadingExternalTileset;
-    QHash<QString/*source*/,QImage> imageCache;
 
     QXmlStreamReader xml;
 };
@@ -444,7 +446,7 @@ void MapReaderPrivate::readTilesetTile(Tileset *tileset)
             tile->mergeProperties(readProperties());
         } else if (xml.name() == MapReader::text_image) {
             // TODO: Support individual tile images in lazy mode
-            tileset->setTileImage(id, QPixmap::fromImage(readImage()));
+            tileset->setTileImage(id, readPixmap());
         } else {
             readUnknownElement();
         }
@@ -481,6 +483,45 @@ void MapReaderPrivate::readTilesetImage(Tileset *tileset)
     }
 }
 
+QPixmap MapReaderPrivate::readPixmap()
+{
+    Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_image);
+
+    const QXmlStreamAttributes atts = xml.attributes();
+    QString source = atts.value(MapReader::text_source).toString();
+    QString format = atts.value(MapReader::text_format).toString();
+
+    if (source.isEmpty()) {
+        while (xml.readNextStartElement()) {
+            if (xml.name() == MapReader::text_data) {
+                const QXmlStreamAttributes atts = xml.attributes();
+                QString encoding = atts.value(MapReader::text_encoding)
+                    .toString();
+                QByteArray data = xml.readElementText().toLatin1();
+                if (encoding == MapReader::text_base64) {
+                    data = QByteArray::fromBase64(data);
+                }
+                xml.skipCurrentElement();
+                return QPixmap::fromImage(QImage::fromData(data, format.toLatin1()));
+            } else {
+                readUnknownElement();
+            }
+        }
+    } else {
+        xml.skipCurrentElement();
+
+        source = p->resolveReference(source, mPath);
+        if(MapReader::pixmapCache.contains(source))
+            return MapReader::pixmapCache.value(source);
+        QImage image = p->readExternalImage(source);
+        if (image.isNull())
+            xml.raiseError(tr("Error loading image:\n'%1'").arg(source));
+        MapReader::pixmapCache[source]=QPixmap::fromImage(image);
+        return MapReader::pixmapCache.value(source);
+    }
+    return QPixmap();
+}
+
 QImage MapReaderPrivate::readImage()
 {
     Q_ASSERT(xml.isStartElement() && xml.name() == MapReader::text_image);
@@ -509,12 +550,12 @@ QImage MapReaderPrivate::readImage()
         xml.skipCurrentElement();
 
         source = p->resolveReference(source, mPath);
-        if(imageCache.contains(source))
-            return imageCache.value(source);
+        if(MapReader::imageCache.contains(source))
+            return MapReader::imageCache.value(source);
         QImage image = p->readExternalImage(source);
         if (image.isNull())
             xml.raiseError(tr("Error loading image:\n'%1'").arg(source));
-        imageCache[source]=image;
+        MapReader::imageCache[source]=image;
         return image;
     }
     return QImage();
@@ -1041,9 +1082,12 @@ QString MapReader::resolveReference(const QString &reference,
 
 QImage MapReader::readExternalImage(const QString &source)
 {
+    if(imageCache.contains(source))
+        return imageCache.value(source);
     QImage image(source);
     if(image.format()!=QImage::Format_ARGB32 || image.format()!=QImage::Format_RGB32)
         image=image.convertToFormat(QImage::Format_ARGB32);
+    imageCache[source]=image;
     return image;
 }
 

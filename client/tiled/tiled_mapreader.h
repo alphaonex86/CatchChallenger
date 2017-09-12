@@ -190,6 +190,9 @@ public:
     static const QString text_property;
     static const QString text_value;
     static const QString text_slash;
+
+    static QHash<QString/*source*/,QImage> imageCache;
+    static QHash<QString/*source*/,QPixmap> pixmapCache;
 private:
     friend class Internal::MapReaderPrivate;
     Internal::MapReaderPrivate *d;
