@@ -7,6 +7,8 @@
 #include <QDomDocument>
 #include <QDomElement>
 #include <QDirIterator>
+#include <QLabel>
+#include <QPainter>
 
 #include <iostream>
 #include <algorithm>
@@ -76,7 +78,6 @@ t.setOfferedSpecies(reader.nextLine(), Integer.parseInt(reader.nextLine()));
 [/trade]
 */
 
-//Fix -49.-39 bug (not rewriten)
 /*deduplicate the tile on same tileset*/
 //sort map by user + graphviz to show the link
 //todo: use zopfli to improve the layer compression
@@ -149,6 +150,8 @@ struct MapDetails
     QSet<QString> links;
 };
 
+
+
 QMap<unsigned int,Shop> shopList;
 QHash<QString,unsigned int> itemNameToId;
 QStringList loadNPCText(const QString &npcFile,const QString &language);
@@ -168,6 +171,7 @@ Tiled::Tileset *tilesetinvisible=NULL;
 Tiled::Tileset *tilesetnormal1=NULL;
 QHash<QString,QHash<QPair<unsigned int,unsigned int>,MapDestination> > mapRelation;
 QHash<QString, MapDetails> mapSplit;//index=0 is zone=1
+QHash<QString, QHash<unsigned int,unsigned int> > mapTilsetConverter;
 
 bool haveBorderHole(const QString &file,const CatchChallenger::Orientation &orientation)
 {
@@ -740,14 +744,129 @@ int readMap(QString file)
     }
 
     mapLoaded[file]=map;
+
+    //std::cout << "Start tile deduplication" << std::endl;
+    //scan duplicate tile
+    if(false)//disable, not usefull for size due to wrong encoded image (as image converted from jpg to png)
     {
-        QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
-        while (i.hasNext()) {
-            i.next();
-            delete i.value();
+        abort();
+        struct ImageAndIndex
+        {
+            QImage image;
+            unsigned int index;
+        };
+
+        unsigned int indexTileset=0;
+        while(indexTileset<(unsigned int)map->tilesetCount()) {
+            Tiled::Tileset * tileset=map->tilesetAt(indexTileset);
+            //std::cout << "Scan dupliate tile: " << tileset->fileName().toStdString() << std::endl;
+            QHash<unsigned int,unsigned int> converter;
+            if(!mapTilsetConverter.contains(tileset->fileName()))
+            {
+                QHash<unsigned int,unsigned int> tempConverter;
+                QVector<ImageAndIndex> tilesParsed;
+                unsigned int countDuplicate=0;
+                unsigned int index=0;
+                while(index<(unsigned int)tileset->tileCount())
+                {
+                    Tiled::Tile *tile=tileset->tileAt(index);
+                    QImage image=tile->image().toImage();
+
+                    bool isTransparent=true;
+                    unsigned int y=0;
+                    while(y<(unsigned int)image.height())
+                    {
+                        unsigned int x=0;
+                        while(x<(unsigned int)image.height())
+                        {
+                            const QColor &color=image.pixelColor(x,y);
+                            const int alpha=color.alpha();
+                            if(alpha>5)
+                                break;
+                            x++;
+                        }
+                        if(x<(unsigned int)image.height())
+                            break;
+                        y++;
+                    }
+                    if(y<(unsigned int)image.height())
+                        isTransparent=false;
+
+                    //browse all tile
+                    unsigned int indexTileParsed=0;
+                    while (indexTileParsed<(unsigned int)tilesParsed.count()) {
+                        if(tilesParsed.at(indexTileParsed).image==image)
+                            break;
+                        indexTileParsed++;
+                    }
+
+                    if(indexTileParsed<(unsigned int)tilesParsed.count())
+                    {
+                        const ImageAndIndex &imageAndIndex=tilesParsed.at(indexTileParsed);
+                        if(!isTransparent)
+                        {
+                            /*
+                            std::cout << "Duplicate tile: " << index << " -> " << imageAndIndex.index << std::endl;
+                            QImage duplicateImage=imageAndIndex.image;
+                            duplicateImage.save("d.png","PNG");
+
+                            Tiled::Tile *tile=tileset->tileAt(index);
+                            QImage image=tile->image().toImage();
+                            image.save("f.png","PNG");
+                            abort();*/
+                            countDuplicate++;
+                        }
+                        tempConverter[index]=imageAndIndex.index;
+                    }
+                    else
+                    {
+                        ImageAndIndex imageAndIndex;
+                        imageAndIndex.image=image;
+                        imageAndIndex.index=index;
+                        tilesParsed << imageAndIndex;
+                    }
+                    index++;
+                }
+                if(tileset->tileCount()>0)
+                {
+                    if(countDuplicate*100/tileset->tileCount()>10)
+                    {
+                        QImage destImage(tileset->imageWidth(),tileset->imageHeight(),QImage::Format_ARGB32);
+                        destImage.fill(Qt::transparent);
+                        QString imageSource=tileset->imageSource();
+                        std::cout << "Many tile to drop for: " << tileset->fileName().toStdString() << std::endl;
+                        converter=tempConverter;
+                        //clear the extra tile
+                        unsigned int index=0;
+                        while(index<(unsigned int)tileset->tileCount())
+                        {
+                            Tiled::Tile *tile=tileset->tileAt(index);
+                            QImage image=tile->image().toImage();
+                            image=image.convertToFormat(QImage::Format_ARGB32);
+                            if(tempConverter.contains(index))
+                            {
+                                image.fill(Qt::transparent);
+                                tile->setImage(QPixmap::fromImage(image));
+                            }
+
+                            {
+                                QPainter painter(&destImage);
+                                painter.drawImage(tile->id()%tileset->columnCount()*image.width(),tile->id()/tileset->columnCount()*image.height(),image);
+                                painter.end();
+                            }
+                            index++;
+                        }
+                        //destImage.save(imageSource,"png");->need reassign the tile id
+                    }
+                    //else
+                        //std::cout << "Ok ratio " << (countDuplicate*100/tileset->tileCount()) << ": " << tileset->fileName().toStdString() << std::endl;
+                }
+            }
+            mapTilsetConverter[tileset->fileName()]=converter;
+            indexTileset++;
         }
-        Tiled::Tileset::preloadedTileset.clear();
     }
+    //std::cout << "Stop tile deduplication" << std::endl;
     return 0;
 }
 
