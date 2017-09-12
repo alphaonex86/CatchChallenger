@@ -76,11 +76,10 @@ t.setOfferedSpecies(reader.nextLine(), Integer.parseInt(reader.nextLine()));
 [/trade]
 */
 
-Fix -49.-39 bug (not rewriten)
-deduplicate the tile on same tileset
+//Fix -49.-39 bug (not rewriten)
+/*deduplicate the tile on same tileset*/
 //sort map by user + graphviz to show the link
 //todo: use zopfli to improve the layer compression
-//when split map, drop the not used meta data like: Grass monster if don't have Grass layer, Water monster if don't have Water layer, ...
 
 struct BotDescriptor
 {
@@ -658,43 +657,55 @@ int readMap(QString file)
                             }
                         }
                     } while(haveChange);
-                    //fill the zone
-                    lastUsedZone++;
+
+                    if(minX>maxX)
+                        abort();
+                    if(minY>maxY)
+                        abort();
+
+                    const unsigned int width=maxX-minX;
+                    const unsigned int height=maxY-minY;
+
+                    if(width>2 && height>2)
                     {
-                        unsigned int y=minY;
-                        while(y<maxY)
+                        //fill the zone
+                        lastUsedZone++;
                         {
-                            unsigned int x=minX;
-                            while(x<maxX)
+                            unsigned int y=minY;
+                            while(y<maxY)
                             {
-                                zones[x+y*map->width()]=lastUsedZone;
-                                x++;
+                                unsigned int x=minX;
+                                while(x<maxX)
+                                {
+                                    zones[x+y*map->width()]=lastUsedZone;
+                                    x++;
+                                }
+                                y++;
                             }
-                            y++;
                         }
-                    }
 
-                    MapZone mapZone;
-                    mapZone.minX=minX;
-                    mapZone.maxX=maxX;
-                    mapZone.minY=minY;
-                    mapZone.maxY=maxY;
+                        MapZone mapZone;
+                        mapZone.minX=minX;
+                        mapZone.maxX=maxX;
+                        mapZone.minY=minY;
+                        mapZone.maxY=maxY;
 
-                    if(lastUsedZone>1)
-                    {
-                        mapZone.folder=file;
-                        mapZone.folder.replace(".tmx","");
-                        if(lastUsedZone==2)
+                        if(lastUsedZone>1)
                         {
-                            mapSplit[file].zones[0].destMap="1.tmx";
-                            mapSplit[file].zones[0].folder=mapZone.folder;
+                            mapZone.folder=file;
+                            mapZone.folder.replace(".tmx","");
+                            if(lastUsedZone==2)
+                            {
+                                mapSplit[file].zones[0].destMap="1.tmx";
+                                mapSplit[file].zones[0].folder=mapZone.folder;
+                            }
+                            mapZone.destMap=QString::number(lastUsedZone)+".tmx";
                         }
-                        mapZone.destMap=QString::number(lastUsedZone)+".tmx";
-                    }
-                    else
-                        mapZone.destMap=file;
+                        else
+                            mapZone.destMap=file;
 
-                    mapSplit[file].zones.push_back(mapZone);
+                        mapSplit[file].zones.push_back(mapZone);
+                    }
                 }
                 x++;
             }
@@ -2394,21 +2405,12 @@ int createBorder(QString file,const bool addOneToY)
             finalPath=mapZone.folder.toStdString()+"/"+mapZone.destMap.toStdString();
         /*Tiled::Properties emptyProperties;
         map->setProperties(emptyProperties);*/
-        if(mapZone.minX>mapZone.maxX)
+        std::vector<PartialMap::RecuesPoint> recuesPoints;
+        if(!PartialMap::save(*map,mapZone.minX,mapZone.minY,mapZone.maxX,mapZone.maxY,
+                             finalPath,
+                             recuesPoints,
+                              "","","","",false,false))
             abort();
-        if(mapZone.minY>mapZone.maxY)
-            abort();
-        const unsigned int width=mapZone.maxX-mapZone.minX;
-        const unsigned int height=mapZone.maxX-mapZone.minY;
-        if(width>2 && height>2)
-        {
-            std::vector<PartialMap::RecuesPoint> recuesPoints;
-            if(!PartialMap::save(*map,mapZone.minX,mapZone.minY,mapZone.maxX,mapZone.maxY,
-                                 finalPath,
-                                 recuesPoints,
-                                  "","","","",false,false))
-                abort();
-        }
         indexZone++;
     }
 
@@ -2828,6 +2830,7 @@ void loadCatchChallengerDatapack()
 
 void moveIntoRegion()
 {
+    QHash<unsigned int,QList<QString> > zoneToMapList;
     {
         unsigned int zone=1;
         bool consumed=false;
@@ -2853,6 +2856,7 @@ void moveIntoRegion()
                 if(mapDetails.region==0)
                 {
                     //std::cout << "Mark the map: " << file.toStdString() << std::endl;
+                    zoneToMapList[zone] << file;
                     mapDetails.region=zone;
                     consumed=true;
                     QSetIterator<QString> i(mapDetails.links);
@@ -2871,6 +2875,13 @@ void moveIntoRegion()
             }
         }
     }
+    {
+        QHashIterator<unsigned int,QList<QString> > i(zoneToMapList);
+        while (i.hasNext()) {
+            i.next();
+            qSort(zoneToMapList[i.key()].begin(), zoneToMapList[i.key()].end());
+        }
+    }
 
     //display it
     QHashIterator<QString, MapDetails> i(mapSplit);
@@ -2879,6 +2890,10 @@ void moveIntoRegion()
         //do the zone
         //std::cout << i.key().toStdString() << ":" << i.value().region << std::endl;
         QString file=i.key();
+        const MapDetails &mapDetails=i.value();
+
+        QString firstMap=zoneToMapList.value(mapDetails.region).first();
+
         QFile tempFile(file);
         if(tempFile.exists())
             if(tempFile.open(QIODevice::ReadWrite))
@@ -2909,9 +2924,11 @@ void moveIntoRegion()
         QString bots=i.key();
         bots.replace(".tmx","-bots.xml");
 
+        QString firstName=firstMap;
+        firstName.replace(".tmx","");
 
         //QString region="region-"+QString::number(i.value().region);
-        QString region="region-"+first alphabetical map;
+        QString region="region-"+firstName;
         QDir().mkdir(region);
 
         QFile::rename(file,region+"/"+file);
