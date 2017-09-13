@@ -1147,11 +1147,11 @@ int createBorder(QString file,const bool addOneToY)
                     {
                         int topBorder=0;
                         int bottomBorder=0;
-                        const int offset=yOffsetModifier.value(mapBorderFile)-yOffsetModifier.value(file);
+                        const int offset=yOffsetModifier.value(file)-yOffsetModifier.value(mapBorderFile);
                         const int topBorderCurrent=mapSplit.value(file).zones.at(0).minY;
-                        const int topBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).minY+offset;
+                        const int topBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).minY-offset;
                         const int bottomBorderCurrent=mapSplit.value(file).zones.at(0).maxY;
-                        const int bottomBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).maxY+offset;
+                        const int bottomBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).maxY-offset;
                         if(topBorderOtherRelative<bottomBorderCurrent && topBorderCurrent<bottomBorderOtherRelative)
                         {
                             if(topBorderCurrent>topBorderOtherRelative)
@@ -1209,11 +1209,11 @@ int createBorder(QString file,const bool addOneToY)
                     {
                         int topBorder=0;
                         int bottomBorder=0;
-                        const int offset=yOffsetModifier.value(mapBorderFile)-yOffsetModifier.value(file);
+                        const int offset=yOffsetModifier.value(file)-yOffsetModifier.value(mapBorderFile);
                         const int topBorderCurrent=mapSplit.value(file).zones.at(0).minY;
-                        const int topBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).minY+offset;
+                        const int topBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).minY-offset;
                         const int bottomBorderCurrent=mapSplit.value(file).zones.at(0).maxY;
-                        const int bottomBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).maxY+offset;
+                        const int bottomBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).maxY-offset;
                         if(topBorderOtherRelative<bottomBorderCurrent && topBorderCurrent<bottomBorderOtherRelative)
                         {
                             if(topBorderCurrent>topBorderOtherRelative)
@@ -1273,9 +1273,9 @@ int createBorder(QString file,const bool addOneToY)
                         int rightBorder=0;
                         const int offset=xOffsetModifier.value(file)-xOffsetModifier.value(mapBorderFile);
                         const int leftBorderCurrent=mapSplit.value(file).zones.at(0).minX;
-                        const int leftBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).minX+offset;
+                        const int leftBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).minX-offset;
                         const int rightBorderCurrent=mapSplit.value(file).zones.at(0).maxX;
-                        const int rightBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).maxX+offset;
+                        const int rightBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).maxX-offset;
                         if(leftBorderOtherRelative<rightBorderCurrent && leftBorderCurrent<rightBorderOtherRelative)
                         {
                             if(leftBorderCurrent>leftBorderOtherRelative)
@@ -1335,9 +1335,9 @@ int createBorder(QString file,const bool addOneToY)
                         int rightBorder=0;
                         const int offset=xOffsetModifier.value(file)-xOffsetModifier.value(mapBorderFile);
                         const int leftBorderCurrent=mapSplit.value(file).zones.at(0).minX;
-                        const int leftBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).minX+offset;
+                        const int leftBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).minX-offset;
                         const int rightBorderCurrent=mapSplit.value(file).zones.at(0).maxX;
-                        const int rightBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).maxX+offset;
+                        const int rightBorderOtherRelative=mapSplit.value(mapBorderFile).zones.at(0).maxX-offset;
                         if(leftBorderOtherRelative<rightBorderCurrent && leftBorderCurrent<rightBorderOtherRelative)
                         {
                             if(leftBorderCurrent>leftBorderOtherRelative)

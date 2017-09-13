@@ -114,7 +114,7 @@ void ActionsAction::appendReputationPoint(CatchChallenger::Api_protocol *api,con
     #endif
 }
 
-bool ActionsAction::botHaveQuest(const CatchChallenger::Api_protocol *api,const uint32_t &botId)
+bool ActionsAction::botHaveQuest(const CatchChallenger::Api_protocol *api,const uint16_t &botId)
 {
     const CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations_ro();
     const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
@@ -194,7 +194,7 @@ bool ActionsAction::botHaveQuest(const CatchChallenger::Api_protocol *api,const 
     return false;
 }
 
-bool ActionsAction::tryValidateQuestStep(CatchChallenger::Api_protocol *api, const uint16_t &questId, const uint32_t &botId, bool silent)
+bool ActionsAction::tryValidateQuestStep(CatchChallenger::Api_protocol *api, const uint16_t &questId, const uint16_t &botId, bool silent)
 {
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
     const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
@@ -387,7 +387,7 @@ bool ActionsAction::startQuest(CatchChallenger::Api_protocol *api,const CatchCha
     return true;
 }
 
-std::vector<std::pair<uint32_t,std::string> > ActionsAction::getQuestList(CatchChallenger::Api_protocol *api,const uint32_t &botId)
+std::vector<std::pair<uint32_t,std::string> > ActionsAction::getQuestList(CatchChallenger::Api_protocol *api,const uint16_t &botId)
 {
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
     const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;

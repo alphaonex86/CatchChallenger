@@ -443,7 +443,7 @@ bool BotTargetList::nextZoneIsAccessible(const CatchChallenger::Api_protocol *ap
 
     for(auto it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
     {
-        const std::vector<uint32_t> &botsFightList=it->second;
+        const std::vector<uint16_t> &botsFightList=it->second;
         unsigned int index=0;
         while(index<botsFightList.size())
         {

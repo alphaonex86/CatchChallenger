@@ -407,7 +407,7 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
         std::pair<uint8_t,uint8_t> pos(x,y);
         if(new_map->botsFightTrigger.find(pos)!=new_map->botsFightTrigger.cend())
         {
-            std::vector<uint32_t> botFightList=new_map->botsFightTrigger.at(pos);
+            std::vector<uint16_t> botFightList=new_map->botsFightTrigger.at(pos);
             unsigned int index=0;
             while(index<botFightList.size())
             {
@@ -580,7 +580,7 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
     const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
     if(playerMap->botsFightTrigger.find(pos)!=playerMap->botsFightTrigger.cend())
     {
-        std::vector<uint32_t> botFightList=playerMap->botsFightTrigger.at(pos);
+        std::vector<uint16_t> botFightList=playerMap->botsFightTrigger.at(pos);
         unsigned int index=0;
         while(index<botFightList.size())
         {
