@@ -50,13 +50,13 @@ public:
     uint64_t elementToLoad() const;
     uint64_t elementLoaded() const;
     static bool haveBeatBot(const CatchChallenger::Api_protocol *api, const uint16_t &botFightId);
-    static bool botHaveQuest(const CatchChallenger::Api_protocol *api,const uint32_t &botId);
-    static bool tryValidateQuestStep(CatchChallenger::Api_protocol *api, const uint16_t &questId, const uint32_t &botId, bool silent);
+    static bool botHaveQuest(const CatchChallenger::Api_protocol *api, const uint16_t &botId);
+    static bool tryValidateQuestStep(CatchChallenger::Api_protocol *api, const uint16_t &questId, const uint16_t &botId, bool silent);
     static void addBeatenBotFight(CatchChallenger::Api_protocol *api,const uint16_t &botFightId);
     static bool haveNextStepQuestRequirements(const CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest);
     static bool haveStartQuestRequirement(const CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest);
     static bool startQuest(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest);
-    static std::vector<std::pair<uint32_t,std::string> > getQuestList(CatchChallenger::Api_protocol *api,const uint32_t &botId);
+    static std::vector<std::pair<uint32_t,std::string> > getQuestList(CatchChallenger::Api_protocol *api, const uint16_t &botId);
     static bool nextStepQuest(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest);
     static void appendReputationPoint(CatchChallenger::Api_protocol *api,const QString &type,const int32_t &point);
     static uint32_t itemQuantity(const CatchChallenger::Api_protocol *api, const uint32_t &itemId);

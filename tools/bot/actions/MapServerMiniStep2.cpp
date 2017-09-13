@@ -637,7 +637,7 @@ bool MapServerMini::preload_step2c()
                             const uint8_t x=n.first.first,y=n.first.second;
                             const uint16_t &codeZone=currentStep.map[x+y*this->width];
                             {
-                                const std::vector<uint32_t> &fightsList=n.second;
+                                const std::vector<uint16_t> &fightsList=n.second;
                                 if(codeZone>0)
                                 {
                                     BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
@@ -658,7 +658,7 @@ bool MapServerMini::preload_step2c()
                             const uint8_t x=n.first.first,y=n.first.second;
                             const uint16_t &codeZone=currentStep.map[x+y*this->width];
                             {
-                                const std::vector<uint32_t> &shopList=n.second;
+                                const std::vector<uint16_t> &shopList=n.second;
                                 if(codeZone>0)
                                 {
                                     BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
