@@ -2593,10 +2593,10 @@ int createBorder(QString file,const bool addOneToY)
                                         else if(i.key()=="es")
                                             next="Siguiente";
                                         tempFile.write(
-                                                    QStringLiteral("      <text%1><![CDATA[%2<br /><br /><a href=\"%3\">[%4]</a>]]></text>\n")
+                                                    QStringLiteral("      <text%1><![CDATA[%2<br /><br /><a href=\"next\">[%3]</a>]]></text>\n")
                                                         .arg(lang)
                                                         .arg(i.value())
-                                                        .arg(sub_index+2)
+                                                        //.arg(sub_index+2)
                                                         .arg(next)
                                                         .toUtf8()
                                                     );
