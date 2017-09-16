@@ -11,3 +11,4 @@ FILE * LinkToLogin::pFile=NULL;
 int LinkToLogin::usbdev=0;
 #endif
 std::string LinkToLogin::pFilePath;
+bool LinkToLogin::withIndentation=false;

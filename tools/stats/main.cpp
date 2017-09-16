@@ -83,6 +83,9 @@ int main(int argc, char *argv[])
         if(!settings.contains("unixSocket"))
             settings.setValue("unixSocket","catchchallenger-stats.sock");
 
+        if(!settings.contains("withIndentation"))
+            settings.setValue("withIndentation","false");
+
         if(!settings.contains("token"))
             generateTokenStatClient(settings);
         std::string token=settings.value("token");
@@ -95,6 +98,7 @@ int main(int argc, char *argv[])
         unixSocketPath=settings.value("unixSocket");
         outputFile=settings.value("outputFile");
         LinkToLogin::linkToLogin->pFilePath=outputFile;
+        LinkToLogin::withIndentation=(settings.value("withIndentation")=="true" || settings.value("withIndentation")=="TRUE" || settings.value("withIndentation")=="1");
 
         const std::vector<char> &tokenBinary=hexatoBinary(token);
         if(tokenBinary.empty())

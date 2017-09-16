@@ -441,7 +441,8 @@ void LinkToLogin::updateJsonFile(const bool &withIndentation)
         std::string serverString;
         if(withIndentation)
             serverString+="    ";
-        serverString+="\""+std::to_string(server.uniqueKey)+"\":{";
+        //serverString+="\""+std::to_string(server.groupIndex)+"-"+std::to_string(server.uniqueKey)+"\":";
+        serverString+="{";
         std::string tempXml=server.xml;
         stringreplaceAll(tempXml,"/","\\/");
         stringreplaceAll(tempXml,"\"","\\\"");
@@ -449,7 +450,8 @@ void LinkToLogin::updateJsonFile(const bool &withIndentation)
         serverString+="\"connectedPlayer\":"+std::to_string(server.currentPlayer)+",";
         if(server.maxPlayer<65534)
             serverString+="\"maxPlayer\":"+std::to_string(server.maxPlayer)+",";
-        serverString+="\"charactersGroup\":"+std::to_string(server.groupIndex)+"";
+        serverString+="\"charactersGroup\":"+std::to_string(server.groupIndex)+",";
+        serverString+="\"uniqueKey\":"+std::to_string(server.uniqueKey)+"";
         serverString+="}";
         if(serverByGroup.find(server.logicalGroupIndex)==serverByGroup.cend())
             serverByGroup[server.logicalGroupIndex]=serverString;
@@ -489,7 +491,13 @@ void LinkToLogin::updateJsonFile(const bool &withIndentation)
                 content+="\"xml\":\""+tempXml+"\",";
                 if(withIndentation)
                     content+="\n";
+                content+="  \"servers\":[";
+                if(withIndentation)
+                    content+="\n";
                 content+=serverByGroup.at(indexLogicalGroups);
+                if(withIndentation)
+                    content+="\n";
+                content+="  ]";
                 if(withIndentation)
                     content+="\n  ";
                 content+="}";
