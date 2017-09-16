@@ -439,31 +439,43 @@ void LinkToLogin::updateJsonFile()
     {
         const ServerFromPoolForDisplay &server=serverList.at(index);
         std::string serverString;
-        serverString+="\""+std::to_string(server.uniqueKey)+"\":{";
+        serverString+="    \""+std::to_string(server.uniqueKey)+"\":{";
         std::string tempXml=server.xml;
         stringreplaceAll(tempXml,"/","\\/");
         stringreplaceAll(tempXml,"\"","\\\"");
         serverString+="\"xml\":\""+tempXml+"\",";
         serverString+="\"connectedPlayer\":"+std::to_string(server.currentPlayer)+",";
-        serverString+="\"maxPlayer\":"+std::to_string(server.maxPlayer)+"";
+        serverString+="\"maxPlayer\":"+std::to_string(server.maxPlayer)+",";
+        serverString+="\"charactersGroup\":"+std::to_string(server.groupIndex)+"";
         serverString+="}";
-        if(serverByGroup.find(server.groupIndex)==serverByGroup.cend())
-            serverByGroup[server.groupIndex]=serverString;
+        if(serverByGroup.find(server.logicalGroupIndex)==serverByGroup.cend())
+            serverByGroup[server.logicalGroupIndex]=serverString;
         else
-            serverByGroup[server.groupIndex]+=","+serverString;
+            serverByGroup[server.logicalGroupIndex]+=",\n"+serverString;
         index++;
     }
 
-    auto serverByGroupIndex=serverByGroup.begin();
-    while(serverByGroupIndex!=serverByGroup.cend())
     {
-        if(content.empty())
-            content="\""+std::to_string(serverByGroupIndex->first)+"\":{"+serverByGroupIndex->second+"}";
-        else
-            content+=",\""+std::to_string(serverByGroupIndex->first)+"\":{"+serverByGroupIndex->second+"}";
-        ++serverByGroupIndex;
+        unsigned int indexLogicalGroups=0;
+        while(indexLogicalGroups<logicalGroups.size())
+        {
+            const LogicalGroup &logicalGroup=logicalGroups.at(indexLogicalGroups);
+            if(serverByGroup.find(indexLogicalGroups)!=serverByGroup.end())
+            {
+                if(!content.empty())
+                    content+=",\n";
+                content+="  \""+logicalGroup.path+"\":{\n";
+                std::string tempXml=logicalGroup.xml;
+                stringreplaceAll(tempXml,"/","\\/");
+                stringreplaceAll(tempXml,"\"","\\\"");
+                content+="  \"xml\":\""+tempXml+"\",\n";
+                content+=serverByGroup.at(indexLogicalGroups);
+                content+="\n  }";
+            }
+            indexLogicalGroups++;
+        }
     }
-    content="{"+content+"}";
+    content="{\n"+content+"\n}";
     jsonFileContent=content;
 
     if(pFile!=NULL)

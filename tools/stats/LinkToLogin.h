@@ -60,6 +60,12 @@ public:
 
         //other
         uint8_t groupIndex;
+        uint8_t logicalGroupIndex;
+    };
+    struct LogicalGroup
+    {
+        std::string path;
+        std::string xml;
     };
 
     //to unordered reply
@@ -121,6 +127,7 @@ private:
     static char host[255];
     static uint16_t port;
     std::string jsonFileContent;
+    std::vector<LogicalGroup> logicalGroups;
 protected:
     std::vector<ServerFromPoolForDisplay> serverList;
 };
