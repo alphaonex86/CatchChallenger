@@ -27,7 +27,72 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
     switch(mainCodeType)
     {
         case 0x44:
-        return true;
+        {
+            unsigned int pos=0;
+            if((size-pos)<(int)(sizeof(uint8_t)))
+            {
+                errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                return false;
+            }
+            uint8_t logicalGroupSize;
+            logicalGroupSize=data[pos];
+            pos+=1;
+
+            logicalGroups.clear();
+            unsigned int index=0;
+            while(index<logicalGroupSize)
+            {
+                LogicalGroup logicalGroup;
+                //folder/path
+                {
+                    if((size-pos)<(int)sizeof(uint8_t))
+                    {
+                        errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    uint8_t stringSize;
+                    stringSize=data[pos];
+                    pos+=1;
+                    if(stringSize>0)
+                    {
+                        if((unsigned int)(size-pos)<(unsigned int)stringSize)
+                        {
+                            errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                            return false;
+                        }
+                        logicalGroup.path=std::string(data+pos,stringSize);
+                        pos+=stringSize;
+                    }
+                }
+
+                //Translation xml
+                {
+                    if((size-pos)<(int)sizeof(uint16_t))
+                    {
+                        errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    uint16_t stringSize;
+                    stringSize=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                    pos+=2;
+                    if(stringSize>0)
+                    {
+                        if((unsigned int)(size-pos)<(unsigned int)stringSize)
+                        {
+                            errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
+                            return false;
+                        }
+                        logicalGroup.xml=std::string(data+pos,stringSize);
+                        pos+=stringSize;
+                    }
+                }
+                logicalGroups.push_back(logicalGroup);
+
+                index++;
+            }
+
+            return true;
+        }
         case 0x40:
         {
             unsigned int pos=0;
@@ -167,6 +232,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                         errorParsingLayer(std::string("wrong size: ")+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
+                    server.logicalGroupIndex=data[pos];
                     pos+=1;
                 }
                 //max player
