@@ -82,6 +82,7 @@ public:
     #ifndef STATSODROIDSHOW2
     static LinkToLogin *linkToLogin;
     #endif
+    static bool withIndentation;
     static int linkToLoginSocketFd;
     static bool haveTheFirstSslHeader;
     std::vector<uint8_t> queryNumberList;
@@ -95,7 +96,7 @@ public:
     virtual void tryReconnect();
     void readTheFirstSslHeader();
     void moveClientFastPath(const uint8_t &, const uint8_t &);
-    virtual void updateJsonFile(const bool &withIndentation=false);
+    virtual void updateJsonFile(const bool &withIndentation);
     #ifndef STATSODROIDSHOW2
     static void removeJsonFile();
     #else

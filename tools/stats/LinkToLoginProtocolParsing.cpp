@@ -90,7 +90,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
 
                 index++;
             }
-            updateJsonFile();
+            updateJsonFile(LinkToLogin::withIndentation);
 
             return true;
         }
@@ -261,7 +261,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 pos+=2;
                 serverListIndex++;
             }
-            updateJsonFile();
+            updateJsonFile(LinkToLogin::withIndentation);
         }
         break;
         //Update the game server current player number on the game server
@@ -280,7 +280,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 pos+=2;
                 serverListIndex++;
             }
-            updateJsonFile();
+            updateJsonFile(LinkToLogin::withIndentation);
         }
         break;
         case 0x48:
@@ -460,7 +460,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                 pos+=2;
                 serverListIndex++;
             }
-            updateJsonFile();
+            updateJsonFile(LinkToLogin::withIndentation);
         }
         return true;
         default:
