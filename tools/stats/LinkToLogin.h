@@ -95,7 +95,7 @@ public:
     virtual void tryReconnect();
     void readTheFirstSslHeader();
     void moveClientFastPath(const uint8_t &, const uint8_t &);
-    virtual void updateJsonFile();
+    virtual void updateJsonFile(const bool &withIndentation=false);
     #ifndef STATSODROIDSHOW2
     static void removeJsonFile();
     #else
