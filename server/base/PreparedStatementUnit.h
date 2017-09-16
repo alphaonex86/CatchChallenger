@@ -8,7 +8,7 @@
 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
 #include <unordered_map>
 #endif
-#ifdef CATCHCHALLENGER_CLASS_QT
+#if defined(CATCHCHALLENGER_CLASS_QT) || !defined(EPOLLCATCHCHALLENGERSERVER)
 #include "QtDatabase.h"
 #endif
 

@@ -310,7 +310,10 @@ struct ServerPrivateVariables
     #if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     PreparedDBQueryCommonForLogin preparedDBQueryCommonForLogin;
     #endif
+    //if change this defined, change it too into PreparedDBQuery.h
+    #if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     PreparedDBQueryCommon preparedDBQueryCommon;
+    #endif
     #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     PreparedDBQueryServer preparedDBQueryServer;
     #endif
