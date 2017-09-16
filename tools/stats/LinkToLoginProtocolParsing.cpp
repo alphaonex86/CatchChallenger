@@ -90,6 +90,7 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
 
                 index++;
             }
+            updateJsonFile();
 
             return true;
         }

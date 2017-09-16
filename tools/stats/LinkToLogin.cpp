@@ -416,7 +416,7 @@ void LinkToLogin::moveClientFastPath(const uint8_t &,const uint8_t &)
 {
 }
 
-void LinkToLogin::updateJsonFile()
+void LinkToLogin::updateJsonFile(const bool &withIndentation)
 {
     #ifndef STATSODROIDSHOW2
     //std::cout << "Update the json file..." << std::endl;
@@ -439,19 +439,27 @@ void LinkToLogin::updateJsonFile()
     {
         const ServerFromPoolForDisplay &server=serverList.at(index);
         std::string serverString;
-        serverString+="    \""+std::to_string(server.uniqueKey)+"\":{";
+        if(withIndentation)
+            serverString+="    ";
+        serverString+="\""+std::to_string(server.uniqueKey)+"\":{";
         std::string tempXml=server.xml;
         stringreplaceAll(tempXml,"/","\\/");
         stringreplaceAll(tempXml,"\"","\\\"");
         serverString+="\"xml\":\""+tempXml+"\",";
         serverString+="\"connectedPlayer\":"+std::to_string(server.currentPlayer)+",";
-        serverString+="\"maxPlayer\":"+std::to_string(server.maxPlayer)+",";
+        if(server.maxPlayer<65534)
+            serverString+="\"maxPlayer\":"+std::to_string(server.maxPlayer)+",";
         serverString+="\"charactersGroup\":"+std::to_string(server.groupIndex)+"";
         serverString+="}";
         if(serverByGroup.find(server.logicalGroupIndex)==serverByGroup.cend())
             serverByGroup[server.logicalGroupIndex]=serverString;
         else
-            serverByGroup[server.logicalGroupIndex]+=",\n"+serverString;
+        {
+            if(withIndentation)
+                serverByGroup[server.logicalGroupIndex]+=",\n"+serverString;
+            else
+                serverByGroup[server.logicalGroupIndex]+=","+serverString;
+        }
         index++;
     }
 
@@ -463,19 +471,38 @@ void LinkToLogin::updateJsonFile()
             if(serverByGroup.find(indexLogicalGroups)!=serverByGroup.end())
             {
                 if(!content.empty())
-                    content+=",\n";
-                content+="  \""+logicalGroup.path+"\":{\n";
+                {
+                    content+=",";
+                    if(withIndentation)
+                        content+="\n";
+                }
+                if(withIndentation)
+                    content+="  ";
+                content+="\""+logicalGroup.path+"\":{";
+                if(withIndentation)
+                    content+="\n";
                 std::string tempXml=logicalGroup.xml;
                 stringreplaceAll(tempXml,"/","\\/");
                 stringreplaceAll(tempXml,"\"","\\\"");
-                content+="  \"xml\":\""+tempXml+"\",\n";
+                if(withIndentation)
+                    content+="  ";
+                content+="\"xml\":\""+tempXml+"\",";
+                if(withIndentation)
+                    content+="\n";
                 content+=serverByGroup.at(indexLogicalGroups);
-                content+="\n  }";
+                if(withIndentation)
+                    content+="\n  ";
+                content+="}";
             }
             indexLogicalGroups++;
         }
     }
-    content="{\n"+content+"\n}";
+    if(withIndentation)
+        content="\n"+content;
+    content="{"+content;
+    if(withIndentation)
+        content=content+"\n";
+    content=content+"}";
     jsonFileContent=content;
 
     if(pFile!=NULL)
