@@ -64,6 +64,7 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
     qRegisterMetaType<QList<ServerFromPoolForDisplay *> >("QList<ServerFromPoolForDisplay *>");
+    qRegisterMetaType<MapVisualiserPlayer::BlockedOn>("MapVisualiserPlayer::BlockedOn");
 
     qRegisterMetaType<Chat_type>("Chat_type");
     qRegisterMetaType<Player_type>("Player_type");
