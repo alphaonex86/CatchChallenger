@@ -55,6 +55,15 @@ bool EpollUnixSocketServer::tryListen(const char * const path)
         std::cerr << "Unable to listen, error (errno): " << errno << ", error string: " << strerror(errno) << std::endl;
         return false;
     }
+    {
+        const int s = EpollSocket::make_non_blocking(sfd);
+        if(s == -1)
+        {
+            close();
+            std::cerr << "Can't put in non blocking" << std::endl;
+            return false;
+        }
+    }
     epoll_event event;
     event.data.ptr = this;
     event.events = EPOLLIN | EPOLLOUT | EPOLLET;
