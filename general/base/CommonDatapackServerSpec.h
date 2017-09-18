@@ -14,7 +14,7 @@ public:
     explicit CommonDatapackServerSpec();
 public:
     void unload();
-    void parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode);
+    void parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode);
     bool isParsedContent() const;
 public:
     std::unordered_map<uint16_t,BotFight> botFights;
@@ -29,6 +29,7 @@ private:
     bool parsingSpec;
     std::string datapackPath;
     std::string mainDatapackCode;
+    std::string subDatapackCode;
 private:
     void parseQuests();
     void parseBotFights();//gold/item variables by server

@@ -238,7 +238,7 @@ void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode,
     }
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
-    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(datapackPath.toStdString(),mainDatapackCode.toStdString());
+    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(datapackPath.toStdString(),mainDatapackCode.toStdString(),subDatapackCode.toStdString());
 
     parseMaps();
     parseQuestsLink();
