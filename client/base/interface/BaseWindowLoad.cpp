@@ -551,6 +551,8 @@ void BaseWindow::datapackParsedMainSub()
 
     //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
     mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
+    if(!client->setMapNumber(DatapackClientLoader::datapackLoader.mapToId.size()))
+        emit newError(tr("Internal error"),QStringLiteral("No map loaded to call client->setMapNumber()"));
 
     have_main_and_sub_datapack_loaded();
 
