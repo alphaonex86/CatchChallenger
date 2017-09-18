@@ -239,7 +239,11 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
     {
         character_id=characterId;
-        characterSelectionIsWrong(query_id,0x04,"selectCharacter_return() profile common and server don't match");
+        characterSelectionIsWrong(query_id,0x04,"selectCharacter_return() profile common and server don't match: "+
+                                  std::to_string(CommonDatapack::commonDatapack.profileList.size())+
+                                  "!="+
+                                  std::to_string(GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
+                                  );
         return;
     }
     #endif

@@ -858,11 +858,12 @@ public:
 struct ServerSpecProfile
 {
     void * mapPointer;
-    std::string mapString;
     /*COORD_TYPE*/ uint8_t x;
     /*COORD_TYPE*/ uint8_t y;
     Orientation orientation;
 
+    /// \todo support multiple map start, change both:
+    std::string mapString;
     std::string databaseId;/*to resolve with the dictionary, in string (not the number), need port prepare profile*/
 };
 

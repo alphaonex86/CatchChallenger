@@ -4,6 +4,8 @@
 #include "../base/Client.h"
 #include "../epoll/Epoll.h"
 #include "../epoll/EpollSocket.h"
+#include "../epoll/EpollServer.h"
+#include "../epoll/EpollSslServer.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -622,6 +624,21 @@ void LinkToMaster::tryReconnect()
             }
         } while(stat!=Stat::Connected);
         readTheFirstSslHeader();
+    }
+
+    {
+        #ifdef SERVERSSL
+        EpollSslServer *server=static_cast<EpollSslServer *>(baseServer);
+        #else
+        EpollServer *server=static_cast<EpollServer *>(baseServer);
+        #endif
+        if(!server->isListening())
+        {
+            std::cout << "Waiting connection after master link" << std::endl;
+
+            if(!server->tryListen())
+                abort();
+        }
     }
 }
 

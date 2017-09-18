@@ -326,7 +326,7 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
     //load the datapack
     {
         CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());
-        CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString(),CommonSettingsServer::commonSettingsServer.mainDatapackCode);
+        CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode);
     }
     client->api->have_main_and_sub_datapack_loaded();
     ifMultipleConnexionStartCreation();
