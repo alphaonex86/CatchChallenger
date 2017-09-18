@@ -129,7 +129,43 @@ bool BaseServer::preload_the_map()
                           << "parsed due: " << "regex_search(" << fileName << ",\\.tmx$) && !regex_search("
                           << fileName << ",[\"'])"
                           << std::endl;
-                abort();
+
+                switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+                {
+                    case MapVisibilityAlgorithmSelection_Simple:
+                        flat_map_list_temp.push_back(new Map_server_MapVisibility_Simple_StoreOnSender);
+                    break;
+                    case MapVisibilityAlgorithmSelection_WithBorder:
+                        flat_map_list_temp.push_back(new Map_server_MapVisibility_WithBorder_StoreOnSender);
+                    break;
+                    case MapVisibilityAlgorithmSelection_None:
+                    default:
+                        flat_map_list_temp.push_back(new MapServer);
+                    break;
+                }
+                MapServer *mapServer=static_cast<MapServer *>(flat_map_list_temp.back());
+                GlobalServerData::serverPrivateVariables.map_list[sortFileName]=mapServer;
+
+                mapServer->width			= 0;
+                mapServer->height			= 0;
+                mapServer->parsed_layer.dirt=NULL;
+                mapServer->parsed_layer.ledges=NULL;
+                mapServer->parsed_layer.monstersCollisionMap=NULL;
+                mapServer->parsed_layer.walkable=NULL;
+                mapServer->map_file		= sortFileName;
+
+                map_name.push_back(sortFileName);
+
+                parseJustLoadedMap(map_temp.map_to_send,fileName);
+
+                Map_semi map_semi;
+                map_semi.map				= GlobalServerData::serverPrivateVariables.map_list.at(sortFileName);
+
+                map_semi.old_map=map_temp.map_to_send;
+
+                semi_loaded_map.push_back(map_semi);
+
+                //abort();
             }
         }
         index++;

@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
                             }
                             epoll_event event;
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET /* | EPOLLOUT: CLOSE_WAIT but put the cpu at 100%, loop between user and kernel space as EpollTimer::validateTheTimer() missing */;//EPOLLET | EPOLLOUT
+                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET | EPOLLOUT /*EPOLLOUT: CLOSE_WAIT but put the cpu at 100%, loop between user and kernel space as EpollTimer::validateTheTimer() missing */;
                             const int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {

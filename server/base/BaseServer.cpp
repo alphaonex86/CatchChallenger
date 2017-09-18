@@ -300,6 +300,49 @@ void BaseServer::preload_finish()
     preload_market_monsters_prices_call=false;
     preload_industries_call=false;
     preload_market_items_call=false;
+
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    switch(GlobalServerData::serverSettings.database_login.tryOpenType)
+    {
+        #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+        case DatabaseBase::DatabaseType::PostgreSQL:
+            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_login)->setMaxDbQueries(100);
+        break;
+        #endif
+        default:
+        break;
+    }
+    switch(GlobalServerData::serverSettings.database_base.tryOpenType)
+    {
+        #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+        case DatabaseBase::DatabaseType::PostgreSQL:
+            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_base)->setMaxDbQueries(100);
+        break;
+        #endif
+        default:
+        break;
+    }
+    #endif
+    switch(GlobalServerData::serverSettings.database_common.tryOpenType)
+    {
+        #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+        case DatabaseBase::DatabaseType::PostgreSQL:
+            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_common)->setMaxDbQueries(100);
+        break;
+        #endif
+        default:
+        break;
+    }
+    switch(GlobalServerData::serverSettings.database_server.tryOpenType)
+    {
+        #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+        case DatabaseBase::DatabaseType::PostgreSQL:
+            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_server)->setMaxDbQueries(100);
+        break;
+        #endif
+        default:
+        break;
+    }
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVER

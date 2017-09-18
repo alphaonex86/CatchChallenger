@@ -798,6 +798,49 @@ int main(int argc, char *argv[])
     server->loadAndFixSettings();
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    switch(GlobalServerData::serverSettings.database_login.tryOpenType)
+    {
+        #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+        case DatabaseBase::DatabaseType::PostgreSQL:
+            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_login)->setMaxDbQueries(2000000000);
+        break;
+        #endif
+        default:
+        break;
+    }
+    switch(GlobalServerData::serverSettings.database_base.tryOpenType)
+    {
+        #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+        case DatabaseBase::DatabaseType::PostgreSQL:
+            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_base)->setMaxDbQueries(2000000000);
+        break;
+        #endif
+        default:
+        break;
+    }
+    #endif
+    switch(GlobalServerData::serverSettings.database_common.tryOpenType)
+    {
+        #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+        case DatabaseBase::DatabaseType::PostgreSQL:
+            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_common)->setMaxDbQueries(2000000000);
+        break;
+        #endif
+        default:
+        break;
+    }
+    switch(GlobalServerData::serverSettings.database_server.tryOpenType)
+    {
+        #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+        case DatabaseBase::DatabaseType::PostgreSQL:
+            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_server)->setMaxDbQueries(2000000000);
+        break;
+        #endif
+        default:
+        break;
+    }
+
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
                 GlobalServerData::serverSettings.database_login.host,
                 GlobalServerData::serverSettings.database_login.db,
@@ -1105,7 +1148,7 @@ int main(int argc, char *argv[])
                             }
                             epoll_event event;
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET | EPOLLRDHUP;//EPOLLET | EPOLLOUT | EPOLLHUP
+                            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET | EPOLLRDHUP | EPOLLET | EPOLLOUT;
                             const int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {

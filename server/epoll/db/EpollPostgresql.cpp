@@ -44,8 +44,10 @@ EpollPostgresql::EpollPostgresql() :
     emptyCallback.method=NULL;
     databaseTypeVar=DatabaseBase::DatabaseType::PostgreSQL;
 
-    queue.reserve(CATCHCHALLENGER_MAXBDQUERIES);
-    queriesList.reserve(CATCHCHALLENGER_MAXBDQUERIES);
+    maxDbQueries=CATCHCHALLENGER_MAXBDQUERIES;
+
+    /*queue.reserve(CATCHCHALLENGER_MAXBDQUERIES);
+    queriesList.reserve(CATCHCHALLENGER_MAXBDQUERIES);*/
 
     if(EpollPostgresql::informationDisplayed==false)
     {
@@ -70,6 +72,14 @@ EpollPostgresql::~EpollPostgresql()
         PQfinish(conn);
         conn=NULL;
     }
+}
+
+bool EpollPostgresql::setMaxDbQueries(const unsigned int &maxDbQueries)
+{
+    if(maxDbQueries<2)
+        return false;
+    this->maxDbQueries=maxDbQueries;
+    return true;
 }
 
 bool EpollPostgresql::isConnected() const
@@ -286,7 +296,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(con
     tempQuery.query=query;
     if(queue.size()>0 || result!=NULL)
     {
-        if(queue.size()>=CATCHCHALLENGER_MAXBDQUERIES)
+        if(queue.size()>=maxDbQueries)
         {
             std::cerr << "pg queue full" << std::endl;
             return NULL;
@@ -448,7 +458,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::
     tempQuery.query=query;
     if(queue.size()>0 || result!=NULL)
     {
-        if(queue.size()>=CATCHCHALLENGER_MAXBDQUERIES)
+        if(queue.size()>=maxDbQueries)
         {
             std::cerr << "pg queue full" << std::endl;
             return NULL;
