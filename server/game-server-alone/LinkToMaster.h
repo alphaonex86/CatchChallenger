@@ -40,6 +40,7 @@ public:
         uint8_t charactersGroupIndex;
     };
 
+    void *baseServer;
     std::string httpDatapackMirror;
     //to unordered reply
     std::unordered_map<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;

@@ -6,6 +6,7 @@
 #include "Map_loader.h"
 #include "../fight/FightLoader.h"
 #include "DatapackGeneralLoader.h"
+#include "../../general/base/FacilityLibGeneral.h"
 
 #include <iostream>
 #include <vector>
@@ -22,7 +23,7 @@ CommonDatapackServerSpec::CommonDatapackServerSpec()
     botFightsMaxId=0;
 }
 
-void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath,const std::string &mainDatapackCode)
+void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode)
 {
     if(isParsedSpec)
         return;
@@ -32,6 +33,7 @@ void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath,con
 
     this->datapackPath=datapackPath;
     this->mainDatapackCode=mainDatapackCode;
+    this->subDatapackCode=subDatapackCode;
 
     #ifndef BOTTESTCONNECT
     CommonDatapack::commonDatapack.parseDatapack(datapackPath);
@@ -83,7 +85,10 @@ void CommonDatapackServerSpec::parseBotFights()
 
 void CommonDatapackServerSpec::parseServerProfileList()
 {
-    serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,mainDatapackCode,datapackPath+DATAPACK_BASE_PATH_PLAYERSPEC+"/"+mainDatapackCode+"/start.xml",CommonDatapack::commonDatapack.profileList);
+    std::string startFile=datapackPath+DATAPACK_BASE_PATH_PLAYERSPEC+"/"+mainDatapackCode+"/sub/"+subDatapackCode+"/start.xml";
+    if(!CatchChallenger::FacilityLibGeneral::isFile(startFile))
+        startFile=datapackPath+DATAPACK_BASE_PATH_PLAYERSPEC+"/"+mainDatapackCode+"/start.xml";
+    serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,mainDatapackCode,startFile,CommonDatapack::commonDatapack.profileList);
     std::cout << serverProfileList.size() << " server profile(s) loaded" << std::endl;
 }
 

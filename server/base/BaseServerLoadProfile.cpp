@@ -17,16 +17,26 @@ void BaseServer::preload_profile()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(CommonDatapack::commonDatapack.profileList.size()!=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
     {
-        std::cout << "preload_profile() profile common and server don't match" << std::endl;
+        std::cout << "preload_profile() profile common and server don't match, maybe the main code ou sub code don't have start.xml valid" << std::endl;
+        abort();
         return;
     }
     #endif
     {
+        unsigned int emptyMap=0;
         unsigned int index=0;
         while(index<CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
         {
-            stringreplaceOne(CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList[index].mapString,CACHEDSTRING_dottmx,"");
+            ServerSpecProfile &serverSpecProfile=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList[index];
+            stringreplaceOne(serverSpecProfile.mapString,CACHEDSTRING_dottmx,"");
+            if(serverSpecProfile.mapString.empty())
+                emptyMap++;
             index++;
+        }
+        if(emptyMap>=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
+        {
+            std::cerr << "serverProfileList have no map, maybe the main code ou sub code don't have start.xml valid" << std::endl;
+            abort();
         }
     }
     GlobalServerData::serverPrivateVariables.serverProfileInternalList.clear();
