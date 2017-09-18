@@ -557,9 +557,9 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 else
                     string=tr("Unknown error: %1").arg(returnCode);
                 std::cerr << "Selected character not found, reason: " << string.toStdString() << ", data: " << binarytoHexa(data.constData(),data.size()) << std::endl;
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
                 abort();//to debug
-                #endif
+                #endif*/
                 notLogged(string);
                 return false;
             }
