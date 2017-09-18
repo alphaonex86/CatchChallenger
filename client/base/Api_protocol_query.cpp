@@ -54,7 +54,12 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
         case 0xE1:
         {
             uint32_t mapId;
-            if(number_of_map<=255)
+            if(number_of_map==0)
+            {
+                parseError(QStringLiteral("Internal error"),QStringLiteral("number_of_map==0 with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                return false;
+            }
+            else if(number_of_map<=255)
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                 {
