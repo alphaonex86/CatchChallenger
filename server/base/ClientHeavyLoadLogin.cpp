@@ -878,7 +878,7 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(CommonDatapack::commonDatapack.profileList.size()!=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
     {
-        errorOutput("profile common and server don't match");
+        errorOutput("Client::addCharacter() profile common and server don't match");
         return;
     }
     if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())

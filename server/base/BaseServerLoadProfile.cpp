@@ -15,14 +15,9 @@ void BaseServer::preload_profile()
     #endif
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    /*if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileList.size())
-    {
-        std::cout << "profile common and server don't match" << std::endl;
-        return;
-    }*/
     if(CommonDatapack::commonDatapack.profileList.size()!=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
     {
-        std::cout << "profile common and server don't match" << std::endl;
+        std::cout << "preload_profile() profile common and server don't match" << std::endl;
         return;
     }
     #endif

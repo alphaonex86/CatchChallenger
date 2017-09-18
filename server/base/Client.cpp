@@ -250,9 +250,15 @@ void Client::disconnectClient()
 
     if(stat==ClientStat::CharacterSelecting)
     {
-        stat=ClientStat::CharacterSelected;
+        stat=ClientStat::CharacterSelected;//to block the new connection util th destructor is invocked
         GlobalServerData::serverPrivateVariables.connected_players_id_list.erase(character_id);
         simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
+        #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+        if(character_id==0)
+            std::cerr << "character_id==0, set it before to correctly unload to master" << std::endl;
+        else
+            LinkToMaster::linkToMaster->characterDisconnected(character_id);
+        #endif
     }
     else if(stat==ClientStat::CharacterSelected)
     {
