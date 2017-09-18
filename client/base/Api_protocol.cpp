@@ -1845,6 +1845,7 @@ void Api_protocol::resetAll()
     delayedLogin.data.clear();
     delayedLogin.packetCode=0;
     delayedLogin.queryNumber=0;
+    number_of_map=0;
     delayedMessages.clear();
     haveTheServerList=false;
     haveTheLogicalGroupList=false;
@@ -2671,5 +2672,16 @@ bool Api_protocol::dataToPlayerMonster(QDataStream &in,PlayerMonster &monster)
         monster.skills.push_back(skill);
         sub_index++;
     }
+    return true;
+}
+
+bool Api_protocol::setMapNumber(const unsigned int number_of_map)
+{
+    if(number_of_map==0)
+    {
+        std::cerr << "to reset this number use resetAll()" << std::endl;
+        return false;
+    }
+    this->number_of_map=number_of_map;
     return true;
 }
