@@ -92,6 +92,8 @@ public:
         Proxy=0x02
     };
     ProxyMode proxyMode;
+
+    bool setMapNumber(const unsigned int number_of_map);
 private:
     //status for the query
     bool haveFirstHeader;
