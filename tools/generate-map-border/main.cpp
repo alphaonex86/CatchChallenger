@@ -2473,6 +2473,11 @@ int createBorder(QString file,const bool addOneToY)
                         delete map->takeLayerAt(indexLayer);
                         indexLayer--;
                     }
+                    else if(mapIsCave)
+                    {
+                        if(tileLayer->name()=="Grass")
+                            tileLayer->setName("Walkable");
+                    }
                 }
                 indexLayer++;
             }
@@ -2705,7 +2710,7 @@ int createBorder(QString file,const bool addOneToY)
     bool mapHaveWaterMonster=map->hasProperty("waterPokemonChances") && !map->property("waterPokemonChances").isEmpty();
     bool mapHaveFishMonster=map->hasProperty("fishPokemonChances") && !map->property("fishPokemonChances").isEmpty();
     bool havePvPAttribute=map->hasProperty("pvp");
-    if((grassLayerDropped || !haveGrassLayer) && mapHaveGrassMonster)
+    if(((grassLayerDropped || !haveGrassLayer) && mapHaveGrassMonster) || mapIsCave)
     {
         QString metadataFile=file;
         metadataFile.replace(".tmx",".xml");
