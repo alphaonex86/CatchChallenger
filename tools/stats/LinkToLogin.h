@@ -129,6 +129,7 @@ private:
     static uint16_t port;
     std::string jsonFileContent;
     std::vector<LogicalGroup> logicalGroups;
+    bool warningLogicalGroupOutOfBound;
 protected:
     std::vector<ServerFromPoolForDisplay> serverList;
 };
