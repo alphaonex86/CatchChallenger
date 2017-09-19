@@ -56,6 +56,7 @@ LinkToLogin::LinkToLogin(
         queryNumberList[index]=index;
         index++;
     }
+    warningLogicalGroupOutOfBound=false;
 }
 
 LinkToLogin::~LinkToLogin()
@@ -438,29 +439,42 @@ void LinkToLogin::updateJsonFile(const bool &withIndentation)
     while(index<serverList.size())
     {
         const ServerFromPoolForDisplay &server=serverList.at(index);
-        std::string serverString;
-        if(withIndentation)
-            serverString+="    ";
-        //serverString+="\""+std::to_string(server.groupIndex)+"-"+std::to_string(server.uniqueKey)+"\":";
-        serverString+="{";
-        std::string tempXml=server.xml;
-        stringreplaceAll(tempXml,"/","\\/");
-        stringreplaceAll(tempXml,"\"","\\\"");
-        serverString+="\"xml\":\""+tempXml+"\",";
-        serverString+="\"connectedPlayer\":"+std::to_string(server.currentPlayer)+",";
-        if(server.maxPlayer<65534)
-            serverString+="\"maxPlayer\":"+std::to_string(server.maxPlayer)+",";
-        serverString+="\"charactersGroup\":"+std::to_string(server.groupIndex)+",";
-        serverString+="\"uniqueKey\":"+std::to_string(server.uniqueKey)+"";
-        serverString+="}";
-        if(serverByGroup.find(server.logicalGroupIndex)==serverByGroup.cend())
-            serverByGroup[server.logicalGroupIndex]=serverString;
+        if(server.logicalGroupIndex<logicalGroups.size())
+        {
+            std::string serverString;
+            if(withIndentation)
+                serverString+="    ";
+            //serverString+="\""+std::to_string(server.groupIndex)+"-"+std::to_string(server.uniqueKey)+"\":";
+            serverString+="{";
+            std::string tempXml=server.xml;
+            stringreplaceAll(tempXml,"/","\\/");
+            stringreplaceAll(tempXml,"\"","\\\"");
+            serverString+="\"xml\":\""+tempXml+"\",";
+            serverString+="\"connectedPlayer\":"+std::to_string(server.currentPlayer)+",";
+            if(server.maxPlayer<65534)
+                serverString+="\"maxPlayer\":"+std::to_string(server.maxPlayer)+",";
+            serverString+="\"charactersGroup\":"+std::to_string(server.groupIndex)+",";
+            serverString+="\"uniqueKey\":"+std::to_string(server.uniqueKey)+"";
+            serverString+="}";
+            if(serverByGroup.find(server.logicalGroupIndex)==serverByGroup.cend())
+                serverByGroup[server.logicalGroupIndex]=serverString;
+            else
+            {
+                if(withIndentation)
+                    serverByGroup[server.logicalGroupIndex]+=",\n"+serverString;
+                else
+                    serverByGroup[server.logicalGroupIndex]+=","+serverString;
+            }
+        }
         else
         {
-            if(withIndentation)
-                serverByGroup[server.logicalGroupIndex]+=",\n"+serverString;
-            else
-                serverByGroup[server.logicalGroupIndex]+=","+serverString;
+            if(!logicalGroups.empty())
+                if(!warningLogicalGroupOutOfBound)
+                {
+                    warningLogicalGroupOutOfBound=true;
+                    std::cerr << "Server " << server.uniqueKey << "-" << server.groupIndex << " have logicalGroupIndex of of bound:"
+                              << server.logicalGroupIndex << ">=" << logicalGroups.size() << std::endl;
+                }
         }
         index++;
     }
