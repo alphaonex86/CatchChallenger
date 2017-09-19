@@ -490,14 +490,14 @@ void LinkToLogin::updateJsonFile(const bool &withIndentation)
                     content+="  ";
                 content+="\"xml\":\""+tempXml+"\",";
                 if(withIndentation)
-                    content+="\n";
-                content+="  \"servers\":[";
+                    content+="\n  ";
+                content+="\"servers\":[";
                 if(withIndentation)
                     content+="\n";
                 content+=serverByGroup.at(indexLogicalGroups);
                 if(withIndentation)
-                    content+="\n";
-                content+="  ]";
+                    content+="\n  ";
+                content+="]";
                 if(withIndentation)
                     content+="\n  ";
                 content+="}";
