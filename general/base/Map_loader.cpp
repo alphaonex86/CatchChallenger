@@ -513,6 +513,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                   << "), file: " << file
                                                   << std::endl;
                                 }
+                                else if(type=="StrengthBoulder")
+                                {}
                                 else
                                 {
                                     std::cerr << "Unknown type: " << type
