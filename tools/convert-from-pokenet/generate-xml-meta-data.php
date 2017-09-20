@@ -638,7 +638,7 @@ if ($dh = opendir($dir)) {
 		}
 		if(count($fish)>0 && preg_match('#layer[^>]* name="Water"#isU',$content))
 		{
-			$xmlcontent.='	<fish>'."\n";
+			$xmlcontent.='	<waterOldRod>'."\n";
 			foreach($fish as $monster)
 			{
 				if($monster['minLevel']==$monster['maxLevel'])
@@ -646,7 +646,7 @@ if ($dh = opendir($dir)) {
 				else
 					$xmlcontent.='		<monster minLevel="'.$monster['minLevel'].'" maxLevel="'.$monster['maxLevel'].'" luck="'.$monster['luck'].'" id="'.$monster['id'].'" />'."\n";
 			}
-			$xmlcontent.='	</fish>'."\n";
+			$xmlcontent.='	</waterOldRod>'."\n";
 		}
 		$xmlcontent.='</map>';
 		$filexml=str_replace('.tmx','.xml',$file);
