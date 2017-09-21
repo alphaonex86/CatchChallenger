@@ -41,16 +41,32 @@ public:
         uint32_t id;
         uint64_t price;
     };
+    struct MapContent
+    {
+        QString region;
+        QString zone;
+        QString subzone;
+        QString name;
+        QString type;
+        bool officialzone;
+    };
 
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     bool preload_the_map(const std::string &path);
+    void displayNewNotFinishedMap();
+private slots:
+    void on_getAnotherUnfinishedMap_clicked();
 private:
     QProcess process;
     Ui::MainWindow *ui;
     QSqlDatabase m_db;
     std::unordered_map<std::string,CatchChallenger::MapServer *> map_list;
     std::vector<Map_semi> semi_loaded_map;
+    QHash<QString,MapContent> finishedFile;
+    QHash<QString,MapContent> not_finishedFile;
+
+    QString selectedMap;
 };
 
 #endif // MAINWINDOW_H

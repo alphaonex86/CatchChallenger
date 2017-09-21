@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>924</width>
-    <height>760</height>
+    <height>798</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Item editor</string>
+   <string>Map metadata</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -24,7 +24,7 @@
        </size>
       </property>
       <property name="title">
-       <string>Near map</string>
+       <string>Near maps</string>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
@@ -35,16 +35,25 @@
            <height>0</height>
           </size>
          </property>
+         <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOn</enum>
+         </property>
+         <property name="horizontalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOn</enum>
+         </property>
+         <property name="sizeAdjustPolicy">
+          <enum>QAbstractScrollArea::AdjustToContents</enum>
+         </property>
          <property name="widgetResizable">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <widget class="QWidget" name="scrollAreaWidgetContents">
           <property name="geometry">
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>892</width>
-            <height>337</height>
+            <width>875</width>
+            <height>320</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -155,7 +164,7 @@
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QLineEdit" name="lineEdit"/>
+             <widget class="QLineEdit" name="region"/>
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_2">
@@ -165,57 +174,68 @@
              </widget>
             </item>
             <item row="1" column="1">
-             <widget class="QLineEdit" name="lineEdit_2"/>
+             <widget class="QLineEdit" name="zone"/>
             </item>
-            <item row="2" column="0">
+            <item row="3" column="0">
              <widget class="QLabel" name="label_3">
               <property name="text">
                <string>Sub zone</string>
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
-             <widget class="QLineEdit" name="lineEdit_3"/>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="subzone">
+              <property name="placeholderText">
+               <string>(optional)</string>
+              </property>
+             </widget>
             </item>
-            <item row="3" column="0">
+            <item row="4" column="0">
              <widget class="QLabel" name="label_4">
               <property name="text">
                <string>Name</string>
               </property>
              </widget>
             </item>
-            <item row="3" column="1">
-             <widget class="QLineEdit" name="lineEdit_4"/>
+            <item row="4" column="1">
+             <widget class="QLineEdit" name="name"/>
             </item>
-            <item row="4" column="0">
+            <item row="5" column="0">
              <widget class="QLabel" name="label_5">
               <property name="text">
                <string>Type</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="1">
-             <widget class="QComboBox" name="comboBox">
+            <item row="5" column="1">
+             <widget class="QComboBox" name="type">
               <item>
                <property name="text">
-                <string>City</string>
+                <string>city</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Indoor</string>
+                <string>indoor</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Outdoor</string>
+                <string>outdoor</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Cave</string>
+                <string>cave</string>
                </property>
               </item>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QCheckBox" name="checkBox">
+              <property name="text">
+               <string>Official zone</string>
+              </property>
              </widget>
             </item>
            </layout>
@@ -257,7 +277,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton">
+            <widget class="QPushButton" name="getAnotherUnfinishedMap">
              <property name="maximumSize">
               <size>
                <width>350</width>
