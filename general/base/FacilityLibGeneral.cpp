@@ -1,5 +1,6 @@
 #include "FacilityLibGeneral.h"
 #include "PortableEndian.h"
+#include "GeneralVariable.h"
 
 #include <cstring>
 #include <string>
@@ -43,6 +44,19 @@ unsigned int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,
 
 std::vector<FacilityLibGeneral::InodeDescriptor> FacilityLibGeneral::listFolderNotRecursive(const std::string& folder,const ListFolder &type)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(folder.empty())
+    {
+        std::cerr << "can't FacilityLibGeneral::listFolderNotRecursive(\"\")" << std::endl;
+    }
+    {
+        const char lastChar=folder.at(folder.size()-1);
+        if(lastChar!='/' && lastChar!='\\')
+        {
+            std::cerr << "can't FacilityLibGeneral::listFolderNotRecursive(\"XXXXX\"), XXXX don't end with /" << std::endl;
+        }
+    }
+    #endif
     std::vector<InodeDescriptor> output;
     DIR *dir;
     struct dirent *ent;
