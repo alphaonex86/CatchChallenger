@@ -10,7 +10,8 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         MainWindow.cpp \
-    ../../server/base/MapServer.cpp
+    ../../server/base/MapServer.cpp \
+    MainWindowLoadMap.cpp
 HEADERS  += MainWindow.h \
     ../../server/base/ServerStructures.h \
     ../../server/base/MapServer.h
