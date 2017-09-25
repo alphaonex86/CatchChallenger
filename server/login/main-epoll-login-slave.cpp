@@ -7,6 +7,7 @@
 #include <chrono>
 #include <ctime>
 #include <vector>
+#include <signal.h>
 
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/Version.h"
@@ -21,10 +22,17 @@
 
 using namespace CatchChallenger;
 
-//list of char connected
+/* Catch Signal Handler functio */
+void signal_callback_handler(int signum){
+
+        printf("Caught signal SIGPIPE %d\n",signum);
+}
 
 int main(int argc, char *argv[])
 {
+    /* Catch Signal Handler SIGPIPE */
+    signal(SIGPIPE, signal_callback_handler);
+
     std::cout << "CatchChallenger version: " << CATCHCHALLENGER_VERSION << std::endl;
     if(argc<1)
     {

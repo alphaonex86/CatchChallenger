@@ -9,6 +9,7 @@
 #include <chrono>
 #include <ctime>
 #include <vector>
+#include <signal.h>
 
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/Version.h"
@@ -31,10 +32,19 @@ const char* __asan_default_options() { return "alloc_dealloc_mismatch=0:detect_c
 
 using namespace CatchChallenger;
 
-//list of char connected
+/* Catch Signal Handler functio */
+void signal_callback_handler(int signum){
+
+        printf("Caught signal SIGPIPE %d\n",signum);
+}
 
 int main(int argc, char *argv[])
 {
+    /* Catch Signal Handler SIGPIPE */
+    signal(SIGPIPE, signal_callback_handler);
+
+    std::cout << "CatchChallenger version: " << CATCHCHALLENGER_VERSION << std::endl;
+
     {
         DIR* dir = opendir("datapack/");
         if (dir)
