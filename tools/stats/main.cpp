@@ -6,6 +6,7 @@
 #include <cstring>
 #include <chrono>
 #include <ctime>
+#include <signal.h>
 
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/cpp11addition.h"
@@ -21,6 +22,12 @@
 using namespace CatchChallenger;
 
 std::string applicationDirPath;
+
+/* Catch Signal Handler functio */
+void signal_callback_handler(int signum){
+
+        printf("Caught signal SIGPIPE %d\n",signum);
+}
 
 void generateTokenStatClient(TinyXMLSettings &settings)
 {
@@ -44,6 +51,9 @@ void generateTokenStatClient(TinyXMLSettings &settings)
 
 int main(int argc, char *argv[])
 {
+    /* Catch Signal Handler SIGPIPE */
+    signal(SIGPIPE, signal_callback_handler);
+
     if(argc<1)
     {
         std::cerr << "argc<1: wrong arg count" << std::endl;
