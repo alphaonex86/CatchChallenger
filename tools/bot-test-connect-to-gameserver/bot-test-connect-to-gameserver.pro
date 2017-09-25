@@ -35,7 +35,8 @@ SOURCES += main.cpp\
     ../../client/base/qt-tar-xz/xz_dec_lzma2.c \
     ../../client/base/qt-tar-xz/xz_dec_stream.c \
     ../../client/base/DatapackChecksum.cpp \
-    ../bot/BotInterface.cpp
+    ../bot/BotInterface.cpp \
+    ../../client/base/FacilityLibClient.cpp
 HEADERS  += \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \
@@ -54,7 +55,8 @@ HEADERS  += \
     ../../client/base/qt-tar-xz/xz_private.h \
     ../../client/base/qt-tar-xz/xz_stream.h \
     ../../client/base/qt-tar-xz/xz.h \
-    ../../client/base/DatapackChecksum.h
+    ../../client/base/DatapackChecksum.h \
+    ../../client/base/FacilityLibClient.h
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
 

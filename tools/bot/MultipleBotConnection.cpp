@@ -2,6 +2,7 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/FacilityLibGeneral.h"
+#include "../../client/base/FacilityLibClient.h"
 #include "MultipleBotConnection.h"
 
 #include <QNetworkProxy>
@@ -324,10 +325,35 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
         }
     }
     //load the datapack
+    QStringList tempMapList;
     {
-        CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());
-        CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode);
+        const QString &datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
+        CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath.toStdString());
+        CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(datapackPath.toStdString(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode);
+
+        const QStringList &returnList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((datapackPath.toStdString()+"map/main/")));
+
+        //load the map
+        const int &size=returnList.size();
+        int index=0;
+        QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
+        QRegularExpression mapExclude(QStringLiteral("[\"']"));
+        QHash<QString,QString> sortToFull;
+        while(index<size)
+        {
+            const QString &fileName=returnList.at(index);
+            QString sortFileName=fileName;
+            if(fileName.contains(mapFilter) && !fileName.contains(mapExclude))
+            {
+                sortFileName.remove(mapFilter);
+                sortToFull[sortFileName]=fileName;
+                tempMapList << sortFileName;
+            }
+            index++;
+        }
     }
+    if(!client->api->setMapNumber(tempMapList.size()))
+        abort();
     client->api->have_main_and_sub_datapack_loaded();
     ifMultipleConnexionStartCreation();
 }

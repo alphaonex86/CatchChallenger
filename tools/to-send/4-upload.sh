@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export TEMP_PATH="/mnt/world/CatchChallenger-temp/"
+export TEMP_PATH="/mnt/data/world/CatchChallenger-temp/"
 export CATCHCHALLENGER_SOURCE="/home/user/Desktop/CatchChallenger/"
 export BASE_PWD=`pwd`
 
