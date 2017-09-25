@@ -187,6 +187,14 @@ void Client::loadItemsWarehouse_return()
 
 bool Client::sendInventory()
 {
+    if(sizeof(ProtocolParsingBase::tempBigBufferForOutput)<=(1+4+
+                                                            (2+4)*public_and_private_informations.items.size()+
+                                                            (2+4)*public_and_private_informations.warehouse_items.size()
+                                                            ))
+    {
+        errorOutput("Too many items to be send");
+        return false;
+    }
     //send the network message
     uint32_t posOutput=0;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x54;

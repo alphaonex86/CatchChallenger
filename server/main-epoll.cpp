@@ -38,6 +38,7 @@
 #include "../general/base/GeneralVariable.h"
 #include "../general/base/CommonSettingsCommon.h"
 #include "../general/base/CommonSettingsServer.h"
+#include <signal.h>
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "game-server-alone/LinkToMaster.h"
@@ -85,6 +86,12 @@ void generateTokenStatClient(TinyXMLSettings &settings,char * const data)
 std::vector<void *> elementsToDelete[16];
 size_t elementsToDeleteSize=0;
 uint8_t elementsToDeleteIndex=0;
+
+/* Catch Signal Handler functio */
+void signal_callback_handler(int signum){
+
+        printf("Caught signal SIGPIPE %d\n",signum);
+}
 
 void CatchChallenger::recordDisconnectByServer(void * client)
 {
