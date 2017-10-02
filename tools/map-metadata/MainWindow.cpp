@@ -33,8 +33,8 @@ MainWindow::MainWindow(QWidget *parent) :
     settings.setValue("mapfolder",dir);
     QDir().mkpath(TMPDATA);
 
-    QDir dir2;
-    dir2.setFilter(QDir::Files | QDir::Dirs | QDir::Hidden | QDir::NoSymLinks);
+    QDir dir2("/tmp/map-metadata/");
+    dir2.setFilter(QDir::Files | QDir::Dirs | QDir::Hidden | QDir::NoSymLinks | QDir::NoDotAndDotDot);
     QFileInfoList list = dir2.entryInfoList();
     if(!QDir("/tmp/map-metadata/").exists() || list.size()==0)
     {
@@ -294,6 +294,15 @@ void MainWindow::displayMap(const QString key)
             {
                 const CatchChallenger::MapServer * const mapPointer=map_list.at(fileSortStd);
 
+                QScrollArea *scrollArea = new QScrollArea(ui->groupBox);
+                scrollArea->setMinimumSize(QSize(350, 0));
+                scrollArea->setWidgetResizable(true);
+                QWidget * scrollAreaWidgetContents = new QWidget();
+                scrollAreaWidgetContents->setGeometry(QRect(0, 0, 892, 337));
+                QHBoxLayout * horizontalLayout_2 = new QHBoxLayout(scrollAreaWidgetContents);
+                horizontalLayout_2->setSpacing(6);
+                horizontalLayout_2->setContentsMargins(11, 11, 11, 11);
+
                 unsigned int mapIndex=0;
                 while(mapIndex<mapPointer->linked_map.size())
                 {
@@ -309,14 +318,6 @@ void MainWindow::displayMap(const QString key)
 
                     if(haveContent)
                     {
-                        QScrollArea *scrollArea = new QScrollArea(ui->groupBox);
-                        scrollArea->setMinimumSize(QSize(350, 0));
-                        scrollArea->setWidgetResizable(true);
-                        QWidget * scrollAreaWidgetContents = new QWidget();
-                        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 892, 337));
-                        QHBoxLayout * horizontalLayout_2 = new QHBoxLayout(scrollAreaWidgetContents);
-                        horizontalLayout_2->setSpacing(6);
-                        horizontalLayout_2->setContentsMargins(11, 11, 11, 11);
                         QGroupBox * groupBox_4 = new QGroupBox(scrollAreaWidgetContents);
                         groupBox_4->setMaximumSize(QSize(300, 300));
                         QVBoxLayout * verticalLayout = new QVBoxLayout(groupBox_4);
@@ -341,21 +342,26 @@ void MainWindow::displayMap(const QString key)
 
                         groupBox_4->setTitle(mapContent.name);
                         label_7->setText("Region: <a href=\""+mapContent.region+"\">"+mapContent.region+"</a>");
+                        label_7->setToolTip(mapContent.region);
                         label_8->setText("Zone: <a href=\""+mapContent.zone+"\">"+mapContent.zone+"</a>");
+                        label_8->setToolTip(mapContent.zone);
                         label_9->setText("Sub zone: <a href=\""+mapContent.subzone+"\">"+mapContent.subzone+"</a>");
+                        label_9->setToolTip(mapContent.subzone);
                         label_10->setText("<a href=\""+QString::fromStdString(map->map_file)+"\">[Edit]</a>");
+                        label_10->setToolTip(QString::fromStdString(map->map_file));
 
                         connect(label_7,&QLabel::linkActivated,this,&MainWindow::on_label_7_linkActivated);
                         connect(label_8,&QLabel::linkActivated,this,&MainWindow::on_label_8_linkActivated);
                         connect(label_9,&QLabel::linkActivated,this,&MainWindow::on_label_9_linkActivated);
                         connect(label_10,&QLabel::linkActivated,this,&MainWindow::on_label_10_linkActivated);
 
-                        ui->horizontalLayout_3->addWidget(scrollArea);
-                        ui->scrollArea=scrollArea;
                     }
 
                     mapIndex++;
                 }
+
+                ui->horizontalLayout_3->addWidget(scrollArea);
+                ui->scrollArea=scrollArea;
             }
         }
 
@@ -511,31 +517,6 @@ void MainWindow::on_type_currentIndexChanged(const QString &arg1)
     }
 }
 
-void MainWindow::on_markAsFinished_clicked()
-{
-    if(!canUpdate || (!finishedFile.contains(selectedMap) && !not_finishedFile.contains(selectedMap)))
-        return;
-    if(not_finishedFile.contains(selectedMap))
-    {
-        MapContent mapContent=not_finishedFile[selectedMap];
-        finishedFile[selectedMap]=mapContent;
-        not_finishedFile.remove(selectedMap);
-    }
-    QSqlQuery query;
-    if(!query.prepare("UPDATE maps SET finished=1 WHERE file=:file;"))
-    {
-        qDebug() << query.lastError().text();
-        abort();
-    }
-    query.bindValue(":file", selectedMap);
-    if(!query.exec())
-    {
-        qDebug() << query.lastError().text();
-        abort();
-    }
-    displayNewNotFinishedMap(true);
-}
-
 void MainWindow::on_officialZone_toggled(bool checked)
 {
     if(!canUpdate || (!finishedFile.contains(selectedMap) && !not_finishedFile.contains(selectedMap)))
@@ -590,5 +571,47 @@ void MainWindow::on_label_9_linkActivated(const QString &link)
 
 void MainWindow::on_label_10_linkActivated(const QString &link)
 {
-    displayMap(link);
+    canUpdate=false;
+    selectedMap.clear();
+    displayMap(link+".tmx");
+    canUpdate=true;
+}
+
+void MainWindow::on_finished_toggled(bool checked)
+{
+    if(!canUpdate || (!finishedFile.contains(selectedMap) && !not_finishedFile.contains(selectedMap)))
+        return;
+    if(checked)
+    {
+        if(not_finishedFile.contains(selectedMap))
+        {
+            MapContent mapContent=not_finishedFile[selectedMap];
+            finishedFile[selectedMap]=mapContent;
+            not_finishedFile.remove(selectedMap);
+        }
+    }
+    else
+    {
+        if(finishedFile.contains(selectedMap))
+        {
+            MapContent mapContent=finishedFile[selectedMap];
+            not_finishedFile[selectedMap]=mapContent;
+            finishedFile.remove(selectedMap);
+        }
+    }
+    QSqlQuery query;
+    if(!query.prepare("UPDATE maps SET finished=:finished WHERE file=:file;"))
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+    query.bindValue(":file", selectedMap);
+    query.bindValue(":finished", checked);
+    if(!query.exec())
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+    if(checked)
+        displayNewNotFinishedMap(true);
 }
