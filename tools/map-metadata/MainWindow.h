@@ -64,12 +64,12 @@ private slots:
     void on_subzone_textChanged(const QString &arg1);
     void on_name_textChanged(const QString &arg1);
     void on_type_currentIndexChanged(const QString &arg1);
-    void on_markAsFinished_clicked();
     void on_officialZone_toggled(bool checked);
     void on_label_7_linkActivated(const QString &link);
     void on_label_8_linkActivated(const QString &link);
     void on_label_9_linkActivated(const QString &link);
     void on_label_10_linkActivated(const QString &link);
+    void on_finished_toggled(bool checked);
 private:
     QProcess process;
     Ui::MainWindow *ui;
