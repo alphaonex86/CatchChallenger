@@ -54,9 +54,22 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     bool preload_the_map(const std::string &path);
-    void displayNewNotFinishedMap();
+    void displayNewNotFinishedMap(const bool useNearMap=false);
+    void displayMap(const QString key);
+    QString simplifiedName(QString name);
 private slots:
     void on_getAnotherUnfinishedMap_clicked();
+    void on_region_textChanged(const QString &arg1);
+    void on_zone_textChanged(const QString &arg1);
+    void on_subzone_textChanged(const QString &arg1);
+    void on_name_textChanged(const QString &arg1);
+    void on_type_currentIndexChanged(const QString &arg1);
+    void on_markAsFinished_clicked();
+    void on_officialZone_toggled(bool checked);
+    void on_label_7_linkActivated(const QString &link);
+    void on_label_8_linkActivated(const QString &link);
+    void on_label_9_linkActivated(const QString &link);
+    void on_label_10_linkActivated(const QString &link);
 private:
     QProcess process;
     Ui::MainWindow *ui;
@@ -65,8 +78,8 @@ private:
     std::vector<Map_semi> semi_loaded_map;
     QHash<QString,MapContent> finishedFile;
     QHash<QString,MapContent> not_finishedFile;
-
     QString selectedMap;
+    bool canUpdate;
 };
 
 #endif // MAINWINDOW_H

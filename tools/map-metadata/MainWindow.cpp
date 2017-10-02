@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    canUpdate=false;
     QSettings settings;
     QString dir=QFileDialog::getExistingDirectory(NULL,"Folder containing region directory",settings.value("mapfolder").toString());
     if(dir.isEmpty())
@@ -32,15 +33,21 @@ MainWindow::MainWindow(QWidget *parent) :
     settings.setValue("mapfolder",dir);
     QDir().mkpath(TMPDATA);
 
-    /*process.setArguments(QStringList() << "/home/user/Desktop/CatchChallenger/datapack-pkmn/map/main/gen4/map/");
-    process.setProgram("/home/user/Desktop/CatchChallenger/tools/build-map2png-Desktop-Debug/map2png");
-    process.setWorkingDirectory("/tmp/map-metadata/");
-    process.start();
-    process.waitForFinished(999999999);
-    std::cerr << process.errorString().toStdString() << std::endl;
-    std::cout << process.readAll().toStdString() << std::endl;
-    if(process.exitCode()!=0)
-        std::cerr << "Process exit code: " << process.exitCode() << std::endl;*/
+    QDir dir2;
+    dir2.setFilter(QDir::Files | QDir::Dirs | QDir::Hidden | QDir::NoSymLinks);
+    QFileInfoList list = dir2.entryInfoList();
+    if(!QDir("/tmp/map-metadata/").exists() || list.size()==0)
+    {
+        process.setArguments(QStringList() << "/home/user/Desktop/CatchChallenger/datapack-pkmn/map/main/gen4/map/");
+        process.setProgram("/home/user/Desktop/CatchChallenger/tools/build-map2png-Desktop-Debug/map2png");
+        process.setWorkingDirectory("/tmp/map-metadata/");
+        process.start();
+        process.waitForFinished(999999999);
+        std::cerr << process.errorString().toStdString() << std::endl;
+        std::cout << process.readAll().toStdString() << std::endl;
+        if(process.exitCode()!=0)
+            std::cerr << "Process exit code: " << process.exitCode() << std::endl;
+    }
 
     QString path=QCoreApplication::applicationDirPath()+"/changes.db";
     QFile destinationFile(path);
@@ -80,8 +87,10 @@ MainWindow::MainWindow(QWidget *parent) :
         mapContent.subzone=query.value(3).toString();
         mapContent.name=query.value(4).toString();
         mapContent.type=query.value(5).toString();
-        mapContent.officialzone=true;
-        if(query.value(1).toInt()>0)
+        if(mapContent.region.isEmpty())
+            abort();
+        mapContent.officialzone=query.value(7).toInt()>0;
+        if(query.value(6).toInt()>0)
             db_finishedFile[file]=mapContent;
         else
             db_not_finishedFile[file]=mapContent;
@@ -114,6 +123,8 @@ MainWindow::MainWindow(QWidget *parent) :
                     {
                         MapContent mapContent;
                         mapContent.region=elementList.at(0);
+                        if(mapContent.region.isEmpty())
+                            abort();
                         mapContent.zone=elementList.at(1);
                         mapContent.zone.replace(".tmx","");
                         if(element.size()==3)
@@ -152,8 +163,12 @@ MainWindow::MainWindow(QWidget *parent) :
                         not_finishedFile[file]=mapContent;
                         //insert into database
                         QSqlQuery query;
-                        query.prepare("INSERT INTO maps (file, region, zone, subzone, name, type, finished) "
-                                      "VALUES (:file, :region, :zone, :subzone, :name, :type, :finished)");
+                        if(!query.prepare("INSERT INTO maps (file, region, zone, subzone, name, type, finished) "
+                                      "VALUES (:file, :region, :zone, :subzone, :name, :type, :finished)"))
+                        {
+                            qDebug() << query.lastError().text();
+                            abort();
+                        }
                         query.bindValue(":file", file);
                         query.bindValue(":region", mapContent.region);
                         query.bindValue(":zone", mapContent.zone);
@@ -186,19 +201,80 @@ void MainWindow::on_getAnotherUnfinishedMap_clicked()
     displayNewNotFinishedMap();
 }
 
-void MainWindow::displayNewNotFinishedMap()
+void MainWindow::displayNewNotFinishedMap(const bool useNearMap)
 {
-    const QList<QString> keys=not_finishedFile.keys();
-    QString key=keys.at(rand()%keys.size());
+    canUpdate=false;
+    QString key;
+
+    bool havePreselectedMap=true;
+    MapContent mapContent;
+    if(not_finishedFile.contains(selectedMap))
+        mapContent=not_finishedFile.value(selectedMap);
+    else if(finishedFile.contains(selectedMap))
+        mapContent=finishedFile.value(selectedMap);
+    else
+        havePreselectedMap=false;
+    if(havePreselectedMap && useNearMap)
+    {
+        selectedMap.remove(".tmx");
+        const CatchChallenger::MapServer * const mapPointer=map_list.at(selectedMap.toStdString());
+        unsigned int mapIndex=0;
+        while(mapIndex<mapPointer->linked_map.size())
+        {
+            const CatchChallenger::CommonMap * const map=mapPointer->linked_map.at(mapIndex);
+            if(not_finishedFile.contains(QString::fromStdString(map->map_file)+".tmx"))
+            {
+                key=QString::fromStdString(map->map_file)+".tmx";
+                if(!not_finishedFile.contains(key))
+                    abort();
+                break;
+            }
+            mapIndex++;
+        }
+        if(mapIndex>=mapPointer->linked_map.size())
+        {
+            const QList<QString> keys=not_finishedFile.keys();
+            key=keys.at(rand()%keys.size());
+        }
+
+        if(!not_finishedFile.contains(key))
+            abort();
+    }
+    else
+    {
+        const QList<QString> keys=not_finishedFile.keys();
+        key=keys.at(rand()%keys.size());
+
+        if(!not_finishedFile.contains(key))
+            abort();
+    }
+
+    selectedMap.clear();
+    displayMap(key);
+    canUpdate=true;
+}
+
+void MainWindow::displayMap(const QString key)
+{
     {
         const QString &file=key;
-        const MapContent &mapContent=not_finishedFile.value(key);
+        if(!not_finishedFile.contains(key) && !finishedFile.contains(key))
+            abort();
+        MapContent mapContent;
+        if(not_finishedFile.contains(key))
+            mapContent=not_finishedFile.value(key);
+        else if(finishedFile.contains(key))
+            mapContent=finishedFile.value(key);
+        else
+            abort();
+        if(mapContent.region.isEmpty())
+            abort();
         ui->region->setText(mapContent.region);
         ui->zone->setText(mapContent.zone);
         ui->subzone->setText(mapContent.subzone);
         ui->name->setText(mapContent.name);
         ui->type->setCurrentIndex(ui->type->findText(mapContent.type));
-        ui->checkBox->setChecked(mapContent.officialzone);
+        ui->officialZone->setChecked(mapContent.officialzone);
 
         QString pngDest=TMPDATA+file;
         pngDest.replace(".tmx",".png");
@@ -258,6 +334,8 @@ void MainWindow::displayNewNotFinishedMap()
                         verticalLayout->addWidget(label_8);
                         QLabel * label_9 = new QLabel(groupBox_4);
                         verticalLayout->addWidget(label_9);
+                        QLabel * label_10 = new QLabel(groupBox_4);
+                        verticalLayout->addWidget(label_10);
                         horizontalLayout_2->addWidget(groupBox_4);
                         scrollArea->setWidget(scrollAreaWidgetContents);
 
@@ -265,6 +343,12 @@ void MainWindow::displayNewNotFinishedMap()
                         label_7->setText("Region: <a href=\""+mapContent.region+"\">"+mapContent.region+"</a>");
                         label_8->setText("Zone: <a href=\""+mapContent.zone+"\">"+mapContent.zone+"</a>");
                         label_9->setText("Sub zone: <a href=\""+mapContent.subzone+"\">"+mapContent.subzone+"</a>");
+                        label_10->setText("<a href=\""+QString::fromStdString(map->map_file)+"\">[Edit]</a>");
+
+                        connect(label_7,&QLabel::linkActivated,this,&MainWindow::on_label_7_linkActivated);
+                        connect(label_8,&QLabel::linkActivated,this,&MainWindow::on_label_8_linkActivated);
+                        connect(label_9,&QLabel::linkActivated,this,&MainWindow::on_label_9_linkActivated);
+                        connect(label_10,&QLabel::linkActivated,this,&MainWindow::on_label_10_linkActivated);
 
                         ui->horizontalLayout_3->addWidget(scrollArea);
                         ui->scrollArea=scrollArea;
@@ -277,4 +361,234 @@ void MainWindow::displayNewNotFinishedMap()
 
         selectedMap=file;
     }
+}
+
+void MainWindow::on_region_textChanged(const QString &arg1)
+{
+    ui->region->setText(simplifiedName(ui->region->text()));
+    if(!canUpdate || (!finishedFile.contains(selectedMap) && !not_finishedFile.contains(selectedMap)))
+        return;
+    if(finishedFile.contains(selectedMap))
+    {
+        MapContent &mapContent=finishedFile[selectedMap];
+        mapContent.region=arg1;
+    }
+    if(not_finishedFile.contains(selectedMap))
+    {
+        MapContent &mapContent=not_finishedFile[selectedMap];
+        mapContent.region=arg1;
+    }
+    QSqlQuery query;
+    if(!query.prepare("UPDATE maps SET region=:region WHERE file=:file;"))
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+    query.bindValue(":file", selectedMap);
+    query.bindValue(":region", arg1);
+    if(!query.exec())
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+}
+
+void MainWindow::on_zone_textChanged(const QString &arg1)
+{
+    ui->zone->setText(simplifiedName(ui->zone->text()));
+    if(!canUpdate || (!finishedFile.contains(selectedMap) && !not_finishedFile.contains(selectedMap)))
+        return;
+    if(finishedFile.contains(selectedMap))
+    {
+        MapContent &mapContent=finishedFile[selectedMap];
+        mapContent.zone=arg1;
+    }
+    if(not_finishedFile.contains(selectedMap))
+    {
+        MapContent &mapContent=not_finishedFile[selectedMap];
+        mapContent.zone=arg1;
+    }
+    QSqlQuery query;
+    if(!query.prepare("UPDATE maps SET zone=:zone WHERE file=:file;"))
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+    query.bindValue(":file", selectedMap);
+    query.bindValue(":zone", arg1);
+    if(!query.exec())
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+}
+
+void MainWindow::on_subzone_textChanged(const QString &arg1)
+{
+    ui->subzone->setText(simplifiedName(ui->subzone->text()));
+    if(!canUpdate || (!finishedFile.contains(selectedMap) && !not_finishedFile.contains(selectedMap)))
+        return;
+    if(finishedFile.contains(selectedMap))
+    {
+        MapContent &mapContent=finishedFile[selectedMap];
+        mapContent.subzone=arg1;
+    }
+    if(not_finishedFile.contains(selectedMap))
+    {
+        MapContent &mapContent=not_finishedFile[selectedMap];
+        mapContent.subzone=arg1;
+    }
+    QSqlQuery query;
+    if(!query.prepare("UPDATE maps SET subzone=:subzone WHERE file=:file;"))
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+    query.bindValue(":file", selectedMap);
+    query.bindValue(":subzone", arg1);
+    if(!query.exec())
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+}
+
+void MainWindow::on_name_textChanged(const QString &arg1)
+{
+    if(!canUpdate || (!finishedFile.contains(selectedMap) && !not_finishedFile.contains(selectedMap)))
+        return;
+    if(finishedFile.contains(selectedMap))
+    {
+        MapContent &mapContent=finishedFile[selectedMap];
+        mapContent.name=arg1;
+    }
+    if(not_finishedFile.contains(selectedMap))
+    {
+        MapContent &mapContent=not_finishedFile[selectedMap];
+        mapContent.name=arg1;
+    }
+    QSqlQuery query;
+    if(!query.prepare("UPDATE maps SET name=:name WHERE file=:file;"))
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+    query.bindValue(":file", selectedMap);
+    query.bindValue(":name", arg1);
+    if(!query.exec())
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+}
+
+void MainWindow::on_type_currentIndexChanged(const QString &arg1)
+{
+    if(!canUpdate || (!finishedFile.contains(selectedMap) && !not_finishedFile.contains(selectedMap)))
+        return;
+    if(finishedFile.contains(selectedMap))
+    {
+        MapContent &mapContent=finishedFile[selectedMap];
+        mapContent.type=arg1;
+    }
+    if(not_finishedFile.contains(selectedMap))
+    {
+        MapContent &mapContent=not_finishedFile[selectedMap];
+        mapContent.type=arg1;
+    }
+    QSqlQuery query;
+    if(!query.prepare("UPDATE maps SET type=:type WHERE file=:file;"))
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+    query.bindValue(":file", selectedMap);
+    query.bindValue(":type", arg1);
+    if(!query.exec())
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+}
+
+void MainWindow::on_markAsFinished_clicked()
+{
+    if(!canUpdate || (!finishedFile.contains(selectedMap) && !not_finishedFile.contains(selectedMap)))
+        return;
+    if(not_finishedFile.contains(selectedMap))
+    {
+        MapContent mapContent=not_finishedFile[selectedMap];
+        finishedFile[selectedMap]=mapContent;
+        not_finishedFile.remove(selectedMap);
+    }
+    QSqlQuery query;
+    if(!query.prepare("UPDATE maps SET finished=1 WHERE file=:file;"))
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+    query.bindValue(":file", selectedMap);
+    if(!query.exec())
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+    displayNewNotFinishedMap(true);
+}
+
+void MainWindow::on_officialZone_toggled(bool checked)
+{
+    if(!canUpdate || (!finishedFile.contains(selectedMap) && !not_finishedFile.contains(selectedMap)))
+        return;
+    if(finishedFile.contains(selectedMap))
+    {
+        MapContent &mapContent=finishedFile[selectedMap];
+        mapContent.officialzone=checked;
+    }
+    if(not_finishedFile.contains(selectedMap))
+    {
+        MapContent &mapContent=not_finishedFile[selectedMap];
+        mapContent.officialzone=checked;
+    }
+    QSqlQuery query;
+    if(!query.prepare("UPDATE maps SET officialzone=:officialzone WHERE file=:file;"))
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+    query.bindValue(":file", selectedMap);
+    query.bindValue(":officialzone", (int)checked);
+    if(!query.exec())
+    {
+        qDebug() << query.lastError().text();
+        abort();
+    }
+}
+
+QString MainWindow::simplifiedName(QString name)
+{
+    name=name.toLower();
+    name.replace(QRegularExpression("[^0-9a-z_./-]"), "-");
+    name.replace(QRegularExpression("-+"), "-");
+    return name;
+}
+
+void MainWindow::on_label_7_linkActivated(const QString &link)
+{
+    ui->region->setText(simplifiedName(link));
+}
+
+void MainWindow::on_label_8_linkActivated(const QString &link)
+{
+    ui->zone->setText(simplifiedName(link));
+}
+
+void MainWindow::on_label_9_linkActivated(const QString &link)
+{
+    ui->subzone->setText(simplifiedName(link));
+}
+
+void MainWindow::on_label_10_linkActivated(const QString &link)
+{
+    displayMap(link);
 }
