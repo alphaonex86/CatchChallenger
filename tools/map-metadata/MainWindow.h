@@ -70,6 +70,7 @@ private slots:
     void on_label_9_linkActivated(const QString &link);
     void on_label_10_linkActivated(const QString &link);
     void on_finished_toggled(bool checked);
+    void updateProgressLabel();
 private:
     QProcess process;
     Ui::MainWindow *ui;

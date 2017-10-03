@@ -65,6 +65,9 @@
                <height>300</height>
               </size>
              </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(60, 230, 108);</string>
+             </property>
              <property name="title">
               <string>Near map</string>
              </property>
@@ -118,6 +121,13 @@
         </widget>
        </item>
       </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="progressLabel">
+      <property name="text">
+       <string>Finished map: 0/1000</string>
+      </property>
      </widget>
     </item>
     <item>
