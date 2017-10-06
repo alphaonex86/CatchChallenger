@@ -130,7 +130,7 @@ MainWindow::MainWindow(QWidget *parent) :
                             abort();
                         mapContent.zone=elementList.at(1);
                         mapContent.zone.replace(".tmx","");
-                        if(element.size()==3)
+                        if(elementList.size()==3)
                         {
                             mapContent.subzone=elementList.at(2);
                             mapContent.subzone.replace(".tmx","");
@@ -204,6 +204,18 @@ MainWindow::MainWindow(QWidget *parent) :
         }
     }
     preload_the_map(dir.toStdString());
+    for(auto& n:map_list)
+    {
+        CatchChallenger::MapServer * map=n.second;
+        unsigned int index=0;
+        while(index<map->linked_map.size())
+        {
+            CatchChallenger::CommonMap * const newMap=map->linked_map.at(index);
+            if(!vectorcontainsAtLeastOne(newMap->linked_map,static_cast<CatchChallenger::CommonMap *>(map)))
+                newMap->linked_map.push_back(map);
+            index++;
+        }
+    }
 
     displayNewNotFinishedMap();
     updateProgressLabel();
@@ -338,7 +350,7 @@ void MainWindow::displayMap(const QString key)
                     else if(finishedFile.contains(QString::fromStdString(map->map_file)+".tmx"))
                         mapContent=finishedFile.value(QString::fromStdString(map->map_file)+".tmx");
                     else
-                       haveContent=false;
+                        abort();//haveContent=false;
 
                     if(haveContent)
                     {
