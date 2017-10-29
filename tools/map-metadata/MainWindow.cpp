@@ -264,23 +264,31 @@ void MainWindow::displayNewNotFinishedMap(const bool useNearMap)
         if(mapIndex>=mapPointer->linked_map.size())
         {
             QStringList keys=not_finishedFile.keys();
-            qSort(keys.begin(),keys.end());
-            //key=keys.at(rand()%keys.size());
-            key=keys.first();
+            if(!keys.empty())
+            {
+                qSort(keys.begin(),keys.end());
+                //key=keys.at(rand()%keys.size());
+                key=keys.first();
+            }
+            else if(!finishedFile.isEmpty())
+                key=finishedFile.keys().first();
+            else
+                return;
         }
-
-        if(!not_finishedFile.contains(key))
-            abort();
     }
     else
     {
         QStringList keys=not_finishedFile.keys();
-        qSort(keys.begin(),keys.end());
-        //key=keys.at(rand()%keys.size());
-        key=keys.first();
-
-        if(!not_finishedFile.contains(key))
-            abort();
+        if(!keys.empty())
+        {
+            qSort(keys.begin(),keys.end());
+            //key=keys.at(rand()%keys.size());
+            key=keys.first();
+        }
+        else if(!finishedFile.isEmpty())
+            key=finishedFile.keys().first();
+        else
+            return;
     }
 
     selectedMap.clear();
