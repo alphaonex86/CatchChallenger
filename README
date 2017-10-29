@@ -103,3 +103,8 @@ Sources:
 The sources of the client/server: https://github.com/alphaonex86/CatchChallenger
 The sources of the datapack: https://github.com/alphaonex86/CatchChallenger-datapack
 The sources of the site: https://github.com/alphaonex86/CatchChallenger-site
+
+======================================================
+Hardware
+You need CPU with support of unaligned access on 8/16/32Bits for the server at least (plan to support all CPU)
+The server is actually 10-20MB of memory (1MB measured by massif) and 2KB by player
