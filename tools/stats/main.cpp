@@ -65,6 +65,27 @@ int main(int argc, char *argv[])
     ProtocolParsing::initialiseTheVariable();
 
     char replyNotConnected[]="{\"error\":\"Not connected to login server (X)\"}";
+    unsigned int replyNotConnectedPos=0;
+    {
+        const unsigned int size=sizeof(replyNotConnected);
+        while(replyNotConnectedPos<size)
+        {
+            if(replyNotConnected[replyNotConnectedPos]=='X')
+                break;
+            replyNotConnectedPos++;
+        }
+        if(replyNotConnectedPos>=sizeof(replyNotConnected))
+        {
+            std::cerr << "X not found into replyNotConnected" << std::endl;
+            abort();
+        }
+        replyNotConnected[replyNotConnectedPos]=48+(uint8_t)1;
+        if(strcmp(replyNotConnected,"{\"error\":\"Not connected to login server (1)\"}")!=0)
+        {
+            std::cerr << "replyNotConnected have the wrong content" << std::endl;
+            abort();
+        }
+    }
 
     EpollServerStats epollServerStats;
     LinkToLogin::linkToLogin=NULL;
@@ -250,7 +271,7 @@ int main(int argc, char *argv[])
 
                         if(LinkToLogin::linkToLogin->stat!=LinkToLogin::Stat::Logged)
                         {
-                            replyNotConnected[41]=48+(uint8_t)LinkToLogin::linkToLogin->stat;
+                            replyNotConnected[replyNotConnectedPos]=48+(uint8_t)LinkToLogin::linkToLogin->stat;
                             if(::write(infd,replyNotConnected,sizeof(replyNotConnected))!=sizeof(replyNotConnected))
                                 std::cerr << "epoll_ctl on socket write error" << std::endl;
                         }

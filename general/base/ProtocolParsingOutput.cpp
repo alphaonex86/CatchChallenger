@@ -6,11 +6,6 @@
 #include <iostream>
 #include <cstring>
 
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-#include <lzma.h>
-#include "lz4/lz4.h"
-#endif
-
 using namespace CatchChallenger;
 
 void ProtocolParsingInputOutput::registerOutputQuery(const uint8_t &queryNumber,const uint8_t &packetCode)

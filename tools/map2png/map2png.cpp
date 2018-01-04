@@ -286,7 +286,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     if (!tempMapObject->tiledMap)
     {
         mLastError=reader.errorString();
-        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(reader.errorString());
+        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2, from %3").arg(resolvedFileName).arg(reader.errorString()).arg(fileName);
         delete tempMapObject;
         return QString();
     }
@@ -468,6 +468,8 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                         loadCurrentMap(mapIndex,tempMapObject->x+offset,tempMapObject->y+tempMapObject->logicalMap.height);
                     }
                 }
+                else
+                    qDebug() << "Failed link from " << fileName << " to " << QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName);
             }
         }
 
@@ -490,6 +492,8 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                         loadCurrentMap(mapIndex,tempMapObject->x+offset,tempMapObject->y-other_map.value(mapIndex)->logicalMap.height);
                     }
                 }
+                else
+                    qDebug() << "Failed link from " << fileName << " to " << QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName);
             }
         }
 
@@ -512,6 +516,8 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                         loadCurrentMap(mapIndex,tempMapObject->x-other_map.value(mapIndex)->logicalMap.width,tempMapObject->y+offset);
                     }
                 }
+                else
+                    qDebug() << "Failed link from " << fileName << " to " << QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName);
             }
         }
 
@@ -534,6 +540,8 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                         loadCurrentMap(mapIndex,tempMapObject->x+tempMapObject->logicalMap.width,tempMapObject->y+offset);
                     }
                 }
+                else
+                    qDebug() << "Failed link from " << fileName << " to " << QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName);
             }
         }
     }
