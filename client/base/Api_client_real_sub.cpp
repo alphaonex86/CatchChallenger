@@ -465,8 +465,8 @@ void Api_client_real::httpFinishedForDatapackListSub()
             }
             if(endOfText==std::string::npos)
             {
-                std::cerr << "not text delimitor into file list" << std::endl;
-                newError("Wrong datapack format","not text delimitor into file list");
+                std::cerr << "no text delimitor into file list: " << reply->url().toString().toStdString() << std::endl;
+                newError("Wrong datapack format","no text delimitor into file list: "+reply->url().toString());
                 return;
             }
             std::vector<std::string> content;
