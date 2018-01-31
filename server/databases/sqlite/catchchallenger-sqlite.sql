@@ -84,7 +84,8 @@ CREATE TABLE character_forserver (
     "botfight_id" BLOB,
     "itemonmap" BLOB,
     "plants" BLOB,
-    "blob_version" INTEGER
+    "blob_version" INTEGER,
+    "lastdaillygift" INTEGER
 , "quest" BLOB);
 CREATE UNIQUE INDEX "idcharacter_forserver" on "character_forserver" (character ASC);
 CREATE TABLE monster (

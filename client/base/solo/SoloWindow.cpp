@@ -311,16 +311,15 @@ void SoloWindow::updateSavegameList()
                     {
                         //update process
                         if(!metaData.contains(text_savegame_version))
-                            metaData.setValue(text_savegame_version,QStringLiteral("0.4"));
+                            metaData.setValue(text_savegame_version,CATCHCHALLENGER_SAVEGAME_VERSION);
                         QString version=metaData.value(text_savegame_version).toString();
 
                         if(version!=SoloWindow::text_CATCHCHALLENGER_SAVEGAME_VERSION)
                         {
-                            if(version==QStringLiteral("0.4"))
+                            if(version==QStringLiteral("2.0"))
                             {
                                 QStringList values;
-                                values << "ALTER TABLE plant ADD id INT;";
-                                values << "CREATE UNIQUE INDEX \"plant_primarykey\" on plant (id ASC);";
+                                values << "ALTER TABLE \"character\" ADD COLUMN lastdaillygift INTEGER;";
                                 QSqlDatabase conn = QSqlDatabase::addDatabase(SoloWindow::text_QSQLITE,SoloWindow::text_savegameupdate);
                                 conn.setDatabaseName(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite);
                                 if(conn.open())
@@ -352,33 +351,7 @@ void SoloWindow::updateSavegameList()
                                 else
                                     qDebug() << "database con't be open to update the savegame" << conn.lastError().driverText() << conn.lastError().databaseText() << values.at(index) << "for" << (savegamesPath+QStringLiteral("catchchallenger.db.sqlite"));
                                 QSqlDatabase::removeDatabase(SoloWindow::text_savegameupdate);
-                                version=QStringLiteral("0.5");
-                                metaData.setValue(SoloWindow::text_savegame_version,version);
-                            }
-                            if(version==QStringLiteral("0.5"))
-                            {
-                                QStringList values;
-                                values << "CREATE TABLE \"character_itemOnMap\" (\"character\" INTEGER,\"itemOnMap\" INTEGER);";
-                                values << "CREATE INDEX \"character_itemOnMap_index\" on character_itemonmap (character ASC);";
-                                values << "CREATE TABLE dictionary_itemonmap (\"id\" INTEGER,\"map\" TEXT,\"x\" INTEGER,\"y\" INTEGER);";
-                                QSqlDatabase conn = QSqlDatabase::addDatabase("QSQLITE","savegameupdate");
-                                conn.setDatabaseName(savegamesPath+QStringLiteral("catchchallenger.db.sqlite"));
-                                if(conn.open())
-                                {
-                                    int index=0;
-                                    while(index<values.size())
-                                    {
-                                        QSqlQuery query(conn);
-                                        if(!query.exec(values.at(index)))
-                                            qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText() << values.at(index) << "for" << (savegamesPath+QStringLiteral("catchchallenger.db.sqlite"));
-                                        index++;
-                                    }
-                                    conn.close();
-                                }
-                                else
-                                    qDebug() << "database con't be open to update the savegame" << conn.lastError().driverText() << conn.lastError().databaseText();
-                                QSqlDatabase::removeDatabase(SoloWindow::text_savegameupdate);
-                                version=QStringLiteral("0.6");
+                                version=QStringLiteral("2.0.3.0");
                                 metaData.setValue(SoloWindow::text_savegame_version,version);
                             }
                         }
