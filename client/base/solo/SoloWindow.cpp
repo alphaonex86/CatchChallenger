@@ -332,20 +332,6 @@ void SoloWindow::updateSavegameList()
                                             qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText();
                                         index++;
                                     }
-                                    QSqlQuery query(conn);
-                                    if(!query.exec(QStringLiteral("SELECT map,x,y FROM plant")))
-                                        qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText();
-                                    else
-                                    {
-                                        int index=0;
-                                        while(query.next())
-                                        {
-                                            QSqlQuery queryUpdate(conn);
-                                            if(!queryUpdate.exec(QStringLiteral("UPDATE character SET id=%1 WHERE map='%2',x=%3,y=%4 FROM plant").arg(index).arg(query.value(0).toString()).arg(query.value(1).toUInt()).arg(query.value(2).toUInt())))
-                                                qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText();
-                                            index++;
-                                        }
-                                    }
                                     conn.close();
                                 }
                                 else
