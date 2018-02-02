@@ -60,10 +60,10 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
     in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
     switch(packetCode)
     {
-        //Insert player on map
+        //Insert player on map, need be delayed if number_of_map==0
         case 0x6B:
         {
-            if(!character_selected)
+            if(!character_selected || number_of_map==0)
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
@@ -272,7 +272,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
         case 0x68:
         #ifndef BENCHMARKMUTIPLECLIENT
         {
-            if(!character_selected)
+            if(!character_selected || number_of_map==0)
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
@@ -401,7 +401,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
         case 0x69:
         #ifndef BENCHMARKMUTIPLECLIENT
         {
-            if(!character_selected)
+            if(!character_selected || number_of_map==0)
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
@@ -511,6 +511,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
         case 0x65:
         #ifndef BENCHMARKMUTIPLECLIENT
             dropAllPlayerOnTheMap();
+            delayedMessages.clear();
         #else
         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("packet not allow in benchmark main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
@@ -520,7 +521,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
         case 0x66:
         #ifndef BENCHMARKMUTIPLECLIENT
         {
-            if(!character_selected)
+            if(!character_selected || number_of_map==0)
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
@@ -614,7 +615,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
         case 0x67:
         #ifndef BENCHMARKMUTIPLECLIENT
         {
-            if(!character_selected)
+            if(!character_selected || number_of_map==0)
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
@@ -864,6 +865,15 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                 return false;
             }
+            if(!character_selected || number_of_map==0)
+            {
+                //because befine max_players
+                DelayedMessage delayedMessageTemp;
+                delayedMessageTemp.data=data;
+                delayedMessageTemp.packetCode=packetCode;
+                delayedMessages.push_back(delayedMessageTemp);
+                return true;
+            }
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
             {
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
@@ -949,6 +959,15 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             {
                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                 return false;
+            }
+            if(!character_selected || number_of_map==0)
+            {
+                //because befine max_players
+                DelayedMessage delayedMessageTemp;
+                delayedMessageTemp.data=data;
+                delayedMessageTemp.packetCode=packetCode;
+                delayedMessages.push_back(delayedMessageTemp);
+                return true;
             }
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
             {

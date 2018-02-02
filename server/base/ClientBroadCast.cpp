@@ -483,3 +483,7 @@ void Client::setRights(const Player_type& type)
                 std::to_string(character_id)
                 });
 }
+
+void Client::timeRangeEvent(const uint64_t &timestamps)
+{
+}

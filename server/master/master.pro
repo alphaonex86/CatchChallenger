@@ -67,7 +67,8 @@ SOURCES += \
     ../base/TinyXMLSettings.cpp \
     CheckTimeoutGameServer.cpp \
     AutomaticPingSend.cpp \
-    ../base/DatabaseFunction.cpp
+    ../base/DatabaseFunction.cpp \
+    TimeRangeEvent.cpp
 
 HEADERS += \
     EpollClientLoginMaster.h \
@@ -102,7 +103,8 @@ HEADERS += \
     ../../general/base/GeneralVariable.h \
     CheckTimeoutGameServer.h \
     AutomaticPingSend.h \
-    ../base/DatabaseFunction.h
+    ../base/DatabaseFunction.h \
+    TimeRangeEvent.h
 
 #choose one of:
 #DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1

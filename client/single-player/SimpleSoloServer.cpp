@@ -15,9 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
     client=new CatchChallenger::Api_client_virtual(socket);
-    internalServer=new CatchChallenger::InternalServer();
-    connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
-    connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverErrorStd,Qt::QueuedConnection);
+    internalServer=NULL;
     connect(client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
     connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
     connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
@@ -129,10 +127,16 @@ MainWindow::~MainWindow()
 void MainWindow::play(const QString &savegamesPath)
 {
     sendSettings(internalServer,savegamesPath);
+    QSettings metaData(savegamesPath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
+    if(internalServer==NULL)
+    {
+        internalServer=new CatchChallenger::InternalServer(metaData);
+        connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
+        connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverErrorStd,Qt::QueuedConnection);
+    }
     internalServer->start();
     ui->stackedWidget->setCurrentWidget(baseWindow);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
-    QSettings metaData(savegamesPath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
     if(!metaData.contains(QStringLiteral("pass")))
     {
         QMessageBox::critical(NULL,tr("Error"),tr("Unable to load internal value"));

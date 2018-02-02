@@ -1686,7 +1686,7 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
     pass=metaData.value(QStringLiteral("pass")).toString();
     if(internalServer!=NULL)
         delete internalServer;
-    internalServer=new CatchChallenger::InternalServer();
+    internalServer=new CatchChallenger::InternalServer(metaData);
     if(!sendSettings(internalServer,savegamesPath))
         return;
     connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);

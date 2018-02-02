@@ -594,6 +594,26 @@ int EpollClientLoginMaster::sendCurrentPlayer()
     return numberOfPlayer;
 }
 
+void EpollClientLoginMaster::sendTimeRangeEvent()
+{
+    if(EpollClientLoginMaster::gameServers.size()==0)
+        return;
+
+    uint32_t posOutput=0;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x4E;
+    posOutput+=1+8;
+    const uint64_t msFrom1970littleendian=htole64(msFrom1970()/1000);
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&msFrom1970littleendian,8);
+
+    unsigned int index=0;
+    while(index<EpollClientLoginMaster::gameServers.size())
+    {
+        EpollClientLoginMaster * const gameServer=EpollClientLoginMaster::gameServers.at(index);
+        gameServer->internalSendRawSmallPacket(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        index++;
+    }
+}
+
 void EpollClientLoginMaster::disconnectForDuplicateConnexionDetected(const uint32_t &characterId)
 {
     *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::duplicateConnexionDetected+0x02)=htole32(characterId);

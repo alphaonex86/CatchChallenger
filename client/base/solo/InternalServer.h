@@ -1,15 +1,6 @@
-#include <QObject>
-#include <QSettings>
-#include <QDebug>
-#include <QTimer>
-#include <QCoreApplication>
-#include <QList>
-#include <QByteArray>
-#include <QSqlDatabase>
-#include <QSqlError>
-#include <QDir>
-#include <QSemaphore>
 #include <QString>
+#include <QSettings>
+#include <QTimer>
 
 #include "../../../server/base/ServerStructures.h"
 #include "../../../server/base/Client.h"
@@ -28,16 +19,21 @@ class InternalServer : public QtServer
 {
     Q_OBJECT
 public:
-    explicit InternalServer();
+    /// \param settings ref is destroyed after this call
+    explicit InternalServer(QSettings &settings);
     virtual ~InternalServer();
 private slots:
     //starting function
     void start_internal_server();
+    void timerGiftSlot();
 protected:
     QString sqlitePath();
 protected slots:
     //remove all finished client
     virtual void removeOneClient();
+    virtual void serverIsReady();
+private:
+    QTimer timerGift;
 };
 }
 

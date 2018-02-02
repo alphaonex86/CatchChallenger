@@ -359,164 +359,165 @@ void BaseWindow::connectAllSignals()
     }
     mapController->connectAllSignals(client);
 
+    //for bug into solo player: Api_client_real -> Api_protocol
     if(!connect(client,&CatchChallenger::Api_client_real::lastReplyTime,      this,&BaseWindow::lastReplyTime,    Qt::QueuedConnection))
         abort();
     if(!connect(client,&CatchChallenger::Api_client_real::protocol_is_good,   this,&BaseWindow::protocol_is_good, Qt::QueuedConnection))
         abort();
     if(!connect(client,&CatchChallenger::Api_protocol::disconnected,          this,&BaseWindow::disconnected,     Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::newError,           this,&BaseWindow::newError,         Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::newError,           this,&BaseWindow::newError,         Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::message,          this,&BaseWindow::message,          Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::message,          this,&BaseWindow::message,          Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::notLogged,          this,&BaseWindow::notLogged,        Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::notLogged,          this,&BaseWindow::notLogged,        Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::logged,             this,&BaseWindow::logged,           Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::logged,             this,&BaseWindow::logged,           Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::haveTheDatapack,    this,&BaseWindow::haveTheDatapack,  Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::haveTheDatapack,    this,&BaseWindow::haveTheDatapack,  Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::haveTheDatapackMainSub,    this,&BaseWindow::haveTheDatapackMainSub,  Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::haveTheDatapackMainSub,    this,&BaseWindow::haveTheDatapackMainSub,  Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::haveDatapackMainSubCode,    this,&BaseWindow::haveDatapackMainSubCode,  Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::haveDatapackMainSubCode,    this,&BaseWindow::haveDatapackMainSubCode,  Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::clanActionFailed,   this,&BaseWindow::clanActionFailed, Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::clanActionFailed,   this,&BaseWindow::clanActionFailed, Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::clanActionSuccess,  this,&BaseWindow::clanActionSuccess,Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::clanActionSuccess,  this,&BaseWindow::clanActionSuccess,Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::clanDissolved,      this,&BaseWindow::clanDissolved,    Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::clanDissolved,      this,&BaseWindow::clanDissolved,    Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::clanInformations,   this,&BaseWindow::clanInformations, Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::clanInformations,   this,&BaseWindow::clanInformations, Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::clanInvite,         this,&BaseWindow::clanInvite,       Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::clanInvite,         this,&BaseWindow::clanInvite,       Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::cityCapture,        this,&BaseWindow::cityCapture,      Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::cityCapture,        this,&BaseWindow::cityCapture,      Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::setEvents,          this,&BaseWindow::setEvents,        Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::setEvents,          this,&BaseWindow::setEvents,        Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::newEvent,           this,&BaseWindow::newEvent,         Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::newEvent,           this,&BaseWindow::newEvent,         Qt::QueuedConnection))
         abort();
 
-    if(!connect(client,&CatchChallenger::Api_client_real::captureCityYourAreNotLeader,                this,&BaseWindow::captureCityYourAreNotLeader,              Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::captureCityYourAreNotLeader,                this,&BaseWindow::captureCityYourAreNotLeader,              Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::captureCityYourLeaderHaveStartInOtherCity,  this,&BaseWindow::captureCityYourLeaderHaveStartInOtherCity,Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::captureCityYourLeaderHaveStartInOtherCity,  this,&BaseWindow::captureCityYourLeaderHaveStartInOtherCity,Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::captureCityPreviousNotFinished,             this,&BaseWindow::captureCityPreviousNotFinished,           Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::captureCityPreviousNotFinished,             this,&BaseWindow::captureCityPreviousNotFinished,           Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::captureCityStartBattle,                     this,&BaseWindow::captureCityStartBattle,                   Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::captureCityStartBattle,                     this,&BaseWindow::captureCityStartBattle,                   Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::captureCityStartBotFight,                   this,&BaseWindow::captureCityStartBotFight,                 Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::captureCityStartBotFight,                   this,&BaseWindow::captureCityStartBotFight,                 Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::captureCityDelayedStart,                    this,&BaseWindow::captureCityDelayedStart,                  Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::captureCityDelayedStart,                    this,&BaseWindow::captureCityDelayedStart,                  Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::captureCityWin,                             this,&BaseWindow::captureCityWin,                           Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::captureCityWin,                             this,&BaseWindow::captureCityWin,                           Qt::QueuedConnection))
         abort();
 
     //connect the map controler
-    if(!connect(client,&CatchChallenger::Api_client_real::have_current_player_info,this,&BaseWindow::have_character_position,Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::have_current_player_info,this,&BaseWindow::have_character_position,Qt::QueuedConnection))
         abort();
 
     //inventory
-    if(!connect(client,&CatchChallenger::Api_client_real::have_inventory,     this,&BaseWindow::have_inventory))
+    if(!connect(client,&CatchChallenger::Api_protocol::have_inventory,     this,&BaseWindow::have_inventory))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::add_to_inventory,   this,&BaseWindow::add_to_inventory_slot))
+    if(!connect(client,&CatchChallenger::Api_protocol::add_to_inventory,   this,&BaseWindow::add_to_inventory_slot))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::remove_to_inventory,this,&BaseWindow::remove_to_inventory_slot))
+    if(!connect(client,&CatchChallenger::Api_protocol::remove_to_inventory,this,&BaseWindow::remove_to_inventory_slot))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::monsterCatch,       this,&BaseWindow::monsterCatch))
+    if(!connect(client,&CatchChallenger::Api_protocol::monsterCatch,       this,&BaseWindow::monsterCatch))
         abort();
 
     //character
-    if(!connect(client,&CatchChallenger::Api_client_real::newCharacterId,     this,&BaseWindow::newCharacterId))
+    if(!connect(client,&CatchChallenger::Api_protocol::newCharacterId,     this,&BaseWindow::newCharacterId))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::haveCharacter,     this,&BaseWindow::haveCharacter))
+    if(!connect(client,&CatchChallenger::Api_protocol::haveCharacter,     this,&BaseWindow::haveCharacter))
         abort();
 
     //chat
-    if(!connect(client,&CatchChallenger::Api_client_real::new_chat_text,  chat,&Chat::new_chat_text))
+    if(!connect(client,&CatchChallenger::Api_protocol::new_chat_text,  chat,&Chat::new_chat_text))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::new_system_text,chat,&Chat::new_system_text))
+    if(!connect(client,&CatchChallenger::Api_protocol::new_system_text,chat,&Chat::new_system_text))
         abort();
 
     //plants
-    if(!connect(this,&BaseWindow::useSeed,              client,&CatchChallenger::Api_client_real::useSeed))
+    if(!connect(this,&BaseWindow::useSeed,              client,&CatchChallenger::Api_protocol::useSeed))
         abort();
-    if(!connect(this,&BaseWindow::collectMaturePlant,   client,&CatchChallenger::Api_client_real::collectMaturePlant))
+    if(!connect(this,&BaseWindow::collectMaturePlant,   client,&CatchChallenger::Api_protocol::collectMaturePlant))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::insert_plant,   this,&BaseWindow::insert_plant))
+    if(!connect(client,&CatchChallenger::Api_protocol::insert_plant,   this,&BaseWindow::insert_plant))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::remove_plant,   this,&BaseWindow::remove_plant))
+    if(!connect(client,&CatchChallenger::Api_protocol::remove_plant,   this,&BaseWindow::remove_plant))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::seed_planted,   this,&BaseWindow::seed_planted))
+    if(!connect(client,&CatchChallenger::Api_protocol::seed_planted,   this,&BaseWindow::seed_planted))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::plant_collected,this,&BaseWindow::plant_collected))
+    if(!connect(client,&CatchChallenger::Api_protocol::plant_collected,this,&BaseWindow::plant_collected))
         abort();
     //crafting
-    if(!connect(client,&CatchChallenger::Api_client_real::recipeUsed,     this,&BaseWindow::recipeUsed))
+    if(!connect(client,&CatchChallenger::Api_protocol::recipeUsed,     this,&BaseWindow::recipeUsed))
         abort();
     //trade
-    if(!connect(client,&CatchChallenger::Api_client_real::tradeRequested,             this,&BaseWindow::tradeRequested))
+    if(!connect(client,&CatchChallenger::Api_protocol::tradeRequested,             this,&BaseWindow::tradeRequested))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::tradeAcceptedByOther,       this,&BaseWindow::tradeAcceptedByOther))
+    if(!connect(client,&CatchChallenger::Api_protocol::tradeAcceptedByOther,       this,&BaseWindow::tradeAcceptedByOther))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::tradeCanceledByOther,       this,&BaseWindow::tradeCanceledByOther))
+    if(!connect(client,&CatchChallenger::Api_protocol::tradeCanceledByOther,       this,&BaseWindow::tradeCanceledByOther))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::tradeFinishedByOther,       this,&BaseWindow::tradeFinishedByOther))
+    if(!connect(client,&CatchChallenger::Api_protocol::tradeFinishedByOther,       this,&BaseWindow::tradeFinishedByOther))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::tradeValidatedByTheServer,  this,&BaseWindow::tradeValidatedByTheServer))
+    if(!connect(client,&CatchChallenger::Api_protocol::tradeValidatedByTheServer,  this,&BaseWindow::tradeValidatedByTheServer))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::tradeAddTradeCash,          this,&BaseWindow::tradeAddTradeCash))
+    if(!connect(client,&CatchChallenger::Api_protocol::tradeAddTradeCash,          this,&BaseWindow::tradeAddTradeCash))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::tradeAddTradeObject,        this,&BaseWindow::tradeAddTradeObject))
+    if(!connect(client,&CatchChallenger::Api_protocol::tradeAddTradeObject,        this,&BaseWindow::tradeAddTradeObject))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::tradeAddTradeMonster,       this,&BaseWindow::tradeAddTradeMonster))
+    if(!connect(client,&CatchChallenger::Api_protocol::tradeAddTradeMonster,       this,&BaseWindow::tradeAddTradeMonster))
         abort();
     //inventory
-    if(!connect(client,&CatchChallenger::Api_client_real::objectUsed,                 this,&BaseWindow::objectUsed))
+    if(!connect(client,&CatchChallenger::Api_protocol::objectUsed,                 this,&BaseWindow::objectUsed))
         abort();
     //shop
-    if(!connect(client,&CatchChallenger::Api_client_real::haveShopList,               this,&BaseWindow::haveShopList))
+    if(!connect(client,&CatchChallenger::Api_protocol::haveShopList,               this,&BaseWindow::haveShopList))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::haveSellObject,             this,&BaseWindow::haveSellObject))
+    if(!connect(client,&CatchChallenger::Api_protocol::haveSellObject,             this,&BaseWindow::haveSellObject))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::haveBuyObject,              this,&BaseWindow::haveBuyObject))
+    if(!connect(client,&CatchChallenger::Api_protocol::haveBuyObject,              this,&BaseWindow::haveBuyObject))
         abort();
     //factory
-    if(!connect(client,&CatchChallenger::Api_client_real::haveFactoryList,            this,&BaseWindow::haveFactoryList))
+    if(!connect(client,&CatchChallenger::Api_protocol::haveFactoryList,            this,&BaseWindow::haveFactoryList))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::haveSellFactoryObject,      this,&BaseWindow::haveSellFactoryObject))
+    if(!connect(client,&CatchChallenger::Api_protocol::haveSellFactoryObject,      this,&BaseWindow::haveSellFactoryObject))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::haveBuyFactoryObject,       this,&BaseWindow::haveBuyFactoryObject))
+    if(!connect(client,&CatchChallenger::Api_protocol::haveBuyFactoryObject,       this,&BaseWindow::haveBuyFactoryObject))
         abort();
     //battle
-    if(!connect(client,&CatchChallenger::Api_client_real::battleRequested,            this,&BaseWindow::battleRequested))
+    if(!connect(client,&CatchChallenger::Api_protocol::battleRequested,            this,&BaseWindow::battleRequested))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::battleAcceptedByOther,      this,&BaseWindow::battleAcceptedByOther))
+    if(!connect(client,&CatchChallenger::Api_protocol::battleAcceptedByOther,      this,&BaseWindow::battleAcceptedByOther))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::battleCanceledByOther,      this,&BaseWindow::battleCanceledByOther))
+    if(!connect(client,&CatchChallenger::Api_protocol::battleCanceledByOther,      this,&BaseWindow::battleCanceledByOther))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::sendBattleReturn,           this,&BaseWindow::sendBattleReturn))
+    if(!connect(client,&CatchChallenger::Api_protocol::sendBattleReturn,           this,&BaseWindow::sendBattleReturn))
         abort();
     //market
-    if(!connect(client,&CatchChallenger::Api_client_real::marketList,                 this,&BaseWindow::marketList))
+    if(!connect(client,&CatchChallenger::Api_protocol::marketList,                 this,&BaseWindow::marketList))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::marketBuy,                  this,&BaseWindow::marketBuy))
+    if(!connect(client,&CatchChallenger::Api_protocol::marketBuy,                  this,&BaseWindow::marketBuy))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::marketBuyMonster,           this,&BaseWindow::marketBuyMonster))
+    if(!connect(client,&CatchChallenger::Api_protocol::marketBuyMonster,           this,&BaseWindow::marketBuyMonster))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::marketPut,                  this,&BaseWindow::marketPut))
+    if(!connect(client,&CatchChallenger::Api_protocol::marketPut,                  this,&BaseWindow::marketPut))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::marketGetCash,              this,&BaseWindow::marketGetCash))
+    if(!connect(client,&CatchChallenger::Api_protocol::marketGetCash,              this,&BaseWindow::marketGetCash))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::marketWithdrawCanceled,     this,&BaseWindow::marketWithdrawCanceled))
+    if(!connect(client,&CatchChallenger::Api_protocol::marketWithdrawCanceled,     this,&BaseWindow::marketWithdrawCanceled))
        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::marketWithdrawObject,       this,&BaseWindow::marketWithdrawObject))
+    if(!connect(client,&CatchChallenger::Api_protocol::marketWithdrawObject,       this,&BaseWindow::marketWithdrawObject))
        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::marketWithdrawMonster,      this,&BaseWindow::marketWithdrawMonster))
+    if(!connect(client,&CatchChallenger::Api_protocol::marketWithdrawMonster,      this,&BaseWindow::marketWithdrawMonster))
        abort();
     //datapack
-    if(!connect(client,&CatchChallenger::Api_client_real::datapackSizeBase,this,&BaseWindow::datapackSize))
+    if(!connect(client,&CatchChallenger::Api_protocol::datapackSizeBase,this,&BaseWindow::datapackSize))
        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::gatewayCacheUpdate,this,&BaseWindow::gatewayCacheUpdate))
+    if(!connect(client,&CatchChallenger::Api_protocol::gatewayCacheUpdate,this,&BaseWindow::gatewayCacheUpdate))
        abort();
     #ifdef CATCHCHALLENGER_MULTI
     if(!connect(static_cast<CatchChallenger::Api_client_real*>(client),&CatchChallenger::Api_client_real::newDatapackFileBase,            this,&BaseWindow::newDatapackFile))
@@ -533,16 +534,16 @@ void BaseWindow::connectAllSignals()
        abort();
     #endif
 
-    if(!connect(this,&BaseWindow::destroyObject,client,&CatchChallenger::Api_client_real::destroyObject))
+    if(!connect(this,&BaseWindow::destroyObject,client,&CatchChallenger::Api_protocol::destroyObject))
        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::teleportTo,this,&BaseWindow::teleportTo,Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::teleportTo,this,&BaseWindow::teleportTo,Qt::QueuedConnection))
        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::number_of_player,this,&BaseWindow::number_of_player))
+    if(!connect(client,&CatchChallenger::Api_protocol::number_of_player,this,&BaseWindow::number_of_player))
        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::random_seeds,&fightEngine,&ClientFightEngine::newRandomNumber))
+    if(!connect(client,&CatchChallenger::Api_protocol::random_seeds,&fightEngine,&ClientFightEngine::newRandomNumber))
        abort();
 
-    if(!connect(client,&CatchChallenger::Api_client_real::insert_player,              this,&BaseWindow::insert_player,Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_protocol::insert_player,              this,&BaseWindow::insert_player,Qt::QueuedConnection))
        abort();
 }
 

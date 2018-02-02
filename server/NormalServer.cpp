@@ -50,6 +50,8 @@ NormalServer::NormalServer() :
     connect(&BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::new_chat_message,this,&NormalServer::new_chat_message,Qt::QueuedConnection);
     connect(&purgeKickedHostTimer,&QTimer::timeout,this,&NormalServer::purgeKickedHost,Qt::QueuedConnection);
     connect(this,&QtServer::need_be_started,this,&NormalServer::start_internal_server,Qt::QueuedConnection);
+    connect(&timeRangeEventTimer,&QTimer::timeout,this,&NormalServer::timeRangeEvent,Qt::QueuedConnection);
+    timeRangeEventTimer.start(1000*60*60*24);
 }
 
 /** call only when the server is down
@@ -487,6 +489,11 @@ void NormalServer::purgeKickedHost()
         kickedHosts.remove(hostsToRemove.at(index));
         index++;
     }
+}
+
+void NormalServer::timeRangeEvent()
+{
+    Client::timeRangeEvent(QDateTime::currentMSecsSinceEpoch()/1000);
 }
 
 void NormalServer::sslErrors(const QList<QSslError> &errors)
