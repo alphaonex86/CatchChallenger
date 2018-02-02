@@ -109,6 +109,7 @@ public:
 
     BaseClassSwitch::EpollObjectType getType() const;
     static int sendCurrentPlayer();//return the number if player
+    static void sendTimeRangeEvent();
     static uint32_t maxAccountId;
     static bool havePlayerCountChange;
 

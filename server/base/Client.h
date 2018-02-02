@@ -100,6 +100,7 @@ public:
     static char * addAuthGetToken(const uint32_t &characterId,const uint32_t &accountIdRequester);
     static void purgeTokenAuthList();
     #endif
+    static void timeRangeEvent(const uint64_t &timestamps);
     uint32_t getPlayerId() const;
     uint32_t getClanId() const;
     bool haveAClan() const;

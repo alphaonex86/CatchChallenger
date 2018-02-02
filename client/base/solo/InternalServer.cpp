@@ -1,13 +1,49 @@
+#include <QObject>
+#include <QTimer>
+#include <QCoreApplication>
+#include <QList>
+#include <QByteArray>
+#include <QSqlDatabase>
+#include <QSqlError>
+#include <QDir>
+#include <QString>
+
 #include "InternalServer.h"
 #include "../../../server/base/GlobalServerData.h"
 #include "../../../general/base/FacilityLib.h"
 
 using namespace CatchChallenger;
 
-InternalServer::InternalServer() :
+/// \param settings ref is destroyed after this call
+InternalServer::InternalServer(QSettings &settings) :
     QtServer()
 {
     connect(this,&QtServer::need_be_started,this,&InternalServer::start_internal_server,Qt::QueuedConnection);
+    const QString &currentDate=QDateTime::currentDateTime().toString("ddMMyyyy");
+    if(settings.contains("gift"))
+    {
+        if(settings.value("gift")!=currentDate)
+        {
+            settings.setValue("gift",currentDate);
+            timerGift.setInterval(1000);
+            connect(this,&QtServer::is_started,this,&InternalServer::serverIsReady);
+            connect(&timerGift,&QTimer::timeout,this,&InternalServer::timerGiftSlot);
+        }
+    }
+    else
+        settings.setValue("gift",currentDate);
+}
+
+void InternalServer::serverIsReady()
+{
+    if(timerGift.interval()==1000)
+        timerGift.start();
+}
+
+void InternalServer::timerGiftSlot()
+{
+    if(isListen() && !isStopped())
+        Client::timeRangeEvent(QDateTime::currentMSecsSinceEpoch()/1000);
 }
 
 /** call only when the server is down

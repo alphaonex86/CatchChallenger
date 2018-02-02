@@ -68,6 +68,7 @@ private:
     QSslKey *sslKey;
     QHash<QHostAddress,QDateTime> kickedHosts;
     QTimer purgeKickedHostTimer;
+    QTimer timeRangeEventTimer;
     NormalServerSettings normalServerSettings;
 
     static std::string text_restart;
@@ -77,6 +78,7 @@ private:
     void newConnection();
     void kicked(const QHostAddress &host);
     void purgeKickedHost();
+    void timeRangeEvent();
     //remove all finished client
     void removeOneClient();
     //void removeOneBot();

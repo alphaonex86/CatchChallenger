@@ -1037,7 +1037,8 @@ void EpollServerLoginMaster::loadTheProfile()
             //cash
             /* crash for unaligned 64Bits on ARM + grsec
             *reinterpret_cast<uint64_t *>(rawServerListForC211+rawServerListForC211Size)=htole64(profile.cash); */
-            memcpy(rawServerListForC211+rawServerListForC211Size,&htole64(profile.cash),8);
+            const uint64_t cashlittleendian=htole64(profile.cash);
+            memcpy(rawServerListForC211+rawServerListForC211Size,&cashlittleendian,8);
             rawServerListForC211Size+=sizeof(uint64_t);
 
             //monster
