@@ -149,8 +149,10 @@ void BaseServer::unload_the_visibility_algorithm()
         #ifndef EPOLLCATCHCHALLENGERSERVER
         GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->stop();
         GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->deleteLater();
+        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=NULL;
         #else
         delete GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove;
+        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=NULL;
         #endif
     }
 }

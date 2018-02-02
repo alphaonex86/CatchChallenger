@@ -664,8 +664,8 @@
         <translation>Niveau: %1</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="983"/>
-        <location filename="../../interface/BaseWindow.cpp" line="985"/>
+        <location filename="../../interface/BaseWindow.cpp" line="984"/>
+        <location filename="../../interface/BaseWindow.cpp" line="986"/>
         <source>You have obtained: </source>
         <translation>You avez obtenu: </translation>
     </message>
@@ -816,73 +816,73 @@
         <translation>Selection de votre personnage</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="791"/>
-        <location filename="../../interface/BaseWindow.cpp" line="796"/>
+        <location filename="../../interface/BaseWindow.cpp" line="792"/>
+        <location filename="../../interface/BaseWindow.cpp" line="797"/>
         <source>Error with the protocol</source>
         <translation>Erreur avec le protocole</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="805"/>
+        <location filename="../../interface/BaseWindow.cpp" line="806"/>
         <source>Map error</source>
         <translation>Erreur de map</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="805"/>
+        <location filename="../../interface/BaseWindow.cpp" line="806"/>
         <source>The current map into the datapack is in error (not found, read failed, wrong format, corrupted, ...)
 Report the bug to the datapack maintainer.</source>
         <translation>La map courrante dans le datapack est en erreur (pas trouvé, lecture échoué, mauvais format, corrompu, ...)
 Repporter le bug au mainteneur du datapack.</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="810"/>
+        <location filename="../../interface/BaseWindow.cpp" line="811"/>
         <source>The repel effect is over</source>
         <translation>L&apos;effet du repousse est fini</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="845"/>
+        <location filename="../../interface/BaseWindow.cpp" line="846"/>
         <location filename="../../interface/BaseWindowShop.cpp" line="70"/>
         <source>Select an object</source>
         <translation>Sélectionner un objet</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="858"/>
+        <location filename="../../interface/BaseWindow.cpp" line="859"/>
         <location filename="../../interface/BaseWindowShop.cpp" line="80"/>
         <source>Unknown name</source>
         <translation>Nom inconnu</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="859"/>
+        <location filename="../../interface/BaseWindow.cpp" line="860"/>
         <location filename="../../interface/BaseWindowShop.cpp" line="81"/>
         <source>Unknown description</source>
         <translation>Description inconnu</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="889"/>
+        <location filename="../../interface/BaseWindow.cpp" line="890"/>
         <source>&lt;span style=&quot;color:#D50000&quot;&gt;Don&apos;t meet the requirements: %1&lt;/span&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1015"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1016"/>
         <source>Planting seed...</source>
         <translation>Plantage de graine...</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1018"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1019"/>
         <source>Collecting plant...</source>
         <translation>Récolte de plante...</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1021"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1022"/>
         <source>Unknown action...</source>
         <translation>Action inconnu...</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1714"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1715"/>
         <source>The last query was slow (%1ms)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1722"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1723"/>
         <source>Remain query in suspend (%1ms ago)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1066,14 +1066,14 @@ Repporter le bug au mainteneur du datapack.</translation>
         <translation>Vous arrivez à &lt;b&gt;&lt;i&gt;%1&lt;/i&gt;&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1285"/>
-        <location filename="../../interface/BaseWindow.cpp" line="1287"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1286"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1288"/>
         <source>You have better reputation into %1</source>
         <translation>Vous avez meilleur réputation en %1</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1292"/>
-        <location filename="../../interface/BaseWindow.cpp" line="1294"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1293"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1295"/>
         <source>You have worse reputation into %1</source>
         <translation>Vous avez une pire réputation en %1</translation>
     </message>
@@ -1167,24 +1167,24 @@ Repporter le bug au mainteneur du datapack.</translation>
         <translation>Vous connaisser déjà cette recette</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1371"/>
-        <location filename="../../interface/BaseWindow.cpp" line="1378"/>
-        <location filename="../../interface/BaseWindow.cpp" line="1380"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1372"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1379"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1381"/>
         <source>Destroy</source>
         <translation>Détruire</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1371"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1372"/>
         <source>Quantity to destroy</source>
         <translation>Quantité à détruire</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1378"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1379"/>
         <source>Are you sure you want to destroy %1 %2?</source>
         <translation>Voulez vous détruire %1 %2?</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1380"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1381"/>
         <source>Are you sure you want to destroy %1 unknow item (id: %2)?</source>
         <translation>Voulez vous détruire %1 item inconnu (id: %2)?</translation>
     </message>
@@ -1241,24 +1241,24 @@ Repporter le bug au mainteneur du datapack.</translation>
         <translation>Pas de point d&apos;entrée de texte</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1452"/>
-        <location filename="../../interface/BaseWindow.cpp" line="1461"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1453"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1462"/>
         <location filename="../../interface/BaseWindowLoad.cpp" line="312"/>
         <source>Cash: %1$</source>
         <translation>Cash: %1$</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1653"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1654"/>
         <source>Last reply time: %1ms</source>
         <translation>Dernier temps de réponse: %1ms</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1689"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1690"/>
         <source>Running query: %1 (%3 and %4), query with worse time: %2ms</source>
         <translation>Requéte en cour: %1 (%3 et %4), requéte avec le pire temps: %2ms</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1696"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1697"/>
         <source>No query running</source>
         <translation>Pas de requéte en cour</translation>
     </message>
@@ -2455,8 +2455,8 @@ HP: %3/%4</translation>
         <translation>Vous avez n&apos;avez pas capturé le %1 sauvage</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindow.cpp" line="1784"/>
-        <location filename="../../interface/BaseWindow.cpp" line="1828"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1785"/>
+        <location filename="../../interface/BaseWindow.cpp" line="1829"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1937"/>
         <location filename="../../../fight/interface/BaseWindowFight.cpp" line="1950"/>
         <source>Unknown</source>
