@@ -11,21 +11,16 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"),QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/savegames/"),true);
-    connect(solowindow,&SoloWindow::play,this,&MainWindow::play);
-
-    socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
-    client=new CatchChallenger::Api_client_virtual(socket);
+    if(!connect(solowindow,&SoloWindow::play,this,&MainWindow::play))
+    {
+        std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        abort();
+    }
     internalServer=NULL;
-    connect(client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
-    connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
-    connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
-    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
-    baseWindow=new CatchChallenger::BaseWindow();
-    baseWindow->setMultiPlayer(false,client);
-    baseWindow->connectAllSignals();
-    connect(baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection);
-    baseWindow->setMinimumSize(800,600);
-    ui->stackedWidget->addWidget(baseWindow);
+    socket=NULL;
+    client=NULL;
+    baseWindow=NULL;
+
     ui->stackedWidget->addWidget(solowindow);
     ui->stackedWidget->setCurrentWidget(solowindow);
     solowindow->setOnlySolo();
@@ -92,7 +87,6 @@ MainWindow::MainWindow(QWidget *parent) :
             qDebug() << string;
     }
     #endif
-    connect(baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded);
     /* already done into another part: #ifdef CATCHCHALLENGER_GITCOMMIT
     ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION)+QStringLiteral(" - ")+QStringLiteral(CATCHCHALLENGER_GITCOMMIT));
     #else
@@ -126,14 +120,83 @@ MainWindow::~MainWindow()
 
 void MainWindow::play(const QString &savegamesPath)
 {
-    sendSettings(internalServer,savegamesPath);
     QSettings metaData(savegamesPath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
+    if(internalServer!=NULL)
+    {
+        internalServer->deleteLater();
+        internalServer=NULL;
+    }
+    if(socket!=NULL)
+    {
+        socket->deleteLater();
+        socket=NULL;
+    }
+    if(client!=NULL)
+    {
+        client->deleteLater();
+        client=NULL;
+    }
+    if(baseWindow!=NULL)
+    {
+        baseWindow->deleteLater();
+        baseWindow=NULL;
+    }
     if(internalServer==NULL)
     {
         internalServer=new CatchChallenger::InternalServer(metaData);
-        connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
-        connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverErrorStd,Qt::QueuedConnection);
+        if(!connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection))
+        {
+            std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            abort();
+        }
+        if(!connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverErrorStd,Qt::QueuedConnection))
+        {
+            std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            abort();
+        }
+
+        socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
+        client=new CatchChallenger::Api_client_virtual(socket);
+        if(!connect(client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good))
+        {
+            std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            abort();
+        }
+        if(!connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected))
+        {
+            std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            abort();
+        }
+        if(!connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message))
+        {
+            std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            abort();
+        }
+        if(!connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged))
+        {
+            std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            abort();
+        }
+        baseWindow=new CatchChallenger::BaseWindow();
+        baseWindow->setMultiPlayer(false,client);
+        baseWindow->connectAllSignals();
+        baseWindow->setMinimumSize(800,600);
+        if(!connect(baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection))
+        {
+            std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            abort();
+        }
+
+        ui->stackedWidget->addWidget(baseWindow);
+        if(!connect(baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded))
+        {
+            std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            abort();
+        }
     }
+
+    sendSettings(internalServer,savegamesPath);
+
     internalServer->start();
     ui->stackedWidget->setCurrentWidget(baseWindow);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
@@ -272,6 +335,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             if(client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2)
                 return;
         const QByteArray &data=socket->readAll();
+        Q_UNUSED(data);
         //client->rea
         if(!isVisible() && internalServer==NULL)
         {
