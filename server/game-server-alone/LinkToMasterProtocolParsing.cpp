@@ -31,15 +31,26 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char * const d
     {
         case 0x4D:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(size!=4)
             {
                 parseNetworkReadError("size wrong ident: "+std::to_string(mainCodeType));
                 return false;
             }
-            #endif
             const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data)));
             Client::disconnectClientById(characterId);
+        }
+        return true;
+        case 0x4E:
+        {
+            if(size!=8)
+            {
+                parseNetworkReadError("size wrong ident: "+std::to_string(mainCodeType));
+                return false;
+            }
+            uint64_t rawtimestamps;
+            memcpy(&rawtimestamps,data,8);
+            const uint64_t &timestamps=le64toh(rawtimestamps);
+            Client::timeRangeEvent(timestamps);
         }
         return true;
         /*case 0xF1:
