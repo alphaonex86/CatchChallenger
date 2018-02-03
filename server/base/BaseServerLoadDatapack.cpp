@@ -448,3 +448,70 @@ void BaseServer::preload_the_datapack()
               << binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerSub)
               << " hash for datapack loaded sub" << std::endl;
 }
+
+void BaseServer::preload_the_gift()
+{
+    if(CommonDatapack::commonDatapack.items.item.empty())
+    {
+        std::cerr << "BaseServer::preload_the_gift(): CommonDatapack::commonDatapack.items.item.emtpy(), skipped" << std::endl;
+        return;
+    }
+    const std::vector<std::string> &stringList=stringsplit(GlobalServerData::serverSettings.daillygift,';');
+
+    bool ok=false;
+    unsigned int total=0;
+    unsigned int index=0;
+    while(index<stringList.size())
+    {
+        const std::vector<std::string> &entryList=stringsplit(stringList.at(index),',');
+        //itemidnumber,percentluck
+        if(entryList.size()==2)
+        {
+            const uint16_t &item=stringtouint16(entryList.at(0),&ok);
+            if(ok)
+            {
+                if(CommonDatapack::commonDatapack.items.item.find(item)!=CommonDatapack::commonDatapack.items.item.cend())
+                {
+                    const uint8_t &value=stringtouint8(entryList.at(1),&ok);
+                    if(ok)
+                        total+=value;
+                }
+            }
+        }
+        index++;
+    }
+
+    index=0;
+    uint32_t minRandom=0;
+    while(index<stringList.size())
+    {
+        const std::vector<std::string> &entryList=stringsplit(stringList.at(index),',');
+        //itemidnumber,percentluck
+        if(entryList.size()==2)
+        {
+            ServerPrivateVariables::GiftEntry giftEntry;
+            giftEntry.item=stringtouint16(entryList.at(0),&ok);
+            if(ok)
+            {
+                if(CommonDatapack::commonDatapack.items.item.find(giftEntry.item)!=CommonDatapack::commonDatapack.items.item.cend())
+                {
+                    const double &proportional=stringtodouble(entryList.at(1),&ok)/total*RAND_MAX;
+                    if(ok)
+                    {
+                        giftEntry.min_random_number=minRandom;
+                        giftEntry.max_random_number=minRandom+proportional;
+                        minRandom=giftEntry.max_random_number+1;
+                        GlobalServerData::serverPrivateVariables.gift_list.push_back(giftEntry);
+                    }
+                    else
+                        std::cerr << "after \",\" is not a number: " << stringList.at(index) << std::endl;
+                }
+                else
+                    std::cerr << "the gift item is not valid: " << std::to_string(giftEntry.item) << std::endl;
+            }
+            else
+                std::cerr << "before \",\" is not a number: " << stringList.at(index) << std::endl;
+        }
+        index++;
+    }
+}

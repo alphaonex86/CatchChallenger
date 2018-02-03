@@ -50,6 +50,7 @@ void BaseServer::unload_the_data()
     unload_the_bots();
     unload_the_skin();
     unload_the_datapack();
+    unload_the_gift();
     unload_the_players();
     unload_the_static_data();
     unload_the_ddos();
@@ -189,6 +190,12 @@ void BaseServer::unload_the_datapack()
     Client::datapack_file_hash_cache_main.clear();
     Client::datapack_file_hash_cache_sub.clear();
     #endif
+}
+
+void BaseServer::unload_the_gift()
+{
+    GlobalServerData::serverPrivateVariables.gift_list.clear();
+    GlobalServerData::serverSettings.daillygift.clear();
 }
 
 void BaseServer::unload_the_players()

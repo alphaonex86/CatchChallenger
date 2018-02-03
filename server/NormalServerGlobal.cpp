@@ -117,8 +117,6 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
         settings->setValue("compressionLevel",6);
     if(!settings->contains("anonymous"))
         settings->setValue("anonymous",false);
-    if(!settings->contains("server_message"))
-        settings->setValue("server_message","");
     if(!settings->contains("proxy"))
         settings->setValue("proxy","");
     if(!settings->contains("proxy_port"))
@@ -147,23 +145,6 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     #else
         settings->setValue("useSsl",false);
     #endif
-    if(!settings->contains("mainDatapackCode"))
-    {
-        const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &fileInfoList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(datapack_basePath+"map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
-        if(fileInfoList.size()==1)
-        {
-            const std::string &string=fileInfoList.at(0).name;
-            if(regex_search(string,std::regex("^[a-z0-9\\- _]+$",std::regex_constants::optimize)))
-                settings->setValue("mainDatapackCode",string);
-        }
-        else
-            settings->setValue("mainDatapackCode","[main]");
-    }
-    if(!settings->contains("subDatapackCode"))
-        settings->setValue("subDatapackCode","");
-
-    if(!settings->contains("exportedXml"))
-        settings->setValue("exportedXml","");
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     settings->beginGroup("master");
     if(!settings->contains("external-server-ip"))
@@ -419,6 +400,29 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
         settings->setValue("capture_day","monday");
     if(!settings->contains("capture_time"))
         settings->setValue("capture_time","0:0");
+    settings->endGroup();
+
+    settings->beginGroup("content");
+        if(!settings->contains("server_message"))
+            settings->setValue("server_message","");
+        if(!settings->contains("mainDatapackCode"))
+        {
+            const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &fileInfoList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(datapack_basePath+"map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+            if(fileInfoList.size()==1)
+            {
+                const std::string &string=fileInfoList.at(0).name;
+                if(regex_search(string,std::regex("^[a-z0-9\\- _]+$",std::regex_constants::optimize)))
+                    settings->setValue("mainDatapackCode",string);
+            }
+            else
+                settings->setValue("mainDatapackCode","[main]");
+        }
+        if(!settings->contains("subDatapackCode"))
+            settings->setValue("subDatapackCode","");
+        if(!settings->contains("exportedXml"))
+            settings->setValue("exportedXml","");
+        if(!settings->contains("daillygift"))
+            settings->setValue("daillygift","itemidnumber,percentluck;itemidnumber,percentluck");
     settings->endGroup();
 
     settings->sync();
