@@ -486,4 +486,9 @@ void Client::setRights(const Player_type& type)
 
 void Client::timeRangeEvent(const uint64_t &timestamps)
 {
+    //24h trigger, then useless drop list
+    //5min scan + bool to have new
+    //null memory allocation pressure
+    Client::timeRangeEventNew=true;
+    Client::timeRangeEventTimestamps=timestamps;
 }

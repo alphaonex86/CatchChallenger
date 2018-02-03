@@ -1,5 +1,5 @@
-#ifndef CATCHCHALLENGER_PLAYERUPDATER_H
-#define CATCHCHALLENGER_PLAYERUPDATER_H
+#ifndef CATCHCHALLENGER_TimeRangeEventScan_H
+#define CATCHCHALLENGER_TimeRangeEventScan_H
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
 #include "../epoll/EpollTimer.h"
@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 namespace CatchChallenger {
-class PlayerUpdater
+class TimeRangeEventScan
         #ifndef EPOLLCATCHCHALLENGERSERVER
         : public QObject
         #else
@@ -20,29 +20,18 @@ class PlayerUpdater
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
-    #else
-    friend class PlayerUpdaterToMaster;
     #endif
 public:
-    explicit PlayerUpdater();
+    explicit TimeRangeEventScan();
 #ifndef EPOLLCATCHCHALLENGERSERVER
 signals:
-    void newConnectedPlayer(uint16_t connected_players) const;
-    void send_addConnectedPlayer() const;
-    void send_removeConnectedPlayer() const;
     void try_initAll() const;
+    void timeRangeEventTrigger();
 #endif
-public:
-    void addConnectedPlayer();
-    void removeConnectedPlayer();
 private:
-    void internal_addConnectedPlayer();
-    void internal_removeConnectedPlayer();
     void exec();
     void initAll();
 private:
-    static uint16_t connected_players;
-    static uint16_t sended_connected_players;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     QTimer *next_send_timer;
     #endif

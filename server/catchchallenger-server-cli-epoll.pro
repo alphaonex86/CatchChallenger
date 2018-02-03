@@ -54,7 +54,7 @@ SOURCES += $$PWD/main-epoll.cpp \
     $$PWD/NormalServerGlobal.cpp \
     $$PWD/epoll/EpollGenericServer.cpp \
     $$PWD/epoll/EpollGenericSslServer.cpp \
-    all-in-one/TimeRangeEvent.cpp
+    $$PWD/all-in-one/TimeRangeEvent.cpp
 
 HEADERS += $$PWD/epoll/EpollSocket.h \
     $$PWD/epoll/EpollClient.h \
@@ -74,8 +74,8 @@ HEADERS += $$PWD/epoll/EpollSocket.h \
     $$PWD/NormalServerGlobal.h \
     $$PWD/epoll/EpollGenericServer.h \
     $$PWD/epoll/EpollGenericSslServer.h \
-    base/DdosBuffer.h \
-    all-in-one/TimeRangeEvent.h
+    $$PWD/base/DdosBuffer.h \
+    $$PWD/all-in-one/TimeRangeEvent.h
 
 #choose one of:
 #DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1

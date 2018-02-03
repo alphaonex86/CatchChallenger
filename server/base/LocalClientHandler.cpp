@@ -348,3 +348,41 @@ void Client::removeAllow(const ActionAllow &allow)
     public_and_private_informations.allow.erase(allow);
     syncDatabaseAllow();
 }
+
+//return true if validated and gift sended
+bool Client::triggerDaillyGift(const uint64_t &timeRangeEventTimestamps)
+{
+    if(lastdaillygift==timeRangeEventTimestamps || stat!=ClientStat::CharacterSelected)
+        return false;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(GlobalServerData::serverPrivateVariables.gift_list.empty())
+    {
+        std::cerr << "triggerDaillyGift can't have GlobalServerData::serverPrivateVariables.gift_list.empty()" << std::endl;
+        abort();
+    }
+    #endif
+    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_gift.asyncWrite({
+                std::to_string(timeRangeEventTimestamps),
+                std::to_string(character_id)
+                });
+
+    const uint32_t &randomNumber=rand();
+    unsigned int index=0;
+    while(index<GlobalServerData::serverPrivateVariables.gift_list.size())
+    {
+        const ServerPrivateVariables::GiftEntry &giftEntry=GlobalServerData::serverPrivateVariables.gift_list.at(index);
+        if(giftEntry.min_random_number>=randomNumber && giftEntry.max_random_number>=randomNumber)
+        {
+            addObjectAndSend(giftEntry.item,1);
+            break;
+        }
+        index++;
+    }
+    if(index>=GlobalServerData::serverPrivateVariables.gift_list.size())
+    {
+        const ServerPrivateVariables::GiftEntry &giftEntry=GlobalServerData::serverPrivateVariables.gift_list.back();
+        addObjectAndSend(giftEntry.item,1);
+    }
+    lastdaillygift=timeRangeEventTimestamps;
+    return true;
+}

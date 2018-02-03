@@ -14,6 +14,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/ConnectedSocket.h"
 #include "PlayerUpdater.h"
+#include "TimeRangeEventScan.h"
 #include "StringWithReplacement.h"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "PlayerUpdaterToMaster.h"
@@ -51,6 +52,7 @@ class Map_custom;
 class CommonMap;
 class ClientMapManagement;
 class PlayerUpdater;
+class TimeRangeEventScan;
 class Map_server_MapVisibility_Simple_StoreOnReceiver;
 class Client;
 class MapServer;
@@ -121,7 +123,6 @@ struct GameServerSettings
 
     //the listen, implicit on the client
     std::string datapack_basePath;
-    std::string server_message;
     bool dontSendPlayerType;
     bool teleportIfMapNotFoundOrOutOfMap;
     bool everyBodyIsRoot;
@@ -212,6 +213,10 @@ struct GameServerSettings
     std::unordered_map<std::string/*type, example: day*/,std::unordered_map<std::string/*groupName, example: day/night*/,ProgrammedEvent> > programmedEventList;
 
     char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+
+    //content
+    std::string server_message;
+    std::string daillygift;
 };
 
 struct CityStatus
@@ -386,11 +391,18 @@ struct ServerPrivateVariables
     //connection
     uint16_t connected_players;
     PlayerUpdater player_updater;
+    TimeRangeEventScan timeRangeEventScan;
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     PlayerUpdaterToMaster player_updater_to_master;
     #endif
     std::unordered_set<uint32_t> connected_players_id_list;
-    std::vector<std::string > server_message;
+    std::vector<std::string> server_message;
+    struct GiftEntry
+    {
+        uint32_t min_random_number,max_random_number;
+        uint16_t item;
+    };
+    std::vector<GiftEntry> gift_list;
 
     uint32_t number_of_bots_logged;
     int botSpawnIndex;

@@ -86,6 +86,7 @@ public:
     void disconnectClient();
     static void disconnectClientById(const uint32_t &characterId);
     Client *getClientFight() const;
+    bool triggerDaillyGift(const uint64_t &timeRangeEventTimestamps);//return true if validated and gift sended
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     void doDDOSCompute();
     #endif
@@ -118,6 +119,8 @@ public:
     static std::unordered_map<std::string,Client *> playerByPseudo;
     static std::unordered_map<uint32_t,Clan *> clanList;
     static std::vector<Client *> clientBroadCastList;
+    static bool timeRangeEventNew;
+    static uint64_t timeRangeEventTimestamps;
 
     static unsigned char protocolReplyProtocolNotSupported[7];
     static unsigned char protocolReplyServerFull[7];
@@ -177,6 +180,7 @@ protected:
         CharacterSelected=0x06,
     };
     ClientStat stat;
+    uint64_t lastdaillygift;//datalocallity with ClientStat stat
 
     std::queue<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
 

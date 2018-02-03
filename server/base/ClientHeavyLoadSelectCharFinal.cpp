@@ -34,6 +34,7 @@ void Client::characterIsRightFinalStep()
     #endif
 
     stat=ClientStat::CharacterSelected;
+    Client::timeRangeEventNew=true;
     checkLoose(false);
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
