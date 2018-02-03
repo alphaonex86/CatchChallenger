@@ -45,7 +45,6 @@ private:
     static uint16_t sended_connected_players;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     QTimer *next_send_timer;
-    #else
     #endif
 };
 }

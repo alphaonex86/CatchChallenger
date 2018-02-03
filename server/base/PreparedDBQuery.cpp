@@ -154,7 +154,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_monster_update_endurance=PreparedStatementUnit("UPDATE `monster` SET `skills_endurance`=UNHEX('%1') WHERE `id`=%2",database);
         PreparedDBQueryCommon::db_query_update_monster_buff=PreparedStatementUnit("UPDATE `monster` SET `buffs`=UNHEX('%1') WHERE `id`=%2",database);
 
-        PreparedDBQueryCommon::db_query_character_by_id=PreparedStatementUnit("SELECT `account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`starter`,LOWER(HEX(`allow`)),LOWER(HEX(`item`)),LOWER(HEX(`item_warehouse`)),LOWER(HEX(`recipes`)),LOWER(HEX(`reputations`)),LOWER(HEX(`encyclopedia_monster`)),LOWER(HEX(`encyclopedia_item`)),LOWER(HEX(`achievements`)),`blob_version`,`date` FROM `character` WHERE `id`=%1",database);
+        PreparedDBQueryCommon::db_query_character_by_id=PreparedStatementUnit("SELECT `account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`warehouse_cash`,`clan_leader`,`time_to_delete`,`starter`,LOWER(HEX(`allow`)),LOWER(HEX(`item`)),LOWER(HEX(`item_warehouse`)),LOWER(HEX(`recipes`)),LOWER(HEX(`reputations`)),LOWER(HEX(`encyclopedia_monster`)),LOWER(HEX(`encyclopedia_item`)),LOWER(HEX(`achievements`)),`blob_version`,`date`,`lastdaillygift` FROM `character` WHERE `id`=%1",database);
         PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero=PreparedStatementUnit("UPDATE `character` SET `time_to_delete`=0 WHERE `id`=%1",database);
         PreparedDBQueryCommon::db_query_update_character_last_connect=PreparedStatementUnit("UPDATE `character` SET `last_connect`=%1 WHERE `id`=%2",database);
         PreparedDBQueryCommon::db_query_clan=PreparedStatementUnit("SELECT `name`,`cash` FROM `clan` WHERE `id`=%1",database);
@@ -169,6 +169,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_monster_hp_and_level=PreparedStatementUnit("UPDATE `monster` SET `hp`=%1,`level`=%2 WHERE `id`=%3",database);
         PreparedDBQueryCommon::db_query_update_monster_move_to_new_player=PreparedStatementUnit("UPDATE `monster` SET `place`=1,`character`=%1,`position`=%2 WHERE `id`=%3",database);
         PreparedDBQueryCommon::db_query_update_monster_owner=PreparedStatementUnit("UPDATE `monster` SET `character`=%1,`position`=%2 WHERE `id`=%3;",database);
+        PreparedDBQueryCommon::db_query_update_gift=PreparedStatementUnit("UPDATE `character` SET `lastdaillygift`=%1 WHERE `id`=%2;",database);
         #endif
         break;
         #endif
@@ -206,7 +207,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_monster_update_endurance=PreparedStatementUnit("UPDATE monster SET skills_endurance='%1' WHERE id=%2",database);
         PreparedDBQueryCommon::db_query_update_monster_buff=PreparedStatementUnit("UPDATE monster SET buffs='%1' WHERE id=%2",database);
 
-        PreparedDBQueryCommon::db_query_character_by_id=PreparedStatementUnit("SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,blob_version,date FROM character WHERE id=%1",database);
+        PreparedDBQueryCommon::db_query_character_by_id=PreparedStatementUnit("SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,blob_version,date,lastdaillygift FROM character WHERE id=%1",database);
         PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero=PreparedStatementUnit("UPDATE character SET time_to_delete=0 WHERE id=%1",database);
         PreparedDBQueryCommon::db_query_update_character_last_connect=PreparedStatementUnit("UPDATE character SET last_connect=%1 WHERE id=%2",database);
         PreparedDBQueryCommon::db_query_clan=PreparedStatementUnit("SELECT name,cash FROM clan WHERE id=%1",database);
@@ -221,6 +222,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_monster_hp_and_level=PreparedStatementUnit("UPDATE monster SET hp=%1,level=%2 WHERE id=%3",database);
         PreparedDBQueryCommon::db_query_update_monster_move_to_new_player=PreparedStatementUnit("UPDATE monster SET place=1,character=%1,position=%2 WHERE id=%3",database);
         PreparedDBQueryCommon::db_query_update_monster_owner=PreparedStatementUnit("UPDATE monster SET character=%1,position=%2 WHERE id=%3;",database);
+        PreparedDBQueryCommon::db_query_update_gift=PreparedStatementUnit("UPDATE character SET lastdaillygift=%1 WHERE id=%2;",database);
         #endif
         break;
         #endif
@@ -262,7 +264,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_monster_update_endurance=PreparedStatementUnit("UPDATE monster SET skills_endurance=decode('%1','hex') WHERE id=%2",database);
         PreparedDBQueryCommon::db_query_update_monster_buff=PreparedStatementUnit("UPDATE monster SET buffs=decode('%1','hex') WHERE id=%2",database);
 
-        PreparedDBQueryCommon::db_query_character_by_id=PreparedStatementUnit("SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,encode(allow,'hex'),encode(item,'hex'),encode(item_warehouse,'hex'),encode(recipes,'hex'),encode(reputations,'hex'),encode(encyclopedia_monster,'hex'),encode(encyclopedia_item,'hex'),encode(achievements,'hex'),blob_version,date FROM character WHERE id=%1",database);
+        PreparedDBQueryCommon::db_query_character_by_id=PreparedStatementUnit("SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,encode(allow,'hex'),encode(item,'hex'),encode(item_warehouse,'hex'),encode(recipes,'hex'),encode(reputations,'hex'),encode(encyclopedia_monster,'hex'),encode(encyclopedia_item,'hex'),encode(achievements,'hex'),blob_version,date,lastdaillygift FROM character WHERE id=%1",database);
         PreparedDBQueryCommon::db_query_set_character_time_to_delete_to_zero=PreparedStatementUnit("UPDATE character SET time_to_delete=0 WHERE id=%1",database);
         PreparedDBQueryCommon::db_query_update_character_last_connect=PreparedStatementUnit("UPDATE character SET last_connect=%1 WHERE id=%2",database);
         PreparedDBQueryCommon::db_query_clan=PreparedStatementUnit("SELECT name,cash FROM clan WHERE id=%1",database);
@@ -277,6 +279,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_monster_hp_and_level=PreparedStatementUnit("UPDATE monster SET hp=%1,level=%2 WHERE id=%3",database);
         PreparedDBQueryCommon::db_query_update_monster_move_to_new_player=PreparedStatementUnit("UPDATE monster SET place=1,character=%1,position=%2 WHERE id=%3",database);
         PreparedDBQueryCommon::db_query_update_monster_owner=PreparedStatementUnit("UPDATE monster SET character=%1,position=%2 WHERE id=%3;",database);
+        PreparedDBQueryCommon::db_query_update_gift=PreparedStatementUnit("UPDATE character SET lastdaillygift=%1 WHERE id=%2;",database);
         #endif
         #if defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
         PreparedDBQueryCommon::db_query_insert_server_time=PreparedStatementUnit("INSERT INTO server_time(server,account,played_time,last_connect) VALUES(%1,%2,0,%3);",database);

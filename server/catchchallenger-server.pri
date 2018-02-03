@@ -80,7 +80,8 @@ SOURCES += \
     $$PWD/base/DatabaseFunction.cpp \
     $$PWD/base/StringWithReplacement.cpp \
     $$PWD/base/StaticText.cpp \
-    $$PWD/base/PreparedStatementUnit.cpp
+    $$PWD/base/PreparedStatementUnit.cpp \
+    $$PWD/base/TimeRangeEventScan.cpp
 
 HEADERS += \
     $$PWD/base/GlobalServerData.h \
@@ -116,4 +117,5 @@ HEADERS += \
     $$PWD/base/StringWithReplacement.h \
     $$PWD/base/StaticText.h \
     $$PWD/base/GameServerVariables.h \
-    $$PWD/base/PreparedStatementUnit.h
+    $$PWD/base/PreparedStatementUnit.h \
+    $$PWD/base/TimeRangeEventScan.h

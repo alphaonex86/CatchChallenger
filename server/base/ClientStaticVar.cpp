@@ -91,6 +91,8 @@ std::unordered_map<uint32_t,Clan *> Client::clanList;
 
 unsigned char *Client::characterIsRightFinalStepHeader=NULL;
 uint32_t Client::characterIsRightFinalStepHeaderSize=0;
+bool Client::timeRangeEventNew=false;
+uint64_t Client::timeRangeEventTimestamps=0;
 
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
 Player_private_and_public_informations *ClientBase::public_and_private_informations_solo=NULL;
