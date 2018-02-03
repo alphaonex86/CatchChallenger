@@ -54,17 +54,38 @@ void BroadCastWithoutSender::receive_instant_player_number(const int16_t &connec
             outputSize=3;
         }
 
-        int index=0;
-        const int &list_size=Client::clientBroadCastList.size();
+        unsigned int index=0;
         #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
         std::cout << "Send to " << Client::clientBroadCastList.size() << " players: " << binarytoHexa(reinterpret_cast<char *>(bufferSendPlayer),outputSize) << std::endl;
         #endif
-        while(index<list_size)
+        while(index<Client::clientBroadCastList.size())
         {
             Client::clientBroadCastList.at(index)->receive_instant_player_number(connected_players,reinterpret_cast<char *>(bufferSendPlayer),outputSize);
             index++;
         }
     }
+}
+
+void BroadCastWithoutSender::timeRangeEventTrigger()
+{
+    //10 clients per 15s = 40 clients per min = 57600 clients per 24h
+    //1ms time used each 15000ms
+    if(Client::timeRangeEventNew!=true || Client::timeRangeEventTimestamps==0)
+        return;
+    uint32_t updatedClient=0;
+    unsigned int index=0;
+    while(index<Client::clientBroadCastList.size())
+    {
+        Client *client=Client::clientBroadCastList.at(index);
+        if(client->triggerDaillyGift(Client::timeRangeEventTimestamps))
+        {
+            updatedClient++;
+            if(updatedClient==10)
+                return;
+        }
+        index++;
+    }
+    Client::timeRangeEventNew=false;
 }
 
 void BroadCastWithoutSender::doDDOSChat()

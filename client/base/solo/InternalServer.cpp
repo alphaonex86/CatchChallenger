@@ -26,6 +26,7 @@ InternalServer::InternalServer(QSettings &settings) :
         {
             settings.setValue("gift",currentDate);
             timerGift.setInterval(1000);
+            timerGift.setSingleShot(true);
             connect(this,&QtServer::is_started,this,&InternalServer::serverIsReady,Qt::QueuedConnection);
             connect(&timerGift,&QTimer::timeout,this,&InternalServer::timerGiftSlot,Qt::QueuedConnection);
         }
@@ -37,7 +38,10 @@ InternalServer::InternalServer(QSettings &settings) :
 void InternalServer::serverIsReady()
 {
     if(timerGift.interval()==1000)
+    {
+        timerGift.setSingleShot(true);
         timerGift.start();
+    }
 }
 
 void InternalServer::timerGiftSlot()

@@ -250,6 +250,7 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
         event.offset=30;
         event.value="night";
     }
+    settings.beginGroup("content");
     if(settings.contains("mainDatapackCode"))
         CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings.value("mainDatapackCode","[main]").toString().toStdString();
     else
@@ -304,6 +305,7 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
                 CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
         }
     }
+    settings.endGroup();
 
     internalServer->setSettings(formatedServerSettings);
     return true;

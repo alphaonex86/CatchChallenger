@@ -202,6 +202,7 @@ void BaseServer::preload_the_data()
     preload_the_events();
     preload_the_ddos();
     preload_the_datapack();
+    preload_the_gift();
     preload_the_skin();
     preload_the_players();
     preload_monsters_drops();

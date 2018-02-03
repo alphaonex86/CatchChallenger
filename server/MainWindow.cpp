@@ -357,7 +357,6 @@ void MainWindow::load_settings()
         CommonSettingsServer::commonSettingsServer.dontSendPseudo					= stringtobool(settings->value("dontSendPseudo"));
         CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer  		= stringtobool(settings->value("plantOnlyVisibleByPlayer"));
         CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange		= stringtobool(settings->value("forceClientToSendAtMapChange"));
-        CommonSettingsServer::commonSettingsServer.exportedXml                      = settings->value("exportedXml");
         formatedServerSettings.dontSendPlayerType                                   = stringtobool(settings->value("dontSendPlayerType"));
         CommonSettingsCommon::commonSettingsCommon.min_character					= stringtouint8(settings->value("min_character"));
         CommonSettingsCommon::commonSettingsCommon.max_character					= stringtouint8(settings->value("max_character"));
@@ -419,50 +418,54 @@ void MainWindow::load_settings()
             abort();
         }
 
-        if(settings->contains("mainDatapackCode"))
-            CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings->value("mainDatapackCode","[main]");
-        else
-            CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
-        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
-        {
-            const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
-            if(list.empty())
+        settings->beginGroup("content");
+            if(settings->contains("mainDatapackCode"))
+                CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings->value("mainDatapackCode","[main]");
+            else
+                CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
+            if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
             {
-                std::cerr << "No main code detected into the current datapack (abort)" << std::endl;
-                settings->sync();
-                abort();
-            }
-            if(list.size()>=1)
-            {
-                settings->setValue("mainDatapackCode",list.at(0).name);
-                CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).name;
-            }
-        }
-        if(settings->contains("subDatapackCode"))
-            CommonSettingsServer::commonSettingsServer.subDatapackCode=settings->value("subDatapackCode","");
-        else
-        {
-            const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/sub/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
-            if(!list.empty())
-            {
-                if(list.size()==1)
+                const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+                if(list.empty())
                 {
-                    settings->setValue("subDatapackCode",list.at(0).name);
-                    CommonSettingsServer::commonSettingsServer.subDatapackCode=list.at(0).name;
+                    std::cerr << "No main code detected into the current datapack (abort)" << std::endl;
+                    settings->sync();
+                    abort();
+                }
+                if(list.size()>=1)
+                {
+                    settings->setValue("mainDatapackCode",list.at(0).name);
+                    CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).name;
+                }
+            }
+            if(settings->contains("subDatapackCode"))
+                CommonSettingsServer::commonSettingsServer.subDatapackCode=settings->value("subDatapackCode","");
+            else
+            {
+                const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/sub/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+                if(!list.empty())
+                {
+                    if(list.size()==1)
+                    {
+                        settings->setValue("subDatapackCode",list.at(0).name);
+                        CommonSettingsServer::commonSettingsServer.subDatapackCode=list.at(0).name;
+                    }
+                    else
+                    {
+                        std::cerr << "No sub code detected into the current datapack" << std::endl;
+                        settings->setValue("subDatapackCode","");
+                        settings->sync();
+                        CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+                    }
                 }
                 else
-                {
-                    std::cerr << "No sub code detected into the current datapack" << std::endl;
-                    settings->setValue("subDatapackCode","");
-                    settings->sync();
                     CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
-                }
             }
-            else
-                CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
-        }
+            formatedServerSettings.server_message				= settings->value("server_message");
+            CommonSettingsServer::commonSettingsServer.exportedXml                      = settings->value("exportedXml");
+            formatedServerSettings.daillygift                      = settings->value("daillygift");
+        settings->endGroup();
         formatedServerSettings.anonymous					= stringtobool(settings->value("anonymous"));
-        formatedServerSettings.server_message				= settings->value("server_message");
         CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase	= settings->value("httpDatapackMirror");
         CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
         formatedServerSettings.datapackCache				= stringtoint32(settings->value("datapackCache"));
@@ -1277,46 +1280,50 @@ void MainWindow::send_settings()
             formatedServerSettings.city.capture.day=City::Capture::Sunday;
         break;
     }
-    if(settings->contains("mainDatapackCode"))
-        CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings->value("mainDatapackCode","[main]");
-    else
-    {
-        const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
-        if(list.empty())
+
+    settings->beginGroup("content");
+        if(settings->contains("mainDatapackCode"))
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings->value("mainDatapackCode","[main]");
+        else
         {
-            std::cerr << "No main code detected into the current datapack (abort)" << std::endl;
-            settings->sync();
-            abort();
-        }
-        if(list.size()==1)
-        {
-            settings->setValue("mainDatapackCode",list.at(0).name);
-            CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).name;
-        }
-    }
-    if(settings->contains("subDatapackCode"))
-        CommonSettingsServer::commonSettingsServer.subDatapackCode=settings->value("subDatapackCode","");
-    else
-    {
-        const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/sub/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
-        if(!list.empty())
-        {
+            const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+            if(list.empty())
+            {
+                std::cerr << "No main code detected into the current datapack (abort)" << std::endl;
+                settings->sync();
+                abort();
+            }
             if(list.size()==1)
             {
-                settings->setValue("subDatapackCode",list.at(0).name);
-                CommonSettingsServer::commonSettingsServer.subDatapackCode=list.at(0).name;
-            }
-            else
-            {
-                std::cerr << "No sub code detected into the current datapack" << std::endl;
-                settings->setValue("subDatapackCode","");
-                settings->sync();
-                CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+                settings->setValue("mainDatapackCode",list.at(0).name);
+                CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).name;
             }
         }
+        if(settings->contains("subDatapackCode"))
+            CommonSettingsServer::commonSettingsServer.subDatapackCode=settings->value("subDatapackCode","");
         else
-            CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
-    }
+        {
+            const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &list=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(GlobalServerData::serverSettings.datapack_basePath+"/map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/sub/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
+            if(!list.empty())
+            {
+                if(list.size()==1)
+                {
+                    settings->setValue("subDatapackCode",list.at(0).name);
+                    CommonSettingsServer::commonSettingsServer.subDatapackCode=list.at(0).name;
+                }
+                else
+                {
+                    std::cerr << "No sub code detected into the current datapack" << std::endl;
+                    settings->setValue("subDatapackCode","");
+                    settings->sync();
+                    CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+                }
+            }
+            else
+                CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+        }
+    settings->endGroup();
+
     QTime time=ui->timeEdit_city_capture_time->time();
     formatedServerSettings.city.capture.hour=time.hour();
     formatedServerSettings.city.capture.minute=time.minute();
@@ -1698,7 +1705,9 @@ void MainWindow::on_anonymous_toggled(bool checked)
 
 void MainWindow::on_server_message_textChanged()
 {
+    settings->beginGroup("content");
     settings->setValue("server_message",ui->server_message->toPlainText().toStdString());
+    settings->endGroup();
 }
 
 void MainWindow::on_proxy_editingFinished()
@@ -2098,7 +2107,9 @@ void CatchChallenger::MainWindow::on_mainDatapackCode_currentIndexChanged(const 
     if(arg1.isEmpty())
         return;
     CommonSettingsServer::commonSettingsServer.mainDatapackCode=arg1.toStdString();
-    settings->setValue("mainDatapackCode",CommonSettingsServer::commonSettingsServer.mainDatapackCode);
+    settings->beginGroup("content");
+        settings->setValue("mainDatapackCode",CommonSettingsServer::commonSettingsServer.mainDatapackCode);
+    settings->endGroup();
     {
         ui->subDatapackCode->clear();
         ui->subDatapackCode->addItem(QString());
@@ -2127,5 +2138,7 @@ void CatchChallenger::MainWindow::on_subDatapackCode_currentIndexChanged(const Q
     if(ui->mainDatapackCode->count()==0)
         return;
     CommonSettingsServer::commonSettingsServer.subDatapackCode=arg1.toStdString();
+    settings->beginGroup("content");
     settings->setValue("subDatapackCode",CommonSettingsServer::commonSettingsServer.subDatapackCode);
+    settings->endGroup();
 }

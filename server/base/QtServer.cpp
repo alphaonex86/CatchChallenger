@@ -16,10 +16,26 @@ QtServer::QtServer()
     qRegisterMetaType<QSqlQuery>("QSqlQuery");
     connect(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,this,&QtServer::send_insert_move_remove,Qt::QueuedConnection);
     if(GlobalServerData::serverSettings.secondToPositionSync>0)
-        connect(&GlobalServerData::serverPrivateVariables.positionSync,&QTimer::timeout,this,&QtServer::positionSync,Qt::QueuedConnection);
-    connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,this,&QtServer::ddosTimer,Qt::QueuedConnection);
-    connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection);
-    connect(this,&QtServer::try_stop_server,this,&QtServer::stop_internal_server);
+        if(!connect(&GlobalServerData::serverPrivateVariables.positionSync,&QTimer::timeout,this,&QtServer::positionSync,Qt::QueuedConnection))
+        {
+            std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            abort();
+        }
+    if(!connect(&GlobalServerData::serverPrivateVariables.ddosTimer,&QTimer::timeout,this,&QtServer::ddosTimer,Qt::QueuedConnection))
+    {
+        std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        abort();
+    }
+    if(!connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection))
+    {
+        std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        abort();
+    }
+    if(!connect(this,&QtServer::try_stop_server,this,&QtServer::stop_internal_server))
+    {
+        std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        abort();
+    }
     GlobalServerData::serverPrivateVariables.db_login=new QtDatabase();
     GlobalServerData::serverPrivateVariables.db_login->setObjectName("db_login");
     GlobalServerData::serverPrivateVariables.db_login->dbThread.setObjectName("db_login");
@@ -32,6 +48,20 @@ QtServer::QtServer()
     GlobalServerData::serverPrivateVariables.db_server=new QtDatabase();
     GlobalServerData::serverPrivateVariables.db_server->setObjectName("db_server");
     GlobalServerData::serverPrivateVariables.db_server->dbThread.setObjectName("db_server");
+    if(!connect(&GlobalServerData::serverPrivateVariables.player_updater,&PlayerUpdater::newConnectedPlayer,
+                &BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::receive_instant_player_number,
+                Qt::QueuedConnection))
+    {
+        std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        abort();
+    }
+    if(!connect(&GlobalServerData::serverPrivateVariables.timeRangeEventScan,&TimeRangeEventScan::timeRangeEventTrigger,
+                &BroadCastWithoutSender::broadCastWithoutSender,&BroadCastWithoutSender::timeRangeEventTrigger,
+                Qt::QueuedConnection))
+    {
+        std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        abort();
+    }
 }
 
 QtServer::~QtServer()

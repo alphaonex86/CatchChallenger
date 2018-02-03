@@ -114,6 +114,7 @@ protected:
     bool preload_the_map();
     void preload_the_skin();
     void preload_the_datapack();
+    void preload_the_gift();
     void preload_the_players();
     void preload_profile();
     virtual void preload_the_visibility_algorithm();
@@ -170,6 +171,7 @@ protected:
     void unload_the_map();
     void unload_the_skin();
     void unload_the_datapack();
+    void unload_the_gift();
     void unload_the_players();
     void unload_the_visibility_algorithm();
     void unload_the_ddos();

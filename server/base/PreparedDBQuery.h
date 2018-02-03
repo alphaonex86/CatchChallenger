@@ -93,6 +93,7 @@ public:
     PreparedStatementUnit db_query_select_monsters_by_player_id;//don't filter by place, dispatched in internal, market volume should be low
     PreparedStatementUnit db_query_update_monster_move_to_new_player;
     PreparedStatementUnit db_query_update_monster_owner;
+    PreparedStatementUnit db_query_update_gift;
 
     #if defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     PreparedStatementUnit db_query_insert_server_time;
