@@ -84,8 +84,7 @@ CREATE TABLE character_forserver (
     "botfight_id" BLOB,
     "itemonmap" BLOB,
     "plants" BLOB,
-    "blob_version" INTEGER,
-    "lastdaillygift" INTEGER
+    "blob_version" INTEGER
 , "quest" BLOB);
 CREATE UNIQUE INDEX "idcharacter_forserver" on "character_forserver" (character ASC);
 CREATE TABLE monster (
@@ -136,8 +135,9 @@ CREATE TABLE character (
     "reputations" BLOB,
     "encyclopedia_monster" BLOB,
     "encyclopedia_item" BLOB,
-    "achievements" BLOB
-, "blob_version" INTEGER);
+    "achievements" BLOB,
+    "blob_version" INTEGER
+, "lastdaillygift" INTEGER);
 CREATE UNIQUE INDEX "id" on "character" (id ASC);
 CREATE UNIQUE INDEX "bypseudoandclan" on "character" (pseudo ASC, clan ASC);
 CREATE INDEX "byclan" on "character" (clan ASC);
