@@ -709,6 +709,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                         }
                                                     }
                                                     else
+                                                    {
                                                         qDebug() << (
                                                                     QStringLiteral("No botId %1 into %2: properties.tagName(): %3, file: %4 (at line: %5)")
                                                                     .arg(botId)
@@ -717,6 +718,14 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                                     .arg(QString::fromStdString(parsedMap->logicalMap.map_file))
                                                                     .arg(bot.lineNumber())
                                                                     );
+                                                        /// \warn show something to continue to block the path
+                                                        CatchChallenger::Bot &bot=parsedMap->logicalMap.bots[QPair<uint8_t,uint8_t>(x,y)];
+                                                        bot=botFiles.value(botFile).value(botId);
+                                                        property_parsed.erase("file");
+                                                        property_parsed.erase("id");
+                                                        bot.properties=property_parsed;
+                                                        bot.botId=botId;
+                                                    }
                                                 }
                                                 else
                                                     qDebug() << (QStringLiteral("No file %1: properties.tagName(): %2, name: %3 (at line: %4)").arg(botFile).arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
