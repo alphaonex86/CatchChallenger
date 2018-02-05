@@ -237,11 +237,15 @@ bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchCha
     return true;
 }
 
-void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const uint32_t &botId,const uint8_t &x,const uint8_t &y,const QString &lookAt,const QString &skin)
+void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const uint32_t &botId,const uint8_t &x,const uint8_t &y,
+                                    const QString &lookAt,const QString &skin)
 {
     Q_UNUSED(botId);
     if(skin.isEmpty())
+    {
+        std::cerr << "MapController::loadBotOnTheMap() skin empty" << std::endl;
         return;
+    }
 
     if(parsedMap->logicalMap.botsDisplay.contains(QPair<uint8_t,uint8_t>(x,y)))
     {
@@ -250,6 +254,8 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         botDisplay->mapObject->setPosition(QPoint(x,y+1));
         MapObjectItem::objectLink.value(botDisplay->mapObject)->setZValue(y);*/
+
+        std::cerr << "MapController::loadBotOnTheMap() parsedMap->logicalMap.botsDisplay.contains(QPair<uint8_t,uint8_t>(x,y))" << std::endl;
         return;
     }
 
