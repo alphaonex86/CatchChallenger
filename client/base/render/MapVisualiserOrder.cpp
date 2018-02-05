@@ -133,8 +133,23 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                             }
                         }
                     }
+                    else if(objects.at(index2)->type()=="border-bottom" ||
+                            objects.at(index2)->type()=="border-top" ||
+                            objects.at(index2)->type()=="border-right" ||
+                            objects.at(index2)->type()=="border-left" ||
+                            objects.at(index2)->type()=="rescue" ||
+                            objects.at(index2)->type()=="door" ||
+                            objects.at(index2)->type()=="teleport on push" ||
+                            objects.at(index2)->type()=="teleport on it")
+                    {
+                        objectGroup->removeObject(objects.at(index2));
+                        delete objects.at(index2);
+                    }
                     else
                     {
+                        #ifndef ONLYMAPRENDER
+                        qDebug() << "Layer Moving, unknown object at " << x << "," << y << " type: " << objects.at(index2)->type();
+                        #endif
                         objectGroup->removeObject(objects.at(index2));
                         delete objects.at(index2);
                     }
@@ -151,6 +166,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                     //remove the bot
                     if(objects.at(index2)->type()==MapVisualiserOrder::text_bot)
                     {
+                        /// \see MapController::loadBotOnTheMap()
                         #ifndef ONLYMAPRENDER
                         objectGroup->removeObject(objects.at(index2));
                         delete objects.at(index2);
@@ -161,6 +177,9 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                     //remove the unknow object
                     else
                     {
+                        #ifndef ONLYMAPRENDER
+                        qDebug() << "layer Object, unknown object at " << objects.at(index2)->x() << "," << objects.at(index2)->y() << " type: " << objects.at(index2)->type();
+                        #endif
                         objectGroup->removeObject(objects.at(index2));
                         delete objects.at(index2);
                     }
