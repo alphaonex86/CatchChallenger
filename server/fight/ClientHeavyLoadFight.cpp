@@ -287,9 +287,10 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
                 }
                 if(ok)
                 {
-                    if(CommonDatapack::commonDatapack.monsterBuffs.at(buff.buff).level.at(buff.level-1).duration!=Buff::Duration_Always)
+                    const Buff::GeneralEffect &generalEffect=CommonDatapack::commonDatapack.monsterBuffs.at(buff.buff).level.at(buff.level-1);
+                    if(generalEffect.duration==Buff::Duration_ThisFight)
                     {
-                        std::cerr << "buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(playerMonster.id)+" can't be loaded from the db if is not permanent" << std::endl;
+                        std::cerr << "buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(playerMonster.id)+" can't be loaded from the db if is not permanent (generalEffect.duration==Buff::Duration_ThisFight): " << std::to_string(generalEffect.duration) << std::endl;
                         return false;
                     }
                 }

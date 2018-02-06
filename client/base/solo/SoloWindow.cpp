@@ -320,25 +320,29 @@ void SoloWindow::updateSavegameList()
                             {
                                 QStringList values;
                                 values << "ALTER TABLE \"character\" ADD COLUMN lastdaillygift INTEGER;";
-                                QSqlDatabase conn = QSqlDatabase::addDatabase(SoloWindow::text_QSQLITE,SoloWindow::text_savegameupdate);
-                                conn.setDatabaseName(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite);
-                                if(conn.open())
                                 {
-                                    int index=0;
-                                    while(index<values.size())
+                                    QSqlDatabase conn = QSqlDatabase::addDatabase(SoloWindow::text_QSQLITE,SoloWindow::text_savegameupdate);
+                                    conn.setDatabaseName(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite);
+                                    if(conn.open())
                                     {
-                                        QSqlQuery query(conn);
-                                        if(!query.exec(values.at(index)))
-                                            qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText();
-                                        index++;
+                                        int index=0;
+                                        while(index<values.size())
+                                        {
+                                            QSqlQuery query(conn);
+                                            if(!query.exec(values.at(index)))
+                                                qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText();
+                                            index++;
+                                        }
+                                        conn.commit();
+                                        conn.close();
+                                        conn = QSqlDatabase();
+                                        version=QStringLiteral("2.0.3.0");
+                                        metaData.setValue(SoloWindow::text_savegame_version,version);
                                     }
-                                    conn.close();
+                                    else
+                                        qDebug() << "database con't be open to update the savegame" << conn.lastError().driverText() << conn.lastError().databaseText() << values.at(index) << "for" << (savegamesPath+QStringLiteral("catchchallenger.db.sqlite"));
                                 }
-                                else
-                                    qDebug() << "database con't be open to update the savegame" << conn.lastError().driverText() << conn.lastError().databaseText() << values.at(index) << "for" << (savegamesPath+QStringLiteral("catchchallenger.db.sqlite"));
-                                QSqlDatabase::removeDatabase(SoloWindow::text_savegameupdate);
-                                version=QStringLiteral("2.0.3.0");
-                                metaData.setValue(SoloWindow::text_savegame_version,version);
+                                QSqlDatabase::removeDatabase(SoloWindow::text_savegameupdate);//need out of scope of QSqlDatabase conn
                             }
                         }
                         int time_played_number=metaData.value(SoloWindow::text_time_played).toUInt(&ok);

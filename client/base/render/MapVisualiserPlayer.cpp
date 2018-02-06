@@ -615,48 +615,54 @@ void MapVisualiserPlayer::finalPlayerStep()
         return;
     }
 
+    if(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.empty())
+        return;
     {
         const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(current_map_pointer->logicalMap,x,y);
         unsigned int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
-            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
-            if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
+            const unsigned int &newIndex=monstersCollisionValue.walkOn.at(index);
+            if(newIndex<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
             {
-                if(monstersCollision.tile!=lastTileset.toStdString())
+                const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
+                if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
                 {
-                    lastTileset=QString::fromStdString(monstersCollision.tile);
-                    if(playerTilesetCache.contains(lastTileset))
-                        playerTileset=playerTilesetCache.value(lastTileset);
-                    else
+                    if(monstersCollision.tile!=lastTileset.toStdString())
                     {
-                        if(lastTileset.isEmpty())
-                            playerTileset=playerTilesetCache[defaultTileset];
+                        lastTileset=QString::fromStdString(monstersCollision.tile);
+                        if(playerTilesetCache.contains(lastTileset))
+                            playerTileset=playerTilesetCache.value(lastTileset);
                         else
                         {
-                            const QString &imagePath=playerSkinPath+MapVisualiserPlayer::text_slash+lastTileset+MapVisualiserPlayer::text_dotpng;
-                            QImage image(imagePath);
-                            if(!image.isNull())
-                            {
-                                playerTileset = new Tiled::Tileset(lastTileset,16,24);
-                                playerTileset->loadFromImage(image,imagePath);
-                            }
+                            if(lastTileset.isEmpty())
+                                playerTileset=playerTilesetCache[defaultTileset];
                             else
                             {
-                                qDebug() << "Unable to load the player tilset: "+imagePath;
-                                playerTileset=playerTilesetCache[defaultTileset];
+                                const QString &imagePath=playerSkinPath+MapVisualiserPlayer::text_slash+lastTileset+MapVisualiserPlayer::text_dotpng;
+                                QImage image(imagePath);
+                                if(!image.isNull())
+                                {
+                                    playerTileset = new Tiled::Tileset(lastTileset,16,24);
+                                    playerTileset->loadFromImage(image,imagePath);
+                                }
+                                else
+                                {
+                                    qDebug() << "Unable to load the player tilset: "+imagePath;
+                                    playerTileset=playerTilesetCache[defaultTileset];
+                                }
                             }
+                            playerTilesetCache[lastTileset]=playerTileset;
                         }
-                        playerTilesetCache[lastTileset]=playerTileset;
+                        {
+                            Tiled::Cell cell=playerMapObject->cell();
+                            int tileId=cell.tile->id();
+                            cell.tile=playerTileset->tileAt(tileId);
+                            playerMapObject->setCell(cell);
+                        }
                     }
-                    {
-                        Tiled::Cell cell=playerMapObject->cell();
-                        int tileId=cell.tile->id();
-                        cell.tile=playerTileset->tileAt(tileId);
-                        playerMapObject->setCell(cell);
-                    }
+                    break;
                 }
-                break;
             }
             index++;
         }
