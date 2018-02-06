@@ -2611,9 +2611,10 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     return returnVar;
 }
 
-std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std::string &file, const std::unordered_map<uint16_t, Item> &items)
+/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
+std::unordered_map<uint16_t, Shop> DatapackGeneralLoader::preload_shop(const std::string &file, const std::unordered_map<uint16_t, Item> &items)
 {
-    std::unordered_map<uint32_t,Shop> shops;
+    std::unordered_map<uint16_t,Shop> shops;
 
     CATCHCHALLENGER_XMLDOCUMENT *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -2656,7 +2657,7 @@ std::unordered_map<uint32_t,Shop> DatapackGeneralLoader::preload_shop(const std:
         {
             if(shopItem->Attribute("id")!=NULL)
             {
-                uint32_t id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(shopItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                const uint16_t id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(shopItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                 if(ok)
                 {
                     if(shops.find(id)==shops.cend())

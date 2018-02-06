@@ -43,7 +43,7 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
     {
         if(playerInformations.items.find(shop_items_graphical.value(item))==playerInformations.items.cend())
             return;
-        uint32_t objectItem=shop_items_graphical.value(item);
+        const CATCHCHALLENGER_TYPE_ITEM objectItem=shop_items_graphical.value(item);
         bool ok=true;
         if(playerInformations.items.at(objectItem)>1)
             tempQuantityForSell=QInputDialog::getInt(this,tr("Sell"),tr("Quantity to sell"),1,1,playerInformations.items.at(objectItem),1,&ok);

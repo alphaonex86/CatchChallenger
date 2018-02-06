@@ -615,8 +615,8 @@ void MapVisualiserPlayer::finalPlayerStep()
         return;
     }
 
-    if(CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.empty())
-        return;
+    /// \see into haveStopTileAction(), to NPC fight: QList<QPair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(QPair<uint8_t,uint8_t>(x,y));
+    if(!CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.empty())
     {
         const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(current_map_pointer->logicalMap,x,y);
         unsigned int index=0;

@@ -648,7 +648,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                                         .arg(botId).arg(botFile));
                                                                 else
                                                                 {
-                                                                    uint32_t shop=stringtouint32(*step->Attribute(std::string("shop")),&ok);
+                                                                    const uint16_t shop=stringtouint16(*step->Attribute(std::string("shop")),&ok);
                                                                     if(!ok)
                                                                         qDebug() << (QStringLiteral("shop is not a number: for bot id: %1 (%2)")
                                                                             .arg(botId).arg(botFile));

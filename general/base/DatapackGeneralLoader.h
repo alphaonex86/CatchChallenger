@@ -36,7 +36,7 @@ public:
     static std::vector<MonstersCollision> loadMonstersCollision(const std::string &file, const std::unordered_map<uint16_t, Item> &items, const std::vector<Event> &events);
     static LayersOptions loadLayersOptions(const std::string &file);
     static std::vector<Event> loadEvents(const std::string &file);
-    static std::unordered_map<uint32_t,Shop> preload_shop(const std::string &file, const std::unordered_map<uint16_t, Item> &items);
+    static std::unordered_map<uint16_t,Shop> preload_shop(const std::string &file, const std::unordered_map<uint16_t, Item> &items);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     #endif
 };
 }

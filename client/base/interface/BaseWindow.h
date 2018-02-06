@@ -495,7 +495,7 @@ private:
     QTimer tip_timeout;
     QTimer gain_timeout;
     QList<QueryType> queryList;
-    uint32_t shopId;
+    uint16_t shopId;/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     QHash<uint32_t,ItemToSellOrBuy> itemsIntoTheShop;
     int64_t temp_warehouse_cash;// if >0 then Withdraw
     //selection of quantity

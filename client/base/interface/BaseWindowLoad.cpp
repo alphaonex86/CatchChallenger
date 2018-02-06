@@ -761,6 +761,11 @@ void BaseWindow::updateConnectingStatus()
     if(waitedData.isEmpty())
     {
         Player_private_and_public_informations &playerInformations=client->get_player_informations();
+        if(playerInformations.bot_already_beaten==NULL)
+        {
+            std::cerr << "void BaseWindow::updateConnectingStatus(): waitedData.isEmpty(), playerInformations.bot_already_beaten==NULL" << std::endl;
+            abort();
+        }
         mapController->setBotsAlreadyBeaten(playerInformations.bot_already_beaten);
         mapController->setInformations(&playerInformations.items,&playerInformations.quests,&events,&playerInformations.itemOnMap,&playerInformations.plantOnMap);
         client->unloadSelection();
