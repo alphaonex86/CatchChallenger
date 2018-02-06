@@ -470,7 +470,7 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
     }
 
     /*uint32_t realPrice=0;
-    const std::vector<uint32_t> shops=mapServer->shops.at(pos);
+    const std::vector<uint16_t> shops=mapServer->shops.at(pos);
     if(!vectorcontainsAtLeastOne(shops,shopId))
         realPrice=shops.at(indexOf).at(objectId).price/2;
     else

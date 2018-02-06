@@ -107,10 +107,13 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
     if(fightMonster!=NULL)
     {
         std::pair<uint8_t,uint8_t> pos(x,y);
-        if(all_map.value(current_map)->logicalMap.botsFightTrigger.find(pos)!=all_map.value(current_map)->logicalMap.botsFightTrigger.cend())
+        const MapVisualiserThread::Map_full * current_map_pointer=all_map.value(current_map);
+        const std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>,pairhash> &botsFightTrigger=current_map_pointer->logicalMap.botsFightTrigger;
+
+        if(botsFightTrigger.find(pos)!=botsFightTrigger.cend())
         {
-            std::vector<uint16_t> botFightList=all_map.value(current_map)->logicalMap.botsFightTrigger.at(pos);
-            QList<QPair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(QPair<uint8_t,uint8_t>(x,y));
+            std::vector<uint16_t> botFightList=botsFightTrigger.at(pos);
+            QList<QPair<uint8_t,uint8_t> > botFightRemotePointList=current_map_pointer->logicalMap.botsFightTriggerExtra.values(QPair<uint8_t,uint8_t>(x,y));
             unsigned int index=0;
             while(index<botFightList.size())
             {
@@ -126,9 +129,9 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
                     }
                     parseStop();
                     emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),botFightRemotePointList.at(index).first,botFightRemotePointList.at(index).second);
-                    if(all_map.value(current_map)->logicalMap.botsDisplay.contains(botFightRemotePointList.at(index)))
+                    if(current_map_pointer->logicalMap.botsDisplay.contains(botFightRemotePointList.at(index)))
                     {
-                        TemporaryTile *temporaryTile=all_map.value(current_map)->logicalMap.botsDisplay.value(botFightRemotePointList.at(index)).temporaryTile;
+                        TemporaryTile *temporaryTile=current_map_pointer->logicalMap.botsDisplay.value(botFightRemotePointList.at(index)).temporaryTile;
                         //show a temporary flags
                         {
                             if(fightCollisionBot==NULL)
@@ -152,7 +155,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         {
             if(inMove)
             {
-                if(fightEngine->generateWildFightIfCollision(&all_map.value(current_map)->logicalMap,x,y,*items,*events))
+                if(fightEngine->generateWildFightIfCollision(&current_map_pointer->logicalMap,x,y,*items,*events))
                 {
                     inMove=false;
                     emit send_player_direction(direction);

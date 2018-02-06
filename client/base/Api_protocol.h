@@ -402,9 +402,9 @@ public:
     void takeAnObjectOnMap();
 
     //shop
-    void getShopList(const uint32_t &shopId);
-    void buyObject(const uint32_t &shopId,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price);
-    void sellObject(const uint32_t &shopId,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price);
+    void getShopList(const uint16_t &shopId);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
+    void buyObject(const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
+    void sellObject(const uint16_t &shopId, const uint16_t &objectId, const uint32_t &quantity, const uint32_t &price);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
 
     //factory
     void getFactoryList(const uint16_t &factoryId);

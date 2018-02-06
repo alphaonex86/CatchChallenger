@@ -20,7 +20,7 @@ public:
     std::unordered_map<uint16_t,BotFight> botFights;
     uint16_t botFightsMaxId;
     std::unordered_map<uint16_t,Quest> quests;
-    std::unordered_map<uint32_t,Shop> shops;
+    std::unordered_map<uint16_t,Shop> shops;/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     std::vector<ServerSpecProfile> serverProfileList;
     std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;//to prevent send network packet for item when luck is 100%
     static CommonDatapackServerSpec commonDatapackServerSpec;

@@ -494,7 +494,8 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         if(stepBot->Attribute(std::string("type"))!=NULL && *stepBot->Attribute(std::string("type"))=="fight" && stepBot->Attribute(std::string("fightid"))!=NULL)
         {
             bool ok;
-            uint32_t fightid=stringtouint32(*stepBot->Attribute(std::string("fightid")),&ok);
+            //16Bit: \see CommonDatapackServerSpec, Map_to_send,struct Bot_Semi,uint16_t id
+            const uint16_t fightid=stringtouint16(*stepBot->Attribute(std::string("fightid")),&ok);
             if(ok)
             {
                 if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
@@ -547,10 +548,16 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                     }
                 }
                 else
-                    qDebug() << (QStringLiteral("No fightid %1 at MapController::loadBotOnTheMap").arg(fightid));
+                    qDebug() << QStringLiteral("No fightid %1 at MapController::loadBotOnTheMap").arg(fightid);
             }
+            else
+                qDebug() << QStringLiteral("fightid not a number: ") << QString::fromStdString(*stepBot->Attribute(std::string("fightid")));
         }
+        else
+            qDebug() << QStringLiteral("stepBot->Attribute(std::string(\"type\"))!=NULL && *stepBot->Attribute(std::string(\"type\"))==\"fight\" && stepBot->Attribute(std::string(\"fightid\"))!=NULL");
     }
+    /*else
+        qDebug() << QStringLiteral("parsedMap->logicalMap.bots.value(Qtpos).step.find(1)!=parsedMap->logicalMap.bots.value(Qtpos).step.cend()");*/
 }
 
 void MapController::setColor(const QColor &color, const uint32_t &timeInMS)

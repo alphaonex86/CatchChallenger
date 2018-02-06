@@ -214,6 +214,13 @@ bool CommonFightEngine::canDoRandomFight(const CommonMap &map,const uint8_t &x,c
     return true;
 }
 
+bool CommonFightEngine::haveBeatBot(const uint16_t &botFightId) const
+{
+    if(public_and_private_informations.bot_already_beaten==NULL)
+        abort();
+    return public_and_private_informations.bot_already_beaten[botFightId/8] & (1<<(7-botFightId%8));
+}
+
 void CommonFightEngine::updateCanDoFight()
 {
     if(isInBattle())
