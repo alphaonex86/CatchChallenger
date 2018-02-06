@@ -196,7 +196,7 @@ protected:
     //to keep client list, std::unordered_set because it will have lot of more disconnecion than server closing
     bool dataLoaded;
 
-    std::unordered_map<std::string/*file name*/,std::unordered_map<uint8_t/*bot id*/,CatchChallenger::Bot> > botFiles;
+    std::unordered_map<std::string/*file name*/,std::unordered_map<uint16_t/*bot id, \see CommonDatapackServerSpec, Map_to_send,struct Bot_Semi,uint16_t id, 16Bit*/,CatchChallenger::Bot> > botFiles;
     std::unordered_set<uint32_t> botIdLoaded;
     uint64_t timeDatapack;
     unsigned int dictionary_pointOnMap_maxId_item,dictionary_pointOnMap_maxId_plant;

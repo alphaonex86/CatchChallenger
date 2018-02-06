@@ -183,7 +183,7 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
     }
     //buffs
     if(ok)
-        ok=loadBuffBlock(GlobalServerData::serverPrivateVariables.db_common->value(11),playerMonster);
+        /*ok=ignore if just buff is buggy*/loadBuffBlock(GlobalServerData::serverPrivateVariables.db_common->value(11),playerMonster);
     //skills
     if(ok)
         ok=loadSkillBlock(GlobalServerData::serverPrivateVariables.db_common->value(12),playerMonster);
@@ -275,14 +275,14 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
                 if(CommonDatapack::commonDatapack.monsterBuffs.find(buff.buff)==CommonDatapack::commonDatapack.monsterBuffs.cend())
                 {
                     std::cerr << "buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(playerMonster.id)+" is not found into buff list" << std::endl;
-                    return false;
+                    ok=false;//just ignore
                 }
                 if(ok)
                 {
                     if(buff.level>CommonDatapack::commonDatapack.monsterBuffs.at(buff.buff).level.size())
                     {
                         std::cerr << "buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(playerMonster.id)+" have not the level: "+std::to_string(buff.level) << std::endl;
-                        return false;
+                        ok=false;//just ignore
                     }
                 }
                 if(ok)
@@ -291,7 +291,7 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
                     if(generalEffect.duration==Buff::Duration_ThisFight)
                     {
                         std::cerr << "buff "+std::to_string(buff.buff)+" for monsterId: "+std::to_string(playerMonster.id)+" can't be loaded from the db if is not permanent (generalEffect.duration==Buff::Duration_ThisFight): " << std::to_string(generalEffect.duration) << std::endl;
-                        return false;
+                        ok=false;//just ignore
                     }
                 }
                 if(ok)

@@ -912,7 +912,7 @@ void Api_protocol::takeAnObjectOnMap()
     packOutcommingData(0x18,NULL,0);
 }
 
-void Api_protocol::getShopList(const uint32_t &shopId)
+void Api_protocol::getShopList(const uint16_t &shopId)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
 {
     if(!is_logged)
     {
@@ -931,7 +931,7 @@ void Api_protocol::getShopList(const uint32_t &shopId)
     is_logged=character_selected=packOutcommingQuery(0x87,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::buyObject(const uint32_t &shopId,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price)
+void Api_protocol::buyObject(const uint16_t &shopId, const uint16_t &objectId, const uint32_t &quantity, const uint32_t &price)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
 {
     if(!is_logged)
     {
@@ -953,7 +953,7 @@ void Api_protocol::buyObject(const uint32_t &shopId,const uint32_t &objectId,con
     is_logged=character_selected=packOutcommingQuery(0x88,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::sellObject(const uint32_t &shopId,const uint32_t &objectId,const uint32_t &quantity,const uint32_t &price)
+void Api_protocol::sellObject(const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
 {
     if(!is_logged)
     {

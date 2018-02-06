@@ -228,13 +228,6 @@ void Client::fightFinished()
     CommonFightEngine::fightFinished();
 }
 
-bool Client::haveBeatBot(const uint16_t &botFightId) const
-{
-    if(public_and_private_informations.bot_already_beaten==NULL)
-        abort();
-    return public_and_private_informations.bot_already_beaten[botFightId/8] & (1<<(7-botFightId%8));
-}
-
 bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     if(isInFight())

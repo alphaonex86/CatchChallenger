@@ -82,6 +82,7 @@ public:
     virtual void hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue);
     virtual bool removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId);
     virtual bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
+    virtual bool haveBeatBot(const uint16_t &botFightId) const;
 protected:
     static ApplyOn invertApplyOn(const ApplyOn &applyOn);
     virtual PlayerMonster getRandomMonster(const std::vector<MapMonster> &monsterList,bool *ok);
