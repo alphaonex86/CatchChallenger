@@ -232,7 +232,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                                 return false;
                             }
-                            QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                            QByteArray rawText=data.mid(static_cast<int>(in.device()->pos()),pseudoSize);
                             public_informations.pseudo=std::string(rawText.data(),rawText.size());
                             in.device()->seek(in.device()->pos()+rawText.size());
                             if(public_informations.pseudo.empty())
@@ -798,12 +798,12 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, pseudoSize: %2, data: %3, line: %4")
                                   .arg(packetCode)
                                   .arg(textSize)
-                                  .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                  .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                   .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                   );
                     return false;
                 }
-                QByteArray rawText=data.mid(in.device()->pos(),textSize);
+                QByteArray rawText=data.mid(static_cast<int>(in.device()->pos()),textSize);
                 text=QString::fromUtf8(rawText.data(),rawText.size());
                 in.device()->seek(in.device()->pos()+rawText.size());
             }
@@ -821,12 +821,12 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, pseudoSize: %2, data: %3, line: %4")
                                       .arg(packetCode)
                                       .arg(pseudoSize)
-                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                      .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                       .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                       );
                         return false;
                     }
-                    QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                    QByteArray rawText=data.mid(static_cast<int>(in.device()->pos()),pseudoSize);
                     pseudo=QString::fromUtf8(rawText.data(),rawText.size());
                     in.device()->seek(in.device()->pos()+rawText.size());
                     if(pseudo.isEmpty())
@@ -1049,7 +1049,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                 return false;
             }
 
-            uint32_t sub_size32=in.device()->size()-in.device()->pos();
+            uint32_t sub_size32=static_cast<uint32_t>(in.device()->size()-in.device()->pos());
             uint32_t decompressedSize=0;
             if(ProtocolParsingBase::compressionTypeClient==CompressionType::None || packetCode==0x76)
             {
@@ -1063,7 +1063,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
             QDataStream in2(data2);
             in2.setVersion(QDataStream::Qt_4_4);in2.setByteOrder(QDataStream::LittleEndian);
 
-            //std::cout << QString(data.mid(0,in.device()->size()).toHex()).toStdString() << " " << QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__).toStdString() << std::endl;
+            //std::cout << QString(data.mid(0,static_cast<int>(in.device()->size())).toHex()).toStdString() << " " << QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__).toStdString() << std::endl;
 
             int index=0;
             while(index<fileListSize)
@@ -1083,13 +1083,13 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return false;
                     }
-                    QByteArray rawText=data2.mid(in2.device()->pos(),fileNameSize);
+                    QByteArray rawText=data2.mid(static_cast<int>(in2.device()->pos()),fileNameSize);
                     in2.device()->seek(in2.device()->pos()+rawText.size());
                     fileName=QString::fromUtf8(rawText.data(),rawText.size());
                 }
                 if(!extensionAllowed.contains(QFileInfo(fileName).suffix()))
                 {
-                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("extension not allowed: %4 with main ident: %1, line: %2, data: %3").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)).arg(QString(data.mid(0,in.device()->size()).toHex())).arg(QFileInfo(fileName).suffix()));
+                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("extension not allowed: %4 with main ident: %1, line: %2, data: %3").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)).arg(QString(data.mid(0,static_cast<int>(in.device()->size())).toHex())).arg(QFileInfo(fileName).suffix()));
                     if(!tolerantMode)
                         return false;
                 }
@@ -1105,7 +1105,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong file data size with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                     return false;
                 }
-                QByteArray dataFile=data2.mid(in2.device()->pos(),size);
+                QByteArray dataFile=data2.mid(static_cast<int>(in2.device()->pos()),static_cast<int>(size));
                 in2.device()->seek(in2.device()->pos()+size);
                 if(packetCode==0x76)
                     std::cout << "Raw file to create: ";
@@ -1175,7 +1175,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, line: %3").arg(packetCode).arg("X").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return false;
                     }
-                    QByteArray rawText=data.mid(in.device()->pos(),textSize);
+                    QByteArray rawText=data.mid(static_cast<int>(in.device()->pos()),textSize);
                     in.device()->seek(in.device()->pos()+rawText.size());
                     text=QString::fromUtf8(rawText.data(),rawText.size());
                 }
@@ -1220,12 +1220,12 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                                   .arg(packetCode)
                                   .arg("X")
                                   .arg(stringSize)
-                                  .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                  .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                   .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                   );
                     return false;
                 }
-                QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
+                QByteArray stringRaw=data.mid(static_cast<int>(in.device()->pos()),stringSize);
                 name=QString::fromUtf8(stringRaw.data(),stringRaw.size());
                 in.device()->seek(in.device()->pos()+stringRaw.size());
             }
@@ -1258,12 +1258,12 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                                   .arg(packetCode)
                                   .arg("X")
                                   .arg(stringSize)
-                                  .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                  .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                   .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                   );
                     return false;
                 }
-                QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
+                QByteArray stringRaw=data.mid(static_cast<int>(in.device()->pos()),stringSize);
                 name=QString::fromUtf8(stringRaw.data(),stringRaw.size());
                 in.device()->seek(in.device()->pos()+stringRaw.size());
             }
@@ -1335,7 +1335,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, data: %3, line: %4")
                                       .arg(packetCode)
                                       .arg("X")
-                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                      .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                       .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                       );
                         return false;
@@ -1349,7 +1349,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, data: %3, line: %4")
                                       .arg(packetCode)
                                       .arg("X")
-                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                      .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                       .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                       );
                         return false;
@@ -1365,7 +1365,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, data: %3, line: %4")
                                           .arg(packetCode)
                                           .arg("X")
-                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                           .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                           );
                             return false;
@@ -1380,12 +1380,12 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                                               .arg(packetCode)
                                               .arg("X")
                                               .arg(stringSize)
-                                              .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                              .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                               .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                               );
                                 return false;
                             }
-                            QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
+                            QByteArray stringRaw=data.mid(static_cast<int>(in.device()->pos()),stringSize);
                             server.host=QString::fromUtf8(stringRaw.data(),stringRaw.size());
                             in.device()->seek(in.device()->pos()+stringRaw.size());
                         }
@@ -1397,7 +1397,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, data: %3, line: %4")
                                           .arg(packetCode)
                                           .arg("X")
-                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                           .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                           );
                             return false;
@@ -1412,7 +1412,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, data: %3, line: %4")
                                       .arg(packetCode)
                                       .arg("X")
-                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                      .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                       .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                       );
                         return false;
@@ -1427,12 +1427,12 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                                           .arg(packetCode)
                                           .arg("X")
                                           .arg(stringSize)
-                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                           .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                           );
                             return false;
                         }
-                        QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
+                        QByteArray stringRaw=data.mid(static_cast<int>(in.device()->pos()),stringSize);
                         server.xml=QString::fromUtf8(stringRaw.data(),stringRaw.size());
                         in.device()->seek(in.device()->pos()+stringRaw.size());
                     }
@@ -1444,7 +1444,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, data: %3, line: %4")
                                       .arg(packetCode)
                                       .arg("X")
-                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                      .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                       .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                       );
                         return false;
@@ -1458,7 +1458,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, data: %3, line: %4")
                                       .arg(packetCode)
                                       .arg("X")
-                                      .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                      .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                       .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                       );
                         return false;
@@ -1476,7 +1476,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                     parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, data: %3, line: %4")
                                   .arg(packetCode)
                                   .arg("X")
-                                  .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                  .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                   .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                   );
                     return false;
@@ -1502,7 +1502,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                 ServerFromPoolForDisplay * tempVar=addLogicalServer(serverTempList.at(serverListIndex),language);
                 if(tempVar!=NULL)
                 {
-                    tempVar->serverOrdenedListIndex=serverOrdenedList.size();
+                    tempVar->serverOrdenedListIndex=static_cast<uint8_t>(serverOrdenedList.size());
                     serverOrdenedList << tempVar;
                 }
                 serverListIndex++;
@@ -1546,7 +1546,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, data: %3, line: %4")
                                           .arg(packetCode)
                                           .arg("X")
-                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                           .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                           );
                             return false;
@@ -1561,12 +1561,12 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                                               .arg(packetCode)
                                               .arg("X")
                                               .arg(pathSize)
-                                              .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                              .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                               .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                               );
                                 return false;
                             }
-                            QByteArray pathRaw=data.mid(in.device()->pos(),pathSize);
+                            QByteArray pathRaw=data.mid(static_cast<int>(in.device()->pos()),pathSize);
                             path=QString::fromUtf8(pathRaw.data(),pathRaw.size());
                             in.device()->seek(in.device()->pos()+pathRaw.size());
                         }
@@ -1577,7 +1577,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                             parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, data: %3, line: %4")
                                           .arg(packetCode)
                                           .arg("X")
-                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                           .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                           );
                             return false;
@@ -1592,12 +1592,12 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                                               .arg(packetCode)
                                               .arg("X")
                                               .arg(xmlSize)
-                                              .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                              .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                               .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                               );
                                 return false;
                             }
-                            QByteArray xmlRaw=data.mid(in.device()->pos(),xmlSize);
+                            QByteArray xmlRaw=data.mid(static_cast<int>(in.device()->pos()),xmlSize);
                             xml=QString::fromUtf8(xmlRaw.data(),xmlRaw.size());
                             in.device()->seek(in.device()->pos()+xmlRaw.size());
                         }
@@ -1847,12 +1847,12 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                                   .arg(packetCode)
                                   .arg("X")
                                   .arg(pseudoSize)
-                                  .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                  .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                   .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                   );
                     return false;
                 }
-                QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                QByteArray rawText=data.mid(static_cast<int>(in.device()->pos()),pseudoSize);
                 pseudo=QString::fromUtf8(rawText.data(),rawText.size());
                 in.device()->seek(in.device()->pos()+rawText.size());
                 if(pseudo.isEmpty())
@@ -2285,12 +2285,12 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                                   .arg(packetCode)
                                   .arg("X")
                                   .arg(pseudoSize)
-                                  .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                  .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                   .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                   );
                     return false;
                 }
-                QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+                QByteArray rawText=data.mid(static_cast<int>(in.device()->pos()),pseudoSize);
                 pseudo=QString::fromUtf8(rawText.data(),rawText.size());
                 in.device()->seek(in.device()->pos()+rawText.size());
                 if(pseudo.isEmpty())
@@ -2459,12 +2459,12 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                                           .arg(packetCode)
                                           .arg("X")
                                           .arg(stringSize)
-                                          .arg(QString(data.mid(in.device()->pos()).toHex()))
+                                          .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                                           .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                                           );
                             return false;
                         }
-                        QByteArray stringRaw=data.mid(in.device()->pos(),stringSize);
+                        QByteArray stringRaw=data.mid(static_cast<int>(in.device()->pos()),stringSize);
                         city=QString::fromUtf8(stringRaw.data(),stringRaw.size());
                         in.device()->seek(in.device()->pos()+stringRaw.size());
                     }
@@ -2557,8 +2557,8 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
     {
         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("remaining data: parseMessage(%1,%2 %3) line %4")
                       .arg(packetCode)
-                      .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                      .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                      .arg(QString(data.mid(0,static_cast<int>(in.device()->pos())).toHex()))
+                      .arg(QString(data.mid(static_cast<int>(in.device()->pos()),(in.device()->size()-in.device()->pos())).toHex()))
                       .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                       );
         return false;

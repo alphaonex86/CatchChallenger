@@ -46,9 +46,8 @@ std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPa
         std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
         std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
         std::sort(returnList.begin(),returnList.end());
-        int index=0;
-        const int &size=returnList.size();
-        while(index<size)
+        unsigned int index=0;
+        while(index<returnList.size())
         {
             const std::string &fileName=returnList.at(index);
             if(regex_search(fileName,datapack_rightFileName) && !regex_search(fileName,excludePath))
@@ -101,9 +100,8 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
     std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
     std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
     std::sort(returnList.begin(),returnList.end());
-    int index=0;
-    const int &size=returnList.size();
-    while(index<size)
+    unsigned int index=0;
+    while(index<returnList.size())
     {
         const std::string &fileName=returnList.at(index);
         if(regex_search(fileName,datapack_rightFileName) && !regex_search(fileName,excludePath))
@@ -154,9 +152,8 @@ std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPa
         std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
         std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
         std::sort(returnList.begin(),returnList.end());
-        int index=0;
-        const int &size=returnList.size();
-        while(index<size)
+        unsigned int index=0;
+        while(index<returnList.size())
         {
             const std::string &fileName=returnList.at(index);
             if(regex_search(fileName,datapack_rightFileName) && !regex_search(fileName,excludePath))
@@ -209,9 +206,8 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
     std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
     std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
     std::sort(returnList.begin(),returnList.end());
-    int index=0;
-    const int &size=returnList.size();
-    while(index<size)
+    unsigned int index=0;
+    while(index<returnList.size())
     {
         const std::string &fileName=returnList.at(index);
         if(regex_search(fileName,datapack_rightFileName) && !regex_search(fileName,excludePath))
@@ -260,9 +256,8 @@ std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPat
         std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
         std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
         std::sort(returnList.begin(),returnList.end());
-        int index=0;
-        const int &size=returnList.size();
-        while(index<size)
+        unsigned int index=0;
+        while(index<returnList.size())
         {
             const std::string &fileName=returnList.at(index);
             if(regex_search(fileName,datapack_rightFileName))
@@ -314,9 +309,8 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
     std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
     std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
     std::sort(returnList.begin(),returnList.end());
-    int index=0;
-    const int &size=returnList.size();
-    while(index<size)
+    unsigned int index=0;
+    while(index<returnList.size())
     {
         const std::string &fileName=returnList.at(index);
         if(regex_search(fileName,datapack_rightFileName))
