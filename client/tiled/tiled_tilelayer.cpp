@@ -194,10 +194,11 @@ void TileLayer::rotate(RotateDirection direction)
             const Cell &source = cellAt(x, y);
             Cell dest = source;
 
-            unsigned char mask =
+            unsigned char mask = static_cast<unsigned char>(
                     (dest.flippedHorizontally << 2) |
                     (dest.flippedVertically << 1) |
-                    (dest.flippedAntiDiagonally << 0);
+                    (dest.flippedAntiDiagonally << 0)
+                        );
 
             mask = rotateMask[mask];
 

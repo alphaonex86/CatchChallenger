@@ -335,9 +335,9 @@ void IsometricRenderer::drawMapObject(QPainter *painter,
             float th = map()->tileHeight();
             QPointF transformScale(1, 1);
             if (tw > th)
-                transformScale = QPointF(1, th/tw);
+                transformScale = QPointF(1, static_cast<qreal>(static_cast<double>(th))/static_cast<qreal>(static_cast<double>(tw)));
             else
-                transformScale = QPointF(tw/th, 1);
+                transformScale = QPointF(static_cast<qreal>(static_cast<double>(tw))/static_cast<qreal>(static_cast<double>(th)), 1);
 
             QPointF l1 = polygon.at(1) - polygon.at(0);
             QPointF l2 = polygon.at(3) - polygon.at(0);

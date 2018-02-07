@@ -101,7 +101,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     {
         Api_protocol::internalVersionDisplayed=true;
         #if defined(Q_CC_GNU)
-            qDebug() << QStringLiteral("GCC %1.%2.%3 build: ").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__)+__DATE__+" "+__TIME__;
+            qDebug() << QStringLiteral("GCC %1.%2.%3 build: ").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__);
         #else
             #if defined(__DATE__) && defined(__TIME__)
                 qDebug() << QStringLiteral("Unknown compiler: ")+__DATE__+" "+__TIME__;
@@ -114,7 +114,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
 
     {
         lastQueryNumber.reserve(16);
-        int index=1;
+        uint8_t index=1;
         while(index<16)
         {
             lastQueryNumber.push_back(index);
@@ -210,7 +210,7 @@ const Player_private_and_public_informations &Api_protocol::get_player_informati
 
 QString Api_protocol::getPseudo()
 {
-    return QString::fromUtf8(player_informations.public_informations.pseudo.data(),player_informations.public_informations.pseudo.size());
+    return QString::fromUtf8(player_informations.public_informations.pseudo.data(),static_cast<int>(player_informations.public_informations.pseudo.size()));
 }
 
 uint16_t Api_protocol::getId()
@@ -2264,7 +2264,11 @@ void Api_protocol::connectTheExternalSocketInternal()
                 return;
             }
             const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);
-            certFile.setFileName(datapackCert.absolutePath()+QStringLiteral("/")+serverFromPoolForDisplay.host+QStringLiteral("-")+serverFromPoolForDisplay.port);
+            certFile.setFileName(
+                        datapackCert.absolutePath()+QStringLiteral("/")+
+                                 serverFromPoolForDisplay.host+QStringLiteral("-")+
+                        QString::number(serverFromPoolForDisplay.port)
+                        );
         }
         else
         {
@@ -2497,7 +2501,7 @@ QByteArray Api_protocol::toUTF8WithHeader(const QString &text)
     data+=text.toUtf8();
     if(data.size()>255)
         return QByteArray();
-    data[0]=data.size()-1;
+    data[0]=static_cast<uint8_t>(data.size())-1;
     return data;
 }
 

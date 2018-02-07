@@ -216,10 +216,10 @@ protected:
     QList<TeleportQueryInformation> teleportList;
 
     //trade
-    QList<uint32_t> tradeRequestId;
+    QList<uint8_t> tradeRequestId;
     bool isInTrade;
     //battle
-    QList<uint32_t> battleRequestId;
+    QList<uint8_t> battleRequestId;
     bool isInBattle;
     QByteArray token;
     QByteArray passHash;
