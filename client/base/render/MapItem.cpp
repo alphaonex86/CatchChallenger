@@ -128,13 +128,13 @@ void MapItem::removeMap(Tiled::Map *map)
     displayed_layer.remove(map);
 }
 
-void MapItem::setMapPosition(Tiled::Map *map,int16_t x,int16_t y)
+void MapItem::setMapPosition(Tiled::Map *map, int16_t x/*pixel, need be 16Bits*/, int16_t y/*pixel, need be 16Bits*/)
 {
     QList<QGraphicsItem *> values = displayed_layer.values(map);
     int index=0;
     while(index<values.size())
     {
-        values.at(index)->setPos(x,y);
+        values.at(index)->setPos(static_cast<qreal>(static_cast<double>(x)),static_cast<qreal>(static_cast<double>(y)));
         index++;
     }
 }
