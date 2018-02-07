@@ -309,7 +309,7 @@ void MapWriterPrivate::writeTileset(QXmlStreamWriter &w, const Tileset *tileset,
             if (terrain != 0xFFFFFFFF)
                 w.writeAttribute(QStringLiteral("terrain"), makeTerrainAttribute(tile));
             if (probability != -1.f)
-                w.writeAttribute(QStringLiteral("probability"), QString::number(probability));
+                w.writeAttribute(QStringLiteral("probability"), QString::number(static_cast<double>(probability)));
             if (!properties.isEmpty())
                 writeProperties(w, properties);
             if (imageSource.isEmpty()) {
@@ -428,7 +428,7 @@ void MapWriterPrivate::writeLayerAttributes(QXmlStreamWriter &w,
                      QString::number(layer->height()));
     const int x = layer->x();
     const int y = layer->y();
-    const qreal opacity = layer->opacity();
+    const qreal opacity = static_cast<double>(layer->opacity());
     if (x != 0)
         w.writeAttribute(QStringLiteral("x"), QString::number(x));
     if (y != 0)
