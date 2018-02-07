@@ -1377,9 +1377,9 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             break;
         }
         if(all_map.contains(QString::fromStdString(map->map_file)))
-            if(all_map.value(QString::fromStdString(map->map_file))->doors.contains(QPair<uint8_t,uint8_t>(x,y)))
+            if(all_map.value(QString::fromStdString(map->map_file))->doors.contains(QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))))
             {
-                MapDoor* door=all_map.value(QString::fromStdString(map->map_file))->doors.value(QPair<uint8_t,uint8_t>(x,y));
+                MapDoor* door=all_map.value(QString::fromStdString(map->map_file))->doors.value(QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
                 door->startOpen(otherPlayer.playerSpeed);
                 otherPlayer.moveAnimationTimer->start(door->timeToOpen());
                 return;

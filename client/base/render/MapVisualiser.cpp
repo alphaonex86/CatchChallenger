@@ -182,7 +182,7 @@ void MapVisualiser::setTargetFPS(int targetFPS)
         waitRenderTime=0;
     else
     {
-        waitRenderTime=1000.0/(float)targetFPS;
+        waitRenderTime=static_cast<uint8_t>(static_cast<float>(1000.0)/(float)targetFPS);
         if(waitRenderTime<1)
             waitRenderTime=1;
     }

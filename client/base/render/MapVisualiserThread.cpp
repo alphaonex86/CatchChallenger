@@ -384,7 +384,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                         objectOver->setPosition(QPointF(x,y+1));
                                     }
                                     //register on map
-                                    tempMapObject->triggerAnimations[QPair<uint8_t,uint8_t>(x,y)]=new TriggerAnimation(
+                                    tempMapObject->triggerAnimations[QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))]=new TriggerAnimation(
                                                 object,
                                                 objectOver,
                                                 content.framesCountEnter,content.msEnter,
@@ -476,7 +476,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                                     objectOver->setPosition(QPointF(x,y+1));
                                                 }
                                                 //register on map
-                                                tempMapObject->triggerAnimations[QPair<uint8_t,uint8_t>(x,y)]=new TriggerAnimation(
+                                                tempMapObject->triggerAnimations[QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))]=new TriggerAnimation(
                                                             object,
                                                             objectOver,
                                                             content.framesCountEnter,content.msEnter,
@@ -630,7 +630,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                         #ifdef DEBUG_CLIENT_BOT
                                                         qDebug() << (QStringLiteral("Put bot %1 (%2) at %3 (%4,%5)").arg(botFile).arg(botId).arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
                                                         #endif
-                                                        CatchChallenger::Bot &bot=parsedMap->logicalMap.bots[QPair<uint8_t,uint8_t>(x,y)];
+                                                        CatchChallenger::Bot &bot=parsedMap->logicalMap.bots[QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
                                                         bot=botFiles.value(botFile).value(botId);
                                                         property_parsed.erase("file");
                                                         property_parsed.erase("id");
@@ -719,7 +719,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                                     .arg(bot.lineNumber())
                                                                     );
                                                         /// \warn show something to continue to block the path
-                                                        CatchChallenger::Bot &bot=parsedMap->logicalMap.bots[QPair<uint8_t,uint8_t>(x,y)];
+                                                        CatchChallenger::Bot &bot=parsedMap->logicalMap.bots[QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
                                                         bot=botFiles.value(botFile).value(botId);
                                                         property_parsed.erase("file");
                                                         property_parsed.erase("id");
