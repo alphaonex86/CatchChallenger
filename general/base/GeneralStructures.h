@@ -205,7 +205,7 @@ struct LayersOptions
 
 struct IndustryLink
 {
-    uint32_t industry;
+    uint16_t industry;
     struct Requirements
     {
         std::vector<ReputationRequirements> reputation;
@@ -416,7 +416,7 @@ struct CharacterEntry
     uint8_t skinId;
     uint32_t delete_time_left;
     uint32_t played_time;
-    uint32_t last_connect;
+    uint64_t last_connect;
 };
 
 /* map related */
@@ -452,7 +452,11 @@ enum MapConditionType : uint8_t
 struct MapCondition
 {
     MapConditionType type;
-    uint32_t value;
+    union Data {
+       uint16_t quest;
+       uint16_t item;
+       uint16_t fightBot;
+    } data;
 };
 
 struct MapMonster
@@ -700,8 +704,11 @@ struct Monster
     struct Evolution
     {
         EvolutionType type;
-        int32_t level;
-        uint32_t evolveTo;
+        union Data {
+           int8_t level;
+           uint16_t item;
+        } data;
+        uint16_t evolveTo;
     };
 
     std::vector<uint8_t> type;

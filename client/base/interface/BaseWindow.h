@@ -57,7 +57,7 @@ public:
     void serverIsReady();
     QString lastLocation() const;
     std::unordered_map<uint16_t, PlayerQuest> getQuests() const;
-    uint8_t getActualBotId() const;
+    uint16_t getActualBotId() const;
     bool haveNextStepQuestRequirements(const Quest &quest) const;
     bool haveStartQuestRequirement(const Quest &quest) const;
     enum ObjectType
@@ -166,7 +166,7 @@ private slots:
     void loadSettings();
     void loadSettingsWithDatapack();
     void updateTheWareHouseContent();
-    QListWidgetItem * itemToGraphic(const uint32_t &id, const uint32_t &quantity);
+    QListWidgetItem * itemToGraphic(const uint16_t &itemid, const uint32_t &quantity);
     //player
     void logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CharacterEntry> > &characterEntryList);
     void updatePlayerImage();
@@ -175,13 +175,13 @@ private slots:
     void sendDatapackContentMainSub();
     void have_main_and_sub_datapack_loaded();
     void have_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
-    void add_to_inventory(const uint32_t &item,const uint32_t &quantity=1,const bool &showGain=true);
+    void add_to_inventory(const uint16_t &item, const uint32_t &quantity=1, const bool &showGain=true);
     void add_to_inventory(const QList<QPair<uint16_t,uint32_t> > &items,const bool &showGain=true);
     void add_to_inventory(const QHash<uint16_t,uint32_t> &items, const bool &showGain=true);
     void add_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
     void remove_to_inventory(const QHash<uint16_t,uint32_t> &items);
     void remove_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
-    void remove_to_inventory(const uint32_t &itemId,const uint32_t &quantity=1);
+    void remove_to_inventory(const uint16_t &itemId, const uint32_t &quantity=1);
     void load_inventory();
     void load_plant_inventory();
     void load_crafting_inventory();
@@ -238,7 +238,7 @@ private slots:
     //inventory
     void on_inventory_itemActivated(QListWidgetItem *item);
     void objectUsed(const ObjectUsage &objectUsage);
-    uint32_t itemQuantity(const uint32_t &itemId) const;
+    uint32_t itemQuantity(const uint16_t &itemId) const;
     //trade
     void tradeRequested(const QString &pseudo, const uint8_t &skinInt);
     void tradeAcceptedByOther(const QString &pseudo,const uint8_t &skinInt);
@@ -341,7 +341,7 @@ private slots:
     bool nextStepQuest(const Quest &quest);
     bool startQuest(const Quest &quest);
     bool botHaveQuest(const uint16_t &botId) const;
-    QList<QPair<uint32_t,QString> > getQuestList(const uint16_t &botId) const;
+    QList<QPair<uint16_t, QString> > getQuestList(const uint16_t &botId) const;
     void updateDisplayedQuests();
     void appendReputationPoint(const QString &type,const int32_t &point);
 
@@ -370,7 +370,7 @@ private slots:
     void marketPut(const bool &success);
     void marketGetCash(const uint64_t &cash);
     void marketWithdrawCanceled();
-    void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity);
+    void marketWithdrawObject(const uint16_t &objectId, const uint32_t &quantity);
     void marketWithdrawMonster(const PlayerMonster &playerMonster);
 
     //autoconnect
@@ -507,7 +507,7 @@ private:
     QList<ActionClan> actionClan;
     QString clanName;
     bool haveClanInformations;
-    uint32_t factoryId;
+    uint16_t factoryId;
     IndustryStatus industryStatus;
     bool factoryInProduction;
     ObjectType waitedObjectType;
@@ -557,7 +557,7 @@ private:
     //plant seed in waiting
     struct SeedInWaiting
     {
-        uint32_t seedItemId;
+        uint16_t seedItemId;
         uint8_t x,y;
         QString map;
     };
@@ -586,7 +586,7 @@ private:
     uint32_t fightId;
 
     //market buy
-    QList<QPair<uint32_t,uint32_t> > marketBuyObjectList;
+    QList<QPair<uint16_t,uint32_t> > marketBuyObjectList;
     uint32_t marketBuyCashInSuspend;
     bool marketBuyInSuspend;
     //market put
@@ -602,20 +602,20 @@ private:
 
     //player items
     QHash<uint16_t,int32_t> change_warehouse_items;//negative = deposite, positive = withdraw
-    QHash<QListWidgetItem *,uint32_t> items_graphical;
-    QHash<uint32_t,QListWidgetItem *> items_to_graphical;
-    QHash<QListWidgetItem *,uint32_t> shop_items_graphical;
-    QHash<uint32_t,QListWidgetItem *> shop_items_to_graphical;
-    QHash<QListWidgetItem *,uint32_t> plants_items_graphical;
-    QHash<uint32_t,QListWidgetItem *> plants_items_to_graphical;
-    QHash<QListWidgetItem *,uint32_t> crafting_recipes_items_graphical;
-    QHash<uint32_t,QListWidgetItem *> crafting_recipes_items_to_graphical;
-    QHash<QListWidgetItem *,uint32_t> fight_attacks_graphical;
-    QHash<QListWidgetItem *,uint8_t> monsters_items_graphical;
-    QHash<QListWidgetItem *,uint32_t> attack_to_learn_graphical;
-    QHash<QListWidgetItem *,uint32_t> quests_to_id_graphical;
+    QHash<QListWidgetItem *,uint16_t> items_graphical;
+    QHash<uint16_t,QListWidgetItem *> items_to_graphical;
+    QHash<QListWidgetItem *,uint16_t> shop_items_graphical;
+    QHash<uint16_t,QListWidgetItem *> shop_items_to_graphical;
+    QHash<QListWidgetItem *,uint8_t> plants_items_graphical;
+    QHash<uint8_t,QListWidgetItem *> plants_items_to_graphical;
+    QHash<QListWidgetItem *,uint16_t> crafting_recipes_items_graphical;
+    QHash<uint16_t,QListWidgetItem *> crafting_recipes_items_to_graphical;
+    QHash<QListWidgetItem *,uint16_t> fight_attacks_graphical;
+    QHash<QListWidgetItem *,uint8_t> monsterspos_items_graphical;
+    QHash<QListWidgetItem *,uint16_t> attack_to_learn_graphical;
+    QHash<QListWidgetItem *,uint16_t> quests_to_id_graphical;
     bool inSelection;
-    QList<uint32_t> objectInUsing;
+    QList<uint16_t> objectInUsing;
     QList<uint32_t> monster_to_deposit,monster_to_withdraw;
 
     //crafting

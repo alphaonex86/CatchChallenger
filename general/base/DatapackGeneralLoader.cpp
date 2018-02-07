@@ -813,7 +813,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                 {
                                     if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(sprouted))
                                     {
-                                        plant.sprouted_seconds=stringtouint32(sprouted->GetText(),&ok2)*60;
+                                        plant.sprouted_seconds=stringtouint16(sprouted->GetText(),&ok2)*60;
                                         if(!ok2)
                                         {
                                             std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not a number: " << sprouted->GetText() << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << sprouted->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(sprouted) << ")" << std::endl;
@@ -830,7 +830,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                 {
                                     if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(taller))
                                     {
-                                        plant.taller_seconds=stringtouint32(taller->GetText(),&ok2)*60;
+                                        plant.taller_seconds=stringtouint16(taller->GetText(),&ok2)*60;
                                         if(!ok2)
                                         {
                                             std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not a number: " << taller->GetText() << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << taller->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(taller) << ")" << std::endl;

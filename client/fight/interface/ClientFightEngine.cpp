@@ -613,7 +613,7 @@ void ClientFightEngine::levelUp(const uint8_t &level, const uint8_t &monsterInde
     while(index<monsterInformations.evolutions.size())
     {
         const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
-        if(evolution.type==Monster::EvolutionType_Level && evolution.level==level)//the current monster is not updated
+        if(evolution.type==Monster::EvolutionType_Level && evolution.data.level==level)//the current monster is not updated
         {
             mEvolutionByLevelUp << monsterIndex;
             return;

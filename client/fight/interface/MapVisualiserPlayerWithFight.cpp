@@ -117,7 +117,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
             unsigned int index=0;
             while(index<botFightList.size())
             {
-                const uint32_t &fightId=botFightList.at(index);
+                const uint16_t &fightId=botFightList.at(index);
                 if(!haveBeatBot(fightId))
                 {
                     qDebug() <<  "is now in fight with: " << fightId;
@@ -140,7 +140,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
                                 fightCollisionBot->loadFromImage(QImage(QStringLiteral(":/images/fightCollisionBot.png")),QStringLiteral(":/images/fightCollisionBot.png"));
                             }
                         }
-                        temporaryTile->startAnimation(fightCollisionBot->tileAt(0),150,fightCollisionBot->tileCount());
+                        temporaryTile->startAnimation(fightCollisionBot->tileAt(0),150,static_cast<uint8_t>(fightCollisionBot->tileCount()));
                     }
                     else
                         qDebug() <<  "temporaryTile not found";
@@ -212,7 +212,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                     case CatchChallenger::MapConditionType_Clan://not do for now
                     break;
                     case CatchChallenger::MapConditionType_FightBot:
-                        if(!haveBeatBot(teleporter.condition.value))
+                        if(!haveBeatBot(teleporter.condition.data.fightBot))
                         {
                             if(!map_client.teleport_condition_texts.at(index).isEmpty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
@@ -222,7 +222,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                     case CatchChallenger::MapConditionType_Item:
                         if(items==NULL)
                             break;
-                        if(items->find(teleporter.condition.value)==items->cend())
+                        if(items->find(teleporter.condition.data.item)==items->cend())
                         {
                             if(!map_client.teleport_condition_texts.at(index).isEmpty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
@@ -232,13 +232,13 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                     case CatchChallenger::MapConditionType_Quest:
                         if(quests==NULL)
                             break;
-                        if(quests->find(teleporter.condition.value)==quests->cend())
+                        if(quests->find(teleporter.condition.data.quest)==quests->cend())
                         {
                             if(!map_client.teleport_condition_texts.at(index).isEmpty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
                             return false;
                         }
-                        if(!quests->at(teleporter.condition.value).finish_one_time)
+                        if(!quests->at(teleporter.condition.data.quest).finish_one_time)
                         {
                             if(!map_client.teleport_condition_texts.at(index).isEmpty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));

@@ -71,8 +71,8 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
         case ObjectType_ItemOnMonster:
         case ObjectType_ItemOnMonsterOutOfFight:
         {
-            const uint8_t monsterPosition=itemId;
-            const uint32_t item=objectInUsing.last();
+            const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
+            const uint16_t item=objectInUsing.last();
             objectInUsing.removeLast();
             if(!ok)
             {
@@ -260,7 +260,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             if(!ok)
                 return;
             ui->stackedWidget->setCurrentWidget(ui->page_learn);
-            monsterPositionToLearn=itemId;
+            monsterPositionToLearn=static_cast<uint8_t>(itemId);
             if(!showLearnSkillByPosition(monsterPositionToLearn))
             {
                 newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Unable to load the right monster");
@@ -278,16 +278,17 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 return;
             resetPosition(true,false,true);
             //do copie here because the call of changeOfMonsterInFight apply the skill/buff effect
-            const PlayerMonster *tempMonster=fightEngine.monsterByPosition(itemId);
+            const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
+            const PlayerMonster *tempMonster=fightEngine.monsterByPosition(monsterPosition);
             if(tempMonster==NULL)
             {
                 qDebug() << "Monster not found";
                 return;
             }
             PlayerMonster copiedMonster=*tempMonster;
-            if(!fightEngine.changeOfMonsterInFight(itemId))
+            if(!fightEngine.changeOfMonsterInFight(monsterPosition))
                 return;
-            client->changeOfMonsterInFightByPosition(itemId);
+            client->changeOfMonsterInFightByPosition(monsterPosition);
             PlayerMonster * playerMonster=fightEngine.getCurrentMonster();
             init_current_monster_display(&copiedMonster);
             ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
@@ -321,7 +322,8 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
                 break;
             }
-            if(!fightEngine.remainMonstersToFightWithoutThisMonster(itemId))
+            const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
+            if(!fightEngine.remainMonstersToFightWithoutThisMonster(monsterPosition))
             {
                 QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
                 break;
@@ -331,7 +333,6 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             getPrice.exec();
             if(!getPrice.isOK())
                 break;
-            const uint8_t monsterPosition=itemId;
             marketPutMonsterList << playerMonster.at(monsterPosition);
             marketPutMonsterPlaceList << monsterPosition;
             fightEngine.removeMonsterByPosition(monsterPosition);
@@ -343,10 +344,11 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
         {
             ui->inventoryUse->setText(tr("Select"));
             load_monsters();
+            const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
             if(waitedObjectType==ObjectType_MonsterToLearn)
             {
                 ui->stackedWidget->setCurrentWidget(ui->page_learn);
-                monsterPositionToLearn=itemId;
+                monsterPositionToLearn=monsterPosition;
                 return;
             }
             ui->stackedWidget->setCurrentWidget(ui->page_trade);
@@ -358,13 +360,12 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
                 break;
             }
-            if(!fightEngine.remainMonstersToFightWithoutThisMonster(itemId))
+            if(!fightEngine.remainMonstersToFightWithoutThisMonster(monsterPosition))
             {
                 QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
                 break;
             }
             //get the right monster
-            const uint8_t monsterPosition=itemId;
             tradeCurrentMonstersPosition << monsterPosition;
             tradeCurrentMonsters << playerMonster.at(monsterPosition);
             fightEngine.removeMonsterByPosition(monsterPosition);
@@ -418,7 +419,10 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
 
             const SeedInWaiting seedInWaiting=seed_in_waiting.last();
             seed_in_waiting.last().seedItemId=itemId;
-            insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plantId,CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds);
+            insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,
+                         seedInWaiting.x,seedInWaiting.y,plantId,
+                         static_cast<uint16_t>(CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds)
+                         );
             addQuery(QueryType_Seed);
             load_plant_inventory();
             load_inventory();
@@ -427,7 +431,10 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
             {
                 client->seed_planted(true);
-                client->insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,seedInWaiting.x,seedInWaiting.y,plantId,CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds);
+                client->insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,
+                                     seedInWaiting.x,seedInWaiting.y,plantId,
+                                     static_cast<uint16_t>(CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds)
+                                     );
             }
         }
         break;
@@ -505,7 +512,7 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
         qDebug() << "BaseWindow::on_inventory_itemActivated(): activated item not found";
         return;
     }
-    const uint32_t &itemId=items_graphical.value(item);
+    const uint16_t &itemId=items_graphical.value(item);
     if(inSelection)
     {
         uint32_t tempQuantitySelected;
@@ -539,7 +546,7 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
             objectSelection(false);
             return;
         }
-        uint32_t objectItem=itemId;
+        uint16_t objectItem=itemId;
         objectSelection(true,objectItem,tempQuantitySelected);
         return;
     }

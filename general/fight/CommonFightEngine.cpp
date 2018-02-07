@@ -792,7 +792,7 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const uint8_t &numberO
         errorFightEngine("Monster is already at the level max into addLevel()");
         return false;
     }
-    int monsterIndex=0;
+    uint8_t monsterIndex=0;
     const int &monsterListSize=public_and_private_informations.playerMonster.size();
     while(monsterIndex<monsterListSize)
     {

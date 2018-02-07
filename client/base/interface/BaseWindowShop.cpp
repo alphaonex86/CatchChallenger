@@ -27,7 +27,9 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
         bool ok=true;
         ItemToSellOrBuy itemToSellOrBuy;
         if(playerInformations.cash/itemsIntoTheShop.value(shop_items_graphical.value(item)).price>1)
-            itemToSellOrBuy.quantity=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,playerInformations.cash/itemsIntoTheShop.value(shop_items_graphical.value(item)).price,1,&ok);
+            itemToSellOrBuy.quantity=QInputDialog::getInt(this,tr("Buy"),tr("Quantity to buy"),1,1,
+                                                          static_cast<uint32_t>(playerInformations.cash/
+                                                                                itemsIntoTheShop.value(shop_items_graphical.value(item)).price),1,&ok);
         else
             itemToSellOrBuy.quantity=1;
         if(!ok)

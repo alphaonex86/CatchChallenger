@@ -30,7 +30,7 @@ public:
     struct ItemOnMapForClient
     {
         Tiled::MapObject* tileObject;
-        uint32_t item;
+        uint16_t item;
         bool infinite;
         uint8_t indexOfItemOnMap;//to see if the player have get it
     };
