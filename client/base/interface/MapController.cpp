@@ -232,7 +232,7 @@ bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchCha
         return false;
     CatchChallenger::CommonMap *new_map=&map;
     CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
-    if(all_map.value(QString::fromStdString(new_map->map_file))->logicalMap.bots.contains(QPair<uint8_t,uint8_t>(x,y)))
+    if(all_map.value(QString::fromStdString(new_map->map_file))->logicalMap.bots.contains(QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))))
         return false;
     return true;
 }
@@ -247,15 +247,15 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         return;
     }
 
-    if(parsedMap->logicalMap.botsDisplay.contains(QPair<uint8_t,uint8_t>(x,y)))
+    if(parsedMap->logicalMap.botsDisplay.contains(QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))))
     {
-        /*CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<uint8_t,uint8_t>(x,y)];
+        /*CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
         ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(botDisplay->mapObject);
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         botDisplay->mapObject->setPosition(QPoint(x,y+1));
         MapObjectItem::objectLink.value(botDisplay->mapObject)->setZValue(y);*/
 
-        std::cerr << "MapController::loadBotOnTheMap() parsedMap->logicalMap.botsDisplay.contains(QPair<uint8_t,uint8_t>(x,y))" << std::endl;
+        std::cerr << "MapController::loadBotOnTheMap() parsedMap->logicalMap.botsDisplay.contains(QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))" << std::endl;
         return;
     }
 
@@ -264,7 +264,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         qDebug() << QStringLiteral("loadBotOnTheMap(), ObjectGroupItem::objectGroupLink not contains parsedMap->objectGroup");
         return;
     }
-    CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<uint8_t,uint8_t>(x,y)];
+    CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
     botDisplay->botMove=CatchChallenger::BotMove::BotMove_Fixed;
     CatchChallenger::Direction direction;
     int baseTile=-1;

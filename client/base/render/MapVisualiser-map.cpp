@@ -127,7 +127,11 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
         //display a new map now visible
         if(!mapItem->haveMap(tempMapObject->tiledMap))
             mapItem->addMap(tempMapObject,tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
-        mapItem->setMapPosition(tempMapObject->tiledMap,tempMapObject->relative_x_pixel,tempMapObject->relative_y_pixel);
+        mapItem->setMapPosition(
+                    tempMapObject->tiledMap,
+                                static_cast<uint16_t>(tempMapObject->relative_x_pixel),
+                                static_cast<uint16_t>(tempMapObject->relative_y_pixel)
+                                );
         emit mapDisplayed(QString::fromStdString(tempMapObject->logicalMap.map_file));
         //display the bot
         QHashIterator<QPair<uint8_t,uint8_t>,CatchChallenger::Bot> i(tempMapObject->logicalMap.bots);
