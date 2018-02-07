@@ -347,7 +347,9 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         new_tp.source_x=object_x;
                                         new_tp.source_y=object_y;
                                         new_tp.condition.type=MapConditionType_None;
-                                        new_tp.condition.value=0;
+                                        new_tp.condition.data.fightBot=0;
+                                        new_tp.condition.data.item=0;
+                                        new_tp.condition.data.quest=0;
                                         new_tp.conditionUnparsed=NULL;
                                         new_tp.destination_x = stringtouint8(property_text.at(CACHEDSTRING_x),&ok);
                                         if(ok)
@@ -1533,7 +1535,9 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
     bool ok;
     MapCondition condition;
     condition.type=MapConditionType_None;
-    condition.value=0;
+    condition.data.fightBot=0;
+    condition.data.item=0;
+    condition.data.quest=0;
     if(conditionContent==NULL)
         return condition;
     const auto * const conditionContentTypeChar=conditionContent->Attribute(XMLCACHEDSTRING_type);
@@ -1546,7 +1550,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             std::cerr << "\"condition\" balise have type=quest but quest attribute not found, item, clan or fightBot (" << conditionFile << " at " << CATCHCHALLENGER_XMLELENTATLINE(conditionContent) << ")" << std::endl;
         else
         {
-            const uint32_t &quest=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(conditionContent->Attribute(XMLCACHEDSTRING_quest)),&ok);
+            const uint16_t &quest=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(conditionContent->Attribute(XMLCACHEDSTRING_quest)),&ok);
             if(!ok)
                 std::cerr << "\"condition\" balise have type=quest but quest attribute is not a number, item, clan or fightBot (" << conditionFile << " at " << CATCHCHALLENGER_XMLELENTATLINE(conditionContent) << ")" << std::endl;
             else if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(quest)==CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
@@ -1554,7 +1558,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             else
             {
                 condition.type=MapConditionType_Quest;
-                condition.value=quest;
+                condition.data.quest=quest;
             }
         }
     }
@@ -1564,7 +1568,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             std::cerr << "\"condition\" balise have type=item but item attribute not found, item, clan or fightBot (" << conditionFile << " at " << CATCHCHALLENGER_XMLELENTATLINE(conditionContent) << ")" << std::endl;
         else
         {
-            const uint32_t &item=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(conditionContent->Attribute(XMLCACHEDSTRING_item)),&ok);
+            const uint16_t &item=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(conditionContent->Attribute(XMLCACHEDSTRING_item)),&ok);
             if(!ok)
                 std::cerr << "\"condition\" balise have type=item but item attribute is not a number, item, clan or fightBot (" << conditionFile << " at " << CATCHCHALLENGER_XMLELENTATLINE(conditionContent) << ")" << std::endl;
             else if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
@@ -1572,7 +1576,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             else
             {
                 condition.type=MapConditionType_Item;
-                condition.value=item;
+                condition.data.item=item;
             }
         }
     }
@@ -1582,7 +1586,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             std::cerr << "\"condition\" balise have type=fightBot but fightBot attribute not found, item, clan or fightBot (" << conditionFile << " at " << CATCHCHALLENGER_XMLELENTATLINE(conditionContent) << ")" << std::endl;
         else
         {
-            const uint32_t &fightBot=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(conditionContent->Attribute(XMLCACHEDSTRING_fightBot)),&ok);
+            const uint16_t &fightBot=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(conditionContent->Attribute(XMLCACHEDSTRING_fightBot)),&ok);
             if(!ok)
                 std::cerr << "\"condition\" balise have type=fightBot but fightBot attribute is not a number, item, clan or fightBot (" << conditionFile << " at " << CATCHCHALLENGER_XMLELENTATLINE(conditionContent) << ")" << std::endl;
             else if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightBot)==CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
@@ -1590,7 +1594,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             else
             {
                 condition.type=MapConditionType_FightBot;
-                condition.value=fightBot;
+                condition.data.fightBot=fightBot;
             }
         }
     }

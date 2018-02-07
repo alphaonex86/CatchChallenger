@@ -18,11 +18,11 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
     qDebug() << "check bot quest for: " << botId;
     #endif
     //do the not started quest here
-    QList<uint32_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
+    const QList<uint16_t> &botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
     int index=0;
     while(index<botQuests.size())
     {
-        const uint32_t &questId=botQuests.at(index);
+        const uint16_t &questId=botQuests.at(index);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";
@@ -62,7 +62,7 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
                 }
                 else
                 {
-                    auto bots=currentQuest.steps.at(playerInformations.quests.at(questId).step-1).bots;
+                    const std::vector<uint16_t> &bots=currentQuest.steps.at(playerInformations.quests.at(questId).step-1).bots;
                     if(vectorcontainsAtLeastOne(bots,botId))
                         return true;//in progress
                     else
@@ -144,7 +144,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             return;
         }
         bool ok;
-        shopId=stringtouint32(*actualBot.step.at(step)->Attribute(std::string("shop")),&ok);
+        shopId=stringtouint16(*actualBot.step.at(step)->Attribute(std::string("shop")),&ok);
         if(!ok)
         {
             showTip(tr("Shop called but wrong id"));
@@ -206,7 +206,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             return;
         }
         bool ok;
-        shopId=stringtouint32(*actualBot.step.at(step)->Attribute(std::string("shop")),&ok);
+        shopId=stringtouint16(*actualBot.step.at(step)->Attribute(std::string("shop")),&ok);
         if(!ok)
         {
             showTip(tr("Shop called but wrong id"));
@@ -245,12 +245,12 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="quests")
     {
         QString textToShow;
-        const QList<QPair<uint32_t,QString> > &quests=BaseWindow::getQuestList(actualBot.botId);
+        const QList<QPair<uint16_t,QString> > &quests=BaseWindow::getQuestList(actualBot.botId);
         if(step==1)
         {
             if(quests.size()==1)
             {
-                const QPair<uint32_t,QString> &quest=quests.at(0);
+                const QPair<uint16_t,QString> &quest=quests.at(0);
                 if(DatapackClientLoader::datapackLoader.questsExtra.value(quest.first).autostep)
                 {
                     on_IG_dialog_text_linkActivated(QString("quest_%1").arg(quest.first));
@@ -358,7 +358,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         }
 
         bool ok;
-        factoryId=stringtouint32(*actualBot.step.at(step)->Attribute(std::string("industry")),&ok);
+        factoryId=stringtouint16(*actualBot.step.at(step)->Attribute(std::string("industry")),&ok);
         if(!ok)
         {
             showTip(tr("Industry called but wrong id"));
@@ -475,7 +475,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             return;
         }
         bool ok;
-        uint32_t fightId=stringtouint32(*actualBot.step.at(step)->Attribute(std::string("fightid")),&ok);
+        const uint16_t &fightId=stringtouint16(*actualBot.step.at(step)->Attribute(std::string("fightid")),&ok);
         if(!ok)
         {
             showTip(tr("Bot step wrong data type error, repport this error please"));
@@ -755,7 +755,7 @@ bool BaseWindow::haveNextStepQuestRequirements(const CatchChallenger::Quest &que
     index=0;
     while(index<requirements.fightId.size())
     {
-        const uint32_t &fightId=requirements.fightId.at(index);
+        const uint16_t &fightId=requirements.fightId.at(index);
         if(!mapController->haveBeatBot(fightId))
         {
             #ifdef DEBUG_CLIENT_QUEST
@@ -848,7 +848,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
         {
             QString tempLink=link;
             tempLink.remove("quest_");
-            uint32_t questId=tempLink.toUShort(&ok);
+            const uint16_t &questId=tempLink.toUShort(&ok);
             if(!ok)
             {
                 showTip(QStringLiteral("Unable to open the link: %1").arg(link));
@@ -909,7 +909,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
             index++;
             continue;
         }
-        uint8_t step=link.toUShort(&ok);
+        uint8_t step=static_cast<uint8_t>(link.toUShort(&ok));
         if(!ok)
         {
             showTip(QStringLiteral("Unable to open the link: %1").arg(link));
@@ -940,17 +940,17 @@ bool BaseWindow::startQuest(const Quest &quest)
     return true;
 }
 
-QList<QPair<uint32_t,QString> > BaseWindow::getQuestList(const uint16_t &botId) const
+QList<QPair<uint16_t,QString> > BaseWindow::getQuestList(const uint16_t &botId) const
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    QList<QPair<uint32_t,QString> > entryList;
-    QPair<uint32_t,QString> oneEntry;
+    QList<QPair<uint16_t,QString> > entryList;
+    QPair<uint16_t,QString> oneEntry;
     //do the not started quest here
-    QList<uint32_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
+    QList<uint16_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
     int index=0;
     while(index<botQuests.size())
     {
-        const uint32_t &questId=botQuests.at(index);
+        const uint16_t &questId=botQuests.at(index);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(questId!=botQuests.at(index))
             qDebug() << "cast error for questId at BaseWindow::getQuestList()";

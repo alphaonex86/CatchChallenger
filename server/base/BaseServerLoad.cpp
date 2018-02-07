@@ -206,9 +206,8 @@ bool BaseServer::preload_the_city_capture()
 void BaseServer::preload_the_skin()
 {
     std::vector<std::string> skinFolderList=FacilityLibGeneral::skinIdList(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
-    int index=0;
-    const int &listsize=skinFolderList.size();
-    while(index<listsize)
+    unsigned int index=0;
+    while(index<skinFolderList.size())
     {
         GlobalServerData::serverPrivateVariables.skinList[skinFolderList.at(index)]=index;
         index++;

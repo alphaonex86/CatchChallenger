@@ -71,7 +71,9 @@ void BaseWindow::newProfileFinished()
     }
     characterEntry.charactersGroupIndex=nameGame.monsterGroupId();
     characterEntry.skinId=nameGame.skinId();
-    client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,profileIndex,QString::fromStdString(characterEntry.pseudo),characterEntry.charactersGroupIndex,characterEntry.skinId);
+    client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,
+                         static_cast<uint8_t>(profileIndex),QString::fromStdString(characterEntry.pseudo),
+                         characterEntry.charactersGroupIndex,characterEntry.skinId);
     characterEntryListInWaiting << characterEntry;
     if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
         ui->character_add->setEnabled(false);
@@ -210,7 +212,7 @@ void BaseWindow::updateServerList()
             else
             {
                 serverByCharacterGroup[server.charactersGroupIndex].first=1;
-                serverByCharacterGroup[server.charactersGroupIndex].second=serverByCharacterGroupTempIndexToDisplay;
+                serverByCharacterGroup[server.charactersGroupIndex].second=static_cast<uint8_t>(serverByCharacterGroupTempIndexToDisplay);
                 serverByCharacterGroupTempIndexToDisplay++;
             }
             index++;

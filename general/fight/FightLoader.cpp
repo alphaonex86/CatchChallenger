@@ -677,17 +677,20 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                     if(typeText!=CACHEDSTRING_trade)
                                                     {
                                                         if(typeText==CACHEDSTRING_item)
-                                                            evolutionVar.level=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_item)),&ok);
-                                                        else
-                                                            evolutionVar.level=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_level)),&ok);
+                                                            evolutionVar.data.item=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_item)),&ok);
+                                                        else//level
+                                                            evolutionVar.data.level=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_level)),&ok);
                                                         if(!ok)
                                                             std::cerr << "Unable to open the xml file: " << file << ", level is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << evolutionItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(evolutionItem) << ")" << std::endl;
                                                     }
                                                     else
-                                                        evolutionVar.level=0;
+                                                    {
+                                                        evolutionVar.data.level=0;
+                                                        evolutionVar.data.item=0;
+                                                    }
                                                     if(ok)
                                                     {
-                                                        evolutionVar.evolveTo=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_evolveTo)),&ok);
+                                                        evolutionVar.evolveTo=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(evolutionItem->Attribute(XMLCACHEDSTRING_evolveTo)),&ok);
                                                         if(!ok)
                                                             std::cerr << "Unable to open the xml file: " << file << ", evolveTo is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << evolutionItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(evolutionItem) << ")" << std::endl;
                                                     }

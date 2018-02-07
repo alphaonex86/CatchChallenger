@@ -589,7 +589,7 @@ std::unordered_map<uint16_t, PlayerQuest> BaseWindow::getQuests() const
     return playerInformations.quests;
 }
 
-uint8_t BaseWindow::getActualBotId() const
+uint16_t BaseWindow::getActualBotId() const
 {
     return actualBot.botId;
 }
@@ -657,7 +657,7 @@ void BaseWindow::add_to_inventory_slot(const QHash<uint16_t,uint32_t> &items)
     add_to_inventory(items);
 }
 
-void BaseWindow::add_to_inventory(const uint32_t &item,const uint32_t &quantity,const bool &showGain)
+void BaseWindow::add_to_inventory(const uint16_t &item,const uint32_t &quantity,const bool &showGain)
 {
     QList<QPair<uint16_t,uint32_t> > items;
     items << QPair<uint16_t,uint32_t>(item,quantity);
@@ -755,7 +755,7 @@ void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bo
     on_listCraftingList_itemSelectionChanged();
 }
 
-void BaseWindow::remove_to_inventory(const uint32_t &itemId,const uint32_t &quantity)
+void BaseWindow::remove_to_inventory(const uint16_t &itemId,const uint32_t &quantity)
 {
     QHash<uint16_t,uint32_t> items;
     items[itemId]=quantity;
@@ -873,7 +873,9 @@ void BaseWindow::on_inventory_itemSelectionChanged()
     bool isRecipe=false;
     {
         /* is a recipe */
-        isRecipe=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.find(items_graphical.value(item))!=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.cend();
+        isRecipe=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes
+                .find(items_graphical.value(item))!=
+                CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.cend();
         if(isRecipe)
         {
             const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(items_graphical.value(item));
@@ -1258,10 +1260,10 @@ void BaseWindow::appendReputationPoint(const QString &type,const int32_t &point)
         emit error(QStringLiteral("Unknow reputation: %1").arg(type));
         return;
     }
-    const uint16_t &reputatioId=DatapackClientLoader::datapackLoader.reputationNameToId.value(type);
+    const uint8_t &reputationId=DatapackClientLoader::datapackLoader.reputationNameToId.value(type);
     PlayerReputation playerReputation;
-    if(client->player_informations.reputation.find(reputatioId)!=client->player_informations.reputation.cend())
-        playerReputation=client->player_informations.reputation.at(reputatioId);
+    if(client->player_informations.reputation.find(reputationId)!=client->player_informations.reputation.cend())
+        playerReputation=client->player_informations.reputation.at(reputationId);
     else
     {
         playerReputation.point=0;
@@ -1272,14 +1274,14 @@ void BaseWindow::appendReputationPoint(const QString &type,const int32_t &point)
     #endif
     PlayerReputation oldPlayerReputation=playerReputation;
     int32_t old_level=playerReputation.level;
-    FacilityLib::appendReputationPoint(&playerReputation,point,CommonDatapack::commonDatapack.reputation.at(reputatioId));
+    FacilityLib::appendReputationPoint(&playerReputation,point,CommonDatapack::commonDatapack.reputation.at(reputationId));
     if(oldPlayerReputation.level==playerReputation.level && oldPlayerReputation.point==playerReputation.point)
         return;
-    if(client->player_informations.reputation.find(reputatioId)!=client->player_informations.reputation.cend())
-        client->player_informations.reputation[reputatioId]=playerReputation;
+    if(client->player_informations.reputation.find(reputationId)!=client->player_informations.reputation.cend())
+        client->player_informations.reputation[reputationId]=playerReputation;
     else
-        client->player_informations.reputation[reputatioId]=playerReputation;
-    const QString &reputationCodeName=QString::fromStdString(CommonDatapack::commonDatapack.reputation.at(reputatioId).name);
+        client->player_informations.reputation[reputationId]=playerReputation;
+    const QString &reputationCodeName=QString::fromStdString(CommonDatapack::commonDatapack.reputation.at(reputationId).name);
     if(old_level<playerReputation.level)
     {
         if(DatapackClientLoader::datapackLoader.reputationExtra.contains(reputationCodeName))
@@ -1362,7 +1364,7 @@ void BaseWindow::on_inventoryDestroy_clicked()
     QList<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
         return;
-    uint32_t itemId=items_graphical.value(items.first());
+    const uint16_t itemId=items_graphical.value(items.first());
     if(playerInformations.items.find(itemId)==playerInformations.items.cend())
         return;
     uint32_t quantity=playerInformations.items.at(itemId);
@@ -1391,7 +1393,7 @@ void BaseWindow::on_inventoryDestroy_clicked()
     load_plant_inventory();
 }
 
-uint32_t BaseWindow::itemQuantity(const uint32_t &itemId) const
+uint32_t BaseWindow::itemQuantity(const uint16_t &itemId) const
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     if(playerInformations.items.find(itemId)!=playerInformations.items.cend())
@@ -1451,7 +1453,7 @@ void BaseWindow::addCash(const uint32_t &cash)
     playerInformations.cash+=cash;
     ui->player_informations_cash->setText(QStringLiteral("%1$").arg(playerInformations.cash));
     ui->shopCash->setText(tr("Cash: %1$").arg(playerInformations.cash));
-    ui->tradePlayerCash->setMaximum(playerInformations.cash);
+    ui->tradePlayerCash->setMaximum(static_cast<uint32_t>(playerInformations.cash));
 }
 
 void BaseWindow::removeCash(const uint32_t &cash)
@@ -1460,7 +1462,7 @@ void BaseWindow::removeCash(const uint32_t &cash)
     playerInformations.cash-=cash;
     ui->player_informations_cash->setText(QStringLiteral("%1$").arg(playerInformations.cash));
     ui->shopCash->setText(tr("Cash: %1$").arg(playerInformations.cash));
-    ui->tradePlayerCash->setMaximum(playerInformations.cash);
+    ui->tradePlayerCash->setMaximum(static_cast<uint32_t>(playerInformations.cash));
 }
 
 void BaseWindow::on_pushButton_interface_monsters_clicked()
@@ -1576,7 +1578,7 @@ void BaseWindow::on_monsterListMoveUp_clicked()
     QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
         return;
-    int	currentRow=ui->monsterList->row(selectedMonsters.first());
+    const uint8_t &currentRow=static_cast<uint8_t>(ui->monsterList->row(selectedMonsters.first()));
     if(currentRow<=0)
         return;
     if(!fightEngine.moveUpMonster(currentRow))
@@ -1595,7 +1597,7 @@ void BaseWindow::on_monsterListMoveDown_clicked()
     QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
         return;
-    int	currentRow=ui->monsterList->row(selectedMonsters.first());
+    const uint8_t &currentRow=static_cast<uint8_t>(ui->monsterList->row(selectedMonsters.first()));
     if(currentRow<0)
         return;
     if(currentRow>=(ui->monsterList->count()-1))
@@ -1760,15 +1762,15 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
     if(informations.encyclopedia_monster!=NULL)
     {
         bool firstFound=false;
-        QList<uint32_t> keys=DatapackClientLoader::datapackLoader.monsterExtra.keys();
+        QList<uint16_t> keys=DatapackClientLoader::datapackLoader.monsterExtra.keys();
         qSort(keys.begin(),keys.end());
-        uint32_t max=keys.last();
+        uint16_t max=keys.last();
         while(max>0 && !(informations.encyclopedia_monster[max/8] & (1<<(7-max%8))))
             max--;
         uint32_t i=0;
         while (i<max)
         {
-            const uint32_t &monsterId=keys.value(i);
+            const uint16_t &monsterId=keys.value(i);
             const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(monsterId);
             QListWidgetItem *item=new QListWidgetItem();
             const uint16_t &bitgetUp=monsterId;
@@ -1804,15 +1806,15 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
     if(informations.encyclopedia_item!=NULL)
     {
         bool firstFound=false;
-        QList<uint32_t> keys=DatapackClientLoader::datapackLoader.itemsExtra.keys();
+        QList<uint16_t> keys=DatapackClientLoader::datapackLoader.itemsExtra.keys();
         qSort(keys.begin(),keys.end());
-        uint32_t max=keys.last();
+        uint16_t max=keys.last();
         while(max>0 && !(informations.encyclopedia_item[max/8] & (1<<(7-max%8))))
             max--;
         uint32_t i=0;
         while (i<max)
         {
-            const uint32_t &itemId=keys.value(i);
+            const uint16_t &itemId=keys.value(i);
             const DatapackClientLoader::ItemExtra &itemsExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemId);
             QListWidgetItem *item=new QListWidgetItem();
             const uint16_t &bitgetUp=itemId;

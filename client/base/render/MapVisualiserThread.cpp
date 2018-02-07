@@ -426,7 +426,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                             content.msLeave=tempString.toUShort();
                                             tempString=trigger;
                                             tempString.replace(regexTrigger,"\\4");
-                                            content.framesCountLeave=tempString.toUShort();
+                                            content.framesCountLeave=static_cast<uint8_t>(tempString.toUShort());
                                             tempString=trigger;
                                             tempString.replace(regexTrigger,"\\5");
                                             //again here
@@ -437,7 +437,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                                 content.msAgain=againString.toUShort();
                                                 againString=tempString;
                                                 againString.replace(regexTriggerAgain,"\\2");
-                                                content.framesCountAgain=againString.toUShort();
+                                                content.framesCountAgain=static_cast<uint8_t>(againString.toUShort());
                                             }
                                             //over here
                                             if(tempString.contains(QStringLiteral("over")))
@@ -610,7 +610,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                     }
                                     if(property_parsed.find("file")!=property_parsed.cend() && property_parsed.find("id")!=property_parsed.cend())
                                     {
-                                        const uint32_t &botId=stringtouint32(property_parsed.at("id"),&ok);
+                                        const uint16_t &botId=stringtouint16(property_parsed.at("id"),&ok);
                                         if(ok)
                                         {
                                             QString botFile(QFileInfo(QFileInfo(fileName).absolutePath()+MapVisualiserThread::text_slash+QString::fromStdString(property_parsed.at("file"))).absoluteFilePath());
@@ -699,9 +699,10 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                                         .arg(botId).arg(botFile));
                                                                 else
                                                                 {
-                                                                    const uint32_t &fightid=stringtouint32(*step->Attribute(std::string("fightid")),&ok);
+                                                                    const uint16_t &fightid=stringtouint16(*step->Attribute(std::string("fightid")),&ok);
                                                                     if(ok)
-                                                                        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
+                                                                        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=
+                                                                                CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
                                                                             parsedMap->logicalMap.botsFight[std::pair<uint8_t,uint8_t>(x,y)].push_back(fightid);
                                                                 }
                                                             }

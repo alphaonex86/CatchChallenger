@@ -492,7 +492,7 @@ void DatapackClientLoader::parseBuffExtra()
             {
                 if(item.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    uint32_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
+                    uint16_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                     if(!ok)
                         qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
@@ -861,7 +861,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                 {
                     if(item.hasAttribute(DatapackClientLoader::text_id))
                     {
-                        uint32_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
+                        uint16_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                         if(ok)
                         {
                             if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(id)!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
