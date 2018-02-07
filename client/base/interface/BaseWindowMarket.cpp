@@ -170,7 +170,7 @@ void BaseWindow::marketPut(const bool &success)
 
 void BaseWindow::marketGetCash(const uint64_t &cash)
 {
-    addCash(cash);
+    addCash(static_cast<uint32_t>(cash));
     ui->marketStat->setText(tr("Cash to withdraw: %1$").arg(0));
 }
 
@@ -190,7 +190,7 @@ void BaseWindow::marketWithdrawCanceled()
     marketWithdrawMonsterList.clear();
 }
 
-void BaseWindow::marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity)
+void BaseWindow::marketWithdrawObject(const uint16_t &objectId,const uint32_t &quantity)
 {
     marketWithdrawInSuspend=false;
     marketWithdrawObjectList.clear();
@@ -263,7 +263,7 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
     }
     uint32_t priceQuantity;
     if(item->data(97).toUInt()>0)
-        priceQuantity=playerInformations.cash/item->data(97).toUInt();
+        priceQuantity=static_cast<uint32_t>(playerInformations.cash)/static_cast<uint32_t>(item->data(97).toUInt());
     else
         priceQuantity=item->data(98).toUInt();
     if(priceQuantity>item->data(98).toUInt())
@@ -305,7 +305,7 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
         marketObject.marketObjectUniqueId=item->data(99).toUInt();
         marketObject.quantity=item->data(98).toUInt();
         marketObject.price=item->data(97).toUInt();
-        marketObject.item=item->data(95).toUInt();
+        marketObject.item=static_cast<uint16_t>(item->data(95).toUInt());
         updateMarketObject(item,marketObject);
     }
 }
@@ -325,13 +325,13 @@ void BaseWindow::on_marketOwnObject_itemActivated(QListWidgetItem *item)
         if(!ok)
             return;
     }
-    client->withdrawMarketObject(item->data(95).toUInt(),item->data(98).toUInt());
+    client->withdrawMarketObject(static_cast<uint16_t>(item->data(95).toUInt()),item->data(98).toUInt());
     marketWithdrawInSuspend=true;
     MarketObject marketObject;
     marketObject.marketObjectUniqueId=item->data(99).toUInt();
     marketObject.quantity=item->data(98).toUInt();
     marketObject.price=item->data(97).toUInt();
-    marketObject.item=item->data(95).toUInt();
+    marketObject.item=static_cast<uint16_t>(item->data(95).toUInt());
     marketWithdrawObjectList << marketObject;
     item->setData(98,item->data(98).toUInt()-quantity);
     if(item->data(98).toUInt()==0)
@@ -350,7 +350,7 @@ void BaseWindow::on_marketMonster_itemActivated(QListWidgetItem *item)
     }
     uint32_t priceQuantity;
     if(item->data(98).toUInt()>0)
-        priceQuantity=playerInformations.cash/item->data(98).toUInt();
+        priceQuantity=static_cast<uint32_t>(playerInformations.cash)/static_cast<uint32_t>(item->data(98).toUInt());
     else
         priceQuantity=1;
     if(priceQuantity>1)
@@ -380,9 +380,9 @@ void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
         return;
     }
     CatchChallenger::MarketMonster playerMonster;
-    playerMonster.monster=item->data(99).toUInt();
+    playerMonster.monster=static_cast<uint16_t>(item->data(99).toUInt());
     playerMonster.price=item->data(98).toUInt();
-    playerMonster.level=item->data(96).toUInt();
+    playerMonster.level=static_cast<uint8_t>(item->data(96).toUInt());
     marketWithdrawMonsterList << playerMonster;
     client->withdrawMarketMonster(item->data(99).toUInt());
     marketWithdrawInSuspend=true;

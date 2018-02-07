@@ -859,7 +859,11 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
             if(defense<1)
                 defense=1;
             const uint8_t &seed=getOneSeed(17);
-            quantity = effect_to_return.effective*(((float)currentMonster->level*(float)1.99+10.5)/(float)255*((float)attack/(float)defense)*(float)effect.quantity)*criticalHit*OtherMulti*(100-seed)/100;
+            quantity = effect_to_return.effective*
+                    static_cast<float>(currentMonster->level)*static_cast<float>(1.99+10.5)/
+                     static_cast<float>(255)*static_cast<float>(attack)/static_cast<float>(defense)*
+                     static_cast<float>(effect.quantity)*static_cast<float>(criticalHit)*static_cast<float>(OtherMulti)*
+                    static_cast<float>(100-seed)/100;
             #ifdef CATCHCHALLENGER_DEBUG_FIGHT
             {
                 int32_t effect_quantity=effect.quantity;

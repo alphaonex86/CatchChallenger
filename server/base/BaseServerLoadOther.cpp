@@ -64,7 +64,7 @@ void BaseServer::preload_other()
             {
                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
                 posOutput+=2;
-                Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=Client::protocolMessageLogicalGroupAndServerListSize+posOutput;
+                Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=Client::protocolMessageLogicalGroupAndServerListSize+static_cast<uint16_t>(posOutput);
                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
                 posOutput+=2;
             }
@@ -125,13 +125,23 @@ void BaseServer::preload_other()
         posOutput+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
         {
             const std::string &text=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            if(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.size()>255)
+            {
+                std::cerr << "CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.size()>255" << std::endl;
+                abort();
+            }
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
             posOutput+=text.size();
         }
 
-        Client::protocolReplyCharacterListSize=posOutput;
+        if(posOutput>65535)
+        {
+            std::cerr << "preload_other() posOutput>65535 abort" << std::endl;
+            abort();
+        }
+        Client::protocolReplyCharacterListSize=static_cast<uint16_t>(posOutput);
 
         if(Client::protocolReplyCharacterList!=NULL)
             delete Client::protocolReplyCharacterList;
@@ -220,7 +230,12 @@ void BaseServer::preload_other()
         //Main type code
         {
             const std::string &text=CommonSettingsServer::commonSettingsServer.mainDatapackCode;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            if(text.size()>255)
+            {
+                std::cerr << "preload_other() CommonSettingsServer::commonSettingsServer.mainDatapackCode size > 255 abort" << std::endl;
+                abort();
+            }
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
             posOutput+=text.size();
@@ -228,7 +243,12 @@ void BaseServer::preload_other()
         //Sub type cod
         {
             const std::string &text=CommonSettingsServer::commonSettingsServer.subDatapackCode;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            if(text.size()>255)
+            {
+                std::cerr << "preload_other() CommonSettingsServer::commonSettingsServer.subDatapackCode size > 255 abort" << std::endl;
+                abort();
+            }
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
             posOutput+=text.size();
@@ -260,7 +280,12 @@ void BaseServer::preload_other()
         //mirror
         {
             const std::string &text=CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            if(text.size()>255)
+            {
+                std::cerr << "preload_other() CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer size > 255 abort" << std::endl;
+                abort();
+            }
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
             posOutput+=text.size();

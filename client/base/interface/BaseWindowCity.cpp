@@ -14,14 +14,14 @@ void BaseWindow::cityCaptureUpdateTime()
         nextCatch=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+24*3600*7*1000);
     else
         nextCatch=QDateTime::fromMSecsSinceEpoch(FacilityLib::nextCaptureTime(city));
-    nextCityCatchTimer.start(nextCatch.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch());
+    nextCityCatchTimer.start(static_cast<uint32_t>(nextCatch.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch()));
 }
 
 void BaseWindow::updatePageZoneCatch()
 {
     if(QDateTime::currentMSecsSinceEpoch()<nextCatchOnScreen.toMSecsSinceEpoch())
     {
-        int sec=(nextCatchOnScreen.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch())/1000+1;
+        int sec=static_cast<uint32_t>(nextCatchOnScreen.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch())/1000+1;
         QString timeText;
         if(sec>3600*24*365*50)
             timeText="Time player: bug";

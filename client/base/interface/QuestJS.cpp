@@ -4,7 +4,7 @@
 #include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/GeneralStructures.h"
 
-Quest::Quest(const uint32_t &quest, void *baseWindow) :
+Quest::Quest(const uint16_t &quest, void *baseWindow) :
     quest(quest),
     baseWindow(static_cast<CatchChallenger::BaseWindow *>(baseWindow))
 {

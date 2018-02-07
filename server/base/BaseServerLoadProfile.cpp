@@ -295,7 +295,8 @@ void BaseServer::preload_profile()
                                 std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'"+item+"','"+reputations+"','"+binarytoHexa(bitlist,sizeof(bitlist))+"','"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");"),database);
                     break;
                     case DatabaseBase::DatabaseType::PostgreSQL:
-                        preparedStatementForCreationMonsterGroup.character_insert=PreparedStatementUnit(std::string("INSERT INTO character("
+                        preparedStatementForCreationMonsterGroup.character_insert=PreparedStatementUnit(
+                                    std::string("INSERT INTO character("
                                 "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                                 "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
                                 ",blob_version) VALUES(%1,%2,"+
@@ -307,7 +308,10 @@ void BaseServer::preload_profile()
                                                                                         ",%4,0,0,"+
                                 std::to_string(profile.cash)+",%5,0,FALSE,"
                                 "0,0,0,"+
-                                std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'\\x"+item+"','\\x"+reputations+"','\\x"+binarytoHexa(bitlist,sizeof(bitlist))+"','\\x"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");"),database);
+                                std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+
+                                ",'\\x"+item+"','\\x"+reputations+"','\\x"+binarytoHexa(bitlist,sizeof(bitlist))+
+                                "','\\x"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");")
+                                                                                                        ,database);
                     break;
                 }
 

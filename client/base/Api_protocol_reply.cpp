@@ -357,7 +357,9 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                 parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                                 return false;
                             }
-                            in >> characterEntry.last_connect;
+                            uint32_t last_connect32;
+                            in >> last_connect32;
+                            characterEntry.last_connect=last_connect32;
 
                             //important
                             characterEntry.charactersGroupIndex=charatersGroupIndex;

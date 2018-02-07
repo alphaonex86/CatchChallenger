@@ -436,6 +436,7 @@ void BaseWindow::currentMapLoaded()
 void BaseWindow::vlceventStatic(const libvlc_event_t *event, void *ptr)
 {
     libvlc_media_player_t * const player=static_cast<libvlc_media_player_t *>(ptr);
+    Q_UNUSED(player);
     switch(event->type)
     {
         case libvlc_MediaPlayerEncounteredError:
