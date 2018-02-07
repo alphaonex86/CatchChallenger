@@ -573,7 +573,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         qDebug() << QStringLiteral("serverFromPoolForDisplay.host.isEmpty()");
                     return parseCharacterBlockServer(
                                 packetCode,queryNumber,
-                                data.mid(static_cast<int>(in.device()->pos()),(in.device()->size()-in.device()->pos()))
+                                data.mid(static_cast<int>(in.device()->pos()),static_cast<int>(in.device()->size()-in.device()->pos()))
                                 );
                 }
                 else
@@ -1256,7 +1256,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                    .arg(packetCode).arg(queryNumber)
                    .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                    .arg(QString(data.mid(0,static_cast<int>(in.device()->pos())).toHex()))
-                   .arg(QString(data.mid(static_cast<int>(in.device()->pos()),(in.device()->size()-in.device()->pos())).toHex()))
+                   .arg(QString(data.mid(static_cast<int>(in.device()->pos()),static_cast<int>(in.device()->size()-in.device()->pos())).toHex()))
                    );
         return false;
     }

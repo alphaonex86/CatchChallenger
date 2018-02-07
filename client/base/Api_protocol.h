@@ -199,7 +199,7 @@ protected:
     QMap<uint8_t,QTime> querySendTime;
 
     //inventory
-    QList<uint32_t> lastObjectUsed;
+    QList<uint16_t> lastObjectUsed;
 
     //datapack
     QString mDatapackBase;

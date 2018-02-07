@@ -95,7 +95,7 @@ protected:
     bool haveNextCurrentObject;
     Tiled::MapObject * nextCurrentObject;
     Tiled::Tileset * animationTileset;
-    uint32_t currentPlayerSpeed;
+    uint16_t currentPlayerSpeed;
     bool animationDisplayed;
 
     std::vector<uint8_t> *events;
