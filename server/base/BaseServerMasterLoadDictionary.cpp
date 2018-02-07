@@ -84,7 +84,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
         const std::string &reputation=std::string(databaseBaseBase->value(1));
         if(dictionary_reputation_database_to_internal.size()<=tempId)
         {
-            unsigned int index=dictionary_reputation_database_to_internal.size();
+            unsigned int index=static_cast<unsigned int>(dictionary_reputation_database_to_internal.size());
             while(index<=tempId)
             {
                 dictionary_reputation_database_to_internal.push_back(-1);

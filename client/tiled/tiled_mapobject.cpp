@@ -36,7 +36,7 @@ MapObject::MapObject():
     mSize(0, 0),
     mShape(Rectangle),
     mObjectGroup(0),
-    mRotation(0.0f),
+    mRotation(static_cast<qreal>(0.0f)),
     mVisible(true)
 {
 }
@@ -51,7 +51,7 @@ MapObject::MapObject(const QString &name, const QString &type,
     mSize(size),
     mShape(Rectangle),
     mObjectGroup(0),
-    mRotation(0.0f),
+    mRotation(static_cast<qreal>(0.0f)),
     mVisible(true)
 {
 }

@@ -399,7 +399,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
         QHash<uint32_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
         QListWidget *listWidget=NULL;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        bool onBuffCurrentMonster;
+        bool onBuffCurrentMonster=false;
         #endif
         if(currentAttack.doByTheCurrentMonster)
         {

@@ -155,12 +155,12 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
                               .arg(packetCode)
                               .arg('X')
                               .arg(pseudoSize)
-                              .arg(QString(data.mid(in.device()->pos()).toHex()))
+                              .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                               .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                               );
                 return false;
             }
-            QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+            QByteArray rawText=data.mid(static_cast<int>(in.device()->pos()),pseudoSize);
             QString pseudo=QString::fromUtf8(rawText.data(),rawText.size());
             in.device()->seek(in.device()->pos()+rawText.size());
             if(pseudo.isEmpty())
@@ -206,12 +206,12 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
                               .arg(packetCode)
                               .arg('X')
                               .arg(pseudoSize)
-                              .arg(QString(data.mid(in.device()->pos()).toHex()))
+                              .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
                               .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                               );
                 return false;
             }
-            QByteArray rawText=data.mid(in.device()->pos(),pseudoSize);
+            QByteArray rawText=data.mid(static_cast<int>(in.device()->pos()),pseudoSize);
             QString pseudo=QString::fromUtf8(rawText.data(),rawText.size());
             in.device()->seek(in.device()->pos()+rawText.size());
             if(pseudo.isEmpty())
@@ -245,8 +245,8 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
     {
         parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("remaining data: parseFullQuery(%1,%2 %3) line %4")
                       .arg(packetCode)
-                      .arg(QString(data.mid(0,in.device()->pos()).toHex()))
-                      .arg(QString(data.mid(in.device()->pos(),(in.device()->size()-in.device()->pos())).toHex()))
+                      .arg(QString(data.mid(0,static_cast<int>(in.device()->pos())).toHex()))
+                      .arg(QString(data.mid(static_cast<int>(in.device()->pos()),(in.device()->size()-in.device()->pos())).toHex()))
                       .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
                       );
         return false;
