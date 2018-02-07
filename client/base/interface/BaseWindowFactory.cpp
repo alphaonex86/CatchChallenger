@@ -18,7 +18,7 @@ void BaseWindow::on_factoryBuy_clicked()
 
 void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
 {
-    uint32_t id=item->data(99).toUInt();
+    uint16_t id=static_cast<uint16_t>(item->data(99).toUInt());
     uint32_t price=item->data(98).toUInt();
     uint32_t quantity=item->data(97).toUInt();
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
@@ -36,7 +36,9 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
     if(playerInformations.cash>=(price*2) && quantity>1)
     {
         bool ok;
-        quantityToBuy = QInputDialog::getInt(this, tr("Buy"),tr("Amount %1 to buy:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantity, 1, &ok);
+        quantityToBuy = QInputDialog::getInt(this, tr("Buy"),tr("Amount %1 to buy:")
+                                             .arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name),
+                                             0, 0, static_cast<int>(quantity), 1, &ok);
         if(!ok || quantityToBuy<=0)
             return;
     }
@@ -81,10 +83,10 @@ void BaseWindow::on_factorySell_clicked()
 void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    uint32_t id=item->data(99).toUInt();
+    uint16_t itemid=static_cast<uint16_t>(item->data(99).toUInt());
     uint32_t price=item->data(98).toUInt();
     uint32_t quantity=item->data(97).toUInt();
-    if(playerInformations.items.find(id)==playerInformations.items.cend())
+    if(playerInformations.items.find(itemid)==playerInformations.items.cend())
     {
         QMessageBox::warning(this,tr("No item"),tr("You have not the item to sell"));
         return;
@@ -95,13 +97,13 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         return;
     }
     int i=1;
-    if(playerInformations.items.at(id)>1 && quantity>1)
+    if(playerInformations.items.at(itemid)>1 && quantity>1)
     {
         uint32_t quantityToSell=quantity;
-        if(playerInformations.items.at(id)<quantityToSell)
-            quantityToSell=playerInformations.items.at(id);
+        if(playerInformations.items.at(itemid)<quantityToSell)
+            quantityToSell=playerInformations.items.at(itemid);
         bool ok;
-        i = QInputDialog::getInt(this, tr("Sell"),tr("Amount %1 to sell:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantityToSell, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Sell"),tr("Amount %1 to sell:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(itemid).name), 0, 0, quantityToSell, 1, &ok);
         if(!ok || i<=0)
             return;
     }
@@ -116,7 +118,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
-            if(resource.item==id)
+            if(resource.item==itemid)
             {
                 item->setData(98,FacilityLib::getFactoryResourcePrice(resource.quantity*industry.cycletobefull-quantity,resource,CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(factoryId).industry)));
                 break;
@@ -126,12 +128,12 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         factoryToResourceItem(item);
     }
     ItemToSellOrBuy tempItem;
-    tempItem.object=id;
+    tempItem.object=itemid;
     tempItem.quantity=i;
     tempItem.price=price;
     itemsToSell << tempItem;
-    remove_to_inventory(id,i);
-    client->sellFactoryResource(factoryId,id,i,price);
+    remove_to_inventory(itemid,i);
+    client->sellFactoryResource(factoryId,itemid,i,price);
     appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
 }
 
@@ -247,7 +249,8 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const uint32_t &newP
         {
             if(factoryInProduction)
                 break;
-            const Industry &industry=CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(factoryId).industry);
+            const IndustryLink &industryLink=CommonDatapack::commonDatapack.industriesLink.at(factoryId);
+            const Industry &industry=CommonDatapack::commonDatapack.industries.at(industryLink.industry);
             industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
             updateFactoryStatProduction(industryStatus,industry);
         }
@@ -366,23 +369,24 @@ void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
         item->setText(QStringLiteral("%1 at %2$").arg(item->data(97).toUInt()).arg(item->data(98).toUInt()));
     else
         item->setText(QStringLiteral("%1$").arg(item->data(98).toUInt()));
-    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(item->data(99).toUInt()))
+    const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
+    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(itemId))
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt()).image);
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).image);
         if(item->data(97).toUInt()==0)
-            item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt()).name).arg(item->data(98).toUInt()));
+            item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name).arg(item->data(98).toUInt()));
         else
-            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt()).name).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
     else
     {
         item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
         if(item->data(97).toUInt()==0)
-            item->setToolTip(tr("Item %1\nPrice: %2$").arg(item->data(99).toUInt()).arg(item->data(98).toUInt()));
+            item->setToolTip(tr("Item %1\nPrice: %2$").arg(itemId).arg(item->data(98).toUInt()));
         else
-            item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(item->data(99).toUInt()).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+            item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(itemId).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
-    if(playerInformations.items.find(item->data(99).toUInt())==playerInformations.items.cend() || !haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.at(factoryId).requirements.reputation))
+    if(playerInformations.items.find(static_cast<uint16_t>(item->data(99).toUInt()))==playerInformations.items.cend() || !haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.at(factoryId).requirements.reputation))
     {
         item->setFont(MissingQuantity);
         item->setForeground(QBrush(QColor(200,20,20)));
@@ -398,21 +402,22 @@ void BaseWindow::factoryToProductItem(QListWidgetItem *item)
         item->setText(QStringLiteral("%1 at %2$").arg(item->data(97).toUInt()).arg(item->data(98).toUInt()));
     else
         item->setText(QStringLiteral("%1$").arg(item->data(98).toUInt()));
-    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(item->data(99).toUInt()))
+    const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
+    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(itemId))
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt()).image);
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).image);
         if(item->data(97).toUInt()==0)
-            item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt()).name).arg(item->data(98).toUInt()));
+            item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name).arg(item->data(98).toUInt()));
         else
-            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt()).name).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
     else
     {
         item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
         if(item->data(97).toUInt()==0)
-            item->setToolTip(tr("Item %1\nPrice: %2$").arg(item->data(99).toUInt()).arg(item->data(98).toUInt()));
+            item->setToolTip(tr("Item %1\nPrice: %2$").arg(itemId).arg(item->data(98).toUInt()));
         else
-            item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(item->data(99).toUInt()).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+            item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(itemId).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
     if(item->data(98).toUInt()>playerInformations.cash)
     {

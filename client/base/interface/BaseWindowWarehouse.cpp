@@ -18,7 +18,8 @@ void BaseWindow::on_warehouseWithdrawCash_clicked()
     if((playerInformations.warehouse_cash-temp_warehouse_cash)==1)
         i = 1;
     else
-        i = QInputDialog::getInt(this, tr("Withdraw"),tr("Amount cash to withdraw:"), 0, 0, playerInformations.warehouse_cash-temp_warehouse_cash, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Withdraw"),tr("Amount cash to withdraw:"), 0, 0,
+                                 static_cast<uint32_t>(playerInformations.warehouse_cash-temp_warehouse_cash), 1, &ok);
     if(!ok || i<=0)
         return;
     temp_warehouse_cash+=i;
@@ -33,7 +34,8 @@ void BaseWindow::on_warehouseDepositCash_clicked()
     if((playerInformations.cash+temp_warehouse_cash)==1)
         i = 1;
     else
-        i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount cash to deposite:"), 0, 0, playerInformations.cash+temp_warehouse_cash, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount cash to deposite:"), 0, 0,
+                                 static_cast<uint32_t>(playerInformations.cash+temp_warehouse_cash), 1, &ok);
     if(!ok || i<=0)
         return;
     temp_warehouse_cash-=i;
@@ -108,11 +110,11 @@ void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     uint32_t quantity=0;
-    uint32_t id=item->data(99).toUInt();
-    if(playerInformations.items.find(id)!=playerInformations.items.cend())
-        quantity+=playerInformations.items.at(id);
-    if(change_warehouse_items.contains(id))
-        quantity+=change_warehouse_items.value(id);
+    const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
+    if(playerInformations.items.find(itemId)!=playerInformations.items.cend())
+        quantity+=playerInformations.items.at(itemId);
+    if(change_warehouse_items.contains(itemId))
+        quantity+=change_warehouse_items.value(itemId);
     if(quantity==0)
     {
         error("Error with item quantity into warehousePlayerInventory");
@@ -123,15 +125,16 @@ void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item
     if(quantity==1)
         i = 1;
     else
-        i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount %1 to deposite:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantity, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount %1 to deposite:")
+                                 .arg(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name), 0, 0, quantity, 1, &ok);
     if(!ok || i<=0)
         return;
-    if(change_warehouse_items.contains(id))
-        change_warehouse_items[id]-=i;
+    if(change_warehouse_items.contains(itemId))
+        change_warehouse_items[itemId]-=i;
     else
-        change_warehouse_items[id]=-i;
-    if(change_warehouse_items.value(id)==0)
-        change_warehouse_items.remove(id);
+        change_warehouse_items[itemId]=-i;
+    if(change_warehouse_items.value(itemId)==0)
+        change_warehouse_items.remove(itemId);
     updateTheWareHouseContent();
 }
 
@@ -139,11 +142,11 @@ void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     uint32_t quantity=0;
-    uint32_t id=item->data(99).toUInt();
-    if(playerInformations.warehouse_items.find(id)!=playerInformations.warehouse_items.cend())
-        quantity+=playerInformations.warehouse_items.at(id);
-    if(change_warehouse_items.contains(id))
-        quantity-=change_warehouse_items.value(id);
+    const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
+    if(playerInformations.warehouse_items.find(itemId)!=playerInformations.warehouse_items.cend())
+        quantity+=playerInformations.warehouse_items.at(itemId);
+    if(change_warehouse_items.contains(itemId))
+        quantity-=change_warehouse_items.value(itemId);
     if(quantity==0)
     {
         error("Error with item quantity into warehousePlayerStoredInventory");
@@ -154,15 +157,15 @@ void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem
     if(quantity==1)
         i = 1;
     else
-        i = QInputDialog::getInt(this, tr("Withdraw"),tr("Amount %1 to withdraw:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name), 0, 0, quantity, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Withdraw"),tr("Amount %1 to withdraw:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name), 0, 0, quantity, 1, &ok);
     if(!ok || i<=0)
         return;
-    if(change_warehouse_items.contains(id))
-        change_warehouse_items[id]+=i;
+    if(change_warehouse_items.contains(itemId))
+        change_warehouse_items[itemId]+=i;
     else
-        change_warehouse_items[id]=i;
-    if(change_warehouse_items.value(id)==0)
-        change_warehouse_items.remove(id);
+        change_warehouse_items[itemId]=i;
+    if(change_warehouse_items.value(itemId)==0)
+        change_warehouse_items.remove(itemId);
     updateTheWareHouseContent();
 }
 
@@ -216,9 +219,8 @@ QList<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
     QList<PlayerMonster> warehouseMonsterOnPlayerList;
     {
         const std::vector<PlayerMonster> &playerMonster=fightEngine.getPlayerMonster();
-        int index=0;
-        int size=playerMonster.size();
-        while(index<size)
+        unsigned int index=0;
+        while(index<playerMonster.size())
         {
             const PlayerMonster &monster=playerMonster.at(index);
             if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() && !monster_to_deposit.contains(index))
@@ -227,9 +229,8 @@ QList<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
         }
     }
     {
-        int index=0;
-        int size=playerInformations.warehouse_playerMonster.size();
-        while(index<size)
+        unsigned int index=0;
+        while(index<playerInformations.warehouse_playerMonster.size())
         {
             const PlayerMonster &monster=playerInformations.warehouse_playerMonster.at(index);
             if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() && monster_to_withdraw.contains(index))
@@ -263,9 +264,9 @@ void BaseWindow::on_warehouseValidate_clicked()
     }
     //validate the change here
     if(temp_warehouse_cash>0)
-        addCash(temp_warehouse_cash);
+        addCash(static_cast<uint32_t>(temp_warehouse_cash));
     else
-        removeCash(-temp_warehouse_cash);
+        removeCash(static_cast<uint32_t>(-temp_warehouse_cash));
     playerInformations.warehouse_cash-=temp_warehouse_cash;
     {
         QHash<uint16_t,int32_t>::const_iterator i = change_warehouse_items.constBegin();

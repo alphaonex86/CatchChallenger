@@ -370,7 +370,7 @@ void BaseWindow::haveTheDatapack()
     settings.setValue("DatapackHashBase-"+client->datapackPathBase(),
                       QByteArray(
                           CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
-                          CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()
+                          static_cast<int>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size())
                                   )
                       );
 
@@ -395,13 +395,13 @@ void BaseWindow::haveTheDatapackMainSub()
     settings.setValue("DatapackHashMain-"+client->datapackPathMain(),
                       QByteArray(
                           CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),
-                          CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()
+                          static_cast<int>(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size())
                                   )
                       );
     settings.setValue("DatapackHashSub-"+client->datapackPathSub(),
                       QByteArray(
                           CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),
-                          CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()
+                          static_cast<int>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size())
                                   )
                       );
 
@@ -1069,7 +1069,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }
-    uint32_t questId=quests_to_id_graphical.value(items.first());
+    const uint16_t &questId=quests_to_id_graphical.value(items.first());
     if(playerInformations.quests.find(questId)==playerInformations.quests.cend())
     {
         qDebug() << "Selected quest is not into the player list";
@@ -1215,24 +1215,24 @@ void BaseWindow::on_questsList_itemSelectionChanged()
     ui->questDetails->setText(stepDescription+stepRequirements+finalRewards);
 }
 
-QListWidgetItem * BaseWindow::itemToGraphic(const uint32_t &id,const uint32_t &quantity)
+QListWidgetItem * BaseWindow::itemToGraphic(const uint16_t &itemid, const uint32_t &quantity)
 {
     QListWidgetItem *item=new QListWidgetItem();
-    item->setData(99,id);
-    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(id))
+    item->setData(99,itemid);
+    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(itemid))
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(id).image);
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(itemid).image);
         if(quantity>1)
             item->setText(QString::number(quantity));
-        item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name);
+        item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra.value(itemid).name);
     }
     else
     {
         item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
         if(quantity>1)
-            item->setText(QStringLiteral("id: %1 (x%2)").arg(id).arg(quantity));
+            item->setText(QStringLiteral("id: %1 (x%2)").arg(itemid).arg(quantity));
         else
-            item->setText(QStringLiteral("id: %1").arg(id));
+            item->setText(QStringLiteral("id: %1").arg(itemid));
     }
     return item;
 }
@@ -1249,7 +1249,7 @@ void BaseWindow::updateTheWareHouseContent()
         auto i=playerInformations.items.begin();
         while(i!=playerInformations.items.cend())
         {
-            int64_t quantity=i->second;
+            int32_t quantity=i->second;
             if(change_warehouse_items.contains(i->first))
                 quantity+=change_warehouse_items.value(i->first);
             if(quantity>0)
@@ -1324,9 +1324,8 @@ void BaseWindow::updateTheWareHouseContent()
 
     //monster warehouse
     {
-        int index=0;
-        int size=playerInformations.warehouse_playerMonster.size();
-        while(index<size)
+        unsigned int index=0;
+        while(index<playerInformations.warehouse_playerMonster.size())
         {
             const PlayerMonster &monster=playerInformations.warehouse_playerMonster.at(index);
             if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
@@ -1369,8 +1368,8 @@ void BaseWindow::cityCapture(const uint32_t &remainingTime,const uint8_t &type)
     nextCatch=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+remainingTime*1000);
     city.capture.frenquency=(City::Capture::Frequency)type;
     city.capture.day=(City::Capture::Day)QDateTime::currentDateTime().addSecs(remainingTime).date().dayOfWeek();
-    city.capture.hour=QDateTime::currentDateTime().addSecs(remainingTime).time().hour();
-    city.capture.minute=QDateTime::currentDateTime().addSecs(remainingTime).time().minute();
+    city.capture.hour=static_cast<uint8_t>(QDateTime::currentDateTime().addSecs(remainingTime).time().hour());
+    city.capture.minute=static_cast<uint8_t>(QDateTime::currentDateTime().addSecs(remainingTime).time().minute());
 }
 
 void BaseWindow::animationFinished()
@@ -1512,8 +1511,8 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaMonster_itemActivated
         return;
     }
 
-    const Monster &monsterCommon=CommonDatapack::commonDatapack.monsters.at(item->data(99).toUInt());
-    const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(item->data(99).toUInt());
+    const Monster &monsterCommon=CommonDatapack::commonDatapack.monsters.at(static_cast<uint16_t>(item->data(99).toUInt()));
+    const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(static_cast<uint16_t>(item->data(99).toUInt()));
     ui->labelEncyclopediaMonster->setText("");
     QByteArray byteArray;
     QBuffer buffer(&byteArray);
@@ -1575,8 +1574,8 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaItem_itemActivated(QL
         return;
     }
 
-    const Item &itemCommon=CommonDatapack::commonDatapack.items.item.at(item->data(99).toUInt());
-    const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(item->data(99).toUInt());
+    const Item &itemCommon=CommonDatapack::commonDatapack.items.item.at(static_cast<uint16_t>(item->data(99).toUInt()));
+    const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(static_cast<uint16_t>(item->data(99).toUInt()));
     ui->labelEncyclopediaItem->setText("");
     QByteArray byteArray;
     QBuffer buffer(&byteArray);

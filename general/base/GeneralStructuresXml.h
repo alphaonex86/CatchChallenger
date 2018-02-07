@@ -81,7 +81,7 @@ struct Bot
 {
     std::unordered_map<uint8_t,const CATCHCHALLENGER_XMLELEMENT *> step;
     std::unordered_map<std::string,std::string> properties;
-    uint32_t botId;//id need be unique for the quests, then 32Bits
+    uint16_t botId;//id need be unique for the quests, then 32Bits
     std::string skin;
     std::string name;
 };

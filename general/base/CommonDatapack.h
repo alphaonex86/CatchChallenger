@@ -35,7 +35,7 @@ public:
     std::unordered_map<uint16_t,uint16_t> itemToCrafingRecipes;
     uint16_t crafingRecipesMaxId;
     #endif
-    std::vector<Reputation> reputation;
+    std::vector<Reputation> reputation;//Player_private_and_public_informations, std::unordered_map<uint8_t,PlayerReputation> reputation;
     std::unordered_map<uint16_t,Monster> monsters;
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     bool monsterRateApplied;

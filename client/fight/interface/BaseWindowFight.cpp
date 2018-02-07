@@ -22,9 +22,9 @@ using namespace CatchChallenger;
 
 void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
 {
-    if(!monsters_items_graphical.contains(item))
+    if(!monsterspos_items_graphical.contains(item))
         return;
-    uint8_t monsterPosition=monsters_items_graphical.value(item);
+    uint8_t monsterPosition=monsterspos_items_graphical.value(item);
     if(inSelection)
     {
        objectSelection(true,monsterPosition);
@@ -202,11 +202,10 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
 //need correct match, else tp to die can failed and do mistake
 bool BaseWindow::check_monsters()
 {
-    int size=client->player_informations.playerMonster.size();
-    int index=0;
-    int sub_size;
-    int sub_index;
-    while(index<size)
+    unsigned int index=0;
+    unsigned int sub_size;
+    unsigned int sub_index;
+    while(index<client->player_informations.playerMonster.size())
     {
         const PlayerMonster &monster=client->player_informations.playerMonster.at(index);
         if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)==CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
@@ -273,7 +272,7 @@ void BaseWindow::load_monsters()
 {
     const std::vector<PlayerMonster> &playerMonsters=fightEngine.getPlayerMonster();
     ui->monsterList->clear();
-    monsters_items_graphical.clear();
+    monsterspos_items_graphical.clear();
     if(playerMonsters.empty())
         return;
     const uint8_t &currentMonsterPosition=fightEngine.getCurrentSelectedMonsterNumber();
@@ -413,7 +412,7 @@ void BaseWindow::load_monsters()
                     item->setBackgroundColor(QColor(200,255,255,255));
             }
             ui->monsterList->addItem(item);
-            monsters_items_graphical[item]=index;
+            monsterspos_items_graphical[item]=index;
         }
         else
         {
@@ -1279,7 +1278,7 @@ void BaseWindow::checkEvolution()
         while(index<monsterInformations.evolutions.size())
         {
             const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
-            if(evolution.type==Monster::EvolutionType_Level && evolution.level==monster->level)
+            if(evolution.type==Monster::EvolutionType_Level && evolution.data.level==monster->level)
             {
                 monsterEvolutionPostion=fightEngine.getPlayerMonsterPosition(monster);
                 const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.at(evolution.evolveTo);
@@ -1982,7 +1981,7 @@ void BaseWindow::on_learnAttackList_itemActivated(QListWidgetItem *item)
         ui->learnDescription->setText(tr("You can't learn this attack"));
         return;
     }
-    if(!monsters_items_graphical.contains(item))
+    if(!monsterspos_items_graphical.contains(item))
         return;
     showLearnSkillByPosition(monsterPositionToLearn);
 }
@@ -2012,7 +2011,7 @@ bool BaseWindow::showLearnSkillByPosition(const uint8_t &monsterPosition)
     attack_to_learn_graphical.clear();
     std::vector<PlayerMonster> playerMonster=fightEngine.getPlayerMonster();
     //get the right monster
-    QHash<uint32_t,uint8_t> skillToDisplay;
+    QHash<uint16_t,uint8_t> skillToDisplay;
     unsigned int index=monsterPosition;
     PlayerMonster monster=playerMonster.at(index);
     ui->learnMonster->setPixmap(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front.scaled(160,160));
@@ -2059,7 +2058,7 @@ bool BaseWindow::showLearnSkillByPosition(const uint8_t &monsterPosition)
         }
         sub_index++;
     }
-    QHashIterator<uint32_t,uint8_t> i(skillToDisplay);
+    QHashIterator<uint16_t,uint8_t> i(skillToDisplay);
     while (i.hasNext()) {
         i.next();
         QListWidgetItem *item=new QListWidgetItem();

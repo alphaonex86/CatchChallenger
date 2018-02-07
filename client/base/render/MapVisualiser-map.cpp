@@ -182,20 +182,20 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
         all_map[QString::fromStdString(tempMapObject->logicalMap.map_file)]=tempMapObject;
         QHash<uint16_t,MapVisualiserThread::Map_animation>::const_iterator i = tempMapObject->animatedObject.constBegin();
         while (i != tempMapObject->animatedObject.constEnd()) {
-            if(!animationTimer.contains(i.key()))
+            if(!animationTimer.contains(static_cast<uint8_t>(i.key())))
             {
                 QTimer *newTimer=new QTimer();
                 newTimer->setInterval(i.key());
-                animationTimer[i.key()]=newTimer;
-                animationFrame[i.key()];//creation
+                animationTimer[static_cast<uint8_t>(i.key())]=newTimer;
+                animationFrame[static_cast<uint8_t>(i.key())];//creation
                 connect(newTimer,&QTimer::timeout,this,&MapVisualiser::applyTheAnimationTimer);
                 newTimer->start();
             }
-            if(!animationFrame.value(i.key()).contains(i.value().count))
-                animationFrame[i.key()][i.value().count]=0;
+            if(!animationFrame.value(static_cast<uint8_t>(i.key())).contains(i.value().count))
+                animationFrame[static_cast<uint8_t>(i.key())][i.value().count]=0;
             else
             {
-                const uint8_t &count=animationFrame.value(i.key()).value(i.value().count);
+                const uint8_t &count=animationFrame.value(static_cast<uint8_t>(i.key())).value(i.value().count);
                 const int &oldcount=tempMapObject->animatedObject[i.key()].count;
                 const int &count_diff=count-oldcount;
                 tempMapObject->animatedObject[i.key()].count+=count_diff;
@@ -396,7 +396,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
 void MapVisualiser::applyTheAnimationTimer()
 {
     QTimer *timer=qobject_cast<QTimer *>(QObject::sender());
-    const uint16_t &interval=timer->interval();
+    const uint8_t &interval=static_cast<uint8_t>(timer->interval());
     if(animationFrame.contains(interval))
     {
         QHash<uint8_t/*frame total*/,uint8_t/*actual frame*/> countList=animationFrame.value(interval);

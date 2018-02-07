@@ -356,8 +356,8 @@ void DatapackClientLoader::parseVisualCategory()
                                                 if(CatchChallenger::CommonDatapack::commonDatapack.events.at(index).values.at(sub_index)==event.attribute(DatapackClientLoader::text_value).toStdString())
                                                 {
                                                     VisualCategory::VisualCategoryCondition visualCategoryCondition;
-                                                    visualCategoryCondition.event=index;
-                                                    visualCategoryCondition.eventValue=sub_index;
+                                                    visualCategoryCondition.event=static_cast<uint8_t>(index);
+                                                    visualCategoryCondition.eventValue=static_cast<uint8_t>(sub_index);
                                                     visualCategoryCondition.color=DatapackClientLoader::datapackLoader.visualCategories.value(item.attribute(DatapackClientLoader::text_id)).defaultColor;
                                                     int alpha=255;
                                                     if(event.hasAttribute(DatapackClientLoader::text_alpha))
@@ -419,7 +419,7 @@ void DatapackClientLoader::parseVisualCategory()
 void DatapackClientLoader::parseReputationExtra()
 {
     {
-        unsigned int index=0;
+        uint8_t index=0;
         while(index<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
         {
             reputationNameToId[QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(index).name)]=index;
@@ -766,9 +766,10 @@ void DatapackClientLoader::parseItemsExtra()
             {
                 if(item.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    const uint32_t &id=item.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
-                    if(ok)
+                    const uint32_t &tempid=item.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                    if(ok && tempid<65536)
                     {
+                        const uint16_t &id=tempid;
                         if(!DatapackClientLoader::itemsExtra.contains(id))
                         {
                             ItemExtra itemExtra;
@@ -908,8 +909,8 @@ void DatapackClientLoader::parseMaps()
     const QStringList &returnList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN).toStdString()));
 
     //load the map
-    unsigned int pointOnMapIndexItem=0;
-    unsigned int pointOnMapIndexPlant=0;
+    uint16_t pointOnMapIndexItem=0;
+    uint16_t pointOnMapIndexPlant=0;
     const int &size=returnList.size();
     int index=0;
     QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
@@ -1149,7 +1150,7 @@ void DatapackClientLoader::parseQuestsExtra()
             continue;
         }
         bool ok;
-        const uint32_t &id=entryList.at(index).fileName().toUInt(&ok);
+        const uint16_t &id=entryList.at(index).fileName().toUInt(&ok);
         if(!ok)
         {
             qDebug() << QStringLiteral("Unable to open the folder: %1, because is folder name is not a number").arg(entryList.at(index).fileName());
@@ -1259,7 +1260,7 @@ void DatapackClientLoader::parseQuestsExtra()
                 {
                     if(step.hasAttribute(DatapackClientLoader::text_id))
                     {
-                        const uint32_t &id=step.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                        const uint8_t &id=step.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
                         if(ok)
                         {
                             CatchChallenger::Quest::Step stepObject;
@@ -1270,8 +1271,8 @@ void DatapackClientLoader::parseQuestsExtra()
                                 while(index<tempStringList.size())
                                 {
                                     uint32_t tempInt=tempStringList.at(index).toUInt(&ok);
-                                    if(ok)
-                                        stepObject.bots.push_back(tempInt);
+                                    if(ok && tempInt<65536)
+                                        stepObject.bots.push_back(static_cast<uint16_t>(tempInt));
                                     index++;
                                 }
                             }
@@ -1400,9 +1401,10 @@ void DatapackClientLoader::parseQuestsText()
             {
                 if(client_logic.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    const uint32_t &id=client_logic.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
-                    if(ok)
+                    const uint32_t &tempid=client_logic.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                    if(ok && tempid<65536)
                     {
+                        const uint16_t &id=tempid;
                         QDomElement text = client_logic.firstChildElement(DatapackClientLoader::text_text);
                         bool found=false;
                         if(!language.isEmpty() && language!=DatapackClientLoader::text_en)

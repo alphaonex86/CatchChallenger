@@ -97,7 +97,7 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     //send the current map of the player
     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=map->id;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(map->id);
         posOutput+=1;
     }
     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
@@ -115,7 +115,7 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.simplifiedId;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.public_informations.simplifiedId);
         posOutput+=1;
     }
     else
@@ -144,7 +144,14 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
 
     if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.pseudo.size();
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(public_and_private_informations.public_informations.pseudo.size()>255)
+        {
+            std::cerr << "preload_other() public_and_private_informations.public_informations.pseudo size > 255 abort" << std::endl;
+            abort();
+        }
+        #endif
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.public_informations.pseudo.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.public_informations.pseudo.data(),public_and_private_informations.public_informations.pseudo.size());
         posOutput+=public_and_private_informations.public_informations.pseudo.size();
