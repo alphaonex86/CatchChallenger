@@ -321,7 +321,7 @@ void BaseWindow::on_warehouseValidate_clicked()
         while(index<monster_to_deposit.size())
         {
             const std::vector<PlayerMonster> &playerMonster=fightEngine.getPlayerMonster();
-            const uint8_t &monsterPosition=monster_to_deposit.at(index);
+            const uint8_t &monsterPosition=static_cast<uint8_t>(monster_to_deposit.at(index));
             playerInformations.warehouse_playerMonster.push_back(playerMonster.at(monsterPosition));
             fightEngine.removeMonsterByPosition(monsterPosition);
             index++;

@@ -84,9 +84,10 @@ bool MapController::asyncMapLoaded(const QString &fileName,MapVisualiserThread::
                         const CatchChallenger::PlayerPlant &playerPlant=plantOnMap->at(indexOfMap);
                         uint32_t seconds_to_mature=0;
                         if(playerPlant.mature_at>(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
-                            seconds_to_mature=playerPlant.mature_at-QDateTime::currentMSecsSinceEpoch()/1000;
+                            seconds_to_mature=static_cast<uint32_t>(playerPlant.mature_at-QDateTime::currentMSecsSinceEpoch()/1000);
                         if(DatapackClientLoader::datapackLoader.fullMapPathToId.contains(fileName))
-                            insert_plant(DatapackClientLoader::datapackLoader.fullMapPathToId.value(fileName),x,y,playerPlant.plant,seconds_to_mature);
+                            insert_plant(DatapackClientLoader::datapackLoader.fullMapPathToId.value(fileName),
+                            static_cast<uint8_t>(x),static_cast<uint8_t>(y),playerPlant.plant,static_cast<uint16_t>(seconds_to_mature));
                         else
                             qDebug() << "!DatapackClientLoader::datapackLoader.fullMapPathToId.contains(plantIndexContent.map) for CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer";
                     }
@@ -137,7 +138,7 @@ void MapController::updateBot()
             break;
             case CatchChallenger::BotMove::BotMove_Loop:
             {
-                uint8_t baseTile=botDisplay.mapObject->cell().tile->id();
+                uint8_t baseTile=static_cast<uint8_t>(botDisplay.mapObject->cell().tile->id());
                 switch(baseTile)
                 {
                     default:

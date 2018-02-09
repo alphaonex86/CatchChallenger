@@ -59,7 +59,7 @@ void WithAnotherPlayer::updateTiemout()
         on_no_clicked();
     else
     {
-        ui->timeout->setValue(15*1000-timems);
+        ui->timeout->setValue(15*1000-static_cast<int>(timems));
         ui->timeoutLabel->setText(QString::number(15-timems/1000)+"s");
     }
 }

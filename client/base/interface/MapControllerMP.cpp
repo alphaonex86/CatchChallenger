@@ -89,12 +89,14 @@ void MapControllerMP::resetAll()
 
 void MapControllerMP::setScale(const float &scaleSize)
 {
+    double scaleSizeDouble=static_cast<double>(scaleSize);
+    double scaleSizeQReal=static_cast<qreal>(scaleSizeDouble);
     if(scaleSize<1 || scaleSize>4)
     {
-        qDebug() << QStringLiteral("scaleSize out of range 1-4: %1").arg(scaleSize);
+        qDebug() << QStringLiteral("scaleSize out of range 1-4: %1").arg(scaleSizeQReal);
         return;
     }
-    scale(scaleSize/this->scaleSize,scaleSize/this->scaleSize);
+    scale(scaleSizeQReal/static_cast<double>(this->scaleSize),scaleSizeQReal/static_cast<double>(this->scaleSize));
     this->scaleSize=scaleSize;
 }
 
@@ -248,7 +250,8 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             return true;
         }
 
-        loadPlayerMap(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.value(mapId),x,y);
+        loadPlayerMap(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.value(mapId),
+                      static_cast<uint8_t>(x),static_cast<uint8_t>(y));
         setSpeed(player.speed);
     }
     else
@@ -259,8 +262,8 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             //return true;-> ignored to fix temporally, but need remove at map unload
         }
         OtherPlayer tempPlayer;
-        tempPlayer.x=x;
-        tempPlayer.y=y;
+        tempPlayer.x=static_cast<uint8_t>(x);
+        tempPlayer.y=static_cast<uint8_t>(y);
         tempPlayer.direction=direction;
         tempPlayer.moveStep=0;
         tempPlayer.inMove=false;
@@ -397,8 +400,8 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
 
         tempPlayer.current_map=mapPath;
         tempPlayer.presumed_map=all_map.value(mapPath);
-        tempPlayer.presumed_x=x;
-        tempPlayer.presumed_y=y;
+        tempPlayer.presumed_x=static_cast<uint8_t>(x);
+        tempPlayer.presumed_y=static_cast<uint8_t>(y);
         switch(direction)
         {
             case CatchChallenger::Direction_look_at_top:
@@ -499,7 +502,9 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     otherPlayer.playerMapObject->setPosition(QPoint(otherPlayer.x,otherPlayer.y+1));
     if(otherPlayer.labelMapObject!=NULL)
-        otherPlayer.labelMapObject->setPosition(QPointF((float)otherPlayer.x-(float)otherPlayer.labelTileset->tileWidth()/2/16+0.5,otherPlayer.y+1-1.4));
+        otherPlayer.labelMapObject->setPosition(QPointF(static_cast<qreal>(otherPlayer.x)-
+                static_cast<qreal>(otherPlayer.labelTileset->tileWidth())/2/16+0.5,
+                                                        static_cast<qreal>(otherPlayer.y)+1-1.4));
 
     /*if(display)
     {
@@ -720,7 +725,9 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const QList<QPair<ui
     otherPlayerList.value(id).playerMapObject->setPosition(QPoint(otherPlayerList.value(id).presumed_x,otherPlayerList.value(id).presumed_y+1));
     if(otherPlayerList.value(id).labelMapObject!=NULL)
     {
-        otherPlayerList.value(id).labelMapObject->setPosition(QPointF((float)otherPlayerList.value(id).presumed_x-(float)otherPlayerList.value(id).labelTileset->tileWidth()/2/16+0.5,otherPlayerList.value(id).presumed_y+1-1.4));
+        otherPlayerList.value(id).labelMapObject->setPosition(QPointF(static_cast<qreal>(otherPlayerList.value(id).presumed_x)-
+             static_cast<qreal>(otherPlayerList.value(id).labelTileset->tileWidth())/2/16+0.5,
+             static_cast<qreal>(otherPlayerList.value(id).presumed_y)+1-1.4));
         MapObjectItem::objectLink.value(otherPlayerList.value(id).labelMapObject)->setZValue(otherPlayerList.value(id).presumed_y);
     }
     MapObjectItem::objectLink.value(otherPlayerList.value(id).playerMapObject)->setZValue(otherPlayerList.value(id).presumed_y);
@@ -1091,8 +1098,8 @@ void MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const u
     client->teleportDone();
 
     //position
-    this->x=x;
-    this->y=y;
+    this->x=static_cast<uint8_t>(x);
+    this->y=static_cast<uint8_t>(y);
 
     unloadPlayerFromCurrentMap();
     current_map=QFileInfo(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.value(mapId)).absoluteFilePath();
@@ -1380,7 +1387,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             if(all_map.value(QString::fromStdString(map->map_file))->doors.contains(QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))))
             {
                 MapDoor* door=all_map.value(QString::fromStdString(map->map_file))->doors.value(QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
-                door->startOpen(otherPlayer.playerSpeed);
+                door->startOpen(static_cast<uint16_t>(otherPlayer.playerSpeed));
                 otherPlayer.moveAnimationTimer->start(door->timeToOpen());
                 return;
             }
@@ -1528,7 +1535,8 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         otherPlayer.playerMapObject->setPosition(QPoint(x,y+1));
         if(otherPlayer.labelMapObject!=NULL)
-            otherPlayer.labelMapObject->setPosition(QPointF((float)x-(float)otherPlayer.labelTileset->tileWidth()/2/16+0.5,y+1-1.4));
+            otherPlayer.labelMapObject->setPosition(QPointF(static_cast<qreal>(x)-static_cast<qreal>(otherPlayer.labelTileset->tileWidth())
+                                                            /2/16+0.5,y+1-1.4));
         MapObjectItem::objectLink.value(otherPlayer.playerMapObject)->setZValue(y);
 
         //check if one arrow key is pressed to continue to move into this direction

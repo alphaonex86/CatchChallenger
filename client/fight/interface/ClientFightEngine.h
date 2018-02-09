@@ -58,7 +58,7 @@ public:
     bool haveBattleOtherMonster() const;
     virtual bool useSkill(const uint16_t &skill);
     bool dropKOOtherMonster();
-    bool tryCatchClient(const uint32_t &item);
+    bool tryCatchClient(const uint16_t &item);
     bool catchInProgress() const;
     virtual uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster);
     void catchIsDone();
@@ -74,7 +74,7 @@ public:
     uint32_t randomSeedsSize() const;
 private:
     uint32_t mLastGivenXP;
-    QList<int> mEvolutionByLevelUp;
+    QList<uint8_t> mEvolutionByLevelUp;
     QList<Skill::AttackReturn> fightEffectList;
     Player_private_and_public_informations player_informations_local;
     QByteArray randomSeeds;

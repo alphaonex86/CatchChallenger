@@ -80,7 +80,7 @@ void BaseWindow::seed_planted(const bool &ok)
         showTip(tr("Seed correctly planted"));
         //do the rewards
         {
-            const uint32_t &itemId=seed_in_waiting.first().seedItemId;
+            const uint16_t &itemId=seed_in_waiting.first().seedItemId;
             if(!DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
             {
                 qDebug() << "Item is not a plant";
@@ -195,11 +195,12 @@ void BaseWindow::load_crafting_inventory()
     uint16_t index=0;
     while(index<=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipesMaxId)
     {
-        uint32_t recipe=index;
+        uint16_t recipe=index;
         if(informations.recipes[recipe/8] & (1<<(7-recipe%8)))
         {
             //load the material item
-            if(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.find(recipe)!=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.find(recipe)
+                    !=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.cend())
             {
                 QListWidgetItem *item=new QListWidgetItem();
                 if(DatapackClientLoader::datapackLoader.itemsExtra.contains(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId))
@@ -389,7 +390,7 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
     ui->labelTallerText->setText(FacilityLibClient::timeToString(plant.taller_seconds));
     ui->labelFloweringText->setText(FacilityLibClient::timeToString(plant.flowering_seconds));
     ui->labelFruitsText->setText(FacilityLibClient::timeToString(plant.fruits_seconds));
-    ui->labelPlantFruitText->setText(tr("Quantity: %1").arg((float)plant.fix_quantity+((float)plant.random_quantity)/RANDOM_FLOAT_PART_DIVIDER));
+    ui->labelPlantFruitText->setText(tr("Quantity: %1").arg((double)plant.fix_quantity+((double)plant.random_quantity)/RANDOM_FLOAT_PART_DIVIDER));
 
     ui->plantUse->setVisible(inSelection);
 }
@@ -545,10 +546,10 @@ void BaseWindow::on_craftingUse_clicked()
         index++;
     }
     index=0;
-    QList<QPair<uint32_t,uint32_t> > recipeUsage;
+    QList<QPair<uint16_t,uint32_t> > recipeUsage;
     while(index<content.materials.size())
     {
-        QPair<uint32_t,uint32_t> pair;
+        QPair<uint16_t,uint32_t> pair;
         pair.first=content.materials.at(index).item;
         pair.second=content.materials.at(index).quantity;
         remove_to_inventory(pair.first,pair.second);
@@ -557,7 +558,7 @@ void BaseWindow::on_craftingUse_clicked()
     }
     materialOfRecipeInUsing << recipeUsage;
     //the product do
-    QPair<uint32_t,uint32_t> pair;
+    QPair<uint16_t,uint32_t> pair;
     pair.first=content.doItemId;
     pair.second=content.quantity;
     productOfRecipeInUsing << pair;

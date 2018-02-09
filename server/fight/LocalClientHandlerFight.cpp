@@ -752,9 +752,12 @@ void Client::confirmEvolution(const uint8_t &monsterPosition)
     while(sub_index<monsterInformations.evolutions.size())
     {
         if(
-                (monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level && monsterInformations.evolutions.at(sub_index).level<=public_and_private_informations.playerMonster.at(index).level)
+                (monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level &&
+                 monsterInformations.evolutions.at(sub_index).data.level<=public_and_private_informations.playerMonster.at(index).level)
                 ||
-                (monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Trade && GlobalServerData::serverPrivateVariables.tradedMonster.find(public_and_private_informations.playerMonster.at(index).id)!=GlobalServerData::serverPrivateVariables.tradedMonster.cend())
+                (monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Trade &&
+                 GlobalServerData::serverPrivateVariables.tradedMonster.find(public_and_private_informations.playerMonster.at(index).id)!=
+                 GlobalServerData::serverPrivateVariables.tradedMonster.cend())
         )
         {
             confirmEvolutionTo(&public_and_private_informations.playerMonster[index],monsterInformations.evolutions.at(sub_index).evolveTo);

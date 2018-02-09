@@ -246,7 +246,7 @@ private slots:
     void tradeFinishedByOther();
     void tradeValidatedByTheServer();
     void tradeAddTradeCash(const uint64_t &cash);
-    void tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity);
+    void tradeAddTradeObject(const uint16_t &item, const uint32_t &quantity);
     void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
     void tradeUpdateCurrentObject();
     QList<PlayerMonster> warehouseMonsterOnPlayer() const;
@@ -287,8 +287,8 @@ private slots:
     //fight
     void wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void prepareFight();
-    void botFight(const uint32_t &fightId);
-    void botFightFull(const uint32_t &fightId);
+    void botFight(const uint16_t &fightId);
+    void botFightFull(const uint16_t &fightId);
     void botFightFullDiffered();
     bool fightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void on_pushButtonFightEnterNext_clicked();
@@ -316,7 +316,7 @@ private slots:
     void init_environement_display(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void init_current_monster_display(PlayerMonster *fightMonster=NULL);
     void init_other_monster_display();
-    void useTrap(const uint32_t &itemId);
+    void useTrap(const uint16_t &itemId);
     void displayTrap();
     void displayExperienceGain();
     void checkEvolution();
@@ -328,7 +328,7 @@ private slots:
 
     //learn
     bool showLearnSkillByPosition(const uint8_t &monsterPosition);
-    bool learnSkillByPosition(const uint8_t &monsterPosition,const uint32_t &skill);
+    bool learnSkillByPosition(const uint8_t &monsterPosition, const uint16_t &skill);
 
     //quest
     bool haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const;
@@ -358,7 +358,7 @@ private slots:
     void captureCityYourLeaderHaveStartInOtherCity(const QString &zone);
     void captureCityPreviousNotFinished();
     void captureCityStartBattle(const uint16_t &player_count,const uint16_t &clan_count);
-    void captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId);
+    void captureCityStartBotFight(const uint16_t &player_count, const uint16_t &clan_count, const uint16_t &fightId);
     void captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count);
     void captureCityWin();
 
@@ -530,7 +530,7 @@ private:
     QmlMonsterGeneralInformations *targetMonsterEvolution;
     uint8_t monsterEvolutionPostion;
     uint32_t mLastGivenXP;
-    uint32_t currentMonsterLevel;
+    uint8_t currentMonsterLevel;
     QSet<QString> supportedImageFormats;
     QString lastPlaceDisplayed;
     std::vector<uint8_t> events;
@@ -583,7 +583,7 @@ private:
     QAbstractSocket::SocketState socketState;
     bool haveDatapack,haveDatapackMainSub,haveCharacterPosition,haveCharacterInformation,haveInventory,datapackIsParsed,mainSubDatapackIsParsed;
     bool characterSelected;
-    uint32_t fightId;
+    uint16_t fightId;
 
     //market buy
     QList<QPair<uint16_t,uint32_t> > marketBuyObjectList;
@@ -619,8 +619,8 @@ private:
     QList<uint32_t> monster_to_deposit,monster_to_withdraw;
 
     //crafting
-    QList<QList<QPair<uint32_t,uint32_t> > > materialOfRecipeInUsing;
-    QList<QPair<uint32_t,uint32_t> > productOfRecipeInUsing;
+    QList<QList<QPair<uint16_t,uint32_t> > > materialOfRecipeInUsing;
+    QList<QPair<uint16_t,uint32_t> > productOfRecipeInUsing;
 
     //bot
     Bot actualBot;
@@ -658,8 +658,8 @@ private:
     bool trapSuccess;
     int32_t attack_quantity_changed;
     QList<BattleInformations> battleInformationsList;
-    QList<uint32_t> botFightList;
-    QHash<uint32_t,QListWidgetItem *> buffToGraphicalItemTop,buffToGraphicalItemBottom;
+    QList<uint16_t> botFightList;
+    QHash<uint8_t,QListWidgetItem *> buffToGraphicalItemTop,buffToGraphicalItemBottom;
     bool useTheRescueSkill;
 
     //city

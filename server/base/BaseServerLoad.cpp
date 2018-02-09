@@ -213,7 +213,7 @@ void BaseServer::preload_the_skin()
         index++;
     }
 
-    std::cout << listsize << " skin(s) loaded" << std::endl;
+    std::cout << skinFolderList.size() << " skin(s) loaded" << std::endl;
 }
 
 void BaseServer::preload_the_players()
