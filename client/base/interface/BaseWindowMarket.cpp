@@ -473,10 +473,10 @@ void BaseWindow::tradeValidatedByTheServer()
 
 void BaseWindow::tradeAddTradeCash(const uint64_t &cash)
 {
-    ui->tradeOtherCash->setValue(ui->tradeOtherCash->value()+cash);
+    ui->tradeOtherCash->setValue(ui->tradeOtherCash->value()+static_cast<uint32_t>(cash));
 }
 
-void BaseWindow::tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity)
+void BaseWindow::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
 {
     if(tradeOtherObjects.contains(item))
         tradeOtherObjects[item]+=quantity;

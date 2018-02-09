@@ -12,7 +12,7 @@ Options::Options()
     settings=new QSettings(QCoreApplication::applicationDirPath()+"/client-settings.conf",QSettings::IniFormat); */
     if(settings->contains("fps"))
     {
-        fps=settings->value("fps").toUInt(&ok);
+        fps=static_cast<uint8_t>(settings->value("fps").toUInt(&ok));
         if(!ok)
             fps=25;
     }
@@ -24,7 +24,7 @@ Options::Options()
         limitedFPS=true;
     if(settings->contains("zoom"))
     {
-        zoom=settings->value("zoom").toUInt();
+        zoom=static_cast<uint8_t>(settings->value("zoom").toUInt());
         if(zoom>4)
             zoom=0;
     }
@@ -32,7 +32,7 @@ Options::Options()
         zoom=0;
     if(settings->contains("audioVolume"))
     {
-        audioVolume=settings->value("audioVolume").toUInt(&ok);
+        audioVolume=static_cast<uint8_t>(settings->value("audioVolume").toUInt(&ok));
         if(!ok || audioVolume>100)
             audioVolume=100;
     }

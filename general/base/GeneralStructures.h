@@ -177,13 +177,18 @@ struct Trap
 struct MonsterItemEffect
 {
     MonsterItemEffectType type;
-    int32_t value;
+    union Data {
+       uint32_t hp;
+       uint8_t buff;
+    } data;
 };
 
 struct MonsterItemEffectOutOfFight
 {
     MonsterItemEffectTypeOutOfFight type;
-    int32_t value;
+    union Data {
+       uint8_t level;
+    } data;
 };
 
 struct ItemFull
@@ -812,7 +817,7 @@ struct BotFight
 {
     struct BotFightMonster
     {
-        uint32_t id;
+        uint16_t id;
         uint8_t level;
         std::vector<PlayerMonster::PlayerSkill> attacks;
     };

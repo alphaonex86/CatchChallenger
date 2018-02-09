@@ -383,16 +383,16 @@ bool CommonFightEngine::useObjectOnMonsterByPosition(const uint16_t &object, con
                 switch(effect.type)
                 {
                     case MonsterItemEffectType_AddHp:
-                        if(effect.value>0 && (playerMonsterStat.hp-playerMonster->hp)>(uint32_t)effect.value)
-                            hpChange(playerMonster,playerMonster->hp+effect.value);
+                        if(effect.data.hp>0 && (playerMonsterStat.hp-playerMonster->hp)>(uint32_t)effect.data.hp)
+                            hpChange(playerMonster,playerMonster->hp+effect.data.hp);
                         else if(playerMonsterStat.hp!=playerMonster->hp)
                             hpChange(playerMonster,playerMonsterStat.hp);
                         else if(monsterItemEffect.size()==1)
                             return false;
                     break;
                     case MonsterItemEffectType_RemoveBuff:
-                        if(effect.value>0)
-                            removeBuffOnMonster(playerMonster,effect.value);
+                        if(effect.data.buff>0)
+                            removeBuffOnMonster(playerMonster,effect.data.buff);
                         else
                             removeAllBuffOnMonster(playerMonster);
                     break;
@@ -566,10 +566,10 @@ std::vector<uint8_t> CommonFightEngine::addPlayerMonster(const std::vector<Playe
 {
     std::vector<uint8_t> positionList;
     {
-        unsigned int index=0;
+        uint8_t index=0;
         while(index<playerMonster.size())
         {
-            positionList.push_back(public_and_private_informations.playerMonster.size()+index);
+            positionList.push_back(static_cast<uint8_t>(public_and_private_informations.playerMonster.size())+index);
             index++;
         }
     }
@@ -581,7 +581,7 @@ std::vector<uint8_t> CommonFightEngine::addPlayerMonster(const std::vector<Playe
 std::vector<uint8_t> CommonFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
 {
     std::vector<uint8_t> positionList;
-    positionList.push_back(public_and_private_informations.playerMonster.size());
+    positionList.push_back(static_cast<uint8_t>(public_and_private_informations.playerMonster.size()));
     public_and_private_informations.playerMonster.push_back(playerMonster);
     updateCanDoFight();
     return positionList;
@@ -793,7 +793,7 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const uint8_t &numberO
         return false;
     }
     uint8_t monsterIndex=0;
-    const int &monsterListSize=public_and_private_informations.playerMonster.size();
+    const int &monsterListSize=static_cast<uint32_t>(public_and_private_informations.playerMonster.size());
     while(monsterIndex<monsterListSize)
     {
         if(&public_and_private_informations.playerMonster.at(monsterIndex)==monster)

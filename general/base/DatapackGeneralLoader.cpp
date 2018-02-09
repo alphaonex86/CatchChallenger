@@ -1814,7 +1814,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                                 {
                                                     MonsterItemEffect monsterItemEffect;
                                                     monsterItemEffect.type=MonsterItemEffectType_AddHp;
-                                                    monsterItemEffect.value=-1;
+                                                    monsterItemEffect.data.hp=-1;
                                                     items.monsterItemEffect[id].push_back(monsterItemEffect);
                                                 }
                                                 else
@@ -1829,7 +1829,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                                             {
                                                                 MonsterItemEffect monsterItemEffect;
                                                                 monsterItemEffect.type=MonsterItemEffectType_AddHp;
-                                                                monsterItemEffect.value=add;
+                                                                monsterItemEffect.data.hp=add;
                                                                 items.monsterItemEffect[id].push_back(monsterItemEffect);
                                                             }
                                                             else
@@ -1859,7 +1859,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                                 {
                                                     MonsterItemEffect monsterItemEffect;
                                                     monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
-                                                    monsterItemEffect.value=-1;
+                                                    monsterItemEffect.data.buff=-1;
                                                     items.monsterItemEffect[id].push_back(monsterItemEffect);
                                                 }
                                                 else
@@ -1873,7 +1873,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                                             {
                                                                 MonsterItemEffect monsterItemEffect;
                                                                 monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
-                                                                monsterItemEffect.value=remove;
+                                                                monsterItemEffect.data.buff=remove;
                                                                 items.monsterItemEffect[id].push_back(monsterItemEffect);
                                                             }
                                                             else
@@ -1916,7 +1916,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                             {
                                                 MonsterItemEffectOutOfFight monsterItemEffectOutOfFight;
                                                 monsterItemEffectOutOfFight.type=MonsterItemEffectTypeOutOfFight_AddLevel;
-                                                monsterItemEffectOutOfFight.value=levelUp;
+                                                monsterItemEffectOutOfFight.data.level=levelUp;
                                                 items.monsterItemEffectOutOfFight[id].push_back(monsterItemEffectOutOfFight);
                                             }
                                         }
