@@ -710,20 +710,20 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                     }
                                                     if(ok)
                                                     {
-                                                        if(typeText==CACHEDSTRING_level && (evolutionVar.level<0 || evolutionVar.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX))
+                                                        if(typeText==CACHEDSTRING_level && (evolutionVar.data.level<0 || evolutionVar.data.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX))
                                                         {
                                                             ok=false;
-                                                            std::cerr << "Unable to open the xml file: " << file << ", level out of range: " << evolutionVar.level << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << evolutionItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(evolutionItem) << ")" << std::endl;
+                                                            std::cerr << "Unable to open the xml file: " << file << ", level out of range: " << evolutionVar.data.level << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << evolutionItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(evolutionItem) << ")" << std::endl;
                                                         }
                                                     }
                                                     if(ok)
                                                     {
                                                         if(typeText==CACHEDSTRING_item)
                                                         {
-                                                            if(items.find(evolutionVar.level)==items.cend())
+                                                            if(items.find(evolutionVar.data.item)==items.cend())
                                                             {
                                                                 ok=false;
-                                                                std::cerr << "Unable to open the xml file: " << file << ", unknown evolution item: " << evolutionVar.level << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << evolutionItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(evolutionItem) << ")" << std::endl;
+                                                                std::cerr << "Unable to open the xml file: " << file << ", unknown evolution item: " << evolutionVar.data.item << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << evolutionItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(evolutionItem) << ")" << std::endl;
                                                             }
                                                         }
                                                     }
@@ -838,13 +838,13 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             }
             if(i->second.evolutions.at(index).type==Monster::EvolutionType_Item)
             {
-                if(itemUse.find(i->second.evolutions.at(index).level)!=itemUse.cend())
+                if(itemUse.find(i->second.evolutions.at(index).data.item)!=itemUse.cend())
                 {
                     std::cerr << "The monster " << i->first << " have already evolution with this item" << std::endl;
                     i->second.evolutions.erase(i->second.evolutions.cbegin()+index);
                     continue;
                 }
-                itemUse.insert(i->second.evolutions.at(index).level);
+                itemUse.insert(i->second.evolutions.at(index).data.item);
             }
             if(i->second.evolutions.at(index).evolveTo==i->first)
             {
@@ -878,7 +878,7 @@ std::unordered_map<uint16_t/*item*/, std::unordered_map<uint16_t/*monster*/,uint
         while(index<i->second.evolutions.size())
         {
             if(i->second.evolutions.at(index).type==Monster::EvolutionType_Item)
-                evolutionItem[i->second.evolutions.at(index).level][i->first]=i->second.evolutions.at(index).evolveTo;
+                evolutionItem[i->second.evolutions.at(index).data.item][i->first]=i->second.evolutions.at(index).evolveTo;
             index++;
         }
         ++i;

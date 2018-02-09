@@ -81,12 +81,14 @@ void DatapackClientLoader::parseMonstersExtra()
             {
                 if(item.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    uint32_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
-                    if(!ok)
+                    uint32_t tempid=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
+                    if(!ok || tempid>65535)
                         qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
-                        if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(id)==CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
+                        const uint16_t id=static_cast<uint16_t>(tempid);
+                        if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(id)
+                                ==CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
                             qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster list into monster extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         else
                         {
@@ -412,7 +414,14 @@ void DatapackClientLoader::parseTypesExtra()
                                 nameItem = nameItem.nextSiblingElement(DatapackClientLoader::text_name);
                             }
                         }
-                        DatapackClientLoader::datapackLoader.typeExtra[DatapackClientLoader::datapackLoader.typeExtra.size()]=type;
+                        if(DatapackClientLoader::datapackLoader.typeExtra.size()>255)
+                        {
+                            qDebug() << QStringLiteral("Unable to open the file: %1, DatapackClientLoader::datapackLoader.typeExtra.size()>255: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                            abort();
+                        }
+                        DatapackClientLoader::datapackLoader.typeExtra[
+                                static_cast<uint8_t>(DatapackClientLoader::datapackLoader.typeExtra.size())
+                                ]=type;
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
@@ -492,11 +501,12 @@ void DatapackClientLoader::parseBuffExtra()
             {
                 if(item.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    uint16_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
-                    if(!ok)
+                    uint32_t tempid=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
+                    if(!ok || tempid>255)
                         qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
+                        const uint8_t &id=static_cast<uint8_t>(tempid);
                         if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.find(id)==CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
                             qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster buff list into buff extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         else
@@ -686,11 +696,12 @@ void DatapackClientLoader::parseSkillsExtra()
             {
                 if(item.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    uint32_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
-                    if(!ok)
+                    const uint32_t tempid=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
+                    if(!ok || tempid>65535)
                         qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                     else
                     {
+                        const uint16_t &id=static_cast<uint16_t>(tempid);
                         if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(id)==CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
                         {}//qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster skill list into skill extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         else
@@ -861,9 +872,10 @@ void DatapackClientLoader::parseBotFightsExtra()
                 {
                     if(item.hasAttribute(DatapackClientLoader::text_id))
                     {
-                        uint16_t id=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
-                        if(ok)
+                        const uint32_t tempid=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
+                        if(ok && tempid<65535)
                         {
+                            const uint16_t id=static_cast<uint16_t>(tempid);
                             if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(id)!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
                             {
                                 if(!botFightsExtra.contains(id))

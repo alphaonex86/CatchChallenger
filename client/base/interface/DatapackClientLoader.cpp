@@ -766,10 +766,10 @@ void DatapackClientLoader::parseItemsExtra()
             {
                 if(item.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    const uint32_t &tempid=item.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                    const uint32_t &tempid=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                     if(ok && tempid<65536)
                     {
-                        const uint16_t &id=tempid;
+                        const uint16_t &id=static_cast<uint16_t>(tempid);
                         if(!DatapackClientLoader::itemsExtra.contains(id))
                         {
                             ItemExtra itemExtra;
@@ -1047,15 +1047,20 @@ void DatapackClientLoader::parseMaps()
                                         /** the -1 is important to fix object layer bug into tiled!!!
                                          * Don't remove! */
                                         const uint32_t &object_y=(object.attribute(DatapackClientLoader::text_y).toUInt(&ok)/tileheight)-1;
-                                        if(ok)
+                                        if(ok && object_y<256)
                                         {
                                             const uint32_t &object_x=object.attribute(DatapackClientLoader::text_x).toUInt(&ok)/tilewidth;
-                                            if(ok)
+                                            if(ok && object_x<256)
                                             {
-                                                itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+fileName][QPair<uint8_t,uint8_t>(object_x,object_y)]=pointOnMapIndexItem;
+                                                itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+fileName]
+                                                        [QPair<uint8_t,uint8_t>(static_cast<uint8_t>(object_x),static_cast<uint8_t>(object_y))]=pointOnMapIndexItem;
                                                 pointOnMapIndexItem++;
                                             }
+                                            else
+                                                qDebug() << QStringLiteral("object_y too big or not number");
                                         }
+                                        else
+                                            qDebug() << QStringLiteral("object_x too big or not number");
                                     }
                                 }
                                 else
@@ -1150,13 +1155,21 @@ void DatapackClientLoader::parseQuestsExtra()
             continue;
         }
         bool ok;
-        const uint16_t &id=entryList.at(index).fileName().toUInt(&ok);
+        const uint32_t &tempid=entryList.at(index).fileName().toUInt(&ok);
         if(!ok)
         {
             qDebug() << QStringLiteral("Unable to open the folder: %1, because is folder name is not a number").arg(entryList.at(index).fileName());
             index++;
             continue;
         }
+        if(tempid>=256)
+        {
+            qDebug() << QStringLiteral("parseQuestsExtra too big: %1").arg(entryList.at(index).fileName());
+            index++;
+            continue;
+        }
+        const uint16_t &id=static_cast<uint16_t>(tempid);
+
         QDomDocument domDocument;
         const QString &file=entryList.at(index).absoluteFilePath()+DatapackClientLoader::text_slashdefinitiondotxml;
         if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
@@ -1260,60 +1273,66 @@ void DatapackClientLoader::parseQuestsExtra()
                 {
                     if(step.hasAttribute(DatapackClientLoader::text_id))
                     {
-                        const uint8_t &id=step.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                        const uint32_t &tempid=step.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                         if(ok)
                         {
-                            CatchChallenger::Quest::Step stepObject;
-                            if(step.hasAttribute(DatapackClientLoader::text_bot))
+                            if(tempid<256)
                             {
-                                QStringList tempStringList=step.attribute(DatapackClientLoader::text_bot).split(DatapackClientLoader::text_dotcomma);
-                                int index=0;
-                                while(index<tempStringList.size())
+                                const uint16_t &id=static_cast<uint16_t>(tempid);
+                                CatchChallenger::Quest::Step stepObject;
+                                if(step.hasAttribute(DatapackClientLoader::text_bot))
                                 {
-                                    uint32_t tempInt=tempStringList.at(index).toUInt(&ok);
-                                    if(ok && tempInt<65536)
-                                        stepObject.bots.push_back(static_cast<uint16_t>(tempInt));
-                                    index++;
-                                }
-                            }
-                            QDomElement stepItem = step.firstChildElement(DatapackClientLoader::text_text);
-                            bool found=false;
-                            if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
-                            {
-                                while(!stepItem.isNull())
-                                {
-                                    if(stepItem.isElement())
+                                    QStringList tempStringList=step.attribute(DatapackClientLoader::text_bot).split(DatapackClientLoader::text_dotcomma);
+                                    int index=0;
+                                    while(index<tempStringList.size())
                                     {
-                                        if(stepItem.hasAttribute(DatapackClientLoader::text_lang) || stepItem.attribute(DatapackClientLoader::text_lang)==language)
+                                        uint32_t tempInt=tempStringList.at(index).toUInt(&ok);
+                                        if(ok && tempInt<65536)
+                                            stepObject.bots.push_back(static_cast<uint16_t>(tempInt));
+                                        index++;
+                                    }
+                                }
+                                QDomElement stepItem = step.firstChildElement(DatapackClientLoader::text_text);
+                                bool found=false;
+                                if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
+                                {
+                                    while(!stepItem.isNull())
+                                    {
+                                        if(stepItem.isElement())
                                         {
-                                            found=true;
-                                            steps[id]=stepItem.text();
+                                            if(stepItem.hasAttribute(DatapackClientLoader::text_lang) || stepItem.attribute(DatapackClientLoader::text_lang)==language)
+                                            {
+                                                found=true;
+                                                steps[id]=stepItem.text();
+                                            }
                                         }
+                                        else
+                                            qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
+                                        stepItem = stepItem.nextSiblingElement(DatapackClientLoader::text_text);
                                     }
-                                    else
-                                        qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
-                                    stepItem = stepItem.nextSiblingElement(DatapackClientLoader::text_text);
                                 }
-                            }
-                            if(!found)
-                            {
-                                stepItem = step.firstChildElement(DatapackClientLoader::text_text);
-                                while(!stepItem.isNull())
+                                if(!found)
                                 {
-                                    if(stepItem.isElement())
+                                    stepItem = step.firstChildElement(DatapackClientLoader::text_text);
+                                    while(!stepItem.isNull())
                                     {
-                                        if(!stepItem.hasAttribute(DatapackClientLoader::text_lang) || stepItem.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
-                                            steps[id]=stepItem.text();
-                                        /*else can be into another lang
-                                            qDebug() << QStringLiteral("Has attribute: %1, is not lang en: child.tagName(): %2 (at line: %3)").arg(file).arg(stepItem.tagName()).arg(stepItem.lineNumber());*/
+                                        if(stepItem.isElement())
+                                        {
+                                            if(!stepItem.hasAttribute(DatapackClientLoader::text_lang) || stepItem.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
+                                                steps[id]=stepItem.text();
+                                            /*else can be into another lang
+                                                qDebug() << QStringLiteral("Has attribute: %1, is not lang en: child.tagName(): %2 (at line: %3)").arg(file).arg(stepItem.tagName()).arg(stepItem.lineNumber());*/
+                                        }
+                                        else
+                                            qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(stepItem.tagName()).arg(stepItem.lineNumber());
+                                        stepItem = stepItem.nextSiblingElement(DatapackClientLoader::text_text);
                                     }
-                                    else
-                                        qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(stepItem.tagName()).arg(stepItem.lineNumber());
-                                    stepItem = stepItem.nextSiblingElement(DatapackClientLoader::text_text);
+                                    if(!steps.contains(id))
+                                        steps[id]=tr("No text");
                                 }
-                                if(!steps.contains(id))
-                                    steps[id]=tr("No text");
                             }
+                            else
+                                qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
                         }
                         else
                             qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
@@ -1401,10 +1420,10 @@ void DatapackClientLoader::parseQuestsText()
             {
                 if(client_logic.hasAttribute(DatapackClientLoader::text_id))
                 {
-                    const uint32_t &tempid=client_logic.attribute(DatapackClientLoader::text_id).toULongLong(&ok);
+                    const uint32_t &tempid=client_logic.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                     if(ok && tempid<65536)
                     {
-                        const uint16_t &id=tempid;
+                        const uint16_t &id=static_cast<uint16_t>(tempid);
                         QDomElement text = client_logic.firstChildElement(DatapackClientLoader::text_text);
                         bool found=false;
                         if(!language.isEmpty() && language!=DatapackClientLoader::text_en)

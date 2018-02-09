@@ -240,7 +240,7 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, 
             return;
         }
         bool ok;
-        uint32_t fightId=stringtouint32(*actualBot.step.at(step)->Attribute(std::string("fightid")),&ok);
+        uint16_t fightId=stringtouint16(*actualBot.step.at(step)->Attribute(std::string("fightid")),&ok);
         if(!ok)
         {
             showTip(tr("Bot step wrong data type error, repport this error please"));

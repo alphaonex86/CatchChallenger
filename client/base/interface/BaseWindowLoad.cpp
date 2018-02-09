@@ -1272,7 +1272,7 @@ void BaseWindow::updateTheWareHouseContent()
         auto i=playerInformations.warehouse_items.begin();
         while(i!=playerInformations.warehouse_items.cend())
         {
-            int64_t quantity=i->second;
+            int32_t quantity=i->second;
             if(change_warehouse_items.contains(i->first))
                 quantity-=change_warehouse_items.value(i->first);
             if(quantity>0)
@@ -1298,9 +1298,8 @@ void BaseWindow::updateTheWareHouseContent()
     //monster
     {
         const std::vector<PlayerMonster> &playerMonster=fightEngine.getPlayerMonster();
-        int index=0;
-        int size=playerMonster.size();
-        while(index<size)
+        unsigned int index=0;
+        while(index<playerMonster.size())
         {
             const PlayerMonster &monster=playerMonster.at(index);
             if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())

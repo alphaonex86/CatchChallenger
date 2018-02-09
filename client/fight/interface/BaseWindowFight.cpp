@@ -230,7 +230,7 @@ bool BaseWindow::check_monsters()
             error(QStringLiteral("the hp %1 is greater than max hp for the level %2").arg(monster.remaining_xp).arg(monster.level));
             return false;
         }
-        sub_size=monster.buffs.size();
+        sub_size=static_cast<uint32_t>(monster.buffs.size());
         sub_index=0;
         while(sub_index<sub_size)
         {
@@ -246,7 +246,7 @@ bool BaseWindow::check_monsters()
             }
             sub_index++;
         }
-        sub_size=monster.skills.size();
+        sub_size=static_cast<uint32_t>(monster.skills.size());
         sub_index=0;
         while(sub_index<sub_size)
         {
@@ -412,7 +412,7 @@ void BaseWindow::load_monsters()
                     item->setBackgroundColor(QColor(200,255,255,255));
             }
             ui->monsterList->addItem(item);
-            monsterspos_items_graphical[item]=index;
+            monsterspos_items_graphical[item]=static_cast<uint8_t>(index);
         }
         else
         {
@@ -464,7 +464,7 @@ void BaseWindow::prepareFight()
     escapeSuccess=false;
 }
 
-void BaseWindow::botFight(const uint32_t &fightId)
+void BaseWindow::botFight(const uint16_t &fightId)
 {
     if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightId)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
     {
@@ -477,7 +477,7 @@ void BaseWindow::botFight(const uint32_t &fightId)
     botFightFull(fightId);
 }
 
-void BaseWindow::botFightFull(const uint32_t &fightId)
+void BaseWindow::botFightFull(const uint16_t &fightId)
 {
     this->fightId=fightId;
     botFightTimer.start();
@@ -495,7 +495,14 @@ void BaseWindow::botFightFullDiffered()
     unsigned int index=0;
     while(index<monsters.size())
     {
-        botFightMonstersTransformed << FacilityLib::botFightMonsterToPlayerMonster(monsters.at(index),ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsters.at(index).id),monsters.at(index).level));
+        const BotFight::BotFightMonster &botFightMonster=monsters.at(index);
+        botFightMonstersTransformed << FacilityLib::botFightMonsterToPlayerMonster(
+                                           monsters.at(index),
+                                           ClientFightEngine::getStat(
+                                               CatchChallenger::CommonDatapack::commonDatapack.monsters.at(botFightMonster.id),
+                                               monsters.at(index).level
+                                               )
+                                           );
         index++;
     }
     fightEngine.setBotMonster(botFightMonstersTransformed);
@@ -1214,8 +1221,8 @@ void BaseWindow::on_pushButtonFightAttackConfirmed_clicked()
         QMessageBox::warning(this,tr("Selection error"),tr("You need select an attack"));
         return;
     }
-    const uint32_t skillEndurance=itemsList.first()->data(99).toUInt();
-    const uint32_t skillUsed=fight_attacks_graphical.value(itemsList.first());
+    const uint8_t skillEndurance=static_cast<uint8_t>(itemsList.first()->data(99).toUInt());
+    const uint16_t skillUsed=fight_attacks_graphical.value(itemsList.first());
     if(skillEndurance<=0 && !useTheRescueSkill)
     {
         QMessageBox::warning(this,tr("No endurance"),tr("You have no more endurance to use this skill"));
@@ -1263,7 +1270,7 @@ void BaseWindow::on_listWidgetFightAttack_itemSelectionChanged()
         ui->labelFightAttackDetails->setText(tr("Select an attack"));
         return;
     }
-    uint32_t skillId=fight_attacks_graphical.value(itemsList.first());
+    uint16_t skillId=fight_attacks_graphical.value(itemsList.first());
     ui->labelFightAttackDetails->setText(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(skillId).description);
 }
 
@@ -1458,7 +1465,7 @@ void BaseWindow::loose()
     }
     else if(!botFightList.isEmpty())
     {
-        uint32_t fightId=botFightList.first();
+        uint16_t fightId=botFightList.first();
         botFightList.removeFirst();
         botFight(fightId);
     }
@@ -1550,7 +1557,7 @@ void BaseWindow::win()
     }
     else if(!botFightList.isEmpty())
     {
-        uint32_t fightId=botFightList.first();
+        const uint16_t fightId=botFightList.first();
         botFightList.removeFirst();
         botFight(fightId);
     }
@@ -1986,7 +1993,7 @@ void BaseWindow::on_learnAttackList_itemActivated(QListWidgetItem *item)
     showLearnSkillByPosition(monsterPositionToLearn);
 }
 
-bool BaseWindow::learnSkillByPosition(const uint8_t &monsterPosition,const uint32_t &skill)
+bool BaseWindow::learnSkillByPosition(const uint8_t &monsterPosition,const uint16_t &skill)
 {
     if(!showLearnSkillByPosition(monsterPosition))
     {
@@ -2137,7 +2144,7 @@ void BaseWindow::on_listWidgetFightAttack_itemActivated(QListWidgetItem *item)
     on_pushButtonFightAttackConfirmed_clicked();
 }
 
-void BaseWindow::useTrap(const uint32_t &itemId)
+void BaseWindow::useTrap(const uint16_t &itemId)
 {
     updateTrapTime.restart();
     displayTrapProgression=0;

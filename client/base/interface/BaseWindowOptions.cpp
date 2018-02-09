@@ -32,7 +32,7 @@ void CatchChallenger::BaseWindow::on_zoom_valueChanged(int value)
 {
     if(!ui->zoom->isEnabled())
         return;
-    Options::options.setForcedZoom(value);
+    Options::options.setForcedZoom(static_cast<uint8_t>(value));
     mapController->setScale(value);
 }
 
@@ -44,13 +44,13 @@ void BaseWindow::on_checkBoxLimitFPS_toggled(bool checked)
 
 void BaseWindow::on_spinBoxMaxFPS_editingFinished()
 {
-    Options::options.setFPS(ui->spinBoxMaxFPS->value());
+    Options::options.setFPS(static_cast<uint16_t>(ui->spinBoxMaxFPS->value()));
     mapController->setTargetFPS(Options::options.getFinalFPS());
 }
 
 void CatchChallenger::BaseWindow::on_audioVolume_valueChanged(int value)
 {
-    Options::options.setAudioVolume(value);
+    Options::options.setAudioVolume(static_cast<uint8_t>(value));
     #ifndef CATCHCHALLENGER_NOAUDIO
     Audio::audio.setVolume(value);
     #endif

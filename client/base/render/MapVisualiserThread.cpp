@@ -120,8 +120,8 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
 
     //copy the variables
     tempMapObject->logicalMap.xmlRoot                               = map_loader.map_to_send.xmlRoot;
-    tempMapObject->logicalMap.width                                 = map_loader.map_to_send.width;
-    tempMapObject->logicalMap.height                                = map_loader.map_to_send.height;
+    tempMapObject->logicalMap.width                                 = static_cast<uint16_t>(map_loader.map_to_send.width);
+    tempMapObject->logicalMap.height                                = static_cast<uint16_t>(map_loader.map_to_send.height);
     tempMapObject->logicalMap.parsed_layer                          = map_loader.map_to_send.parsed_layer;
     tempMapObject->logicalMap.map_file                              = resolvedFileName.toStdString();
     tempMapObject->logicalMap.border.bottom.map                     = NULL;
@@ -142,7 +142,8 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
             if(DatapackClientLoader::datapackLoader.itemOnMap.contains(resolvedFileName))
             {
                 if(DatapackClientLoader::datapackLoader.itemOnMap.value(resolvedFileName).contains(QPair<uint8_t,uint8_t>(item.point.x,item.point.y)))
-                    newItem.indexOfItemOnMap=DatapackClientLoader::datapackLoader.itemOnMap.value(resolvedFileName).value(QPair<uint8_t,uint8_t>(item.point.x,item.point.y));
+                    newItem.indexOfItemOnMap=DatapackClientLoader::datapackLoader.itemOnMap.value(resolvedFileName)
+                            .value(QPair<uint8_t,uint8_t>(item.point.x,item.point.y));
                 else
                     qDebug() << QStringLiteral("Map itemOnMap %1,%2 not found").arg(item.point.x).arg(item.point.y);
             }
@@ -299,7 +300,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                         msString.remove(MapVisualiserThread::text_ms);
                                         framesString.remove(MapVisualiserThread::text_frames);
                                         uint16_t ms=msString.toUShort();
-                                        uint8_t frames=framesString.toUShort();
+                                        uint8_t frames=static_cast<uint8_t>(framesString.toUShort());
                                         if(ms>0 && frames>1)
                                         {
                                             {
@@ -420,7 +421,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                             content.msEnter=tempString.toUShort();
                                             tempString=trigger;
                                             tempString.replace(regexTrigger,"\\2");
-                                            content.framesCountEnter=tempString.toUShort();
+                                            content.framesCountEnter=static_cast<uint8_t>(tempString.toUShort());
                                             tempString=trigger;
                                             tempString.replace(regexTrigger,"\\3");
                                             content.msLeave=tempString.toUShort();

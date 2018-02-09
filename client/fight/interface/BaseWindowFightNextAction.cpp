@@ -396,7 +396,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
     if(!currentAttack.addBuffEffectMonster.empty())
     {
         const Skill::BuffEffect &addBuffEffectMonster=currentAttack.addBuffEffectMonster.front();
-        QHash<uint32_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
+        QHash<uint8_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
         QListWidget *listWidget=NULL;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         bool onBuffCurrentMonster=false;
@@ -529,7 +529,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
     if(!currentAttack.removeBuffEffectMonster.empty())
     {
         const Skill::BuffEffect &removeBuffEffectMonster=currentAttack.removeBuffEffectMonster.front();
-        QHash<uint32_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
+        QHash<uint8_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
         if(currentAttack.doByTheCurrentMonster)
         {
             if((removeBuffEffectMonster.on & ApplyOn_AllEnemy) || (removeBuffEffectMonster.on & ApplyOn_AloneEnemy))

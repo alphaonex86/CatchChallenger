@@ -119,33 +119,33 @@ bool Client::singleMove(const Direction &direction)
                 {
                     if(public_and_private_informations.bot_already_beaten==NULL)
                     {
-                        errorOutput("Need have public_and_private_informations.bot_already_beaten!=NULL to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+                        errorOutput("Need have public_and_private_informations.bot_already_beaten!=NULL to use this teleporter: "+std::to_string(teleporter.condition.data.fightBot)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                         return false;
                     }
-                    const auto &fightId=teleporter.condition.value;
+                    const auto &fightId=teleporter.condition.data.fightBot;
                     if(!(public_and_private_informations.bot_already_beaten[fightId/8] & (1<<(7-fightId%8))))
                     {
-                        errorOutput("Need have FightBot win to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+                        errorOutput("Need have FightBot win to use this teleporter: "+std::to_string(teleporter.condition.data.fightBot)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                         return false;
                     }
                 }
                 break;
                 case CatchChallenger::MapConditionType_Item:
-                    if(public_and_private_informations.items.find(teleporter.condition.value)==public_and_private_informations.items.cend())
+                    if(public_and_private_informations.items.find(teleporter.condition.data.item)==public_and_private_informations.items.cend())
                     {
-                        errorOutput("Need have item to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+                        errorOutput("Need have item to use this teleporter: "+std::to_string(teleporter.condition.data.item)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                         return false;
                     }
                 break;
                 case CatchChallenger::MapConditionType_Quest:
-                    if(public_and_private_informations.quests.find(teleporter.condition.value)==public_and_private_informations.quests.cend())
+                    if(public_and_private_informations.quests.find(teleporter.condition.data.quest)==public_and_private_informations.quests.cend())
                     {
-                        errorOutput("Need have quest to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+                        errorOutput("Need have quest to use this teleporter: "+std::to_string(teleporter.condition.data.quest)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                         return false;
                     }
-                    if(!public_and_private_informations.quests.at(teleporter.condition.value).finish_one_time)
+                    if(!public_and_private_informations.quests.at(teleporter.condition.data.quest).finish_one_time)
                     {
-                        errorOutput("Need have finish the quest to use this teleporter: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+                        errorOutput("Need have finish the quest to use this teleporter: "+std::to_string(teleporter.condition.data.quest)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                         return false;
                     }
                 break;
@@ -154,7 +154,7 @@ bool Client::singleMove(const Direction &direction)
             }
             if(teleporter.map==NULL)
             {
-                errorOutput("This teleporter no valid teleporter.map==NULL: "+std::to_string(teleporter.condition.value)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+                errorOutput("This teleporter no valid teleporter.map==NULL: "+std::to_string(teleporter.condition.data.item)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                 return false;
             }
             x=teleporter.destination_x;

@@ -80,7 +80,7 @@ void BaseWindow::captureCityStartBattle(const uint16_t &player_count,const uint1
     updater_page_zonecatch.stop();
 }
 
-void BaseWindow::captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId)
+void BaseWindow::captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint16_t &fightId)
 {
     ui->zonecaptureCancel->setVisible(false);
     ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");
