@@ -112,7 +112,7 @@ bool MapController::updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *pl
         plant->mapObject->setCell(cell);
         return false;
     }
-    int seconds_to_mature=plant->mature_at-currentTime;
+    int seconds_to_mature=static_cast<uint32_t>(plant->mature_at-currentTime);
     int floweringDiff=CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].flowering_seconds;
     int tallerDiff=CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].taller_seconds;
     int sproutedDiff=CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].sprouted_seconds;

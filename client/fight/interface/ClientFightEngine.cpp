@@ -224,7 +224,7 @@ void ClientFightEngine::resetAll()
 std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonster)
 {
     std::vector<uint8_t> positionList;
-    const uint8_t basePosition=public_and_private_informations.playerMonster.size();
+    const uint8_t basePosition=static_cast<uint8_t>(public_and_private_informations.playerMonster.size());
     Player_private_and_public_informations &informations=client->get_player_informations();
     std::vector<PlayerMonster> monsterList;
     int index=0;
@@ -236,7 +236,7 @@ std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const QList<PlayerMonst
         else
             std::cerr << "ClientFightEngine::addPlayerMonster(QList): encyclopedia_monster is null, unable to set" << std::endl;
         monsterList.push_back(playerMonster.at(index));
-        positionList.push_back(basePosition+index);
+        positionList.push_back(basePosition+static_cast<uint8_t>(index));
         index++;
     }
     CommonFightEngine::addPlayerMonster(monsterList);
@@ -246,7 +246,7 @@ std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const QList<PlayerMonst
 std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
 {
     std::vector<uint8_t> positionList;
-    const uint8_t basePosition=public_and_private_informations.playerMonster.size();
+    const uint8_t basePosition=static_cast<uint8_t>(public_and_private_informations.playerMonster.size());
     Player_private_and_public_informations &informations=client->get_player_informations();
     unsigned int index=0;
     while(index<playerMonster.size())
@@ -256,7 +256,7 @@ std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const std::vector<Playe
             informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
         else
             std::cerr << "ClientFightEngine::addPlayerMonster(std::vector): encyclopedia_monster is null, unable to set" << std::endl;
-        positionList.push_back(basePosition+index);
+        positionList.push_back(basePosition+static_cast<uint8_t>(index));
         index++;
     }
     CommonFightEngine::addPlayerMonster(playerMonster);
@@ -271,7 +271,7 @@ std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const PlayerMonster &pl
         informations.encyclopedia_monster[playerMonster.monster/8]|=(1<<(7-playerMonster.monster%8));
     else
         std::cerr << "ClientFightEngine::addPlayerMonster(PlayerMonster): encyclopedia_monster is null, unable to set" << std::endl;
-    positionList.push_back(public_and_private_informations.playerMonster.size());
+    positionList.push_back(static_cast<uint8_t>(public_and_private_informations.playerMonster.size()));
     CommonFightEngine::addPlayerMonster(playerMonster);
     return positionList;
 }
@@ -283,7 +283,7 @@ bool ClientFightEngine::internalTryEscape()
     return CommonFightEngine::internalTryEscape();
 }
 
-bool ClientFightEngine::tryCatchClient(const uint32_t &item)
+bool ClientFightEngine::tryCatchClient(const uint16_t &item)
 {
     if(!playerMonster_catchInProgress.isEmpty())
     {
@@ -637,7 +637,7 @@ uint8_t ClientFightEngine::getPlayerMonsterPosition(const PlayerMonster * const 
     while(index<public_and_private_informations.playerMonster.size())
     {
         if(&public_and_private_informations.playerMonster.at(index)==playerMonster)
-            return index;
+            return static_cast<uint8_t>(index);
         index++;
     }
     std::cerr << "getPlayerMonsterPosition() with not existing monster" << std::endl;
@@ -770,11 +770,11 @@ bool ClientFightEngine::useObjectOnMonsterByPosition(const uint16_t &object, con
                 {
                     //duplicate to have a return
                     case MonsterItemEffectType_AddHp:
-                        if(effect.value>0 && (playerMonsterStat.hp-playerMonster->hp)>(uint32_t)effect.value)
+                        if(effect.data.hp>0 && (playerMonsterStat.hp-playerMonster->hp)>(uint32_t)effect.data.hp)
                         {
-                            hpChange(playerMonster,playerMonster->hp+effect.value);
+                            hpChange(playerMonster,playerMonster->hp+effect.data.hp);
                             Skill::LifeEffectReturn lifeEffectReturn;
-                            lifeEffectReturn.quantity=effect.value;
+                            lifeEffectReturn.quantity=effect.data.hp;
                             lifeEffectReturn.on=ApplyOn_Themself;
                             lifeEffectReturn.critical=false;
                             lifeEffectReturn.effective=1;
@@ -796,12 +796,12 @@ bool ClientFightEngine::useObjectOnMonsterByPosition(const uint16_t &object, con
                     break;
                     //duplicate to have a return
                     case MonsterItemEffectType_RemoveBuff:
-                        if(effect.value>0)
+                        if(effect.data.buff>0)
                         {
-                            if(removeBuffOnMonster(playerMonster,effect.value))
+                            if(removeBuffOnMonster(playerMonster,effect.data.buff))
                             {
                                 Skill::BuffEffect buffEffect;
-                                buffEffect.buff=effect.value;
+                                buffEffect.buff=effect.data.buff;
                                 buffEffect.on=ApplyOn_Themself;
                                 buffEffect.level=1;
                                 attackReturn.removeBuffEffectMonster.push_back(buffEffect);
