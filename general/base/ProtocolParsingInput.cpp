@@ -32,7 +32,7 @@ ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
         #else
         if(socket==NULL)
             return -1;
-        const int &temp_size=socket->read(data,size);
+        const int &temp_size=static_cast<int>(socket->read(data,size));
         #endif
         RXSize+=temp_size;
         return temp_size;
@@ -77,12 +77,13 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
         do
         {
             protocolParsingCheck->flags|=0x08;
-            if(protocolParsingCheck->parseIncommingDataRaw(data,size,cursor)!=1)
+            if(protocolParsingCheck->parseIncommingDataRaw(data,static_cast<uint32_t>(size),cursor)!=1)
             {
                 if(cursor>0)
-                    std::cerr << "Bug at data-sending: " << binarytoHexa(data,cursor) << " " << binarytoHexa(data+cursor,size-cursor) << ", cursor:" << cursor << std::endl;
+                    std::cerr << "Bug at data-sending: " << binarytoHexa(data,cursor) << " " <<
+                                 binarytoHexa(data+cursor,static_cast<uint32_t>(size)-cursor) << ", cursor:" << cursor << std::endl;
                 else
-                    std::cerr << "Bug at data-sending: " << binarytoHexa(data+cursor,size-cursor) << std::endl;
+                    std::cerr << "Bug at data-sending: " << binarytoHexa(data+cursor,static_cast<uint32_t>(size)-cursor) << std::endl;
                 abort();
             }
             if(!protocolParsingCheck->valid)
@@ -192,7 +193,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
         uint32_t cursor=0;
         if(!header_cut.empty())
         {
-            const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-header_cut.size();
+            const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-static_cast<unsigned int>(header_cut.size());
             memcpy(ProtocolParsingInputOutput::tempBigBufferForInput,header_cut.data(),header_cut.size());
             size=read(ProtocolParsingInputOutput::tempBigBufferForInput,size_to_get)+header_cut.size();
             if(size<0)
@@ -257,7 +258,7 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
             #ifdef PROTOCOLPARSINGDEBUG
             std::cout << "Start split: " << binarytoHexa(ProtocolParsingInputOutput::tempBigBufferForInput+cursor,size-cursor) << " and size " << size-cursor << ", cursor: " << cursor << std::endl;
             #endif
-            returnVar=parseIncommingDataRaw(ProtocolParsingInputOutput::tempBigBufferForInput,size,cursor);
+            returnVar=parseIncommingDataRaw(ProtocolParsingInputOutput::tempBigBufferForInput,static_cast<uint32_t>(size),cursor);
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(oldcursor==cursor && returnVar==1)
             {
@@ -593,7 +594,7 @@ int8_t ProtocolParsingBase::parseData(const char * const commonBuffer, const uin
     //if have too many data, or just the size
     if((dataSize-dataToWithoutHeader.size())<=(size-cursor))
     {
-        const uint32_t &size_to_append=dataSize-dataToWithoutHeader.size();
+        const uint32_t &size_to_append=dataSize-static_cast<uint32_t>(dataToWithoutHeader.size());
         binaryAppend(dataToWithoutHeader,commonBuffer+cursor,size_to_append);
         cursor+=size_to_append;
         #ifdef PROTOCOLPARSINGDEBUG
@@ -611,7 +612,7 @@ int8_t ProtocolParsingBase::parseData(const char * const commonBuffer, const uin
             return false;
         }
         #endif
-        const bool &returnVal=parseDispatch(dataToWithoutHeader.data(),dataToWithoutHeader.size());
+        const bool &returnVal=parseDispatch(dataToWithoutHeader.data(),static_cast<uint32_t>(dataToWithoutHeader.size()));
         dataClear();
         if(returnVal)
             return 1;

@@ -23,7 +23,7 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NewProfile)
 {
-    const uint32_t timeVar=time(NULL);
+    const uint32_t timeVar=static_cast<uint32_t>(time(NULL));
     srand(timeVar);
     ui->setupUi(this);
     this->datapackPath=datapackPath;
@@ -46,7 +46,7 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
     }
     if(ui->comboBox->count()>0)
     {
-        srand(time(NULL));
+        srand(static_cast<uint32_t>(time(NULL)));
         ui->comboBox->setCurrentIndex(rand()%ui->comboBox->count());
         ui->description->setText(profileTextList.at(ui->comboBox->currentIndex()).description);
         ui->ok->setEnabled(true);

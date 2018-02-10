@@ -104,7 +104,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                                             msString.remove(MapVisualiserOrder::text_ms);
                                             framesString.remove(MapVisualiserOrder::text_frames);
                                             uint16_t ms=msString.toUShort();
-                                            uint8_t frames=framesString.toUShort();
+                                            uint8_t frames=static_cast<uint8_t>(framesString.toUShort());
                                             if(ms>0 && frames>1)
                                             {
                                                 if(!tempMapObject->doors.contains(QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))))
