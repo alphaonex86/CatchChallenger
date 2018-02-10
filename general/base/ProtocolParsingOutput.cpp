@@ -49,7 +49,7 @@ bool ProtocolParsingBase::internalPackOutcommingData(const char * const data,con
 
     if(size<=CATCHCHALLENGER_MAX_PACKET_SIZE)
     {
-        const int &byteWriten = write(data,size);
+        const ssize_t &byteWriten = write(data,size);
         if(Q_UNLIKELY(size!=byteWriten))
         {
             disconnectClient();
@@ -60,7 +60,7 @@ bool ProtocolParsingBase::internalPackOutcommingData(const char * const data,con
     else
     {
         int cursor=0;
-        int byteWriten;
+        ssize_t byteWriten=0;
         while(Q_LIKELY(cursor<size))
         {
             const int &remaining_size=size-cursor;
@@ -107,7 +107,7 @@ bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,con
     }
     #endif
 
-    const int &byteWriten = write(data,size);
+    const ssize_t &byteWriten = write(data,size);
     if(Q_UNLIKELY(size!=byteWriten))
     {
         disconnectClient();

@@ -14,7 +14,7 @@ NewGame::NewGame(const QString &skinPath, const QString &monsterPath, std::vecto
     QDialog(parent),
     ui(new Ui::NewGame)
 {
-    srand(time(NULL));
+    srand(static_cast<uint32_t>(time(NULL)));
     ui->setupUi(this);
     this->forcedSkin=forcedSkin;
     this->monsterPath=monsterPath;
@@ -23,9 +23,9 @@ NewGame::NewGame(const QString &skinPath, const QString &monsterPath, std::vecto
     step=Step1;
     currentMonsterGroup=0;
     if(!monstergroup.empty())
-        currentMonsterGroup=rand()%monstergroup.size();
+        currentMonsterGroup=static_cast<uint8_t>(rand()%monstergroup.size());
     this->skinPath=skinPath.toStdString();
-    unsigned int index=0;
+    uint8_t index=0;
     while(index<CatchChallenger::CommonDatapack::commonDatapack.skins.size())
     {
         if(forcedSkin.empty() || vectorcontainsAtLeastOne(forcedSkin,(uint8_t)index))
@@ -46,7 +46,7 @@ NewGame::NewGame(const QString &skinPath, const QString &monsterPath, std::vecto
 
     currentSkin=0;
     if(!skinList.empty())
-        currentSkin=rand()%skinList.size();
+        currentSkin=static_cast<uint8_t>(rand()%skinList.size());
     updateSkin();
     ui->pseudo->setFocus();
     if(skinList.empty())

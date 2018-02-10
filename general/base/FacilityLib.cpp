@@ -41,7 +41,14 @@ uint16_t FacilityLib::publicPlayerMonsterToBinary(char *data,const PublicPlayerM
     posOutput+=2;
     data[posOutput]=(uint8_t)publicPlayerMonster.gender;
     posOutput+=1;
-    data[posOutput]=publicPlayerMonster.buffs.size();
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(publicPlayerMonster.buffs.size()>255)
+    {
+        std::cerr << "FacilityLib::publicPlayerMonsterToBinary() buffs.size()>255" << std::endl;
+        abort();
+    }
+    #endif
+    data[posOutput]=static_cast<uint8_t>(publicPlayerMonster.buffs.size());
     posOutput+=1;
     uint8_t index=0;
     while(index<publicPlayerMonster.buffs.size())
@@ -68,7 +75,14 @@ uint16_t FacilityLib::playerMonsterToBinary(char *data,const PlayerMonster &play
     posOutput+=2;
     data[posOutput]=(uint8_t)playerMonster.gender;
     posOutput+=1;
-    data[posOutput]=playerMonster.buffs.size();
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(playerMonster.buffs.size()>255)
+    {
+        std::cerr << "FacilityLib::publicPlayerMonsterToBinary() buffs.size()>255" << std::endl;
+        abort();
+    }
+    #endif
+    data[posOutput]=static_cast<uint8_t>(playerMonster.buffs.size());
     posOutput+=1;
     uint8_t index=0;
     while(index<playerMonster.buffs.size())
@@ -167,8 +181,15 @@ uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &mon
     data[posOutput]=(uint8_t)monster.character_origin==character_id;
     posOutput+=1;
 
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(monster.buffs.size()>255)
+    {
+        std::cerr << "FacilityLib::publicPlayerMonsterToBinary() buffs.size()>255" << std::endl;
+        abort();
+    }
+    #endif
     uint16_t sub_index=0;
-    data[posOutput]=monster.buffs.size();
+    data[posOutput]=static_cast<uint8_t>(monster.buffs.size());
     posOutput+=1;
     while(sub_index<monster.buffs.size())
     {
@@ -303,7 +324,7 @@ uint32_t FacilityLib::getFactoryResourcePrice(const uint32_t &quantityInStock,co
     if(quantityInStock>=max_items)
         price_temp_change=0;
     else
-        price_temp_change=((max_items-quantityInStock)*CommonSettingsServer::commonSettingsServer.factoryPriceChange*2)/max_items;
+        price_temp_change=static_cast<uint8_t>(((max_items-quantityInStock)*CommonSettingsServer::commonSettingsServer.factoryPriceChange*2)/max_items);
     return CommonDatapack::commonDatapack.items.item.at(resource.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
 }
 
@@ -314,7 +335,7 @@ uint32_t FacilityLib::getFactoryProductPrice(const uint32_t &quantityInStock, co
     if(quantityInStock>=max_items)
         price_temp_change=0;
     else
-        price_temp_change=((max_items-quantityInStock)*CommonSettingsServer::commonSettingsServer.factoryPriceChange*2)/max_items;
+        price_temp_change=static_cast<uint8_t>(((max_items-quantityInStock)*CommonSettingsServer::commonSettingsServer.factoryPriceChange*2)/max_items);
     return CommonDatapack::commonDatapack.items.item.at(product.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
 }
 
@@ -348,7 +369,7 @@ void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const
             if(playerReputation->level<=(-((int32_t)reputation.reputation_negative.size()-1)) && playerReputation->point<=0)
             {
                 playerReputation->point=0;
-                playerReputation->level=(-((int32_t)reputation.reputation_negative.size()-1));
+                playerReputation->level=static_cast<uint8_t>((-((int32_t)reputation.reputation_negative.size()-1)));
                 break;
             }
         }
@@ -366,7 +387,7 @@ void FacilityLib::appendReputationPoint(PlayerReputation *playerReputation,const
             if(playerReputation->level>=((int32_t)reputation.reputation_positive.size()-1) && playerReputation->point>=0)
             {
                 playerReputation->point=0;
-                playerReputation->level=((int32_t)reputation.reputation_positive.size()-1);
+                playerReputation->level=static_cast<uint8_t>(((int32_t)reputation.reputation_positive.size()-1));
                 break;
             }
         }

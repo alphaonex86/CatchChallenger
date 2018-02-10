@@ -275,9 +275,9 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             tempMapObject->relative_x_pixel=border_map->relative_x_pixel+offset_pixel;
                             tempMapObject->relative_y_pixel=border_map->relative_y_pixel+border_map->logicalMap.height*border_map->tiledMap->tileHeight();
                             tempMapObject->logicalMap.border.top.map=&border_map->logicalMap;
-                            tempMapObject->logicalMap.border.top.x_offset=offset;
+                            tempMapObject->logicalMap.border.top.x_offset=static_cast<int16_t>(offset);
                             border_map->logicalMap.border.bottom.map=&tempMapObject->logicalMap;
-                            border_map->logicalMap.border.bottom.x_offset=-offset;
+                            border_map->logicalMap.border.bottom.x_offset=static_cast<int16_t>(-offset);
                             QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
                             if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
                             {
@@ -304,9 +304,9 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             tempMapObject->relative_x_pixel=border_map->relative_x_pixel+offset_pixel;
                             tempMapObject->relative_y_pixel=border_map->relative_y_pixel-tempMapObject->logicalMap.height*tempMapObject->tiledMap->tileHeight();
                             tempMapObject->logicalMap.border.bottom.map=&border_map->logicalMap;
-                            tempMapObject->logicalMap.border.bottom.x_offset=offset;
+                            tempMapObject->logicalMap.border.bottom.x_offset=static_cast<int16_t>(offset);
                             border_map->logicalMap.border.top.map=&tempMapObject->logicalMap;
-                            border_map->logicalMap.border.top.x_offset=-offset;
+                            border_map->logicalMap.border.top.x_offset=static_cast<int16_t>(-offset);
                             QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
                             if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
                             {
@@ -333,9 +333,9 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             tempMapObject->relative_x_pixel=border_map->relative_x_pixel-tempMapObject->logicalMap.width*tempMapObject->tiledMap->tileWidth();
                             tempMapObject->relative_y_pixel=border_map->relative_y_pixel+offset_pixel;
                             tempMapObject->logicalMap.border.right.map=&border_map->logicalMap;
-                            tempMapObject->logicalMap.border.right.y_offset=offset;
+                            tempMapObject->logicalMap.border.right.y_offset=static_cast<int16_t>(offset);
                             border_map->logicalMap.border.left.map=&tempMapObject->logicalMap;
-                            border_map->logicalMap.border.left.y_offset=-offset;
+                            border_map->logicalMap.border.left.y_offset=static_cast<int16_t>(-offset);
                             QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
                             if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
                             {
@@ -362,9 +362,9 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             tempMapObject->relative_x_pixel=border_map->relative_x_pixel+border_map->logicalMap.width*border_map->tiledMap->tileWidth();
                             tempMapObject->relative_y_pixel=border_map->relative_y_pixel+offset_pixel;
                             tempMapObject->logicalMap.border.left.map=&border_map->logicalMap;
-                            tempMapObject->logicalMap.border.left.y_offset=offset;
+                            tempMapObject->logicalMap.border.left.y_offset=static_cast<int16_t>(offset);
                             border_map->logicalMap.border.right.map=&tempMapObject->logicalMap;
-                            border_map->logicalMap.border.right.y_offset=-offset;
+                            border_map->logicalMap.border.right.y_offset=static_cast<int16_t>(-offset);
                             QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
                             if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
                             {

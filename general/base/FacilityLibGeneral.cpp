@@ -28,9 +28,9 @@ unsigned int FacilityLibGeneral::toUTF8WithHeader(const std::string &text,char *
 {
     if(text.empty() || text.size()>255)
         return 0;
-    data[0]=text.size();
-    memcpy(data+1,text.data(),text.size());
-    return 1+text.size();
+    data[0]=static_cast<uint8_t>(text.size());
+    memcpy(data+1,text.data(),static_cast<size_t>(text.size()));
+    return 1+static_cast<uint8_t>(text.size());
 }
 
 unsigned int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,char * const data)
@@ -38,8 +38,8 @@ unsigned int FacilityLibGeneral::toUTF8With16BitsHeader(const std::string &text,
     if(text.empty() || text.size()>65535)
         return 0;
     *reinterpret_cast<uint16_t *>(data+0)=(uint16_t)htole16((uint16_t)text.size());
-    memcpy(data+2,text.data(),text.size());
-    return 2+text.size();
+    memcpy(data+2,text.data(),static_cast<size_t>(text.size()));
+    return 2+static_cast<uint8_t>(text.size());
 }
 
 std::vector<FacilityLibGeneral::InodeDescriptor> FacilityLibGeneral::listFolderNotRecursive(const std::string& folder,const ListFolder &type)
@@ -102,8 +102,7 @@ std::vector<std::string> FacilityLibGeneral::listFolder(const std::string& folde
 {
     std::vector<std::string> returnList;
     std::vector<FacilityLibGeneral::InodeDescriptor> entryList=listFolderNotRecursive(folder+suffix);//possible wait time here
-    int sizeEntryList=entryList.size();
-    for (int index=0;index<sizeEntryList;++index)
+    for (unsigned int index=0;index<entryList.size();++index)
     {
         const FacilityLibGeneral::InodeDescriptor &fileInfo=entryList.at(index);
         if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Type::Dir)
@@ -123,8 +122,7 @@ std::vector<std::string> FacilityLibGeneral::listFolderWithExclude(const std::st
     if(suffix==exclude)
         return returnList;
     std::vector<FacilityLibGeneral::InodeDescriptor> entryList=listFolderNotRecursive(folder+suffix);//possible wait time here
-    int sizeEntryList=entryList.size();
-    for (int index=0;index<sizeEntryList;++index)
+    for (unsigned int index=0;index<entryList.size();++index)
     {
         const FacilityLibGeneral::InodeDescriptor &fileInfo=entryList.at(index);
         if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Type::Dir)
@@ -156,8 +154,7 @@ std::vector<std::string> FacilityLibGeneral::skinIdList(const std::string& skinP
 {
     std::vector<std::string> skinFolderList;
     std::vector<FacilityLibGeneral::InodeDescriptor> entryList=listFolderNotRecursive(skinPath,FacilityLibGeneral::ListFolder::Dirs);//possible wait time here
-    const unsigned int &sizeEntryList=entryList.size();
-    for(unsigned int index=0;index<sizeEntryList;++index)
+    for(unsigned int index=0;index<entryList.size();++index)
     {
         const FacilityLibGeneral::InodeDescriptor &fileInfo=entryList.at(index);
         if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Type::Dir)
@@ -183,7 +180,7 @@ std::string FacilityLibGeneral::dropPrefixAndSuffixLowerThen33(const std::string
     }
     if(start>=str.size())
         return std::string();
-    unsigned int stop=str.size()-1;
+    unsigned int stop=static_cast<unsigned int>(str.size())-1;
     while(str.at(stop)<33)
         stop--;
     return str.substr(start,stop-start+1);
@@ -253,9 +250,14 @@ std::vector<char> FacilityLibGeneral::readAllFileAndClose(FILE * file)
 uint32_t FacilityLibGeneral::fileSize(FILE * file)
 {
     fseek(file,0,SEEK_END);
-    uint32_t fsize=ftell(file);
+    const size_t fsize=ftell(file);
+    if(fsize>0x7FFFFFFF)
+    {
+        std::cerr << "fsize>0x7FFFFFFF into FacilityLibGeneral::fileSize()" << std::endl;
+        abort();
+    }
     fseek(file,0,SEEK_SET);
-    return fsize;
+    return static_cast<uint32_t>(fsize);
 }
 
 std::string FacilityLibGeneral::getSuffix(const std::string& fileName)
