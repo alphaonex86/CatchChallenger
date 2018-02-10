@@ -120,8 +120,8 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
 
     //copy the variables
     tempMapObject->logicalMap.xmlRoot                               = map_loader.map_to_send.xmlRoot;
-    tempMapObject->logicalMap.width                                 = static_cast<uint16_t>(map_loader.map_to_send.width);
-    tempMapObject->logicalMap.height                                = static_cast<uint16_t>(map_loader.map_to_send.height);
+    tempMapObject->logicalMap.width                                 = static_cast<uint8_t>(map_loader.map_to_send.width);
+    tempMapObject->logicalMap.height                                = static_cast<uint8_t>(map_loader.map_to_send.height);
     tempMapObject->logicalMap.parsed_layer                          = map_loader.map_to_send.parsed_layer;
     tempMapObject->logicalMap.map_file                              = resolvedFileName.toStdString();
     tempMapObject->logicalMap.border.bottom.map                     = NULL;
@@ -189,9 +189,8 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
     //load the string
     tempMapObject->logicalMap.teleport_semi.clear();
     {
-        int index=0;
-        const int &listSize=map_loader.map_to_send.teleport.size();
-        while(index<listSize)
+        unsigned int index=0;
+        while(index<map_loader.map_to_send.teleport.size())
         {
             const CatchChallenger::Map_semi_teleport &teleport=map_loader.map_to_send.teleport.at(index);
             tempMapObject->logicalMap.teleport_semi << teleport;

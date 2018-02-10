@@ -214,7 +214,7 @@ std::unordered_map<uint16_t, Quest> DatapackGeneralLoader::loadQuests(const std:
             index++;
             continue;
         }
-        const uint32_t &questId=stringtouint32(fileList.at(index).name,&ok);
+        const uint16_t &questId=stringtouint16(fileList.at(index).name,&ok);
         if(ok)
         {
             //add it, all seam ok
@@ -237,7 +237,7 @@ std::unordered_map<uint16_t, Quest> DatapackGeneralLoader::loadQuests(const std:
 
 std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &file)
 {
-    std::unordered_map<std::string,int> reputationNameToId;
+    std::unordered_map<std::string,uint8_t> reputationNameToId;
     {
         unsigned int index=0;
         while(index<CommonDatapack::commonDatapack.reputation.size())
@@ -329,7 +329,9 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                     CatchChallenger::ReputationRequirements reputation;
                                     reputation.level=level;
                                     reputation.positif=positif;
-                                    reputation.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
+                                    reputation.reputationId=reputationNameToId.at(
+                                                CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type")))
+                                                );
                                     quest.requirements.reputation.push_back(reputation);
                                 }
                                 else
@@ -355,7 +357,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     {
                         if(requirementsItem->Attribute("id")!=NULL)
                         {
-                            const uint32_t &questId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                            const uint16_t &questId=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                             if(ok)
                             {
                                 QuestRequirements questNewEntry;
@@ -497,7 +499,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         {
             if(step->Attribute("id")!=NULL)
             {
-                const uint32_t &id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                const uint8_t &id=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                 if(ok)
                 {
                     CatchChallenger::Quest::Step stepObject;
@@ -507,7 +509,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         unsigned int index=0;
                         while(index<tempStringList.size())
                         {
-                            const uint32_t &tempInt=stringtouint32(tempStringList.at(index),&ok);
+                            const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
                             if(ok)
                                 stepObject.bots.push_back(tempInt);
                             index++;

@@ -28,7 +28,7 @@ extern "C" void *lz_alloc(void *, size_t , size_t size)
     try{
         p = new char [size];
     }
-    catch(std::bad_alloc &ba)
+    catch(std::bad_alloc &)
     {
         p = NULL;
     }
@@ -184,7 +184,7 @@ int32_t ProtocolParsing::compressZlib(const char * const input, const uint32_t &
     {
         nErr=deflate(&strm,Z_FINISH);
         if(nErr==Z_STREAM_END)
-            nRet=strm.total_out;
+            nRet=static_cast<uint32_t>(strm.total_out);
         else
         {
             logZlibError(nErr);
@@ -255,7 +255,7 @@ int32_t ProtocolParsing::decompressXz(const char * const input, const uint32_t &
         }
     } while (strm.avail_out == 0);
     lzma_end (&strm);
-    return maxOutputSize-strm.avail_out;
+    return maxOutputSize-static_cast<uint32_t>(strm.avail_out);
 }
 
 int32_t ProtocolParsing::compressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
@@ -317,7 +317,7 @@ int32_t ProtocolParsing::compressXz(const char * const input, const uint32_t &in
         }
     } while (strm.avail_out == 0);
     lzma_end (&strm);
-    return maxOutputSize-strm.avail_out;
+    return maxOutputSize-static_cast<uint32_t>(strm.avail_out);
 }
 
 #endif

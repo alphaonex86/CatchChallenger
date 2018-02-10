@@ -20,12 +20,12 @@ public:
         struct Map_BorderContent_TopBottom
         {
             CommonMap *map;
-            int32_t x_offset;
+            int16_t x_offset;//the max map size is 255, then offset have range: -255 to 255, see Map_loader::tryLoadMap() check size
         };
         struct Map_BorderContent_LeftRight
         {
             CommonMap *map;
-            int32_t y_offset;
+            int16_t y_offset;//the max map size is 255, then offset have range: -255 to 255, see Map_loader::tryLoadMap() check size
         };
         Map_BorderContent_TopBottom top;
         Map_BorderContent_TopBottom bottom;
@@ -47,8 +47,8 @@ public:
     uint8_t teleporter_list_size;
 
     std::string map_file;
-    uint16_t width;
-    uint16_t height;
+    uint8_t width;//why uint16_t if a map is not allowed be more than 255?
+    uint8_t height;//why uint16_t if a map is not allowed be more than 255?
     uint32_t group;
     uint32_t id;
 

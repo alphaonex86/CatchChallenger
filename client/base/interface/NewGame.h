@@ -46,8 +46,8 @@ private:
     bool skinLoaded;
     std::vector<std::string> skinList;
     std::vector<uint8_t> skinListId;
-    unsigned int currentSkin;
-    unsigned int currentMonsterGroup;
+    uint8_t currentSkin;
+    uint8_t currentMonsterGroup;
     std::string skinPath;
     bool okCanBeEnabled();
 

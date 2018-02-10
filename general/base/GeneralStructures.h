@@ -466,7 +466,7 @@ struct MapCondition
 
 struct MapMonster
 {
-    uint32_t id;
+    uint16_t id;
     uint8_t minLevel;
     uint8_t maxLevel;
     uint8_t luck;

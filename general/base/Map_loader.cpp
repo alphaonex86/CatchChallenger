@@ -271,7 +271,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                     map_to_send_temp.border.left.fileName=borderMap;
                                                     if(!stringEndsWith(map_to_send_temp.border.left.fileName,".tmx") && !map_to_send_temp.border.left.fileName.empty())
                                                         map_to_send_temp.border.left.fileName+=".tmx";
-                                                    map_to_send_temp.border.left.y_offset=object_y;
+                                                    map_to_send_temp.border.left.y_offset=static_cast<uint16_t>(object_y);
                                                 }
                                                 else
                                                     std::cerr << "The border " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " " << type << " is already set (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
@@ -289,7 +289,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                     map_to_send_temp.border.right.fileName=borderMap;
                                                     if(!stringEndsWith(map_to_send_temp.border.right.fileName,".tmx") && !map_to_send_temp.border.right.fileName.empty())
                                                         map_to_send_temp.border.right.fileName+=".tmx";
-                                                    map_to_send_temp.border.right.y_offset=object_y;
+                                                    map_to_send_temp.border.right.y_offset=static_cast<uint16_t>(object_y);
                                                 }
                                                 else
                                                     std::cerr << "The border " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " " << type << " is already set (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
@@ -307,7 +307,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                     map_to_send_temp.border.top.fileName=borderMap;
                                                     if(!stringEndsWith(map_to_send_temp.border.top.fileName,".tmx") && !map_to_send_temp.border.top.fileName.empty())
                                                         map_to_send_temp.border.top.fileName+=".tmx";
-                                                    map_to_send_temp.border.top.x_offset=object_x;
+                                                    map_to_send_temp.border.top.x_offset=static_cast<uint16_t>(object_x);
                                                 }
                                                 else
                                                     std::cerr << "The border " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " " << type << " is already set (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
@@ -325,7 +325,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                     map_to_send_temp.border.bottom.fileName=borderMap;
                                                     if(!stringEndsWith(map_to_send_temp.border.bottom.fileName,".tmx") && !map_to_send_temp.border.bottom.fileName.empty())
                                                         map_to_send_temp.border.bottom.fileName+=".tmx";
-                                                    map_to_send_temp.border.bottom.x_offset=object_x;
+                                                    map_to_send_temp.border.bottom.x_offset=static_cast<uint16_t>(object_x);
                                                 }
                                                 else
                                                     std::cerr << "The border " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " " << type << " is already set (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
@@ -344,8 +344,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                     if(property_text.find(CACHEDSTRING_map)!=property_text.cend() && property_text.find(CACHEDSTRING_x)!=property_text.cend() && property_text.find(CACHEDSTRING_y)!=property_text.cend())
                                     {
                                         Map_semi_teleport new_tp;
-                                        new_tp.source_x=object_x;
-                                        new_tp.source_y=object_y;
+                                        new_tp.source_x=static_cast<uint8_t>(object_x);
+                                        new_tp.source_y=static_cast<uint8_t>(object_y);
                                         new_tp.condition.type=MapConditionType_None;
                                         new_tp.condition.data.fightBot=0;
                                         new_tp.condition.data.item=0;
@@ -394,8 +394,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                 else if(type=="rescue")
                                 {
                                     Map_to_send::Map_Point tempPoint;
-                                    tempPoint.x=object_x;
-                                    tempPoint.y=object_y;
+                                    tempPoint.x=static_cast<uint8_t>(object_x);
+                                    tempPoint.y=static_cast<uint8_t>(object_y);
                                     map_to_send_temp.rescue_points.push_back(tempPoint);
                                     //map_to_send_temp.bot_spawn_points << tempPoint;
                                 }
@@ -480,8 +480,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         bot_semi.property_text=property_text;
                                         if(ok)
                                         {
-                                            bot_semi.point.x=object_x;
-                                            bot_semi.point.y=object_y;
+                                            bot_semi.point.x=static_cast<uint8_t>(object_x);
+                                            bot_semi.point.y=static_cast<uint8_t>(object_y);
                                             map_to_send_temp.bots.push_back(bot_semi);
                                         }
                                     }
@@ -504,8 +504,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         item_semi.item=stringtouint16(property_text.at(CACHEDSTRING_item),&ok);
                                         if(ok)
                                         {
-                                            item_semi.point.x=object_x;
-                                            item_semi.point.y=object_y;
+                                            item_semi.point.x=static_cast<uint8_t>(object_x);
+                                            item_semi.point.y=static_cast<uint8_t>(object_y);
                                             map_to_send_temp.items.push_back(item_semi);
                                         }
                                     }
@@ -600,7 +600,10 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 {
                     std::vector<char> dataRaw;
                     dataRaw.resize(map_to_send_temp.height*map_to_send_temp.width*4);
-                    const uint32_t &decompressedSize=ProtocolParsing::decompressZlib(compressedData.data(),compressedData.size(),dataRaw.data(),dataRaw.size());
+                    const int32_t &decompressedSize=ProtocolParsing::decompressZlib(
+                                compressedData.data(),static_cast<uint32_t>(compressedData.size()),
+                                dataRaw.data(),static_cast<uint32_t>(dataRaw.size())
+                                                                    );
                     if((uint32_t)decompressedSize!=map_to_send_temp.height*map_to_send_temp.width*4)
                     {
                         error=std::string("map binary size (")+std::to_string(dataRaw.size())+") != "+std::to_string(map_to_send_temp.height)+"x"+std::to_string(map_to_send_temp.width)+"x4";
@@ -613,9 +616,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             Walkable=dataRaw;
                         else
                         {
-                            const int &layersize=Walkable.size();
-                            int index=0;
-                            while(index<layersize)
+                            unsigned int index=0;
+                            while(index<Walkable.size())
                             {
                                 Walkable[index]=Walkable.at(index) || dataRaw.at(index);
                                 index++;
@@ -628,9 +630,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             Collisions=dataRaw;
                         else
                         {
-                            int index=0;
-                            const int &layersize=Collisions.size();
-                            while(index<layersize)
+                            unsigned int index=0;
+                            while(index<Collisions.size())
                             {
                                 Collisions[index]=Collisions.at(index) || dataRaw.at(index);
                                 index++;
@@ -643,9 +644,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             Dirt=dataRaw;
                         else
                         {
-                            int index=0;
-                            const int &layersize=Dirt.size();
-                            while(index<layersize)
+                            unsigned int index=0;
+                            while(index<Dirt.size())
                             {
                                 Dirt[index]=Dirt.at(index) || dataRaw.at(index);
                                 index++;
@@ -658,9 +658,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             LedgesRight=dataRaw;
                         else
                         {
-                            int index=0;
-                            const int &layersize=LedgesRight.size();
-                            while(index<layersize)
+                            unsigned int index=0;
+                            while(index<LedgesRight.size())
                             {
                                 LedgesRight[index]=LedgesRight.at(index) || dataRaw.at(index);
                                 index++;
@@ -673,9 +672,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             LedgesLeft=dataRaw;
                         else
                         {
-                            int index=0;
-                            const int &layersize=LedgesLeft.size();
-                            while(index<layersize)
+                            unsigned int index=0;
+                            while(index<LedgesLeft.size())
                             {
                                 LedgesLeft[index]=LedgesLeft.at(index) || dataRaw.at(index);
                                 index++;
@@ -688,9 +686,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             LedgesBottom=dataRaw;
                         else
                         {
-                            int index=0;
-                            const int &layersize=LedgesBottom.size();
-                            while(index<layersize)
+                            unsigned int index=0;
+                            while(index<LedgesBottom.size())
                             {
                                 LedgesBottom[index]=LedgesBottom.at(index) || dataRaw.at(index);
                                 index++;
@@ -703,9 +700,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             LedgesTop=dataRaw;
                         else
                         {
-                            int index=0;
-                            const int &layersize=LedgesTop.size();
-                            while(index<layersize)
+                            unsigned int index=0;
+                            while(index<LedgesTop.size())
                             {
                                 LedgesTop[index]=LedgesTop.at(index) || dataRaw.at(index);
                                 index++;
@@ -860,8 +856,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 if(dirt)
                 {
                     Map_to_send::DirtOnMap_Semi dirtOnMap_Semi;
-                    dirtOnMap_Semi.point.x=x;
-                    dirtOnMap_Semi.point.y=y;
+                    dirtOnMap_Semi.point.x=static_cast<uint8_t>(x);
+                    dirtOnMap_Semi.point.y=static_cast<uint8_t>(y);
                     map_to_send_temp.dirts.push_back(dirtOnMap_Semi);
                 }
                 map_to_send_temp.parsed_layer.dirt[x+y*map_to_send_temp.width]=dirt;
@@ -1315,7 +1311,7 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                     if(monsters->Attribute(XMLCACHEDSTRING_id)!=NULL && ((monsters->Attribute(XMLCACHEDSTRING_minLevel)!=NULL && monsters->Attribute(XMLCACHEDSTRING_maxLevel)!=NULL) || monsters->Attribute(XMLCACHEDSTRING_level)!=NULL) && monsters->Attribute(XMLCACHEDSTRING_luck)!=NULL)
                     {
                         MapMonster mapMonster;
-                        mapMonster.id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monsters->Attribute(XMLCACHEDSTRING_id)),&ok);
+                        mapMonster.id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monsters->Attribute(XMLCACHEDSTRING_id)),&ok);
                         if(!ok)
                             std::cerr << "id is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                         if(ok)

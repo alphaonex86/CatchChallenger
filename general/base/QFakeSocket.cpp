@@ -142,7 +142,7 @@ QAbstractSocket::SocketState QFakeSocket::state() const
 qint64 QFakeSocket::readData(char * rawData, qint64 maxSize)
 {
     QMutexLocker lock(&mutex);
-    QByteArray extractedData=this->data.mid(0,maxSize);
+    QByteArray extractedData=this->data.mid(0,static_cast<int>(maxSize));
     #ifdef FAKESOCKETDEBUG
     qDebug() << (std::stringLiteral("readData(): extractedData.size(): %1, data.size(): %2, extractedData: %3").arg(extractedData.size()).arg(data.size()).arg(std::string(extractedData.toHex())));
     #endif
@@ -165,7 +165,7 @@ qint64	QFakeSocket::writeData(const char * rawData, qint64 size)
         #ifdef FAKESOCKETDEBUG
         qDebug() << (std::stringLiteral("writeData(): size: %1").arg(size));
         #endif
-        dataToSend=QByteArray(rawData,size);
+        dataToSend=QByteArray(rawData,static_cast<int>(size));
     }
     theOtherSocket->internal_writeData(dataToSend);
     return size;
