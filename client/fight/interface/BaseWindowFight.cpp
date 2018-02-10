@@ -2268,7 +2268,7 @@ void BaseWindow::battleCanceledByOther()
     }
     else if(!botFightList.isEmpty())
     {
-        uint32_t fightId=botFightList.first();
+        const uint16_t fightId=botFightList.first();
         botFightList.removeFirst();
         botFight(fightId);
     }

@@ -195,21 +195,31 @@ void ConnectedSocket::setTcpCork(const bool &cork)
     #ifdef __linux__
     if(sslSocket!=NULL)
     {
-        const int &infd=sslSocket->socketDescriptor();
+        #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
+        const qintptr &infd=
+        #else
+        const int32_t &infd=
+        #endif
+                sslSocket->socketDescriptor();
         if(infd!=-1)
         {
             int state = cork;
-            if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+            if(setsockopt(static_cast<int>(infd), IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
                 std::cerr << "Unable to apply tcp cork" << std::endl;
         }
     }
     if(tcpSocket!=NULL)
     {
-        const int &infd=tcpSocket->socketDescriptor();
+        #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
+        const qintptr &infd=
+        #else
+        const int32_t &infd=
+        #endif
+                tcpSocket->socketDescriptor();
         if(infd!=-1)
         {
             int state = cork;
-            if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+            if(setsockopt(static_cast<int>(infd), IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
                 std::cerr << "Unable to apply tcp cork" << std::endl;
         }
     }

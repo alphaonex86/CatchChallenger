@@ -33,71 +33,71 @@ distribution.
 #endif
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1400 ) && (!defined WINCE)
-	// Microsoft Visual Studio, version 2005 and higher. Not WinCE.
-	/*int _snprintf_s(
-	   char *buffer,
-	   size_t sizeOfBuffer,
-	   size_t count,
-	   const char *format [,
-		  argument] ...
-	);*/
-	static inline int TIXML_SNPRINTF( char* buffer, size_t size, const char* format, ... )
-	{
-		va_list va;
-		va_start( va, format );
-		int result = vsnprintf_s( buffer, size, _TRUNCATE, format, va );
-		va_end( va );
-		return result;
-	}
+    // Microsoft Visual Studio, version 2005 and higher. Not WinCE.
+    /*int _snprintf_s(
+       char *buffer,
+       size_t sizeOfBuffer,
+       size_t count,
+       const char *format [,
+          argument] ...
+    );*/
+    static inline int TIXML_SNPRINTF( char* buffer, size_t size, const char* format, ... )
+    {
+        va_list va;
+        va_start( va, format );
+        int result = vsnprintf_s( buffer, size, _TRUNCATE, format, va );
+        va_end( va );
+        return result;
+    }
 
-	static inline int TIXML_VSNPRINTF( char* buffer, size_t size, const char* format, va_list va )
-	{
-		int result = vsnprintf_s( buffer, size, _TRUNCATE, format, va );
-		return result;
-	}
+    static inline int TIXML_VSNPRINTF( char* buffer, size_t size, const char* format, va_list va )
+    {
+        int result = vsnprintf_s( buffer, size, _TRUNCATE, format, va );
+        return result;
+    }
 
-	#define TIXML_VSCPRINTF	_vscprintf
-	#define TIXML_SSCANF	sscanf_s
+    #define TIXML_VSCPRINTF	_vscprintf
+    #define TIXML_SSCANF	sscanf_s
 #elif defined _MSC_VER
-	// Microsoft Visual Studio 2003 and earlier or WinCE
-	#define TIXML_SNPRINTF	_snprintf
-	#define TIXML_VSNPRINTF _vsnprintf
-	#define TIXML_SSCANF	sscanf
-	#if (_MSC_VER < 1400 ) && (!defined WINCE)
-		// Microsoft Visual Studio 2003 and not WinCE.
-		#define TIXML_VSCPRINTF   _vscprintf // VS2003's C runtime has this, but VC6 C runtime or WinCE SDK doesn't have.
-	#else
-		// Microsoft Visual Studio 2003 and earlier or WinCE.
-		static inline int TIXML_VSCPRINTF( const char* format, va_list va )
-		{
-			int len = 512;
-			for (;;) {
-				len = len*2;
-				char* str = new char[len]();
-				const int required = _vsnprintf(str, len, format, va);
-				delete[] str;
-				if ( required != -1 ) {
-					TIXMLASSERT( required >= 0 );
-					len = required;
-					break;
-				}
-			}
-			TIXMLASSERT( len >= 0 );
-			return len;
-		}
-	#endif
+    // Microsoft Visual Studio 2003 and earlier or WinCE
+    #define TIXML_SNPRINTF	_snprintf
+    #define TIXML_VSNPRINTF _vsnprintf
+    #define TIXML_SSCANF	sscanf
+    #if (_MSC_VER < 1400 ) && (!defined WINCE)
+        // Microsoft Visual Studio 2003 and not WinCE.
+        #define TIXML_VSCPRINTF   _vscprintf // VS2003's C runtime has this, but VC6 C runtime or WinCE SDK doesn't have.
+    #else
+        // Microsoft Visual Studio 2003 and earlier or WinCE.
+        static inline int TIXML_VSCPRINTF( const char* format, va_list va )
+        {
+            int len = 512;
+            for (;;) {
+                len = len*2;
+                char* str = new char[len]();
+                const int required = _vsnprintf(str, len, format, va);
+                delete[] str;
+                if ( required != -1 ) {
+                    TIXMLASSERT( required >= 0 );
+                    len = required;
+                    break;
+                }
+            }
+            TIXMLASSERT( len >= 0 );
+            return len;
+        }
+    #endif
 #else
-	// GCC version 3 and higher
-	//#warning( "Using sn* functions." )
-	#define TIXML_SNPRINTF	snprintf
-	#define TIXML_VSNPRINTF	vsnprintf
-	static inline int TIXML_VSCPRINTF( const char* format, va_list va )
-	{
-		int len = vsnprintf( 0, 0, format, va );
-		TIXMLASSERT( len >= 0 );
-		return len;
-	}
-	#define TIXML_SSCANF   sscanf
+    // GCC version 3 and higher
+    //#warning( "Using sn* functions." )
+    #define TIXML_SNPRINTF	snprintf
+    #define TIXML_VSNPRINTF	vsnprintf
+    static inline int TIXML_VSCPRINTF( const char* format, va_list va )
+    {
+        int len = vsnprintf( 0, 0, format, va );
+        TIXMLASSERT( len >= 0 );
+        return len;
+    }
+    #define TIXML_SSCANF   sscanf
 #endif
 
 
@@ -541,12 +541,12 @@ void XMLUtil::ToStr( bool v, char* buffer, int bufferSize )
 }
 
 /*
-	ToStr() of a number is a very tricky topic.
-	https://github.com/leethomason/tinyxml2/issues/106
+    ToStr() of a number is a very tricky topic.
+    https://github.com/leethomason/tinyxml2/issues/106
 */
 void XMLUtil::ToStr( float v, char* buffer, int bufferSize )
 {
-    TIXML_SNPRINTF( buffer, bufferSize, "%.8g", v );
+    TIXML_SNPRINTF( buffer, bufferSize, "%.8g", static_cast<double>(v) );
 }
 
 
@@ -716,7 +716,7 @@ XMLNode::~XMLNode()
     }
 }
 
-const char* XMLNode::Value() const 
+const char* XMLNode::Value() const
 {
     // Catch an edge case: XMLDocuments don't have a a Value. Carefully return nullptr.
     if ( this->ToDocument() )
@@ -767,7 +767,7 @@ void XMLNode::Unlink( XMLNode* child )
     if ( child->_next ) {
         child->_next->_prev = child->_prev;
     }
-	child->_parent = 0;
+    child->_parent = 0;
 }
 
 
@@ -1239,12 +1239,12 @@ bool XMLUnknown::Accept( XMLVisitor* visitor ) const
 
 // --------- XMLAttribute ---------- //
 
-const char* XMLAttribute::Name() const 
+const char* XMLAttribute::Name() const
 {
     return _name.GetStr();
 }
 
-const char* XMLAttribute::Value() const 
+const char* XMLAttribute::Value() const
 {
     return _value.GetStr();
 }
@@ -1425,16 +1425,16 @@ const char* XMLElement::GetText() const
 
 void	XMLElement::SetText( const char* inText )
 {
-	if ( FirstChild() && FirstChild()->ToText() )
-		FirstChild()->SetValue( inText );
-	else {
-		XMLText*	theText = GetDocument()->NewText( inText );
-		InsertFirstChild( theText );
-	}
+    if ( FirstChild() && FirstChild()->ToText() )
+        FirstChild()->SetValue( inText );
+    else {
+        XMLText*	theText = GetDocument()->NewText( inText );
+        InsertFirstChild( theText );
+    }
 }
 
 
-void XMLElement::SetText( int v ) 
+void XMLElement::SetText( int v )
 {
     char buf[BUF_SIZE];
     XMLUtil::ToStr( v, buf, BUF_SIZE );
@@ -1442,7 +1442,7 @@ void XMLElement::SetText( int v )
 }
 
 
-void XMLElement::SetText( unsigned v ) 
+void XMLElement::SetText( unsigned v )
 {
     char buf[BUF_SIZE];
     XMLUtil::ToStr( v, buf, BUF_SIZE );
@@ -1450,7 +1450,7 @@ void XMLElement::SetText( unsigned v )
 }
 
 
-void XMLElement::SetText( bool v ) 
+void XMLElement::SetText( bool v )
 {
     char buf[BUF_SIZE];
     XMLUtil::ToStr( v, buf, BUF_SIZE );
@@ -1458,7 +1458,7 @@ void XMLElement::SetText( bool v )
 }
 
 
-void XMLElement::SetText( float v ) 
+void XMLElement::SetText( float v )
 {
     char buf[BUF_SIZE];
     XMLUtil::ToStr( v, buf, BUF_SIZE );
@@ -1466,7 +1466,7 @@ void XMLElement::SetText( float v )
 }
 
 
-void XMLElement::SetText( double v ) 
+void XMLElement::SetText( double v )
 {
     char buf[BUF_SIZE];
     XMLUtil::ToStr( v, buf, BUF_SIZE );
@@ -1605,7 +1605,7 @@ char* XMLElement::ParseAttributes( char* p )
             TIXMLASSERT( sizeof( XMLAttribute ) == _document->_attributePool.ItemSize() );
             XMLAttribute* attrib = new (_document->_attributePool.Alloc() ) XMLAttribute();
             attrib->_memPool = &_document->_attributePool;
-			attrib->_memPool->SetTracked();
+            attrib->_memPool->SetTracked();
 
             p = attrib->ParseDeep( p, _document->ProcessEntities() );
             if ( !p || Attribute( attrib->Name() ) ) {
@@ -1808,7 +1808,7 @@ void XMLDocument::Clear()
     _commentPool.Trace( "comment" );
     _attributePool.Trace( "attribute" );
 #endif
-    
+
 #ifdef DEBUG
     if ( !hadError ) {
         TIXMLASSERT( _elementPool.CurrentAllocs()   == _elementPool.Untracked() );
@@ -1884,7 +1884,7 @@ static FILE* callfopen( const char* filepath, const char* mode )
 #endif
     return fp;
 }
-    
+
 void XMLDocument::DeleteNode( XMLNode* node )	{
     TIXMLASSERT( node );
     TIXMLASSERT(node->_document == this );
@@ -2060,7 +2060,7 @@ void XMLDocument::SetError( XMLError error, const char* str1, const char* str2 )
 
 const char* XMLDocument::ErrorName() const
 {
-	TIXMLASSERT( _errorID >= 0 && _errorID < XML_ERROR_COUNT );
+    TIXMLASSERT( _errorID >= 0 && _errorID < XML_ERROR_COUNT );
     const char* errorName = _errorNames[_errorID];
     TIXMLASSERT( errorName && errorName[0] );
     return errorName;
@@ -2143,7 +2143,7 @@ void XMLPrinter::Print( const char* format, ... )
         va_start( va, format );
         TIXMLASSERT( _buffer.Size() > 0 && _buffer[_buffer.Size() - 1] == 0 );
         char* p = _buffer.PushArr( len ) - 1;	// back up over the null terminator.
-		TIXML_VSNPRINTF( p, len+1, format, va );
+        TIXML_VSNPRINTF( p, len+1, format, va );
     }
     va_end( va );
 }
