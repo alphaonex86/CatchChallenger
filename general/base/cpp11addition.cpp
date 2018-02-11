@@ -285,7 +285,7 @@ uint8_t hexToDecUnit(const std::string& data, bool *ok)
             *ok=false;
         return 0;
     };
-    return fromHex(data[0],ok) << 4 | fromHex(data[1],ok);
+    return static_cast<uint8_t>(fromHex(data[0],ok) << 4 | fromHex(data[1],ok));
 }
 
 std::vector<char> hexatoBinary(const std::string &data,bool *ok)
@@ -343,7 +343,7 @@ void binaryAppend(std::vector<char> &data,const std::vector<char> &add)
         data=add;
         return;
     }
-    const int oldsize=data.size();
+    const size_t oldsize=data.size();
     data.resize(oldsize+add.size());
     memcpy(data.data()+oldsize,add.data(),add.size());
 }
@@ -358,7 +358,7 @@ void binaryAppend(std::vector<char> &data,const char * const add,const uint32_t 
         memcpy(data.data(),add,addSize);
         return;
     }
-    const int oldsize=data.size();
+    const size_t oldsize=data.size();
     data.resize(oldsize+addSize);
     memcpy(data.data()+oldsize,add,addSize);
 }
@@ -367,7 +367,7 @@ std::vector<char> base64toBinary(const std::string &string)
 {
     int index=0;
     int sub_index=0;
-    int encoded_string_remaining=string.size();
+    size_t encoded_string_remaining=string.size();
     int encoded_string_pos=0;
     unsigned char char_array_4[4], char_array_3[3];
     std::vector<char> ret;
@@ -379,11 +379,11 @@ std::vector<char> base64toBinary(const std::string &string)
         if(index==4)
         {
             for(index=0;index<4;index++)
-                char_array_4[index]=base64_chars.find(char_array_4[index]);
+                char_array_4[index]=static_cast<uint8_t>(base64_chars.find(char_array_4[index]));
 
-            char_array_3[0]=(char_array_4[0]<<2) + ((char_array_4[1]&0x30)>>4);
-            char_array_3[1]=((char_array_4[1]&0xf)<<4) + ((char_array_4[2]&0x3c)>>2);
-            char_array_3[2]=((char_array_4[2]&0x3)<<6) + char_array_4[3];
+            char_array_3[0]=static_cast<uint8_t>((char_array_4[0]<<2) + ((char_array_4[1]&0x30)>>4));
+            char_array_3[1]=static_cast<uint8_t>(((char_array_4[1]&0xf)<<4) + ((char_array_4[2]&0x3c)>>2));
+            char_array_3[2]=static_cast<uint8_t>(((char_array_4[2]&0x3)<<6) + char_array_4[3]);
 
             for(index=0;(index<3);index++)
                 ret.push_back(char_array_3[index]);
@@ -398,11 +398,11 @@ std::vector<char> base64toBinary(const std::string &string)
             char_array_4[sub_index]=0;
 
         for(sub_index=0;sub_index<4;sub_index++)
-            char_array_4[sub_index]=base64_chars.find(char_array_4[sub_index]);
+            char_array_4[sub_index]=static_cast<uint8_t>(base64_chars.find(char_array_4[sub_index]));
 
-        char_array_3[0]=(char_array_4[0]<<2) + ((char_array_4[1]&0x30)>>4);
-        char_array_3[1]=((char_array_4[1]&0xf)<<4) + ((char_array_4[2]&0x3c)>>2);
-        char_array_3[2]=((char_array_4[2]&0x3)<<6) + char_array_4[3];
+        char_array_3[0]=static_cast<uint8_t>((char_array_4[0]<<2) + ((char_array_4[1]&0x30)>>4));
+        char_array_3[1]=static_cast<uint8_t>(((char_array_4[1]&0xf)<<4) + ((char_array_4[2]&0x3c)>>2));
+        char_array_3[2]=static_cast<uint8_t>(((char_array_4[2]&0x3)<<6) + char_array_4[3]);
 
         for (sub_index=0;(sub_index<index-1);sub_index++)
             ret.push_back(char_array_3[sub_index]);

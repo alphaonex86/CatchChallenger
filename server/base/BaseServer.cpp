@@ -133,7 +133,7 @@ BaseServer::BaseServer() :
 
     initAll();
 
-    srand(time(NULL));
+    srand(static_cast<int>(time(NULL)));
 }
 
 /** call only when the server is down
@@ -350,8 +350,8 @@ void BaseServer::preload_finish()
 bool BaseServer::load_next_city_capture()
 {
     GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
-    const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-QDateTime::currentMSecsSinceEpoch();
-    GlobalServerData::serverPrivateVariables.timer_city_capture->start(time);
+    const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-QDateTime::currentMSecsSinceEpoch()/1000;
+    GlobalServerData::serverPrivateVariables.timer_city_capture->start(static_cast<int>(time));
     return true;
 }
 #endif
@@ -742,9 +742,8 @@ void BaseServer::loadAndFixSettings()
         std::cerr << "GlobalServerData::serverPrivateVariables.server_message too big, remove: " << GlobalServerData::serverPrivateVariables.server_message.at(GlobalServerData::serverPrivateVariables.server_message.size()-1) << std::endl;
         GlobalServerData::serverPrivateVariables.server_message.pop_back();
     }
-    int index=0;
-    const int &listsize=GlobalServerData::serverPrivateVariables.server_message.size();
-    while(index<listsize)
+    unsigned int index=0;
+    while(index<GlobalServerData::serverPrivateVariables.server_message.size())
     {
         if(GlobalServerData::serverPrivateVariables.server_message.at(index).size()>128)
         {
