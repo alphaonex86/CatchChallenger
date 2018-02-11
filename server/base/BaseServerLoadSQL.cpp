@@ -50,8 +50,7 @@ void BaseServer::preload_zone_sql()
         preload_market_monsters_prices_sql();
     else
     {
-        const int &listsize=entryListZone.size();
-        while(entryListIndex<listsize)
+        while(entryListIndex<entryListZone.size())
         {
             std::string zoneCodeName=entryListZone.at(entryListIndex).name;
             stringreplaceOne(zoneCodeName,".xml","");
@@ -465,7 +464,7 @@ void BaseServer::preload_dictionary_map_return()
         const std::string &map=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1));
         if(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
         {
-            unsigned int index=DictionaryServer::dictionary_map_database_to_internal.size();
+            unsigned int index=static_cast<uint32_t>(DictionaryServer::dictionary_map_database_to_internal.size());
             while(index<=databaseMapId)
             {
                 DictionaryServer::dictionary_map_database_to_internal.push_back(NULL);
@@ -497,7 +496,7 @@ void BaseServer::preload_dictionary_map_return()
         const std::string &map=map_list_flat.at(index);
         if(foundMap.find(map)==foundMap.end())
         {
-            maxDatabaseMapId=DictionaryServer::dictionary_map_database_to_internal.size()+1;
+            maxDatabaseMapId=static_cast<uint32_t>(DictionaryServer::dictionary_map_database_to_internal.size())+1;
             std::string queryText;
             switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
             {
@@ -592,7 +591,7 @@ void BaseServer::preload_industries_return()
     {
         IndustryStatus industryStatus;
         bool ok;
-        uint32_t id=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        uint16_t id=stringtouint16(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
             std::cerr << "preload_industries: id is not a number" << std::endl;
         if(ok)
@@ -607,8 +606,7 @@ void BaseServer::preload_industries_return()
         {
             const std::vector<std::string> &resourcesStringList=stringsplit(GlobalServerData::serverPrivateVariables.db_server->value(1),';');
             unsigned int index=0;
-            const unsigned int &listsize=resourcesStringList.size();
-            while(index<listsize)
+            while(index<resourcesStringList.size())
             {
                 const std::vector<std::string> &itemStringList=stringsplit(resourcesStringList.at(index),':');
                 if(itemStringList.size()!=2)
@@ -635,16 +633,18 @@ void BaseServer::preload_industries_return()
                     ok=false;
                     break;
                 }
-                const Industry &industry=CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(id).industry);
-                int indexItem=0;
-                const int &resourceslistsize=industry.resources.size();
-                while(indexItem<resourceslistsize)
+                const IndustryLink &industryLink=CommonDatapack::commonDatapack.industriesLink.at(id);
+                const Industry &industry=CommonDatapack::commonDatapack.industries.at(
+                            industryLink.industry
+                            );
+                unsigned int indexItem=0;
+                while(indexItem<industry.resources.size())
                 {
                     if(industry.resources.at(indexItem).item==item)
                         break;
                     indexItem++;
                 }
-                if(indexItem==resourceslistsize)
+                if(indexItem==industry.resources.size())
                 {
                     std::cerr << "preload_industries: item in db not found" << std::endl;
                     ok=false;
@@ -660,8 +660,7 @@ void BaseServer::preload_industries_return()
         {
             const std::vector<std::string> &productsStringList=stringsplit(GlobalServerData::serverPrivateVariables.db_server->value(2),';');
             int index=0;
-            const int &listsize=productsStringList.size();
-            while(index<listsize)
+            while(index<productsStringList.size())
             {
                 const std::vector<std::string> &itemStringList=stringsplit(productsStringList.at(index),':');
                 if(itemStringList.size()!=2)
@@ -688,16 +687,16 @@ void BaseServer::preload_industries_return()
                     ok=false;
                     break;
                 }
-                const Industry &industry=CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(id).industry);
-                int indexItem=0;
-                const int &productlistsize=industry.products.size();
-                while(indexItem<productlistsize)
+                const IndustryLink &industryLink=CommonDatapack::commonDatapack.industriesLink.at(id);
+                const Industry &industry=CommonDatapack::commonDatapack.industries.at(industryLink.industry);
+                unsigned int indexItem=0;
+                while(indexItem<industry.products.size())
                 {
                     if(industry.products.at(indexItem).item==item)
                         break;
                     indexItem++;
                 }
-                if(indexItem==productlistsize)
+                if(indexItem==industry.products.size())
                 {
                     std::cerr << "preload_industries: item in db not found" << std::endl;
                     ok=false;
@@ -921,7 +920,7 @@ void BaseServer::preload_market_items()
     int index=0;
     while(index<=65535)
     {
-        Client::marketObjectIdList.push_back(index);
+        Client::marketObjectIdList.push_back(static_cast<uint16_t>(index));
         index++;
     }
     //do the query
@@ -987,7 +986,7 @@ void BaseServer::preload_market_items_return()
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         MarketItem marketItem;
-        marketItem.item=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        marketItem.item=stringtouint16(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
         {
             std::cerr << "item id is not a number, skip" << std::endl;

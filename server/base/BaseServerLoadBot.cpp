@@ -13,15 +13,13 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
     int botfights_number=0;
     int botfightstigger_number=0;
     //resolv the botfights, bots, shops, learn, heal, zonecapture, market
-    const int &size=semi_loaded_map.size();
-    int index=0;
+    unsigned int index=0;
     bool ok;
-    while(index<size)
+    while(index<semi_loaded_map.size())
     {
-        int sub_index=0;
+        unsigned int sub_index=0;
         const Map_semi &current_map=semi_loaded_map.at(index);
-        const int &botssize=current_map.old_map.bots.size();
-        while(sub_index<botssize)
+        while(sub_index<current_map.old_map.bots.size())
         {
             bots_number++;
             Map_to_send::Bot_Semi bot_Semi=current_map.old_map.bots.at(sub_index);

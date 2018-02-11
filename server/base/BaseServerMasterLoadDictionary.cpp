@@ -206,7 +206,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
         const std::string &skin=databaseBaseBase->value(1);
         if(dictionary_skin_database_to_internal.size()<=tempId)
         {
-            unsigned int index=dictionary_skin_database_to_internal.size();
+            unsigned int index=static_cast<uint32_t>(dictionary_skin_database_to_internal.size());
             while(index<=tempId)
             {
                 dictionary_skin_database_to_internal.push_back(0);
@@ -311,7 +311,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
 {
     std::unordered_map<std::string,uint8_t> profileNameToId;
     {
-        unsigned int index=0;
+        uint8_t index=0;
         while(index<CommonDatapack::commonDatapack.profileList.size())
         {
             const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
@@ -338,7 +338,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
         const std::string &starter=std::string(databaseBaseBase->value(1));
         if(dictionary_starter_database_to_internal.size()<=tempId)
         {
-            unsigned int index=dictionary_starter_database_to_internal.size();
+            uint8_t index=static_cast<uint8_t>(dictionary_starter_database_to_internal.size());
             while(index<=tempId)
             {
                 dictionary_starter_database_to_internal.push_back(0);
@@ -383,7 +383,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
             }
             while(dictionary_starter_database_to_internal.size()<lastId)
                 dictionary_starter_database_to_internal.push_back(0);
-            dictionary_starter_database_to_internal.push_back(index);
+            dictionary_starter_database_to_internal.push_back(static_cast<uint8_t>(index));
             dictionary_starter_internal_to_database[index]=lastId;
             #else
             std::cerr << "Dictionary starter mismatch (abort)" << std::endl;

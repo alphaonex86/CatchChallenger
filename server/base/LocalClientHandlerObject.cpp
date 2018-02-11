@@ -216,7 +216,7 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
     //if is crafting recipe
     if(CommonDatapack::commonDatapack.itemToCrafingRecipes.find(itemId)!=CommonDatapack::commonDatapack.itemToCrafingRecipes.cend())
     {
-        const uint32_t &recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes.at(itemId);
+        const uint16_t &recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes.at(itemId);
         if(public_and_private_informations.recipes[recipeId/8] & (1<<(7-recipeId%8)))
         {
             errorOutput("Can't use the object: "+std::to_string(itemId)+", recipe already registred");

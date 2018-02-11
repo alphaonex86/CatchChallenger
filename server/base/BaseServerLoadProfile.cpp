@@ -82,7 +82,7 @@ void BaseServer::preload_profile()
             });
             auto max=item_list.at(item_list.size()-1).id;
             uint32_t pos=0;
-            char item_raw[(2+4)*item_list.size()];
+            char item_raw[static_cast<uint8_t>(2+4)*item_list.size()];
             unsigned int index=0;
             while(index<item_list.size())
             {
@@ -94,7 +94,7 @@ void BaseServer::preload_profile()
                 pos+=4;
                 index++;
             }
-            item=binarytoHexa(item_raw,sizeof(item_raw));
+            item=binarytoHexa(item_raw,static_cast<uint32_t>(sizeof(item_raw)));
 
             const size_t size=max/8+1;
             char bitlist[size];
@@ -107,7 +107,7 @@ void BaseServer::preload_profile()
                 bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
                 index++;
             }
-            encyclopedia_item=binarytoHexa(bitlist,sizeof(bitlist));
+            encyclopedia_item=binarytoHexa(bitlist,static_cast<uint32_t>(sizeof(bitlist)));
         }
 
         std::string reputations;
@@ -138,7 +138,7 @@ void BaseServer::preload_profile()
                         break;
                         #endif
                     }
-                    temp.reputationDatabaseId=CommonDatapack::commonDatapack.reputation.at(source.internalIndex).reverse_database_id;
+                    temp.reputationDatabaseId=static_cast<uint8_t>(CommonDatapack::commonDatapack.reputation.at(source.internalIndex).reverse_database_id);
                     reputationList.push_back(temp);
                     index++;
                 }
@@ -149,21 +149,21 @@ void BaseServer::preload_profile()
                 return a.reputationDatabaseId<b.reputationDatabaseId;
             });
             uint32_t pos=0;
-            char reputation_raw[(1+4+1)*reputations_list.size()];
+            char reputation_raw[static_cast<uint8_t>(1+4+1)*reputations_list.size()];
             unsigned int index=0;
             while(index<reputations_list.size())
             {
                 const auto &reputation=reputations_list.at(index);
                 *reinterpret_cast<uint32_t *>(reputation_raw+pos)=htole32(reputation.point);
                 pos+=4;
-                reputation_raw[pos]=reputation.reputationDatabaseId-lastReputationId;
+                reputation_raw[pos]=static_cast<uint8_t>(reputation.reputationDatabaseId-lastReputationId);
                 pos+=1;
                 lastReputationId=reputation.reputationDatabaseId;
                 reputation_raw[pos]=reputation.level;
                 pos+=1;
                 index++;
             }
-            reputations=binarytoHexa(reputation_raw,sizeof(reputation_raw));
+            reputations=binarytoHexa(reputation_raw,static_cast<uint32_t>(sizeof(reputation_raw)));
         }
 
         ServerProfileInternal::PreparedStatementForCreation &preparedStatementForCreation=serverProfileInternal.preparedStatementForCreationByCommon;
@@ -222,8 +222,8 @@ void BaseServer::preload_profile()
                                     "%3",
                                     "%4",
                                     std::to_string(monsterIndex+1),
-                                    binarytoHexa(raw_skill,sizeof(raw_skill)),
-                                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
+                                    binarytoHexa(raw_skill,static_cast<uint32_t>(sizeof(raw_skill))),
+                                    binarytoHexa(raw_skill_endurance,static_cast<uint32_t>(sizeof(raw_skill_endurance)))
                                     });
                             preparedStatementForCreationMonsterGroup.monster_insert.push_back(PreparedStatementUnit(queryText,database));
                         }
@@ -240,8 +240,8 @@ void BaseServer::preload_profile()
                                     "3",
                                     "%3",
                                     std::to_string(monsterIndex+1),
-                                    binarytoHexa(raw_skill,sizeof(raw_skill)),
-                                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
+                                    binarytoHexa(raw_skill,static_cast<uint32_t>(sizeof(raw_skill))),
+                                    binarytoHexa(raw_skill_endurance,static_cast<uint32_t>(sizeof(raw_skill_endurance)))
                                     });
                             preparedStatementForCreationMonsterGroup.monster_insert.push_back(PreparedStatementUnit(queryText,database));
                         }
@@ -277,7 +277,9 @@ void BaseServer::preload_profile()
                                                                                         ",%4,0,0,"+
                                 std::to_string(profile.cash)+",%5,0,0,"
                                 "0,0,0,"+
-                                std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('"+binarytoHexa(bitlist,sizeof(bitlist))+"'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(common_blobversion_datapack)+");"),database);
+                                std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+
+                                ",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('"+binarytoHexa(bitlist,static_cast<uint32_t>(sizeof(bitlist)))+
+                                "'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(common_blobversion_datapack)+");"),database);
                     break;
                     case DatabaseBase::DatabaseType::SQLite:
                         preparedStatementForCreationMonsterGroup.character_insert=PreparedStatementUnit(std::string("INSERT INTO character("
@@ -292,7 +294,9 @@ void BaseServer::preload_profile()
                                                                                         ",%4,0,0,"+
                                 std::to_string(profile.cash)+",%5,0,0,"
                                 "0,0,0,"+
-                                std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'"+item+"','"+reputations+"','"+binarytoHexa(bitlist,sizeof(bitlist))+"','"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");"),database);
+                                std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'"+item+
+                                "','"+reputations+"','"+binarytoHexa(bitlist,static_cast<uint32_t>(sizeof(bitlist)))+"','"+encyclopedia_item+"',"+
+                                std::to_string(common_blobversion_datapack)+");"),database);
                     break;
                     case DatabaseBase::DatabaseType::PostgreSQL:
                         preparedStatementForCreationMonsterGroup.character_insert=PreparedStatementUnit(
@@ -309,7 +313,7 @@ void BaseServer::preload_profile()
                                 std::to_string(profile.cash)+",%5,0,FALSE,"
                                 "0,0,0,"+
                                 std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+
-                                ",'\\x"+item+"','\\x"+reputations+"','\\x"+binarytoHexa(bitlist,sizeof(bitlist))+
+                                ",'\\x"+item+"','\\x"+reputations+"','\\x"+binarytoHexa(bitlist,static_cast<uint32_t>(sizeof(bitlist)))+
                                 "','\\x"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");")
                                                                                                         ,database);
                     break;

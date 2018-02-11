@@ -176,11 +176,6 @@ bool Client::singleMove(const Direction &direction)
     }
 
     this->map=map;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(this->map!=NULL)
-        if(this->map->width==999)
-            this->map->width=9999;
-    #endif
     this->x=x;
     this->y=y;
     {
