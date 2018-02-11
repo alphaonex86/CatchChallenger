@@ -53,10 +53,9 @@ void BaseServerMasterSendDatapack::preload_the_skin()
 {
     const std::vector<std::string> &skinFolderList=FacilityLibGeneral::skinIdList(datapack_basePathLogin+DATAPACK_BASE_PATH_SKIN);
     unsigned int index=0;
-    const unsigned int &listsize=skinFolderList.size();
-    while(index<listsize)
+    while(index<skinFolderList.size())
     {
-        skinList[skinFolderList.at(index)]=index;
+        skinList[skinFolderList.at(index)]=static_cast<uint8_t>(index);
         index++;
     }
     loadTheDatapackFileList();

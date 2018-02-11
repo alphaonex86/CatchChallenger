@@ -81,8 +81,9 @@ void BaseServer::preload_map_semi_after_db_id()
                         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
                     }
-                    DictionaryServer::dictionary_pointOnMap_plant_internal_to_database[sortFileName][std::pair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=dictionary_pointOnMap_maxId_plant;
-                    pointOnMapDbCode=dictionary_pointOnMap_maxId_plant;
+                    DictionaryServer::dictionary_pointOnMap_plant_internal_to_database[sortFileName]
+                            [std::pair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=static_cast<uint16_t>(dictionary_pointOnMap_maxId_plant);
+                    pointOnMapDbCode=static_cast<uint16_t>(dictionary_pointOnMap_maxId_plant);
                 }
 
                 MapServer::PlantOnMap plantOnMap;
@@ -177,8 +178,9 @@ void BaseServer::preload_map_semi_after_db_id()
                         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
                     }
-                    DictionaryServer::dictionary_pointOnMap_item_internal_to_database[sortFileName][std::pair<uint8_t,uint8_t>(item.point.x,item.point.y)]=dictionary_pointOnMap_maxId_item;
-                    pointOnMapDbCode=dictionary_pointOnMap_maxId_item;
+                    DictionaryServer::dictionary_pointOnMap_item_internal_to_database[sortFileName]
+                            [std::pair<uint8_t,uint8_t>(item.point.x,item.point.y)]=static_cast<uint16_t>(dictionary_pointOnMap_maxId_item);
+                    pointOnMapDbCode=static_cast<uint16_t>(dictionary_pointOnMap_maxId_item);
                 }
 
                 MapServer::ItemOnMap itemOnMap;
