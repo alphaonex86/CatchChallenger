@@ -9,7 +9,7 @@ std::vector<PlayerMonster::PlayerSkill> CommonFightEngineBase::generateWildSkill
 {
     std::vector<PlayerMonster::PlayerSkill> skills;
 
-    int index=monster.learn.size()-1;
+    uint16_t index=static_cast<uint16_t>(monster.learn.size())-1;
     std::vector<uint16_t> learnedSkill;
     while(index>=0 && skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER)
     {

@@ -255,7 +255,7 @@ std::vector<Skill::LifeEffectReturn> CommonFightEngine::applyBuffLifeEffect(Publ
                     }
                     if(effect.type==QuantityType_Percent)
                     {
-                        quantity=((int64_t)currentMonsterStat.hp*(int64_t)effect.quantity)/(int64_t)100;
+                        quantity=static_cast<uint32_t>(((int64_t)currentMonsterStat.hp*(int64_t)effect.quantity)/(int64_t)100);
                         if(effect.quantity<0)
                         {
                             if(quantity==0)

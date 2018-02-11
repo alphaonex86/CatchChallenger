@@ -68,7 +68,7 @@ bool CommonFightEngine::learnSkill(PlayerMonster *monsterPlayer, const uint16_t 
     return false;
 }
 
-bool CommonFightEngine::learnSkillByItem(PlayerMonster *playerMonster, const uint32_t &itemId)
+bool CommonFightEngine::learnSkillByItem(PlayerMonster *playerMonster, const uint16_t &itemId)
 {
     if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(playerMonster->monster)==CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
     {
@@ -149,7 +149,7 @@ std::vector<Monster::AttackToLearn> CommonFightEngine::autoLearnSkill(const uint
     const PlayerMonster &monster=public_and_private_informations.playerMonster.at(monsterIndex);
     unsigned int sub_index=0;
     unsigned int sub_index2=0;
-    const unsigned int &learn_size=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size();
+    const size_t &learn_size=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size();
     while(sub_index<learn_size)
     {
         const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.at(sub_index);
@@ -157,7 +157,7 @@ std::vector<Monster::AttackToLearn> CommonFightEngine::autoLearnSkill(const uint
         {
             //search if have already the previous skill
             sub_index2=0;
-            const unsigned int &monster_skill_size=monster.skills.size();
+            const size_t &monster_skill_size=monster.skills.size();
             while(sub_index2<monster_skill_size)
             {
                 if(monster.skills.at(sub_index2).skill==learn.learnSkill)

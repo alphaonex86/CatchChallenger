@@ -377,7 +377,7 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
     uint32_t index=0;
     while(index<tryCapture)
     {
-        uint16_t number=rand()%65536;
+        uint16_t number=static_cast<uint16_t>(rand()%65536);
         if(number>=realRate)
             return false;
         index++;
