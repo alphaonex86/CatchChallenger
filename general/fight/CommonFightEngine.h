@@ -40,7 +40,7 @@ public:
     virtual bool dropKOOtherMonster();
     virtual void healAllMonsters();
     virtual bool learnSkill(PlayerMonster *monsterPlayer, const uint16_t &skill);
-    virtual bool learnSkillByItem(PlayerMonster *playerMonster, const uint32_t &itemId);
+    virtual bool learnSkillByItem(PlayerMonster *playerMonster, const uint16_t &itemId);
     virtual std::vector<uint8_t> addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
     virtual std::vector<uint8_t> addPlayerMonster(const PlayerMonster &playerMonster);
     virtual void insertPlayerMonster(const uint8_t &place,const PlayerMonster &playerMonster);
@@ -78,7 +78,7 @@ public:
     virtual int addBuffEffectFull(const Skill::BuffEffect &effect,PublicPlayerMonster * currentMonster,PublicPlayerMonster * otherMonster);
     virtual void removeBuffEffectFull(const Skill::BuffEffect &effect);
     virtual bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition);
-    virtual void confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster);
+    virtual void confirmEvolutionTo(PlayerMonster * playerMonster, const uint16_t &monster);
     virtual void hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue);
     virtual bool removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId);
     virtual bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
@@ -113,7 +113,7 @@ protected:
     bool ableToFight;
     std::vector<PlayerMonster> wildMonsters,botFightMonsters;
     uint8_t stepFight;
-    int selectedMonster;
+    uint8_t selectedMonster;
     bool doTurnIfChangeOfMonster;
 };
 }

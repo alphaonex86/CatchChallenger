@@ -107,7 +107,7 @@ void CommonDatapackServerSpec::applyMonstersRate()
         CatchChallenger::Monster &monster=CommonDatapack::commonDatapack.monsters[n.first];
         monster.give_xp*=CommonSettingsServer::commonSettingsServer.rates_xp;
         monster.give_sp*=CommonSettingsServer::commonSettingsServer.rates_xp;
-        monster.powerVar*=CommonSettingsServer::commonSettingsServer.rates_xp_pow;
+        monster.powerVar*=static_cast<double>(CommonSettingsServer::commonSettingsServer.rates_xp_pow);
         monster.level_to_xp.clear();
         int index=0;
         while(index<CATCHCHALLENGER_MONSTER_LEVEL_MAX)
@@ -118,7 +118,7 @@ void CommonDatapackServerSpec::applyMonstersRate()
             uint64_t tempXp=xp_for_this_level*xp_for_max_level/max_xp;
             if(tempXp<1)
                 tempXp=1;
-            monster.level_to_xp.push_back(tempXp);
+            monster.level_to_xp.push_back(static_cast<uint32_t>(tempXp));
             index++;
         }
     }

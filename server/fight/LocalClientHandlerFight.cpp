@@ -696,7 +696,7 @@ bool Client::addPlayerMonsterWithChange(const PlayerMonster &playerMonster)
     }
 }
 
-void Client::confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster)
+void Client::confirmEvolutionTo(PlayerMonster * playerMonster, const uint16_t &monster)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     PlayerMonster * currentMonster=getCurrentMonster();

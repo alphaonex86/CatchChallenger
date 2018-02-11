@@ -598,10 +598,10 @@ enum ApplyOn : uint8_t
 
 struct MonsterDrops
 {
-    uint32_t item;
+    uint16_t item;
     uint32_t quantity_min;
     uint32_t quantity_max;
-    uint32_t luck;//seam be 0 to 100
+    uint8_t luck;//seam be 0 to 100
 };
 
 struct Skill

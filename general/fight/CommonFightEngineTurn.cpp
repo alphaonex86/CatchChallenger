@@ -485,11 +485,11 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
             return attackReturn;
         }
     }
-    unsigned int position;
+    uint8_t position;
     if(otherMonster->skills.size()==1)
         position=0;
     else
-        position=getOneSeed(otherMonster->skills.size()-1);
+        position=getOneSeed(static_cast<uint8_t>(otherMonster->skills.size())-1);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(position>=otherMonster->skills.size())
     {
@@ -901,7 +901,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
         }
     }
     else
-        quantity=((int64_t)currentMonster->hp*(int64_t)effect.quantity)/(int64_t)100;
+        quantity=static_cast<uint32_t>(((int64_t)currentMonster->hp*(int64_t)effect.quantity)/(int64_t)100);
     if(effect.quantity<0)
     {
         if(quantity==0)
@@ -950,7 +950,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
     return effect_to_return;
 }
 
-void CommonFightEngine::confirmEvolutionTo(PlayerMonster * playerMonster,const uint32_t &monster)
+void CommonFightEngine::confirmEvolutionTo(PlayerMonster * playerMonster,const uint16_t &monster)
 {
     const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(playerMonster->monster);
     const Monster::Stat oldStat=getStat(monsterInformations,playerMonster->level);
