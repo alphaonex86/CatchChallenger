@@ -206,8 +206,8 @@ protected:
     #ifndef EPOLLCATCHCHALLENGERSERVER
     std::vector<FacilityLibGeneral::InodeDescriptor> entryListZone;
     #endif
-    int entryListIndex;
-    int plant_on_the_map;
+    unsigned int entryListIndex;
+    unsigned int plant_on_the_map;
     std::vector<Map_semi> semi_loaded_map;
     #ifdef EPOLLCATCHCHALLENGERSERVER
     std::vector<CATCHCHALLENGER_XMLDOCUMENT *> toDeleteAfterBotLoad;

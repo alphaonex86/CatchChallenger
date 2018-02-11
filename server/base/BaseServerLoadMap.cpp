@@ -36,14 +36,13 @@ bool BaseServer::preload_the_map()
         abort();
     }
     //load the map
-    unsigned int size=returnList.size();
     unsigned int index=0;
     unsigned int sub_index;
     std::string tmxRemove(".tmx");
     std::regex mapFilter("\\.tmx$");
     std::regex mapExclude("[\"']");
     std::vector<CommonMap *> flat_map_list_temp;
-    while(index<size)
+    while(index<returnList.size())
     {
         std::string fileName=returnList.at(index);
         stringreplaceAll(fileName,CACHEDSTRING_antislash,CACHEDSTRING_slash);
@@ -73,8 +72,8 @@ bool BaseServer::preload_the_map()
                 MapServer *mapServer=static_cast<MapServer *>(flat_map_list_temp.back());
                 GlobalServerData::serverPrivateVariables.map_list[sortFileName]=mapServer;
 
-                mapServer->width			= map_temp.map_to_send.width;
-                mapServer->height			= map_temp.map_to_send.height;
+                mapServer->width			= static_cast<uint8_t>(map_temp.map_to_send.width);
+                mapServer->height			= static_cast<uint8_t>(map_temp.map_to_send.height);
                 mapServer->parsed_layer	= map_temp.map_to_send.parsed_layer;
                 mapServer->map_file		= sortFileName;
 
@@ -111,8 +110,7 @@ bool BaseServer::preload_the_map()
                 }
 
                 sub_index=0;
-                const unsigned int &listsize=map_temp.map_to_send.teleport.size();
-                while(sub_index<listsize)
+                while(sub_index<map_temp.map_to_send.teleport.size())
                 {
                     map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.teleport.at(sub_index).map,GlobalServerData::serverPrivateVariables.datapack_mapPath);
                     stringreplaceOne(map_temp.map_to_send.teleport[sub_index].map,CACHEDSTRING_dottmx,"");
@@ -190,9 +188,8 @@ bool BaseServer::preload_the_map()
     std::sort(map_name_to_do_id.begin(),map_name_to_do_id.end());
 
     //resolv the border map name into their pointer
-    size=semi_loaded_map.size();
     index=0;
-    while(index<size)
+    while(index<semi_loaded_map.size())
     {
         if(semi_loaded_map.at(index).border.bottom.fileName.size()>0 && GlobalServerData::serverPrivateVariables.map_list.find(semi_loaded_map.at(index).border.bottom.fileName)!=GlobalServerData::serverPrivateVariables.map_list.end())
             semi_loaded_map[index].map->border.bottom.map=GlobalServerData::serverPrivateVariables.map_list.at(semi_loaded_map.at(index).border.bottom.fileName);
@@ -218,9 +215,8 @@ bool BaseServer::preload_the_map()
     }
 
     //resolv the teleported into their pointer
-    size=semi_loaded_map.size();
     index=0;
-    while(index<size)
+    while(index<semi_loaded_map.size())
     {
         unsigned int sub_index=0;
         Map_semi &map_semi=semi_loaded_map.at(index);
@@ -327,9 +323,8 @@ bool BaseServer::preload_the_map()
     }
 
     //clean border balise without another oposite border
-    size=semi_loaded_map.size();
     index=0;
-    while(index<size)
+    while(index<semi_loaded_map.size())
     {
         const auto &currentTempMap=GlobalServerData::serverPrivateVariables.map_list.at(map_name.at(index));
         if(currentTempMap->border.bottom.map!=NULL && currentTempMap->border.bottom.map->border.top.map!=currentTempMap)
@@ -412,9 +407,8 @@ bool BaseServer::preload_the_map()
     }
 
     //resolv the near map
-    size=semi_loaded_map.size();
     index=0;
-    while(index<size)
+    while(index<semi_loaded_map.size())
     {
         CommonMap * const currentTempMap=GlobalServerData::serverPrivateVariables.map_list.at(map_name.at(index));
         if(currentTempMap->border.bottom.map!=NULL &&
@@ -502,9 +496,8 @@ bool BaseServer::preload_the_map()
     }
 
     //resolv the offset to change of map
-    size=semi_loaded_map.size();
     index=0;
-    while(index<size)
+    while(index<semi_loaded_map.size())
     {
         const auto &currentTempMap=GlobalServerData::serverPrivateVariables.map_list.at(map_name.at(index));
         if(currentTempMap->border.bottom.map!=NULL)
@@ -548,9 +541,8 @@ bool BaseServer::preload_the_map()
     preload_the_bots(semi_loaded_map);
 
     //load the rescue
-    size=semi_loaded_map.size();
     index=0;
-    while(index<size)
+    while(index<semi_loaded_map.size())
     {
         sub_index=0;
         while(sub_index<semi_loaded_map.at(index).old_map.rescue_points.size())
@@ -565,9 +557,8 @@ bool BaseServer::preload_the_map()
         index++;
     }
 
-    size=map_name_to_do_id.size();
     index=0;
-    while(index<size)
+    while(index<map_name_to_do_id.size())
     {
         if(GlobalServerData::serverPrivateVariables.map_list.find(map_name_to_do_id.at(index))!=GlobalServerData::serverPrivateVariables.map_list.end())
         {

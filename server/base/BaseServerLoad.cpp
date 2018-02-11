@@ -54,13 +54,18 @@ void BaseServer::preload_the_events()
                             uint64_t previousStart=nextStart;
                             while(previousStart>time)
                                 previousStart-=(programmedEvent.cycle*60);
-                            pastEventStart[previousStart]=sub_index;
+                            pastEventStart[previousStart]=static_cast<uint8_t>(sub_index);
                             #ifdef EPOLLCATCHCHALLENGERSERVER
                                 TimerEvents * const timer=new TimerEvents(index,sub_index);
                                 GlobalServerData::serverPrivateVariables.timerEvents.push_back(timer);
                                 timer->start(programmedEvent.cycle*1000*60,(time-nextStart-1000));
                             #else
-                            GlobalServerData::serverPrivateVariables.timerEvents.push_back(new QtTimerEvents(programmedEvent.cycle*1000*60,(time-nextStart-1000),index,sub_index));
+                            GlobalServerData::serverPrivateVariables.timerEvents.push_back(
+                                        new QtTimerEvents(
+                                            programmedEvent.cycle*1000*60,static_cast<uint32_t>(time-nextStart-1000),
+                                            static_cast<uint8_t>(index),static_cast<uint8_t>(sub_index)
+                                            )
+                                        );
                             #endif
                         }
                         else
@@ -71,7 +76,7 @@ void BaseServer::preload_the_events()
                     if(!pastEventStart.empty())
                     {
                         const uint32_t value=pastEventStart.crbegin()->second;
-                        CatchChallenger::Client::setEvent(index,value);
+                        CatchChallenger::Client::setEvent(static_cast<uint8_t>(index),static_cast<uint8_t>(value));
                     }
                     #endif
                     break;
@@ -96,9 +101,8 @@ void BaseServer::preload_the_ddos()
 #ifndef EPOLLCATCHCHALLENGERSERVER
 bool BaseServer::preload_zone_init()
 {
-    const unsigned int &listsize=entryListZone.size();
     unsigned int index=0;
-    while(index<listsize)
+    while(index<entryListZone.size())
     {
         if(!regex_search(entryListZone.at(index).name,regexXmlFile))
         {
@@ -160,9 +164,8 @@ bool BaseServer::preload_zone_init()
             {
                 bool ok;
                 const std::vector<std::string> &fightIdStringList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(capture->Attribute(XMLCACHEDSTRING_fightId)),';');
-                int sub_index=0;
-                const int &listsize=fightIdStringList.size();
-                while(sub_index<listsize)
+                unsigned int sub_index=0;
+                while(sub_index<fightIdStringList.size())
                 {
                     const uint16_t &fightId=stringtouint16(fightIdStringList.at(sub_index),&ok);
                     if(ok)
@@ -174,7 +177,7 @@ bool BaseServer::preload_zone_init()
                     }
                     sub_index++;
                 }
-                if(sub_index==listsize && !fightIdList.empty())
+                if(sub_index==fightIdStringList.size() && !fightIdList.empty())
                     GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity[zoneCodeName]=fightIdList;
                 break;
             }
@@ -207,9 +210,9 @@ void BaseServer::preload_the_skin()
 {
     std::vector<std::string> skinFolderList=FacilityLibGeneral::skinIdList(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
     unsigned int index=0;
-    while(index<skinFolderList.size())
+    while(index<skinFolderList.size() && index<255)
     {
-        GlobalServerData::serverPrivateVariables.skinList[skinFolderList.at(index)]=index;
+        GlobalServerData::serverPrivateVariables.skinList[skinFolderList.at(index)]=static_cast<uint8_t>(index);
         index++;
     }
 
