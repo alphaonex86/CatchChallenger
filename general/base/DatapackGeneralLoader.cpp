@@ -180,6 +180,11 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
                             reputationTemp.name=type;
                             reputationTemp.reputation_positive=point_list_positive;
                             reputationTemp.reputation_negative=point_list_negative;
+                            if(reputation.size()>=255)
+                            {
+                                std::cerr << "You can't have mopre than 255 reputation " << file << ": " << item->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                                abort();
+                            }
                             reputation.push_back(reputationTemp);
                         }
                     }
@@ -239,10 +244,11 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
 {
     std::unordered_map<std::string,uint8_t> reputationNameToId;
     {
-        unsigned int index=0;
+        uint8_t index=0;
         while(index<CommonDatapack::commonDatapack.reputation.size())
         {
-            reputationNameToId[CommonDatapack::commonDatapack.reputation.at(index).name]=index;
+            const Reputation &reputation=CommonDatapack::commonDatapack.reputation.at(index);
+            reputationNameToId[reputation.name]=index;
             index++;
         }
     }
@@ -434,7 +440,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         if(rewardsItem->Attribute("id")!=NULL)
                         {
                             CatchChallenger::Quest::Item item;
-                            item.item=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(rewardsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                            item.item=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(rewardsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                             item.quantity=1;
                             if(ok)
                             {
@@ -527,7 +533,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                 if(stepItem->Attribute("id")!=NULL)
                                 {
                                     CatchChallenger::Quest::Item item;
-                                    item.item=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                                    item.item=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                                     item.quantity=1;
                                     if(ok)
                                     {
@@ -552,7 +558,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                             unsigned int index=0;
                                             while(index<tempStringList.size())
                                             {
-                                                const uint32_t &tempInt=stringtouint32(tempStringList.at(index),&ok);
+                                                const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
                                                 if(ok)
                                                     itemMonster.monsters.push_back(tempInt);
                                                 index++;
@@ -585,7 +591,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                             {
                                 if(fightItem->Attribute("id")!=NULL)
                                 {
-                                    const uint32_t &fightId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(fightItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                                    const uint16_t &fightId=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(fightItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                                     if(ok)
                                         stepObject.requirements.fightId.push_back(fightId);
                                     else
@@ -617,7 +623,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     #endif
 
     //sort the step
-    unsigned int indexLoop=1;
+    uint8_t indexLoop=1;
     while(indexLoop<(steps.size()+1))
     {
         if(steps.find(indexLoop)==steps.cend())
@@ -632,9 +638,9 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
 
 std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::string &file)
 {
-    std::unordered_map<std::string,int> reputationNameToId;
+    std::unordered_map<std::string,uint8_t> reputationNameToId;
     {
-        unsigned int index=0;
+        uint8_t index=0;
         while(index<CommonDatapack::commonDatapack.reputation.size())
         {
             reputationNameToId[CommonDatapack::commonDatapack.reputation.at(index).name]=index;
@@ -684,7 +690,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
             if(plantItem->Attribute("id")!=NULL && plantItem->Attribute("itemUsed")!=NULL)
             {
                 const uint8_t &id=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(plantItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                const uint32_t &itemUsed=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(plantItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemUsed"))),&ok2);
+                const uint16_t &itemUsed=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(plantItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemUsed"))),&ok2);
                 if(ok && ok2)
                 {
                     if(plants.find(id)==plants.cend())
@@ -716,7 +722,11 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                                 reputationRequirements.level=stringtouint8(stringLevel,&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRequirements.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
+                                                    reputationRequirements.reputationId=reputationNameToId.at(
+                                                                CATCHCHALLENGER_XMLATTRIBUTETOSTRING(
+                                                                    reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))
+                                                                    )
+                                                                );
                                                     plant.requirements.reputation.push_back(reputationRequirements);
                                                 }
                                             }
@@ -749,7 +759,11 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                                 reputationRewards.point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRewards.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
+                                                    reputationRewards.reputationId=reputationNameToId.at(
+                                                                CATCHCHALLENGER_XMLATTRIBUTETOSTRING(
+                                                                    reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))
+                                                                    )
+                                                                );
                                                     plant.rewards.reputation.push_back(reputationRewards);
                                                 }
                                             }
@@ -773,7 +787,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                 const int &integer_part=float_quantity;
                                 float random_part=float_quantity-integer_part;
                                 random_part*=RANDOM_FLOAT_PART_DIVIDER;
-                                plant.fix_quantity=integer_part;
+                                plant.fix_quantity=static_cast<uint16_t>(integer_part);
                                 plant.random_quantity=random_part;
                                 ok=ok2;
                             }
@@ -790,9 +804,9 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                     if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(fruits))
                                     {
                                         plant.fruits_seconds=stringtouint32(fruits->GetText(),&ok2)*60;
-                                        plant.sprouted_seconds=plant.fruits_seconds;
-                                        plant.taller_seconds=plant.fruits_seconds;
-                                        plant.flowering_seconds=plant.fruits_seconds;
+                                        plant.sprouted_seconds=static_cast<uint16_t>(plant.fruits_seconds);
+                                        plant.taller_seconds=static_cast<uint16_t>(plant.fruits_seconds);
+                                        plant.flowering_seconds=static_cast<uint16_t>(plant.fruits_seconds);
                                         if(!ok2)
                                         {
                                             std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not a number: " << fruits->GetText() << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << fruits->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(fruits) << ")" << std::endl;
@@ -849,7 +863,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                 {
                                     if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(flowering))
                                     {
-                                        plant.flowering_seconds=stringtouint32(flowering->GetText(),&ok2)*60;
+                                        plant.flowering_seconds=stringtouint16(flowering->GetText(),&ok2)*60;
                                         if(!ok2)
                                         {
                                             ok=false;
@@ -896,9 +910,9 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                             }
                             if(needIntermediateTimeFix)
                             {
-                                plant.flowering_seconds=plant.fruits_seconds*3/4;
-                                plant.taller_seconds=plant.fruits_seconds*2/4;
-                                plant.sprouted_seconds=plant.fruits_seconds*1/4;
+                                plant.flowering_seconds=static_cast<uint16_t>(plant.fruits_seconds*3/4);
+                                plant.taller_seconds=static_cast<uint16_t>(plant.fruits_seconds*2/4);
+                                plant.sprouted_seconds=static_cast<uint16_t>(plant.fruits_seconds*1/4);
                             }
                             plants[id]=plant;
                         }
@@ -924,9 +938,9 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
 
 std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> > DatapackGeneralLoader::loadCraftingRecipes(const std::string &file,const std::unordered_map<uint16_t, Item> &items,uint16_t &crafingRecipesMaxId)
 {
-    std::unordered_map<std::string,int> reputationNameToId;
+    std::unordered_map<std::string,uint8_t> reputationNameToId;
     {
-        unsigned int index=0;
+        uint8_t index=0;
         while(index<CommonDatapack::commonDatapack.reputation.size())
         {
             reputationNameToId[CommonDatapack::commonDatapack.reputation.at(index).name]=index;
@@ -999,15 +1013,15 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                         if(tempShort>65535)
                             std::cerr << "preload_crafting_recipes() quantity can't be greater than 65535 for crafting recipe file: " << file << ", child->CATCHCHALLENGER_XMLELENTVALUE(): " << recipeItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
                         else
-                            quantity=tempShort;
+                            quantity=static_cast<uint16_t>(tempShort);
                     }
                     else
                         std::cerr << "preload_crafting_recipes() quantity in not an number for crafting recipe file: " << file << ", child->CATCHCHALLENGER_XMLELENTVALUE(): " << recipeItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
                 }
 
-                const uint32_t &id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                const uint32_t &itemToLearn=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemToLearn"))),&ok2);
-                const uint32_t &doItemId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("doItemId"))),&ok3);
+                const uint16_t &id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                const uint16_t &itemToLearn=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemToLearn"))),&ok2);
+                const uint16_t &doItemId=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("doItemId"))),&ok3);
                 if(ok && ok2 && ok3)
                 {
                     if(crafingRecipes.find(id)==crafingRecipes.cend())
@@ -1039,7 +1053,11 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                                 reputationRequirements.level=stringtouint8(stringLevel,&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRequirements.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
+                                                    reputationRequirements.reputationId=reputationNameToId.at(
+                                                                CATCHCHALLENGER_XMLATTRIBUTETOSTRING(
+                                                                    reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))
+                                                                    )
+                                                                );
                                                     recipe.requirements.reputation.push_back(reputationRequirements);
                                                 }
                                             }
@@ -1072,7 +1090,11 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                                 reputationRewards.point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
                                                 if(ok)
                                                 {
-                                                    reputationRewards.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
+                                                    reputationRewards.reputationId=reputationNameToId.at(
+                                                                CATCHCHALLENGER_XMLATTRIBUTETOSTRING(
+                                                                    reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))
+                                                                    )
+                                                                );
                                                     recipe.rewards.reputation.push_back(reputationRewards);
                                                 }
                                             }
@@ -1093,7 +1115,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                             {
                                 if(material->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemId"))!=NULL)
                                 {
-                                    const uint32_t &itemId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(material->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemId"))),&ok2);
+                                    const uint16_t &itemId=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(material->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemId"))),&ok2);
                                     if(!ok2)
                                     {
                                         ok=false;
@@ -1113,7 +1135,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                                 break;
                                             }
                                             else
-                                                quantity=tempShort;
+                                                quantity=static_cast<uint16_t>(tempShort);
                                         }
                                         else
                                         {
@@ -1281,7 +1303,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                 if(industryItem->Attribute("id")!=NULL && industryItem->Attribute("time")!=NULL && industryItem->Attribute("cycletobefull")!=NULL)
                 {
                     Industry industry;
-                    const uint32_t &id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(industryItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                    const uint16_t &id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(industryItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                     industry.time=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(industryItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("time"))),&ok2);
                     industry.cycletobefull=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(industryItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("cycletobefull"))),&ok3);
                     if(ok && ok2 && ok3)
@@ -1323,7 +1345,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                         {
                                             if(resourceItem->Attribute("id")!=NULL)
                                             {
-                                                resource.item=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(resourceItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                                                resource.item=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(resourceItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                                                 if(!ok)
                                                     std::cerr << "id is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << industryItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
                                                 else if(items.find(resource.item)==items.cend())
@@ -1401,7 +1423,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
                                         {
                                             if(productItem->Attribute("id")!=NULL)
                                             {
-                                                product.item=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(productItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                                                product.item=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(productItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                                                 if(!ok)
                                                     std::cerr << "id is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << industryItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
                                                 else if(items.find(product.item)==items.cend())
@@ -1490,9 +1512,9 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
 
 std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesLink(const std::string &file,const std::unordered_map<uint16_t,Industry> &industries)
 {
-    std::unordered_map<std::string,int> reputationNameToId;
+    std::unordered_map<std::string,uint8_t> reputationNameToId;
     {
-        unsigned int index=0;
+        uint8_t index=0;
         while(index<CommonDatapack::commonDatapack.reputation.size())
         {
             reputationNameToId[CommonDatapack::commonDatapack.reputation.at(index).name]=index;
@@ -1541,8 +1563,8 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
         {
             if(linkItem->Attribute("industrialrecipe")!=NULL && linkItem->Attribute("industry")!=NULL)
             {
-                const uint32_t &industry_id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(linkItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("industrialrecipe"))),&ok);
-                const uint32_t &factory_id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(linkItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("industry"))),&ok2);
+                const uint16_t &industry_id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(linkItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("industrialrecipe"))),&ok);
+                const uint16_t &factory_id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(linkItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("industry"))),&ok2);
                 if(ok && ok2)
                 {
                     if(industriesLink.find(factory_id)==industriesLink.cend())
@@ -1708,7 +1730,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
             {
                 if(item->Attribute("id")!=NULL)
                 {
-                    const uint32_t &id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                    const uint16_t &id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                     if(ok)
                     {
                         if(items.item.find(id)==items.item.cend())
@@ -1866,16 +1888,16 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                                 }
                                                 else
                                                 {
-                                                    const int32_t &remove=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(buffItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("remove"))),&ok);
+                                                    const int8_t &removebuffid=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(buffItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("remove"))),&ok);
                                                     if(ok)
                                                     {
-                                                        if(remove>0)
+                                                        if(removebuffid>0)
                                                         {
-                                                            if(monsterBuffs.find(remove)!=monsterBuffs.cend())
+                                                            if(monsterBuffs.find(removebuffid)!=monsterBuffs.cend())
                                                             {
                                                                 MonsterItemEffect monsterItemEffect;
                                                                 monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
-                                                                monsterItemEffect.data.buff=remove;
+                                                                monsterItemEffect.data.buff=removebuffid;
                                                                 items.monsterItemEffect[id].push_back(monsterItemEffect);
                                                             }
                                                             else
@@ -1909,7 +1931,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                                     {
                                         if(levelItem->Attribute("up")!=NULL)
                                         {
-                                            const uint32_t &levelUp=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(levelItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("up"))),&ok);
+                                            const uint8_t &levelUp=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(levelItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("up"))),&ok);
                                             if(!ok)
                                                 std::cerr << "Unable to open the file, level up is not possitive number, file: " << file << ", child->CATCHCHALLENGER_XMLELENTVALUE(): " << levelItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(levelItem) << ")" << std::endl;
                                             else if(levelUp<=0)
@@ -1963,9 +1985,9 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                                                                                   const std::unordered_map<uint16_t,Monster> &monsters,const std::vector<Reputation> &reputations)
 {
     std::unordered_set<std::string> idDuplicate;
-    std::unordered_map<std::string,int> reputationNameToId;
+    std::unordered_map<std::string,uint8_t> reputationNameToId;
     {
-        unsigned int index=0;
+        uint8_t index=0;
         while(index<CommonDatapack::commonDatapack.reputation.size())
         {
             reputationNameToId[CommonDatapack::commonDatapack.reputation.at(index).name]=index;
@@ -1975,7 +1997,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
     std::vector<std::string> defaultforcedskinList;
     std::unordered_map<std::string,uint8_t> skinNameToId;
     {
-        unsigned int index=0;
+        uint8_t index=0;
         while(index<CommonDatapack::commonDatapack.skins.size())
         {
             skinNameToId[CommonDatapack::commonDatapack.skins.at(index)]=index;
@@ -2089,7 +2111,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                         Profile::Monster monster;
                         if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(monstersElement) && monstersElement->Attribute("id")!=NULL && monstersElement->Attribute("level")!=NULL && monstersElement->Attribute("captured_with")!=NULL)
                         {
-                            monster.id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                            monster.id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                             if(!ok)
                                 std::cerr << "Unable to open the xml file: " << file << ", monster id is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                             if(ok)
@@ -2105,7 +2127,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                             }
                             if(ok)
                             {
-                                monster.captured_with=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("captured_with"))),&ok);
+                                monster.captured_with=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("captured_with"))),&ok);
                                 if(!ok)
                                     std::cerr << "Unable to open the xml file: " << file << ", captured_with is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                             }
@@ -2216,7 +2238,7 @@ std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> 
                     Profile::Item itemTemp;
                     if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(itemElement) && itemElement->Attribute("id")!=NULL)
                     {
-                        itemTemp.id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(itemElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                        itemTemp.id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(itemElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
                         if(!ok)
                             std::cerr << "Unable to open the xml file: " << file << ", item id is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << startItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                         if(ok)
@@ -2273,8 +2295,8 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
     std::unordered_map<std::string,uint8_t> eventStringToId;
     std::unordered_map<std::string,std::unordered_map<std::string,uint8_t> > eventListingToId;
     {
-        unsigned int index=0;
-        unsigned int sub_index;
+        uint8_t index=0;
+        uint8_t sub_index;
         while(index<events.size())
         {
             const Event &event=events.at(index);
@@ -2362,7 +2384,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                         monstersCollision.item=0;
                         if(monstersCollisionItem->Attribute("item")!=NULL)
                         {
-                            monstersCollision.item=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("item"))),&ok);
+                            monstersCollision.item=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("item"))),&ok);
                             if(!ok)
                                 std::cerr << "item attribute is not a number, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(monstersCollisionItem) << std::endl;
                             else if(items.find(monstersCollision.item)==items.cend())
@@ -2672,7 +2694,7 @@ std::unordered_map<uint16_t, Shop> DatapackGeneralLoader::preload_shop(const std
                             {
                                 if(product->Attribute("itemId")!=NULL)
                                 {
-                                    uint32_t itemId=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(product->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemId"))),&ok);
+                                    uint16_t itemId=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(product->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemId"))),&ok);
                                     if(!ok)
                                         std::cerr << "preload_shop() product attribute itemId is not a number for shops file: " << file << ", child->CATCHCHALLENGER_XMLELENTVALUE(): " << shopItem->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(shopItem) << ")" << std::endl;
                                     else
@@ -3028,7 +3050,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
                                                     if(!luck.empty())
                                                         if(luck.back()=='%')
                                                             luck.resize(luck.size()-1);
-                                                    dropVar.luck=stringtouint32(luck,&ok);
+                                                    dropVar.luck=stringtouint8(luck,&ok);
                                                     if(!ok)
                                                         std::cerr << "Unable to open the xml file: " << file << ", luck is not a number: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                                     else if(dropVar.luck==0)
@@ -3057,7 +3079,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
                                             {
                                                 if(drop->Attribute("item")!=NULL)
                                                 {
-                                                    dropVar.item=stringtouint32(drop->Attribute("item"),&ok);
+                                                    dropVar.item=stringtouint16(drop->Attribute("item"),&ok);
                                                     if(!ok)
                                                         std::cerr << "Unable to open the xml file: " << file << ", item is not a number: child.tagName(): " << drop->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
                                                 }
@@ -3074,7 +3096,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
                                             }
                                             if(ok)
                                             {
-                                                if(CommonSettingsServer::commonSettingsServer.rates_drop!=1.0)
+                                                if(static_cast<double>(CommonSettingsServer::commonSettingsServer.rates_drop)!=1.0)
                                                 {
                                                     if(CommonSettingsServer::commonSettingsServer.rates_drop==0)
                                                     {
@@ -3082,13 +3104,13 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
                                                         CommonSettingsServer::commonSettingsServer.rates_drop=1;
                                                     }
                                                     dropVar.luck=dropVar.luck*CommonSettingsServer::commonSettingsServer.rates_drop;
-                                                    float targetAverage=((float)dropVar.quantity_min+(float)dropVar.quantity_max)/2.0;
-                                                    targetAverage=(targetAverage*dropVar.luck)/100.0;
+                                                    double targetAverage=static_cast<double>(((double)dropVar.quantity_min+(double)dropVar.quantity_max)/2.0);
+                                                    targetAverage=static_cast<double>((targetAverage*dropVar.luck)/100.0);
                                                     while(dropVar.luck>100)
                                                     {
                                                         dropVar.quantity_max++;
-                                                        float currentAverage=((float)dropVar.quantity_min+(float)dropVar.quantity_max)/2.0;
-                                                        dropVar.luck=(100.0*targetAverage)/currentAverage;
+                                                        double currentAverage=static_cast<double>(((double)dropVar.quantity_min+(double)dropVar.quantity_max)/2.0);
+                                                        dropVar.luck=static_cast<double>((100.0*targetAverage)/currentAverage);
                                                     }
                                                 }
                                                 monsterDrops[id].push_back(dropVar);

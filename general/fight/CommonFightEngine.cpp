@@ -157,8 +157,8 @@ void CommonFightEngine::healAllMonsters()
             while(sub_index<playerMonster.skills.size())
             {
                 const PlayerMonster::PlayerSkill &playerSkill=playerMonster.skills.at(sub_index);
-                const int &skill=playerSkill.skill;
-                const int &skillIndex=playerSkill.level-1;
+                const uint16_t &skill=playerSkill.skill;
+                const uint8_t &skillIndex=playerSkill.level-1;
                 if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(skill)!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
                 {
                     const Skill &fullSkill=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(skill);
@@ -229,7 +229,7 @@ void CommonFightEngine::updateCanDoFight()
         return;
     }
     ableToFight=false;
-    unsigned int index=0;
+    uint8_t index=0;
     while(index<public_and_private_informations.playerMonster.size())
     {
         const PlayerMonster &playerMonsterEntry=public_and_private_informations.playerMonster.at(index);
@@ -268,7 +268,7 @@ bool CommonFightEngine::haveAnotherEnnemyMonsterToFight()
 
 PlayerMonster * CommonFightEngine::getCurrentMonster()//no const due to error message
 {
-    const int &playerMonsterSize=public_and_private_informations.playerMonster.size();
+    const size_t &playerMonsterSize=public_and_private_informations.playerMonster.size();
     if(selectedMonster>=0 && selectedMonster<playerMonsterSize)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
