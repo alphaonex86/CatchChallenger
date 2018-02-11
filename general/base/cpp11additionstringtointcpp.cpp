@@ -18,7 +18,7 @@ uint8_t stringtouint8(const std::string &string,bool *ok)
     #ifdef __EXCEPTIONS
     unsigned int tempValue;
     try {
-      tempValue = std::stoul(string);
+      tempValue = static_cast<unsigned int>(std::stoul(string));
     }
     catch(...) {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -32,7 +32,7 @@ uint8_t stringtouint8(const std::string &string,bool *ok)
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
-        return tempValue;
+        return static_cast<uint8_t>(tempValue);
     }
     else
     {
@@ -78,7 +78,7 @@ uint16_t stringtouint16(const std::string &string,bool *ok)
     #ifdef __EXCEPTIONS
     unsigned int tempValue;
     try {
-      tempValue = std::stoul(string);
+      tempValue = static_cast<unsigned int>(std::stoul(string));
     }
     catch(...) {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -92,7 +92,7 @@ uint16_t stringtouint16(const std::string &string,bool *ok)
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
-        return tempValue;
+        return static_cast<uint16_t>(tempValue);
     }
     else
     {
@@ -138,7 +138,7 @@ uint32_t stringtouint32(const std::string &string,bool *ok)
     #ifdef __EXCEPTIONS
     uint32_t tempValue;
     try {
-      tempValue = std::stoul(string);
+      tempValue = static_cast<unsigned int>(std::stoul(string));
     }
     catch(...) {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -257,7 +257,7 @@ int8_t stringtoint8(const std::string &string,bool *ok)
     #ifdef __EXCEPTIONS
     int tempValue;
     try {
-      tempValue = std::stol(string);
+      tempValue = static_cast<int>(std::stol(string));
     }
     catch(...) {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -271,7 +271,7 @@ int8_t stringtoint8(const std::string &string,bool *ok)
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
-        return tempValue;
+        return static_cast<int8_t>(tempValue);
     }
     else
     {
@@ -317,7 +317,7 @@ int16_t stringtoint16(const std::string &string,bool *ok)
     #ifdef __EXCEPTIONS
     int tempValue;
     try {
-      tempValue = std::stol(string);
+      tempValue = static_cast<int>(std::stol(string));
     }
     catch(...) {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -331,7 +331,7 @@ int16_t stringtoint16(const std::string &string,bool *ok)
     {
         if(Q_LIKELY(ok!=NULL))
             *ok=true;
-        return tempValue;
+        return static_cast<int16_t>(tempValue);
     }
     else
     {
@@ -377,7 +377,7 @@ int32_t stringtoint32(const std::string &string,bool *ok)
     #ifdef __EXCEPTIONS
     int32_t tempValue;
     try {
-      tempValue = std::stol(string);
+      tempValue = static_cast<int>(std::stol(string));
     }
     catch(...) {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
