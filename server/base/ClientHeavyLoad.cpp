@@ -57,9 +57,8 @@ std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> 
     const std::unordered_set<std::string> &extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
     #endif
 
-    int index=0;
-    const int &size=returnList.size();
-    while(index<size)
+    unsigned int index=0;
+    while(index<returnList.size())
     {
         #ifdef _WIN32
         std::string fileName=returnList.at(index);

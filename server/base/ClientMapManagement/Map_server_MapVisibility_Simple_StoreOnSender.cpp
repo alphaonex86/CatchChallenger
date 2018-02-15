@@ -59,7 +59,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             posOutput+=1;
             if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
             {
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=id;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(id);
                 posOutput+=1;
             }
             else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
@@ -74,7 +74,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             if(GlobalServerData::serverSettings.max_players<=255)
             {
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.size();
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(clients.size());
                 posOutput+=1;
             }
             else
@@ -87,7 +87,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             {
                 if(GlobalServerData::serverSettings.max_players<=255)
                 {
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.at(index)->public_and_private_informations.public_informations.simplifiedId;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=
+                            static_cast<uint8_t>(clients.at(index)->public_and_private_informations.public_informations.simplifiedId);
                     posOutput+=1;
                 }
                 else
@@ -173,7 +174,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     posOutput+=1;
                     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
                     {
-                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=id;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(id);
                         posOutput+=1;
                     }
                     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
@@ -188,7 +189,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     }
                     if(GlobalServerData::serverSettings.max_players<=255)
                     {
-                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=insert_player;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(insert_player);
                         posOutput+=1;
                     }
                     else
@@ -204,7 +205,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         {
                             if(GlobalServerData::serverSettings.max_players<=255)
                             {
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.simplifiedId;
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=
+                                        static_cast<uint8_t>(client->public_and_private_informations.public_informations.simplifiedId);
                                 posOutput+=1;
                             }
                             else
@@ -324,7 +326,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     posOutput+=1;
                     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
                     {
-                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=id;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(id);
                         posOutput+=1;
                     }
                     else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
@@ -339,7 +341,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     }
                     if(GlobalServerData::serverSettings.max_players<=255)
                     {
-                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.size()-1;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(clients.size()-1);
                         posOutput+=1;
                         unsigned int index_subindex=0;
                         while(index_subindex<clients.size())
@@ -347,7 +349,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                             const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index_subindex);
                             if(index!=index_subindex)
                             {
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.simplifiedId;
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(client->public_and_private_informations.public_informations.simplifiedId);
                                 posOutput+=1;
                                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getX();
                                 posOutput+=1;
@@ -461,7 +463,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             {
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(sizeof(uint8_t)+to_send_remove.size()*sizeof(uint8_t));//set the dynamic size
 
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=to_send_remove.size();
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(to_send_remove.size());
                 posOutput+=1;
                 unsigned int index_subindex=0;
                 while(index_subindex<to_send_remove.size())

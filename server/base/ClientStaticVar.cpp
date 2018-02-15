@@ -57,7 +57,7 @@ const unsigned char Client::protocolHeaderToMatch[] = PROTOCOL_HEADER_GAMESERVER
 DdosBuffer<uint16_t,3> Client::generalChatDrop;
 DdosBuffer<uint16_t,3> Client::clanChatDrop;
 DdosBuffer<uint16_t,3> Client::privateChatDrop;
-std::vector<uint16_t> Client::marketObjectIdList;
+std::vector<uint32_t> Client::marketObjectUniqueIdList;
 #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
 std::queue<Client::PlantInWaiting> Client::plant_list_in_waiting;
 #endif

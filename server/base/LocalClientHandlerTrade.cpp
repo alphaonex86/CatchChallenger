@@ -30,7 +30,7 @@ void Client::registerTradeRequest(Client * otherPlayerTrade)
 
     //sender pseudo
     const std::string &pseudo=otherPlayerTrade->public_and_private_informations.public_informations.pseudo;
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=pseudo.size();
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=static_cast<uint8_t>(pseudo.size());
     pos+=1;
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,pseudo.data(),pseudo.size());
     pos+=pseudo.size();
@@ -54,7 +54,7 @@ uint64_t Client::getTradeCash() const
     return tradeCash;
 }
 
-std::unordered_map<uint32_t,uint32_t> Client::getTradeObjects() const
+std::unordered_map<uint16_t,uint32_t> Client::getTradeObjects() const
 {
     return tradeObjects;
 }
@@ -108,7 +108,7 @@ void Client::tradeFinished()
             saveObjectRetention(i->first);
             ++i;
         }
-        const std::unordered_map<uint32_t,uint32_t> otherPlayerTradeGetTradeObjects=otherPlayerTrade->getTradeObjects();
+        const std::unordered_map<uint16_t,uint32_t> otherPlayerTradeGetTradeObjects=otherPlayerTrade->getTradeObjects();
         auto j=otherPlayerTradeGetTradeObjects.begin();
         while (j!=otherPlayerTradeGetTradeObjects.cend())
         {
@@ -411,7 +411,7 @@ void Client::internalTradeAccepted(const bool &send)
 
         //sender pseudo
         const std::string &pseudo=otherPlayerTrade->public_and_private_informations.public_informations.pseudo;
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=pseudo.size();
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=static_cast<uint8_t>(pseudo.size());
         pos+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,pseudo.data(),pseudo.size());
         pos+=pseudo.size();
