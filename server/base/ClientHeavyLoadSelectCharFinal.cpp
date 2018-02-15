@@ -65,7 +65,7 @@ void Client::characterIsRightFinalStep()
             index++;
         }
         index=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=events.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(events.size());
         posOutput+=1;
         while(index<events.size())
         {
@@ -81,7 +81,7 @@ void Client::characterIsRightFinalStep()
     //temporary character id
     if(GlobalServerData::serverSettings.max_players<=255)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.simplifiedId;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.public_informations.simplifiedId);
         posOutput+=1;
     }
     else
@@ -93,12 +93,12 @@ void Client::characterIsRightFinalStep()
     //pseudo
     {
         const std::string &text=public_and_private_informations.public_informations.pseudo;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
     }
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.allow.size();
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.allow.size());
     posOutput+=1;
     {
         auto i=public_and_private_informations.allow.begin();
@@ -133,11 +133,11 @@ void Client::characterIsRightFinalStep()
 
     //temporary variable
     uint32_t index;
-    uint32_t size;
+    uint8_t size;
 
     //send monster
     index=0;
-    size=public_and_private_informations.playerMonster.size();
+    size=static_cast<uint8_t>(public_and_private_informations.playerMonster.size());
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size;
     posOutput+=1;
     while(index<size)
@@ -146,7 +146,7 @@ void Client::characterIsRightFinalStep()
         index++;
     }
     index=0;
-    size=public_and_private_informations.warehouse_playerMonster.size();
+    size=static_cast<uint8_t>(public_and_private_informations.warehouse_playerMonster.size());
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size;
     posOutput+=1;
     while(index<size)
@@ -158,7 +158,7 @@ void Client::characterIsRightFinalStep()
     /// \todo force to 255 max
     //send reputation
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.reputation.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.reputation.size());
         posOutput+=1;
         auto i=public_and_private_informations.reputation.begin();
         while(i!=public_and_private_informations.reputation.cend())

@@ -16,6 +16,11 @@ void Client::sendLocalChatText(const std::string &text)
     static_cast<MapServer *>(map)->localChatDropNewValue++;
     if(map==NULL)
         return;
+    if(text.size()>255)
+    {
+        errorOutput("text too big");
+        return;
+    }
     normalOutput("[chat local] "+this->public_and_private_informations.public_informations.pseudo+": "+text);
 
     uint32_t posOutput=0;
@@ -28,13 +33,13 @@ void Client::sendLocalChatText(const std::string &text)
         posOutput+=1;
 
         //text
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
 
         //sender pseudo
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.pseudo.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.public_informations.pseudo.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.public_informations.pseudo.data(),public_and_private_informations.public_informations.pseudo.size());
         posOutput+=public_and_private_informations.public_informations.pseudo.size();
@@ -50,8 +55,8 @@ void Client::sendLocalChatText(const std::string &text)
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
     }
 
-    const int &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
-    int index=0;
+    const size_t &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
+    unsigned int index=0;
     while(index<size)
     {
         Client * const client=static_cast<MapServer *>(map)->clientsForBroadcast.at(index);

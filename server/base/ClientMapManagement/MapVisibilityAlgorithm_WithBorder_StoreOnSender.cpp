@@ -53,7 +53,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
     //local map
     if(Q_LIKELY(temp_map->show))
     {
-        const uint16_t &loop_size=temp_map->clients.size();
+        const uint16_t &loop_size=static_cast<uint16_t>(temp_map->clients.size());
         if(Q_LIKELY(temp_map->showWithBorder))
         {
             if(Q_UNLIKELY((loop_size+temp_map->clientsOnBorder)>=GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder))
@@ -121,11 +121,11 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
     //border map
     {
         uint8_t border_map_index=0;
-        const uint8_t &border_map_loop_size=map->linked_map.size();
+        const uint8_t &border_map_loop_size=static_cast<uint8_t>(map->linked_map.size());
         while(border_map_index<border_map_loop_size)
         {
             Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->linked_map.at(border_map_index));
-            const uint16_t &loop_size=temp_border_map->clients.size();
+            const uint16_t &loop_size=static_cast<uint16_t>(temp_border_map->clients.size());
             //insert border player on current player
             if(temp_map->showWithBorder)
             {
@@ -177,7 +177,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveClient(const uint8_t &movedUnit,const Direction &direction)
 {
     Map_server_MapVisibility_WithBorder_StoreOnSender *temp_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map);
-    const uint16_t &loop_size=temp_map->clients.size();
+    const uint16_t &loop_size=static_cast<uint16_t>(temp_map->clients.size());
     if(Q_UNLIKELY(mapHaveChanged))
     {
         #ifdef DEBUG_MESSAGE_CLIENT_MOVE
@@ -228,11 +228,11 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveClient(const uint8_t &
     const SIMPLIFIED_PLAYER_ID_TYPE &thisSimplifiedId=public_and_private_informations.public_informations.simplifiedId;
     //border map
     uint8_t border_map_index=0;
-    const uint8_t &border_map_loop_size=map->linked_map.size();
+    const uint8_t &border_map_loop_size=static_cast<uint8_t>(map->linked_map.size());
     while(border_map_index<border_map_loop_size)
     {
         Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->linked_map.at(border_map_index));
-        const uint16_t &loop_size=temp_border_map->clients.size();
+        const uint16_t &loop_size=static_cast<uint16_t>(temp_border_map->clients.size());
         if(temp_border_map->showWithBorder)
         {
             uint16_t index=0;
@@ -296,7 +296,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::reinsertClientForOthersOnS
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
 {
     Map_server_MapVisibility_WithBorder_StoreOnSender *temp_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map);
-    const uint16_t &loop_size=temp_map->clients.size();
+    const uint16_t &loop_size=static_cast<uint16_t>(temp_map->clients.size());
     if(Q_UNLIKELY(temp_map->show==false))
     {
         if(Q_UNLIKELY(loop_size<=(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow)))
@@ -376,11 +376,11 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
     //border map
     {
         uint8_t border_map_index=0;
-        const uint8_t &border_map_loop_size=map->linked_map.size();
+        const uint8_t &border_map_loop_size=static_cast<uint8_t>(map->linked_map.size());
         while(border_map_index<border_map_loop_size)
         {
             Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->linked_map.at(border_map_index));
-            const uint16_t &loop_size=temp_border_map->clients.size();
+            const uint16_t &loop_size=static_cast<uint16_t>(temp_border_map->clients.size());
             //remove border client on this
             if(Q_LIKELY(temp_map->showWithBorder==true))
             {
@@ -459,11 +459,11 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::reinsertCurrentPlayerOnlyT
     normalOutput("reinsertOnlyTheBorderClients() "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
     #endif
     uint8_t border_map_index=0;
-    const uint8_t &border_map_loop_size=map->linked_map.size();
+    const uint8_t &border_map_loop_size=static_cast<uint8_t>(map->linked_map.size());
     while(border_map_index<border_map_loop_size)
     {
         Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->linked_map.at(border_map_index));
-        const uint16_t &loop_size=temp_border_map->clients.size();
+        const uint16_t &loop_size=static_cast<uint16_t>(temp_border_map->clients.size());
         uint16_t index=0;
         while(index<loop_size)
         {
@@ -704,18 +704,18 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
     to_send_insert.clear();
     //////////////////////////// insert //////////////////////////
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=send_insert_by_map.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(send_insert_by_map.size());
         posOutput+=1;
         auto i_insert = send_insert_by_map.begin();
         while (i_insert != send_insert_by_map.cend())
         {
             Map_server_MapVisibility_WithBorder_StoreOnSender* map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(i_insert->first);
             const std::vector<MapVisibilityAlgorithm_WithBorder_StoreOnSender *> &clients_list=i_insert->second;
-            const uint16_t &list_size=clients_list.size();
+            const uint16_t &list_size=static_cast<uint16_t>(clients_list.size());
 
             if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
             {
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=map->id;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(map->id);
                 posOutput+=1;
             }
             else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
@@ -730,7 +730,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
             }
             if(GlobalServerData::serverSettings.max_players<=255)
             {
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=list_size;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(list_size);
                 posOutput+=1;
             }
             else
@@ -757,7 +757,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
                 #endif
                 if(GlobalServerData::serverSettings.max_players<=255)
                 {
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.simplifiedId;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(client->public_and_private_informations.public_informations.simplifiedId);
                     posOutput+=1;
                 }
                 else
@@ -783,7 +783,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_insert()
                 if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                 {
                     const std::string &text=client->public_and_private_informations.public_informations.pseudo;
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                     posOutput+=1;
                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                     posOutput+=text.size();
@@ -821,7 +821,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
     auto i_move = to_send_move.begin();
     if(GlobalServerData::serverSettings.max_players<=255)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=to_send_move.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(to_send_move.size());
         posOutput+=1;
     }
     else
@@ -836,7 +836,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
         #endif
         if(GlobalServerData::serverSettings.max_players<=255)
         {
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i_move->first;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(i_move->first);
             posOutput+=1;
         }
         else
@@ -845,8 +845,8 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_move()
             posOutput+=2;
         }
 
-        purgeBuffer_list_size_internal=i_move->second.size();
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=purgeBuffer_list_size_internal;
+        purgeBuffer_list_size_internal=static_cast<uint32_t>(i_move->second.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(purgeBuffer_list_size_internal);
         posOutput+=1;
         purgeBuffer_indexMovement=0;
         while(purgeBuffer_indexMovement<purgeBuffer_list_size_internal)
@@ -882,7 +882,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_remove()
     auto i_remove = to_send_remove.begin();
     if(GlobalServerData::serverSettings.max_players<=255)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=to_send_remove.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(to_send_remove.size());
         posOutput+=1;
     }
     else
@@ -897,7 +897,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_remove()
         #endif
         if(GlobalServerData::serverSettings.max_players<=255)
         {
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=*i_remove;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(*i_remove);
             posOutput+=1;
         }
         else
@@ -929,7 +929,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
     //////////////////////////// re-insert //////////////////////////
     if(GlobalServerData::serverSettings.max_players<=255)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=to_send_reinsert.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(to_send_reinsert.size());
         posOutput+=1;
     }
     else
@@ -951,7 +951,7 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::send_reinsert()
         #endif
         if(GlobalServerData::serverSettings.max_players<=255)
         {
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i_insert->first;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(i_insert->first);
             posOutput+=1;
         }
         else
