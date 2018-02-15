@@ -776,7 +776,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 return false;
             }
             #endif
-            const uint32_t &questId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const uint16_t &questId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
             newQuestAction(QuestAction_NextStep,questId);
             return true;
         }

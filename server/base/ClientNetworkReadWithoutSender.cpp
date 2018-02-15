@@ -11,8 +11,8 @@ void ClientNetworkReadWithoutSender::doDDOSAction()
 {
     if(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE>0)
     {
-        const int &size=Client::clientBroadCastList.size();
-        int index=0;
+        const size_t &size=Client::clientBroadCastList.size();
+        unsigned int index=0;
         while(index<size)
         {
             Client::clientBroadCastList.at(index)->doDDOSCompute();

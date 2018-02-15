@@ -58,7 +58,7 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
     if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
     {
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(/*map:*/1+1+1+1);//set the dynamic size
-        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+0]=map->id;
+        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+0]=static_cast<uint8_t>(map->id);
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+1]=x;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=y;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+3]=(uint8_t)orientation;
@@ -194,13 +194,13 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                         int index=0;
                         while(index<TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
-                            token->value[index]=rand()%256;
+                            token->value[index]=static_cast<uint8_t>(rand()%256);
                             index++;
                         }
                     }
                     else
                     {
-                        const int32_t readedByte=fread(token->value,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,BaseServerLogin::fpRandomFile);
+                        const int32_t readedByte=static_cast<int32_t>(fread(token->value,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,BaseServerLogin::fpRandomFile));
                         if(readedByte!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                         {
                             /// \todo check why client not disconnected if pass here

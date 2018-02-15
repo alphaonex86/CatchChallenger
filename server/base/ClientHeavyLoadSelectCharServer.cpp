@@ -254,11 +254,11 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                 #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
                 public_and_private_informations.itemOnMap.reserve(itemonmap.size());
                 #endif
-                uint32_t lastItemonmapId=0;
+                uint16_t lastItemonmapId=0;
                 uint32_t pos=0;
                 while(pos<itemonmap.size())
                 {
-                    uint32_t pointOnMapDatabaseId=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(
+                    uint16_t pointOnMapDatabaseId=(uint16_t)le16toh(*reinterpret_cast<const uint16_t *>(
                                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                         itemonmap.data()
                                         #else
@@ -316,11 +316,11 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                 public_and_private_informations.plantOnMap.reserve(plants.size()/(1+1+8));
                 #endif
                 PlayerPlant plant;
-                uint32_t lastPlantId=0;
+                uint16_t lastPlantId=0;
                 uint32_t pos=0;
                 while(pos<plants.size())
                 {
-                    uint32_t pointOnMap=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(
+                    uint16_t pointOnMap=(uint16_t)le16toh(*reinterpret_cast<const uint16_t *>(
                                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                         plants.data()
                                         #else
@@ -387,7 +387,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         }
         else
         {
-            if(quests.size()%(1+1+1)!=0)
+            if(quests.size()%(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/)!=0)
             {
                 characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(15));
                 return;
@@ -395,24 +395,24 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             else
             {
                 #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-                public_and_private_informations.quests.reserve(quests.size()/(1+1+1));
+                public_and_private_informations.quests.reserve(quests.size()/(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/));
                 #endif
                 PlayerQuest playerQuest;
-                uint32_t lastQuestId=0;
+                uint16_t lastQuestId=0;
                 uint32_t pos=0;
                 while(pos<quests.size())
                 {
-                    uint32_t questId=(uint32_t)
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            quests
-                            #else
-                            raw_quests
-                            #endif
-                            [pos]+lastQuestId;
-                    if(questId>255)
-                        questId-=256;
+                    uint16_t questId=(uint16_t)le16toh(*reinterpret_cast<const uint16_t *>(
+                                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                        quests.data()
+                                        #else
+                                        raw_quests
+                                        #endif
+                                        +pos))+lastQuestId;
+                    if(questId>65535)
+                        questId-=65536;
                     lastQuestId=questId;
-                    ++pos;
+                    pos+=2;
                     playerQuest.finish_one_time=
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             quests
@@ -475,7 +475,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         orientation=Orientation_bottom;
         normalOutput("Wrong orientation (not number) corrected with bottom: "+GlobalServerData::serverPrivateVariables.db_server->value(3));
     }
-    CommonMap * map;
+    CommonMap * map=NULL;
     uint8_t x,y;
     //all is rights
     if(!GlobalServerData::serverSettings.teleportIfMapNotFoundOrOutOfMap || profileIndex>=CommonDatapack::commonDatapack.profileList.size())
@@ -497,13 +497,13 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             characterSelectionIsWrong(query_id,0x04,"map_database_id have not reverse: "+std::to_string(map_database_id)+", mostly due to start previously start with another mainDatapackCode");
             return;
         }
-        x=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
+        x=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
         if(!ok)
         {
             characterSelectionIsWrong(query_id,0x04,"x coord is not a number");
             return;
         }
-        y=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
+        y=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
         if(!ok)
         {
             characterSelectionIsWrong(query_id,0x04,"y coord is not a number");
@@ -537,10 +537,10 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                 goToFinal=true;
             if(!goToFinal)
             {
-                x=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
+                x=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
                 if(!ok)
                     goToFinal=true;
-                y=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
+                y=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
                 if(!ok)
                     goToFinal=true;
                 if(x>=map->width)

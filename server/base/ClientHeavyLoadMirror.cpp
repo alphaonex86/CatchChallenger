@@ -148,12 +148,12 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
     std::vector<FileToSend> fileToSendList;
 
     uint32_t fileToDelete=0;
-    const int &loop_size=files.size();
+    const size_t &loop_size=files.size();
     //send the size to download on the client
     {
         //clone to drop the ask file and remain the missing client files
         std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> filesListForSize(filesList);
-        int index=0;
+        unsigned int index=0;
         uint32_t datapckFileNumber=0;
         uint32_t datapckFileSize=0;
         while(index<loop_size)
@@ -453,7 +453,7 @@ void Client::sendCompressedFileContent()
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x77;
         posOutput+=1+4;
 
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=BaseServerMasterSendDatapack::compressedFilesBufferCount;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(BaseServerMasterSendDatapack::compressedFilesBufferCount);
         posOutput+=1;
         if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_MAX_PACKET_SIZE)
         {
@@ -461,7 +461,13 @@ void Client::sendCompressedFileContent()
             return;
         }
 
-        const uint32_t &compressedSize=computeCompression(BaseServerMasterSendDatapack::compressedFilesBuffer.data(),ProtocolParsingBase::tempBigBufferForOutput+posOutput,BaseServerMasterSendDatapack::compressedFilesBuffer.size(),sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput,ProtocolParsingBase::compressionTypeServer);
+        const uint32_t &compressedSize=computeCompression(
+                    BaseServerMasterSendDatapack::compressedFilesBuffer.data(),
+                    ProtocolParsingBase::tempBigBufferForOutput+posOutput,
+                    static_cast<uint32_t>(BaseServerMasterSendDatapack::compressedFilesBuffer.size()),
+                    sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput,
+                    ProtocolParsingBase::compressionTypeServer
+                    );
         posOutput+=compressedSize;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -488,7 +494,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
     if(filedesc!=NULL)
     {
         const std::vector<char> &content=FacilityLibGeneral::readAllFileAndClose(filedesc);
-        const int &contentsize=content.size();
+        const unsigned int &contentsize=static_cast<uint32_t>(content.size());
 
         const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
         #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
@@ -504,7 +510,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
             uint32_t posOutput=0;
             {
                 const std::string &text=fileName;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                 posOutput+=1;
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                 posOutput+=text.size();
@@ -560,7 +566,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 //filename
                 {
                     const std::string &text=fileName;
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                     posOutput+=1;
                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                     posOutput+=text.size();
@@ -583,7 +589,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
                 uint32_t posOutput=0;
                 {
                     const std::string &text=fileName;
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                     posOutput+=1;
                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                     posOutput+=text.size();

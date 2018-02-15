@@ -19,7 +19,7 @@ void Client::updateObjectInDatabase()
     }
     else
     {
-        uint32_t lastItemId=0;
+        uint16_t lastItemId=0;
         uint32_t pos=0;
         char item_raw[(2+4)*public_and_private_informations.items.size()];
         auto i=public_and_private_informations.items.begin();
@@ -35,7 +35,7 @@ void Client::updateObjectInDatabase()
             }
             else
             {
-                item=65536-lastItemId+i->first;
+                item=static_cast<uint16_t>(65536-lastItemId)+static_cast<uint16_t>(i->first);
                 lastItemId=i->first;
             }
             #else
@@ -51,7 +51,7 @@ void Client::updateObjectInDatabase()
             ++i;
         }
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item.asyncWrite({
-            binarytoHexa(item_raw,sizeof(item_raw)),
+            binarytoHexa(item_raw,static_cast<uint32_t>(sizeof(item_raw))),
             std::to_string(character_id)
             });
     }
@@ -101,7 +101,7 @@ void Client::updateObjectInWarehouseDatabase()
     }
     else
     {
-        uint32_t lastItemId=0;
+        uint16_t lastItemId=0;
         uint32_t pos=0;
         char item_raw[(2+4)*public_and_private_informations.warehouse_items.size()];
         auto i=public_and_private_informations.warehouse_items.begin();
@@ -117,7 +117,7 @@ void Client::updateObjectInWarehouseDatabase()
             }
             else
             {
-                item=65536-lastItemId+i->first;
+                item=static_cast<uint16_t>(65536-lastItemId)+static_cast<uint16_t>(i->first);
                 lastItemId=i->first;
             }
             #else
@@ -133,7 +133,7 @@ void Client::updateObjectInWarehouseDatabase()
             ++i;
         }
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item_warehouse.asyncWrite({
-            binarytoHexa(item_raw,sizeof(item_raw)),
+            binarytoHexa(item_raw,static_cast<uint32_t>(sizeof(item_raw))),
             std::to_string(character_id)
             });
     }
@@ -176,7 +176,7 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
     std::string item;
     if(!public_and_private_informations.items.empty())
     {
-        uint32_t lastItemId=0;
+        uint16_t lastItemId=0;
         uint32_t pos=0;
         char item_raw[(2+4)*public_and_private_informations.items.size()];
         auto i=public_and_private_informations.items.begin();
@@ -192,7 +192,7 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
             }
             else
             {
-                item=65536-lastItemId+i->first;
+                item=static_cast<uint16_t>(65536-lastItemId)+static_cast<uint16_t>(i->first);
                 lastItemId=i->first;
             }
             #else
@@ -207,11 +207,12 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
             pos+=4;
             ++i;
         }
-        item=binarytoHexa(item_raw,sizeof(item_raw));
+        item=binarytoHexa(item_raw,static_cast<uint32_t>(sizeof(item_raw)));
     }
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item_and_encyclopedia.asyncWrite({
         item,
-        binarytoHexa(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.items.item.size()/8+1),
+        binarytoHexa(public_and_private_informations.encyclopedia_item,
+        static_cast<uint32_t>(CommonDatapack::commonDatapack.items.item.size())/8+1),
         std::to_string(character_id)
         });
 }
@@ -219,7 +220,8 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
 void Client::updateMonsterInDatabaseEncyclopedia()
 {
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster_encyclopedia.asyncWrite({
-        binarytoHexa(public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.monsters.size()/8+1),
+        binarytoHexa(public_and_private_informations.encyclopedia_monster,
+        static_cast<uint32_t>(CommonDatapack::commonDatapack.monsters.size())/8+1),
         std::to_string(character_id)
         });
 }
@@ -236,7 +238,7 @@ void Client::syncDatabaseAllow()
         ++i;
     }
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_allow.asyncWrite({
-                binarytoHexa(allowflat,sizeof(allowflat)),
+                binarytoHexa(allowflat,static_cast<uint32_t>(sizeof(allowflat))),
                 std::to_string(character_id)
                 });
 }
@@ -261,7 +263,7 @@ void Client::syncDatabaseReputation()
             abort();
         }
         #endif
-        const uint8_t &databaseType=CommonDatapack::commonDatapack.reputation.at(i->first).reverse_database_id;
+        const uint8_t &databaseType=static_cast<uint8_t>(CommonDatapack::commonDatapack.reputation.at(i->first).reverse_database_id);
         #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
         //not ordened
         uint8_t type;
@@ -272,7 +274,7 @@ void Client::syncDatabaseReputation()
         }
         else
         {
-            type=256-lastReputationId+databaseType;
+            type=static_cast<uint8_t>(256-lastReputationId+databaseType);
             lastReputationId=databaseType;
         }
         #else

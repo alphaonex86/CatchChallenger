@@ -160,7 +160,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
 
             {
                 const std::string &text=clan->captureCityInProgress;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                 posOutput+=1;
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                 posOutput+=text.size();
@@ -211,8 +211,7 @@ void Client::leaveTheCityCapture()
         {
             //drop the clan capture in no other player of the same clan is into it
             unsigned int index=0;
-            const unsigned int &list_size=captureCity.at(clan->captureCityInProgress).size();
-            while(index<list_size)
+            while(index<captureCity.at(clan->captureCityInProgress).size())
             {
                 if(captureCity.at(clan->captureCityInProgress).at(index)->clanId()==clanId())
                     break;
@@ -254,7 +253,8 @@ void Client::startTheCityCapture()
             unsigned int index;
             unsigned int sub_index;
             //do the clan count
-            int player_count=tempCaptureCityValidated.players.size()+tempCaptureCityValidated.bots.size();
+            //why 16Bits? because is 16 fight, is too much to capture the city
+            uint16_t player_count=static_cast<uint16_t>(tempCaptureCityValidated.players.size()+tempCaptureCityValidated.bots.size());
             int clan_count=0;
             if(tempCaptureCityValidated.bots.size()>0)
                 clan_count++;
@@ -270,6 +270,7 @@ void Client::startTheCityCapture()
                         tempCaptureCityValidated.clanSize[clanId]=1;
                     index++;
                 }
+                /// \todo take care about clan_count overflow
                 clan_count+=tempCaptureCityValidated.clanSize.size();
             }
             //do the PvP
@@ -285,9 +286,9 @@ void Client::startTheCityCapture()
                         tempCaptureCityValidated.players.at(sub_index)->otherCityPlayerBattle=tempCaptureCityValidated.players.at(index);
                         tempCaptureCityValidated.players.at(index)->battleFakeAccepted(tempCaptureCityValidated.players.at(sub_index));
                         tempCaptureCityValidated.playersInFight.push_back(tempCaptureCityValidated.players.at(index));
-                        tempCaptureCityValidated.playersInFight.back()->cityCaptureBattle(player_count,clan_count);
+                        tempCaptureCityValidated.playersInFight.back()->cityCaptureBattle(player_count,static_cast<uint16_t>(clan_count));
                         tempCaptureCityValidated.playersInFight.push_back(tempCaptureCityValidated.players.at(sub_index));
-                        tempCaptureCityValidated.playersInFight.back()->cityCaptureBattle(player_count,clan_count);
+                        tempCaptureCityValidated.playersInFight.back()->cityCaptureBattle(player_count,static_cast<uint16_t>(clan_count));
                         tempCaptureCityValidated.players.erase(tempCaptureCityValidated.players.begin()+index);
                         index--;
                         tempCaptureCityValidated.players.erase(tempCaptureCityValidated.players.begin()+sub_index-1);
@@ -301,14 +302,14 @@ void Client::startTheCityCapture()
             while(tempCaptureCityValidated.players.size()>0 && tempCaptureCityValidated.bots.size()>0)
             {
                 tempCaptureCityValidated.playersInFight.push_back(tempCaptureCityValidated.players.front());
-                tempCaptureCityValidated.playersInFight.back()->cityCaptureBotFight(player_count,clan_count,tempCaptureCityValidated.bots.front());
+                tempCaptureCityValidated.playersInFight.back()->cityCaptureBotFight(player_count,static_cast<uint16_t>(clan_count),tempCaptureCityValidated.bots.front());
                 tempCaptureCityValidated.botsInFight.push_back(tempCaptureCityValidated.bots.front());
                 tempCaptureCityValidated.players.front()->botFightStart(tempCaptureCityValidated.bots.front());
                 tempCaptureCityValidated.players.erase(tempCaptureCityValidated.players.begin());
                 tempCaptureCityValidated.bots.erase(tempCaptureCityValidated.bots.begin());
             }
             //send the wait to the rest
-            cityCaptureSendInWait(tempCaptureCityValidated,player_count,clan_count);
+            cityCaptureSendInWait(tempCaptureCityValidated,player_count,static_cast<uint16_t>(clan_count));
 
             captureCityValidatedList[i->first]=tempCaptureCityValidated;
         }
@@ -329,15 +330,15 @@ void Client::cityCaptureSendInWait(const CaptureCityValidated &captureCityValida
 
 uint16_t Client::cityCapturePlayerCount(const CaptureCityValidated &captureCityValidated)
 {
-    return captureCityValidated.bots.size()+captureCityValidated.botsInFight.size()+captureCityValidated.players.size()+captureCityValidated.playersInFight.size();
+    return static_cast<uint16_t>(captureCityValidated.bots.size()+captureCityValidated.botsInFight.size()+captureCityValidated.players.size()+captureCityValidated.playersInFight.size());
 }
 
 uint16_t Client::cityCaptureClanCount(const CaptureCityValidated &captureCityValidated)
 {
     if(captureCityValidated.bots.size()==0 && captureCityValidated.botsInFight.size()==0)
-        return captureCityValidated.clanSize.size();
+        return static_cast<uint16_t>(captureCityValidated.clanSize.size());
     else
-        return captureCityValidated.clanSize.size()+1;
+        return static_cast<uint16_t>(captureCityValidated.clanSize.size())+1;
 }
 
 void Client::cityCaptureBattle(const uint16_t &number_of_player,const uint16_t &number_of_clan)

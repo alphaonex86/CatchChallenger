@@ -97,7 +97,7 @@ Client::Client(
     public_and_private_informations.bot_already_beaten=NULL;
     queryNumberList.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
     {
-        int index=0;
+        uint8_t index=0;
         while(index<CATCHCHALLENGER_MAXPROTOCOLQUERY)
         {
             queryNumberList.push_back(index);
@@ -313,8 +313,7 @@ void Client::disconnectClient()
         if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheDisconnexion)
         {
             unsigned int index=0;
-            const unsigned int &size=public_and_private_informations.playerMonster.size();
-            while(index<size)
+            while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
                 if(CommonSettingsServer::commonSettingsServer.useSP)

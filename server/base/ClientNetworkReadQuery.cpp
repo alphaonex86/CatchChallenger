@@ -278,8 +278,8 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             pos+=1;
             switch(queryType)
             {
-                case 0x01:
-                case 0x02:
+                case 0x01://object
+                case 0x02://monster
                 break;
                 default:
                     errorOutput("market return type with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
@@ -292,7 +292,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                     errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
                     return false;
                 }
-                const uint16_t &objectId=le32toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                const uint16_t &uniqueObjectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
                 pos+=sizeof(uint16_t);
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
@@ -310,7 +310,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 memcpy(&priceTemp,data+pos,sizeof(uint64_t));
                 const uint64_t &price=le64toh(priceTemp);
                 pos+=sizeof(uint64_t);
-                putMarketObject(queryNumber,objectId,quantity,price);
+                putMarketObject(queryNumber,uniqueObjectId,quantity,price);
             }
             else
             {

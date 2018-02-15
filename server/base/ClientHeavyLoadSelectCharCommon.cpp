@@ -370,10 +370,10 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             characterSelectionIsWrong(query_id,0x04,"item have wrong size");
             return;
         }
-        uint32_t lastItemId=0;
+        uint16_t lastItemId=0;
         while(pos<data.size())
         {
-            uint32_t item=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos))+lastItemId;
+            uint16_t item=(uint16_t)le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos))+static_cast<uint8_t>(lastItemId);
             if(item>65535)
                 item-=65536;
             lastItemId=item;
@@ -405,10 +405,10 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             characterSelectionIsWrong(query_id,0x04,"item warehouse have wrong size");
             return;
         }
-        uint32_t lastItemId=0;
+        uint16_t lastItemId=0;
         while(pos<data.size())
         {
-            uint32_t item=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos))+lastItemId;
+            uint16_t item=(uint16_t)le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos))+lastItemId;
             if(item>65535)
                 item-=65536;
             lastItemId=item;
@@ -490,58 +490,62 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                 normalOutput("The reputation: "+std::to_string(typeReputation)+" not resolved");
                 continue;
             }
-            const uint8_t &reputationInternalId=DictionaryLogin::dictionary_reputation_database_to_internal.at(typeReputation);
-            if(playerReputation.level>=0)
+            const int &reputationInternalIdFull=DictionaryLogin::dictionary_reputation_database_to_internal.at(typeReputation);
+            const uint8_t &reputationInternalId=static_cast<uint8_t>(reputationInternalIdFull);
+            if(reputationInternalIdFull>=0)
             {
-                if((uint32_t)playerReputation.level>=CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.size())
+                if(playerReputation.level>=0)
                 {
-                    normalOutput("The reputation level "+std::to_string(typeReputation)+
-                                 " is wrong because is out of range (reputation level: "+std::to_string(playerReputation.level)+
-                                 " > max level: "+
-                                 std::to_string(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.size())+
-                                 ")");
-                    continue;
+                    if((uint32_t)playerReputation.level>=CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.size())
+                    {
+                        normalOutput("The reputation level "+std::to_string(typeReputation)+
+                                     " is wrong because is out of range (reputation level: "+std::to_string(playerReputation.level)+
+                                     " > max level: "+
+                                     std::to_string(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.size())+
+                                     ")");
+                        continue;
+                    }
                 }
+                else
+                {
+                    if((uint32_t)(-playerReputation.level)>CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.size())
+                    {
+                        normalOutput("The reputation level "+std::to_string(typeReputation)+
+                                     " is wrong because is out of range (reputation level: "+std::to_string(playerReputation.level)+
+                                     " < max level: "+std::to_string(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.size())+")");
+                        continue;
+                    }
+                }
+                if(playerReputation.point>0)
+                {
+                    if(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.size()==(uint32_t)(playerReputation.level+1))//start at level 0 in positive
+                    {
+                        normalOutput("The reputation level is already at max, drop point");
+                        playerReputation.point=0;
+                    }
+                    if(playerReputation.point>=CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.at(playerReputation.level+1))//start at level 0 in positive
+                    {
+                        normalOutput("The reputation point "+std::to_string(playerReputation.point)+
+                                     " is greater than max "+std::to_string(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.at(playerReputation.level)));
+                        continue;
+                    }
+                }
+                else if(playerReputation.point<0)
+                {
+                    if(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.size()==(uint32_t)-playerReputation.level)//start at level -1 in negative
+                    {
+                        normalOutput("The reputation level is already at min, drop point");
+                        playerReputation.point=0;
+                    }
+                    if(playerReputation.point<CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.at(-playerReputation.level))//start at level -1 in negative
+                    {
+                        normalOutput("The reputation point "+std::to_string(playerReputation.point)+
+                                     " is greater than max "+std::to_string(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.at(playerReputation.level)));
+                        continue;
+                    }
+                }
+                public_and_private_informations.reputation[reputationInternalId]=playerReputation;
             }
-            else
-            {
-                if((uint32_t)(-playerReputation.level)>CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.size())
-                {
-                    normalOutput("The reputation level "+std::to_string(typeReputation)+
-                                 " is wrong because is out of range (reputation level: "+std::to_string(playerReputation.level)+
-                                 " < max level: "+std::to_string(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.size())+")");
-                    continue;
-                }
-            }
-            if(playerReputation.point>0)
-            {
-                if(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.size()==(uint32_t)(playerReputation.level+1))//start at level 0 in positive
-                {
-                    normalOutput("The reputation level is already at max, drop point");
-                    playerReputation.point=0;
-                }
-                if(playerReputation.point>=CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.at(playerReputation.level+1))//start at level 0 in positive
-                {
-                    normalOutput("The reputation point "+std::to_string(playerReputation.point)+
-                                 " is greater than max "+std::to_string(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.at(playerReputation.level)));
-                    continue;
-                }
-            }
-            else if(playerReputation.point<0)
-            {
-                if(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.size()==(uint32_t)-playerReputation.level)//start at level -1 in negative
-                {
-                    normalOutput("The reputation level is already at min, drop point");
-                    playerReputation.point=0;
-                }
-                if(playerReputation.point<CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.at(-playerReputation.level))//start at level -1 in negative
-                {
-                    normalOutput("The reputation point "+std::to_string(playerReputation.point)+
-                                 " is greater than max "+std::to_string(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.at(playerReputation.level)));
-                    continue;
-                }
-            }
-            public_and_private_informations.reputation[reputationInternalId]=playerReputation;
         }
     }
     //achievements(17) ignored for now

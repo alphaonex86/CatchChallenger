@@ -111,7 +111,7 @@ public:
     static DdosBuffer<uint16_t,3> generalChatDrop;
     static DdosBuffer<uint16_t,3> clanChatDrop;
     static DdosBuffer<uint16_t,3> privateChatDrop;
-    static std::vector<uint16_t> marketObjectIdList;
+    static std::vector<uint32_t> marketObjectUniqueIdList;//this is not the item id
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     static uint64_t datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
     #endif
@@ -481,7 +481,7 @@ private:
     void tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity);
     void tradeAddTradeMonster(const uint8_t &monsterPosition);
     //quest
-    void newQuestAction(const QuestAction &action,const uint32_t &questId);
+    void newQuestAction(const QuestAction &action, const uint16_t &questId);
     void appendAllow(const ActionAllow &allow);
     void removeAllow(const ActionAllow &allow);
     void syncDatabaseAllow();
@@ -533,14 +533,14 @@ private:
     void fightOrBattleFinish(const bool &win, const uint16_t &fightId);//fightId == 0 if is in battle
     void moveMonster(const bool &up,const uint8_t &number);
     //market
-    void getMarketList(const uint32_t &query_id);
-    void buyMarketObject(const uint32_t &query_id,const uint32_t &marketObjectId,const uint32_t &quantity);
-    void buyMarketMonster(const uint32_t &query_id, const uint32_t &marketMonsterUniqueId/*To ident even if the position have changed, imply search at server*/);
-    void putMarketObject(const uint32_t &query_id, const uint32_t &objectId, const uint32_t &quantity, const uint64_t &price);
-    void putMarketMonster(const uint32_t &query_id, const uint8_t &monsterPosition, const uint64_t &price);
-    void withdrawMarketCash(const uint32_t &query_id);
-    void withdrawMarketObject(const uint32_t &query_id,const uint32_t &objectId,const uint32_t &quantity);
-    void withdrawMarketMonster(const uint32_t &query_id, const uint32_t &marketMonsterUniqueId/*To ident even if the position have changed, imply search at server*/);
+    void getMarketList(const uint8_t &query_id);
+    void buyMarketObject(const uint8_t &query_id,const uint32_t &marketObjectId,const uint32_t &quantity);
+    void buyMarketMonster(const uint8_t &query_id, const uint32_t &marketMonsterUniqueId/*To ident even if the position have changed, imply search at server*/);
+    void putMarketObject(const uint8_t &query_id, const uint16_t &objectId, const uint32_t &quantity, const uint64_t &price);
+    void putMarketMonster(const uint8_t &query_id, const uint8_t &monsterPosition, const uint64_t &price);
+    void withdrawMarketCash(const uint8_t &query_id);
+    void withdrawMarketObject(const uint8_t &query_id,const uint16_t &objectId,const uint32_t &quantity);
+    void withdrawMarketMonster(const uint8_t &query_id, const uint32_t &marketMonsterUniqueId/*To ident even if the position have changed, imply search at server*/);
 
     static std::string directionToStringToSave(const Direction &direction);
     static std::string orientationToStringToSave(const Orientation &orientation);
@@ -549,8 +549,8 @@ private:
     bool haveStartQuestRequirement(const CatchChallenger::Quest &quest);
     bool nextStepQuest(const Quest &quest);
     bool startQuest(const Quest &quest);
-    void addQuestStepDrop(const uint32_t &questId,const uint8_t &questStep);
-    void removeQuestStepDrop(const uint32_t &questId,const uint8_t &questStep);
+    void addQuestStepDrop(const uint16_t &questId,const uint8_t &questStep);
+    void removeQuestStepDrop(const uint16_t &questId,const uint8_t &questStep);
     void syncDatabaseQuest();
 
     bool checkCollision();
@@ -634,7 +634,7 @@ private:
     bool tradeIsValidated;
     bool tradeIsFreezed;
     uint64_t tradeCash;
-    std::unordered_map<uint32_t,uint32_t> tradeObjects;
+    std::unordered_map<uint16_t,uint32_t> tradeObjects;
     std::vector<PlayerMonster> tradeMonster;
     std::vector<uint32_t> inviteToClanList;
     Clan *clan;
@@ -661,7 +661,7 @@ private:
     void registerTradeRequest(Client * otherPlayerTrade);
     bool getIsFreezed() const;
     uint64_t getTradeCash() const;
-    std::unordered_map<uint32_t,uint32_t> getTradeObjects() const;
+    std::unordered_map<uint16_t, uint32_t> getTradeObjects() const;
     std::vector<PlayerMonster> getTradeMonster() const;
     void resetTheTrade();
     void transferExistingMonster(std::vector<PlayerMonster> tradeMonster);
