@@ -22,12 +22,12 @@ std::unordered_map<std::string,uint8_t> BaseServerMasterSendDatapack::skinList;
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 std::unordered_set<std::string> BaseServerMasterSendDatapack::compressedExtension;
 std::vector<char> BaseServerMasterSendDatapack::compressedFilesBuffer;
-int BaseServerMasterSendDatapack::compressedFilesBufferCount;
+uint8_t BaseServerMasterSendDatapack::compressedFilesBufferCount;
 #endif
 std::unordered_set<std::string> BaseServerMasterSendDatapack::extensionAllowed;
 
 std::vector<char> BaseServerMasterSendDatapack::rawFilesBuffer;
-int BaseServerMasterSendDatapack::rawFilesBufferCount;
+uint8_t BaseServerMasterSendDatapack::rawFilesBufferCount;
 
 std::unordered_map<std::string,uint32_t> BaseServerMasterSendDatapack::datapack_file_list_cache;
 std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> BaseServerMasterSendDatapack::datapack_file_hash_cache_base;

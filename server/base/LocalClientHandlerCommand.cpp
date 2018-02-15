@@ -31,7 +31,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("Wrong arguments number for the command, usage: /give objectId player [quantity=1]");
             return;
         }
-        const uint32_t &objectId=stringtouint32(arguments.at(0),&ok);
+        const uint16_t &objectId=stringtouint16(arguments.at(0),&ok);
         if(!ok)
         {
             receiveSystemText("objectId is not a number, usage: /give objectId player [quantity=1]");
@@ -84,7 +84,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("Wrong arguments number for the command, usage: /give setevent [event] [value]");
             return;
         }
-        unsigned int index=0,sub_index;
+        uint8_t index=0,sub_index;
         while(index<CommonDatapack::commonDatapack.events.size())
         {
             const Event &event=CommonDatapack::commonDatapack.events.at(index);
@@ -136,7 +136,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("Wrong arguments number for the command, usage: /take objectId player [quantity=1]");
             return;
         }
-        const uint32_t objectId=stringtouint32(arguments.front(),&ok);
+        const uint16_t objectId=stringtouint16(arguments.front(),&ok);
         if(!ok)
         {
             receiveSystemText("objectId is not a number, usage: /take objectId player [quantity=1]");
@@ -159,7 +159,9 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
         normalOutput(public_and_private_informations.public_informations.pseudo+" have take to "+arguments.at(1)+" the item with id: "+std::to_string(objectId)+" in quantity: "+std::to_string(quantity));
-        playerByPseudo.at(arguments.at(1))->sendRemoveObject(objectId,playerByPseudo.at(arguments.at(1))->removeObject(objectId,quantity));
+        playerByPseudo.at(arguments.at(1))->sendRemoveObject(
+                    objectId,playerByPseudo.at(arguments.at(1))->
+                    removeObject(objectId,quantity));
     }
     else if(command==StaticText::text_tp)
     {

@@ -64,7 +64,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
     #endif
     if(Q_LIKELY(temp_map->show))
     {
-        const int loop_size=temp_map->clients.size();
+        const size_t loop_size=temp_map->clients.size();
         if(Q_UNLIKELY(loop_size>=GlobalServerData::serverSettings.mapVisibility.simple.max))
         {
             #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -202,7 +202,7 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::purgeBuffer()
 void MapVisibilityAlgorithm_Simple_StoreOnSender::removeClient()
 {
     Map_server_MapVisibility_Simple_StoreOnSender *temp_map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map);
-    int loop_size=temp_map->clients.size();
+    const size_t loop_size=temp_map->clients.size();
     if(Q_UNLIKELY(temp_map->show==false))
     {
         if(Q_UNLIKELY(loop_size<=(GlobalServerData::serverSettings.mapVisibility.simple.reshow)))

@@ -659,7 +659,7 @@ void BaseServer::preload_industries_return()
         if(ok)
         {
             const std::vector<std::string> &productsStringList=stringsplit(GlobalServerData::serverPrivateVariables.db_server->value(2),';');
-            int index=0;
+            unsigned int index=0;
             while(index<productsStringList.size())
             {
                 const std::vector<std::string> &itemStringList=stringsplit(productsStringList.at(index),':');
@@ -915,12 +915,12 @@ void BaseServer::preload_market_items()
     preload_market_items_call=true;
     std::cout << GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size() << " SQL monster list loaded" << std::endl;
 
-    Client::marketObjectIdList.clear();
-    Client::marketObjectIdList.reserve(65535);
+    Client::marketObjectUniqueIdList.clear();
+    Client::marketObjectUniqueIdList.reserve(65535);
     int index=0;
     while(index<=65535)
     {
-        Client::marketObjectIdList.push_back(static_cast<uint16_t>(index));
+        Client::marketObjectUniqueIdList.push_back(static_cast<uint16_t>(index));
         index++;
     }
     //do the query
@@ -1010,13 +1010,13 @@ void BaseServer::preload_market_items_return()
             std::cerr << "cash is not a number, skip" << std::endl;
             continue;
         }
-        if(Client::marketObjectIdList.size()==0)
+        if(Client::marketObjectUniqueIdList.size()==0)
         {
             std::cerr << "not more marketObjectId into the list, skip" << std::endl;
             return;
         }
-        marketItem.marketObjectUniqueId=Client::marketObjectIdList.at(0);
-        Client::marketObjectIdList.erase(Client::marketObjectIdList.begin());
+        marketItem.marketObjectUniqueId=Client::marketObjectUniqueIdList.at(0);
+        Client::marketObjectUniqueIdList.erase(Client::marketObjectUniqueIdList.begin());
         GlobalServerData::serverPrivateVariables.marketItemList.push_back(marketItem);
     }
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

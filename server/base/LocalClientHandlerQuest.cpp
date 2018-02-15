@@ -9,7 +9,7 @@
 using namespace CatchChallenger;
 
 //quest
-void Client::newQuestAction(const QuestAction &action,const uint32_t &questId)
+void Client::newQuestAction(const QuestAction &action,const uint16_t &questId)
 {
     if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
     {
@@ -44,7 +44,7 @@ void Client::newQuestAction(const QuestAction &action,const uint32_t &questId)
     }
 }
 
-void Client::addQuestStepDrop(const uint32_t &questId,const uint8_t &questStep)
+void Client::addQuestStepDrop(const uint16_t &questId,const uint8_t &questStep)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput("addQuestStepDrop for quest: "+std::to_string(questId)+", step: "+std::to_string(questStep));
@@ -77,7 +77,7 @@ void Client::addQuestStepDrop(const uint32_t &questId,const uint8_t &questStep)
     }
 }
 
-void Client::removeQuestStepDrop(const uint32_t &questId,const uint8_t &questStep)
+void Client::removeQuestStepDrop(const uint16_t &questId,const uint8_t &questStep)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput("removeQuestStepDrop for quest: "+std::to_string(questId)+", step: "+std::to_string(questStep));
@@ -210,70 +210,88 @@ bool Client::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
 
 void Client::syncDatabaseQuest()
 {
-    if(public_and_private_informations.quests.size()*(1+1+1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    if(public_and_private_informations.quests.size()*(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
     {
-        uint32_t posOutput=0;
-        uint8_t lastQuestId=0;
-        char tempBigBufferForOutput[public_and_private_informations.quests.size()*(1+1+1)];
+        uint16_t lastQuestId=0;
+        uint32_t pos=0;
+        char quest_raw[(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/)*public_and_private_informations.quests.size()];
         auto i=public_and_private_informations.quests.begin();
         while(i!=public_and_private_informations.quests.cend())
         {
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
             //not ordened
-            uint8_t type;
+            uint16_t item;
             if(lastQuestId<=i->first)
             {
-                type=i->first-lastQuestId;
+                item=i->first-lastQuestId;
                 lastQuestId=i->first;
             }
             else
             {
-                type=256-lastQuestId+i->first;
+                item=static_cast<uint16_t>(65536-lastQuestId)+static_cast<uint16_t>(i->first);
                 lastQuestId=i->first;
             }
             #else
             //ordened
-            const uint8_t &type=i->first-lastQuestId;
+            const uint16_t &item=i->first-lastQuestId;
             lastQuestId=i->first;
             #endif
             const PlayerQuest &quest=i->second;
-            tempBigBufferForOutput[posOutput]=type;
-            posOutput+=1;
+            *reinterpret_cast<uint16_t *>(quest_raw+pos)=htole16(item);
+            pos+=2;
             if(quest.finish_one_time)
-                tempBigBufferForOutput[posOutput]=0x01;
+                quest_raw[pos]=0x01;
             else
-                tempBigBufferForOutput[posOutput]=0x00;
-            posOutput+=1;
-            tempBigBufferForOutput[posOutput]=quest.step;
-            posOutput+=1;
+                quest_raw[pos]=0x00;
+            pos+=1;
+            quest_raw[pos]=quest.step;
+            pos+=1;
             ++i;
         }
         GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_quests.asyncWrite({
-                    binarytoHexa(tempBigBufferForOutput,posOutput),
+                    binarytoHexa(quest_raw,pos),
                     std::to_string(character_id)
                     });
     }
     else
     {
-        uint32_t posOutput=0;
+        uint16_t lastQuestId=0;
+        uint32_t pos=0;
         auto i=public_and_private_informations.quests.begin();
         while(i!=public_and_private_informations.quests.cend())
         {
-            const uint8_t &type=i->first;
-            const PlayerQuest &quest=i->second;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=type;
-            posOutput+=1;
-            if(quest.finish_one_time)
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+            //not ordened
+            uint16_t item;
+            if(lastQuestId<=i->first)
+            {
+                item=i->first-lastQuestId;
+                lastQuestId=i->first;
+            }
             else
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
-            posOutput+=1;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=quest.step;
-            posOutput+=1;
+            {
+                item=static_cast<uint16_t>(65536-lastQuestId)+static_cast<uint16_t>(i->first);
+                lastQuestId=i->first;
+            }
+            #else
+            //ordened
+            const uint16_t &item=i->first-lastQuestId;
+            lastQuestId=i->first;
+            #endif
+            const PlayerQuest &quest=i->second;
+            *reinterpret_cast<uint16_t *>(tempBigBufferForOutput+pos)=htole16(item);
+            pos+=2;
+            if(quest.finish_one_time)
+                tempBigBufferForOutput[pos]=0x01;
+            else
+                tempBigBufferForOutput[pos]=0x00;
+            pos+=1;
+            tempBigBufferForOutput[pos]=quest.step;
+            pos+=1;
             ++i;
         }
         GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_quests.asyncWrite({
-                    binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput),
+                    binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,pos),
                     std::to_string(character_id)
                     });
     }

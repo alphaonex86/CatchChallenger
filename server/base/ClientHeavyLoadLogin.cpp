@@ -481,7 +481,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
                     if(time_to_delete==0)
                         characterEntry.delete_time_left=0;
                     else
-                        characterEntry.delete_time_left=time_to_delete-current_time;
+                        characterEntry.delete_time_left=static_cast<uint32_t>(static_cast<uint64_t>(time_to_delete)-current_time);
                     characterEntry.pseudo=GlobalServerData::serverPrivateVariables.db_common->value(1);
                     if(characterEntry.pseudo.size()==0 || characterEntry.pseudo.size()>255)
                     {
@@ -527,8 +527,8 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
         data[posOutput]=0x01;//Number of characters group, characters group 0, all in one server
         posOutput+=1;
 
-        number_of_character=characterEntryList.size();
-        data[posOutput]=characterEntryList.size();
+        number_of_character=static_cast<uint8_t>(characterEntryList.size());
+        data[posOutput]=static_cast<uint8_t>(characterEntryList.size());
         posOutput+=1;
         unsigned int index=0;
         while(index<characterEntryList.size())
@@ -539,7 +539,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
             {
                 {
                     const std::string &text=characterEntry.pseudo;
-                    data[posOutput]=text.size();
+                    data[posOutput]=static_cast<uint8_t>(text.size());
                     posOutput+=1;
                     memcpy(data+posOutput,text.data(),text.size());
                     posOutput+=text.size();
@@ -659,7 +659,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
         if(!ok)
         {
             std::cerr << "last_connect is not number: " << GlobalServerData::serverPrivateVariables.db_common->value(2) << " fixed by 0" << std::endl;
-            last_connect=current_time;
+            last_connect=static_cast<uint32_t>(current_time);
         }
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(last_connect);
         posOutput+=sizeof(uint32_t);

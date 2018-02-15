@@ -40,8 +40,8 @@ void Client::sendSystemMessage(const std::string &text, const bool &important, c
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
-    const int &size=clientBroadCastList.size();
-    int index=0;
+    const size_t &size=clientBroadCastList.size();
+    unsigned int index=0;
     if(!playerInclude)
         while(index<size)
         {
@@ -133,14 +133,14 @@ bool Client::receiveChatText(const Chat_type &chatType,const std::string &text,c
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)chatType;
     posOutput+=1;
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
     }
     {
         const std::string &text=sender_informations->public_and_private_informations.public_informations.pseudo;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
@@ -218,14 +218,14 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)chatType;
             posOutput+=1;
             {
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                 posOutput+=1;
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                 posOutput+=text.size();
             }
             {
                 const std::string &text=public_and_private_informations.public_informations.pseudo;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                 posOutput+=1;
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                 posOutput+=text.size();
@@ -238,8 +238,8 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
 
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
-            const int &size=playerWithSameClan.size();
-            int index=0;
+            const size_t &size=playerWithSameClan.size();
+            unsigned int index=0;
             while(index<size)
             {
                 Client * const client=playerWithSameClan.at(index);
@@ -266,14 +266,14 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)chatType;
         posOutput+=1;
         {
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
             posOutput+=text.size();
         }
         {
             const std::string &text=public_and_private_informations.public_informations.pseudo;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
             posOutput+=text.size();
@@ -286,8 +286,8 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
 
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
-        const int &size=clientBroadCastList.size();
-        int index=0;
+        const size_t &size=clientBroadCastList.size();
+        unsigned int index=0;
         while(index<size)
         {
             Client * const client=clientBroadCastList.at(index);

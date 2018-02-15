@@ -45,7 +45,7 @@ void BroadCastWithoutSender::receive_instant_player_number(const int16_t &connec
         uint8_t outputSize;
         if(GlobalServerData::serverSettings.max_players<=255)
         {
-            bufferSendPlayer[0x01]=connected_players;
+            bufferSendPlayer[0x01]=static_cast<uint8_t>(connected_players);
             outputSize=2;
         }
         else

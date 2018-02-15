@@ -124,14 +124,14 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint8_t &rescue_new_x=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(rescue_x,&ok);
+    const uint8_t &rescue_new_x=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(rescue_x,&ok);
     if(!ok)
     {
         normalOutput("rescue x coord is not a number");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint8_t &rescue_new_y=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(rescue_y,&ok);
+    const uint8_t &rescue_new_y=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(rescue_y,&ok);
     if(!ok)
     {
         normalOutput("rescue y coord is not a number");
@@ -198,14 +198,14 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint8_t &unvalidated_rescue_new_x=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(unvalidated_rescue_x,&ok);
+    const uint8_t &unvalidated_rescue_new_x=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(unvalidated_rescue_x,&ok);
     if(!ok)
     {
         normalOutput("unvalidated rescue x coord is not a number");
         characterIsRight(query_id,characterId,map,x,y,orientation);
         return;
     }
-    const uint8_t &unvalidated_rescue_new_y=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(unvalidated_rescue_y,&ok);
+    const uint8_t &unvalidated_rescue_new_y=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(unvalidated_rescue_y,&ok);
     if(!ok)
     {
         normalOutput("unvalidated rescue y coord is not a number");

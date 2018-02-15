@@ -29,11 +29,11 @@ public:
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static std::unordered_set<std::string> compressedExtension;
     static std::vector<char> compressedFilesBuffer;
-    static int compressedFilesBufferCount;
+    static uint8_t compressedFilesBufferCount;
     #endif
     static std::unordered_set<std::string> extensionAllowed;
     static std::vector<char> rawFilesBuffer;
-    static int rawFilesBufferCount;
+    static uint8_t rawFilesBufferCount;
     static std::unordered_map<std::string,uint32_t> datapack_file_list_cache;
     static std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache_base;
     #endif

@@ -382,7 +382,7 @@ void Client::sendClanInfo()
     posOutput+=1+4;
 
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clan->name.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(clan->name.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,clan->name.data(),clan->name.size());
         posOutput+=clan->name.size();
@@ -424,7 +424,7 @@ bool Client::inviteToClan(const uint32_t &clanId)
     posOutput+=4;
     {
         const std::string &text=clan->name;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
