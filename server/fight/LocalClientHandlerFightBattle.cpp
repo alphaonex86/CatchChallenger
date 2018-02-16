@@ -39,7 +39,7 @@ void Client::registerBattleRequest(Client *otherPlayerBattle)
 
     {
         const std::string &text=otherPlayerBattle->public_and_private_informations.public_informations.pseudo;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
@@ -182,14 +182,14 @@ void Client::internalBattleAccepted(const bool &send)
 
         {
             const std::string &text=otherPlayerBattle->public_and_private_informations.public_informations.pseudo;
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
             posOutput+=text.size();
         }
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=otherPlayerBattle->public_and_private_informations.public_informations.skinId;
         posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=playerMonstersPreview.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(playerMonstersPreview.size());
         posOutput+=1;
         unsigned int index=0;
         while(index<playerMonstersPreview.size() && index<255)
@@ -236,7 +236,7 @@ void Client::sendBattleReturn()
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x50;
     posOutput+=1+4;
 
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturn.size();
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(attackReturn.size());
     posOutput+=1;
     master_index=0;
     while(master_index<attackReturn.size())
@@ -252,7 +252,7 @@ void Client::sendBattleReturn()
         posOutput+=2;
         //ad buff
         index=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.addBuffEffectMonster.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(attackReturnTemp.addBuffEffectMonster.size());
         posOutput+=1;
         while(index<attackReturnTemp.addBuffEffectMonster.size())
         {
@@ -266,7 +266,7 @@ void Client::sendBattleReturn()
         }
         //remove buff
         index=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.removeBuffEffectMonster.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(attackReturnTemp.removeBuffEffectMonster.size());
         posOutput+=1;
         while(index<attackReturnTemp.removeBuffEffectMonster.size())
         {
@@ -280,7 +280,7 @@ void Client::sendBattleReturn()
         }
         //life effect
         index=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.lifeEffectMonster.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(attackReturnTemp.lifeEffectMonster.size());
         posOutput+=1;
         while(index<attackReturnTemp.lifeEffectMonster.size())
         {
@@ -292,7 +292,7 @@ void Client::sendBattleReturn()
         }
         //buff effect
         index=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=attackReturnTemp.buffLifeEffectMonster.size();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(attackReturnTemp.buffLifeEffectMonster.size());
         posOutput+=1;
         while(index<attackReturnTemp.buffLifeEffectMonster.size())
         {

@@ -27,7 +27,7 @@ void Client::useSeed(const uint8_t &plant_id)
     }
 }
 
-void Client::useRecipe(const uint8_t &query_id,const uint32_t &recipe_id)
+void Client::useRecipe(const uint8_t &query_id,const uint16_t &recipe_id)
 {
     //don't check if the recipe exists, because the loading of the know recide do that's
     if(!(public_and_private_informations.recipes[recipe_id/8] & (1<<(7-recipe_id%8))))
@@ -37,9 +37,8 @@ void Client::useRecipe(const uint8_t &query_id,const uint32_t &recipe_id)
     }
     const CrafingRecipe &recipe=CommonDatapack::commonDatapack.crafingRecipes.at(recipe_id);
     //check if have material
-    int index=0;
-    const int &materials_size=recipe.materials.size();
-    while(index<materials_size)
+    unsigned int index=0;
+    while(index<recipe.materials.size())
     {
         if(objectQuantity(recipe.materials.at(index).item)<recipe.materials.at(index).quantity)
         {
@@ -55,7 +54,7 @@ void Client::useRecipe(const uint8_t &query_id,const uint32_t &recipe_id)
             success=false;
     //take the material
     index=0;
-    while(index<materials_size)
+    while(index<recipe.materials.size())
     {
         removeObject(recipe.materials.at(index).item,recipe.materials.at(index).quantity);
         index++;
@@ -212,7 +211,7 @@ bool Client::syncDatabaseItemOnMap()
             }
             else
             {
-                itemonmapInt=65536-lastItemonmapId+*i;
+                itemonmapInt=static_cast<uint16_t>(65536-static_cast<uint32_t>(lastItemonmapId)+static_cast<uint32_t>(*i));
                 lastItemonmapId=*i;
             }
             #else

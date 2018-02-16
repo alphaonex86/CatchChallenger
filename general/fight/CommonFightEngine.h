@@ -92,7 +92,7 @@ protected:
     virtual bool internalTryEscape();
     virtual bool internalTryCapture(const Trap &trap);
     virtual void fightFinished();
-    virtual void wildDrop(const uint32_t &monster);
+    virtual void wildDrop(const uint16_t &monster);
     virtual bool checkKOOtherMonstersForGain();
     virtual bool giveXPSP(int xp,int sp);
     virtual bool addLevel(PlayerMonster * monster,const uint8_t &numberOfLevel=1);

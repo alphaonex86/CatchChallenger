@@ -60,5 +60,9 @@
         <file>images/chat/background-input.png</file>
         <file>images/chat/developer.png</file>
         <file>images/chat/premium.png</file>
+        <file>images/colorflags/0.png</file>
+        <file>images/colorflags/1.png</file>
+        <file>images/colorflags/2.png</file>
+        <file>images/colorflags/3.png</file>
     </qresource>
 </RCC>

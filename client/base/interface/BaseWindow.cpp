@@ -56,6 +56,7 @@ QIcon BaseWindow::icon_server_list_stat2;
 QIcon BaseWindow::icon_server_list_stat3;
 QIcon BaseWindow::icon_server_list_stat4;
 QIcon BaseWindow::icon_server_list_bug;
+QList<QIcon> BaseWindow::icon_server_list_color;
 
 BaseWindow::BaseWindow() :
     ui(new Ui::BaseWindowUI)

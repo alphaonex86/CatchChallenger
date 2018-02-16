@@ -9,7 +9,7 @@
 
 using namespace CatchChallenger;
 
-void Client::wildDrop(const uint32_t &monster)
+void Client::wildDrop(const uint16_t &monster)
 {
     std::vector<MonsterDrops> drops=GlobalServerData::serverPrivateVariables.monsterDrops.at(monster);
     if(questsDrop.find(monster)!=questsDrop.cend())
@@ -64,8 +64,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
     {
         unsigned int sub_index=0;
         uint16_t lastSkillId=0;
-        const unsigned int &sub_size=newMonster.skills.size();
-        while(sub_index<sub_size)
+        while(sub_index<newMonster.skills.size())
         {
             const PlayerMonster::PlayerSkill &playerSkill=newMonster.skills.at(sub_index);
             raw_skill_endurance[sub_index]=playerSkill.endurance;
@@ -80,7 +79,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
             }
             else
             {
-                skillInt=65536-lastSkillId+playerSkill.skill;
+                skillInt=static_cast<uint16_t>(65536-static_cast<uint32_t>(lastSkillId)+static_cast<uint32_t>(playerSkill.skill));
                 lastSkillId=playerSkill.skill;
             }
             #else
@@ -114,7 +113,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
             }
             else
             {
-                buffInt=256-lastBuffId+buff.buff;
+                buffInt=static_cast<uint8_t>(256-static_cast<uint16_t>(lastBuffId)+static_cast<uint16_t>(buff.buff));
                 lastBuffId=buff.buff;
             }
             #else
@@ -134,7 +133,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
     {
         public_and_private_informations.warehouse_playerMonster.push_back(newMonster);
         public_and_private_informations.warehouse_playerMonster.back().id=monster_id;
-        position=public_and_private_informations.warehouse_playerMonster.size();
+        position=static_cast<int>(public_and_private_informations.warehouse_playerMonster.size());
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_full.asyncWrite({
                     std::to_string(monster_id),
                     std::to_string(character_id),
@@ -146,9 +145,9 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
                     std::to_string((uint8_t)newMonster.gender),
                     std::to_string(character_id),
                     std::to_string(position),
-                    binarytoHexa(raw_buff,sizeof(raw_buff)),
-                    binarytoHexa(raw_skill,sizeof(raw_skill)),
-                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
+                    binarytoHexa(raw_buff,static_cast<uint32_t>(sizeof(raw_buff))),
+                    binarytoHexa(raw_skill,static_cast<uint32_t>(sizeof(raw_skill))),
+                    binarytoHexa(raw_skill_endurance,static_cast<uint32_t>(sizeof(raw_skill_endurance)))
                     });
         #if defined(CATCHCHALLENGER_EXTRA_CHECK)
         if(sizeof(raw_skill)==0)
@@ -162,7 +161,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
     {
         public_and_private_informations.playerMonster.push_back(newMonster);
         public_and_private_informations.playerMonster.back().id=monster_id;
-        position=public_and_private_informations.playerMonster.size();
+        position=static_cast<int>(public_and_private_informations.playerMonster.size());
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_full.asyncWrite({
                     std::to_string(monster_id),
                     std::to_string(character_id),
@@ -174,9 +173,9 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
                     std::to_string((uint8_t)newMonster.gender),
                     std::to_string(character_id),
                     std::to_string(position),
-                    binarytoHexa(raw_buff,sizeof(raw_buff)),
-                    binarytoHexa(raw_skill,sizeof(raw_skill)),
-                    binarytoHexa(raw_skill_endurance,sizeof(raw_skill_endurance))
+                    binarytoHexa(raw_buff,static_cast<uint32_t>(sizeof(raw_buff))),
+                    binarytoHexa(raw_skill,static_cast<uint32_t>(sizeof(raw_skill))),
+                    binarytoHexa(raw_skill_endurance,static_cast<uint32_t>(sizeof(raw_skill_endurance)))
                     });
         #if defined(CATCHCHALLENGER_EXTRA_CHECK)
         if(sizeof(raw_skill)==0)
