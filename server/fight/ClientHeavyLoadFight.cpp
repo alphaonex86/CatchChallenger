@@ -243,7 +243,7 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
             uint32_t pos=0;
             while(pos<buffs.size())
             {
-                uint32_t buffint=(uint32_t)
+                uint8_t buffint=(uint8_t)
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         buffs
                         #else
@@ -325,7 +325,7 @@ bool Client::loadSkillBlock(const std::string &dataHexa,PlayerMonster &playerMon
             uint32_t pos=0;
             while(pos<skills.size())
             {
-                uint32_t skillInt=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(raw_skills+pos))+lastSkillId;
+                uint16_t skillInt=(uint16_t)le16toh(*reinterpret_cast<const uint16_t *>(raw_skills+pos))+lastSkillId;
                 if(skillInt>65535)
                     skillInt-=65536;
                 lastSkillId=skillInt;

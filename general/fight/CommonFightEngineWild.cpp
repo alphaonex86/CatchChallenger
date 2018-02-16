@@ -293,7 +293,7 @@ uint32_t CommonFightEngine::tryCapture(const uint16_t &item)
     }
 }
 
-void CommonFightEngine::wildDrop(const uint32_t &)
+void CommonFightEngine::wildDrop(const uint16_t &)
 {
 }
 

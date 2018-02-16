@@ -23,7 +23,7 @@ uint8_t DatabaseFunction::stringtouint8(const std::string &string,bool *ok)
         abort();
     }
     #endif
-    return std::stoull(string);
+    return static_cast<uint8_t>(std::stoul(string));
 }
 
 uint16_t DatabaseFunction::stringtouint16(const std::string &string,bool *ok)
@@ -39,7 +39,7 @@ uint16_t DatabaseFunction::stringtouint16(const std::string &string,bool *ok)
         abort();
     }
     #endif
-    return std::stoull(string);
+    return static_cast<uint16_t>(std::stoul(string));
 }
 
 uint32_t DatabaseFunction::stringtouint32(const std::string &string,bool *ok)
@@ -55,7 +55,7 @@ uint32_t DatabaseFunction::stringtouint32(const std::string &string,bool *ok)
         abort();
     }
     #endif
-    return std::stoull(string);
+    return std::stoul(string);
 }
 
 bool DatabaseFunction::stringtobool(const std::string &string,bool *ok)
@@ -106,7 +106,7 @@ int8_t DatabaseFunction::stringtoint8(const std::string &string,bool *ok)
         abort();
     }
     #endif
-    return std::stoi(string);
+    return static_cast<int8_t>(std::stoi(string));
 }
 
 int16_t DatabaseFunction::stringtoint16(const std::string &string,bool *ok)
@@ -122,7 +122,7 @@ int16_t DatabaseFunction::stringtoint16(const std::string &string,bool *ok)
         abort();
     }
     #endif
-    return std::stoi(string);
+    return static_cast<int16_t>(std::stoi(string));
 }
 
 int32_t DatabaseFunction::stringtoint32(const std::string &string,bool *ok)

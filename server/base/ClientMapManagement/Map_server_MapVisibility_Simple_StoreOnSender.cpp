@@ -114,7 +114,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                 {
                     const std::string &text=clients.at(index)->public_and_private_informations.public_informations.pseudo;
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                     posOutput+=1;
                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                     posOutput+=text.size();
@@ -232,7 +232,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                             if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                             {
                                 const std::string &text=client->public_and_private_informations.public_informations.pseudo;
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                                 posOutput+=1;
                                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                                 posOutput+=text.size();
@@ -372,7 +372,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                 if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                                 {
                                     const std::string &text=client->public_and_private_informations.public_informations.pseudo;
-                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                                     posOutput+=1;
                                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                                     posOutput+=text.size();
@@ -417,7 +417,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                 if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                                 {
                                     const std::string &text=client->public_and_private_informations.public_informations.pseudo;
-                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=text.size();
+                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                                     posOutput+=1;
                                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
                                     posOutput+=text.size();
