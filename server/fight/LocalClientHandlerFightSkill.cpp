@@ -25,9 +25,8 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
             break;
         sub_index2++;
     }
-    int sub_index=0;
-    const int &list_size=CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size();
-    while(sub_index<list_size)
+    unsigned int sub_index=0;
+    while(sub_index<CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size())
     {
         const Monster::AttackToLearn &learn=CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.at(sub_index);
         if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
