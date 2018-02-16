@@ -163,7 +163,7 @@ bool Client::syncDatabasePlant()
             }
             else
             {
-                dirtOnMap=65536-lastPlantId+i->first;
+                dirtOnMap=static_cast<uint16_t>(65536-static_cast<uint32_t>(lastPlantId)+static_cast<uint32_t>(i->first));
                 lastPlantId=i->first;
             }
             #else

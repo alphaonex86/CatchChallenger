@@ -28,7 +28,7 @@ void Client::syncMonsterBuff(const PlayerMonster &monster)
         }
         else
         {
-            buffInt=256-lastBuffId+buff.buff;
+            buffInt=static_cast<uint8_t>(256-static_cast<uint16_t>(lastBuffId)+static_cast<uint16_t>(buff.buff));
             lastBuffId=buff.buff;
         }
         #else
@@ -43,7 +43,7 @@ void Client::syncMonsterBuff(const PlayerMonster &monster)
         sub_index++;
     }
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_buff.asyncWrite({
-                binarytoHexa(raw_buff,sizeof(raw_buff)),
+                binarytoHexa(raw_buff,static_cast<uint32_t>(sizeof(raw_buff))),
                 std::to_string(monster.id)
                 });
 }
@@ -62,8 +62,7 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
     char skills[monster.skills.size()*(2+1)];
     unsigned int sub_index=0;
     uint16_t lastSkillId=0;
-    const unsigned int &sub_size=monster.skills.size();
-    while(sub_index<sub_size)
+    while(sub_index<monster.skills.size())
     {
         const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(sub_index);
         skills_endurance[sub_index]=playerSkill.endurance;
@@ -78,7 +77,7 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
         }
         else
         {
-            skillInt=65536-lastSkillId+playerSkill.skill;
+            skillInt=static_cast<uint16_t>(65536-static_cast<uint32_t>(lastSkillId)+static_cast<uint32_t>(playerSkill.skill));
             lastSkillId=playerSkill.skill;
         }
         #else
@@ -93,8 +92,8 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
         sub_index++;
     }
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_monster_update_skill_and_endurance.asyncWrite({
-                binarytoHexa(skills,sizeof(skills)),
-                binarytoHexa(skills_endurance,sizeof(skills_endurance)),
+                binarytoHexa(skills,static_cast<uint32_t>(sizeof(skills))),
+                binarytoHexa(skills_endurance,static_cast<uint32_t>(sizeof(skills_endurance))),
                 std::to_string(monster.id)
                 });
 }
@@ -111,8 +110,7 @@ void Client::syncMonsterEndurance(const PlayerMonster &monster)
     }
     char skills_endurance[monster.skills.size()*(1)];
     unsigned int sub_index=0;
-    const unsigned int &sub_size=monster.skills.size();
-    while(sub_index<sub_size)
+    while(sub_index<monster.skills.size())
     {
         const PlayerMonster::PlayerSkill &playerSkill=monster.skills.at(sub_index);
         skills_endurance[sub_index]=playerSkill.endurance;
@@ -120,7 +118,7 @@ void Client::syncMonsterEndurance(const PlayerMonster &monster)
         sub_index++;
     }
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_monster_update_endurance.asyncWrite({
-                binarytoHexa(skills_endurance,sizeof(skills_endurance)),
+                binarytoHexa(skills_endurance,static_cast<uint32_t>(sizeof(skills_endurance))),
                 std::to_string(monster.id)
                 });
 }
@@ -128,7 +126,7 @@ void Client::syncMonsterEndurance(const PlayerMonster &monster)
 void Client::saveAllMonsterPosition()
 {
     const std::vector<PlayerMonster> &playerMonsterList=getPlayerMonster();
-    unsigned int index=0;
+    uint8_t index=0;
     while(index<playerMonsterList.size())
     {
         const PlayerMonster &playerMonster=playerMonsterList.at(index);

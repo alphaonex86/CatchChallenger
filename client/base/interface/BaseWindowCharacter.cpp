@@ -231,6 +231,8 @@ void BaseWindow::updateServerList()
     if(icon_server_list_star1.isNull())
     {
         BaseWindow::icon_server_list_star1=QIcon(":/images/interface/server_list/star1.png");
+        if(BaseWindow::icon_server_list_star1.isNull())
+            abort();
         BaseWindow::icon_server_list_star2=QIcon(":/images/interface/server_list/star2.png");
         BaseWindow::icon_server_list_star3=QIcon(":/images/interface/server_list/star3.png");
         BaseWindow::icon_server_list_star4=QIcon(":/images/interface/server_list/star4.png");
@@ -241,6 +243,12 @@ void BaseWindow::updateServerList()
         BaseWindow::icon_server_list_stat3=QIcon(":/images/interface/server_list/stat3.png");
         BaseWindow::icon_server_list_stat4=QIcon(":/images/interface/server_list/stat4.png");
         BaseWindow::icon_server_list_bug=QIcon(":/images/interface/server_list/bug.png");
+        if(BaseWindow::icon_server_list_bug.isNull())
+            abort();
+        icon_server_list_color.push_back(QIcon(":/images/colorflags/0.png"));
+        icon_server_list_color.push_back(QIcon(":/images/colorflags/1.png"));
+        icon_server_list_color.push_back(QIcon(":/images/colorflags/2.png"));
+        icon_server_list_color.push_back(QIcon(":/images/colorflags/3.png"));
     }
     //do the average value
     {
@@ -304,7 +312,13 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
             QString text;
             QString groupText;
             if(characterListForSelection.size()>1 && serverByCharacterGroup.size()>1)
-                groupText=QStringLiteral(" (%1)").arg(serverByCharacterGroup.value(server.charactersGroupIndex).second);
+            {
+                const uint8_t groupInt=serverByCharacterGroup.value(server.charactersGroupIndex).second;
+                if(groupInt>=icon_server_list_color.size())
+                    groupText=QStringLiteral(" (%1)").arg(groupInt);
+                if(!icon_server_list_color.isEmpty())
+                    itemServer->setIcon(0,icon_server_list_color.at(groupInt%icon_server_list_color.size()));
+            }
             QString name=server.name;
             if(name.isEmpty())
                 name=tr("Default server");

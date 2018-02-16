@@ -282,10 +282,10 @@ private:
 
     Client *otherPlayerBattle;
     bool battleIsValidated;
-    uint32_t mCurrentSkillId;
+    uint16_t mCurrentSkillId;
     bool mHaveCurrentSkill,mMonsterChange;
-    uint32_t botFightCash;
-    uint32_t botFightId;
+    uint64_t botFightCash;
+    uint16_t botFightId;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     bool isInCityCapture;
     #endif
@@ -428,7 +428,7 @@ private:
     //seed
     void useSeed(const uint8_t &plant_id);
     //crafting
-    void useRecipe(const uint8_t &query_id,const uint32_t &recipe_id);
+    void useRecipe(const uint8_t &query_id, const uint16_t &recipe_id);
     void takeAnObjectOnMap();
     //inventory
     void addObjectAndSend(const uint16_t &item,const uint32_t &quantity=1);
@@ -583,7 +583,7 @@ private:
     void healAllMonsters();
     void battleFakeAccepted(Client * otherPlayer);
     void battleFakeAcceptedInternal(Client *otherPlayer);
-    bool botFightStart(const uint32_t &botFightId);
+    bool botFightStart(const uint16_t &botFightId);
     int addCurrentBuffEffect(const Skill::BuffEffect &effect);
     bool moveUpMonster(const uint8_t &number);
     bool moveDownMonster(const uint8_t &number);
@@ -616,7 +616,7 @@ private:
     void fightFinished();
     bool giveXPSP(int xp,int sp);
     bool useSkillAgainstBotMonster(const uint16_t &skill, const uint8_t &skillLevel);
-    void wildDrop(const uint32_t &monster);
+    void wildDrop(const uint16_t &monster);
     uint8_t getOneSeed(const uint8_t &max);
     bool bothRealPlayerIsReady() const;
     bool checkIfCanDoTheTurn();

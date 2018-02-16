@@ -713,6 +713,7 @@ private:
     static QIcon icon_server_list_stat3;
     static QIcon icon_server_list_stat4;
     static QIcon icon_server_list_bug;
+    static QList<QIcon> icon_server_list_color;
 
     bool monsterBeforeMoveForChangeInWaiting;
     QTimer checkQueryTime;

@@ -192,10 +192,9 @@ void Client::healAllMonsters()
             }
             bool endurance_have_change=false;
             sub_index=0;
-            const unsigned int &list_size=public_and_private_informations.playerMonster.at(index).skills.size();
-            while(sub_index<list_size)
+            while(sub_index<public_and_private_informations.playerMonster.at(index).skills.size())
             {
-                unsigned int endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(
+                uint8_t endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(
                         public_and_private_informations.playerMonster.at(index).skills.at(sub_index).skill
                         )
                         .level.at(public_and_private_informations.playerMonster.at(index).skills.at(sub_index).level-1).endurance;
@@ -260,7 +259,7 @@ bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TY
     return false;
 }
 
-bool Client::botFightStart(const uint32_t &botFightId)
+bool Client::botFightStart(const uint16_t &botFightId)
 {
     if(isInFight())
     {
@@ -618,7 +617,7 @@ Skill::AttackReturn Client::generateOtherAttack()
         errorOutput("The other player have not skill at generateOtherAttack()");
         return attackReturnTemp;
     }
-    const uint32_t &skill=otherPlayerBattle->getCurrentSkill();
+    const uint16_t &skill=otherPlayerBattle->getCurrentSkill();
     uint8_t skillLevel=otherPlayerBattle->getSkillLevel(skill);
     if(skillLevel==0)
     {
