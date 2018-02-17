@@ -254,11 +254,11 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                 #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
                 public_and_private_informations.itemOnMap.reserve(itemonmap.size());
                 #endif
-                uint16_t lastItemonmapId=0;
+                uint32_t lastItemonmapId=0;
                 uint32_t pos=0;
                 while(pos<itemonmap.size())
                 {
-                    uint16_t pointOnMapDatabaseId=(uint16_t)le16toh(*reinterpret_cast<const uint16_t *>(
+                    uint32_t pointOnMapDatabaseId=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(
                                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                         itemonmap.data()
                                         #else
@@ -267,7 +267,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                                         +pos))+lastItemonmapId;
                     if(pointOnMapDatabaseId>65535)
                         pointOnMapDatabaseId-=65536;
-                    lastItemonmapId=pointOnMapDatabaseId;
+                    lastItemonmapId=static_cast<uint16_t>(pointOnMapDatabaseId);
                     if(!ok)
                     {
                         normalOutput("wrong value type for item on map, skip: "+std::to_string(pointOnMapDatabaseId));
@@ -287,7 +287,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                         pos+=2;
                         continue;
                     }
-                    public_and_private_informations.itemOnMap.insert(pointOnMapDatabaseId);
+                    public_and_private_informations.itemOnMap.insert(static_cast<uint16_t>(pointOnMapDatabaseId));
                     pos+=2;
                 }
             }
@@ -316,11 +316,11 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                 public_and_private_informations.plantOnMap.reserve(plants.size()/(1+1+8));
                 #endif
                 PlayerPlant plant;
-                uint16_t lastPlantId=0;
+                uint32_t lastPlantId=0;
                 uint32_t pos=0;
                 while(pos<plants.size())
                 {
-                    uint16_t pointOnMap=(uint16_t)le16toh(*reinterpret_cast<const uint16_t *>(
+                    uint32_t pointOnMap=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(
                                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                         plants.data()
                                         #else
@@ -329,7 +329,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                                         +pos))+lastPlantId;
                     if(pointOnMap>65535)
                         pointOnMap-=65536;
-                    lastPlantId=pointOnMap;
+                    lastPlantId=static_cast<uint16_t>(pointOnMap);
                     pos+=2;
 
                     if(pointOnMap>=DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size())
@@ -368,7 +368,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     plant.mature_at=le64toh(mature_at)+CommonDatapack::commonDatapack.plants.at(plant.plant).fruits_seconds;
                     pos+=8;
 
-                    public_and_private_informations.plantOnMap[pointOnMap]=plant;
+                    public_and_private_informations.plantOnMap[static_cast<uint16_t>(pointOnMap)]=plant;
                 }
             }
         }
@@ -398,20 +398,21 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                 public_and_private_informations.quests.reserve(quests.size()/(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/));
                 #endif
                 PlayerQuest playerQuest;
-                uint16_t lastQuestId=0;
+                uint32_t lastQuestId=0;
                 uint32_t pos=0;
                 while(pos<quests.size())
                 {
-                    uint16_t questId=(uint16_t)le16toh(*reinterpret_cast<const uint16_t *>(
+                    uint32_t questInt=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(
                                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                         quests.data()
                                         #else
                                         raw_quests
                                         #endif
                                         +pos))+lastQuestId;
-                    if(questId>65535)
-                        questId-=65536;
-                    lastQuestId=questId;
+                    if(questInt>65535)
+                        questInt-=65536;
+                    lastQuestId=questInt;
+                    const uint16_t questId=static_cast<uint16_t>(questInt);
                     pos+=2;
                     playerQuest.finish_one_time=
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -430,7 +431,8 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                             [pos];
                     ++pos;
 
-                    if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
+                    if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==
+                            CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
                     {
                         normalOutput("wrong value type for quest on map, skip: "+std::to_string(questId));
                         pos+=2;

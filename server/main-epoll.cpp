@@ -70,7 +70,7 @@ void generateTokenStatClient(TinyXMLSettings &settings,char * const data)
         std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(data,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,fpRandomFile);
+    const size_t &returnedSize=fread(data,1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,fpRandomFile);
     if(returnedSize!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
     {
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT << " needed to do the token from " << RANDOMFILEDEVICE << std::endl;
@@ -124,7 +124,7 @@ void send_settings()
     //common var
     CommonSettingsServer::commonSettingsServer.useSP                            = stringtobool(settings->value("useSP"));
     CommonSettingsServer::commonSettingsServer.autoLearn                        = stringtobool(settings->value("autoLearn")) && !CommonSettingsServer::commonSettingsServer.useSP;
-    CommonSettingsServer::commonSettingsServer.forcedSpeed                      = stringtouint32(settings->value("forcedSpeed"));
+    CommonSettingsServer::commonSettingsServer.forcedSpeed                      = stringtouint8(settings->value("forcedSpeed"));
     CommonSettingsServer::commonSettingsServer.dontSendPseudo					= stringtobool(settings->value("dontSendPseudo"));
     CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer  		= stringtobool(settings->value("plantOnlyVisibleByPlayer"));
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange		= stringtobool(settings->value("forceClientToSendAtMapChange"));
@@ -136,10 +136,10 @@ void send_settings()
     CommonSettingsCommon::commonSettingsCommon.max_character					= stringtouint8(settings->value("max_character"));
     CommonSettingsCommon::commonSettingsCommon.max_pseudo_size					= stringtouint8(settings->value("max_pseudo_size"));
     CommonSettingsCommon::commonSettingsCommon.character_delete_time			= stringtouint32(settings->value("character_delete_time"));
-    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters                = stringtouint32(settings->value("maxPlayerMonsters"));
-    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters       = stringtouint32(settings->value("maxWarehousePlayerMonsters"));
-    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = stringtouint32(settings->value("maxPlayerItems"));
-    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems          = stringtouint32(settings->value("maxWarehousePlayerItems"));
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters                = stringtouint8(settings->value("maxPlayerMonsters"));
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters       = stringtouint16(settings->value("maxWarehousePlayerMonsters"));
+    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = stringtouint8(settings->value("maxPlayerItems"));
+    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems          = stringtouint16(settings->value("maxWarehousePlayerItems"));
     //connection
     formatedServerSettings.automatic_account_creation   = stringtobool(settings->value("automatic_account_creation"));
     #endif
@@ -152,7 +152,7 @@ void send_settings()
         std::cerr << "Compression level not a number fixed by 6" << std::endl;
         formatedServerSettings.compressionLevel=6;
     }
-    formatedServerSettings.compressionLevel                                     = stringtouint32(settings->value("compressionLevel"));
+    formatedServerSettings.compressionLevel                                     = stringtouint8(settings->value("compressionLevel"));
     if(settings->value("compression")=="none")
         formatedServerSettings.compressionType                                = CompressionType_None;
     else if(settings->value("compression")=="xz")
@@ -163,10 +163,10 @@ void send_settings()
         formatedServerSettings.compressionType                                = CompressionType_Zlib;
 
     //the listen
-    formatedServerNormalSettings.server_port			= stringtouint32(settings->value("server-port"));
+    formatedServerNormalSettings.server_port			= stringtouint16(settings->value("server-port"));
     formatedServerNormalSettings.server_ip				= settings->value("server-ip");
     formatedServerNormalSettings.proxy					= settings->value("proxy");
-    formatedServerNormalSettings.proxy_port				= stringtouint32(settings->value("proxy_port"));
+    formatedServerNormalSettings.proxy_port				= stringtouint16(settings->value("proxy_port"));
     formatedServerNormalSettings.useSsl					= stringtobool(settings->value("useSsl"));
     formatedServerSettings.common_blobversion_datapack= stringtouint8(settings->value("common_blobversion_datapack"),&ok);
     if(!ok)
@@ -256,10 +256,10 @@ void send_settings()
 
     //rates
     settings->beginGroup("rates");
-    CommonSettingsServer::commonSettingsServer.rates_xp             = stringtodouble(settings->value("xp_normal"));
-    CommonSettingsServer::commonSettingsServer.rates_gold			= stringtodouble(settings->value("gold_normal"));
-    CommonSettingsServer::commonSettingsServer.rates_xp_pow			= stringtodouble(settings->value("xp_pow_normal"));
-    CommonSettingsServer::commonSettingsServer.rates_drop			= stringtodouble(settings->value("drop_normal"));
+    CommonSettingsServer::commonSettingsServer.rates_xp             = stringtofloat(settings->value("xp_normal"));
+    CommonSettingsServer::commonSettingsServer.rates_gold			= stringtofloat(settings->value("gold_normal"));
+    CommonSettingsServer::commonSettingsServer.rates_xp_pow			= stringtofloat(settings->value("xp_pow_normal"));
+    CommonSettingsServer::commonSettingsServer.rates_drop			= stringtofloat(settings->value("drop_normal"));
     //formatedServerSettings.rates_xp_premium                         = stringtodouble(settings->value("xp_premium"));
     //formatedServerSettings.rates_gold_premium                       = stringtodouble(settings->value("gold_premium"));
     /*CommonSettingsCommon::commonSettingsCommon.rates_shiny		= stringtodouble(settings->value("shiny_normal"));
@@ -268,11 +268,11 @@ void send_settings()
 
     settings->beginGroup("DDOS");
     CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick         = stringtouint32(settings->value("waitBeforeConnectAfterKick"));
-    formatedServerSettings.ddos.computeAverageValueTimeInterval       = stringtouint32(settings->value("computeAverageValueTimeInterval"));
+    formatedServerSettings.ddos.computeAverageValueTimeInterval       = stringtouint8(settings->value("computeAverageValueTimeInterval"));
     #ifdef CATCHCHALLENGER_DDOS_FILTER
-    formatedServerSettings.ddos.kickLimitMove                         = stringtouint32(settings->value("kickLimitMove"));
-    formatedServerSettings.ddos.kickLimitChat                         = stringtouint32(settings->value("kickLimitChat"));
-    formatedServerSettings.ddos.kickLimitOther                        = stringtouint32(settings->value("kickLimitOther"));
+    formatedServerSettings.ddos.kickLimitMove                         = stringtouint8(settings->value("kickLimitMove"));
+    formatedServerSettings.ddos.kickLimitChat                         = stringtouint8(settings->value("kickLimitChat"));
+    formatedServerSettings.ddos.kickLimitOther                        = stringtouint8(settings->value("kickLimitOther"));
     #endif
     formatedServerSettings.ddos.dropGlobalChatMessageGeneral          = stringtouint32(settings->value("dropGlobalChatMessageGeneral"));
     formatedServerSettings.ddos.dropGlobalChatMessageLocalClan        = stringtouint32(settings->value("dropGlobalChatMessageLocalClan"));
@@ -410,7 +410,7 @@ void send_settings()
     settings->endGroup();
 
     //connection
-    formatedServerSettings.max_players					= stringtouint32(settings->value("max-players"));
+    formatedServerSettings.max_players					= stringtouint16(settings->value("max-players"));
 
     //visibility algorithm
     settings->beginGroup("MapVisibilityAlgorithm");
@@ -433,18 +433,18 @@ void send_settings()
     if(formatedServerSettings.mapVisibility.mapVisibilityAlgorithm==MapVisibilityAlgorithmSelection_Simple)
     {
         settings->beginGroup("MapVisibilityAlgorithm-Simple");
-        formatedServerSettings.mapVisibility.simple.max				= stringtouint32(settings->value("Max"));
-        formatedServerSettings.mapVisibility.simple.reshow			= stringtouint32(settings->value("Reshow"));
+        formatedServerSettings.mapVisibility.simple.max				= stringtouint16(settings->value("Max"));
+        formatedServerSettings.mapVisibility.simple.reshow			= stringtouint16(settings->value("Reshow"));
         formatedServerSettings.mapVisibility.simple.reemit          = stringtobool(settings->value("Reemit"));
         settings->endGroup();
     }
     else if(formatedServerSettings.mapVisibility.mapVisibilityAlgorithm==MapVisibilityAlgorithmSelection_WithBorder)
     {
         settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
-        formatedServerSettings.mapVisibility.withBorder.maxWithBorder	= stringtouint32(settings->value("MaxWithBorder"));
-        formatedServerSettings.mapVisibility.withBorder.reshowWithBorder= stringtouint32(settings->value("ReshowWithBorder"));
-        formatedServerSettings.mapVisibility.withBorder.max				= stringtouint32(settings->value("Max"));
-        formatedServerSettings.mapVisibility.withBorder.reshow			= stringtouint32(settings->value("Reshow"));
+        formatedServerSettings.mapVisibility.withBorder.maxWithBorder	= stringtouint16(settings->value("MaxWithBorder"));
+        formatedServerSettings.mapVisibility.withBorder.reshowWithBorder= stringtouint16(settings->value("ReshowWithBorder"));
+        formatedServerSettings.mapVisibility.withBorder.max				= stringtouint16(settings->value("Max"));
+        formatedServerSettings.mapVisibility.withBorder.reshow			= stringtouint16(settings->value("Reshow"));
         settings->endGroup();
     }
 
@@ -467,10 +467,10 @@ void send_settings()
                             GameServerSettings::ProgrammedEvent event;
                             event.value=settings->value("value");
                             bool ok;
-                            event.cycle=stringtouint32(settings->value("cycle"),&ok);
+                            event.cycle=stringtouint16(settings->value("cycle"),&ok);
                             if(!ok)
                                 event.cycle=0;
-                            event.offset=stringtouint32(settings->value("offset"),&ok);
+                            event.offset=stringtouint16(settings->value("offset"),&ok);
                             if(!ok)
                                 event.offset=0;
                             if(event.cycle>0)
@@ -556,12 +556,12 @@ void send_settings()
     if(capture_time_string_list.size()==2)
     {
         bool ok;
-        formatedServerSettings.city.capture.hour=stringtouint32(capture_time_string_list.front(),&ok);
+        formatedServerSettings.city.capture.hour=stringtouint8(capture_time_string_list.front(),&ok);
         if(!ok)
             formatedServerSettings.city.capture.hour=0;
         else
         {
-            formatedServerSettings.city.capture.minute=stringtouint32(capture_time_string_list.back(),&ok);
+            formatedServerSettings.city.capture.minute=stringtouint8(capture_time_string_list.back(),&ok);
             if(!ok)
                 formatedServerSettings.city.capture.minute=0;
         }
@@ -605,7 +605,7 @@ int main(int argc, char *argv[])
     }
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
 
-    srand(time(NULL));
+    srand(static_cast<unsigned int>(time(NULL)));
 
     bool datapack_loaded=false;
 
@@ -1149,7 +1149,7 @@ int main(int argc, char *argv[])
                                     #else
                                     //std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << std::endl;
                                     #endif
-                                    client->socketStringSize=strlen(hbuf)+strlen(sbuf)+1+1;
+                                    client->socketStringSize=static_cast<int>(strlen(hbuf))+static_cast<int>(strlen(sbuf))+1+1;
                                     client->socketString=new char[client->socketStringSize];
                                     strcpy(client->socketString,hbuf);
                                     strcat(client->socketString,":");
