@@ -344,7 +344,7 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
             QString port_string=connexion;
             port_string.remove(postRemove);
             bool ok;
-            uint16_t port=port_string.toInt(&ok);
+            uint16_t port=static_cast<uint16_t>(port_string.toInt(&ok));
             if(ok)
             {
                 ConnexionInfo connexionInfo;
@@ -359,9 +359,9 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
                     connexionInfo.connexionCounter=0;
                 connexionInfo.lastConnexion=lastConnexion.toUInt(&ok);
                 if(!ok)
-                    connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+                    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
                 if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
-                    connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+                    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
                 if(proxy.contains(regexConnexion))
                 {
                     QString host=proxy;
@@ -369,7 +369,7 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
                     QString proxy_port_string=proxy;
                     proxy_port_string.remove(postRemove);
                     bool ok;
-                    uint16_t proxy_port=proxy_port_string.toInt(&ok);
+                    uint16_t proxy_port=static_cast<uint16_t>(proxy_port_string.toInt(&ok));
                     if(ok)
                     {
                         connexionInfo.proxyHost=host;
@@ -439,7 +439,7 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                     qDebug() << QStringLiteral("Unable to open the file: %1, unique_code can't be empty: %4 child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber()).arg(server.attribute("port"));
                 else
                 {
-                    connexionInfo.port=temp_port;
+                    connexionInfo.port=static_cast<uint16_t>(temp_port);
                     QDomElement lang;
                     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
                     bool found=false;
@@ -515,7 +515,7 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                     //proxy
                     if(settings.contains(QStringLiteral("proxyPort")))
                     {
-                        connexionInfo.proxyPort=settings.value(QStringLiteral("proxyPort")).toUInt(&ok);
+                        connexionInfo.proxyPort=static_cast<uint16_t>(settings.value(QStringLiteral("proxyPort")).toUInt(&ok));
                         if(!ok)
                             connexionInfo.proxyPort=9050;
                     }
@@ -530,13 +530,13 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                     {
                         connexionInfo.lastConnexion=settings.value(QStringLiteral("lastConnexion")).toUInt(&ok);
                         if(!ok)
-                            connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+                            connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
                     }
                     else
-                        connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+                        connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
                     settings.endGroup();
                     if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
-                        connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+                        connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
                     returnedVar << connexionInfo;
                 }
             }
@@ -749,7 +749,7 @@ void MainWindow::on_server_add_clicked()
     ConnexionInfo connexionInfo;
     connexionInfo.connexionCounter=0;
     connexionInfo.host=addServer.server();
-    connexionInfo.lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
     connexionInfo.name=addServer.name();
     connexionInfo.port=addServer.port();
     connexionInfo.proxyHost=addServer.proxyServer();
@@ -1129,7 +1129,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     lastServer=selectedServerConnexion->host+":"+QString::number(selectedServerConnexion->port);
     realSslSocket->connectToHost(selectedServerConnexion->host,selectedServerConnexion->port);
     selectedServerConnexion->connexionCounter++;
-    selectedServerConnexion->lastConnexion=QDateTime::currentMSecsSinceEpoch()/1000;
+    selectedServerConnexion->lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
     saveConnexionInfoList();
     connectTheExternalSocket();
     displayServerList();//need be after connectTheExternalSocket() because it reset selectedServer

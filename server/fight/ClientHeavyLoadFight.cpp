@@ -239,11 +239,11 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
         {
             playerMonster.buffs.reserve(buffs.size()/(1+1+1));
             PlayerBuff buff;
-            uint32_t lastBuffId=0;
+            uint16_t lastBuffId=0;
             uint32_t pos=0;
             while(pos<buffs.size())
             {
-                uint8_t buffint=(uint8_t)
+                uint16_t buffint=(uint16_t)
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         buffs
                         #else
@@ -253,7 +253,7 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
                 if(buffint>255)
                     buffint-=256;
                 lastBuffId=buffint;
-                buff.buff=buffint;
+                buff.buff=static_cast<uint8_t>(buffint);
                 ++pos;
                 buff.level=
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -325,11 +325,11 @@ bool Client::loadSkillBlock(const std::string &dataHexa,PlayerMonster &playerMon
             uint32_t pos=0;
             while(pos<skills.size())
             {
-                uint16_t skillInt=(uint16_t)le16toh(*reinterpret_cast<const uint16_t *>(raw_skills+pos))+lastSkillId;
+                uint32_t skillInt=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(raw_skills+pos))+lastSkillId;
                 if(skillInt>65535)
                     skillInt-=65536;
                 lastSkillId=skillInt;
-                skill.skill=skillInt;
+                skill.skill=static_cast<uint16_t>(skillInt);
                 pos+=2;
                 skill.level=
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK

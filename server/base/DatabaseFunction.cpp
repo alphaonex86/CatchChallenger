@@ -55,7 +55,7 @@ uint32_t DatabaseFunction::stringtouint32(const std::string &string,bool *ok)
         abort();
     }
     #endif
-    return std::stoul(string);
+    return static_cast<uint32_t>(std::stoul(string));
 }
 
 bool DatabaseFunction::stringtobool(const std::string &string,bool *ok)

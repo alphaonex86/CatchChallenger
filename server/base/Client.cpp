@@ -485,7 +485,7 @@ char *Client::addAuthGetToken(const uint32_t &characterId, const uint32_t &accou
     newEntry.accountIdRequester=accountIdRequester;
     newEntry.createTime=sFrom1970();
     newEntry.token=new char[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
-    const int &returnedSize=fread(newEntry.token,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,BaseServerLogin::fpRandomFile);
+    const int &returnedSize=static_cast<int32_t>(fread(newEntry.token,1,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER,BaseServerLogin::fpRandomFile));
     if(returnedSize!=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
     {
         std::cerr << "sizeof(newEntry.token) don't match with random size: " << returnedSize << std::endl;

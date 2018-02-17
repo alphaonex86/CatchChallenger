@@ -55,7 +55,7 @@ LinkToMaster::LinkToMaster(
 
     flags|=0x08;
     queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
-    unsigned int index=0;
+    uint8_t index=0;
     while(index<queryNumberList.size())
     {
         queryNumberList[index]=index;
@@ -353,7 +353,7 @@ bool LinkToMaster::setSettings(TinyXMLSettings * const settings)
 
     if(!settings->contains("uniqueKey"))
     {
-        uniqueKey = rng();
+        uniqueKey = static_cast<uint32_t>(rng());
         settings->setValue("uniqueKey",std::to_string(uniqueKey));
     }
     else
@@ -362,7 +362,7 @@ bool LinkToMaster::setSettings(TinyXMLSettings * const settings)
         uniqueKey=stringtouint32(settings->value("uniqueKey"),&ok);
         if(!ok)
         {
-            uniqueKey = rng();
+            uniqueKey = static_cast<uint32_t>(rng());
             settings->setValue("uniqueKey",std::to_string(uniqueKey));
         }
     }
@@ -382,7 +382,7 @@ void LinkToMaster::generateToken(TinyXMLSettings * const settings)
         std::cerr << "Unable to open " << RANDOMFILEDEVICE << " to generate random token" << std::endl;
         abort();
     }
-    const int &returnedSize=fread(LinkToMaster::private_token,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile);
+    const int &returnedSize=static_cast<int32_t>(fread(LinkToMaster::private_token,1,TOKEN_SIZE_FOR_MASTERAUTH,fpRandomFile));
     if(returnedSize!=TOKEN_SIZE_FOR_MASTERAUTH)
     {
         std::cerr << "Unable to read the " << TOKEN_SIZE_FOR_MASTERAUTH << " needed to do the token" << std::endl;
@@ -592,7 +592,7 @@ void LinkToMaster::tryReconnect()
     {
         flags|=0x08;
         queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
-        unsigned int index=0;
+        uint8_t index=0;
         while(index<queryNumberList.size())
         {
             queryNumberList[index]=index;

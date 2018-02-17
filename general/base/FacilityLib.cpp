@@ -3,6 +3,10 @@
 #include "CommonSettingsServer.h"
 #include "PortableEndian.h"
 
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#include <iostream>
+#endif
+
 #include <ctime>
 #include <time.h>
 

@@ -56,9 +56,9 @@ void BaseServer::preload_the_events()
                                 previousStart-=(programmedEvent.cycle*60);
                             pastEventStart[previousStart]=static_cast<uint8_t>(sub_index);
                             #ifdef EPOLLCATCHCHALLENGERSERVER
-                                TimerEvents * const timer=new TimerEvents(index,sub_index);
+                                TimerEvents * const timer=new TimerEvents(static_cast<uint8_t>(index),static_cast<uint8_t>(sub_index));
                                 GlobalServerData::serverPrivateVariables.timerEvents.push_back(timer);
-                                timer->start(programmedEvent.cycle*1000*60,(time-nextStart-1000));
+                                timer->start(static_cast<unsigned int>(programmedEvent.cycle*1000*60),static_cast<unsigned int>(time-nextStart-1000));
                             #else
                             GlobalServerData::serverPrivateVariables.timerEvents.push_back(
                                         new QtTimerEvents(

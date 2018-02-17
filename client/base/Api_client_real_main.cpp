@@ -56,7 +56,7 @@ void Api_client_real::writeNewFileMain(const QString &fileName,const QByteArray 
     //send size
     {
         if(httpModeMain)
-            newDatapackFileMain(ceil((float)data.size()/1000)*1000);
+            newDatapackFileMain(ceil((double)data.size()/1000)*1000);
         else
             newDatapackFileMain(data.size());
     }
@@ -243,7 +243,7 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
                 return;
             }
             out << (uint8_t)datapackFilesListMain.at(index).size();
-            outputData+=QByteArray(datapackFilesListMain.at(index).c_str(),datapackFilesListMain.at(index).size());
+            outputData+=QByteArray(datapackFilesListMain.at(index).c_str(),static_cast<uint32_t>(datapackFilesListMain.at(index).size()));
             out.device()->seek(out.device()->size());
 
             index++;
@@ -648,9 +648,9 @@ void Api_client_real::downloadProgressDatapackMain(int64_t bytesReceived, int64_
     if(!datapackTarXzMain && !datapackTarXzSub)
     {
         if(bytesReceived>0)
-            datapackSizeMain(1,bytesTotal);
+            datapackSizeMain(1,static_cast<uint32_t>(bytesTotal));
     }
-    emit progressingDatapackFileMain(bytesReceived);
+    emit progressingDatapackFileMain(static_cast<uint32_t>(bytesReceived));
 }
 
 void Api_client_real::httpErrorEventMain()
