@@ -8,10 +8,12 @@ using namespace CatchChallenger;
 std::vector<PlayerMonster::PlayerSkill> CommonFightEngineBase::generateWildSkill(const Monster &monster, const uint8_t &level)
 {
     std::vector<PlayerMonster::PlayerSkill> skills;
+    if(monster.learn.empty())
+        return skills;
 
-    uint16_t index=static_cast<uint16_t>(monster.learn.size())-1;
+    uint16_t index=static_cast<uint16_t>(monster.learn.size()-1);
     std::vector<uint16_t> learnedSkill;
-    while(index>=0 && skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER)
+    while(skills.size()<CATCHCHALLENGER_MONSTER_WILD_SKILL_NUMBER)
     {
         const Monster::AttackToLearn &attackToLearn=monster.learn.at(index);
         //attackToLearn.learnAtLevel -> need be sorted at load
@@ -30,6 +32,8 @@ std::vector<PlayerMonster::PlayerSkill> CommonFightEngineBase::generateWildSkill
         }
         /*else
             break;-->start with wrong value, then never break*/
+        if(index==0)
+            break;
         index--;
     }
 
