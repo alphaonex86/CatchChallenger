@@ -40,7 +40,7 @@ QString AddOrEditServer::server() const
 
 uint16_t AddOrEditServer::port() const
 {
-    return ui->port->value();
+    return static_cast<uint16_t>(ui->port->value());
 }
 
 QString AddOrEditServer::proxyServer() const
@@ -50,7 +50,7 @@ QString AddOrEditServer::proxyServer() const
 
 uint16_t AddOrEditServer::proxyPort() const
 {
-    return ui->proxyPort->value();
+    return static_cast<uint16_t>(ui->proxyPort->value());
 }
 
 QString AddOrEditServer::name() const
