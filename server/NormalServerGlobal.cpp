@@ -26,16 +26,12 @@ void NormalServerGlobal::displayInfo()
         puts("_WIN32 are disabled");
     #endif
     #if defined(__clang__)
-        std::cout << "Llvm and clang " << __clang_major__ << "." << __clang_minor__ << "." << __clang_patchlevel__ << ", version string: " << __clang_version__ << " build: " << __DATE__ << " " << __TIME__ << std::endl;
+        std::cout << "Llvm and clang " << __clang_major__ << "." << __clang_minor__ << "." << __clang_patchlevel__ << ", version string: " << __clang_version__ << std::endl;
     #else
         #if defined(__GNUC__)
-            std::cout << "GCC " << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__ << " build: " << __DATE__ << " " << __TIME__ << std::endl;
+            std::cout << "GCC " << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__ << std::endl;
         #else
-            #if defined(__DATE__) && defined(__TIME__)
-                std::cout << "Unknown compiler: " << __DATE__ << " " << __TIME__ << std::endl;
-            #else
-                std::cout << "Unknown compiler" << std::endl;
-            #endif
+            std::cout << "Unknown compiler" << std::endl;
         #endif
     #endif
     std::cout << "CatchChallenger version: " << CATCHCHALLENGER_VERSION << std::endl;

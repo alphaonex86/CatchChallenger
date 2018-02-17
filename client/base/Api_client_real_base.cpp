@@ -58,7 +58,7 @@ void Api_client_real::writeNewFileBase(const QString &fileName,const QByteArray 
     //send size
     {
         if(httpModeBase)
-            newDatapackFileBase(ceil((float)data.size()/1000)*1000);
+            newDatapackFileBase(ceil((double)data.size()/1000)*1000);
         else
             newDatapackFileBase(data.size());
     }
@@ -227,7 +227,7 @@ void Api_client_real::datapackChecksumDoneBase(const std::vector<std::string> &d
                 return;
             }
             out << (uint8_t)datapackFilesListBase.at(index).size();
-            outputData+=QByteArray(datapackFilesListBase.at(index).c_str(),datapackFilesListBase.at(index).size());
+            outputData+=QByteArray(datapackFilesListBase.at(index).c_str(),static_cast<uint32_t>(datapackFilesListBase.at(index).size()));
             out.device()->seek(out.device()->size());
 
             index++;
@@ -271,9 +271,9 @@ void Api_client_real::downloadProgressDatapackBase(int64_t bytesReceived, int64_
     if(!datapackTarXzBase)
     {
         if(bytesReceived>0)
-            datapackSizeBase(1,bytesTotal);
+            datapackSizeBase(1,static_cast<uint32_t>(bytesTotal));
     }
-    emit progressingDatapackFileBase(bytesReceived);
+    emit progressingDatapackFileBase(static_cast<uint32_t>(bytesReceived));
 }
 
 void Api_client_real::test_mirror_base()

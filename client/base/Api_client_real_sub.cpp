@@ -56,7 +56,7 @@ void Api_client_real::writeNewFileSub(const QString &fileName,const QByteArray &
     //send size
     {
         if(httpModeSub)
-            newDatapackFileSub(ceil((float)data.size()/1000)*1000);
+            newDatapackFileSub(ceil((double)data.size()/1000)*1000);
         else
             newDatapackFileSub(data.size());
     }
@@ -205,7 +205,7 @@ void Api_client_real::datapackChecksumDoneSub(const std::vector<std::string> &da
                 return;
             }
             out << (uint8_t)datapackFilesListSub.at(index).size();
-            outputData+=QByteArray(datapackFilesListSub.at(index).c_str(),datapackFilesListSub.at(index).size());
+            outputData+=QByteArray(datapackFilesListSub.at(index).c_str(),static_cast<uint32_t>(datapackFilesListSub.at(index).size()));
             out.device()->seek(out.device()->size());
 
             index++;
@@ -620,9 +620,9 @@ void Api_client_real::downloadProgressDatapackSub(int64_t bytesReceived, int64_t
     if(!datapackTarXzMain && !datapackTarXzSub)
     {
         if(bytesReceived>0)
-            datapackSizeSub(1,bytesTotal);
+            datapackSizeSub(1,static_cast<uint32_t>(bytesTotal));
     }
-    emit progressingDatapackFileSub(bytesReceived);
+    emit progressingDatapackFileSub(static_cast<uint32_t>(bytesReceived));
 }
 
 void Api_client_real::httpErrorEventSub()

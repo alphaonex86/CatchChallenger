@@ -370,22 +370,22 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             characterSelectionIsWrong(query_id,0x04,"item have wrong size");
             return;
         }
-        uint16_t lastItemId=0;
+        uint32_t lastItemId=0;
         while(pos<data.size())
         {
-            uint16_t item=(uint16_t)le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos))+static_cast<uint8_t>(lastItemId);
+            uint32_t item=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos))+static_cast<uint8_t>(lastItemId);
             if(item>65535)
                 item-=65536;
-            lastItemId=item;
+            lastItemId=static_cast<uint16_t>(item);
             pos+=2;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
+            if(CommonDatapack::commonDatapack.items.item.find(static_cast<uint16_t>(item))==CommonDatapack::commonDatapack.items.item.cend())
                 normalOutput("Take care load unknown item: "+std::to_string(item));
             #endif
             const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
             pos+=4;
             public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
-            public_and_private_informations.items[item]=quantity;
+            public_and_private_informations.items[static_cast<uint16_t>(item)]=quantity;
         }
     }
     //item_warehouse
@@ -405,22 +405,23 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             characterSelectionIsWrong(query_id,0x04,"item warehouse have wrong size");
             return;
         }
-        uint16_t lastItemId=0;
+        uint32_t lastItemId=0;
         while(pos<data.size())
         {
-            uint16_t item=(uint16_t)le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos))+lastItemId;
+            uint32_t item=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos))+lastItemId;
             if(item>65535)
                 item-=65536;
-            lastItemId=item;
+            lastItemId=static_cast<uint16_t>(item);
             pos+=2;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
+            if(CommonDatapack::commonDatapack.items.item.find(static_cast<uint16_t>(item))==
+                    CommonDatapack::commonDatapack.items.item.cend())
                 normalOutput("Take care load unknown item: "+std::to_string(item));
             #endif
             const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
             pos+=4;
             public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
-            public_and_private_informations.warehouse_items[item]=quantity;
+            public_and_private_informations.warehouse_items[static_cast<uint16_t>(item)]=quantity;
         }
     }
     //recipes
@@ -462,16 +463,16 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             characterSelectionIsWrong(query_id,0x04,"reputations have wrong size");
             return;
         }
-        uint32_t lastReputationId=0;
+        uint16_t lastReputationId=0;
         while(pos<data.size())
         {
             PlayerReputation playerReputation;
             playerReputation.point=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
             pos+=4;
-            uint32_t typeReputation=(uint32_t)data_raw[pos]+lastReputationId;
+            uint16_t typeReputation=(uint16_t)data_raw[pos]+lastReputationId;
             if(typeReputation>255)
                 typeReputation-=256;
-            lastReputationId=typeReputation;
+            lastReputationId=static_cast<uint8_t>(typeReputation);
             pos+=1;
             playerReputation.level=data_raw[pos];
             pos+=1;

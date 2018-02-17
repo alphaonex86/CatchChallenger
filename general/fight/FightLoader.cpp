@@ -172,12 +172,14 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                                                 #endif
                                                 )
 {
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(types.size()>255)
     {
         std::cerr << "FightLoader::loadMonster() types.size()>255" << std::endl;
         abort();
     }
+    #endif
     #endif
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     if(CommonSettingsServer::commonSettingsServer.rates_xp_pow==0)

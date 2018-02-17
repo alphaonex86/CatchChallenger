@@ -108,7 +108,7 @@ bool Client::haveCurrentSkill() const
     return mHaveCurrentSkill;
 }
 
-uint32_t Client::getCurrentSkill() const
+uint16_t Client::getCurrentSkill() const
 {
     return mCurrentSkillId;
 }

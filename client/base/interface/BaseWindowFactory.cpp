@@ -333,9 +333,9 @@ void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatu
         factoryInProduction=true;
         #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
         QString productionTime;
-        uint32_t remainingProductionTime=0;
+        uint64_t remainingProductionTime=0;
         if((uint64_t)(industryStatus.last_update+industry.time)>(uint64_t)(QDateTime::currentMSecsSinceEpoch()/1000))
-            remainingProductionTime=(industryStatus.last_update+industry.time)-(QDateTime::currentMSecsSinceEpoch()/1000);
+            remainingProductionTime=static_cast<uint32_t>((industryStatus.last_update+industry.time)-(QDateTime::currentMSecsSinceEpoch()/1000));
         else if((uint64_t)(industryStatus.last_update+industry.time)<(uint64_t)(QDateTime::currentMSecsSinceEpoch()/1000))
             remainingProductionTime=((QDateTime::currentMSecsSinceEpoch()/1000)-industryStatus.last_update)%industry.time;
         else
@@ -346,7 +346,7 @@ void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatu
             if(remainingProductionTime<60)
                 productionTime+=tr("Less than a minute");
             else
-                productionTime+=tr("%n minute(s)","",remainingProductionTime/60);
+                productionTime+=tr("%n minute(s)","",static_cast<uint32_t>(remainingProductionTime/60));
         }
         ui->factoryStatText->setText(QStringLiteral("%1<br />%2").arg(tr("In production")).arg(productionTime));
         #else
