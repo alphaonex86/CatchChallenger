@@ -50,7 +50,7 @@ BaseServer::BaseServer() :
         abort();
     }
     GlobalServerData::serverSettings.datapack_basePath                          = FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/";
-    GlobalServerData::serverSettings.compressionType                            = CompressionType_Zlib;
+    GlobalServerData::serverSettings.compressionType                            = CompressionType_Zstandard;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange = true;
     CommonSettingsServer::commonSettingsServer.forcedSpeed            = CATCHCHALLENGER_SERVER_NORMAL_SPEED;
@@ -1201,17 +1201,9 @@ void BaseServer::loadAndFixSettings()
             ProtocolParsing::compressionTypeServer=ProtocolParsing::CompressionType::None;
         break;
         default:
-        case CatchChallenger::CompressionType_Zlib:
-            GlobalServerData::serverSettings.compressionType      = CompressionType_Zlib;
-            ProtocolParsing::compressionTypeServer=ProtocolParsing::CompressionType::Zlib;
-        break;
-        case CatchChallenger::CompressionType_Xz:
-            GlobalServerData::serverSettings.compressionType      = CompressionType_Xz;
-            ProtocolParsing::compressionTypeServer=ProtocolParsing::CompressionType::Xz;
-        break;
-        case CatchChallenger::CompressionType_Lz4:
-            GlobalServerData::serverSettings.compressionType      = CompressionType_Lz4;
-            ProtocolParsing::compressionTypeServer=ProtocolParsing::CompressionType::Lz4;
+        case CatchChallenger::CompressionType_Zstandard:
+            GlobalServerData::serverSettings.compressionType      = CompressionType_Zstandard;
+            ProtocolParsing::compressionTypeServer=ProtocolParsing::CompressionType::Zstandard;
         break;
     }
 }
