@@ -16,24 +16,12 @@ unsigned char Client::protocolReplyCompressionNone[]={0x7F/*reply server to clie
                                                       ,0x00,0x00,0x00/*little endian*/
                                                       ,0x04/*compression: none*/};
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-unsigned char Client::protocolReplyCompresssionZlib[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01
+unsigned char Client::protocolReplyCompresssionZstandard[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01
                                                        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                                                        +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
                                                        #endif
                                                        ,0x00,0x00,0x00/*little endian*/
-                                                       ,0x05/*compression: zlib*/};
-unsigned char Client::protocolReplyCompressionXz[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01
-                                                    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                                                    +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
-                                                    #endif
-                                                    ,0x00,0x00,0x00/*little endian*/
-                                                    ,0x06/*compression: Xz*/};
-unsigned char Client::protocolReplyCompressionLz4[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01
-                                                    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                                                    +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
-                                                    #endif
-                                                    ,0x00,0x00,0x00/*little endian*/
-                                                    ,0x07/*compression: Lz4*/};
+                                                       ,0x08/*compression: zlib*/};
 #endif
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

@@ -97,12 +97,13 @@ void ProcessControler::send_settings()
     formatedServerSettings.compressionLevel                                     = stringtouint32(settings->value("compressionLevel"));
     if(settings->value("compression")=="none")
         formatedServerSettings.compressionType                                = CompressionType_None;
-    else if(settings->value("compression")=="xz")
-        formatedServerSettings.compressionType                                = CompressionType_Xz;
-    else if(settings->value("compression")=="lz4")
-        formatedServerSettings.compressionType                                = CompressionType_Lz4;
+    else if(settings->value("compression")=="zstd")
+        formatedServerSettings.compressionType                                = CompressionType_Zstandard;
     else
-        formatedServerSettings.compressionType                                = CompressionType_Zlib;
+    {
+        std::cerr << "Wrong compression: " << settings->value("compression") << std::endl;
+        formatedServerSettings.compressionType                                = CompressionType_Zstandard;
+    }
 
     //the listen
     formatedServerNormalSettings.server_port			= stringtouint32(settings->value("server-port"));

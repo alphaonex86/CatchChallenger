@@ -185,9 +185,7 @@ private:
     /// \todo group all reply in one
     static unsigned char protocolReplyCompressionNone[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    static unsigned char protocolReplyCompresssionZlib[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static unsigned char protocolReplyCompressionXz[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static unsigned char protocolReplyCompressionLz4[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompresssionZstandard[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     #endif
 
     static unsigned char loginInProgressBuffer[7];

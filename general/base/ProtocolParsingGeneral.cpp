@@ -2,7 +2,6 @@
 #include "GeneralVariable.h"
 #include "GeneralStructures.h"
 #include "ProtocolParsingCheck.h"
-#include <zlib.h>
 #include <iostream>
 #include <cstring>
 #include <openssl/sha.h>
@@ -12,8 +11,16 @@
 #endif
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-#include <lzma.h>
-#include "lz4/lz4.h"
+#include "zstd.h"
+
+#ifndef CATCHCHALLENGER_CLASS_GATEWAY
+#ifndef CATCHCHALLENGER_CLASS_LOGIN
+#ifndef CATCHCHALLENGER_CLASS_MASTER
+#include <zlib.h>
+#endif
+#endif
+#endif
+
 #endif
 
 using namespace CatchChallenger;
@@ -22,24 +29,9 @@ using namespace CatchChallenger;
 
 uint8_t ProtocolParsing::compressionLevel=6;
 
-extern "C" void *lz_alloc(void *, size_t , size_t size)
-{
-    void *p = NULL;
-    try{
-        p = new char [size];
-    }
-    catch(std::bad_alloc &)
-    {
-        p = NULL;
-    }
-    return p;
-}
-
-extern "C" void lz_free(void *, void *ptr)
-{
-    delete [] (char*)ptr;
-}
-
+#ifndef CATCHCHALLENGER_CLASS_GATEWAY
+#ifndef CATCHCHALLENGER_CLASS_LOGIN
+#ifndef CATCHCHALLENGER_CLASS_MASTER
 static void logZlibError(int error)
 {
     switch (error)
@@ -127,7 +119,7 @@ int32_t ProtocolParsing::decompressZlib(const char * const input, const uint32_t
     return maxOutputSize-strm.avail_out;
 }
 
-int32_t ProtocolParsing::compressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
+int32_t ProtocolParsing::compressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
 {
     z_stream strm;
 
@@ -140,43 +132,6 @@ int32_t ProtocolParsing::compressZstandard(const char * const input, const uint3
     strm.next_out = (Bytef *) output;
     strm.avail_out = maxOutputSize;
     strm.total_out = maxOutputSize;
-
-    /*int ret = deflateInit(&strm, ProtocolParsing::compressionLevel);
-    if(ret != Z_OK)
-    {
-        logZlibError(ret);
-        return -1;
-    }
-
-    do {
-        ret = deflate(&strm, Z_SYNC_FLUSH);
-
-        switch (ret) {
-            case Z_NEED_DICT:
-            case Z_STREAM_ERROR:
-            ret = Z_DATA_ERROR;
-            case Z_DATA_ERROR:
-            case Z_MEM_ERROR:
-            deflateEnd(&strm);
-            logZlibError(ret);
-            return -1;
-        }
-
-        if(ret != Z_OK && ret != Z_STREAM_END)
-        {
-            if((strm.next_out-reinterpret_cast<unsigned char * const>(output))>maxOutputSize)
-            {
-                logZlibError(Z_STREAM_ERROR);
-                return -1;
-            }
-            logZlibError(Z_STREAM_ERROR);
-            return -1;
-        }
-    }
-    while (ret != Z_STREAM_END);
-    deflateEnd(&strm);
-
-    return maxOutputSize-strm.avail_out;*/
 
     int nErr,nRet=-1;
     nErr=deflateInit(&strm, ProtocolParsing::compressionLevel);
@@ -199,127 +154,29 @@ int32_t ProtocolParsing::compressZstandard(const char * const input, const uint3
     deflateEnd(&strm);    // zlib function
     return nRet;
 }
+#endif
+#endif
+#endif
 
-int32_t ProtocolParsing::decompressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
+int32_t ProtocolParsing::decompressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
 {
-    lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
-    const uint32_t flags = LZMA_TELL_UNSUPPORTED_CHECK;
-    const uint64_t memory_limit = 64*1024*1024; /* no memory limit */
-    lzma_ret ret_xz;
-
-    ret_xz = lzma_stream_decoder (&strm, memory_limit, flags);
-    if (ret_xz != LZMA_OK) {
+    size_t const dSize = ZSTD_decompress(output, maxOutputSize, input, intputSize);
+    if (ZSTD_isError(dSize)) {
+        std::cerr << "error compressing" << ZSTD_getErrorName(dSize) << std::endl;
         return -1;
     }
-
-    strm.next_in = (Bytef *) input;
-    strm.avail_in = intputSize;
-    strm.next_out = (Bytef *) output;
-    strm.avail_out = maxOutputSize;
-    do {
-        ret_xz = lzma_code (&strm, LZMA_FINISH);
-
-        if (ret_xz != LZMA_OK && ret_xz != LZMA_STREAM_END) {
-            const char *msg;
-            switch (ret_xz) {
-            case LZMA_MEM_ERROR:
-                msg = "Memory allocation failed";
-                break;
-
-            case LZMA_FORMAT_ERROR:
-                msg = "The input is not in the .xz format";
-                break;
-
-            case LZMA_OPTIONS_ERROR:
-                msg = "Unsupported compression options";
-                break;
-
-            case LZMA_DATA_ERROR:
-                msg = "Compressed file is corrupt";
-                break;
-
-            case LZMA_BUF_ERROR:
-                msg = "Compressed file is truncated or "
-                        "otherwise corrupt";
-                break;
-
-            default:
-                msg = "Unknown error, possibly a bug";
-                break;
-            }
-
-            fprintf(stderr, "Decoder error: "
-                    "%s (error code %u)\n",
-                    msg, ret_xz);
-            return -1;
-        }
-    } while (strm.avail_out == 0);
-    lzma_end (&strm);
-    return maxOutputSize-static_cast<uint32_t>(strm.avail_out);
+    return dSize;
 }
 
-int32_t ProtocolParsing::compressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
+int32_t ProtocolParsing::compressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
 {
-    std::vector<char> arr;
-    lzma_check check = LZMA_CHECK_CRC64;
-    lzma_stream strm = LZMA_STREAM_INIT; /* alloc and init lzma_stream struct */
-    lzma_allocator al;
-    al.alloc = lz_alloc;
-    al.free = lz_free;
-    strm.allocator = &al;
-    strm.next_in = (Bytef *) input;
-    strm.avail_in = intputSize;
-    strm.next_out = (Bytef *) output;
-    strm.avail_out = maxOutputSize;
-    lzma_ret ret_xz;
-
-    /* initialize xz encoder */
-    ret_xz = lzma_easy_encoder (&strm, ProtocolParsing::compressionLevel, check);
-    if (ret_xz != LZMA_OK) {
+    size_t const cSize = ZSTD_compress(output, maxOutputSize, input, intputSize, ProtocolParsing::compressionLevel);
+    if (ZSTD_isError(cSize)) {
+        std::cerr << "error compressing" << ZSTD_getErrorName(cSize) << std::endl;
         return -1;
     }
-
-    do {
-        ret_xz = lzma_code (&strm, LZMA_FINISH);
-
-        if (ret_xz != LZMA_OK && ret_xz != LZMA_STREAM_END) {
-            const char *msg;
-            switch (ret_xz) {
-            case LZMA_MEM_ERROR:
-                msg = "Memory allocation failed";
-                break;
-
-            case LZMA_FORMAT_ERROR:
-                msg = "The input is not in the .xz format";
-                break;
-
-            case LZMA_OPTIONS_ERROR:
-                msg = "Unsupported compression options";
-                break;
-
-            case LZMA_DATA_ERROR:
-                msg = "Compressed file is corrupt";
-                break;
-
-            case LZMA_BUF_ERROR:
-                msg = "Compressed file is truncated or "
-                        "otherwise corrupt";
-                break;
-            default:
-                msg = "Unknown error, possibly a bug";
-                break;
-            }
-
-            fprintf(stderr, "Decoder error: "
-                    "%s (error code %u)\n",
-                    msg, ret_xz);
-            return -1;
-        }
-    } while (strm.avail_out == 0);
-    lzma_end (&strm);
-    return maxOutputSize-static_cast<uint32_t>(strm.avail_out);
+    return cSize;
 }
-
 #endif
 
 #if ! defined (ONLYMAPRENDER)

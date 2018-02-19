@@ -40,14 +40,8 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                             case 0x04:
                                 ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
                             break;
-                            case 0x05:
-                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zlib;
-                            break;
-                            case 0x06:
-                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
-                            break;
-                            case 0x07:
-                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
+                            case 0x08:
+                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zstandard;
                             break;
                             default:
                                 parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+
@@ -64,14 +58,8 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                             case 0x04:
                                 tempCompression=ProtocolParsing::CompressionType::None;
                             break;
-                            case 0x05:
-                                tempCompression=ProtocolParsing::CompressionType::Zlib;
-                            break;
-                            case 0x06:
-                                tempCompression=ProtocolParsing::CompressionType::Xz;
-                            break;
-                            case 0x07:
-                                tempCompression=ProtocolParsing::CompressionType::Lz4;
+                            case 0x08:
+                                tempCompression=ProtocolParsing::CompressionType::Zstandard;
                             break;
                             default:
                                 parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+
@@ -174,14 +162,8 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                             case 0x04:
                                 ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
                             break;
-                            case 0x05:
-                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zlib;
-                            break;
-                            case 0x06:
-                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
-                            break;
-                            case 0x07:
-                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
+                            case 0x08:
+                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zstandard;
                             break;
                             default:
                                 parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+
@@ -197,14 +179,8 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                             case 0x04:
                                 tempCompression=ProtocolParsing::CompressionType::None;
                             break;
-                            case 0x05:
-                                tempCompression=ProtocolParsing::CompressionType::Zlib;
-                            break;
-                            case 0x06:
-                                tempCompression=ProtocolParsing::CompressionType::Xz;
-                            break;
-                            case 0x07:
-                                tempCompression=ProtocolParsing::CompressionType::Lz4;
+                            case 0x08:
+                                tempCompression=ProtocolParsing::CompressionType::Zstandard;
                             break;
                             default:
                                 parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+
@@ -238,14 +214,8 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                             case ProtocolParsing::CompressionType::None:
                                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x04;
                             break;
-                            case ProtocolParsing::CompressionType::Zlib:
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x05;
-                            break;
-                            case ProtocolParsing::CompressionType::Xz:
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x06;
-                            break;
-                            case ProtocolParsing::CompressionType::Lz4:
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x07;
+                            case ProtocolParsing::CompressionType::Zstandard:
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x08;
                             break;
                             default:
                                 parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+" and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");

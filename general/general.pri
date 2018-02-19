@@ -4,10 +4,11 @@ mac:QMAKE_CXXFLAGS+="-stdlib=libc++"
 #QMAKE_CXXFLAGS+="-Wall -Wextra -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-unused-macros -Wno-newline-eof -Wno-exit-time-destructors -Wno-global-constructors -Wno-gnu-zero-variadic-macro-arguments -Wno-documentation -Wno-shadow -Wno-missing-prototypes -Wno-padded -Wno-covered-switch-default -Wno-old-style-cast -Wno-documentation-unknown-command -Wno-switch-enum -Wno-undefined-reinterpret-cast -Wno-unreachable-code-break -Wno-sign-conversion -Wno-float-conversion"
 #QMAKE_CXXFLAGS+="-Wno-weak-vtables -Wno-non-virtual-dtor -Wno-gnu-statement-expression -Wno-implicit-fallthrough -Wno-float-equal -Wno-unreachable-code -Wno-missing-noreturn -Wno-unreachable-code-return -Wno-vla-extension -Wno-format-nonliteral -Wno-vla -Wno-embedded-directive -Wno-missing-variable-declarations -Wno-missing-braces"
 QMAKE_CXXFLAGS+="-Wno-missing-braces"
+QMAKE_CFLAGS+="-Wno-missing-braces"
 
 QT       -= core
 
-LIBS += -lz -llzma
+LIBS += -lz -lzstd
 LIBS += -lcrypto
 
 TEMPLATE = app
@@ -40,7 +41,6 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/base/cpp11addition.cpp \
     $$PWD/base/cpp11additionstringtointcpp.cpp \
     $$PWD/base/cpp11additionstringtointc.cpp \
-    $$PWD/base/lz4/lz4.c \
     $$PWD/base/CachedString.cpp
 
 HEADERS  += $$PWD/base/GeneralStructures.h \
@@ -69,7 +69,6 @@ HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/cpp11addition.h \
     $$PWD/base/GeneralStructuresXml.h \
     $$PWD/base/PortableEndian.h \
-    $$PWD/base/lz4/lz4.h \
     $$PWD/base/CachedString.h
 
 #only linux is C only, mac, windows, other is in Qt for compatibility

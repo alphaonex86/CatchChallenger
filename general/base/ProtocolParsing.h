@@ -90,6 +90,11 @@ public:
     static void setMaxPlayers(const uint16_t &maxPlayers);
     static int32_t decompressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
     static int32_t compressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    //for tiled
+    #ifndef CATCHCHALLENGER_CLASS_GATEWAY
+    static int32_t decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static int32_t compressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    #endif
 
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     int32_t computeDecompression(const char* const source, char* const dest, const unsigned int &sourceSize, const unsigned int &maxDecompressedSize, const CompressionType &compressionType);
