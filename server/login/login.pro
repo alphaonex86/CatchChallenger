@@ -23,7 +23,7 @@ LIBS    += -lpq
 #DEFINES += CATCHCHALLENGER_DB_MYSQL
 
 LIBS += -lssl -lcrypto
-LIBS    += -llzma -lz
+LIBS    += -lzstd
 
 CONFIG += c++11
 
@@ -71,7 +71,6 @@ SOURCES += \
     LinkToGameServer.cpp \
     TimerDdos.cpp \
     ../epoll/EpollTimer.cpp \
-    ../../general/base/lz4/lz4.c \
     ../../general/base/cpp11addition.cpp \
     ../../general/base/cpp11additionstringtointc.cpp \
     ../../general/base/cpp11additionstringtointcpp.cpp \
@@ -109,7 +108,6 @@ HEADERS += \
     LinkToGameServer.h \
     TimerDdos.h \
     ../epoll/EpollTimer.h \
-    ../../general/base/lz4/lz4.h \
     ../../general/base/cpp11addition.h \
     ../base/TinyXMLSettings.h \
     ../base/DatabaseFunction.h \

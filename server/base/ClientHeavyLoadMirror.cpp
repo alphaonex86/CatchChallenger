@@ -523,17 +523,9 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
             BaseServerMasterSendDatapack::compressedFilesBufferCount++;
             switch(ProtocolParsing::compressionTypeServer)
             {
-                case ProtocolParsing::CompressionType::Xz:
-                if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB*1024 || BaseServerMasterSendDatapack::compressedFilesBufferCount>=255)
-                    sendCompressedFileContent();
-                break;
                 default:
-                case ProtocolParsing::CompressionType::Zlib:
+                case ProtocolParsing::CompressionType::Zstandard:
                 if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024 || BaseServerMasterSendDatapack::compressedFilesBufferCount>=255)
-                    sendCompressedFileContent();
-                break;
-                case ProtocolParsing::CompressionType::Lz4:
-                if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_LZ4_COMPRESSEDFILEPURGE_KB*1024 || BaseServerMasterSendDatapack::compressedFilesBufferCount>=255)
                     sendCompressedFileContent();
                 break;
             }

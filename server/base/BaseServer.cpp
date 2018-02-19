@@ -24,7 +24,7 @@ BaseServer::BaseServer() :
 
     dictionary_pointOnMap_maxId_item=0;
     dictionary_pointOnMap_maxId_plant=0;
-    ProtocolParsing::compressionTypeServer                                = ProtocolParsing::CompressionType::Zlib;
+    ProtocolParsing::compressionTypeServer                                = ProtocolParsing::CompressionType::Zstandard;
 
     GlobalServerData::serverPrivateVariables.connected_players      = 0;
     GlobalServerData::serverPrivateVariables.number_of_bots_logged  = 0;
