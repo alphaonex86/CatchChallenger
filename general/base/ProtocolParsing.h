@@ -59,10 +59,8 @@ public:
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     enum CompressionType
     {
-        None,
-        Zlib,
-        Xz,
-        Lz4
+        None=0x00,
+        Zstandard = 0x04
     };
     #endif
     enum InitialiseTheVariableType
@@ -90,10 +88,8 @@ public:
     ProtocolParsing();
     static void initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType=InitialiseTheVariableType::AllInOne);
     static void setMaxPlayers(const uint16_t &maxPlayers);
-    static int32_t decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
-    static int32_t compressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
-    static int32_t decompressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
-    static int32_t compressXz(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static int32_t decompressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
+    static int32_t compressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
 
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     int32_t computeDecompression(const char* const source, char* const dest, const unsigned int &sourceSize, const unsigned int &maxDecompressedSize, const CompressionType &compressionType);

@@ -127,7 +127,7 @@ int32_t ProtocolParsing::decompressZlib(const char * const input, const uint32_t
     return maxOutputSize-strm.avail_out;
 }
 
-int32_t ProtocolParsing::compressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
+int32_t ProtocolParsing::compressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
 {
     z_stream strm;
 
@@ -371,9 +371,9 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
             memset(ProtocolParsingBase::tempBigBufferForCompressedOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForCompressedOutput));
             memset(ProtocolParsingBase::tempBigBufferForUncompressedInput,0,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput));
-            ProtocolParsing::compressionTypeServer=CompressionType::Zlib;
+            ProtocolParsing::compressionTypeServer=CompressionType::Zstandard;
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            ProtocolParsing::compressionTypeClient=CompressionType::Zlib;
+            ProtocolParsing::compressionTypeClient=CompressionType::Zstandard;
             #endif
             #endif
 

@@ -64,9 +64,7 @@ enum Orientation : uint8_t
 enum CompressionType : uint8_t
 {
     CompressionType_None = 0x00,
-    CompressionType_Zlib = 0x01,
-    CompressionType_Xz = 0x02,
-    CompressionType_Lz4 = 0x03
+    CompressionType_Zstandard = 0x04
 };
 
 enum ActionAllow : uint8_t

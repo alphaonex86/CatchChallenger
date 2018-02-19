@@ -141,7 +141,7 @@ void Client::plantSeed(
 //plant
 bool Client::syncDatabasePlant()
 {
-    if(public_and_private_informations.plantOnMap.size()*(1+1+8)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    if(public_and_private_informations.plantOnMap.size()*(2/*pointOnMap*/+1/*plant*/+8/*timestamps*/)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
     {
         errorOutput("Too many plant");
         return false;
