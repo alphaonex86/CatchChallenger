@@ -269,7 +269,7 @@ bool CommonFightEngine::haveAnotherEnnemyMonsterToFight()
 PlayerMonster * CommonFightEngine::getCurrentMonster()//no const due to error message
 {
     const size_t &playerMonsterSize=public_and_private_informations.playerMonster.size();
-    if(selectedMonster>=0 && selectedMonster<playerMonsterSize)
+    if(selectedMonster<playerMonsterSize)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(CommonDatapack::commonDatapack.monsters.find(public_and_private_informations.playerMonster.at(selectedMonster).monster)==CommonDatapack::commonDatapack.monsters.cend())

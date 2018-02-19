@@ -305,7 +305,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         }
         else
         {
-            if(plants.size()%(2+1+8)!=0)
+            if(plants.size()%(2/*pointOnMap*/+1/*plant*/+8/*timestamps*/)!=0)
             {
                 characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(17));
                 return;
@@ -389,7 +389,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         {
             if(quests.size()%(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/)!=0)
             {
-                characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(15));
+                characterSelectionIsWrong(query_id,0x04,"quests missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(15));
                 return;
             }
             else
