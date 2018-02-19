@@ -382,12 +382,10 @@ void MainWindow::load_settings()
         formatedServerSettings.compressionLevel                                     = stringtouint32(settings->value("compressionLevel"));
         if(settings->value("compression")=="none")
             formatedServerSettings.compressionType                                = CompressionType_None;
-        else if(settings->value("compression")=="xz")
-            formatedServerSettings.compressionType                                = CompressionType_Xz;
-        else if(settings->value("compression")=="lz4")
-            formatedServerSettings.compressionType                                = CompressionType_Lz4;
+        else if(settings->value("compression")=="zstd")
+            formatedServerSettings.compressionType                                = CompressionType_Zstandard;
         else
-            formatedServerSettings.compressionType                                = CompressionType_Zlib;
+            formatedServerSettings.compressionType                                = CompressionType_Zstandard;
 
         //the listen
         formatedServerNormalSettings.server_port			= stringtouint32(settings->value("server-port"));
@@ -786,14 +784,8 @@ void MainWindow::load_settings()
         case CompressionType_None:
             ui->compression->setCurrentIndex(0);
         break;
-        case CompressionType_Xz:
-            ui->compression->setCurrentIndex(2);
-        break;
-        case CompressionType_Lz4:
-            ui->compression->setCurrentIndex(3);
-        break;
         default:
-        case CompressionType_Zlib:
+        case CompressionType_Zstandard:
             ui->compression->setCurrentIndex(1);
         break;
     }
@@ -1107,13 +1099,7 @@ void MainWindow::send_settings()
         break;
         default:
         case 1:
-        formatedServerSettings.compressionType=CatchChallenger::CompressionType_Zlib;
-        break;
-        case 2:
-        formatedServerSettings.compressionType=CatchChallenger::CompressionType_Xz;
-        break;
-        case 3:
-        formatedServerSettings.compressionType=CatchChallenger::CompressionType_Lz4;
+        formatedServerSettings.compressionType=CatchChallenger::CompressionType_Zstandard;
         break;
     }
     formatedServerSettings.compressionLevel                     = ui->compressionLevel->value();
@@ -1659,13 +1645,7 @@ void MainWindow::on_compression_currentIndexChanged(int index)
         break;
         default:
         case 1:
-        settings->setValue("compression","zlib");
-        break;
-        case 2:
-        settings->setValue("compression","xz");
-        break;
-        case 3:
-        settings->setValue("compression","lz4");
+        settings->setValue("compression","zstd");
         break;
     }
 }

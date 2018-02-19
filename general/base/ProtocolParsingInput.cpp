@@ -7,7 +7,7 @@
 #include <cstring>
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-#include "lz4/lz4.h"
+#include "zstd.h"
 #endif
 
 using namespace CatchChallenger;
@@ -674,15 +674,9 @@ int32_t ProtocolParsing::computeCompression(const char* const source, char* cons
             abort();
             return -1;
         break;
-        case CompressionType::Zlib:
+        case CompressionType::Zstandard:
         default:
-            return ProtocolParsing::compressZlib(source,sourceSize,dest,maxDecompressedSize);
-        break;
-        case CompressionType::Xz:
-            return ProtocolParsing::compressXz(source,sourceSize,dest,maxDecompressedSize);
-        break;
-        case CompressionType::Lz4:
-            return LZ4_compress_fast(source,dest,sourceSize,maxDecompressedSize,ProtocolParsing::compressionLevel);
+            return ProtocolParsing::compressZstandard(source,sourceSize,dest,maxDecompressedSize);
         break;
     }
 }

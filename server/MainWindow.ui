@@ -43,7 +43,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="starting">
        <attribute name="title">
@@ -627,17 +627,7 @@
           </item>
           <item>
            <property name="text">
-            <string>Zlib (Few cpu, few compression)</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Xz (Lot of cpu, lot of compression)</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Lz4 (Very few cpu, very few compression)</string>
+            <string>Zstandard (few cpu)</string>
            </property>
           </item>
          </widget>

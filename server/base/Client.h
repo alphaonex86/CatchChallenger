@@ -132,9 +132,7 @@ public:
     /// \todo group all reply in one
     static unsigned char protocolReplyCompressionNone[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    static unsigned char protocolReplyCompresssionZlib[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static unsigned char protocolReplyCompressionXz[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    static unsigned char protocolReplyCompressionLz4[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    static unsigned char protocolReplyCompresssionZstandard[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     #endif
     static std::vector<Client *> stat_client_list;
     static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
@@ -146,9 +144,7 @@ public:
     static uint16_t protocolMessageLogicalGroupAndServerListPosPlayerNumber;
     #else
     static unsigned char protocolReplyCompressionNone[7];
-    static unsigned char protocolReplyCompresssionZlib[7];
-    static unsigned char protocolReplyCompressionXz[7];
-    static unsigned char protocolReplyCompressionLz4[7];
+    static unsigned char protocolReplyCompresssionZstandard[7];
     #endif
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

@@ -237,19 +237,12 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                         #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionNone),sizeof(Client::protocolReplyCompressionNone));
                     break;
-                    case CompressionType_Zlib:
-                        *(Client::protocolReplyCompresssionZlib+1)=queryNumber;
+                    case CompressionType_Zstandard:
+                        *(Client::protocolReplyCompresssionZstandard+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                        memcpy(Client::protocolReplyCompresssionZlib+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        memcpy(Client::protocolReplyCompresssionZstandard+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
-                        internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompresssionZlib),sizeof(Client::protocolReplyCompresssionZlib));
-                    break;
-                    case CompressionType_Xz:
-                        *(Client::protocolReplyCompressionXz+1)=queryNumber;
-                        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-                        memcpy(Client::protocolReplyCompressionXz+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        #endif
-                        internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionXz),sizeof(Client::protocolReplyCompressionXz));
+                        internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompresssionZstandard),sizeof(Client::protocolReplyCompresssionZstandard));
                     break;
                     default:
                         errorOutput("Compression selected wrong");

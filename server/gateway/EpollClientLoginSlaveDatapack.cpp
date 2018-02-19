@@ -485,12 +485,8 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
             EpollClientLoginSlave::compressedFilesBufferCount++;
             switch(ProtocolParsing::compressionTypeServer)
             {
-                case ProtocolParsing::CompressionType::Xz:
-                if(EpollClientLoginSlave::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_XZ_COMPRESSEDFILEPURGE_KB*1024 || EpollClientLoginSlave::compressedFilesBufferCount>=255)
-                    sendCompressedFileContent();
-                break;
                 default:
-                case ProtocolParsing::CompressionType::Zlib:
+                case ProtocolParsing::CompressionType::Zstandard:
                 if(EpollClientLoginSlave::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024 || EpollClientLoginSlave::compressedFilesBufferCount>=255)
                     sendCompressedFileContent();
                 break;
