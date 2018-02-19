@@ -78,14 +78,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     case 0x04:
                         ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
                     break;
-                    case 0x05:
-                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zlib;
-                    break;
-                    case 0x06:
-                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Xz;
-                    break;
-                    case 0x07:
-                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Lz4;
+                    case 0x08:
+                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zstandard;
                     break;
                     default:
                         newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("compression type wrong with main ident: %1 and queryNumber: %2, type: query_type_protocol").arg(packetCode).arg(queryNumber));

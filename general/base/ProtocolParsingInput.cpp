@@ -651,15 +651,9 @@ int32_t ProtocolParsing::computeDecompression(const char* const source, char* co
             abort();
             return -1;
         break;
-        case CompressionType::Zlib:
+        case CompressionType::Zstandard:
         default:
-            return ProtocolParsing::decompressZlib(source,sourceSize,dest,maxDecompressedSize);
-        break;
-        case CompressionType::Xz:
-            return ProtocolParsing::decompressXz(source,sourceSize,dest,maxDecompressedSize);
-        break;
-        case CompressionType::Lz4:
-            return LZ4_decompress_safe(source,dest,sourceSize,maxDecompressedSize);
+            return ProtocolParsing::decompressZstandard(source,sourceSize,dest,maxDecompressedSize);
         break;
     }
 }
