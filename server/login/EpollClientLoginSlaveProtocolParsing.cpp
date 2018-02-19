@@ -98,20 +98,10 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                         memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionNone),sizeof(EpollClientLoginSlave::protocolReplyCompressionNone));
                     break;
-                    case ProtocolParsing::CompressionType::Zlib:
-                        *(EpollClientLoginSlave::protocolReplyCompresssionZlib+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompresssionZlib+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompresssionZlib),sizeof(EpollClientLoginSlave::protocolReplyCompresssionZlib));
-                    break;
-                    case ProtocolParsing::CompressionType::Xz:
-                        *(EpollClientLoginSlave::protocolReplyCompressionXz+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompressionXz+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionXz),sizeof(EpollClientLoginSlave::protocolReplyCompressionXz));
-                    break;
-                    case ProtocolParsing::CompressionType::Lz4:
-                        *(EpollClientLoginSlave::protocolReplyCompressionLz4+1)=queryNumber;
-                        memcpy(EpollClientLoginSlave::protocolReplyCompressionLz4+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionLz4),sizeof(EpollClientLoginSlave::protocolReplyCompressionLz4));
+                    case ProtocolParsing::CompressionType::Zstandard:
+                        *(EpollClientLoginSlave::protocolReplyCompresssionZstandard+1)=queryNumber;
+                        memcpy(EpollClientLoginSlave::protocolReplyCompresssionZstandard+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                        internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompresssionZstandard),sizeof(EpollClientLoginSlave::protocolReplyCompresssionZstandard));
                     break;
                     default:
                         parseNetworkReadError("Compression selected wrong");

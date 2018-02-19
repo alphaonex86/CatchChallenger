@@ -14,7 +14,7 @@ DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 DEFINES += CATCHCHALLENGER_CLASS_GATEWAY
 
 LIBS += -lssl -lcrypto
-LIBS    += -llzma -lz
+LIBS    += -lzstd
 LIBS += -lcurl
 
 CONFIG += c++11
@@ -62,7 +62,6 @@ SOURCES += \
     ../../general/base/CommonSettingsCommon.cpp \
     ../../general/base/CommonSettingsServer.cpp \
     EpollClientLoginSlaveDatapack.cpp \
-    ../../general/base/lz4/lz4.c \
     ../../general/base/cpp11addition.cpp \
     ../../general/base/cpp11additionstringtointc.cpp \
     ../../general/base/cpp11additionstringtointcpp.cpp \
@@ -102,7 +101,6 @@ HEADERS += \
     ../../client/base/qt-tar-xz/xz_stream.h \
     ../../general/base/CommonSettingsCommon.h \
     ../../general/base/CommonSettingsServer.h \
-    ../../general/base/lz4/lz4.h \
     FacilityLibGateway.h \
     ../base/TinyXMLSettings.h
 
