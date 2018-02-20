@@ -205,13 +205,13 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                             newItem->setText(newItem->text()+"\nIf zone owned by clan");
                                         break;
                                         case CatchChallenger::MapConditionType::MapConditionType_FightBot:
-                                            newItem->setText(newItem->text()+"\nIf win fight "+QString::number(condition.condition.value));
+                                            newItem->setText(newItem->text()+"\nIf win fight "+QString::number(condition.condition.data.fightBot));
                                         break;
                                         case CatchChallenger::MapConditionType::MapConditionType_Item:
-                                            newItem->setText(newItem->text()+"\nIf have item "+QString::number(condition.condition.value));
+                                            newItem->setText(newItem->text()+"\nIf have item "+QString::number(condition.condition.data.item));
                                         break;
                                         case CatchChallenger::MapConditionType::MapConditionType_Quest:
-                                            newItem->setText(newItem->text()+"\nIf finish the quest "+QString::number(condition.condition.value));
+                                            newItem->setText(newItem->text()+"\nIf finish the quest "+QString::number(condition.condition.data.quest));
                                         break;
                                         default:
                                         break;

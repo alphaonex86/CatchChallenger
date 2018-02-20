@@ -186,22 +186,22 @@ bool ActionsAction::mapConditionIsRepected(const CatchChallenger::Api_protocol *
         case CatchChallenger::MapConditionType_Clan://not do for now
         break;
         case CatchChallenger::MapConditionType_FightBot:
-            if(!haveBeatBot(api,condition.value))
+            if(!haveBeatBot(api,condition.data.fightBot))
                 return false;
         break;
         case CatchChallenger::MapConditionType_Item:
         {
             const CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations_ro();
-            if(playerInformations.items.find(condition.value)==playerInformations.items.cend())
+            if(playerInformations.items.find(condition.data.item)==playerInformations.items.cend())
                 return false;
         }
         break;
         case CatchChallenger::MapConditionType_Quest:
         {
             const CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations_ro();
-             if(playerInformations.quests.find(condition.value)==playerInformations.quests.cend())
+             if(playerInformations.quests.find(condition.data.quest)==playerInformations.quests.cend())
                 return false;
-            if(!playerInformations.quests.at(condition.value).finish_one_time)
+            if(!playerInformations.quests.at(condition.data.quest).finish_one_time)
                 return false;
         }
         break;
@@ -973,7 +973,7 @@ void ActionsAction::remove_to_inventory(CatchChallenger::Api_protocol *api,const
     }
 }
 
-uint32_t ActionsAction::itemQuantity(const CatchChallenger::Api_protocol *api,const uint32_t &itemId)
+uint32_t ActionsAction::itemQuantity(const CatchChallenger::Api_protocol *api, const uint16_t &itemId)
 {
     const CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations_ro();
     if(player.items.find(itemId)!=player.items.cend())
@@ -1079,7 +1079,7 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
             while(index<monsterInformations.evolutions.size())
             {
                 const CatchChallenger::Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
-                if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.level==monster->level)
+                if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.data.level==monster->level)
                 {
                     const uint8_t &monsterEvolutionPostion=player.fightEngine->getPlayerMonsterPosition(monster);
                     player.fightEngine->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it

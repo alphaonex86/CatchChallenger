@@ -1598,14 +1598,14 @@ void BaseWindow::on_monsterListMoveDown_clicked()
     QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
         return;
-    const uint8_t &currentRow=static_cast<uint8_t>(ui->monsterList->row(selectedMonsters.first()));
+    const int &currentRow=ui->monsterList->row(selectedMonsters.first());
     if(currentRow<0)
         return;
     if(currentRow>=(ui->monsterList->count()-1))
         return;
-    if(!fightEngine.moveDownMonster(currentRow))
+    if(!fightEngine.moveDownMonster(static_cast<uint8_t>(currentRow)))
         return;
-    client->monsterMoveDown(currentRow+1);
+    client->monsterMoveDown(static_cast<uint8_t>(currentRow+1));
     QListWidgetItem * item=ui->monsterList->takeItem(currentRow);
     ui->monsterList->insertItem(currentRow+1,item);
     ui->monsterList->item(currentRow)->setSelected(false);
