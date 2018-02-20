@@ -190,13 +190,13 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                                                         attrs.push_back("label=\"Need be owner clan\"");
                                                     break;
                                                     case CatchChallenger::MapConditionType_Quest:
-                                                        attrs.push_back("label=\"Quest "+std::to_string(condition.value)+"\"");
+                                                        attrs.push_back("label=\"Quest "+std::to_string(condition.data.quest)+"\"");
                                                     break;
                                                     case CatchChallenger::MapConditionType_Item:
-                                                        attrs.push_back("label=\"Item "+std::to_string(condition.value)+"\"");
+                                                        attrs.push_back("label=\"Item "+std::to_string(condition.data.item)+"\"");
                                                     break;
                                                     case CatchChallenger::MapConditionType_FightBot:
-                                                        attrs.push_back("label=\"Fight "+std::to_string(condition.value)+"\"");
+                                                        attrs.push_back("label=\"Fight "+std::to_string(condition.data.fightBot)+"\"");
                                                     break;
                                                     default:
                                                     break;
@@ -371,13 +371,13 @@ std::string BotTargetList::graphLocalMap()
                                         attrs.push_back("label=\"Need be owner clan\"");
                                     break;
                                     case CatchChallenger::MapConditionType_Quest:
-                                        attrs.push_back("label=\"Quest "+std::to_string(condition.value)+"\"");
+                                        attrs.push_back("label=\"Quest "+std::to_string(condition.data.quest)+"\"");
                                     break;
                                     case CatchChallenger::MapConditionType_Item:
-                                        attrs.push_back("label=\"Item "+std::to_string(condition.value)+"\"");
+                                        attrs.push_back("label=\"Item "+std::to_string(condition.data.item)+"\"");
                                     break;
                                     case CatchChallenger::MapConditionType_FightBot:
-                                        attrs.push_back("label=\"Fight "+std::to_string(condition.value)+"\"");
+                                        attrs.push_back("label=\"Fight "+std::to_string(condition.data.fightBot)+"\"");
                                     break;
                                     default:
                                     break;

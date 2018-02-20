@@ -56,10 +56,10 @@ public:
     static bool haveNextStepQuestRequirements(const CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest);
     static bool haveStartQuestRequirement(const CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest);
     static bool startQuest(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest);
-    static std::vector<std::pair<uint32_t,std::string> > getQuestList(CatchChallenger::Api_protocol *api, const uint16_t &botId);
+    static std::vector<std::pair<uint16_t,std::string> > getQuestList(CatchChallenger::Api_protocol *api, const uint16_t &botId);
     static bool nextStepQuest(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest);
     static void appendReputationPoint(CatchChallenger::Api_protocol *api,const QString &type,const int32_t &point);
-    static uint32_t itemQuantity(const CatchChallenger::Api_protocol *api, const uint32_t &itemId);
+    static uint32_t itemQuantity(const CatchChallenger::Api_protocol *api, const uint16_t &itemId);
     static bool haveReputationRequirements(const CatchChallenger::Api_protocol *api,const QList<CatchChallenger::ReputationRequirements> &reputationList);
     static bool haveReputationRequirements(const CatchChallenger::Api_protocol *api, const std::vector<CatchChallenger::ReputationRequirements> &reputationList);
     static void appendReputationRewards(CatchChallenger::Api_protocol *api,const QList<CatchChallenger::ReputationRewards> &reputationList);
