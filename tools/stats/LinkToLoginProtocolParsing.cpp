@@ -512,7 +512,7 @@ bool LinkToLogin::parseReplyData(const uint8_t &mainCodeType,const uint8_t &quer
             }
             //Protocol initialization
             const uint8_t &returnCode=data[0x00];
-            if(returnCode>=0x04 && returnCode<=0x06)
+            if(returnCode==0x08)
             {
                 if(size!=(1+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT))
                 {
@@ -521,10 +521,7 @@ bool LinkToLogin::parseReplyData(const uint8_t &mainCodeType,const uint8_t &quer
                 }
                 switch(returnCode)
                 {
-                    case 0x04:
-                    case 0x05:
-                    case 0x06:
-                    case 0x07:
+                    case 0x08:
                     break;
                     default:
                         std::cerr << "compression type wrong with main ident: 1 and queryNumber: %2, type: query_type_protocol" << queryNumber << std::endl;

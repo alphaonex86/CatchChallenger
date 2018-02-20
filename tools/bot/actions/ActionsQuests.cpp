@@ -122,7 +122,7 @@ bool ActionsAction::botHaveQuest(const CatchChallenger::Api_protocol *api,const 
     qDebug() << "check bot quest for: " << botId;
     #endif
     //do the not started quest here
-    QList<uint32_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
+    QList<uint16_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
     int index=0;
     while(index<botQuests.size())
     {
@@ -387,14 +387,14 @@ bool ActionsAction::startQuest(CatchChallenger::Api_protocol *api,const CatchCha
     return true;
 }
 
-std::vector<std::pair<uint32_t,std::string> > ActionsAction::getQuestList(CatchChallenger::Api_protocol *api,const uint16_t &botId)
+std::vector<std::pair<uint16_t, std::string> > ActionsAction::getQuestList(CatchChallenger::Api_protocol *api,const uint16_t &botId)
 {
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
     const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
-    std::vector<std::pair<uint32_t,std::string> > entryList;
-    std::pair<uint32_t,std::string> oneEntry;
+    std::vector<std::pair<uint16_t,std::string> > entryList;
+    std::pair<uint16_t,std::string> oneEntry;
     //do the not started quest here
-    QList<uint32_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
+    QList<uint16_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
     int index=0;
     while(index<botQuests.size())
     {
