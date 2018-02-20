@@ -789,7 +789,7 @@ void BotTargetList::updatePlayerStep()
                                         while(index<monsterInformations.evolutions.size())
                                         {
                                             const CatchChallenger::Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
-                                            if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.level==monster->level)
+                                            if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.data.level==monster->level)
                                             {
                                                 const uint8_t &monsterEvolutionPostion=player.fightEngine->getPlayerMonsterPosition(monster);
                                                 player.fightEngine->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
@@ -821,7 +821,7 @@ void BotTargetList::updatePlayerStep()
                                 while(index<monsterInformations.evolutions.size())
                                 {
                                     const CatchChallenger::Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
-                                    if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.level==monster->level)
+                                    if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.data.level==monster->level)
                                     {
                                         const uint8_t &monsterEvolutionPostion=player.fightEngine->getPlayerMonsterPosition(monster);
                                         player.fightEngine->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it

@@ -110,7 +110,9 @@ bool MapServerMini::preload_step2()
 
     CatchChallenger::MapCondition mapConditionEmpty;
     mapConditionEmpty.type=CatchChallenger::MapConditionType_None;
-    mapConditionEmpty.value=0;
+    mapConditionEmpty.data.fightBot=0;
+    mapConditionEmpty.data.item=0;
+    mapConditionEmpty.data.quest=0;
     //link the internal block
     {
         int y=0;
@@ -278,8 +280,27 @@ MapServerMini::BlockObject::LinkCondition &MapServerMini::searchConditionOrCreat
     while(index<linkInformationFrom.linkConditions.size())
     {
         BlockObject::LinkCondition &linkCondition=linkInformationFrom.linkConditions[index];
-        if(linkCondition.condition.type==condition.type && linkCondition.condition.value==condition.value)
+        switch(linkCondition.condition.type)
+        {
+            case CatchChallenger::MapConditionType_None:
             return linkCondition;
+            case CatchChallenger::MapConditionType_Clan://not do for now
+            return linkCondition;
+            case CatchChallenger::MapConditionType_FightBot:
+                if(linkCondition.condition.data.fightBot==condition.data.fightBot)
+                    return linkCondition;
+            break;
+            case CatchChallenger::MapConditionType_Item:
+                if(linkCondition.condition.data.item==condition.data.item)
+                    return linkCondition;
+            break;
+            case CatchChallenger::MapConditionType_Quest:
+                 if(linkCondition.condition.data.quest==condition.data.quest)
+                    return linkCondition;
+            break;
+            default:
+            break;
+        }
         index++;
     }
     BlockObject::LinkCondition newLinkCondition;
@@ -312,7 +333,9 @@ bool MapServerMini::preload_step2b()
 
     CatchChallenger::MapCondition mapConditionEmpty;
     mapConditionEmpty.type=CatchChallenger::MapConditionType_None;
-    mapConditionEmpty.value=0;
+    mapConditionEmpty.data.fightBot=0;
+    mapConditionEmpty.data.item=0;
+    mapConditionEmpty.data.quest=0;
 
     //connect the right border
     if(this->border.right.map!=NULL)
