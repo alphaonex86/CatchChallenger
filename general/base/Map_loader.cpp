@@ -11,10 +11,11 @@
 #include <iostream>
 #include <unordered_map>
 #include <map>
+#include <zlib.h>
 
 using namespace CatchChallenger;
 
-std::unordered_map<std::string/*file*/, std::unordered_map<uint32_t/*id*/,CATCHCHALLENGER_XMLELEMENT *> > Map_loader::teleportConditionsUnparsed;
+std::unordered_map<std::string/*file*/, std::unordered_map<uint16_t/*id*/,CATCHCHALLENGER_XMLELEMENT *> > Map_loader::teleportConditionsUnparsed;
 //std::regex e("[^A-Za-z0-9+/=]+",std::regex::ECMAScript|std::regex::optimize);->very slow, 1000x more slow than dropPrefixAndSuffixLowerThen33(
 
 /// \todo put at walkable the tp on push
@@ -35,6 +36,93 @@ Map_loader::Map_loader()
 
 Map_loader::~Map_loader()
 {
+}
+
+static void logZlibError(int error)
+{
+    switch (error)
+    {
+    case Z_MEM_ERROR:
+        std::cerr << "Out of memory while (de)compressing data!" << std::endl;
+        break;
+    case Z_VERSION_ERROR:
+        std::cerr << "Incompatible zlib version!" << std::endl;
+        break;
+    case Z_NEED_DICT:
+    case Z_DATA_ERROR:
+        std::cerr << "Incorrect zlib compressed data!" << std::endl;
+        break;
+    default:
+    {
+        std::cerr << "Unknown error while (de)compressing data!" << std::endl;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        abort();
+        #endif
+    }
+    }
+}
+
+int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
+{
+    z_stream strm;
+
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    strm.next_in = (Bytef *) input;
+    strm.avail_in = intputSize;
+    strm.next_out = (Bytef *) output;
+    strm.avail_out = maxOutputSize;
+
+    int ret = inflateInit2(&strm, 15 + 32);
+
+    if (ret != Z_OK) {
+    logZlibError(ret);
+    return -1;
+    }
+
+    do {
+        ret=inflate(&strm, Z_SYNC_FLUSH);
+
+        switch(ret)
+        {
+            case Z_NEED_DICT:
+            case Z_STREAM_ERROR:
+            ret = Z_DATA_ERROR;
+            case Z_DATA_ERROR:
+            case Z_MEM_ERROR:
+            inflateEnd(&strm);
+            logZlibError(ret);
+            return -1;
+        }
+
+        if (ret != Z_OK && ret != Z_STREAM_END)
+        {
+            unsigned char * const val=reinterpret_cast<unsigned char * const>(output);
+            if(val>strm.next_out)
+            {
+                logZlibError(Z_STREAM_ERROR);
+                return -1;
+            }
+            if(static_cast<uint32_t>(strm.next_out-val)>static_cast<uint32_t>(maxOutputSize))
+            {
+                logZlibError(Z_STREAM_ERROR);
+                return -1;
+            }
+            logZlibError(ret);
+            return -1;
+        }
+    }
+    while(ret!=Z_STREAM_END);
+
+    if(strm.avail_in!=0)
+    {
+        logZlibError(Z_DATA_ERROR);
+        return -1;
+    }
+    inflateEnd(&strm);
+
+    return maxOutputSize-strm.avail_out;
 }
 
 void Map_loader::removeMapLayer(const ParsedLayer &parsed_layer)
@@ -600,7 +688,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 {
                     std::vector<char> dataRaw;
                     dataRaw.resize(map_to_send_temp.height*map_to_send_temp.width*4);
-                    const int32_t &decompressedSize=ProtocolParsing::decompressZlib(
+                    const int32_t &decompressedSize=decompressZlib(
                                 compressedData.data(),static_cast<uint32_t>(compressedData.size()),
                                 dataRaw.data(),static_cast<uint32_t>(dataRaw.size())
                                                                     );
@@ -1448,7 +1536,7 @@ std::string Map_loader::resolvRelativeMap(const std::string &file,const std::str
     return link;
 }
 
-CATCHCHALLENGER_XMLELEMENT *Map_loader::getXmlCondition(const std::string &fileName,const std::string &file,const uint32_t &conditionId)
+CATCHCHALLENGER_XMLELEMENT *Map_loader::getXmlCondition(const std::string &fileName,const std::string &file,const uint16_t &conditionId)
 {
     (void)fileName;
     #ifdef ONLYMAPRENDER
@@ -1501,7 +1589,7 @@ CATCHCHALLENGER_XMLELEMENT *Map_loader::getXmlCondition(const std::string &fileN
                 std::cerr << "\"condition\" balise have not type attribute (" << file << " at " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
             else
             {
-                const uint32_t &id=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_id)),&ok);
+                const uint16_t &id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(XMLCACHEDSTRING_id)),&ok);
                 if(!ok)
                     std::cerr << "\"condition\" balise have id is not a number (" << file << " at " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                 else

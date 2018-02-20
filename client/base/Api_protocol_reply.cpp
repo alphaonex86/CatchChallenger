@@ -71,7 +71,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             }
             uint8_t returnCode;
             in >> returnCode;
-            if(returnCode>=0x04 && returnCode<=0x06)
+            if(returnCode==0x08)
             {
                 switch(returnCode)
                 {
