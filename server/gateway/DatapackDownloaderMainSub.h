@@ -3,7 +3,6 @@
 
 #include "../../general/base/GeneralVariable.h"
 #include "../../client/base/DatapackChecksum.h"
-#include "../../client/base/qt-tar-xz/QXzDecode.h"
 
 #include <string>
 #include <string>
@@ -38,8 +37,8 @@ public:
     void test_mirror_sub();
     void httpErrorEventMain();
     void httpErrorEventSub();
-    void decodedIsFinishMain(QXzDecode &xzDecodeMain);
-    void decodedIsFinishSub(QXzDecode &xzDecodeSub);
+    void decodedIsFinishMain(const std::vector<char> &rawData);
+    void decodedIsFinishSub(const std::vector<char> &rawData);
     bool mirrorTryNextMain();
     bool mirrorTryNextSub();
     void httpFinishedForDatapackListMain(const std::vector<char> data=std::vector<char>());
@@ -62,8 +61,8 @@ public:
     static std::vector<std::string> httpDatapackMirrorServerList;
 private:
     static std::regex regex_DATAPACK_FILE_REGEX;
-    bool datapackTarXzMain;
-    bool datapackTarXzSub;
+    bool datapackTarMain;
+    bool datapackTarSub;
     CatchChallenger::DatapackChecksum datapackChecksum;
     unsigned int index_mirror_main;
     unsigned int index_mirror_sub;

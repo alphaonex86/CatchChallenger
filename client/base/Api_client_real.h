@@ -25,7 +25,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "ClientStructures.h"
 #include "Api_protocol.h"
-#include "qt-tar-xz/QXzDecodeThread.h"
+#include "qt-tar-compressed/QZstdDecodeThread.h"
 
 namespace CatchChallenger {
 class Api_client_real : public Api_protocol
@@ -78,12 +78,12 @@ protected:
 private:
     static QRegularExpression regex_DATAPACK_FILE_REGEX;
     /// \todo group into one thread by change for queue
-    QXzDecodeThread xzDecodeThreadBase;
-    QXzDecodeThread xzDecodeThreadMain;
-    QXzDecodeThread xzDecodeThreadSub;
-    bool datapackTarXzBase;
-    bool datapackTarXzMain;
-    bool datapackTarXzSub;
+    QZstdDecodeThread zstdDecodeThreadBase;
+    QZstdDecodeThread zstdDecodeThreadMain;
+    QZstdDecodeThread zstdDecodeThreadSub;
+    bool datapackTarBase;
+    bool datapackTarMain;
+    bool datapackTarSub;
     CatchChallenger::DatapackChecksum datapackChecksum;
     QString host;
     uint16_t port;
