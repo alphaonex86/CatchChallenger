@@ -12,6 +12,16 @@
 #include <QObject>
 #endif
 
+#ifdef CATCHCHALLENGER_CLASS_GATEWAY
+#error This kind don't need reply on that's
+#endif
+#ifdef CATCHCHALLENGER_CLASS_LOGIN
+#error This kind don't need reply on that's
+#endif
+#ifdef CATCHCHALLENGER_CLASS_MASTER
+#error This kind don't need reply on that's
+#endif
+
 namespace CatchChallenger {
 class Map_loader
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -37,7 +47,7 @@ public:
     static std::unordered_map<std::string/*file*/, std::unordered_map<uint16_t/*id*/,CATCHCHALLENGER_XMLELEMENT *> > teleportConditionsUnparsed;
 
     //for tiled
-    #ifndef CATCHCHALLENGER_CLASS_GATEWAY
+    #ifdef TILED_ZLIB
     static int32_t decompressZlib(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
     #endif
 

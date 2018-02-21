@@ -8,8 +8,11 @@ QMAKE_CFLAGS+="-Wno-missing-braces"
 
 QT       -= core
 
-LIBS += -lz -lzstd
+LIBS += -lzstd
 LIBS += -lcrypto
+
+DEFINES += TILED_ZLIB
+LIBS += -lz
 
 TEMPLATE = app
 

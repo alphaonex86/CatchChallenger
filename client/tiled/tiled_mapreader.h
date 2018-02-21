@@ -174,9 +174,7 @@ public:
     static const QString text_opacity;
     static const QString text_visible;
     static const QString text_compression;
-    static const QString text_csv;
-    static const QString text_gzip;
-    static const QString text_zlib;
+    static const QString text_zstd;
     static const QString text_gid;
     static const QString text_color;
     static const QString text_object;

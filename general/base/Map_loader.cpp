@@ -11,7 +11,10 @@
 #include <iostream>
 #include <unordered_map>
 #include <map>
+#ifdef TILED_ZLIB
 #include <zlib.h>
+#endif
+#include <zstd.h>      // presumes zstd library is installed
 
 using namespace CatchChallenger;
 
@@ -38,6 +41,7 @@ Map_loader::~Map_loader()
 {
 }
 
+#ifdef TILED_ZLIB
 static void logZlibError(int error)
 {
     switch (error)
@@ -124,6 +128,7 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
 
     return maxOutputSize-strm.avail_out;
 }
+#endif
 
 void Map_loader::removeMapLayer(const ParsedLayer &parsed_layer)
 {
@@ -674,9 +679,19 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 error=std::string("only encoding base64 is supported, file: ")+file;
                 return false;
             }
-            else if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(data->Attribute(XMLCACHEDSTRING_compression)),XMLCACHEDSTRING_zlib))
+            else if(
+                    #ifdef TILED_ZLIB
+                    !CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(data->Attribute(XMLCACHEDSTRING_compression)),XMLCACHEDSTRING_zlib)
+                    &&
+                    #endif
+                    !CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(data->Attribute(XMLCACHEDSTRING_compression)),XMLCACHEDSTRING_zstd)
+                    )
             {
-                error=std::string("Only compression zlib is supported, file: ")+file;
+                #ifdef TILED_ZLIB
+                error=std::string("Only compression zlib or zstd is supported, file: ")+file;
+                #else
+                error=std::string("Only compression zstd is supported, file: ")+file;
+                #endif
                 return false;
             }
             else
@@ -688,10 +703,23 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 {
                     std::vector<char> dataRaw;
                     dataRaw.resize(map_to_send_temp.height*map_to_send_temp.width*4);
-                    const int32_t &decompressedSize=decompressZlib(
+                    int32_t decompressedSize=0;
+                    #ifdef TILED_ZLIB
+                    if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(data->Attribute(XMLCACHEDSTRING_compression)),XMLCACHEDSTRING_zlib))
+                        decompressedSize=decompressZlib(
                                 compressedData.data(),static_cast<uint32_t>(compressedData.size()),
                                 dataRaw.data(),static_cast<uint32_t>(dataRaw.size())
-                                                                    );
+                                    );
+                    else
+                    #endif
+                        {
+                            decompressedSize=ZSTD_decompress(dataRaw.data(),static_cast<uint32_t>(dataRaw.size()), compressedData.data(),static_cast<uint32_t>(compressedData.size()));
+                            if (ZSTD_isError(decompressedSize)) {
+                                std::cerr << "error decoding: " << ZSTD_getErrorName(decompressedSize) << std::endl;
+                                decompressedSize=0;
+                            }
+                        }
+
                     if((uint32_t)decompressedSize!=map_to_send_temp.height*map_to_send_temp.width*4)
                     {
                         error=std::string("map binary size (")+std::to_string(dataRaw.size())+") != "+std::to_string(map_to_send_temp.height)+"x"+std::to_string(map_to_send_temp.width)+"x4";

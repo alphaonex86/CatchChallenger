@@ -600,14 +600,14 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
 
     if(events & EPOLLIN)
     {
-        PQconsumeInput(conn);
+        const int PQconsumeInputVar=PQconsumeInput(conn);
         PGnotify *notify;
         while((notify = PQnotifies(conn)) != NULL)
         {
             std::cerr << "ASYNC NOTIFY of '" << notify->relname << "' received from backend PID " << notify->be_pid << std::endl;
             PQfreemem(notify);
         }
-        if(PQisBusy(conn)==0)
+        if(/*PQisBusy(conn)==0, produce blocking, when server is unbusy this this never call*/true)
         {
             if(result!=NULL)
                 clear();
@@ -673,6 +673,8 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                 }
             }
         }
+        else
+            std::cout << "PostgreSQL events with EPOLLIN: PQisBusy: " << std::to_string(PQconsumeInputVar) << std::endl;
     }
     if(events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
     {
