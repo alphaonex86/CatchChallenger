@@ -17,7 +17,7 @@ using namespace CatchChallenger;
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
-#include "qt-tar-xz/QTarDecode.h"
+#include "qt-tar-compressed/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 
 //need host + port here to have datapack base
@@ -35,9 +35,9 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     qnamQueueCount3(0),
     qnamQueueCount4(0)
 {
-    datapackTarXzBase=false;
-    datapackTarXzMain=false;
-    datapackTarXzSub=false;
+    datapackTarBase=false;
+    datapackTarMain=false;
+    datapackTarSub=false;
     index_mirror_base=0;
     index_mirror_main=0;
     index_mirror_sub=0;
@@ -56,9 +56,9 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneBase,this,&Api_client_real::datapackChecksumDoneBase);
     connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneMain,this,&Api_client_real::datapackChecksumDoneMain);
     connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneSub,this,&Api_client_real::datapackChecksumDoneSub);
-    connect(&xzDecodeThreadBase,&QXzDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishBase);
-    connect(&xzDecodeThreadMain,&QXzDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishMain);
-    connect(&xzDecodeThreadSub,&QXzDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishSub);
+    connect(&zstdDecodeThreadBase,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishBase);
+    connect(&zstdDecodeThreadMain,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishMain);
+    connect(&zstdDecodeThreadSub,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishSub);
     disconnected();
     //dataClear();do into disconnected()
 }

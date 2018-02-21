@@ -77,11 +77,7 @@ SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/render/PreparedLayer.cpp \
     $$PWD/render/MapMark.cpp \
     $$PWD/interface/PathFinding.cpp \
-    $$PWD/FacilityLibClient.cpp \
-    $$PWD/qt-tar-xz/xz_crc32.c \
-    $$PWD/qt-tar-xz/xz_dec_bcj.c \
-    $$PWD/qt-tar-xz/xz_dec_lzma2.c \
-    $$PWD/qt-tar-xz/xz_dec_stream.c
+    $$PWD/FacilityLibClient.cpp
 
 HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/DatapackChecksum.h \
@@ -129,11 +125,6 @@ HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/render/MapMark.h \
     $$PWD/interface/PathFinding.h \
     $$PWD/FacilityLibClient.h \
-    $$PWD/qt-tar-xz/xz_config.h \
-    $$PWD/qt-tar-xz/xz_lzma2.h \
-    $$PWD/qt-tar-xz/xz_private.h \
-    $$PWD/qt-tar-xz/xz_stream.h \
-    $$PWD/qt-tar-xz/xz.h \
     $$PWD/ClientVariableAudio.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \

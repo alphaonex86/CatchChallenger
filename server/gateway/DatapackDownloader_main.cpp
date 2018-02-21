@@ -7,13 +7,14 @@ using namespace CatchChallenger;
 #include <regex>
 #include <thread>
 #include <chrono>
+#include <zstd.h>
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLibGeneral.h"
-#include "../../client/base/qt-tar-xz/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/cpp11addition.h"
+#include "../../client/base/qt-tar-compressed/QTarDecode.h"
 #include "LinkToGameServer.h"
 #include "EpollServerLoginSlave.h"
 #include "FacilityLibGateway.h"
@@ -129,9 +130,9 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
     if(DatapackDownloaderMainSub::httpDatapackMirrorServerList.empty())
     {
         {
-            if(remove((mDatapackMain+"/pack/datapack-main-"+mainDatapackCode+".tar.xz").c_str())!=0 && errno!=ENOENT)
+            if(remove((mDatapackMain+"/pack/datapack-main-"+mainDatapackCode+".tar.zst").c_str())!=0 && errno!=ENOENT)
             {
-                std::cerr << "Unable to remove " << mDatapackMain << "/pack/datapack-main-"+mainDatapackCode+".tar.xz" << std::endl;
+                std::cerr << "Unable to remove " << mDatapackMain << "/pack/datapack-main-"+mainDatapackCode+".tar.zst" << std::endl;
                 abort();
             }
         }
@@ -226,7 +227,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
 
             if(index_mirror_main>=DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
                 index_mirror_main=0;
-            const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_main)+"pack/diff/datapack-main-"+binarytoHexa(hash)+".tar.xz";
+            const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_main)+"pack/diff/datapack-main-"+binarytoHexa(hash)+".tar.zst";
 
             struct MemoryStruct chunk;
             chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
@@ -278,9 +279,9 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
 
 void DatapackDownloaderMainSub::test_mirror_main()
 {
-    if(!datapackTarXzMain)
+    if(!datapackTarMain)
     {
-        const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_main)+"pack/datapack-main-"+mainDatapackCode+".tar.xz";
+        const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_main)+"pack/datapack-main-"+mainDatapackCode+".tar.zst";
 
         struct MemoryStruct chunk;
         chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
@@ -330,7 +331,7 @@ void DatapackDownloaderMainSub::test_mirror_main()
     else
     {
         if(index_mirror_main>=DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
-            /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/main.txt, and only after that's quit */
+            /* here and not above because at last mirror you need try the tar.zst and after the datapack-list/main.txt, and only after that's quit */
             return;
 
         const std::string url=DatapackDownloaderMainSub::httpDatapackMirrorServerList.at(index_mirror_main)+"datapack-list/main-"+mainDatapackCode+".txt";
@@ -382,13 +383,38 @@ void DatapackDownloaderMainSub::test_mirror_main()
     }
 }
 
-void DatapackDownloaderMainSub::decodedIsFinishMain(QXzDecode &xzDecodeMain)
+void DatapackDownloaderMainSub::decodedIsFinishMain(const std::vector<char> &rawData)
 {
-    if(!xzDecodeMain.decode())
+    std::vector<char> mDataToDecode=rawData;
+    std::string mErrorString;
+    {
+        std::vector<char> dataToDecoded;
+        unsigned long long const rSize = ZSTD_getDecompressedSize(mDataToDecode.data(), mDataToDecode.size());
+        if (rSize==ZSTD_CONTENTSIZE_ERROR) {
+            mErrorString="it was not compressed by zstd";
+        } else if (rSize==ZSTD_CONTENTSIZE_UNKNOWN) {
+            mErrorString="original size unknown. Use streaming decompression instead.";
+        } else {
+            dataToDecoded.resize(rSize);
+            size_t const dSize = ZSTD_decompress(dataToDecoded.data(), rSize, mDataToDecode.data(), mDataToDecode.size());
+            if (dSize != rSize)
+                mErrorString=std::string("error decoding: ")+ZSTD_getErrorName(dSize);
+            else
+            {
+                dataToDecoded.resize(dSize);
+                mDataToDecode=dataToDecoded;
+            }
+        }
+    }
+
+    if(!mErrorString.empty())
+    {
+        std::cerr << "mErrorString: " << mErrorString << std::endl;
         test_mirror_main();
+    }
     else
     {
-        const std::vector<char> &decodedData=xzDecodeMain.decodedData();
+        const std::vector<char> &decodedData=mDataToDecode;
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
@@ -439,14 +465,14 @@ void DatapackDownloaderMainSub::decodedIsFinishMain(QXzDecode &xzDecodeMain)
 
 bool DatapackDownloaderMainSub::mirrorTryNextMain()
 {
-    if(datapackTarXzMain==false)
+    if(datapackTarMain==false)
     {
-        datapackTarXzMain=true;
+        datapackTarMain=true;
         test_mirror_main();
     }
     else
     {
-        datapackTarXzMain=false;
+        datapackTarMain=false;
         index_mirror_main++;
         if(index_mirror_main>=DatapackDownloaderMainSub::httpDatapackMirrorServerList.size())
         {
@@ -469,12 +495,11 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
     }
     else
     {
-        if(!datapackTarXzMain)
+        if(!datapackTarMain)
         {
-            std::cerr << "datapack-main-"+mainDatapackCode+".tar.xz size:" << data.size()/1000 << "KB" << std::endl;
-            datapackTarXzMain=true;
-            QXzDecode xzDecodeMain(data,16*1024*1024);
-            decodedIsFinishMain(xzDecodeMain);
+            std::cerr << "datapack-main-"+mainDatapackCode+".tar.zst size:" << data.size()/1000 << "KB" << std::endl;
+            datapackTarMain=true;
+            decodedIsFinishMain(data);
             return;
         }
         else
@@ -767,7 +792,7 @@ void DatapackDownloaderMainSub::sendDatapackContentMain()
     numberOfFileWrittenMain=0;
     numberOfFileWrittenSub=0;
     index_mirror_main=0;
-    datapackTarXzMain=false;
+    datapackTarMain=false;
     wait_datapack_content_main=true;
     FacilityLibGateway::mkpath(mDatapackMain);
     datapackFilesListMain=listDatapackMain(std::string());

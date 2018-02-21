@@ -2,6 +2,8 @@
 #include "GlobalServerData.h"
 #include "DictionaryServer.h"
 
+#include <chrono>
+
 #include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
 #include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"

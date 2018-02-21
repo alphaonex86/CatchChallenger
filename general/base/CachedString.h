@@ -92,6 +92,7 @@
 #define XMLCACHEDSTRING_compression CACHEDSTRING_compression
 #define XMLCACHEDSTRING_base64 CACHEDSTRING_base64
 #define XMLCACHEDSTRING_zlib CACHEDSTRING_zlib
+#define XMLCACHEDSTRING_zstd CACHEDSTRING_zstd
 #define XMLCACHEDSTRING_minLevel CACHEDSTRING_minLevel
 #define XMLCACHEDSTRING_maxLevel CACHEDSTRING_maxLevel
 #define XMLCACHEDSTRING_luck CACHEDSTRING_luck
@@ -458,6 +459,7 @@ public:
     std::string compression;
     std::string base64;
     std::string zlib;
+    std::string zstd;
     std::string minLevel;
     std::string maxLevel;
     std::string luck;

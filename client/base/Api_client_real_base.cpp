@@ -17,7 +17,7 @@ using namespace CatchChallenger;
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLibGeneral.h"
-#include "qt-tar-xz/QTarDecode.h"
+#include "qt-tar-compressed/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 
 //need host + port here to have datapack base
@@ -257,7 +257,7 @@ void Api_client_real::datapackChecksumDoneBase(const std::vector<std::string> &d
             QNetworkRequest networkRequest(
                         QString::fromStdString(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase)
                         .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base)+
-                        QStringLiteral("pack/diff/datapack-base-%1.tar.xz").arg(QString::fromStdString(binarytoHexa(hash)))
+                        QStringLiteral("pack/diff/datapack-base-%1.tar.zst").arg(QString::fromStdString(binarytoHexa(hash)))
                         );
             QNetworkReply *reply = qnam.get(networkRequest);
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase);
@@ -268,7 +268,7 @@ void Api_client_real::datapackChecksumDoneBase(const std::vector<std::string> &d
 
 void Api_client_real::downloadProgressDatapackBase(int64_t bytesReceived, int64_t bytesTotal)
 {
-    if(!datapackTarXzBase)
+    if(!datapackTarBase)
     {
         if(bytesReceived>0)
             datapackSizeBase(1,static_cast<uint32_t>(bytesTotal));
@@ -280,9 +280,9 @@ void Api_client_real::test_mirror_base()
 {
     QNetworkReply *reply;
     const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
-    if(!datapackTarXzBase)
+    if(!datapackTarBase)
     {
-        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.xz"));
+        QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.zst"));
         reply = qnam.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase);//fix it, put httpFinished* broke it
@@ -290,7 +290,7 @@ void Api_client_real::test_mirror_base()
     else
     {
         if(index_mirror_base>=httpDatapackMirrorList.size())
-            /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/base.txt, and only after that's quit */
+            /* here and not above because at last mirror you need try the tar.zst and after the datapack-list/base.txt, and only after that's quit */
             return;
 
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("datapack-list/base.txt"));
@@ -313,11 +313,11 @@ void Api_client_real::test_mirror_base()
 
 void Api_client_real::decodedIsFinishBase()
 {
-    if(xzDecodeThreadBase.errorFound())
+    if(zstdDecodeThreadBase.errorFound())
         test_mirror_base();
     else
     {
-        const std::vector<char> &decodedData=xzDecodeThreadBase.decodedData();
+        const std::vector<char> &decodedData=zstdDecodeThreadBase.decodedData();
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
@@ -361,14 +361,14 @@ void Api_client_real::decodedIsFinishBase()
 
 bool Api_client_real::mirrorTryNextBase(const QString &error)
 {
-    if(datapackTarXzBase==false)
+    if(datapackTarBase==false)
     {
-        datapackTarXzBase=true;
+        datapackTarBase=true;
         test_mirror_base();
     }
     else
     {
-        datapackTarXzBase=false;
+        datapackTarBase=false;
         index_mirror_base++;
         if(index_mirror_base>=QString::fromStdString(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
         {
@@ -416,16 +416,16 @@ void Api_client_real::httpFinishedForDatapackListBase()
     }
     else
     {
-        if(!datapackTarXzBase)
+        if(!datapackTarBase)
         {
-            qDebug() << "datapack.tar.xz size:" << QString("%1KB").arg(reply->size()/1000);
-            datapackTarXzBase=true;
+            qDebug() << "datapack.tar.zst size:" << QString("%1KB").arg(reply->size()/1000);
+            datapackTarBase=true;
             QByteArray olddata=reply->readAll();
             std::vector<char> newdata;
             newdata.resize(olddata.size());
             memcpy(newdata.data(),olddata.constData(),olddata.size());
-            xzDecodeThreadBase.setData(newdata,100*1024*1024);
-            xzDecodeThreadBase.start(QThread::LowestPriority);
+            zstdDecodeThreadBase.setData(newdata);
+            zstdDecodeThreadBase.start(QThread::LowestPriority);
             return;
         }
         else
@@ -652,7 +652,7 @@ void Api_client_real::sendDatapackContentBase(const QByteArray &hashBase)
         QString::fromStdString(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase)=values.join(Api_client_real::text_dotcoma);
     }
 
-    datapackTarXzBase=false;
+    datapackTarBase=false;
     wait_datapack_content_base=true;
     datapackFilesListBase=listDatapackBase();
     std::sort(datapackFilesListBase.begin(),datapackFilesListBase.end());
