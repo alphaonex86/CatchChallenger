@@ -8,7 +8,7 @@ using namespace CatchChallenger;
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
-#include "../../client/base/qt-tar-xz/QTarDecode.h"
+#include "../../client/base/qt-tar-compressed/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 #include "LinkToGameServer.h"
 #include "EpollClientLoginSlave.h"
@@ -31,8 +31,8 @@ DatapackDownloaderMainSub::DatapackDownloaderMainSub(const std::string &mDatapac
     subDatapackCode(subDatapackCode)
 {
     datapackStatus=DatapackStatus::Main;
-    datapackTarXzMain=false;
-    datapackTarXzSub=false;
+    datapackTarMain=false;
+    datapackTarSub=false;
     index_mirror_main=0;
     index_mirror_sub=0;
     wait_datapack_content_main=false;

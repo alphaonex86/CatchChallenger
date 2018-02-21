@@ -11,13 +11,14 @@ using namespace CatchChallenger;
 #include <stdio.h>
 #include <thread>
 #include <chrono>
+#include <zstd.h>
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLibGeneral.h"
-#include "../../client/base/qt-tar-xz/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/cpp11addition.h"
+#include "../../client/base/qt-tar-compressed/QTarDecode.h"
 #include "LinkToGameServer.h"
 #include "EpollServerLoginSlave.h"
 #include "FacilityLibGateway.h"
@@ -40,7 +41,7 @@ DatapackDownloaderBase::DatapackDownloaderBase(const std::string &mDatapackBase)
     mDatapackBase(mDatapackBase)
 {
     httpModeBase=false;
-    datapackTarXzBase=false;
+    datapackTarBase=false;
     index_mirror_base=0;
     wait_datapack_content_base=false;
     curlm = curl_multi_init();
@@ -274,9 +275,9 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
     if(DatapackDownloaderBase::httpDatapackMirrorBaseList.empty())
     {
         {
-            if(remove((mDatapackBase+"/pack/datapack.tar.xz").c_str())!=0 && errno!=ENOENT)
+            if(remove((mDatapackBase+"/pack/datapack.tar.zst").c_str())!=0 && errno!=ENOENT)
             {
-                std::cerr << "Unable to remove " << mDatapackBase << "/pack/datapack.tar.xz" << std::endl;
+                std::cerr << "Unable to remove " << mDatapackBase << "/pack/datapack.tar.zst" << std::endl;
                 abort();
             }
         }
@@ -371,7 +372,7 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
 
             if(index_mirror_base>=DatapackDownloaderBase::httpDatapackMirrorBaseList.size())
                 index_mirror_base=0;
-            const std::string url=DatapackDownloaderBase::httpDatapackMirrorBaseList.at(index_mirror_base)+"pack/diff/datapack-base-"+binarytoHexa(hash)+".tar.xz";
+            const std::string url=DatapackDownloaderBase::httpDatapackMirrorBaseList.at(index_mirror_base)+"pack/diff/datapack-base-"+binarytoHexa(hash)+".tar.zst";
 
             CURL *curl=curl_easy_init();
             if(!curl)
@@ -423,9 +424,9 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
 
 void DatapackDownloaderBase::test_mirror_base()
 {
-    if(!datapackTarXzBase)
+    if(!datapackTarBase)
     {
-        const std::string url=DatapackDownloaderBase::httpDatapackMirrorBaseList.at(index_mirror_base)+"pack/datapack.tar.xz";
+        const std::string url=DatapackDownloaderBase::httpDatapackMirrorBaseList.at(index_mirror_base)+"pack/datapack.tar.zst";
 
         struct MemoryStruct chunk;
         chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
@@ -475,7 +476,7 @@ void DatapackDownloaderBase::test_mirror_base()
     else
     {
         if(index_mirror_base>=DatapackDownloaderBase::httpDatapackMirrorBaseList.size())
-            /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/base.txt, and only after that's quit */
+            /* here and not above because at last mirror you need try the tar.zst and after the datapack-list/base.txt, and only after that's quit */
             return;
 
         const std::string url=DatapackDownloaderBase::httpDatapackMirrorBaseList.at(index_mirror_base)+"datapack-list/base.txt";
@@ -527,13 +528,38 @@ void DatapackDownloaderBase::test_mirror_base()
     }
 }
 
-void DatapackDownloaderBase::decodedIsFinishBase(QXzDecode &xzDecodeBase)
+void DatapackDownloaderBase::decodedIsFinishBase(const std::vector<char> &rawData)
 {
-    if(!xzDecodeBase.decode())
+    std::vector<char> mDataToDecode=rawData;
+    std::string mErrorString;
+    {
+        std::vector<char> dataToDecoded;
+        unsigned long long const rSize = ZSTD_getDecompressedSize(mDataToDecode.data(), mDataToDecode.size());
+        if (rSize==ZSTD_CONTENTSIZE_ERROR) {
+            mErrorString="it was not compressed by zstd";
+        } else if (rSize==ZSTD_CONTENTSIZE_UNKNOWN) {
+            mErrorString="original size unknown. Use streaming decompression instead.";
+        } else {
+            dataToDecoded.resize(rSize);
+            size_t const dSize = ZSTD_decompress(dataToDecoded.data(), rSize, mDataToDecode.data(), mDataToDecode.size());
+            if (dSize != rSize)
+                mErrorString=std::string("error decoding: ")+ZSTD_getErrorName(dSize);
+            else
+            {
+                dataToDecoded.resize(dSize);
+                mDataToDecode=dataToDecoded;
+            }
+        }
+    }
+
+    if(!mErrorString.empty())
+    {
+        std::cerr << "mErrorString: " << mErrorString << std::endl;
         test_mirror_base();
+    }
     else
     {
-        const std::vector<char> &decodedData=xzDecodeBase.decodedData();
+        const std::vector<char> &decodedData=mDataToDecode;
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
@@ -584,14 +610,14 @@ void DatapackDownloaderBase::decodedIsFinishBase(QXzDecode &xzDecodeBase)
 
 bool DatapackDownloaderBase::mirrorTryNextBase()
 {
-    if(datapackTarXzBase==false)
+    if(datapackTarBase==false)
     {
-        datapackTarXzBase=true;
+        datapackTarBase=true;
         test_mirror_base();
     }
     else
     {
-        datapackTarXzBase=false;
+        datapackTarBase=false;
         index_mirror_base++;
         if(index_mirror_base>=DatapackDownloaderBase::httpDatapackMirrorBaseList.size())
         {
@@ -614,12 +640,11 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
     }
     else
     {
-        if(!datapackTarXzBase)
+        if(!datapackTarBase)
         {
-            std::cerr << "datapack.tar.xz size:" << data.size()/1000 << "KB" << std::endl;
-            datapackTarXzBase=true;
-            QXzDecode xzDecodeBase(data,16*1024*1024);
-            decodedIsFinishBase(xzDecodeBase);
+            std::cerr << "datapack.tar.zst size:" << data.size()/1000 << "KB" << std::endl;
+            datapackTarBase=true;
+            decodedIsFinishBase(data);
             return;
         }
         else
@@ -911,7 +936,7 @@ void DatapackDownloaderBase::sendDatapackContentBase()
 
     numberOfFileWritten=0;
     index_mirror_base=0;
-    datapackTarXzBase=false;
+    datapackTarBase=false;
     wait_datapack_content_base=true;
     FacilityLibGateway::mkpath(mDatapackBase);
     datapackFilesListBase=listDatapackBase(std::string());

@@ -3,7 +3,6 @@
 
 #include "../../general/base/GeneralVariable.h"
 #include "../../client/base/DatapackChecksum.h"
-#include "../../client/base/qt-tar-xz/QXzDecode.h"
 
 #include <string>
 #include <vector>
@@ -32,7 +31,7 @@ public:
     //datapack related
     void sendDatapackContentBase();
     void test_mirror_base();
-    void decodedIsFinishBase(QXzDecode &xzDecodeBase);
+    void decodedIsFinishBase(const std::vector<char> &rawData);
     bool mirrorTryNextBase();
     void httpFinishedForDatapackListBase(const std::vector<char> data=std::vector<char>());
     const std::vector<std::string> listDatapackBase(std::string suffix);
@@ -49,7 +48,7 @@ public:
     static std::unordered_map<CURL *,void *> curlPrivateData;
 private:
     static std::regex regex_DATAPACK_FILE_REGEX;
-    bool datapackTarXzBase;
+    bool datapackTarBase;
     CatchChallenger::DatapackChecksum datapackChecksum;
     unsigned int index_mirror_base;
     unsigned int numberOfFileWritten;

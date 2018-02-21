@@ -684,7 +684,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                     !CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(data->Attribute(XMLCACHEDSTRING_compression)),XMLCACHEDSTRING_zlib)
                     &&
                     #endif
-                    !CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(data->Attribute(XMLCACHEDSTRING_compression)),XMLCACHEDSTRING_zstd)
+                    !CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(data->Attribute(XMLCACHEDSTRING_compression)),"zstd")
                     )
             {
                 #ifdef TILED_ZLIB

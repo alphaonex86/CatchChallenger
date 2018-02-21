@@ -108,6 +108,7 @@ CachedString::CachedString()
     compression="compression";
     base64="base64";
     zlib="zlib";
+    zstd="zstd";
     minLevel="minLevel";
     maxLevel="maxLevel";
     luck="luck";

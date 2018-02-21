@@ -17,7 +17,7 @@ using namespace CatchChallenger;
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLibGeneral.h"
-#include "qt-tar-xz/QTarDecode.h"
+#include "qt-tar-compressed/QTarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 
 void Api_client_real::writeNewFileMain(const QString &fileName,const QByteArray &data)
@@ -292,7 +292,7 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
                         .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+
                         QStringLiteral("pack/diff/datapack-main-")+
                         QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
-                        QStringLiteral("-%1.tar.xz").arg(QString::fromStdString(binarytoHexa(hash)))
+                        QStringLiteral("-%1.tar.zst").arg(QString::fromStdString(binarytoHexa(hash)))
                         );
             QNetworkReply *reply = qnam.get(networkRequest);
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);
@@ -305,10 +305,10 @@ void Api_client_real::test_mirror_main()
 {
     QNetworkReply *reply;
     const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
-    if(!datapackTarXzMain)
+    if(!datapackTarMain)
     {
         QString fullDatapack=httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+
-                QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".tar.xz");
+                QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".tar.zst");
         QNetworkRequest networkRequest(fullDatapack);
         qDebug() << "Try download: " << fullDatapack;
         reply = qnam.get(networkRequest);
@@ -318,7 +318,7 @@ void Api_client_real::test_mirror_main()
     else
     {
         if(index_mirror_main>=httpDatapackMirrorList.size())
-            /* here and not above because at last mirror you need try the tar.xz and after the datapack-list/main-XXXX.txt, and only after that's quit */
+            /* here and not above because at last mirror you need try the tar.zst and after the datapack-list/main-XXXX.txt, and only after that's quit */
             return;
 
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("datapack-list/main-")+
@@ -342,11 +342,11 @@ void Api_client_real::test_mirror_main()
 
 void Api_client_real::decodedIsFinishMain()
 {
-    if(xzDecodeThreadMain.errorFound())
+    if(zstdDecodeThreadMain.errorFound())
         test_mirror_main();
     else
     {
-        const std::vector<char> &decodedData=xzDecodeThreadMain.decodedData();
+        const std::vector<char> &decodedData=zstdDecodeThreadMain.decodedData();
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
@@ -390,14 +390,14 @@ void Api_client_real::decodedIsFinishMain()
 
 bool Api_client_real::mirrorTryNextMain(const QString &error)
 {
-    if(!datapackTarXzMain)
+    if(!datapackTarMain)
     {
-        datapackTarXzMain=true;
+        datapackTarMain=true;
         test_mirror_main();
     }
     else
     {
-        datapackTarXzMain=false;
+        datapackTarMain=false;
         index_mirror_main++;
         if(index_mirror_main>=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
         {
@@ -445,17 +445,17 @@ void Api_client_real::httpFinishedForDatapackListMain()
     }
     else
     {
-        if(!datapackTarXzMain)
+        if(!datapackTarMain)
         {
             qDebug() << QStringLiteral("pack/datapack-main-")+
-                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".tar.xz") << " size:" << QString("%1KB").arg(reply->size()/1000);
-            datapackTarXzMain=true;
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".tar.zst") << " size:" << QString("%1KB").arg(reply->size()/1000);
+            datapackTarMain=true;
             QByteArray olddata=reply->readAll();
             std::vector<char> newdata;
             newdata.resize(olddata.size());
             memcpy(newdata.data(),olddata.constData(),olddata.size());
-            xzDecodeThreadMain.setData(newdata,100*1024*1024);
-            xzDecodeThreadMain.start(QThread::LowestPriority);
+            zstdDecodeThreadMain.setData(newdata);
+            zstdDecodeThreadMain.start(QThread::LowestPriority);
             return;
         }
         else
@@ -645,7 +645,7 @@ void Api_client_real::datapackDownloadFinishedMain()
 
 void Api_client_real::downloadProgressDatapackMain(int64_t bytesReceived, int64_t bytesTotal)
 {
-    if(!datapackTarXzMain && !datapackTarXzSub)
+    if(!datapackTarMain && !datapackTarSub)
     {
         if(bytesReceived>0)
             datapackSizeMain(1,static_cast<uint32_t>(bytesTotal));
@@ -709,7 +709,7 @@ void Api_client_real::sendDatapackContentMain()
         CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=values.join(Api_client_real::text_dotcoma).toStdString();
     }
 
-    datapackTarXzMain=false;
+    datapackTarMain=false;
     wait_datapack_content_main=true;
     datapackFilesListMain=listDatapackMain();
     std::sort(datapackFilesListMain.begin(),datapackFilesListMain.end());
