@@ -24,6 +24,7 @@ bool BaseServer::preload_the_map()
     std::vector<std::string> map_name_to_do_id;
     std::vector<std::string> returnList=FacilityLibGeneral::listFolder(GlobalServerData::serverPrivateVariables.datapack_mapPath);
     std::sort(returnList.begin(), returnList.end());
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
     if(returnList.size()==0)
     {
@@ -570,7 +571,8 @@ bool BaseServer::preload_the_map()
         index++;
     }
 
-    std::cout << GlobalServerData::serverPrivateVariables.map_list.size() << " map(s) loaded" << std::endl;
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << GlobalServerData::serverPrivateVariables.map_list.size() << " map(s) loaded into " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
     DictionaryServer::dictionary_pointOnMap_item_internal_to_database.clear();
     DictionaryServer::dictionary_pointOnMap_plant_internal_to_database.clear();

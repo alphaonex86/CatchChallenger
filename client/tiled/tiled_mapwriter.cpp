@@ -346,19 +346,12 @@ void MapWriterPrivate::writeTileLayer(QXmlStreamWriter &w,
     QString encoding;
     QString compression;
 
-    if (mLayerDataFormat == Map::Base64
-            || mLayerDataFormat == Map::Base64Gzip
-            || mLayerDataFormat == Map::Base64Zlib) {
-
+    if (mLayerDataFormat == Map::Base64Zstandard) {
         encoding = QStringLiteral("base64");
-
-        if (mLayerDataFormat == Map::Base64Gzip)
-            compression = QStringLiteral("gzip");
-        else if (mLayerDataFormat == Map::Base64Zlib)
-            compression = QStringLiteral("zlib");
-
-    } else if (mLayerDataFormat == Map::CSV)
-        encoding = QStringLiteral("csv");
+        compression = QStringLiteral("zstd");
+    }
+    else
+        abort();
 
     w.writeStartElement(QStringLiteral("data"));
     if (!encoding.isEmpty())
@@ -375,22 +368,6 @@ void MapWriterPrivate::writeTileLayer(QXmlStreamWriter &w,
                 w.writeEndElement();
             }
         }
-    } else if (mLayerDataFormat == Map::CSV) {
-        QString tileData;
-
-        for (int y = 0; y < tileLayer->height(); ++y) {
-            for (int x = 0; x < tileLayer->width(); ++x) {
-                const unsigned gid = mGidMapper.cellToGid(tileLayer->cellAt(x, y));
-                tileData.append(QString::number(gid));
-                if (x != tileLayer->width() - 1
-                    || y != tileLayer->height() - 1)
-                    tileData.append(QStringLiteral(","));
-            }
-            tileData.append(QStringLiteral("\n"));
-        }
-
-        w.writeCharacters(QStringLiteral("\n"));
-        w.writeCharacters(tileData);
     } else {
         QByteArray tileData;
         tileData.reserve(tileLayer->height() * tileLayer->width() * 4);
@@ -405,10 +382,8 @@ void MapWriterPrivate::writeTileLayer(QXmlStreamWriter &w,
             }
         }
 
-        if (mLayerDataFormat == Map::Base64Gzip)
-            tileData = compress(tileData, Gzip);
-        else if (mLayerDataFormat == Map::Base64Zlib)
-            tileData = compress(tileData, Zlib);
+        if (mLayerDataFormat == Map::Base64Zstandard)
+            tileData = compress(tileData, Zstandard);
 
         w.writeCharacters(QStringLiteral("\n   "));
         w.writeCharacters(QString::fromLatin1(tileData.toBase64()));

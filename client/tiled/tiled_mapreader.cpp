@@ -89,9 +89,7 @@ const QString MapReader::text_terrain=QStringLiteral("terrain");
 const QString MapReader::text_opacity=QStringLiteral("opacity");
 const QString MapReader::text_visible=QStringLiteral("visible");
 const QString MapReader::text_compression=QStringLiteral("compression");
-const QString MapReader::text_csv=QStringLiteral("csv");
-const QString MapReader::text_gzip=QStringLiteral("gzip");
-const QString MapReader::text_zlib=QStringLiteral("zlib");
+const QString MapReader::text_zstd=QStringLiteral("zstd");
 const QString MapReader::text_gid=QStringLiteral("gid");
 const QString MapReader::text_color=QStringLiteral("color");
 const QString MapReader::text_object=QStringLiteral("object");
@@ -151,8 +149,6 @@ private:
     void decodeBinaryLayerData(TileLayer *tileLayer,
                                const QStringRef &text,
                                const QStringRef &compression);
-    void decodeCSVLayerData(TileLayer *tileLayer, const QString &text);
-
     /**
      * Returns the cell for the given global tile ID. Errors are raised with
      * the QXmlStreamReader.
@@ -639,15 +635,9 @@ void MapReaderPrivate::readLayerData(TileLayer *tileLayer)
     if (respect) {
         if (encoding.isEmpty())
             mMap->setLayerDataFormat(Map::XML);
-        else if (encoding == MapReader::text_csv)
-            mMap->setLayerDataFormat(Map::CSV);
         else if (encoding == MapReader::text_base64) {
-            if (compression.isEmpty())
-                mMap->setLayerDataFormat(Map::Base64);
-            else if (compression == MapReader::text_gzip)
-                mMap->setLayerDataFormat(Map::Base64Gzip);
-            else if (compression == MapReader::text_zlib)
-                mMap->setLayerDataFormat(Map::Base64Zlib);
+            if (compression == MapReader::text_zstd)
+                mMap->setLayerDataFormat(Map::Base64Zstandard);
         }
         // else, error handled below
     }
@@ -684,8 +674,6 @@ void MapReaderPrivate::readLayerData(TileLayer *tileLayer)
                 decodeBinaryLayerData(tileLayer,
                                       xml.text(),
                                       compression);
-            } else if (encoding == MapReader::text_csv) {
-                decodeCSVLayerData(tileLayer, xml.text().toString());
             } else {
                 xml.raiseError(tr("Unknown encoding: %1")
                                .arg(encoding.toString()));
@@ -708,10 +696,15 @@ void MapReaderPrivate::decodeBinaryLayerData(TileLayer *tileLayer,
     QByteArray tileData = QByteArray::fromBase64(latin1Text);
     const int size = (tileLayer->width() * tileLayer->height()) * 4;
 
-    if (compression == MapReader::text_zlib
-        || compression == MapReader::text_gzip) {
-        tileData = decompress(tileData, size);
-    } else if (!compression.isEmpty()) {
+    #ifdef TILED_ZLIB
+    if (compression == "zlib" || compression == "gzip") {
+        tileData = decompress(tileData, size, Zlib);
+    }
+    else
+        #endif
+        if (compression == MapReader::text_zstd) {
+         tileData = decompress(tileData, size, Zstandard);
+     } else if (!compression.isEmpty()) {
         xml.raiseError(tr("Compression method '%1' not supported")
                        .arg(compression.toString()));
         return;
@@ -740,33 +733,6 @@ void MapReaderPrivate::decodeBinaryLayerData(TileLayer *tileLayer,
         if (x == tileLayer->width()) {
             x = 0;
             y++;
-        }
-    }
-}
-
-void MapReaderPrivate::decodeCSVLayerData(TileLayer *tileLayer, const QString &text)
-{
-    QString trimText = text.trimmed();
-    QStringList tiles = trimText.split(MapReader::text_comma);
-
-    if (tiles.length() != tileLayer->width() * tileLayer->height()) {
-        xml.raiseError(tr("Corrupt layer data for layer '%1'")
-                       .arg(tileLayer->name()));
-        return;
-    }
-
-    for (int y = 0; y < tileLayer->height(); y++) {
-        for (int x = 0; x < tileLayer->width(); x++) {
-            bool conversionOk;
-            const unsigned gid = tiles.at(y * tileLayer->width() + x)
-                    .toUInt(&conversionOk);
-            if (!conversionOk) {
-                xml.raiseError(
-                        tr("Unable to parse tile at (%1,%2) on layer '%3'")
-                               .arg(x + 1).arg(y + 1).arg(tileLayer->name()));
-                return;
-            }
-            tileLayer->setCell(x, y, cellForGid(gid));
         }
     }
 }

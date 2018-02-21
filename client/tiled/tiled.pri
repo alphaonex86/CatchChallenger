@@ -36,6 +36,9 @@ $$PWD/tiled_objectgroup.cpp \
 $$PWD/tiled_orthogonalrenderer.cpp \
 $$PWD/tiled_properties.cpp \
 $$PWD/tiled_staggeredrenderer.cpp \
-$$PWD/tiled_tile.cpp \                                                                                                                                                                                                                                                        
+$$PWD/tiled_tile.cpp \
 $$PWD/tiled_tilelayer.cpp \
 $$PWD/tiled_tileset.cpp
+
+#DEFINES += TILED_ZLIB
+#LIBS += -lz
