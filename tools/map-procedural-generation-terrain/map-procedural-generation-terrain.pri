@@ -7,6 +7,9 @@ QMAKE_CXXFLAGS+="-std=c++0x -g"
 QMAKE_CFLAGS += -fno-omit-frame-pointer -g
 QMAKE_CXXFLAGS += -fno-omit-frame-pointer -g
 
+DEFINES += TILED_ZLIB
+LIBS += -lz
+
 QT += xml
 
 DEFINES += ONLYMAPRENDER

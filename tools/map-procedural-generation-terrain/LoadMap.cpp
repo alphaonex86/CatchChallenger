@@ -78,7 +78,8 @@ Tiled::Map *LoadMap::readMap(const QString &tmx)
     Tiled::Map *map=reader.readMap(QCoreApplication::applicationDirPath()+"/"+tmx);
     if(map==NULL)
     {
-        std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString() << "/" << tmx.toStdString() << std::endl;
+        std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString() << "/" << tmx.toStdString() <<
+                  ": " << reader.errorString().toStdString() << std::endl;
         abort();
     }
     return map;

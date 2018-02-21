@@ -26,16 +26,18 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef COMPRESSION_H
-#define COMPRESSION_H
+#pragma once
 
 class QByteArray;
 
 namespace Tiled {
 
 enum CompressionMethod {
+    #ifdef TILED_ZLIB
     Gzip,
-    Zlib
+    Zlib,
+    #endif
+    Zstandard
 };
 
 /**
@@ -51,7 +53,8 @@ enum CompressionMethod {
  * @return the uncompressed data, or a null QByteArray if decompressing failed
  */
 QByteArray decompress(const QByteArray &data,
-                                         int expectedSize = 1024);
+                                         const int expectedSize = 1024,
+                                         const CompressionMethod method = Zstandard);
 
 /**
  * Compresses the give data in either gzip or zlib format. Returns a null
@@ -63,8 +66,7 @@ QByteArray decompress(const QByteArray &data,
  * @return the compressed data, or a null QByteArray if compression failed
  */
 QByteArray compress(const QByteArray &data,
-                                       CompressionMethod method = Zlib);
+                                       const CompressionMethod method = Zstandard,
+                                       const unsigned int compressionlevel = 22);
 
 } // namespace Tiled
-
-#endif // COMPRESSION_H
