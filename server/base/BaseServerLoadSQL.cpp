@@ -438,6 +438,8 @@ void BaseServer::preload_dictionary_map()
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         criticalDatabaseQueryFailed();return;//stop because can't resolv the name
     }
+    else
+        std::cout << "wait database dictionary_map query" << std::endl;
 }
 
 void BaseServer::preload_dictionary_map_static(void *object)
@@ -447,6 +449,7 @@ void BaseServer::preload_dictionary_map_static(void *object)
 
 void BaseServer::preload_dictionary_map_return()
 {
+    std::cout << "database dictionary_map query finish" << std::endl;
     if(DictionaryServer::dictionary_map_database_to_internal.size()>0)
     {
         std::cerr << "preload_dictionary_map_return() already call" << std::endl;
