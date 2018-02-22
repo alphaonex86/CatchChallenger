@@ -29,6 +29,7 @@ void BaseWindow::resetAll()
     ui->labelSlow->hide();
     ui->frame_main_display_interface_player->hide();
     ui->label_interface_number_of_player->setText("?/?");
+    ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(:/images/empty.png);border-width: 0px;}");
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     chat->resetAll();
     mapController->resetAll();
@@ -699,6 +700,7 @@ void BaseWindow::updateConnectingStatus()
                 {
                     if(CommonSettingsCommon::commonSettingsCommon.min_character>0)
                     {
+                        ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(:/images/empty.png);border-width: 0px;}");
                         ui->stackedWidget->setCurrentWidget(ui->page_init);
                         ui->label_connecting_status->setText(QString());
                     }
