@@ -108,7 +108,7 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     if(!settings->contains("tolerantMode"))
         settings->setValue("tolerantMode",false);
     if(!settings->contains("compression"))
-        settings->setValue("compression","zlib");
+        settings->setValue("compression","zstd");
     if(!settings->contains("compressionLevel"))
         settings->setValue("compressionLevel",6);
     if(!settings->contains("anonymous"))

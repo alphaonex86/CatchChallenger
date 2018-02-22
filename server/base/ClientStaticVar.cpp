@@ -21,7 +21,7 @@ unsigned char Client::protocolReplyCompresssionZstandard[]={0x7F/*reply server t
                                                        +TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT/*reply size*/
                                                        #endif
                                                        ,0x00,0x00,0x00/*little endian*/
-                                                       ,0x08/*compression: zlib*/};
+                                                       ,0x08/*compression: zstd*/};
 #endif
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
