@@ -65,95 +65,136 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
          <string notr="true">#page_init{background-image: url(:/images/background.jpg);}</string>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
+        <layout class="QVBoxLayout" name="_2sdgdf">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
          <item>
-          <spacer name="verticalSpacer_loading_4">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
+          <widget class="QFrame" name="frameLoading">
+           <property name="autoFillBackground">
+            <bool>false</bool>
            </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>488</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_loading_7">
-           <item>
-            <spacer name="horizontalSpacer_loading_9">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_connecting_status">
-             <property name="font">
-              <font>
-               <pointsize>15</pointsize>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-image: url(:/images/empty.png);
-color: rgb(255, 255, 255);</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_loading_10">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <spacer name="verticalSpacer_35">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QLabel" name="loadingTip">
            <property name="styleSheet">
-            <string notr="true">background-color: rgb(255, 255, 163);
+            <string notr="true">#frameLoading {border-image: url(:/images/empty.png);border-width: 0px;}</string>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_40">
+            <item>
+             <spacer name="verticalSpacer_loading_4">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>779</width>
+                <height>456</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_loading_7">
+              <item>
+               <spacer name="horizontalSpacer_loading_9">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_connecting_status">
+                <property name="font">
+                 <font>
+                  <pointsize>15</pointsize>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-image: url(:/images/empty.png);
+color: rgb(255, 255, 255);
+background-color: rgba(0, 0, 0, 128);</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_loading_10">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_35">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>28</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="loadingTip">
+              <property name="styleSheet">
+               <string notr="true">background-color: rgb(255, 255, 163);
 border: 1px solid rgb(255, 221, 50);
 border-radius:5px;
 color: rgb(0, 0, 0);</string>
-           </property>
-           <property name="text">
-            <string>Tip: Use tabulation key (tab) to change the focus of the selection</string>
-           </property>
+              </property>
+              <property name="text">
+               <string>Tip: Use tabulation key (tab) to change the focus of the selection</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+           <zorder>verticalSpacer_loading_4</zorder>
+           <zorder></zorder>
+           <zorder>loadingTip</zorder>
+           <zorder>verticalSpacer_loading_4</zorder>
+           <zorder></zorder>
+           <zorder>loadingTip</zorder>
+           <zorder>verticalSpacer_35</zorder>
           </widget>
          </item>
         </layout>
@@ -7325,9 +7366,9 @@ border-image: url(:/images/empty.png);
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../resources/client-resources-multi.qrc"/>
-  <include location="../../fight/resources/client-resources-fight.qrc"/>
   <include location="../resources/client-resources.qrc"/>
+  <include location="../../fight/resources/client-resources-fight.qrc"/>
+  <include location="../resources/client-resources-multi.qrc"/>
  </resources>
  <connections>
   <connection>
