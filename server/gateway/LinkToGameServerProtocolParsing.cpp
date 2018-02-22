@@ -31,7 +31,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                     return false;
                 }
                 const uint8_t &returnCode=data[0x00];
-                if(returnCode>=0x04 && returnCode<=0x07)
+                if(returnCode==0x04 || returnCode==0x08)
                 {
                     if(!LinkToGameServer::compressionSet)
                     {
@@ -111,7 +111,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                     if(returnCode==0x03)
                         parseNetworkReadError("Server full");
                     else
-                        parseNetworkReadError("Unknown error "+std::to_string(returnCode));
+                        parseNetworkReadError("Unknown error at 0xA0 "+std::to_string(returnCode));
                     return false;
                 }
             }
@@ -139,7 +139,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         if(data[0x00]==0x03)
                             parseNetworkReadError("Server full");
                         else
-                            parseNetworkReadError("Unknown error "+std::to_string(data[0x00]));
+                            parseNetworkReadError("Unknown error at reconnecting "+std::to_string(data[0x00]));
                     }
                     else
                         parseNetworkReadError("size==(sizeof(uint8_t)) and client null with main ident: "+std::to_string(mainCodeType)+
@@ -153,7 +153,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                     return false;
                 }
                 const uint8_t &returnCode=data[0x00];
-                if(returnCode>=0x04 && returnCode<=0x07)
+                if(returnCode==0x04 || returnCode==0x08)
                 {
                     if(!LinkToGameServer::compressionSet)
                     {
@@ -238,7 +238,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                 }
                 else
                 {
-                    parseNetworkReadError("Unknown error "+std::to_string(returnCode));
+                    parseNetworkReadError("Unknown error after reconnecting "+std::to_string(returnCode));
                     return false;
                 }
             }

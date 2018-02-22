@@ -183,15 +183,13 @@ void EpollServerLoginMaster::loadLoginSettings(TinyXMLSettings &settings)
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     if(!settings.contains("compression"))
-        settings.setValue("compression","zlib");
+        settings.setValue("compression","zstd");
     if(settings.value("compression").toString()=="none")
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::None;
-    else if(settings.value("compression").toString()=="xz")
-        ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Xz;
-    else if(settings.value("compression").toString()=="lz4")
-            ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Lz4;
+    else if(settings.value("compression").toString()=="zstd")
+        ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zstd;
     else
-        ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zlib;
+        ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zstd;
     ProtocolParsing::compressionLevel          = stringtouint8(settings.value("compressionLevel"));
     #endif
     if(!settings.contains("automatic_account_creation"))

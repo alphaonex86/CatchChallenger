@@ -60,7 +60,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         settings.setValue("httpDatapackMirrorRewriteMainAndSub","");
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     if(!settings.contains("compression"))
-        settings.setValue("compression","zlib");
+        settings.setValue("compression","zstd");
     if(!settings.contains("compressionLevel"))
         settings.setValue("compressionLevel","6");
     #endif
