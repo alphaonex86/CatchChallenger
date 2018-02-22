@@ -183,7 +183,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     //connection
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     if(!settings.contains("compression"))
-        settings.setValue("compression","zlib");
+        settings.setValue("compression","zstd");
     if(settings.value("compression")=="none")
         ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::None;
     else if(settings.value("compression")=="zstd")
