@@ -194,6 +194,23 @@ void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
     client->selectCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,serverOrdenedList.at(serverSelected)->uniqueKey,item->data(99).toUInt(),serverSelected);
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     ui->label_connecting_status->setText(tr("Selecting your character"));
+
+    QDir dir(client->datapackPathBase()+"/loading/");
+    dir.setFilter(QDir::Files | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+    dir.setSorting(QDir::Size | QDir::Reversed);
+
+    QFileInfoList list = dir.entryInfoList();
+    if(list.size()>0)
+    {
+        const QFileInfo &fileInfo = list.at(rand()%list.size());
+        QImage image(fileInfo.absoluteFilePath());
+        if(!image.isNull())
+            ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(\""+fileInfo.absoluteFilePath()+"\")  0 0 0 0 stretch stretch;border-width: 0px;}");
+        else
+            ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(:/images/empty.png);border-width: 0px;}");
+    }
+    else
+        ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(:/images/empty.png);border-width: 0px;}");
 }
 
 
