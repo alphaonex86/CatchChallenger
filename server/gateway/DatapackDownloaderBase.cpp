@@ -389,7 +389,7 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
             struct MemoryStruct chunk;
             chunk.memory = static_cast<char *>(malloc(1));  /* will be grown as needed by the realloc above */
             chunk.size = 0;    /* no data at this point */
-            std::cout << "Download: " << url << std::endl;
+            std::cout << "Download: " << url << " into " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
             {
                 std::cerr << "Unable to set the curl url: " << url << std::endl;
@@ -443,7 +443,7 @@ void DatapackDownloaderBase::test_mirror_base()
             std::cerr << "Unable to set the curl keep alive" << std::endl;
         if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L)!=CURLE_OK)
             std::cerr << "Unable to set the curl keep alive" << std::endl;
-        std::cout << "Download: " << url << std::endl;
+        std::cout << "Download: " << url << " into " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
         {
             std::cerr << "Unable to set the curl url: " << url << std::endl;
@@ -496,7 +496,7 @@ void DatapackDownloaderBase::test_mirror_base()
             std::cerr << "Unable to set the curl keep alive" << std::endl;
         if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L)!=CURLE_OK)
             std::cerr << "Unable to set the curl keep alive" << std::endl;
-        std::cout << "Download: " << url << std::endl;
+        std::cout << "Download: " << url << " into " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
         {
             std::cerr << "Unable to set the curl url: " << url << std::endl;
@@ -530,6 +530,8 @@ void DatapackDownloaderBase::test_mirror_base()
 
 void DatapackDownloaderBase::decodedIsFinishBase(const std::vector<char> &rawData)
 {
+    std::cout << "DatapackDownloaderBase::decodedIsFinishBase" << std::endl;
+
     std::vector<char> mDataToDecode=rawData;
     std::string mErrorString;
     {
@@ -635,6 +637,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
 {
     if(data.empty())
     {
+        std::cout << "DatapackDownloaderBase::httpFinishedForDatapackListBase() data emtpy" << std::endl;
         mirrorTryNextBase();
         return;
     }
@@ -642,6 +645,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
     {
         if(!datapackTarBase)
         {
+            std::cout << "DatapackDownloaderBase::httpFinishedForDatapackListBase() !datapackTarBase" << std::endl;
             std::cerr << "datapack.tar.zst size:" << data.size()/1000 << "KB" << std::endl;
             datapackTarBase=true;
             decodedIsFinishBase(data);
@@ -649,6 +653,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
         }
         else
         {
+            std::cout << "DatapackDownloaderBase::httpFinishedForDatapackListBase() datapackTarBase" << std::endl;
             /*ref crash here*/const std::string selectedMirror=DatapackDownloaderBase::httpDatapackMirrorBaseList.at(index_mirror_base);
 
             httpError=false;
@@ -849,7 +854,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             while(handle_count>0 || !DatapackDownloaderBase::curlSuspendList.empty() || DatapackDownloaderBase::curlmCount>0);
-            std::cout << "handle_count == 0: leave the curl loop" << std::endl;
+            std::cout << "handle_count == 0: leave the curl loop" << " into " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             curl_multi_cleanup(DatapackDownloaderBase::curlm);
 
             index=0;
@@ -861,6 +866,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                     std::cerr << "Unable to remove" << datapackFilesListBase.at(index) << std::endl;
                     abort();
                 }
+                std::cout << "remove: " << mDatapackBase+datapackFilesListBase.at(index) << std::endl;
                 index++;
             }
             datapackFilesListBase.clear();
@@ -902,6 +908,7 @@ const std::vector<std::string> DatapackDownloaderBase::listDatapackBase(std::str
                 std::cerr << "listDatapack(): remove invalid file: " << suffix << fileInfo.absoluteFilePath << std::endl;
                 if(::remove((mDatapackBase+suffix+fileInfo.name).c_str())!=0)
                     std::cerr << "listDatapack(): unable remove invalid file: " << suffix << fileInfo.absoluteFilePath << ": " << errno << std::endl;
+                std::cout << "remove: " << mDatapackBase+suffix+fileInfo.name << std::endl;
             }
         }
     }

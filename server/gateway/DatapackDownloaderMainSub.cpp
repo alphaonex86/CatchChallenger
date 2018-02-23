@@ -117,6 +117,7 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
                     if(remove((mDatapackMain+'/'+datapackFilesListMain.at(index)).c_str())!=0)
                         std::cerr << "unable to remove the file: " << datapackFilesListMain.at(index) << ": " << errno << std::endl;
                     //removeFile(datapackFilesListMain.at(index));
+                    std::cout << "remove: " << mDatapackMain+'/'+datapackFilesListMain.at(index) << std::endl;
                 }
                 index++;
             }
@@ -171,6 +172,7 @@ void DatapackDownloaderMainSub::datapackFileList(const char * const data,const u
                     if(remove((mDatapackSub+'/'+datapackFilesListSub.at(index)).c_str())!=0)
                         std::cerr << "unable to remove the file: " << datapackFilesListSub.at(index) << ": " << errno << std::endl;
                     //removeFile(datapackFilesListSub.at(index));
+                    std::cout << "remove: " << mDatapackSub+'/'+datapackFilesListSub.at(index) << std::endl;
                 }
                 index++;
             }
