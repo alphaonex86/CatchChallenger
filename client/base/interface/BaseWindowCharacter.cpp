@@ -202,7 +202,7 @@ void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
     QFileInfoList list = dir.entryInfoList();
     if(list.size()>0)
     {
-        const QFileInfo &fileInfo = list.at(rand()%list.size());
+        const QFileInfo &fileInfo = list.at(time(NULL)%list.size());
         QImage image(fileInfo.absoluteFilePath());
         if(!image.isNull())
             ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(\""+fileInfo.absoluteFilePath()+"\")  0 0 0 0 stretch stretch;border-width: 0px;}");
