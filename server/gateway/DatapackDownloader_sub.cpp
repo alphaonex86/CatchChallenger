@@ -148,6 +148,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
                 std::cerr << "Unable to remove " << mDatapackSub << "/pack/datapack-sub-"+mainDatapackCode+"-"+subDatapackCode+".tar.zst" << std::endl;
                 abort();
             }
+            std::cout << "remove: " << mDatapackSub+"/pack/datapack-sub-"+mainDatapackCode+"-"+subDatapackCode+".tar.zst" << std::endl;
         }
         {
             if(remove((mDatapackSub+"/datapack-list/sub-"+mainDatapackCode+"-"+subDatapackCode+".txt").c_str())!=0 && errno!=ENOENT)
@@ -155,6 +156,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
                 std::cerr << "Unable to remove " << mDatapackSub << "/datapack-list/sub-"+mainDatapackCode+"-"+subDatapackCode+".txt" << std::endl;
                 abort();
             }
+            std::cout << "remove: " << mDatapackSub+"/datapack-list/sub-"+mainDatapackCode+"-"+subDatapackCode+".txt" << std::endl;
         }
         if(sendedHashSub.empty())
         {
@@ -257,7 +259,7 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
                 std::cerr << "Unable to set the curl keep alive" << std::endl;
             if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L)!=CURLE_OK)
                 std::cerr << "Unable to set the curl keep alive" << std::endl;
-            std::cout << "Download: " << url << std::endl;
+            std::cout << "Download: " << url << " into " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
             {
                 std::cerr << "Unable to set the curl url: " << url << std::endl;
@@ -311,7 +313,7 @@ void DatapackDownloaderMainSub::test_mirror_sub()
             std::cerr << "Unable to set the curl keep alive" << std::endl;
         if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L)!=CURLE_OK)
             std::cerr << "Unable to set the curl keep alive" << std::endl;
-        std::cout << "Download: " << url << std::endl;
+        std::cout << "Download: " << url << " into " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
         {
             std::cerr << "Unable to set the curl url: " << url << std::endl;
@@ -364,7 +366,7 @@ void DatapackDownloaderMainSub::test_mirror_sub()
             std::cerr << "Unable to set the curl keep alive" << std::endl;
         if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L)!=CURLE_OK)
             std::cerr << "Unable to set the curl keep alive" << std::endl;
-        std::cout << "Download: " << url << std::endl;
+        std::cout << "Download: " << url << " into " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         if(curl_easy_setopt(curl, CURLOPT_URL, url.c_str())!=CURLE_OK)
         {
             std::cerr << "Unable to set the curl url: " << url << std::endl;
@@ -717,7 +719,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             while(handle_count>0 || !DatapackDownloaderBase::curlSuspendList.empty() || DatapackDownloaderBase::curlmCount>0);
-            std::cout << "handle_count == 0: leave the curl loop" << std::endl;
+            std::cout << "handle_count == 0: leave the curl loop" << " into " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             curl_multi_cleanup(DatapackDownloaderBase::curlm);
 
             index=0;
@@ -729,6 +731,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
                     std::cerr << "Unable to remove" << datapackFilesListSub.at(index) << std::endl;
                     abort();
                 }
+                std::cout << "remove: " << mDatapackSub+datapackFilesListSub.at(index) << std::endl;
                 index++;
             }
             datapackFilesListSub.clear();
@@ -770,6 +773,7 @@ const std::vector<std::string> DatapackDownloaderMainSub::listDatapackSub(std::s
                 std::cerr << "listDatapack(): remove invalid file: " << suffix << fileInfo.absoluteFilePath << std::endl;
                 if(::remove((mDatapackSub+suffix+fileInfo.name).c_str())!=0)
                     std::cerr << "listDatapack(): unable remove invalid file: " << suffix << fileInfo.absoluteFilePath << ": " << errno << std::endl;
+                std::cout << "remove: " <<mDatapackSub+suffix+fileInfo.name << std::endl;
             }
         }
     }
