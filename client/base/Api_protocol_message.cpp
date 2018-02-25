@@ -197,7 +197,16 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                     Player_type playerType=(Player_type)playerTypeInt;
                     if(playerType!=Player_type_normal && playerType!=Player_type_premium && playerType!=Player_type_gm && playerType!=Player_type_dev)
                     {
-                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("playerType have wrong value: %1, at main ident: %2, directionAndPlayerType: %3, line: %4").arg(playerTypeInt).arg(packetCode).arg(directionAndPlayerType).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                        parseError(QStringLiteral("Procotol wrong or corrupted"),
+                                   QStringLiteral("playerType have wrong value: %1, at main ident: %2, directionAndPlayerType: %3: %4 %5 line %6")
+                                      .arg(playerTypeInt)
+                                      .arg(packetCode)
+                                      .arg(directionAndPlayerType)
+                                      .arg(QString(data.mid(0,static_cast<int>(in.device()->pos())).toHex()))
+                                      .arg(QString(data.mid(static_cast<int>(in.device()->pos()),static_cast<int>(in.device()->size()-in.device()->pos())).toHex()))
+                                      .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
+                                      );
+                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("playerType have wrong value: %1, at main ident: %2, directionAndPlayerType: %3, line: %4").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
                         return false;
                     }
                     public_informations.type=playerType;
