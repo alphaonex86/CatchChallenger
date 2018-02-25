@@ -331,7 +331,10 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
         CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath.toStdString());
         CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(datapackPath.toStdString(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode);
 
-        const QStringList &returnList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(CatchChallenger::FacilityLibGeneral::listFolder((datapackPath.toStdString()+"map/main/")));
+        const QStringList &returnList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(
+                    CatchChallenger::FacilityLibGeneral::listFolder(
+                        (datapackPath.toStdString()+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/")
+                        ));
 
         //load the map
         const int &size=returnList.size();

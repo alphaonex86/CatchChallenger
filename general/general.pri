@@ -11,9 +11,6 @@ QT       -= core
 LIBS += -lzstd
 LIBS += -lcrypto
 
-DEFINES += TILED_ZLIB
-LIBS += -lz
-
 TEMPLATE = app
 
 SOURCES += $$PWD/base/ChatParsing.cpp \

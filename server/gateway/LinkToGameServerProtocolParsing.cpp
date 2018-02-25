@@ -8,6 +8,7 @@
 #include "DatapackDownloaderBase.h"
 #include "DatapackDownloaderMainSub.h"
 #include "../epoll/Epoll.h"
+#include <netinet/tcp.h>
 
 using namespace CatchChallenger;
 
@@ -777,6 +778,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 return false;
             }
 
+            //here the GAMESERVER is LOGINSERVER, Token to connect on game server
             const int &socketFd=LinkToGameServer::tryConnect(selectedServer.host.c_str(),selectedServer.port,5,1);
             if(Q_LIKELY(socketFd>=0))
             {
@@ -795,6 +797,28 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                         return false;
                     }
                 }
+                {
+                    if(EpollServerLoginSlave::epollServerLoginSlave->tcpCork)
+                    {
+                        //set cork for CatchChallener because don't have real time part
+                        int state = 1;
+                        if(setsockopt(socketFd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
+                        {
+                            std::cerr << "Unable to apply tcp cork" << std::endl;
+                            abort();
+                        }
+                    }
+                    else if(EpollServerLoginSlave::epollServerLoginSlave->tcpNodelay)
+                    {
+                        //set no delay to don't try group the packet and improve the performance
+                        int state = 1;
+                        if(setsockopt(socketFd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
+                        {
+                            std::cerr << "Unable to apply tcp no delay" << std::endl;
+                            abort();
+                        }
+                    }
+                }
 
                 queryIdToReconnect=queryNumber;
                 stat=Stat::Reconnecting;
@@ -802,8 +826,9 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 //send the protocol
                 //wait readTheFirstSslHeader() to sendProtocolHeader();
                 haveTheFirstSslHeader=false;
-                setConnexionSettings();
-                parseIncommingData();
+                //setConnexionSettings();->do above
+                //parseIncommingData();->why?
+                return true;//wait the reply of gameserver
             }
             else
             {

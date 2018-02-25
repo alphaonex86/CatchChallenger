@@ -2686,6 +2686,7 @@ bool Api_protocol::setMapNumber(const unsigned int number_of_map)
         std::cerr << "to reset this number use resetAll()" << std::endl;
         return false;
     }
+    std::cout << "number of map: " << std::to_string(number_of_map) << std::endl;
     this->number_of_map=number_of_map;
     return true;
 }

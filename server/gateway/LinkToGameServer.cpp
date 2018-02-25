@@ -179,7 +179,7 @@ void LinkToGameServer::setConnexionSettings()
         int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, socketFd, &event);
         if(s == -1)
         {
-            std::cerr << "epoll_ctl on socket (master link) error" << std::endl;
+            std::cerr << "epoll_ctl on socket (LinkToGameServer) error, errno: " << std::to_string(errno) << std::endl;
             abort();
         }
     }
