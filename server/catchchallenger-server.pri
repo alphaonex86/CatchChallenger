@@ -1,5 +1,8 @@
 TEMPLATE = app
 
+DEFINES += TILED_ZLIB
+LIBS += -lz
+
 SOURCES += \
     $$PWD/base/GlobalServerData.cpp \
     $$PWD/base/SqlFunction.cpp \

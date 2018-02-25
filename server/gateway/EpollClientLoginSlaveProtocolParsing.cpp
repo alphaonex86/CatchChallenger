@@ -219,7 +219,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
                 }
                 linkToGameServer->selectedServer=linkToGameServer->serverReconnectList.at(charactersGroupIndex).at(uniqueKey);
                 linkToGameServer->serverReconnectList.clear();
-                return true;
+                //return true; -> why?
             }
             break;
             //Send datapack file list

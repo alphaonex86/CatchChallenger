@@ -1,3 +1,6 @@
+DEFINES += TILED_ZLIB
+LIBS += -lz
+
 HEADERS += $$PWD/tiled_compression.h \
 $$PWD/tiled_gidmapper.h \
 $$PWD/tiled_imagelayer.h \
@@ -40,5 +43,3 @@ $$PWD/tiled_tile.cpp \
 $$PWD/tiled_tilelayer.cpp \
 $$PWD/tiled_tileset.cpp
 
-#DEFINES += TILED_ZLIB
-#LIBS += -lz
