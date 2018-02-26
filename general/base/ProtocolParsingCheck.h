@@ -36,7 +36,7 @@ class ProtocolParsingCheck : public ProtocolParsingBase
         ProtocolParsing::CompressionType getCompressType() const; /// if client get server because it's check then mirror
         #endif
 
-        void disconnectClient();
+        bool disconnectClient();
 
         ssize_t read(char * data, const size_t &size);
         ssize_t write(const char * data, const size_t &size);

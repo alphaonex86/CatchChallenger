@@ -133,7 +133,7 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
     disconnectClient();
 }
 
-void EpollClientLoginSlave::disconnectClient()
+bool EpollClientLoginSlave::disconnectClient()
 {
     if(linkToGameServer!=NULL)
     {
@@ -170,6 +170,7 @@ void EpollClientLoginSlave::disconnectClient()
             index++;
         }
     }
+    return true;
 }
 
 //input/ouput layer
