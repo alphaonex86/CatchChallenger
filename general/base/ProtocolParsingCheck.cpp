@@ -79,10 +79,11 @@ void ProtocolParsingCheck::messageParsingLayer(const std::string &message) const
     std::cerr << "ProtocolParsingCheck: " << message << std::endl;
 }
 
-void ProtocolParsingCheck::disconnectClient()
+bool ProtocolParsingCheck::disconnectClient()
 {
     std::cerr << "Disconnect at control" << std::endl;
     abort();
+    return true;
 }
 
 ssize_t ProtocolParsingCheck::read(char * data, const size_t &size)

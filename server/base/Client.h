@@ -85,7 +85,7 @@ public:
     std::string getPseudo() const;
     void savePosition();
     static bool characterConnected(const uint32_t &characterId);
-    void disconnectClient();
+    bool disconnectClient();
     static void disconnectClientById(const uint32_t &characterId);
     Client *getClientFight() const;
     bool triggerDaillyGift(const uint64_t &timeRangeEventTimestamps);//return true if validated and gift sended

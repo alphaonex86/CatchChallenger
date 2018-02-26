@@ -257,10 +257,11 @@ void LinkToMaster::readTheFirstSslHeader()
     sendProtocolHeader();
 }
 
-void LinkToMaster::disconnectClient()
+bool LinkToMaster::disconnectClient()
 {
     epollSocket.close();
     messageParsingLayer("Disconnected client");
+    return true;
 }
 
 //input/ouput layer

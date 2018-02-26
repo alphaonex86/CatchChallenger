@@ -70,7 +70,7 @@ public:
     void sendDifferedA8Reply();
     void sendDiffered93OrACReply();
     void readTheFirstSslHeader();
-    void disconnectClient();
+    bool disconnectClient();
     uint8_t freeQueryNumberToServer();
     bool sendRawSmallPacket(const char * const data,const int &size);
     bool removeFromQueryReceived(const uint8_t &queryNumber);

@@ -28,7 +28,7 @@ public:
     static bool internalVersionDisplayed;
     explicit Api_protocol(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_protocol();
-    void disconnectClient();
+    bool disconnectClient();
     void unloadSelection();
     ServerFromPoolForDisplay getCurrentServer(const int &index);
     bool dataToPlayerMonster(QDataStream &in, PlayerMonster &monster);

@@ -153,12 +153,13 @@ void EpollClientLoginMaster::passUniqueKeyToNextGameServer()
     }
 }
 
-void EpollClientLoginMaster::disconnectClient()
+bool EpollClientLoginMaster::disconnectClient()
 {
     resetToDisconnect();
     updateConsoleCountServer();
     epollSocket.close();
     //messageParsingLayer("Disconnected client");
+    return true;
 }
 
 void EpollClientLoginMaster::updateConsoleCountServer()

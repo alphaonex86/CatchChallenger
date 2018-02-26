@@ -184,7 +184,7 @@ public:
 protected:
     //reply to the query
     bool removeFromQueryReceived(const uint8_t &queryNumber);
-    virtual void disconnectClient() = 0;
+    virtual bool disconnectClient() = 0;
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     virtual ProtocolParsing::CompressionType getCompressType() const = 0;
     #endif

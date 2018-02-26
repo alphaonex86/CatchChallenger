@@ -53,7 +53,7 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
         LinkToGameServer::compressionSet=false;
 }
 
-void EpollClientLoginSlave::disconnectClient()
+bool EpollClientLoginSlave::disconnectClient()
 {
     if(linkToGameServer!=NULL)
     {

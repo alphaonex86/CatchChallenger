@@ -253,8 +253,8 @@ int main(int argc, char *argv[])
                     {
                         numberOfConnectedClient--;
 
-                        client->disconnectClient();
-                        elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
+                        if(client->disconnectClient())
+                            elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
                     }
                 }
                 break;
