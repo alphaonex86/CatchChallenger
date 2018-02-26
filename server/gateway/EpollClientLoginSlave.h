@@ -60,7 +60,7 @@ public:
         #endif
         );
     ~EpollClientLoginSlave();
-    void disconnectClient();
+    bool disconnectClient();
     enum EpollClientLoginStat
     {
         None,
