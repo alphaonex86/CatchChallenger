@@ -53,7 +53,7 @@ public:
         #endif
         );
     ~EpollClientLoginSlave();
-    void disconnectClient();
+    bool disconnectClient();
     struct AddCharacterParam
     {
         uint8_t query_id;

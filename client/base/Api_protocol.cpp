@@ -138,7 +138,7 @@ Api_protocol::~Api_protocol()
     }
 }
 
-void Api_protocol::disconnectClient()
+bool Api_protocol::disconnectClient()
 {
     if(socket!=NULL)
         socket->disconnect();
@@ -154,6 +154,7 @@ void Api_protocol::disconnectClient()
         delete player_informations.encyclopedia_item;
         player_informations.encyclopedia_item=NULL;
     }
+    return true;
 }
 
 void Api_protocol::socketDestroyed()

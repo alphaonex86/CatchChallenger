@@ -23,7 +23,7 @@ public:
         #endif
         );
     ~EpollClientLoginMaster();
-    void disconnectClient();
+    bool disconnectClient();
     void parseIncommingData();
     void breakNeedMoreData();
     void selectCharacter(const uint8_t &query_id, const uint32_t &serverUniqueKey, const uint8_t &charactersGroupIndex, const uint32_t &characterId, const uint32_t &accountId);

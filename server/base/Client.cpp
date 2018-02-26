@@ -176,13 +176,13 @@ void Client::connectionError(QAbstractSocket::SocketError error)
 #endif
 
 /// \warning called in one other thread!!!
-void Client::disconnectClient()
+bool Client::disconnectClient()
 {
     closeSocket();
     if(stat==ClientStat::None)
-        return;
+        return false;
     if(account_id==0)
-        return;
+        return false;
     account_id=0;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     if(character_id!=0)
@@ -352,6 +352,8 @@ void Client::disconnectClient()
     #ifdef EPOLLCATCHCHALLENGERSERVER
     recordDisconnectByServer(this);
     #endif
+
+    return true;
 }
 
 //input/ouput layer

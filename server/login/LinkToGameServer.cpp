@@ -198,7 +198,7 @@ void LinkToGameServer::readTheFirstSslHeader()
     sendProtocolHeader();
 }
 
-void LinkToGameServer::disconnectClient()
+bool LinkToGameServer::disconnectClient()
 {
     if(client!=NULL)
     {
@@ -209,6 +209,7 @@ void LinkToGameServer::disconnectClient()
     }
     epollSocket.close();
     messageParsingLayer("Disconnected client");
+    return true;
 }
 
 //input/ouput layer

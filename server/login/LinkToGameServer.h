@@ -47,7 +47,7 @@ public:
     bool sendRawBlock(const char * const data,const unsigned int &size);
     bool removeFromQueryReceived(const uint8_t &queryNumber);
 protected:
-    void disconnectClient();
+    bool disconnectClient();
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;
     void errorParsingLayer(const char * const error);
