@@ -830,6 +830,9 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 //parseIncommingData();->why?, replaced by: readTheFirstSslHeader();
                 //read here the first byte to start protocol TLS if needed
                 readTheFirstSslHeader();
+                resetForReconnect();
+                /*flags|=0x08;
+                stat=Stat::Connected;*/
 
                 return true;//wait the reply of gameserver
             }
