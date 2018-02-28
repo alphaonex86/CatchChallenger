@@ -64,8 +64,9 @@ bool EpollClientLoginSlave::disconnectClient()
     }
     epollSocket.close();
     vectorremoveOne(client_list,this);
-    if(stat!=EpollClientLoginStat::None)
-        messageParsingLayer("Disconnected client");
+    /*SIGILLif(stat!=EpollClientLoginStat::None)
+        messageParsingLayer("Disconnected client");*/
+    return true;
 }
 
 //input/ouput layer
