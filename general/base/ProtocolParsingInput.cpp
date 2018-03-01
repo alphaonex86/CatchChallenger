@@ -190,7 +190,6 @@ void ProtocolParsingInputOutput::parseIncommingData()
     while(1)
     {
         ssize_t size;//bytesAvailable() and then read() can return negative value
-        uint32_t cursor=0;
         if(!header_cut.empty())
         {
             const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-static_cast<unsigned int>(header_cut.size());
@@ -248,7 +247,7 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
             #endif
             return;
         }
-
+        uint32_t cursor=0;
         int8_t returnVar;
         do
         {
@@ -417,7 +416,9 @@ int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const ui
             dataSize=ProtocolParsingBase::packetFixedSize[packetCode];
             if(dataSize==0xFF)
             {
-                errorParsingLayer("wrong packet code (header): "+std::to_string(packetCode));
+                errorParsingLayer("wrong packet code (header): "+std::to_string(packetCode)+
+                                  ", data: "+binarytoHexa(commonBuffer,size)+
+                                  ", cursor: "+std::to_string(cursor));
                 return -1;//packetCode code wrong
             }
             else if(dataSize!=0xFE)
@@ -447,10 +448,21 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
             return 0;
         }
         queryNumber=*(commonBuffer+cursor);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(Q_UNLIKELY(cursor==0))
+        {
+            errorParsingLayer("cursor==0, don't have read the header?"
+                              ", data: "+binarytoHexa(commonBuffer,size)+
+                              ", cursor: "+std::to_string(cursor));
+            return -1;
+        }
+        #endif
         cursor+=sizeof(uint8_t);
         if(Q_UNLIKELY(queryNumber>(CATCHCHALLENGER_MAXPROTOCOLQUERY-1)))
         {
-            errorParsingLayer("query number >"+std::to_string(CATCHCHALLENGER_MAXPROTOCOLQUERY-1));
+            errorParsingLayer("query number >"+std::to_string(CATCHCHALLENGER_MAXPROTOCOLQUERY-1)+
+                              ", data: "+binarytoHexa(commonBuffer,size)+
+                              ", cursor: "+std::to_string(cursor));
             return -1;
         }
         //set this parsing step is done
@@ -529,7 +541,9 @@ int8_t ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const
 
         if(dataSize>(CATCHCHALLENGER_BIGBUFFERSIZE-8))
         {
-            errorParsingLayer("packet size too big (define)");
+            errorParsingLayer("packet size too big (define)"
+                              ", data: "+binarytoHexa(commonBuffer,size)+
+                              ", cursor: "+std::to_string(cursor));
             return -1;
         }
         #ifdef CATCHCHALLENGER_CLASS_MASTER
