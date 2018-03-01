@@ -76,7 +76,7 @@ public:
     void readTheFirstSslHeader();
     void moveClientFastPath(const uint8_t &, const uint8_t &);
 protected:
-    void disconnectClient();
+    bool disconnectClient();
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;
     void errorParsingLayer(const char * const error);
