@@ -223,7 +223,8 @@ public:
     #endif
     void resetForReconnect();
 protected:
-    void parseIncommingData();
+    /*virtual for void LinkToGameServer::parseIncommingData()
+    of gateway, readTheFirstSslHeader() */virtual void parseIncommingData();
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     ProtocolParsing::CompressionType getCompressType() const;
     #endif
