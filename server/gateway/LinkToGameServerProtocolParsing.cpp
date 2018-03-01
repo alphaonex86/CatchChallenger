@@ -829,9 +829,12 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 //setConnexionSettings();->do above
                 //parseIncommingData();->why?, replaced by: readTheFirstSslHeader();
                 //read here the first byte to start protocol TLS if needed
-                readTheFirstSslHeader();
+                /** \warning wait to leave the current event loop
+                readTheFirstSslHeader();never do that's here, corrupt the input buffer
                 resetForReconnect();
-                /*flags|=0x08;
+                flags|=0x08;
+                not leave the event loop, then not release the cursor, and bad parse
+
                 stat=Stat::Connected;*/
 
                 return true;//wait the reply of gameserver
