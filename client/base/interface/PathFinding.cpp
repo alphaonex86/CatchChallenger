@@ -14,6 +14,7 @@ PathFinding::PathFinding() :
 
 PathFinding::~PathFinding()
 {
+    quit();
     emit internalCancel();
 }
 
