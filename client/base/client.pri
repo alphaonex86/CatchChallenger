@@ -6,6 +6,7 @@ QT       += gui network xml core
 DEFINES += CATCHCHALLENGER_CLIENT
 
 # see the file ClientVariableAudio.h
+DEFINES += CATCHCHALLENGER_NOAUDIO
 !contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
 linux:LIBS += -lvlc
 macx:LIBS += -lvlc

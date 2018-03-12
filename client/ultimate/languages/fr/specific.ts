@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.0" language="fr" sourcelanguage="en">
+<TS version="2.1" language="fr" sourcelanguage="en">
 <context>
     <name>AddOrEditServer</name>
     <message>
@@ -216,22 +216,22 @@
         <location filename="../../mainwindow.cpp" line="1701"/>
         <location filename="../../mainwindow.cpp" line="1707"/>
         <location filename="../../mainwindow.cpp" line="1765"/>
-        <location filename="../../mainwindow.cpp" line="1817"/>
-        <location filename="../../mainwindow.cpp" line="1829"/>
-        <location filename="../../mainwindow.cpp" line="2050"/>
-        <location filename="../../mainwindow.cpp" line="2055"/>
+        <location filename="../../mainwindow.cpp" line="1818"/>
+        <location filename="../../mainwindow.cpp" line="1830"/>
+        <location filename="../../mainwindow.cpp" line="2052"/>
+        <location filename="../../mainwindow.cpp" line="2057"/>
         <source>Error</source>
         <translation>Erreur</translation>
     </message>
     <message>
         <location filename="../../mainwindow.cpp" line="741"/>
-        <location filename="../../mainwindow.cpp" line="2050"/>
+        <location filename="../../mainwindow.cpp" line="2052"/>
         <source>The host seam don&apos;t be a valid hostname or ip</source>
         <translation>Le nom d&apos;hote ne semble pas valide ou ne semble pas être une ip</translation>
     </message>
     <message>
         <location filename="../../mainwindow.cpp" line="746"/>
-        <location filename="../../mainwindow.cpp" line="2055"/>
+        <location filename="../../mainwindow.cpp" line="2057"/>
         <source>The name is already taken</source>
         <translation>Le nom est déjà pris</translation>
     </message>
@@ -443,28 +443,28 @@
         <translation>Impossible de sauvegarder des valeurs interne à l&apos;arret du jeu</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="1817"/>
-        <location filename="../../mainwindow.cpp" line="1829"/>
+        <location filename="../../mainwindow.cpp" line="1818"/>
+        <location filename="../../mainwindow.cpp" line="1830"/>
         <source>No main code detected into the current datapack</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="1906"/>
-        <location filename="../../mainwindow.cpp" line="1916"/>
+        <location filename="../../mainwindow.cpp" line="1908"/>
+        <location filename="../../mainwindow.cpp" line="1918"/>
         <source>Latest news:</source>
         <translation>Derniéres news:</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="1951"/>
-        <location filename="../../mainwindow.cpp" line="1957"/>
-        <location filename="../../mainwindow.cpp" line="1963"/>
-        <location filename="../../mainwindow.cpp" line="1969"/>
-        <location filename="../../mainwindow.cpp" line="1980"/>
+        <location filename="../../mainwindow.cpp" line="1953"/>
+        <location filename="../../mainwindow.cpp" line="1959"/>
+        <location filename="../../mainwindow.cpp" line="1965"/>
+        <location filename="../../mainwindow.cpp" line="1971"/>
+        <location filename="../../mainwindow.cpp" line="1982"/>
         <source>Ok</source>
         <translation>Ok</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.cpp" line="1986"/>
+        <location filename="../../mainwindow.cpp" line="1988"/>
         <source>Ok (%1)</source>
         <translation>Ok (%1)</translation>
     </message>
