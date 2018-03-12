@@ -264,6 +264,16 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode,const QByteArray &data
                     in >> skinId;
                     public_informations.skinId=skinId;
 
+                    //the following monster id to show
+                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                    {
+                        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                        return false;
+                    }
+                    uint16_t monsterId;
+                    in >> monsterId;
+                    public_informations.monsterId=monsterId;
+
                     if(public_informations.simplifiedId==player_informations.public_informations.simplifiedId)
                     {
                         setLastDirection(direction);

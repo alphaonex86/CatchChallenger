@@ -276,7 +276,7 @@ bool LinkToGameServer::disconnectClient()
         replySelectCharInWait=NULL;
     }
     epollSocket.close();
-    messageParsingLayer("Disconnected game server");
+    messageParsingLayer("Disconnected login/game server: "+std::to_string(stat));
     return true;
 }
 

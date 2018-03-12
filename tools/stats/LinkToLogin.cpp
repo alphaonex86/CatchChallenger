@@ -270,10 +270,11 @@ void LinkToLogin::readTheFirstSslHeader()
     sendProtocolHeader();
 }
 
-void LinkToLogin::disconnectClient()
+bool LinkToLogin::disconnectClient()
 {
     epollSocket.close();
     messageParsingLayer("Disconnected login link... try connect in loop");
+    return true;
 }
 
 //input/ouput layer

@@ -157,8 +157,16 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
         posOutput+=public_and_private_informations.public_informations.pseudo.size();
     }
 
+    //skin id
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.skinId;
     posOutput+=1;
+
+    //the following monster id to show
+    if(public_and_private_informations.playerMonster.empty())
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+    else
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.playerMonster.front().monster);
+    posOutput+=2;
 
     //set the dynamic size
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);

@@ -106,7 +106,7 @@ public:
     static void displayErrorAndQuit(const char * errorString);
     const std::string &getJsonFileContent() const;
 protected:
-    void disconnectClient();
+    bool disconnectClient();
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;
     void errorParsingLayer(const char * const error);

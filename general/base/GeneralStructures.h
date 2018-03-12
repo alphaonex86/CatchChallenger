@@ -294,6 +294,7 @@ struct Player_public_informations
     std::string pseudo;
     Player_type type;
     uint8_t skinId;
+    uint16_t monsterId;
     SPEED_TYPE speed;
 };
 

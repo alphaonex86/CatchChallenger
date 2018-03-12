@@ -122,6 +122,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 //skin
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.at(index)->public_and_private_informations.public_informations.skinId;
                 posOutput+=1;
+                //the following monster id to show
+                if(clients.at(index)->public_and_private_informations.playerMonster.empty())
+                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+                else
+                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(clients.at(index)->public_and_private_informations.playerMonster.front().monster);
+                posOutput+=2;
 
                 ++index;
             }
@@ -240,6 +246,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                             //skin
                             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.skinId;
                             posOutput+=1;
+                            //the following monster id to show
+                            if(client->public_and_private_informations.playerMonster.empty())
+                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+                            else
+                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.playerMonster.front().monster);
+                            posOutput+=2;
                         }
                         ++index;
                     }
@@ -380,6 +392,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                 //skin
                                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.skinId;
                                 posOutput+=1;
+                                //the following monster id to show
+                                if(client->public_and_private_informations.playerMonster.empty())
+                                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+                                else
+                                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.playerMonster.front().monster);
+                                posOutput+=2;
                             }
                             ++index_subindex;
                         }
@@ -425,6 +443,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                 //skin
                                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.skinId;
                                 posOutput+=1;
+                                //the following monster id to show
+                                if(client->public_and_private_informations.playerMonster.empty())
+                                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
+                                else
+                                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.playerMonster.front().monster);
+                                posOutput+=2;
                             }
                             ++index_subindex;
                         }
