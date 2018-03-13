@@ -75,5 +75,7 @@ HEADERS  += $$PWD/base/GeneralStructures.h \
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
 mac:INCLUDEPATH += /usr/local/include/
 mac:LIBS += -L/usr/local/lib/
+mac:INCLUDEPATH += /usr/local/opt/openssl/include
+mac:LIBS += -L/usr/local/opt/openssl/lib
 #win32:LIBS += -lWs2_32
 linux:DEFINES += __linux__
