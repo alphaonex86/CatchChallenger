@@ -1836,7 +1836,7 @@ void Api_protocol::resetAll()
         qDebug() << "Api_protocol::resetAll() Suspect internal bug";
     //status for the query
     token.clear();
-    message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+QString(__FILE__)+":"+QString::number(__LINE__));
+    message("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+QString(__FILE__)+":"+QString::number(__LINE__));
     stageConnexion=StageConnexion::Stage1;
     if(socket==NULL || socket->fakeSocket==NULL)
         haveFirstHeader=false;

@@ -9,15 +9,44 @@ public:
     virtual ~BaseClassSwitch() {}
     enum EpollObjectType : uint8_t
     {
-        Server,
-        UnixServer,
-        Client,
-        UnixClient,
-        Timer,
-        Database,
-        MasterLink,
+        #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
+            Server,
+            Client,
+            Timer,
+            Database,
+        #endif
+        #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+            Server,
+            Client,
+            Timer,
+            Database,
+            MasterLink,
+        #endif
+        #ifdef CATCHCHALLENGER_CLASS_LOGIN
+            Server,
+            Client,
+            Timer,
+            Database,
+            MasterLink,
+        #endif
+        #ifdef CATCHCHALLENGER_CLASS_MASTER
+            Server,
+            Client,
+            Timer,
+            Database,
+        #endif
         #ifdef CATCHCHALLENGER_CLASS_GATEWAY
-        ClientServer,
+            Server,
+            Client,
+            Timer,
+            ClientServer,
+        #endif
+        #ifdef CATCHCHALLENGER_CLASS_STATS
+            Client,
+            UnixServer,
+        #endif
+        #ifdef CATCHCHALLENGER_CLASS_QT
+            Database,
         #endif
     };
     virtual EpollObjectType getType() const = 0;
