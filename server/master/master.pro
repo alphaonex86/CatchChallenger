@@ -104,7 +104,8 @@ HEADERS += \
     CheckTimeoutGameServer.h \
     AutomaticPingSend.h \
     ../base/DatabaseFunction.h \
-    TimeRangeEvent.h
+    TimeRangeEvent.h \
+    ../epoll/BaseClassSwitch.h
 
 #choose one of:
 #DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1

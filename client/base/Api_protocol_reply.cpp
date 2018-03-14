@@ -71,7 +71,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             }
             uint8_t returnCode;
             in >> returnCode;
-            if(returnCode==0x08)
+            if(returnCode==0x04 || returnCode==0x08)
             {
                 switch(returnCode)
                 {
@@ -127,6 +127,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 //newError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("the server have returned: %1").arg(string));
                 //show the message box
                 disconnected(QStringLiteral("the server have returned: %1").arg(string));
+                std::cerr << string.toStdString() << std::endl;
                 closeSocket();
                 return false;
             }

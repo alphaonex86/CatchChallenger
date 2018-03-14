@@ -305,7 +305,7 @@ void LinkToLogin::messageParsingLayer(const char * const message) const
 
 BaseClassSwitch::EpollObjectType LinkToLogin::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::MasterLink;
+    return BaseClassSwitch::EpollObjectType::Client;
 }
 
 void LinkToLogin::parseIncommingData()
