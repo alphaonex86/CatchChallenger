@@ -313,7 +313,7 @@ void LinkToGameServer::messageParsingLayer(const char * const message) const
 
 BaseClassSwitch::EpollObjectType LinkToGameServer::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::Client;
+    return BaseClassSwitch::EpollObjectType::ClientServer;
 }
 
 void LinkToGameServer::parseIncommingData()
