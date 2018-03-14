@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
             {
                 switch(elementsToDelete.at(index).second)
                 {
-                    case BaseClassSwitch::EpollObjectType::MasterLink:
+                    case BaseClassSwitch::EpollObjectType::Client:
                         delete static_cast<LinkToLogin *>(elementsToDelete.at(index).first);
                     break;
                     default:
@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
-                case BaseClassSwitch::EpollObjectType::MasterLink:
+                case BaseClassSwitch::EpollObjectType::Client:
                 {
                     LinkToLogin * const client=static_cast<LinkToLogin *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||

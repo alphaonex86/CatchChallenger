@@ -112,7 +112,8 @@ HEADERS += \
     ../base/TinyXMLSettings.h \
     ../base/DatabaseFunction.h \
     ../base/StringWithReplacement.h \
-    VariableLoginServer.h
+    VariableLoginServer.h \
+    ../epoll/BaseClassSwitch.h
 
 #DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2

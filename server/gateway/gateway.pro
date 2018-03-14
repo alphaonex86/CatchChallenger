@@ -94,7 +94,8 @@ HEADERS += \
     ../../general/base/CommonSettingsCommon.h \
     ../../general/base/CommonSettingsServer.h \
     FacilityLibGateway.h \
-    ../base/TinyXMLSettings.h
+    ../base/TinyXMLSettings.h \
+    ../epoll/BaseClassSwitch.h
 
 #choose one of:
 #DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1
