@@ -258,6 +258,36 @@ int main(int argc, char *argv[])
                     }
                 }
                 break;
+                case BaseClassSwitch::EpollObjectType::ClientServer:
+                {
+                    LinkToGameServer * const client=static_cast<LinkToGameServer *>(events[i].data.ptr);
+                    if((events[i].events & EPOLLERR) ||
+                    (events[i].events & EPOLLHUP) ||
+                    (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
+                    {
+                        /* An error has occured on this fd, or the socket is not
+                        ready for reading (why were we notified then?) */
+                        if(!(events[i].events & EPOLLHUP))
+                            std::cerr << "client epoll error: " << events[i].events << std::endl;
+                        numberOfConnectedClient--;
+
+                        client->disconnectClient();
+                        elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
+
+                        continue;
+                    }
+                    //ready to read
+                    if(events[i].events & EPOLLIN)
+                        client->parseIncommingData();
+                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || client->socketIsClosed())
+                    {
+                        numberOfConnectedClient--;
+
+                        if(client->disconnectClient())
+                            elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
+                    }
+                }
+                break;
                 case BaseClassSwitch::EpollObjectType::Timer:
                 {
                     static_cast<EpollTimer *>(events[i].data.ptr)->exec();
