@@ -478,73 +478,73 @@
     </message>
     <message>
         <location filename="../../../Api_protocol_reply.cpp" line="126"/>
-        <location filename="../../../Api_protocol_reply.cpp" line="164"/>
-        <location filename="../../../Api_protocol_reply.cpp" line="467"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="165"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="468"/>
         <source>Unknown error %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="149"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="150"/>
         <source>Bad login</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="151"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="152"/>
         <source>Wrong login/pass</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="153"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="154"/>
         <source>Server internal error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="155"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="156"/>
         <source>Can&apos;t create character and don&apos;t have character</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="157"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="158"/>
         <source>Login already in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="463"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="464"/>
         <source>Login already used</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="465"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="466"/>
         <source>Not created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="544"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="545"/>
         <source>Character not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="546"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="547"/>
         <source>Already logged</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="548"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="549"/>
         <source>Server internal problem</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="550"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="551"/>
         <source>Server not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="552"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="553"/>
         <source>Too recently disconnected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol_reply.cpp" line="554"/>
+        <location filename="../../../Api_protocol_reply.cpp" line="555"/>
         <source>Unknown error: %1</source>
         <translation type="unfinished"></translation>
     </message>
