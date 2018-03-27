@@ -65,7 +65,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -106,6 +106,12 @@
              <spacer name="spacer">
               <property name="orientation">
                <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
               </property>
              </spacer>
             </item>
@@ -169,7 +175,6 @@ color: rgb(0, 0, 0);</string>
              </widget>
             </item>
            </layout>
-           <zorder></zorder>
            <zorder>spacer</zorder>
            <zorder>loadingTip</zorder>
           </widget>

@@ -3,7 +3,6 @@ http://catchchallenger.first-world.info/
 
 The license of the datapack is GPL3. But will be totally remaked in cartoon style.
 
-The extrapart like xz embedded o lz4 have their own license.
 client/tiled/ is extracted version of http://www.mapeditor.org/, https://github.com/bjorn/tiled
 
 ===================================================
@@ -33,7 +32,7 @@ Ubuntu 16.04 add to the .pro:
 QMAKE_CFLAGS="-std=c++0x"
 QMAKE_CXXFLAGS="-std=c++0x"
 In general:
-Ubuntu: apt-get install qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev libvlc-dev
+Ubuntu: apt-get install qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev libvlc-dev
 Debian stretch: apt-get install build-essential gcc automake qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default libqt5sql5-psql libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev libvlc-dev
 
 For the Gui server:
