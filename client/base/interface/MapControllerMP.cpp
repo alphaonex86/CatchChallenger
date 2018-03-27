@@ -175,6 +175,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
     qDebug() << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(DatapackClientLoader::datapackLoader.maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
     #endif
+    //current player
     if(player.simplifiedId==player_informations.public_informations.simplifiedId)
     {
         //ignore to improve the performance server because can reinsert all player of map using the overall client list
@@ -254,6 +255,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
                       static_cast<uint8_t>(x),static_cast<uint8_t>(y));
         setSpeed(player.speed);
     }
+    //other player
     else
     {
         if(otherPlayerList.contains(player.simplifiedId))
