@@ -18,9 +18,6 @@ class DatapackChecksum
     Q_OBJECT
     #endif
 public:
-    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-    static QThread thread;
-    #endif
     explicit DatapackChecksum();
     ~DatapackChecksum();
     struct FullDatapackChecksumReturn
@@ -35,6 +32,11 @@ public:
     static FullDatapackChecksumReturn doFullSyncChecksumBase(const std::string &datapackPath);
     static FullDatapackChecksumReturn doFullSyncChecksumMain(const std::string &datapackPath);
     static FullDatapackChecksumReturn doFullSyncChecksumSub(const std::string &datapackPath);
+    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
+    void stopThread();
+private:
+    static QThread thread;
+    #endif
     #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
 public slots:
     void doDifferedChecksumBase(const std::string &datapackPath);

@@ -31,6 +31,15 @@ MultipleBotConnection::MultipleBotConnection() :
 
 MultipleBotConnection::~MultipleBotConnection()
 {
+    QHashIterator<QSslSocket *,CatchChallengerClient *> i(sslSocketToCatchChallengerClient);
+    while (i.hasNext()) {
+        i.next();
+        delete i.value()->api;
+        delete i.value();
+    }
+    apiToCatchChallengerClient.clear();
+    connectedSocketToCatchChallengerClient.clear();
+    sslSocketToCatchChallengerClient.clear();
 }
 
 QString MultipleBotConnection::getResolvedPluginName(const QString &name)
