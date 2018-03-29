@@ -29,6 +29,9 @@ FeedNews::~FeedNews()
 {
     if(qnam!=NULL)
         delete qnam;
+    exit();
+    quit();
+    wait();
 }
 
 void FeedNews::downloadFile()

@@ -47,6 +47,7 @@ MainWindow::MainWindow(QWidget *parent) :
     socket=NULL;
     realSslSocket=NULL;
     client=NULL;
+    completer=NULL;
     ui->setupUi(this);
     ui->update->setVisible(false);
     if(settings.contains("news"))

@@ -14,8 +14,10 @@ PathFinding::PathFinding() :
 
 PathFinding::~PathFinding()
 {
+    exit();
     quit();
-    emit internalCancel();
+    //emit internalCancel();
+    wait();
 }
 
 void PathFinding::searchPath(const QHash<QString, MapVisualiserThread::Map_full *> &all_map,const QString &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const QString &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items)
