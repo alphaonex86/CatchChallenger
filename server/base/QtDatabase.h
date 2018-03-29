@@ -17,7 +17,8 @@ class QtDatabaseThread : public QThread
 {
     Q_OBJECT
 public:
-    QtDatabaseThread();
+    explicit QtDatabaseThread();
+    ~QtDatabaseThread();
     void receiveQuery(const std::string &query, const QSqlDatabase &db);
 signals:
     void sendReply(const QSqlQuery &queryReturn);

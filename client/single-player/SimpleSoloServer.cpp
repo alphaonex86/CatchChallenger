@@ -114,8 +114,16 @@ MainWindow::~MainWindow()
         socket->abort();
         socket->deleteLater();
     }
-    baseWindow->deleteLater();
-    baseWindow=NULL;
+    if(baseWindow!=NULL)
+    {
+        delete baseWindow;
+        baseWindow=NULL;
+    }
+    if(client!=NULL)
+    {
+        delete client;
+        client=NULL;
+    }
 }
 
 void MainWindow::play(const QString &savegamesPath)
