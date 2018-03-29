@@ -117,6 +117,11 @@ GlobalControler::GlobalControler(QObject *parent) :
     timeoutTimer.start(timeout*1000);
 }
 
+GlobalControler::~GlobalControler()
+{
+    qDebug() << "GlobalControler::~GlobalControler()";
+}
+
 void GlobalControler::detectSlowDown(uint32_t, uint32_t worseTime)
 {
     if(worseTime>7*1000)

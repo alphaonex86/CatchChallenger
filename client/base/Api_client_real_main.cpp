@@ -456,6 +456,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
             memcpy(newdata.data(),olddata.constData(),olddata.size());
             zstdDecodeThreadMain.setData(newdata);
             zstdDecodeThreadMain.start(QThread::LowestPriority);
+            zstdDecodeThreadMain.setObjectName("zstddtm");
             return;
         }
         else
