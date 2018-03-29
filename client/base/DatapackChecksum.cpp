@@ -23,11 +23,17 @@ DatapackChecksum::DatapackChecksum()
     if(!thread.isRunning())
         thread.start();
     moveToThread(&thread);
+    thread.setObjectName("DatapackChecksum");
     #endif
 }
 
 DatapackChecksum::~DatapackChecksum()
 {
+    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
+    thread.exit();
+    thread.quit();
+    thread.wait();
+    #endif
 }
 
 std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPath)

@@ -20,6 +20,7 @@ class GlobalControler : public QObject
     Q_OBJECT
 public:
     explicit GlobalControler(QObject *parent = 0);
+    ~GlobalControler();
 private:
     QSettings settings;
     QTimer slowDownTimer;
