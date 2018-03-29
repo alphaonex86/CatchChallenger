@@ -342,6 +342,13 @@ QtDatabaseThread::QtDatabaseThread()
     start();
 }
 
+QtDatabaseThread::~QtDatabaseThread()
+{
+    exit();
+    quit();
+    wait();
+}
+
 void QtDatabaseThread::receiveQuery(const std::string &query,const QSqlDatabase &db)
 {
     QSqlQuery queryReturn(db);
