@@ -72,6 +72,16 @@ Api_client_real::~Api_client_real()
         if(socket->state()!=QAbstractSocket::UnconnectedState)
             socket->waitForDisconnected();
     }
+    zstdDecodeThreadBase.exit();
+    zstdDecodeThreadBase.quit();
+    zstdDecodeThreadMain.exit();
+    zstdDecodeThreadMain.quit();
+    zstdDecodeThreadSub.exit();
+    zstdDecodeThreadSub.quit();
+
+    zstdDecodeThreadBase.wait();
+    zstdDecodeThreadMain.wait();
+    zstdDecodeThreadSub.wait();
 }
 
 bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)

@@ -426,6 +426,7 @@ void Api_client_real::httpFinishedForDatapackListBase()
             memcpy(newdata.data(),olddata.constData(),olddata.size());
             zstdDecodeThreadBase.setData(newdata);
             zstdDecodeThreadBase.start(QThread::LowestPriority);
+            zstdDecodeThreadBase.setObjectName("zstddtb");
             return;
         }
         else
