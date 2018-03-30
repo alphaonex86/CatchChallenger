@@ -108,12 +108,6 @@ MainWindow::~MainWindow()
         delete internalServer;
         internalServer=NULL;
     }
-    delete ui;
-    if(socket!=NULL)
-    {
-        socket->abort();
-        socket->deleteLater();
-    }
     if(baseWindow!=NULL)
     {
         delete baseWindow;
@@ -124,6 +118,12 @@ MainWindow::~MainWindow()
         delete client;
         client=NULL;
     }
+    if(socket!=NULL)
+    {
+        socket->abort();
+        socket->deleteLater();
+    }
+    delete ui;
 }
 
 void MainWindow::play(const QString &savegamesPath)
