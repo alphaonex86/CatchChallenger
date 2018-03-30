@@ -6,6 +6,7 @@
 PathFinding::PathFinding() :
     tryCancel(false)
 {
+    setObjectName("PathFinding");
     start();
     moveToThread(this);
     connect(this,&PathFinding::internalCancel,this,&PathFinding::cancel,Qt::BlockingQueuedConnection);
