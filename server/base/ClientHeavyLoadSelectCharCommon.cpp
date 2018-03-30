@@ -378,14 +378,15 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                 item-=65536;
             lastItemId=static_cast<uint16_t>(item);
             pos+=2;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(CommonDatapack::commonDatapack.items.item.find(static_cast<uint16_t>(item))==CommonDatapack::commonDatapack.items.item.cend())
                 normalOutput("Take care load unknown item: "+std::to_string(item));
-            #endif
-            const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
-            pos+=4;
-            public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
-            public_and_private_informations.items[static_cast<uint16_t>(item)]=quantity;
+            else
+            {
+                const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
+                pos+=4;
+                public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
+                public_and_private_informations.items[static_cast<uint16_t>(item)]=quantity;
+            }
         }
     }
     //item_warehouse
@@ -413,15 +414,16 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                 item-=65536;
             lastItemId=static_cast<uint16_t>(item);
             pos+=2;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(CommonDatapack::commonDatapack.items.item.find(static_cast<uint16_t>(item))==
                     CommonDatapack::commonDatapack.items.item.cend())
                 normalOutput("Take care load unknown item: "+std::to_string(item));
-            #endif
-            const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
-            pos+=4;
-            public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
-            public_and_private_informations.warehouse_items[static_cast<uint16_t>(item)]=quantity;
+            else
+            {
+                const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
+                pos+=4;
+                public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
+                public_and_private_informations.warehouse_items[static_cast<uint16_t>(item)]=quantity;
+            }
         }
     }
     //recipes

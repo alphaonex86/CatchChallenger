@@ -75,6 +75,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     player_informations.encyclopedia_monster=NULL;
     player_informations.encyclopedia_item=NULL;
     player_informations.bot_already_beaten=NULL;
+    stageConnexion=StageConnexion::Stage1;
     resetAll();
 
     connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::socketDestroyed,Qt::DirectConnection);
