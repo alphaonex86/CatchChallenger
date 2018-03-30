@@ -17,6 +17,7 @@ QtDatabase::QtDatabase() :
     conn(NULL),
     sqlQuery(NULL)
 {
+    setObjectName("QtDatabase");
     connect(this,&QtDatabase::sendQuery,&dbThread,&QtDatabaseThread::receiveQuery,Qt::QueuedConnection);
     connect(&dbThread,&QtDatabaseThread::sendReply,this,&QtDatabase::receiveReply,Qt::QueuedConnection);
 }

@@ -15,6 +15,7 @@ FeedNews *FeedNews::feedNews=NULL;
 
 FeedNews::FeedNews()
 {
+    setObjectName("FeedNews");
     start();
     moveToThread(this);
     qnam=NULL;

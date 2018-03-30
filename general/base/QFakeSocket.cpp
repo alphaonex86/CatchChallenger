@@ -4,7 +4,6 @@
 #include "GeneralVariable.h"
 
 #include <QMutexLocker>
-#include <QThread>
 using namespace CatchChallenger;
 
 QFakeSocket::QFakeSocket()
