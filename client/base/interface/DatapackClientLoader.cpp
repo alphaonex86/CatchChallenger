@@ -99,6 +99,7 @@ DatapackClientLoader::DatapackClientLoader()
     inProgress=false;
     start();
     moveToThread(this);
+    setObjectName("DatapackClientLoader");
 }
 
 DatapackClientLoader::~DatapackClientLoader()

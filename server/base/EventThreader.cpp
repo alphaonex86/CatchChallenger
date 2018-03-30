@@ -4,6 +4,7 @@
 using namespace CatchChallenger;
 EventThreader::EventThreader()
 {
+    setObjectName("EventThreader");
     start();
     moveToThread(this);
 }
