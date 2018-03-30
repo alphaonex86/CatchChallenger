@@ -12,6 +12,7 @@ RssNews *RssNews::rssNews=NULL;
 
 RssNews::RssNews()
 {
+    setObjectName("RssNews");
     start();
     moveToThread(this);
     qnam=NULL;

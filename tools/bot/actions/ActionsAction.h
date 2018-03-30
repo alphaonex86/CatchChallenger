@@ -13,7 +13,6 @@
 
 #include <QTimer>
 #include <QString>
-#include <QThread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
