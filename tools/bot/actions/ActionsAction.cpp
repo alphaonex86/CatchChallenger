@@ -31,34 +31,48 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
     Q_UNUSED(y);
     Q_UNUSED(direction);
 
+    //after allMapIsLoaded because is after allMapIsLoaded the api is loaded
+    if(!allMapIsLoaded)
+    {
+        DelayedMapPlayerChange delayedMapPlayerChange;
+        delayedMapPlayerChange.direction=direction;
+        delayedMapPlayerChange.mapId=mapId;
+        delayedMapPlayerChange.player=player;
+        delayedMapPlayerChange.x=x;
+        delayedMapPlayerChange.y=y;
+        delayedMapPlayerChange.type=DelayedMapPlayerChangeType_Insert;
+        if(clientList.find(api)==clientList.cend())
+        {
+            std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
+            abort();
+        }
+        Player &botplayer=clientList[api];
+        botplayer.delayedMapPlayerChange.push_back(delayedMapPlayerChange);
+    }
+
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
+    if(clientList.find(api)==clientList.cend())
+    {
+        std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
+        abort();
+    }
     Player &botplayer=clientList[api];
+    if(botplayer.api==NULL)
+    {
+        std::cerr << "clientList.find(api)==NULL" << std::endl;
+        abort();
+    }
+    //after allMapIsLoaded because is after allMapIsLoaded the api is loaded
     if(player_private_and_public_informations.public_informations.simplifiedId==player.simplifiedId)
     {
-        if(allMapIsLoaded)
-        {
-            botplayer.fightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
-            ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
-            connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection);
-            connect(api,&CatchChallenger::Api_protocol::seed_planted,   actionsAction,&ActionsAction::seed_planted_slot);
-            connect(api,&CatchChallenger::Api_protocol::plant_collected,   actionsAction,&ActionsAction::plant_collected_slot);
-
-            if(!moveTimer.isActive())
-                moveTimer.start(player_private_and_public_informations.public_informations.speed);
-
-            checkOnTileEvent(botplayer,false);
-        }
-        else
-        {
-            DelayedMapPlayerChange delayedMapPlayerChange;
-            delayedMapPlayerChange.direction=direction;
-            delayedMapPlayerChange.mapId=mapId;
-            delayedMapPlayerChange.player=player;
-            delayedMapPlayerChange.x=x;
-            delayedMapPlayerChange.y=y;
-            delayedMapPlayerChange.type=DelayedMapPlayerChangeType_Insert;
-            botplayer.delayedMapPlayerChange.push_back(delayedMapPlayerChange);
-        }
+        DelayedMapPlayerChange delayedMapPlayerChange;
+        delayedMapPlayerChange.direction=direction;
+        delayedMapPlayerChange.mapId=mapId;
+        delayedMapPlayerChange.player=player;
+        delayedMapPlayerChange.x=x;
+        delayedMapPlayerChange.y=y;
+        delayedMapPlayerChange.type=DelayedMapPlayerChangeType_Insert;
+        botplayer.delayedMapPlayerChange.push_back(delayedMapPlayerChange);
     }
 }
 
@@ -68,7 +82,17 @@ void ActionsAction::insert_player_all(CatchChallenger::Api_protocol *api,const C
     (void)x;
     (void)y;
     (void)direction;
+    if(clientList.find(api)==clientList.cend())
+    {
+        std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
+        abort();
+    }
     Player &botplayer=clientList[api];
+    if(botplayer.api==NULL)
+    {
+        std::cerr << "clientList.find(api)==NULL" << std::endl;
+        abort();
+    }
     if(player.simplifiedId!=botplayer.api->get_player_informations().public_informations.simplifiedId)
     {
         botplayer.visiblePlayers[player.simplifiedId]=player;
@@ -83,7 +107,17 @@ void ActionsAction::newEvent(CatchChallenger::Api_protocol *api,const uint8_t &e
 
 void ActionsAction::forcedEvent(CatchChallenger::Api_protocol *api,const uint8_t &event,const uint8_t &event_value)
 {
+    if(clientList.find(api)==clientList.cend())
+    {
+        std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
+        abort();
+    }
     Player &botplayer=clientList[api];
+    if(botplayer.api==NULL)
+    {
+        std::cerr << "clientList.find(api)==NULL" << std::endl;
+        abort();
+    }
     botplayer.events[event]=event_value;
 }
 
@@ -94,7 +128,18 @@ void ActionsAction::newRandomNumber_slot(const QByteArray &data)
         return;
     if(!clientList.contains(api))
         return;
-    clientList[api].fightEngine->newRandomNumber(data);
+    if(clientList.find(api)==clientList.cend())
+    {
+        std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
+        abort();
+    }
+    Player &botplayer=clientList[api];
+    if(botplayer.api==NULL)
+    {
+        std::cerr << "clientList.find(api)==NULL" << std::endl;
+        abort();
+    }
+    botplayer.fightEngine->newRandomNumber(data);
 }
 
 void ActionsAction::setEvents_slot(const QList<QPair<uint8_t,uint8_t> > &events)
@@ -115,7 +160,17 @@ void ActionsAction::newEvent_slot(const uint8_t &event,const uint8_t &event_valu
 
 void ActionsAction::setEvents(CatchChallenger::Api_protocol *api,const QList<QPair<uint8_t,uint8_t> > &events)
 {
+    if(clientList.find(api)==clientList.cend())
+    {
+        std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
+        abort();
+    }
     Player &botplayer=clientList[api];
+    if(botplayer.api==NULL)
+    {
+        std::cerr << "clientList.find(api)==NULL" << std::endl;
+        abort();
+    }
     botplayer.events.clear();
     unsigned int index=0;
     while(index<botplayer.events.size())
@@ -151,14 +206,34 @@ void ActionsAction::setEvents(CatchChallenger::Api_protocol *api,const QList<QPa
 
 void ActionsAction::dropAllPlayerOnTheMap(CatchChallenger::Api_protocol *api)
 {
+    if(clientList.find(api)==clientList.cend())
+    {
+        std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
+        abort();
+    }
     Player &botplayer=clientList[api];
+    if(botplayer.api==NULL)
+    {
+        std::cerr << "clientList.find(api)==NULL" << std::endl;
+        abort();
+    }
     botplayer.visiblePlayers.clear();
     botplayer.delayedMapPlayerChange.clear();
 }
 
 void ActionsAction::remove_player(CatchChallenger::Api_protocol *api, const uint16_t &id)
 {
+    if(clientList.find(api)==clientList.cend())
+    {
+        std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
+        abort();
+    }
     Player &botplayer=clientList[api];
+    if(botplayer.api==NULL)
+    {
+        std::cerr << "clientList.find(api)==NULL" << std::endl;
+        abort();
+    }
     if(allMapIsLoaded)
         botplayer.visiblePlayers.remove(id);
     else
@@ -225,7 +300,17 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol *api,const CatchChalle
     }
 
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
+    if(clientList.find(api)==clientList.cend())
+    {
+        std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
+        abort();
+    }
     Player &botplayer=clientList[api];
+    if(botplayer.api==NULL)
+    {
+        std::cerr << "clientList.find(api)==NULL" << std::endl;
+        abort();
+    }
     CatchChallenger::ParsedLayerLedges ledge;
     ledge=CatchChallenger::MoveOnTheMap::getLedge(map,x,y);
     if(ledge!=CatchChallenger::ParsedLayerLedges_NoLedges)
@@ -1016,7 +1101,17 @@ void ActionsAction::monsterCatch(const bool &success)
         return;
     if(!clientList.contains(api))
         return;
+    if(clientList.find(api)==clientList.cend())
+    {
+        std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
+        abort();
+    }
     Player &player=clientList[api];
+    if(player.api==NULL)
+    {
+        std::cerr << "clientList.find(api)==NULL" << std::endl;
+        abort();
+    }
     if(player.fightEngine->playerMonster_catchInProgress.isEmpty())
     {
         std::cerr << "Internal bug: cupture monster list is emtpy" << std::endl;
