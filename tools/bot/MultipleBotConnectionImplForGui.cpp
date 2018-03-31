@@ -116,14 +116,19 @@ void MultipleBotConnectionImplForGui::characterSelectForFirstCharacter(const qui
         i.next();
         if(!characterOnMap.contains(charId))
         {
-            if(!i.value()->api->selectCharacter(charactersGroupIndex,serverUniqueKey,charId))
-                qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Unable to manual select character:" << charId;
-            else
+            if(i.value()->api!=NULL)
             {
-                qDebug() << "add character on map: " << charId << " at " << __FILE__ << ":" << __LINE__;
-                characterOnMap << charId;
-                qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Manual select character:" << charId;
+                if(!i.value()->api->selectCharacter(charactersGroupIndex,serverUniqueKey,charId))
+                    qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Unable to manual select character:" << charId;
+                else
+                {
+                    qDebug() << "add character on map: " << charId << " at " << __FILE__ << ":" << __LINE__;
+                    characterOnMap << charId;
+                    qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Manual select character:" << charId;
+                }
             }
+            else
+                qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): api null" << charId;
             return;
         }
         else
