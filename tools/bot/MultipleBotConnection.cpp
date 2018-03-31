@@ -72,23 +72,31 @@ void MultipleBotConnection::disconnected()
     {
         if(connectedSocketToCatchChallengerClient.contains(senderObject))
         {
-            if(connectedSocketToCatchChallengerClient.value(senderObject)->api->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2 ||
-                    connectedSocketToCatchChallengerClient.value(senderObject)->api->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage3)
+            if(connectedSocketToCatchChallengerClient.value(senderObject)->api!=NULL)
             {
-                connectedSocketToCatchChallengerClient.value(senderObject)->api->socketDisconnectedForReconnect();
-                return;
+                if(connectedSocketToCatchChallengerClient.value(senderObject)->api->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2 ||
+                        connectedSocketToCatchChallengerClient.value(senderObject)->api->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage3)
+                {
+                    connectedSocketToCatchChallengerClient.value(senderObject)->api->socketDisconnectedForReconnect();
+                    return;
+                }
+                else
+                {
+                    qDebug() << "disconnected(): For reason: " << connectedSocketToCatchChallengerClient[senderObject];
+                    haveEnError=true;
+                    if(connectedSocketToCatchChallengerClient.value(senderObject)->haveBeenDiscounted==false)
+                    {
+                        connectedSocketToCatchChallengerClient[senderObject]->haveBeenDiscounted=true;
+                        numberOfBotConnected--;
+                        emit emit_numberOfBotConnected(numberOfBotConnected);
+                        std::cout << "disconnected(): numberOfBotConnected--: " << connectedSocketToCatchChallengerClient[senderObject]->api->player_informations.public_informations.pseudo << std::endl;
+                    }
+                }
             }
             else
             {
-                qDebug() << "disconnected(): For reason: " << connectedSocketToCatchChallengerClient[senderObject];
                 haveEnError=true;
-                if(connectedSocketToCatchChallengerClient.value(senderObject)->haveBeenDiscounted==false)
-                {
-                    connectedSocketToCatchChallengerClient[senderObject]->haveBeenDiscounted=true;
-                    numberOfBotConnected--;
-                    emit emit_numberOfBotConnected(numberOfBotConnected);
-                    std::cout << "disconnected(): numberOfBotConnected--: " << connectedSocketToCatchChallengerClient[senderObject]->api->player_informations.public_informations.pseudo << std::endl;
-                }
+                qDebug() << "disconnected(): error, api null";
             }
         }
         else
@@ -127,6 +135,11 @@ void MultipleBotConnection::tryLink(CatchChallengerClient * client)
     emit emit_numberOfBotConnected(numberOfBotConnected);
     std::cout << "MultipleBotConnection::tryLink(): numberOfBotConnected++: multipleConnexion():" << std::to_string(multipleConnexion()) << std::endl;
 
+    if(client->api==NULL)
+    {
+        std::cerr << "tryLink client->api==NULL" << std::endl;
+        abort();
+    }
     if(!connect(client->api,&CatchChallenger::Api_client_real::protocol_is_good,this,&MultipleBotConnection::protocol_is_good))
         abort();
     if(!multipleConnexion())
@@ -151,6 +164,11 @@ void MultipleBotConnection::protocol_is_good_with_client(CatchChallengerClient *
     if(senderObject==NULL)
         return;*/
 
+    if(client->api==NULL)
+    {
+        std::cerr << "protocol_is_good_with_client client->api==NULL" << std::endl;
+        abort();
+    }
     client->api->tryLogin(client->login,client->pass);
 }
 
@@ -181,6 +199,11 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
     {
         qDebug() << "!serverIsSelected";
         return;
+    }
+    if(client->api==NULL)
+    {
+        std::cerr << "logged_with_client client->api==NULL" << std::endl;
+        abort();
     }
     if(client->charactersList.empty() || client->charactersList.at(charactersGroupIndex).count()<=0)
     {
@@ -228,6 +251,11 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
 
 void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *client)
 {
+    if(client->api==NULL)
+    {
+        std::cerr << "haveTheDatapack_with_client client->api==NULL" << std::endl;
+        abort();
+    }
     if(botInterface!=NULL)
         qDebug() << "MultipleBotConnection::haveTheDatapack_with_client(): Bot version:" << botInterface->name() << botInterface->version();
     //load the profil list
@@ -305,11 +333,21 @@ void MultipleBotConnection::haveDatapackMainSubCode_with_client(CatchChallengerC
 {
     if(botInterface!=NULL)
         qDebug() << "MultipleBotConnection::haveDatapackMainSubCode_with_client(): Bot version:" << botInterface->name() << botInterface->version();
+    if(client->api==NULL)
+    {
+        std::cerr << "haveDatapackMainSubCode_with_client client->api==NULL" << std::endl;
+        abort();
+    }
     client->api->sendDatapackContentMainSub();
 }
 
 void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerClient *client)
 {
+    if(client->api==NULL)
+    {
+        std::cerr << "haveTheDatapackMainSub_with_client client->api==NULL" << std::endl;
+        abort();
+    }
     Q_UNUSED(client);
     if(botInterface!=NULL)
         qDebug() << "MultipleBotConnection::haveTheDatapackMainSub_with_client(): Bot version:" << botInterface->name() << botInterface->version();
@@ -424,6 +462,11 @@ void MultipleBotConnection::connectTimerSlot()
 
 void MultipleBotConnection::newCharacterId_with_client(MultipleBotConnection::CatchChallengerClient *client, const quint8 &returnCode, const quint32 &characterId)
 {
+    if(client->api==NULL)
+    {
+        std::cerr << "newCharacterId_with_client client->api==NULL" << std::endl;
+        abort();
+    }
     if(returnCode!=0x00)
     {
         qDebug() << "new character not created, server have returned a failed: " << returnCode;
@@ -537,6 +580,11 @@ MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClie
 
 void MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * client)
 {
+    if(client->api==NULL)
+    {
+        std::cerr << "connectTheExternalSocket client->api==NULL" << std::endl;
+        abort();
+    }
     client->api->setDatapackPath(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"));
     if(!connect(client->api,&CatchChallenger::Api_client_real::insert_player,            this,&MultipleBotConnection::insert_player))
         abort();
