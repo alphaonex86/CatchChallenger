@@ -50,6 +50,7 @@ public:
     enum DelayedMapPlayerChangeType
     {
         DelayedMapPlayerChangeType_Insert,
+        DelayedMapPlayerChangeType_InsertAll,
         DelayedMapPlayerChangeType_Delete
     };
     struct DelayedMapPlayerChange
@@ -93,7 +94,6 @@ public:
         };
         QList<ClientPlantInCollecting> plant_collect_in_waiting;
         QRegularExpression regexMatchPseudo;
-        std::vector<DelayedMapPlayerChange> delayedMapPlayerChange;
     };
 
     ActionsBotInterface();
@@ -106,6 +106,8 @@ public:
     QString version();
     virtual void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     static QHash<CatchChallenger::Api_protocol *,Player> clientList;
+    //not into clientList because clientList is not initialised when receive the signals (due to delay of map loading)
+    static QHash<CatchChallenger::Api_protocol *,std::vector<DelayedMapPlayerChange> > delayedMessage;
 protected:
     bool randomText;
     bool globalChatRandomReply;

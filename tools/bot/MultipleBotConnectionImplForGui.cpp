@@ -188,13 +188,24 @@ void MultipleBotConnectionImplForGui::insert_player(const CatchChallenger::Playe
     if(senderObject==NULL)
         return;
 
-    MultipleBotConnection::insert_player_with_client(apiToCatchChallengerClient.value(senderObject),player,mapId,x,y,direction);
-
-    if(botInterface!=NULL)
+    if(!apiToCatchChallengerClient.contains(senderObject))
     {
-        botInterface->insert_player_all(apiToCatchChallengerClient.value(senderObject)->api,player,mapId,x,y,direction);
-        if(player.simplifiedId==apiToCatchChallengerClient.value(senderObject)->api->getId())
-            botInterface->insert_player(apiToCatchChallengerClient.value(senderObject)->api,player,mapId,x,y,direction);
+        std::cerr << "MultipleBotConnectionImplForGui::insert_player() !apiToCatchChallengerClient.contains(senderObject)" << std::endl;
+        return;
+    }
+    CatchChallengerClient * catchChallengerClient=apiToCatchChallengerClient.value(senderObject);
+    MultipleBotConnection::insert_player_with_client(catchChallengerClient,player,mapId,x,y,direction);
+
+    if(catchChallengerClient->api==NULL)
+        std::cerr << "MultipleBotConnectionImplForGui::insert_player() catchChallengerClient->api==NULL" << std::endl;
+    else
+    {
+        if(botInterface!=NULL)
+        {
+            botInterface->insert_player_all(catchChallengerClient->api,player,mapId,x,y,direction);
+            if(player.simplifiedId==catchChallengerClient->api->getId())
+                botInterface->insert_player(catchChallengerClient->api,player,mapId,x,y,direction);
+        }
     }
 }
 
@@ -510,22 +521,41 @@ void MultipleBotConnectionImplForGui::disconnected()
         return;
     }
 
-    if(connectedSocketToCatchChallengerClient.value(senderObject)->api->stage()==CatchChallenger::Api_protocol::StageConnexion::Stage4)
+    if(!connectedSocketToCatchChallengerClient.contains(senderObject))
+    {
+        std::cerr << "MultipleBotConnectionImplForGui::disconnected() !connectedSocketToCatchChallengerClient.contains(senderObject)" << std::endl;
+        abort();
+    }
+    CatchChallengerClient * catchChallengerClient=connectedSocketToCatchChallengerClient.value(senderObject);
+    if(catchChallengerClient==NULL)
+    {
+        std::cerr << "MultipleBotConnectionImplForGui::disconnected() catchChallengerClient==NULL" << std::endl;
+        abort();
+    }
+    CatchChallenger::Api_client_real *api=catchChallengerClient->api;
+    if(api==NULL)
+    {
+        std::cerr << "MultipleBotConnectionImplForGui::disconnected() api==NULL" << std::endl;
+        abort();
+    }
+    const CatchChallenger::Api_protocol::StageConnexion stage=api->stage();
+    if(stage==CatchChallenger::Api_protocol::StageConnexion::Stage2)
     {
         std::cout << "MultipleBotConnectionImplForGui::disconnected() for reconnect, ignore" << std::endl;
+        MultipleBotConnection::disconnected();
         return;
     }
     MultipleBotConnection::disconnected();
 
-    connectedSocketToCatchChallengerClient[senderObject]->haveShowDisconnectionReason=false;
-    if(connectedSocketToCatchChallengerClient.value(senderObject)->selectedCharacter==true)
+    catchChallengerClient->haveShowDisconnectionReason=false;
+    if(catchChallengerClient->selectedCharacter==true)
     {
-        connectedSocketToCatchChallengerClient[senderObject]->selectedCharacter=false;
+        catchChallengerClient->selectedCharacter=false;
         numberOfSelectedCharacter--;
         emit emit_numberOfSelectedCharacter(numberOfSelectedCharacter);
     }
     if(botInterface!=NULL)
-        botInterface->removeClient(connectedSocketToCatchChallengerClient.value(senderObject)->api);
+        botInterface->removeClient(api);
 }
 
 

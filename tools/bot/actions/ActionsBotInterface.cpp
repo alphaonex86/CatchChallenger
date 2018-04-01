@@ -2,6 +2,7 @@
 #include "../../general/base/Version.h"
 
 QHash<CatchChallenger::Api_protocol *,ActionsBotInterface::Player> ActionsBotInterface::clientList;
+QHash<CatchChallenger::Api_protocol *,std::vector<ActionsBotInterface::DelayedMapPlayerChange> > ActionsBotInterface::delayedMessage;
 
 ActionsBotInterface::ActionsBotInterface() :
     randomText(false),
@@ -59,6 +60,7 @@ void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol *api,const
 
 void ActionsBotInterface::removeClient(CatchChallenger::Api_protocol *api)
 {
+    std::cerr << "ActionsBotInterface::removeClient" << std::endl;
     clientList.remove(api);
 }
 
