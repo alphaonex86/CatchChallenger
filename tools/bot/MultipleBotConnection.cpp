@@ -243,6 +243,14 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
                     qDebug() << "Unable to do automatic character selection:" << character_id;
                 else
                 {
+                    //if not the first bot
+                    if(!tempMapList.empty())
+                    {
+                        //then do fake init normaly done into haveDatapackMainSubCode_with_client(
+                        if(!client->api->setMapNumber(tempMapList.size()))
+                            abort();
+                        client->api->have_main_and_sub_datapack_loaded();
+                    }
                     qDebug() << "MultipleBotConnection::logged_with_client(): Add char on map: Manual select character:" << character_id;
                     characterOnMap << character_id;
                 }
@@ -375,7 +383,11 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
         }
     }
     //load the datapack
-    QStringList tempMapList;
+    if(!tempMapList.isEmpty())
+    {
+        qDebug() << "MultipleBotConnection::haveTheDatapackMainSub_with_client() !tempMapList.isEmpty() internal bug";
+        abort();
+    }
     {
         const QString &datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
         CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath.toStdString());

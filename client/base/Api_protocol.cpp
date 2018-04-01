@@ -1857,7 +1857,6 @@ void Api_protocol::resetAll()
     have_receive_protocol=false;
     max_players=65535;
     max_players_real=65535;
-    number_of_map=0;
     selectedServerIndex=-1;
     player_informations.allow.clear();
     player_informations.cash=0;

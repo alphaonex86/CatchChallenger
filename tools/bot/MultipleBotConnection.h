@@ -55,6 +55,8 @@ protected:
     uint8_t charactersGroupIndex;
     int64_t/*to have -1*/ serverUniqueKey;
     bool serverIsSelected;
+
+    QStringList tempMapList;
 protected:
     virtual void insert_player_with_client(CatchChallengerClient *client,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
     virtual void haveCharacter();
