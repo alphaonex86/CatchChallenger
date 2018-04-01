@@ -96,7 +96,8 @@ private slots:
     void on_autoSelectTarget_toggled(bool checked);
     void on_autoSelectFilter_clicked();
     void on_hideTooHard_toggled(bool checked);
-
+    void on_graphvizTextShow_clicked();
+    void on_overall_graphvizTextShow_clicked();
 private:
     Ui::BotTargetList *ui;
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient;

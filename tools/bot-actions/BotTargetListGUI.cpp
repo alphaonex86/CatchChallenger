@@ -292,6 +292,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         globalTarget.extra=plantOnMapIndex;
                                         globalTarget.bestPath=resolvedBlock.bestPath;
                                         globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant;
+                                        globalTarget.points=0;
                                         unsigned int points=0;
                                         if(isMature)
                                         {
@@ -330,13 +331,10 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                                         points-=distance;
                                                 }
 
+                                                globalTarget.points=points;
+                                                globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
                                                 if(bestPoint<points)
-                                                {
                                                     bestPoint=points;
-                                                    if(listGUI==ui->globalTargets)
-                                                        bestItems=QList<QListWidgetItem *>() << newItem;
-                                                    bestTarget=globalTarget;
-                                                }
                                             }
                                         }
 
@@ -382,6 +380,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         globalTarget.extra=plantOnMapIndex;
                                         globalTarget.bestPath=resolvedBlock.bestPath;
                                         globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Dirt;
+                                        globalTarget.points=0;
 
                                         uint32_t points=1400;//2000 is for mature plant, never be less than 1000
                                         {
@@ -399,13 +398,10 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                                     points-=distance;
                                             }
 
+                                            globalTarget.points=points;
+                                            globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
                                             if(bestPoint<points)
-                                            {
                                                 bestPoint=points;
-                                                if(listGUI==ui->globalTargets)
-                                                    bestItems=QList<QListWidgetItem *>() << newItem;
-                                                bestTarget=globalTarget;
-                                            }
                                         }
 
                                         newItem->setIcon(QIcon(":/dirt.png"));
@@ -481,6 +477,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                     globalTarget.extra=itemOnMap.indexOfItemOnMap;
                     globalTarget.bestPath=resolvedBlock.bestPath;
                     globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap;
+                    globalTarget.points=0;
                     unsigned int points=2000;//2000 is for mature plant, never be less than 1000
                     if(itemOnMap.infinite)
                         points=1500;
@@ -514,13 +511,10 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                 points*=2;
                         }
 
+                        globalTarget.points=points;
+                        globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
                         if(bestPoint<points)
-                        {
                             bestPoint=points;
-                            if(listGUI==ui->globalTargets)
-                                bestItems=QList<QListWidgetItem *>() << newItem;
-                            bestTarget=globalTarget;
-                        }
                     }
 
                     if(listGUI==ui->globalTargets)
@@ -563,6 +557,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                         globalTarget.extra=fightId;
                         globalTarget.bestPath=resolvedBlock.bestPath;
                         globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight;
+                        globalTarget.points=0;
 
                         uint8_t maxFightLevel=0;
                         {
@@ -580,7 +575,6 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                         QColor colorValueL;
                         QColor alternateColorValueL;
                         const bool tooHard=maxFightLevel>(maxMonsterLevel+2);
-                        bool selected=false;
                         unsigned int points=0;
                         if(tooHard)
                         {
@@ -632,13 +626,9 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         points*=2;
                                 }
 
+                                globalTarget.points=points;
                                 if(bestPoint<points)
-                                {
-                                    selected=true;
                                     bestPoint=points;
-                                    bestItems.clear();
-                                    bestTarget=globalTarget;
-                                }
                             }
                         }
 
@@ -670,8 +660,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         itemToReturn.push_back(newItem->text().toStdString());
                                         if(listGUI==ui->globalTargets)
                                         {
-                                            if(selected)
-                                                bestItems << newItem;
+                                            globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
                                             targetListGlobalTarget.push_back(globalTarget);
                                             if(alternateColor)
                                                 newItem->setBackgroundColor(alternateColorValueL);
@@ -706,8 +695,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         itemToReturn.push_back(newItem->text().toStdString());
                                         if(listGUI==ui->globalTargets)
                                         {
-                                            if(selected)
-                                                bestItems << newItem;
+                                            globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
                                             targetListGlobalTarget.push_back(globalTarget);
                                             if(alternateColor)
                                                 newItem->setBackgroundColor(alternateColorValueL);
@@ -752,6 +740,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                     globalTarget.extra=shopId;
                     globalTarget.bestPath=resolvedBlock.bestPath;
                     globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Shop;
+                    globalTarget.points=0;
 
                     unsigned int sub_index=0;
                     while(sub_index<shop.prices.size())
@@ -815,6 +804,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             globalTarget.extra=0;
             globalTarget.bestPath=resolvedBlock.bestPath;
             globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal;
+            globalTarget.points=0;
 
             QListWidgetItem * newItem=new QListWidgetItem();
             newItem->setText(QString("Heal"));
@@ -907,6 +897,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             globalTarget.extra=0;
             globalTarget.bestPath=resolvedBlock.bestPath;
             globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster;
+            globalTarget.points=0;
 
             uint8_t maxFightLevel=0;
             {
@@ -924,7 +915,6 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             QColor colorValueL;
             QColor alternateColorValueL;
             const bool tooHard=maxFightLevel>(maxMonsterLevel+2);
-            bool selected=false;
             unsigned int points=0;
             if(tooHard)
             {
@@ -987,13 +977,9 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                     addPoint/=totalLuck;
                     points+=addPoint;
 
+                    globalTarget.points=points;
                     if(bestPoint<points)
-                    {
-                        selected=true;
                         bestPoint=points;
-                        bestItems.clear();
-                        bestTarget=globalTarget;
-                    }
                 }
             }
 
@@ -1018,8 +1004,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                         itemToReturn.push_back(newItem->text().toStdString());
                         if(listGUI==ui->globalTargets)
                         {
-                            if(selected)
-                                bestItems << newItem;
+                            globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
                             targetListGlobalTarget.push_back(globalTarget);
                             if(alternateColor)
                                 newItem->setBackgroundColor(alternateColorValueL);
@@ -1038,6 +1023,27 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                     alternateColor=!alternateColor;
             }
             buffer_index++;
+        }
+    }
+
+    //choose the final target
+    {
+        unsigned int lowerBestPoints=bestPoint*90/100;//90%
+        std::vector<ActionsBotInterface::GlobalTarget> bestTargetListGlobalTarget;
+        size_t index=0;
+        while(index<targetListGlobalTarget.size())
+        {
+            const ActionsBotInterface::GlobalTarget &tempTarget=targetListGlobalTarget.at(index);
+            if(tempTarget.points>=lowerBestPoints)
+                bestTargetListGlobalTarget.push_back(tempTarget);
+            index++;
+        }
+
+        if(!bestTargetListGlobalTarget.empty())
+        {
+            const ActionsBotInterface::GlobalTarget &finalTarget=bestTargetListGlobalTarget.at(rand()%bestTargetListGlobalTarget.size());
+            bestItems=finalTarget.uiItems;
+            bestTarget=finalTarget;
         }
     }
 
