@@ -41,13 +41,8 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
         delayedMapPlayerChange.x=x;
         delayedMapPlayerChange.y=y;
         delayedMapPlayerChange.type=DelayedMapPlayerChangeType_Insert;
-        if(clientList.find(api)==clientList.cend())
-        {
-            std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
-            abort();
-        }
-        Player &botplayer=clientList[api];
-        botplayer.delayedMapPlayerChange.push_back(delayedMapPlayerChange);
+        delayedMessage[api].push_back(delayedMapPlayerChange);
+        return;
     }
 
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
@@ -65,14 +60,16 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
     //after allMapIsLoaded because is after allMapIsLoaded the api is loaded
     if(player_private_and_public_informations.public_informations.simplifiedId==player.simplifiedId)
     {
-        DelayedMapPlayerChange delayedMapPlayerChange;
-        delayedMapPlayerChange.direction=direction;
-        delayedMapPlayerChange.mapId=mapId;
-        delayedMapPlayerChange.player=player;
-        delayedMapPlayerChange.x=x;
-        delayedMapPlayerChange.y=y;
-        delayedMapPlayerChange.type=DelayedMapPlayerChangeType_Insert;
-        botplayer.delayedMapPlayerChange.push_back(delayedMapPlayerChange);
+        botplayer.fightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
+        ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
+        connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection);
+        connect(api,&CatchChallenger::Api_protocol::seed_planted,   actionsAction,&ActionsAction::seed_planted_slot);
+        connect(api,&CatchChallenger::Api_protocol::plant_collected,   actionsAction,&ActionsAction::plant_collected_slot);
+
+        if(!moveTimer.isActive())
+            moveTimer.start(player_private_and_public_informations.public_informations.speed);
+
+        checkOnTileEvent(botplayer,false);
     }
 }
 
@@ -82,6 +79,20 @@ void ActionsAction::insert_player_all(CatchChallenger::Api_protocol *api,const C
     (void)x;
     (void)y;
     (void)direction;
+
+    if(!allMapIsLoaded)
+    {
+        DelayedMapPlayerChange delayedMapPlayerChange;
+        delayedMapPlayerChange.direction=direction;
+        delayedMapPlayerChange.mapId=mapId;
+        delayedMapPlayerChange.player=player;
+        delayedMapPlayerChange.x=x;
+        delayedMapPlayerChange.y=y;
+        delayedMapPlayerChange.type=DelayedMapPlayerChangeType_InsertAll;
+        delayedMessage[api].push_back(delayedMapPlayerChange);
+        return;
+    }
+
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
@@ -160,6 +171,8 @@ void ActionsAction::newEvent_slot(const uint8_t &event,const uint8_t &event_valu
 
 void ActionsAction::setEvents(CatchChallenger::Api_protocol *api,const QList<QPair<uint8_t,uint8_t> > &events)
 {
+    /// \todo: fix
+    return;
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
@@ -218,7 +231,7 @@ void ActionsAction::dropAllPlayerOnTheMap(CatchChallenger::Api_protocol *api)
         abort();
     }
     botplayer.visiblePlayers.clear();
-    botplayer.delayedMapPlayerChange.clear();
+    delayedMessage[api].clear();
 }
 
 void ActionsAction::remove_player(CatchChallenger::Api_protocol *api, const uint16_t &id)
@@ -248,7 +261,7 @@ void ActionsAction::remove_player(CatchChallenger::Api_protocol *api, const uint
         delayedMapPlayerChange.x=0;
         delayedMapPlayerChange.y=0;
         delayedMapPlayerChange.type=DelayedMapPlayerChangeType_Delete;
-        botplayer.delayedMapPlayerChange.push_back(delayedMapPlayerChange);
+        delayedMessage[api].push_back(delayedMapPlayerChange);
     }
 }
 
