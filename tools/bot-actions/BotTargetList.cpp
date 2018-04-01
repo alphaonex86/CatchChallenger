@@ -8,10 +8,17 @@
 #include "TargetFilter.h"
 
 #include <chrono>
-#include <QMessageBox>
 #include <unordered_map>
 #include <stdlib.h>
 #include <time.h>
+#include <iostream>
+
+#include <QMessageBox>
+#include <QStandardPaths>
+#include <QProcess>
+#include <QScrollArea>
+#include <QHBoxLayout>
+#include <QFileDialog>
 
 BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient,
                              QHash<CatchChallenger::ConnectedSocket *,MultipleBotConnection::CatchChallengerClient *> connectedSocketToCatchChallengerClient,
@@ -1288,9 +1295,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             {
                                 if(returnedVar.at(returnedVar.size()-2).second<1)
                                 {
-                                    auto end = std::chrono::high_resolution_clock::now();
+                                    /*auto end = std::chrono::high_resolution_clock::now();
                                     std::chrono::duration<double, std::milli> elapsed = end-start;
-                                    /*std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+                                    std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
                                     std::cerr << "Bug from " << std::to_string(source_x) << "," << std::to_string(source_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)source_orientation) << " due for last step (1)" << std::endl;
                                     std::cerr << "To " << std::to_string(destination.destination_x) << "," << std::to_string(destination.destination_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)destination.destination_orientation) << std::endl;
                                     std::cerr << "Dump: " << BotTargetList::stepToString(returnedVar) << std::endl;
@@ -1307,9 +1314,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                             }
                             else
                             {
-                                auto end = std::chrono::high_resolution_clock::now();
+                                /*auto end = std::chrono::high_resolution_clock::now();
                                 std::chrono::duration<double, std::milli> elapsed = end-start;
-                                /*std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+                                std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
                                 std::cerr << "Bug from " << std::to_string(source_x) << "," << std::to_string(source_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)source_orientation) << " due for last step (2)" << std::endl;
                                 std::cerr << "To " << std::to_string(destination.destination_x) << "," << std::to_string(destination.destination_y) << ": " << CatchChallenger::MoveOnTheMap::directionToString((CatchChallenger::Direction)destination.destination_orientation) << std::endl;
                                 std::cerr << "Dump: " << BotTargetList::stepToString(returnedVar) << std::endl;
@@ -1343,9 +1350,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                         if(pathToEachDestinations.size()>=destinations.size())
                         {
                             const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &finalVar=selectTheBetterPathToDestination(pathToEachDestinations,destinationIndexSelected);
-                            auto end = std::chrono::high_resolution_clock::now();
+                            /*auto end = std::chrono::high_resolution_clock::now();
                             std::chrono::duration<double, std::milli> elapsed = end-start;
-                            //std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+                            //std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;*/
 
                             *ok=true;
 
@@ -1360,9 +1367,9 @@ std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > Bot
                         if(pathToEachDestinations.size()>=destinations.size())
                         {
                             const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &finalVar=selectTheBetterPathToDestination(pathToEachDestinations,destinationIndexSelected);
-                            auto end = std::chrono::high_resolution_clock::now();
+                            /*auto end = std::chrono::high_resolution_clock::now();
                             std::chrono::duration<double, std::milli> elapsed = end-start;
-                            //std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;
+                            //std::cout << "Path result into " <<  (uint32_t)elapsed.count() << "ms" << std::endl;*/
 
                             *ok=true;
 
@@ -1574,4 +1581,59 @@ void BotTargetList::on_hideTooHard_toggled(bool checked)
 {
     Q_UNUSED(checked);
     updatePlayerInformation();
+}
+
+void BotTargetList::on_graphvizTextShow_clicked()
+{
+    //std::cout << QStandardPaths::writableLocation(QStandardPaths::TempLocation).toStdString()+"/" << std::endl;
+    QString dotPath=QStandardPaths::writableLocation(QStandardPaths::TempLocation)+"/ccbot.dot";
+    QString pngPath=QStandardPaths::writableLocation(QStandardPaths::TempLocation)+"/ccbot.png";
+    QFile dotfile(dotPath);
+    if(!dotfile.open(QFile::WriteOnly))
+    {
+        QMessageBox::warning(this,"Error","Unable to save the dot file");
+        return;
+    }
+    dotfile.write(ui->graphvizText->toPlainText().toUtf8());
+    dotfile.close();
+    if(QProcess::execute("/usr/bin/dot -Tpng "+dotPath+" -o "+pngPath)!=0)
+    {
+        QMessageBox::warning(this,"Error","Unable to convert the dot file");
+        return;
+    }
+    QFile::remove(dotPath);
+    QString fileName = QFileDialog::getSaveFileName(this,
+            tr("Save PNG Image"), "",
+            tr("PNG Image (*.png)"));
+    if(fileName.isEmpty())
+        QFile::remove(pngPath);
+    else
+        QFile::rename(pngPath,fileName);
+}
+
+void BotTargetList::on_overall_graphvizTextShow_clicked()
+{
+    QString dotPath=QStandardPaths::writableLocation(QStandardPaths::TempLocation)+"/ccbot.dot";
+    QString pngPath=QStandardPaths::writableLocation(QStandardPaths::TempLocation)+"/ccbot.png";
+    QFile dotfile(dotPath);
+    if(!dotfile.open(QFile::WriteOnly))
+    {
+        QMessageBox::warning(this,"Error","Unable to save the dot file");
+        return;
+    }
+    dotfile.write(ui->overall_graphvizText->toPlainText().toUtf8());
+    dotfile.close();
+    if(QProcess::execute("/usr/bin/dot -Tpng "+dotPath+" -o "+pngPath)!=0)
+    {
+        QMessageBox::warning(this,"Error","Unable to convert the dot file");
+        return;
+    }
+    QFile::remove(dotPath);
+    QString fileName = QFileDialog::getSaveFileName(this,
+            tr("Save PNG Image"), "",
+            tr("PNG Image (*.png)"));
+    if(fileName.isEmpty())
+        QFile::remove(pngPath);
+    else
+        QFile::rename(pngPath,fileName);
 }
