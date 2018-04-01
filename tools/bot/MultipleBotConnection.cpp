@@ -72,19 +72,22 @@ void MultipleBotConnection::disconnected()
     {
         if(connectedSocketToCatchChallengerClient.contains(senderObject))
         {
-            if(connectedSocketToCatchChallengerClient.value(senderObject)->api!=NULL)
+            CatchChallengerClient * catchChallengerClient=connectedSocketToCatchChallengerClient.value(senderObject);
+            CatchChallenger::Api_client_real *api=catchChallengerClient->api;
+            if(api!=NULL)
             {
-                if(connectedSocketToCatchChallengerClient.value(senderObject)->api->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2 ||
-                        connectedSocketToCatchChallengerClient.value(senderObject)->api->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage3)
+                if(api->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2 ||
+                        api->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage3)
                 {
-                    connectedSocketToCatchChallengerClient.value(senderObject)->api->socketDisconnectedForReconnect();
+                    qDebug() << "disconnected(): For reason: api->socketDisconnectedForReconnect()";
+                    api->socketDisconnectedForReconnect();
                     return;
                 }
                 else
                 {
                     qDebug() << "disconnected(): For reason: " << connectedSocketToCatchChallengerClient[senderObject];
                     haveEnError=true;
-                    if(connectedSocketToCatchChallengerClient.value(senderObject)->haveBeenDiscounted==false)
+                    if(catchChallengerClient->haveBeenDiscounted==false)
                     {
                         connectedSocketToCatchChallengerClient[senderObject]->haveBeenDiscounted=true;
                         numberOfBotConnected--;

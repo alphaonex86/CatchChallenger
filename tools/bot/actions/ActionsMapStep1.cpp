@@ -81,26 +81,29 @@ bool ActionsAction::preload_post_subdatapack()
 void ActionsAction::loadFinishedReemitTheDelayedFunction()
 {
     allMapIsLoaded=true;
-    QHashIterator<CatchChallenger::Api_protocol *,Player> i(clientList);
+    QHashIterator<CatchChallenger::Api_protocol *,std::vector<DelayedMapPlayerChange> > i(delayedMessage);
     while (i.hasNext()) {
         i.next();
         CatchChallenger::Api_protocol *api=i.key();
-        const Player &player=i.value();
+        const std::vector<DelayedMapPlayerChange> &delayedMapPlayerChangeList=i.value();
 
         unsigned int index=0;
-        while(index<player.delayedMapPlayerChange.size())
+        while(index<delayedMapPlayerChangeList.size())
         {
-            const DelayedMapPlayerChange &delayedMapPlayerChange=player.delayedMapPlayerChange.at(index);
+            const DelayedMapPlayerChange &delayedMapPlayerChange=delayedMapPlayerChangeList.at(index);
             switch(delayedMapPlayerChange.type)
             {
-                case DelayedMapPlayerChangeType_Insert:
-                    insert_player(api,delayedMapPlayerChange.player,delayedMapPlayerChange.mapId,delayedMapPlayerChange.x,delayedMapPlayerChange.y,delayedMapPlayerChange.direction);
-                break;
-                case DelayedMapPlayerChangeType_Delete:
-                    remove_player(api,delayedMapPlayerChange.player.simplifiedId);
-                break;
-                default:
-                    abort();
+            case DelayedMapPlayerChangeType_Insert:
+                insert_player(api,delayedMapPlayerChange.player,delayedMapPlayerChange.mapId,delayedMapPlayerChange.x,delayedMapPlayerChange.y,delayedMapPlayerChange.direction);
+            break;
+            case DelayedMapPlayerChangeType_InsertAll:
+                insert_player_all(api,delayedMapPlayerChange.player,delayedMapPlayerChange.mapId,delayedMapPlayerChange.x,delayedMapPlayerChange.y,delayedMapPlayerChange.direction);
+            break;
+            case DelayedMapPlayerChangeType_Delete:
+                remove_player(api,delayedMapPlayerChange.player.simplifiedId);
+            break;
+            default:
+                abort();
             }
 
             index++;
