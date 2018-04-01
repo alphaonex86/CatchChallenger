@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <QRegularExpression>
 #include <QTime>
+#include <QList>
+#include <QListWidgetItem>
 
 class ActionsBotInterface : public BotInterface
 {
@@ -39,6 +41,8 @@ public:
         QTime sinceTheLastAction;
         std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > wildForwardStep,wildBackwardStep;
         uint8_t wildCycle;
+        unsigned int points;
+        QList<QListWidgetItem *> uiItems;
     };
     struct ChatEntry
     {
