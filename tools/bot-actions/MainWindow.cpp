@@ -164,7 +164,7 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
     updateServerList(api);
 
     ActionsAction *actionsAction=static_cast<ActionsAction *>(multipleBotConnexion.botInterface);
-    if(!actionsAction->clientList.contains(api))
+    if(!ActionsAction::clientList.contains(api))
     {
         ActionsBotInterface::Player newPlayer;
         //newPlayer.player=0;
@@ -183,7 +183,7 @@ void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchC
         newPlayer.target.wildCycle=0;
         newPlayer.fightEngine=new CatchChallenger::ClientFightEngine();
         newPlayer.api=api;
-        actionsAction->clientList[api]=newPlayer;
+        ActionsAction::clientList[api]=newPlayer;
         newPlayer.fightEngine->setClient(api);
 
         if(!connect(api,&CatchChallenger::Api_protocol::have_inventory,     actionsAction,&ActionsAction::have_inventory_slot,Qt::QueuedConnection))
