@@ -271,7 +271,7 @@
         <item>
          <widget class="QLabel" name="label_4">
           <property name="text">
-           <string>Single target point range: 100-1000</string>
+           <string>Single target point range: 1000-10000</string>
           </property>
          </widget>
         </item>
