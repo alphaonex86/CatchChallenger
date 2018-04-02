@@ -57,6 +57,8 @@ private slots:
     void all_player_connected();
     void all_player_on_map();
     void on_host_returnPressed();
+    void on_showPassword_toggled(bool);
+
 signals:
     void isDisconnected();
 private:

@@ -475,13 +475,10 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
             case CatchChallenger::Chat_type::Chat_type_local:
             case CatchChallenger::Chat_type::Chat_type_clan:
             {
-                CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(QObject::sender());
-                if(api==NULL)
-                    return;
                 query.prepare("INSERT INTO otherchat (chat_type,text,player_type,player,theotherplayer) VALUES (:chat_type,:text,:player_type,:player,:theotherplayer)");
                 query.bindValue(":chat_type", (uint8_t)newEntry.chat_type);
                 query.bindValue(":text", QString::fromStdString(newEntry.text));
-                query.bindValue(":player", api->getPseudo());
+                query.bindValue(":player", pseudo);
                 query.bindValue(":theotherplayer", QString::fromStdString(newEntry.player_pseudo));
                 query.bindValue(":player_type", (uint8_t)newEntry.player_type);
                 if(!query.exec())
@@ -503,12 +500,9 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
             break;
             case CatchChallenger::Chat_type::Chat_type_pm:
             {
-                CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(QObject::sender());
-                if(api==NULL)
-                    return;
                 query.prepare("INSERT INTO privatechat (text,player_type,player,theotherplayer,fromplayer) VALUES (:text,:player_type,:player,:theotherplayer,:fromplayer)");
                 query.bindValue(":text", QString::fromStdString(newEntry.text));
-                query.bindValue(":player", api->getPseudo());
+                query.bindValue(":player", pseudo);
                 query.bindValue(":theotherplayer", QString::fromStdString(newEntry.player_pseudo));
                 query.bindValue(":player_type", (uint8_t)newEntry.player_type);
                 query.bindValue(":fromplayer",0);
@@ -935,28 +929,32 @@ void SocialChat::on_chatSpecText_returnPressed()
         return;
     if(text.contains(QRegularExpression("^ +$")))
     {
-        ui->globalChatText->clear();
+        ui->chatSpecText->clear();
         new_system_text(CatchChallenger::Chat_type_system,"Space text not allowed");
+        std::cerr << pseudo.toStdString() << ": Space text not allowed" << std::endl;
         return;
     }
     if(text.size()>256)
     {
-        ui->globalChatText->clear();
+        ui->chatSpecText->clear();
         new_system_text(CatchChallenger::Chat_type_system,"Message too long");
+        std::cerr << pseudo.toStdString() << ": Message too long" << std::endl;
         return;
     }
     if(!text.startsWith('/'))
     {
         if(text==lastMessageSend)
         {
-            ui->globalChatText->clear();
+            ui->chatSpecText->clear();
             new_system_text(CatchChallenger::Chat_type_system,"Send message like as previous");
+            std::cerr << pseudo.toStdString() << ": Send message like as previous" << std::endl;
             return;
         }
         if(numberForFlood>2)
         {
-            ui->globalChatText->clear();
+            ui->chatSpecText->clear();
             new_system_text(CatchChallenger::Chat_type_system,"Stop flood");
+            std::cerr << pseudo.toStdString() << ": Stop flood (" << std::to_string(numberForFlood) << ")" << std::endl;
             return;
         }
     }
