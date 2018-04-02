@@ -484,11 +484,21 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                     {
                         //remove the distance point
                         points-=resolvedBlock.weight;
-                        //add plant value
-                        points+=item.price;
+                        //add plant value, add 0 to 800 ln(price)
+                        if(ActionsAction::actionsAction->maxitemprice>0 && item.price>0)
+                        {
+                            //1 to 10000
+                            const double linear10000price=
+                                    (item.price-ActionsAction::actionsAction->minitemprice)*
+                                    (10000-1)/
+                                    ActionsAction::actionsAction->maxitemprice+1;
+                            //now with log scale, 0 to 800
+                            points+=log(linear10000price)*800/log(10000);
+                        }
                         //if not consumable and player don't have it
-                        if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemOnMap.item)==player_private_and_public_informations.items.cend())
-                            points=points*14/10;//+40%
+                        if(!item.consumeAtUse && player_private_and_public_informations.items.find(itemOnMap.item)==
+                                player_private_and_public_informations.items.cend())
+                            points=points*13/10;//+30%
                         if(player_private_and_public_informations.items.find(itemOnMap.item)!=player_private_and_public_informations.items.cend())
                         {
                             if(!item.consumeAtUse)

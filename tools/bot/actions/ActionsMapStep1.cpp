@@ -3,6 +3,7 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/Map_loader.h"
 #include "../../general/base/FacilityLibGeneral.h"
+#include "../../general/base/CommonDatapack.h"
 
 #include <regex>
 #include <string>
@@ -74,6 +75,17 @@ bool ActionsAction::preload_post_subdatapack()
         //QCoreApplication::processEvents(); do a bug, try parse GUI
         index++;
         loaded++;
+    }
+    minitemprice=0;
+    maxitemprice=1;
+    for( const auto& n : CatchChallenger::CommonDatapack::commonDatapack.items.item ) {
+        const CatchChallenger::Item &item=n.second;
+        if(maxitemprice==0 || maxitemprice<item.price)
+            if(item.price>0)
+                maxitemprice=item.price;
+        if(minitemprice==0 || minitemprice>item.price)
+            if(item.price>0)
+                minitemprice=item.price;
     }
     return true;
 }
