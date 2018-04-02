@@ -365,14 +365,29 @@ void BotTargetList::updatePlayerStep()
                         && player.target.blockObject!=NULL && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                 {
                     //get the next tile
+                    if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
+                    {
+                        std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        abort();
+                    }
                     if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
                         return;
+                    if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
+                    {
+                        std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        abort();
+                    }
                     const std::string &mapStdString=actionsAction->id_map_to_map.at(player.mapId);
                     CatchChallenger::CommonMap *map=actionsAction->map_list.at(mapStdString);
                     const MapServerMini *mapServer=static_cast<MapServerMini *>(map);
                     uint8_t x=player.x;
                     uint8_t y=player.y;
                     CatchChallenger::Direction direction;
+                    if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
+                    {
+                        std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        abort();
+                    }
                     switch(api->getDirection())
                     {
                         case CatchChallenger::Direction_look_at_left:
@@ -390,6 +405,11 @@ void BotTargetList::updatePlayerStep()
                         default:
                             direction=api->getDirection();
                     }
+                    if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
+                    {
+                        std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        abort();
+                    }
                     if(!ActionsAction::moveWithoutTeleport(api,direction,&mapServer,&x,&y,false,false))
                     {
                         std::cerr << "Unable to do the last move before action: " << mapServer->map_file << "(" << std::to_string(x) << "," << std::to_string(y) << ") to " << std::to_string(direction) << std::endl;
@@ -397,6 +417,11 @@ void BotTargetList::updatePlayerStep()
                         abort();
                     }
 
+                    if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
+                    {
+                        std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        abort();
+                    }
                     CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
                     const QPair<uint8_t,uint8_t> QtPoint(x,y);
                     std::pair<uint8_t,uint8_t> p(x,y);
@@ -404,7 +429,17 @@ void BotTargetList::updatePlayerStep()
                     if(!mapQtString.endsWith(".tmx"))
                         mapQtString+=".tmx";
                     //finish correctly the step
+                    if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
+                    {
+                        std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        abort();
+                    }
                     api->stopMove();
+                    if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
+                    {
+                        std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        abort();
+                    }
                     switch(player.target.type)
                     {
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap:
