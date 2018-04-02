@@ -2084,3 +2084,11 @@ void MainWindow::on_server_edit_clicked()
         index++;
     }
 }
+
+void MainWindow::on_showPassword_toggled(bool)
+{
+    if(ui->showPassword->isChecked())
+        ui->lineEditPass->setEchoMode(QLineEdit::Normal);
+    else
+        ui->lineEditPass->setEchoMode(QLineEdit::Password);
+}

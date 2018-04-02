@@ -95,6 +95,20 @@
           </widget>
          </item>
          <item>
+          <widget class="QToolButton" name="showPassword">
+           <property name="toolTip">
+            <string>Show the password</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../../client/base/resources/client-resources-multi.qrc">
+             <normaloff>:/images/multi/showpassword.png</normaloff>:/images/multi/showpassword.png</iconset>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
           <spacer name="horizontalSpacer_3">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
@@ -379,7 +393,9 @@
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="../../client/base/resources/client-resources-multi.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>multipleConnexion</sender>

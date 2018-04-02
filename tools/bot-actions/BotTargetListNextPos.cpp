@@ -27,6 +27,8 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
                 if(itemOnMap.indexOfItemOnMap==target.extra)
                     return it->first;
             }
+            std::cerr << "BotTargetList::getNextPosition() ActionsBotInterface::GlobalTarget::ItemOnMap: " << std::to_string(target.extra) << std::endl;
+            abort();
             break;
             case ActionsBotInterface::GlobalTarget::Fight:
                 for(auto it = blockObject->botsFight.begin();it!=blockObject->botsFight.cend();++it)
@@ -35,6 +37,8 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
                     if(vectorcontainsAtLeastOne(botsFightList,(uint16_t)target.extra))
                         return it->first;
                 }
+                std::cerr << "BotTargetList::getNextPosition() ActionsBotInterface::GlobalTarget::Fight: " << std::to_string(target.extra) << std::endl;
+                abort();
             break;
             case ActionsBotInterface::GlobalTarget::Shop:
                 for(auto it = blockObject->shops.begin();it!=blockObject->shops.cend();++it)
@@ -43,10 +47,14 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
                     if(vectorcontainsAtLeastOne(shops,(uint16_t)target.extra))
                         return it->first;
                 }
+                std::cerr << "BotTargetList::getNextPosition() ActionsBotInterface::GlobalTarget::Shop: " << std::to_string(target.extra) << std::endl;
+                abort();
             break;
             case ActionsBotInterface::GlobalTarget::Heal:
                 for(auto it = blockObject->heal.begin();it!=blockObject->heal.cend();++it)
                     return *it;
+                std::cerr << "BotTargetList::getNextPosition() ActionsBotInterface::GlobalTarget::Heal" << std::endl;
+                abort();
             break;
             case ActionsBotInterface::GlobalTarget::WildMonster:
                 abort();

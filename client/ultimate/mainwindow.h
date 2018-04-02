@@ -129,6 +129,7 @@ private slots:
     #endif
     void on_server_edit_clicked();
     void askForUltimateCopy();
+    void on_showPassword_toggled(bool);
 private:
     enum ServerMode
     {

@@ -63,6 +63,7 @@ private slots:
     void vlcevent(const libvlc_event_t* event);
     void audioLoop(void *player);
     #endif
+    void on_showPassword_toggled(bool);
 private:
     QSslSocket *realSslSocket;
     Ui::MainWindow *ui;
