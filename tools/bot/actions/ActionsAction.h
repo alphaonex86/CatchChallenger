@@ -208,6 +208,8 @@ public:
     std::unordered_set<uint32_t> botIdLoaded;
 
     QTimer moveTimer;
+
+    uint64_t minitemprice,maxitemprice;
 private:
     void doMove();
     void doText();

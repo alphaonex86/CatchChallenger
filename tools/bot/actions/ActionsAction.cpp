@@ -17,6 +17,8 @@ ActionsAction::ActionsAction()
     loaded=0;
     allMapIsLoaded=false;
     ActionsAction::actionsAction=this;
+    minitemprice=0;
+    maxitemprice=0;
 }
 
 ActionsAction::~ActionsAction()
