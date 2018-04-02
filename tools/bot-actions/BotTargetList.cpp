@@ -19,6 +19,8 @@
 #include <QScrollArea>
 #include <QHBoxLayout>
 #include <QFileDialog>
+#include <QSqlQuery>
+#include <QSqlError>
 
 BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient,
                              QHash<CatchChallenger::ConnectedSocket *,MultipleBotConnection::CatchChallengerClient *> connectedSocketToCatchChallengerClient,
@@ -228,6 +230,52 @@ void BotTargetList::loadAllBotsInformation2()
     show();
     SocialChat::socialChat->show();
     //waitScreen.hide();
+
+    QHash<CatchChallenger::Api_protocol *,ActionsBotInterface::Player>::const_iterator i = ActionsBotInterface::clientList.constBegin();
+    while (i != ActionsBotInterface::clientList.constEnd()) {
+        CatchChallenger::Api_protocol * const api=i.key();
+        //ActionsBotInterface::Player &client=const_cast<ActionsBotInterface::Player &>(i.value());
+        if(api->getCaracterSelected())
+        {
+            QSqlQuery query;
+            query.prepare("SELECT plant,item,fight,shop,wild FROM preferences WHERE pseudo=:pseudo");
+            query.bindValue(":pseudo",api->getPseudo());
+            if(!query.exec())
+                qDebug() << "note load error: " << query.lastError();
+            else if(query.next())
+            {
+                MultipleBotConnection::CatchChallengerClient * const catchChallengerClient=
+                        apiToCatchChallengerClient[static_cast<CatchChallenger::Api_client_real *>(api)];
+                catchChallengerClient->preferences.plant=query.value("plant").toUInt();
+                catchChallengerClient->preferences.item=query.value("item").toUInt();
+                catchChallengerClient->preferences.fight=query.value("fight").toUInt();
+                catchChallengerClient->preferences.shop=query.value("shop").toUInt();
+                catchChallengerClient->preferences.wild=query.value("wild").toUInt();
+            }
+            else
+            {
+                MultipleBotConnection::CatchChallengerClient * const catchChallengerClient=
+                        apiToCatchChallengerClient[static_cast<CatchChallenger::Api_client_real *>(api)];
+                catchChallengerClient->preferences.plant=10+rand()%90;
+                catchChallengerClient->preferences.item=10+rand()%90;
+                catchChallengerClient->preferences.fight=10+rand()%90;
+                catchChallengerClient->preferences.shop=10+rand()%90;
+                catchChallengerClient->preferences.wild=10+rand()%90;
+
+                QSqlQuery query;
+                query.prepare("INSERT INTO preferences (pseudo,plant,item,fight,shop,wild) "
+                              "VALUES (:pseudo, :plant, :item, :fight, :shop, :wild)");
+                query.bindValue(":pseudo", api->getPseudo());
+                query.bindValue(":plant", catchChallengerClient->preferences.plant);
+                query.bindValue(":item", catchChallengerClient->preferences.item);
+                query.bindValue(":fight", catchChallengerClient->preferences.fight);
+                query.bindValue(":shop", catchChallengerClient->preferences.shop);
+                query.bindValue(":wild", catchChallengerClient->preferences.wild);
+                query.exec();
+            }
+        }
+        ++i;
+    }
 }
 
 void BotTargetList::on_bots_itemSelectionChanged()
@@ -1636,4 +1684,114 @@ void BotTargetList::on_overall_graphvizTextShow_clicked()
         QFile::remove(pngPath);
     else
         QFile::rename(pngPath,fileName);
+}
+
+void BotTargetList::on_PrefPlant_valueChanged(int value)
+{
+    if(value<10 || value>100)
+        return;
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    if(!actionsAction->clientList.contains(client->api))
+        return;
+
+    QSqlQuery query;
+    query.prepare("UPDATE preferences SET plant=:plant WHERE pseudo=:pseudo");
+    query.bindValue(":pseudo", pseudo);
+    query.bindValue(":plant", value);
+    query.exec();
+    client->preferences.plant=value;
+}
+
+void BotTargetList::on_PrefItem_valueChanged(int value)
+{
+    if(value<10 || value>100)
+        return;
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    if(!actionsAction->clientList.contains(client->api))
+        return;
+
+    QSqlQuery query;
+    query.prepare("UPDATE preferences SET item=:item WHERE pseudo=:pseudo");
+    query.bindValue(":pseudo", pseudo);
+    query.bindValue(":item", value);
+    query.exec();
+    client->preferences.item=value;
+}
+
+void BotTargetList::on_PrefFight_valueChanged(int value)
+{
+    if(value<10 || value>100)
+        return;
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    if(!actionsAction->clientList.contains(client->api))
+        return;
+
+    QSqlQuery query;
+    query.prepare("UPDATE preferences SET fight=:fight WHERE pseudo=:pseudo");
+    query.bindValue(":pseudo", pseudo);
+    query.bindValue(":fight", value);
+    query.exec();
+    client->preferences.fight=value;
+}
+
+void BotTargetList::on_PrefShop_valueChanged(int value)
+{
+    if(value<10 || value>100)
+        return;
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    if(!actionsAction->clientList.contains(client->api))
+        return;
+
+    QSqlQuery query;
+    query.prepare("UPDATE preferences SET shop=:shop WHERE pseudo=:pseudo");
+    query.bindValue(":pseudo", pseudo);
+    query.bindValue(":shop", value);
+    query.exec();
+    client->preferences.shop=value;
+}
+
+void BotTargetList::on_PrefWild_valueChanged(int value)
+{
+    if(value<10 || value>100)
+        return;
+    const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    const QString &pseudo=selectedItems.at(0)->text();
+    if(!pseudoToBot.contains(pseudo))
+        return;
+    MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
+    if(!actionsAction->clientList.contains(client->api))
+        return;
+
+    QSqlQuery query;
+    query.prepare("UPDATE preferences SET wild=:wild WHERE pseudo=:pseudo");
+    query.bindValue(":pseudo", pseudo);
+    query.bindValue(":wild", value);
+    query.exec();
+    client->preferences.wild=value;
 }

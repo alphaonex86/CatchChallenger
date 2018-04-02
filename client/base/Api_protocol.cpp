@@ -202,21 +202,41 @@ void Api_protocol::parseError(const QString &userMessage,const QString &errorStr
 
 Player_private_and_public_informations &Api_protocol::get_player_informations()
 {
+    if(!getCaracterSelected())
+    {
+        std::cerr << "Api_protocol::get_player_informations(): !getCaracterSelected() (internal error)" << std::endl;
+        return player_informations;
+    }
     return player_informations;
 }
 
 const Player_private_and_public_informations &Api_protocol::get_player_informations_ro() const
 {
+    if(!getCaracterSelected())
+    {
+        std::cerr << "Api_protocol::get_player_informations_ro(): !getCaracterSelected() (internal error)" << std::endl;
+        return player_informations;
+    }
     return player_informations;
 }
 
 QString Api_protocol::getPseudo()
 {
+    if(!getCaracterSelected())
+    {
+        std::cerr << "Api_protocol::getPseudo(): !getCaracterSelected() (internal error)" << std::endl;
+        return QString();
+    }
     return QString::fromUtf8(player_informations.public_informations.pseudo.data(),static_cast<int>(player_informations.public_informations.pseudo.size()));
 }
 
 uint16_t Api_protocol::getId()
 {
+    if(!getCaracterSelected())
+    {
+        std::cerr << "Api_protocol::getId(): !getCaracterSelected() (internal error)" << std::endl;
+        return 0;
+    }
     return player_informations.public_informations.simplifiedId;
 }
 
