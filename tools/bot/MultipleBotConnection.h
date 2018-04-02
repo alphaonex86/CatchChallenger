@@ -35,6 +35,16 @@ public:
         QString pass;
         bool selectedCharacter;
         //bool haveFirstHeader;->put into Api_protocol
+
+        struct Preferences
+        {
+            unsigned int plant;
+            unsigned int item;
+            unsigned int fight;
+            unsigned int shop;
+            unsigned int wild;
+        };
+        Preferences preferences;
     };
     QHash<CatchChallenger::Api_client_real *,CatchChallengerClient *> apiToCatchChallengerClient;
     QHash<CatchChallenger::ConnectedSocket *,CatchChallengerClient *> connectedSocketToCatchChallengerClient;
