@@ -28,7 +28,8 @@ SOURCES += main.cpp\
     BotTargetListNextPos.cpp \
     SocialChat.cpp \
     TargetFilter.cpp \
-    MultipleBotConnectionAction.cpp
+    MultipleBotConnectionAction.cpp \
+    DatabaseBot.cpp
 HEADERS  += MainWindow.h \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \
@@ -38,7 +39,8 @@ HEADERS  += MainWindow.h \
     WaitScreen.h \
     SocialChat.h \
     TargetFilter.h \
-    MultipleBotConnectionAction.h
+    MultipleBotConnectionAction.h \
+    DatabaseBot.h
 
 FORMS    += MainWindow.ui \
     BotTargetList.ui \
