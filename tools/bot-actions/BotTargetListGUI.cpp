@@ -18,7 +18,6 @@ std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockO
 
 uint16_t BotTargetList::mapPointDistanceNormalised(uint8_t x1,uint8_t y1,uint8_t x2,uint8_t y2)
 {
-
     uint16_t squaredistancex=0,squaredistancey=0;
     if(x1>x2)
         squaredistancex=x1-x2;
@@ -111,6 +110,9 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
 {
     //compute the forbiden direct value
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations_ro();
+    CatchChallenger::Api_client_real * apiReal=const_cast<CatchChallenger::Api_client_real *>(
+                static_cast<const CatchChallenger::Api_client_real * const>(api));
+    MultipleBotConnection::CatchChallengerClient * catchChallengerClient=apiToCatchChallengerClient.value(apiReal);
     uint32_t maxMonsterLevel=0;
     {
         unsigned int index=0;
@@ -331,6 +333,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                                         points-=distance;
                                                 }
 
+                                                points=points*catchChallengerClient->preferences.plant/100;
                                                 globalTarget.points=points;
                                                 globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
                                                 if(bestPoint<points)
@@ -398,6 +401,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                                     points-=distance;
                                             }
 
+                                            points=points*catchChallengerClient->preferences.plant/100;
                                             globalTarget.points=points;
                                             globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
                                             if(bestPoint<points)
@@ -521,6 +525,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                 points*=2;
                         }
 
+                        points=points*catchChallengerClient->preferences.item/100;
                         globalTarget.points=points;
                         globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
                         if(bestPoint<points)
@@ -636,6 +641,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         points*=2;
                                 }
 
+                                points=points*catchChallengerClient->preferences.fight/100;
                                 globalTarget.points=points;
                                 if(bestPoint<points)
                                     bestPoint=points;
@@ -750,7 +756,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                     globalTarget.extra=shopId;
                     globalTarget.bestPath=resolvedBlock.bestPath;
                     globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Shop;
-                    globalTarget.points=0;
+                    globalTarget.points=0*catchChallengerClient->preferences.shop/100;
 
                     unsigned int sub_index=0;
                     while(sub_index<shop.prices.size())
@@ -814,7 +820,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             globalTarget.extra=0;
             globalTarget.bestPath=resolvedBlock.bestPath;
             globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal;
-            globalTarget.points=0;
+            globalTarget.points=0*catchChallengerClient->preferences.fight/100;
 
             QListWidgetItem * newItem=new QListWidgetItem();
             newItem->setText(QString("Heal"));
@@ -987,6 +993,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                     addPoint/=totalLuck;
                     points+=addPoint;
 
+                    points=points*catchChallengerClient->preferences.wild/100;
                     globalTarget.points=points;
                     if(bestPoint<points)
                         bestPoint=points;
@@ -1073,6 +1080,12 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             std::cerr << "The target count not match with visual elements" << std::endl;
             abort();
         }
+
+    ui->PrefFight->setValue(catchChallengerClient->preferences.fight);
+    ui->PrefItem->setValue(catchChallengerClient->preferences.item);
+    ui->PrefPlant->setValue(catchChallengerClient->preferences.plant);
+    ui->PrefShop->setValue(catchChallengerClient->preferences.shop);
+    ui->PrefWild->setValue(catchChallengerClient->preferences.wild);
 
     return itemToReturn;
 }
