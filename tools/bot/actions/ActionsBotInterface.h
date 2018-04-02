@@ -23,14 +23,14 @@ public:
     {
         enum GlobalTargetType
         {
-            ItemOnMap,//indexOfItemOnMap
-            Fight,//fight id
-            Shop,//shop id
-            Heal,
-            WildMonster,
-            Dirt,
-            Plant,
-            None
+            ItemOnMap=0,//indexOfItemOnMap
+            Fight=1,//fight id
+            Shop=2,//shop id
+            Heal=3,
+            WildMonster=4,
+            Dirt=5,
+            Plant=6,
+            None=7
         };
         GlobalTargetType type;
         uint32_t extra;
