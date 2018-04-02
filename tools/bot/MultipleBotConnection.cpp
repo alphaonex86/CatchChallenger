@@ -580,6 +580,11 @@ MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClie
     sslSocketToCatchChallengerClient[client->sslSocket]=client;
     client->socket=new CatchChallenger::ConnectedSocket(client->sslSocket);
     client->api=new CatchChallenger::Api_client_real(client->socket,false);
+    client->preferences.plant=100;
+    client->preferences.item=100;
+    client->preferences.fight=100;
+    client->preferences.shop=100;
+    client->preferences.wild=100;
 
     if(!connect(sslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,&MultipleBotConnection::sslErrors,Qt::QueuedConnection))
         abort();

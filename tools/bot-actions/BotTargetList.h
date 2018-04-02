@@ -98,6 +98,11 @@ private slots:
     void on_hideTooHard_toggled(bool checked);
     void on_graphvizTextShow_clicked();
     void on_overall_graphvizTextShow_clicked();
+    void on_PrefPlant_valueChanged(int value);
+    void on_PrefItem_valueChanged(int value);
+    void on_PrefFight_valueChanged(int value);
+    void on_PrefShop_valueChanged(int value);
+    void on_PrefWild_valueChanged(int value);
 private:
     Ui::BotTargetList *ui;
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient;
