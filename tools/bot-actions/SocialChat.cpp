@@ -2,6 +2,7 @@
 #include "ui_SocialChat.h"
 #include "../../client/base/interface/DatapackClientLoader.h"
 #include "../../general/base/ChatParsing.h"
+#include "DatabaseBot.h"
 
 #include <QListWidget>
 #include <QSqlQuery>
@@ -15,22 +16,6 @@ SocialChat::SocialChat() :
     ui(new Ui::SocialChat)
 {
     ui->setupUi(this);
-    const QString destination(QCoreApplication::applicationDirPath()+"/chat.db");
-    QFile destinationFile(destination);
-    if(!destinationFile.exists())
-    {
-        QFile::copy(":/chat.db",destination);
-        destinationFile.setPermissions(destinationFile.permissions() | QFileDevice::WriteOwner | QFileDevice::WriteUser);
-    }
-
-    database = QSqlDatabase::addDatabase("QSQLITE");
-    database.setDatabaseName(destination);
-
-    if (!database.open())
-    {
-        std::cerr << "Error: connection with database fail" << std::endl;
-        abort();
-    }
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
