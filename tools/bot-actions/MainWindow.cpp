@@ -547,3 +547,11 @@ void MainWindow::on_host_returnPressed()
 {
     on_connect_clicked();
 }
+
+void MainWindow::on_showPassword_toggled(bool)
+{
+    if(ui->showPassword->isChecked())
+        ui->pass->setEchoMode(QLineEdit::Normal);
+    else
+        ui->pass->setEchoMode(QLineEdit::Password);
+}

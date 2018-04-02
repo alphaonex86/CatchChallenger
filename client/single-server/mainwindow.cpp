@@ -712,3 +712,11 @@ void MainWindow::audioLoop(void *player)
     libvlc_media_player_play(vlcPlayer);
 }
 #endif
+
+void MainWindow::on_showPassword_toggled(bool)
+{
+    if(ui->showPassword->isChecked())
+        ui->lineEditPass->setEchoMode(QLineEdit::Normal);
+    else
+        ui->lineEditPass->setEchoMode(QLineEdit::Password);
+}

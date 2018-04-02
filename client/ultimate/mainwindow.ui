@@ -26,7 +26,7 @@
    <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../server/all-server-resources.qrc">
+   <iconset resource="../base/resources/client-resources.qrc">
     <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -944,6 +944,26 @@ color: rgb(0, 0, 0);</string>
                     </property>
                    </widget>
                   </item>
+                  <item>
+                   <widget class="QToolButton" name="showPassword">
+                    <property name="toolTip">
+                     <string>Show the password</string>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../base/resources/client-resources-multi.qrc">
+                      <normaloff>:/images/multi/showpassword.png</normaloff>:/images/multi/showpassword.png</iconset>
+                    </property>
+                    <property name="iconSize">
+                     <size>
+                      <width>16</width>
+                      <height>16</height>
+                     </size>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
                 </item>
                 <item>
@@ -1137,8 +1157,8 @@ padding: 0 5px;</string>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../../server/all-server-resources.qrc"/>
   <include location="../base/resources/client-resources.qrc"/>
+  <include location="../base/resources/client-resources-multi.qrc"/>
  </resources>
  <connections/>
 </ui>

@@ -234,6 +234,20 @@ border-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
                     </property>
                    </widget>
                   </item>
+                  <item>
+                   <widget class="QToolButton" name="showPassword">
+                    <property name="toolTip">
+                     <string>Show the password</string>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="../base/resources/client-resources-multi.qrc">
+                      <normaloff>:/images/multi/showpassword.png</normaloff>:/images/multi/showpassword.png</iconset>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
                 </item>
                 <item>
@@ -456,6 +470,7 @@ color: rgb(0, 0, 0);</string>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
   <include location="../base/resources/client-resources.qrc"/>
+  <include location="../base/resources/client-resources-multi.qrc"/>
  </resources>
  <connections/>
 </ui>

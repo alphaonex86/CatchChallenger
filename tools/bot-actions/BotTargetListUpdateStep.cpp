@@ -49,7 +49,8 @@ void BotTargetList::updatePlayerStep()
                 bool haveChange=false;
                 if(player.target.localStep.empty())
                 {
-                    if(!player.target.bestPath.empty())
+                    //was: !player.target.bestPath.empty() but block the first step
+                    if(!player.target.bestPath.empty())/// need set out of here, \see startPlayerMove()
                     {
                         haveChange=true;
                         if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
@@ -78,12 +79,31 @@ void BotTargetList::updatePlayerStep()
                             default:
                             break;
                         }
+                        //look to move
+                        CatchChallenger::Direction newDirectionToMove=newDirection;
+                        switch(newDirection)
+                        {
+                            case CatchChallenger::Direction_look_at_bottom:
+                                newDirectionToMove=CatchChallenger::Direction::Direction_move_at_bottom;
+                            break;
+                            case CatchChallenger::Direction_look_at_left:
+                                newDirectionToMove=CatchChallenger::Direction::Direction_move_at_left;
+                            break;
+                            case CatchChallenger::Direction_look_at_right:
+                                newDirectionToMove=CatchChallenger::Direction::Direction_move_at_right;
+                            break;
+                            case CatchChallenger::Direction_look_at_top:
+                                newDirectionToMove=CatchChallenger::Direction::Direction_move_at_top;
+                            break;
+                            default:
+                            break;
+                        }
 
                         //get the item in front of to continue the progression
                         {
                             const MapServerMini * destMap=playerMap;
                             uint8_t x=player.x,y=player.y;
-                            if(ActionsAction::move(api,newDirection,&destMap,&x,&y,false,false))
+                            if(ActionsAction::move(api,newDirectionToMove,&destMap,&x,&y,false,false))
                             {
                                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                 {
@@ -147,10 +167,10 @@ void BotTargetList::updatePlayerStep()
                             case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
                             case MapServerMini::BlockObject::LinkType::SourceLeftMap:
                             case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
-                                if(ActionsAction::canGoTo(api,newDirection,*playerMap,player.x,player.y,true,true))
+                                if(ActionsAction::canGoTo(api,newDirectionToMove,*playerMap,player.x,player.y,true,true))
                                 {
-                                    ActionsAction::move(api,newDirection,&playerMap,&player.x,&player.y,true,true);
-                                    api->newDirection(newDirection);
+                                    ActionsAction::move(api,newDirectionToMove,&playerMap,&player.x,&player.y,true,true);
+                                    api->newDirection(newDirectionToMove);
                                     //enter into new zone, drop the entry
                                     if(player.target.bestPath.empty())
                                         abort();
@@ -305,7 +325,7 @@ void BotTargetList::updatePlayerStep()
                                     linkPoint.x=point.first;
                                     linkPoint.y=point.second;
                                     pointsList.push_back(linkPoint);
-                                    std::cout << "player.target.bestPath.empty()" << std::endl;
+                                    std::cout << "player.target.bestPath.empty(): blockObject!=player.target.blockObject && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster" << std::endl;
                                     if(pointsList.size()!=destinations.size())
                                         abort();
                                     uint8_t o=api->getDirection();
@@ -341,7 +361,8 @@ void BotTargetList::updatePlayerStep()
                     updatePlayerMap(true);
                 }
 
-                if(player.target.localStep.empty() && player.target.bestPath.empty() && player.target.blockObject!=NULL && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
+                if(player.target.localStep.empty() && player.target.bestPath.empty()
+                        && player.target.blockObject!=NULL && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                 {
                     //get the next tile
                     if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
