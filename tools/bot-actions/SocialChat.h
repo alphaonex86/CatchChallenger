@@ -2,7 +2,6 @@
 #define SOCIALCHAT_H
 
 #include <QMainWindow>
-#include <QSqlDatabase>
 #include <QHash>
 #include <QString>
 #include <QPixmap>
@@ -61,7 +60,6 @@ private:
     void focusInEvent(QFocusEvent * event);
     Ui::SocialChat *ui;
     QHash<QString,CatchChallenger::Api_protocol *> pseudoToBot;
-    QSqlDatabase database;
 
     //skin
     QHash<QString,QPixmap> frontSkinCacheString;
