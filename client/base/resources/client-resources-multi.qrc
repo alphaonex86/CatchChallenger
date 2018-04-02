@@ -28,5 +28,6 @@
         <file>images/multi/slow.png</file>
         <file>images/multi/busy.png</file>
         <file>images/multi/warning.png</file>
+        <file>images/multi/showpassword.png</file>
     </qresource>
 </RCC>

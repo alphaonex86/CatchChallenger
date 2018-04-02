@@ -414,7 +414,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
             linkPoint.x=point.first;
             linkPoint.y=point.second;
             pointsList.push_back(linkPoint);
-            std::cout << "player.target.bestPath.empty()" << std::endl;
+            std::cout << "player.target.bestPath.empty(): player.target.bestPath.empty() && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster" << std::endl;
         }
     }
     else //search the best path to the next block
@@ -1699,6 +1699,8 @@ void BotTargetList::on_PrefPlant_valueChanged(int value)
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
     if(!actionsAction->clientList.contains(client->api))
         return;
+    if((unsigned int)value==client->preferences.plant)
+        return;
 
     QSqlQuery query;
     query.prepare("UPDATE preferences SET plant=:plant WHERE pseudo=:pseudo");
@@ -1720,6 +1722,8 @@ void BotTargetList::on_PrefItem_valueChanged(int value)
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
     if(!actionsAction->clientList.contains(client->api))
+        return;
+    if((unsigned int)value==client->preferences.item)
         return;
 
     QSqlQuery query;
@@ -1743,6 +1747,8 @@ void BotTargetList::on_PrefFight_valueChanged(int value)
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
     if(!actionsAction->clientList.contains(client->api))
         return;
+    if((unsigned int)value==client->preferences.fight)
+        return;
 
     QSqlQuery query;
     query.prepare("UPDATE preferences SET fight=:fight WHERE pseudo=:pseudo");
@@ -1765,6 +1771,8 @@ void BotTargetList::on_PrefShop_valueChanged(int value)
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
     if(!actionsAction->clientList.contains(client->api))
         return;
+    if((unsigned int)value==client->preferences.shop)
+        return;
 
     QSqlQuery query;
     query.prepare("UPDATE preferences SET shop=:shop WHERE pseudo=:pseudo");
@@ -1786,6 +1794,8 @@ void BotTargetList::on_PrefWild_valueChanged(int value)
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
     if(!actionsAction->clientList.contains(client->api))
+        return;
+    if((unsigned int)value==client->preferences.wild)
         return;
 
     QSqlQuery query;
