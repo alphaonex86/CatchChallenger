@@ -462,7 +462,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../Api_protocol.cpp" line="362"/>
+        <location filename="../../../Api_protocol.cpp" line="382"/>
         <source>Hostname too big</source>
         <translation type="unfinished"></translation>
     </message>

@@ -148,27 +148,32 @@
         <translation>Mot de passe:</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.ui" line="952"/>
+        <location filename="../../mainwindow.ui" line="950"/>
+        <source>Show the password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../mainwindow.ui" line="972"/>
         <source>Remember the password</source>
         <translation>Sauvegarder le mot de passe</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.ui" line="991"/>
+        <location filename="../../mainwindow.ui" line="1011"/>
         <source>&lt;a href=&quot;http://catchchallenger.first-world.info/&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Web site&lt;/span&gt;&lt;/a&gt;</source>
         <translation>&lt;a href=&quot;http://catchchallenger.first-world.info/&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Site web&lt;/span&gt;&lt;/a&gt;</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.ui" line="1018"/>
+        <location filename="../../mainwindow.ui" line="1038"/>
         <source>&lt;a href=&quot;http://catchchallenger.first-world.info/register.html&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Register&lt;/span&gt;&lt;/a&gt;</source>
         <translation>&lt;a href=&quot;http://catchchallenger.first-world.info/register.html&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;S&apos;enregister&lt;/span&gt;&lt;/a&gt;</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.ui" line="1058"/>
+        <location filename="../../mainwindow.ui" line="1078"/>
         <source> Ok </source>
         <translation> Ok </translation>
     </message>
     <message>
-        <location filename="../../mainwindow.ui" line="1078"/>
+        <location filename="../../mainwindow.ui" line="1098"/>
         <source>Cancel</source>
         <translation>Annuler</translation>
     </message>
