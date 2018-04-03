@@ -14,22 +14,27 @@
         <translation>Mot de passe:</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.ui" line="242"/>
+        <location filename="../../mainwindow.ui" line="240"/>
+        <source>Show the password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../mainwindow.ui" line="256"/>
         <source>Remember the password</source>
         <translation>Sauvegarder le mot de passe</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.ui" line="277"/>
+        <location filename="../../mainwindow.ui" line="291"/>
         <source> Ok </source>
         <translation> Ok </translation>
     </message>
     <message>
-        <location filename="../../mainwindow.ui" line="301"/>
+        <location filename="../../mainwindow.ui" line="315"/>
         <source>&lt;a href=&quot;http://catchchallenger.first-world.info/register.html&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Register&lt;/span&gt;&lt;/a&gt;</source>
         <translation>&lt;a href=&quot;http://catchchallenger.first-world.info/register.html&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;S&apos;enregistrer&lt;/span&gt;&lt;/a&gt;</translation>
     </message>
     <message>
-        <location filename="../../mainwindow.ui" line="328"/>
+        <location filename="../../mainwindow.ui" line="342"/>
         <source>&lt;a href=&quot;http://catchchallenger.first-world.info/&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Web site&lt;/span&gt;&lt;/a&gt;</source>
         <translation>&lt;a href=&quot;http://catchchallenger.first-world.info/&quot;&gt;&lt;span style=&quot;text-decoration:underline;color:#0057ae;&quot;&gt;Site&lt;/span&gt;&lt;/a&gt;</translation>
     </message>

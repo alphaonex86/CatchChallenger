@@ -173,8 +173,6 @@ void ActionsAction::newEvent_slot(const uint8_t &event,const uint8_t &event_valu
 
 void ActionsAction::setEvents(CatchChallenger::Api_protocol *api,const QList<QPair<uint8_t,uint8_t> > &events)
 {
-    /// \todo: fix
-    return;
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
@@ -711,6 +709,10 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
         if(player.repel_step<=0)
         {
             const CatchChallenger::Player_private_and_public_informations &playerInformationsRO=player.api->get_player_informations_ro();
+
+            if(player.events.empty())
+                std::cerr << playerInformationsRO.public_informations.pseudo << ": player.events.empty()" << std::endl;
+
             const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
             const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
             if(player.fightEngine->generateWildFightIfCollision(playerMap,player.x,player.y,playerInformationsRO.items,player.events))
