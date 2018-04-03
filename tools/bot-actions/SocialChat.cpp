@@ -341,23 +341,31 @@ void SocialChat::on_note_textChanged()
     }
 }
 
-void SocialChat::new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &player_type)
+void SocialChat::new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &theotherpseudo,const CatchChallenger::Player_type &player_type)
 {
+    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(QObject::sender());
+    if(api==NULL)
+        return;
+    const QString pseudo=api->getPseudo();
+
     if(chat_type==CatchChallenger::Chat_type::Chat_type_all)
         if(pseudoToBot.contains(pseudo))
             return;
 
-    new_chat_text_internal(chat_type,text,pseudo,player_type);
+    new_chat_text_internal(chat_type,text,pseudo,theotherpseudo,player_type);
 }
 
-void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &player_type)
+void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_type,const QString &text,
+                                        const QString &pseudo,//what bot receive this text
+                                        const QString &theotherpseudo,//what is the player sending this text (can be the bot him self)
+                                        const CatchChallenger::Player_type &player_type)
 {
     if(chat_type==CatchChallenger::Chat_type::Chat_type_all)
         knownGlobalChatPlayers << pseudo;
 
     ChatEntry newEntry;
     newEntry.player_type=player_type;
-    newEntry.player_pseudo=pseudo.toStdString();
+    newEntry.player_pseudo=theotherpseudo.toStdString();
     newEntry.chat_type=chat_type;
     newEntry.text=text.toStdString();
 
@@ -439,6 +447,7 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
         ++i;
     }
 
+    //drop duplicate message
     if(chat_type==CatchChallenger::Chat_type::Chat_type_all)
     {
         const std::string tempContent=newEntry.player_pseudo+newEntry.text;
@@ -669,7 +678,7 @@ void SocialChat::on_globalChatText_returnPressed()
 
         api->sendChatText(CatchChallenger::Chat_type_all,text);
         if(!text.startsWith('/'))
-            new_chat_text_internal(CatchChallenger::Chat_type_all,text,pseudo,player_informations.public_informations.type);
+            new_chat_text_internal(CatchChallenger::Chat_type_all,text,pseudo,pseudo,player_informations.public_informations.type);
         ui->globalChatText->clear();
     }
     else if(text.contains(QRegularExpression("^/pm [^ ]+ .+$")))
@@ -980,7 +989,7 @@ void SocialChat::on_chatSpecText_returnPressed()
             case CatchChallenger::Chat_type_clan:
                 api->sendChatText(chatType,text);
                 if(!text.startsWith('/'))
-                    new_chat_text_internal(chatType,text,pseudo,player_informations.public_informations.type);
+                    new_chat_text_internal(chatType,text,pseudo,pseudo,player_informations.public_informations.type);
                 ui->chatSpecText->clear();
             break;
             default:
