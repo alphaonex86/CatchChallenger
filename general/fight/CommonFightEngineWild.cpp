@@ -212,18 +212,26 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const
                 {
                     const MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContent=monstersCollisionValue.walkOnMonsters.at(index);
                     std::vector<MapMonster> monsterList;
-                    unsigned int index_condition=0;
-                    while(index_condition<monstersCollisionContent.conditions.size())
+                    if(!events.empty())
                     {
-                        const MonstersCollisionValue::MonstersCollisionValueOnCondition &monstersCollisionValueOnCondition=monstersCollisionContent.conditions.at(index_condition);
-                        if(events.at(monstersCollisionValueOnCondition.event)==monstersCollisionValueOnCondition.event_value)
+                        unsigned int index_condition=0;
+                        while(index_condition<monstersCollisionContent.conditions.size())
                         {
-                            monsterList=monstersCollisionValueOnCondition.monsters;
-                            break;
+                            const MonstersCollisionValue::MonstersCollisionValueOnCondition &monstersCollisionValueOnCondition=monstersCollisionContent.conditions.at(index_condition);
+                            if(monstersCollisionValueOnCondition.event<events.size())
+                            {
+                                if(events.at(monstersCollisionValueOnCondition.event)==monstersCollisionValueOnCondition.event_value)
+                                {
+                                    monsterList=monstersCollisionValueOnCondition.monsters;
+                                    break;
+                                }
+                            }
+                            index_condition++;
                         }
-                        index_condition++;
+                        if(index_condition==monstersCollisionContent.conditions.size())
+                            monsterList=monstersCollisionContent.defaultMonsters;
                     }
-                    if(index_condition==monstersCollisionContent.conditions.size())
+                    else
                         monsterList=monstersCollisionContent.defaultMonsters;
                     if(monsterList.empty())
                         return false;
