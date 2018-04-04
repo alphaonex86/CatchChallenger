@@ -415,7 +415,7 @@ public:
     void tryEscape();
     void useSkill(const uint16_t &skill);
     void heal();
-    void requestFight(const uint32_t &fightId);
+    void requestFight(const uint16_t &fightId);
     void changeOfMonsterInFightByPosition(const uint8_t &monsterPosition);
 
     //monster

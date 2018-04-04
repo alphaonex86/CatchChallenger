@@ -1090,7 +1090,7 @@ void Api_protocol::heal()
     is_logged=character_selected=packOutcommingData(0x0B,NULL,0);
 }
 
-void Api_protocol::requestFight(const uint32_t &fightId)
+void Api_protocol::requestFight(const uint16_t &fightId)
 {
     if(!is_logged)
     {
@@ -1101,6 +1101,16 @@ void Api_protocol::requestFight(const uint32_t &fightId)
     {
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
+    }
+    if(player_informations.bot_already_beaten==NULL)
+    {
+        std::cerr << "player_informations.bot_already_beaten==NULL, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        abort();
+    }
+    if(player_informations.bot_already_beaten[fightId/8] & (1<<(7-fightId%8)))
+    {
+        std::cerr << "player_informations.bot_already_beaten["+std::to_string(fightId)+"], line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        abort();
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);

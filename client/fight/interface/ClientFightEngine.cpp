@@ -44,7 +44,7 @@ void ClientFightEngine::setBattleMonster(const QList<uint8_t> &stat,const uint8_
     mLastGivenXP=0;
 }
 
-void ClientFightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonsters)
+void ClientFightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonsters,const uint16_t &fightId)
 {
     if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !this->botFightMonsters.empty())
     {
@@ -56,7 +56,13 @@ void ClientFightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonste
         emit error("monster list size can't be empty");
         return;
     }
+    if(this->fightId!=0)
+    {
+        emit error("ClientFightEngine::setBotMonster() fightId!=0");
+        return;
+    }
     startTheFight();
+    this->fightId=fightId;
     this->botFightMonsters=CatchChallenger::QListToStdVector(botFightMonsters);
     int index=0;
     while(index<botFightMonsters.size())
@@ -207,6 +213,7 @@ bool ClientFightEngine::isInFight() const
 void ClientFightEngine::resetAll()
 {
     mLastGivenXP=0;
+    fightId=0;
 
     randomSeeds.clear();
     player_informations_local.playerMonster.clear();
@@ -585,11 +592,45 @@ bool ClientFightEngine::haveBattleOtherMonster() const
 
 bool ClientFightEngine::useSkill(const uint16_t &skill)
 {
+    const bool wasInBotFight=!botFightMonsters.empty();
     mLastGivenXP=0;
     client->useSkill(skill);
-    if(isInBattle())
+    if(!isInBattle())
+    {
+        if(!CommonFightEngine::useSkill(skill))
+            return false;
+        return finishTheTurn(wasInBotFight);
+    }
+    else
         return true;
-    return CommonFightEngine::useSkill(skill);
+    ////> drop model server bool Client::useSkill(const uint16_t &skill)
+}
+
+bool ClientFightEngine::finishTheTurn(const bool &isBot)
+{
+    const bool &win=!currentMonsterIsKO() && otherMonsterIsKO();
+    if(!isInFight())
+    {
+        if(win)
+        {
+            if(isBot)
+            {
+                if(public_and_private_informations.bot_already_beaten!=NULL)
+                {
+                    public_and_private_informations.bot_already_beaten[fightId/8]|=(1<<(7-fightId%8));
+                    fightId=0;
+                }
+                else
+                {
+                    std::cerr << "ClientFightEngine::finishTheTurn() public_and_private_informations.bot_already_beaten==NULL: "+std::to_string(fightId) << std::endl;
+                    abort();
+                }
+                std::cout << public_and_private_informations.public_informations.pseudo <<
+                             ": Register the win against the bot fight: "+std::to_string(fightId) << std::endl;
+            }
+        }
+    }
+    return win;
 }
 
 void ClientFightEngine::catchIsDone()
