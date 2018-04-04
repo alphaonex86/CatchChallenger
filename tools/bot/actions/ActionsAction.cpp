@@ -696,7 +696,7 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
                     botFightMonstersTransformed << CatchChallenger::FacilityLib::botFightMonsterToPlayerMonster(monsters.at(index),CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsters.at(index).id),monsters.at(index).level));
                     index++;
                 }
-                player.fightEngine->setBotMonster(botFightMonstersTransformed);
+                player.fightEngine->setBotMonster(botFightMonstersTransformed,fightId);
                 player.lastFightAction.restart();
                 return true;
             }
