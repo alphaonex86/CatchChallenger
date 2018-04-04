@@ -37,7 +37,7 @@ public:
     QList<PlayerMonster> playerMonster_catchInProgress;
     virtual void fightFinished();
     void setBattleMonster(const QList<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
-    void setBotMonster(const QList<PlayerMonster> &publicPlayerMonster);
+    void setBotMonster(const QList<PlayerMonster> &publicPlayerMonster, const uint16_t &fightId);
     bool addBattleMonster(const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     bool haveWin();
     void addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &fightEffectList);
@@ -57,6 +57,7 @@ public:
     bool isInBattle() const;
     bool haveBattleOtherMonster() const;
     virtual bool useSkill(const uint16_t &skill);
+    bool finishTheTurn(const bool &isBot);
     bool dropKOOtherMonster();
     bool tryCatchClient(const uint16_t &item);
     bool catchInProgress() const;
@@ -79,6 +80,7 @@ private:
     Player_private_and_public_informations player_informations_local;
     QByteArray randomSeeds;
     Api_protocol * client;
+    uint16_t fightId;
     Skill::AttackReturn doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel);
     bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
     bool internalTryEscape();

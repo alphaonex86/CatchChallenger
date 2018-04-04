@@ -505,7 +505,7 @@ void BaseWindow::botFightFullDiffered()
                                            );
         index++;
     }
-    fightEngine.setBotMonster(botFightMonstersTransformed);
+    fightEngine.setBotMonster(botFightMonstersTransformed,fightId);
     init_environement_display(mapController->getMapObject(),mapController->getX(),mapController->getY());
     ui->labelFightMonsterBottom->setPixmap(playerBackImage.scaled(160,160));
     init_current_monster_display();
