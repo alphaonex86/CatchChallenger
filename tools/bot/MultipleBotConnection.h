@@ -51,6 +51,7 @@ public:
     QHash<QSslSocket *,CatchChallengerClient *> sslSocketToCatchChallengerClient;
 
     virtual CatchChallengerClient *createClient();
+    bool haveAnError();
 protected:
     BotInterface *pluginLoaderInstance;
 
@@ -61,7 +62,7 @@ protected:
     QSet<quint32> characterOnMap;//protect mutual call: characterSelectForFirstCharacter(), logged_with_client(), haveTheDatapack_with_client()
     quint16 numberOfBotConnected;
     quint16 numberOfSelectedCharacter;
-    bool haveEnError;
+    bool mHaveAnError;
     uint8_t charactersGroupIndex;
     int64_t/*to have -1*/ serverUniqueKey;
     bool serverIsSelected;

@@ -6,6 +6,7 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "MapBrowse.h"
 #include "TargetFilter.h"
+#include "MainWindow.h"
 
 #include <chrono>
 #include <unordered_map>
@@ -1543,6 +1544,9 @@ void BotTargetList::on_autoSelectTarget_toggled(bool checked)
 
 void BotTargetList::autoStartAction()
 {
+    if(MainWindow::multipleBotConnexion.haveAnError())
+        return;
+
     CatchChallenger::Api_protocol * apiSelectClient=NULL;
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()==1)
