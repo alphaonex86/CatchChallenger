@@ -374,7 +374,7 @@ void MultipleBotConnectionImplForGui::protocol_is_good()
 void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketError error)
 {
     qDebug() << "newSocketError()" << error;
-    haveEnError=true;
+    mHaveAnError=true;
 
     QString errorString;
     switch(error)
@@ -486,7 +486,7 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
 
 void MultipleBotConnectionImplForGui::newError(QString error,QString detailedError)
 {
-    haveEnError=true;
+    mHaveAnError=true;
 
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
