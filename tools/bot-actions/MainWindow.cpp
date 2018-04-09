@@ -11,6 +11,8 @@
 #include <QNetworkProxy>
 #include <QMessageBox>
 
+MultipleBotConnectionAction MainWindow::multipleBotConnexion;
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)

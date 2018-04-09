@@ -11,7 +11,7 @@
 
 MultipleBotConnection::MultipleBotConnection() :
     botInterface(NULL),
-    haveEnError(false),
+    mHaveAnError(false),
     charactersGroupIndex(0),
     serverUniqueKey(-1),
     serverIsSelected(false)
@@ -26,7 +26,7 @@ MultipleBotConnection::MultipleBotConnection() :
     numberToChangeLoginForMultipleConnexion=1;
     numberOfBotConnected=0;
     numberOfSelectedCharacter=0;
-    haveEnError=false;
+    mHaveAnError=false;
 }
 
 MultipleBotConnection::~MultipleBotConnection()
@@ -86,7 +86,7 @@ void MultipleBotConnection::disconnected()
                 else
                 {
                     qDebug() << "disconnected(): For reason: " << connectedSocketToCatchChallengerClient[senderObject];
-                    haveEnError=true;
+                    mHaveAnError=true;
                     if(catchChallengerClient->haveBeenDiscounted==false)
                     {
                         connectedSocketToCatchChallengerClient[senderObject]->haveBeenDiscounted=true;
@@ -98,19 +98,19 @@ void MultipleBotConnection::disconnected()
             }
             else
             {
-                haveEnError=true;
+                mHaveAnError=true;
                 qDebug() << "disconnected(): error, api null";
             }
         }
         else
         {
-            haveEnError=true;
+            mHaveAnError=true;
             qDebug() << "disconnected(): error, from unknown (not found)";
         }
     }
     else
     {
-        haveEnError=true;
+        mHaveAnError=true;
         qDebug() << "disconnected(): error, from unknown";
     }
 }
@@ -123,7 +123,7 @@ void MultipleBotConnection::lastReplyTime(const quint32 &time)
 void MultipleBotConnection::notLogged(const QString &reason)
 {
     Q_UNUSED(reason);
-    haveEnError=true;
+    mHaveAnError=true;
 
     QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
     while (i.hasNext()) {
@@ -453,7 +453,7 @@ void MultipleBotConnection::connectTimerSlot()
         if(numberOfBotConnected<numberOfSelectedCharacter)
         {
             qDebug() << "MultipleBotConnection::connectTimerSlot(): numberOfBotConnected(" << numberOfBotConnected << ")<numberOfSelectedCharacter(" << numberOfSelectedCharacter << ")";
-            haveEnError=true;
+            mHaveAnError=true;
             connectTimer.stop();
         }
         else
@@ -537,20 +537,25 @@ void MultipleBotConnection::newError_with_client(CatchChallengerClient *client, 
 {
     Q_UNUSED(error);
     Q_UNUSED(detailedError);
-    haveEnError=true;
+    mHaveAnError=true;
     client->socket->disconnectFromHost();
 }
 
 void MultipleBotConnection::newSocketError_with_client(CatchChallengerClient *client, QAbstractSocket::SocketError error)
 {
     qDebug() << "newSocketError()" << error;
-    haveEnError=true;
+    mHaveAnError=true;
     Q_UNUSED(client);
+}
+
+bool MultipleBotConnection::haveAnError()
+{
+    return mHaveAnError;
 }
 
 MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClient()
 {
-    if(haveEnError)
+    if(mHaveAnError)
     {
         connectTimer.stop();
         return NULL;

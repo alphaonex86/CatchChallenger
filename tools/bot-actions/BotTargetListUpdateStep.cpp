@@ -10,9 +10,12 @@
 #include <chrono>
 #include <QMessageBox>
 #include <stdlib.h>
+#include "MainWindow.h"
 
 void BotTargetList::updatePlayerStep()
 {
+    if(MainWindow::multipleBotConnexion.haveAnError())
+        return;
     CatchChallenger::Api_protocol * apiSelectedClient=NULL;
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()==1)
