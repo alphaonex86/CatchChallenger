@@ -91,6 +91,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                             const Tiled::Tile *tile=objects.at(index2)->cell().tile;
                             if(tile!=NULL)
                             {
+                                //animation only for door
                                 const QString &animation=tile->property(MapVisualiserOrder::text_animation);
                                 if(!animation.isEmpty())
                                 {
@@ -190,6 +191,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
             else
                 delete tempMapObject->tiledMap->takeLayerAt(index);
         }
+        /// for the animation of tile see MapVisualiser::applyTheAnimationTimer()
         else
             index++;
     }
