@@ -298,52 +298,59 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const QString &
                                         QString framesString=animationList.at(1);
                                         msString.remove(MapVisualiserThread::text_ms);
                                         framesString.remove(MapVisualiserThread::text_frames);
-                                        uint16_t ms=msString.toUShort();
-                                        uint8_t frames=static_cast<uint8_t>(framesString.toUShort());
-                                        if(ms>0 && frames>1)
+                                        const unsigned int temp_ms=msString.toUInt();
+                                        const unsigned int temp_frames=framesString.toUInt();
+                                        if(temp_ms>=10 && temp_ms<=65535)
                                         {
+                                            if(temp_frames>1 && temp_frames<=255)
                                             {
-                                                Tiled::Cell cell;
-                                                cell.tile=NULL;
-                                                tileLayer->setCell(x,y,cell);
+                                                const uint16_t ms=static_cast<uint16_t>(temp_ms);
+                                                const uint8_t frames=static_cast<uint8_t>(temp_frames);
+                                                {
+                                                    Tiled::Cell cell;
+                                                    cell.tile=NULL;
+                                                    tileLayer->setCell(x,y,cell);
+                                                }
+                                                Tiled::ObjectGroup *objectGroup=NULL;
+                                                if(index<(tempMapObject->tiledMap->layerCount()))
+                                                    if(Tiled::ObjectGroup *objectGroupTemp = tempMapObject->tiledMap->layerAt(index+1)->asObjectGroup())
+                                                        objectGroup=objectGroupTemp;
+                                                if(objectGroup==NULL)
+                                                {
+                                                    objectGroup=new Tiled::ObjectGroup;
+                                                    objectGroup->setName("Layer for animation "+tileLayer->name());
+                                                    tempMapObject->tiledMap->insertLayer(index+1,objectGroup);
+                                                }
+                                                Tiled::MapObject *object=new Tiled::MapObject();
+                                                objectGroup->addObject(object);
+                                                object->setPosition(QPointF(x,y+1));
+                                                Tiled::Cell cell=object->cell();
+                                                if(!tempMapObject->animatedObject.contains(ms))
+                                                {
+                                                    Map_animation tempAnimationDescriptor;
+                                                    tempAnimationDescriptor.count=0;
+                                                    tempAnimationDescriptor.frameCountTotal=frames;
+                                                    tempMapObject->animatedObject[ms]=tempAnimationDescriptor;
+                                                }
+                                                Map_animation_object map_animation_object;
+                                                map_animation_object.randomOffset=0;
+                                                if(animationList.size()>=3 && animationList.at(2)==MapVisualiserThread::text_randomoffset)
+                                                    map_animation_object.randomOffset=rand()%frames;
+                                                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                                map_animation_object.minId=tile->id();
+                                                map_animation_object.maxId=tile->id()+frames;
+                                                #endif
+                                                cell.tile=tile->tileset()->tileAt(tile->id()+map_animation_object.randomOffset);
+                                                object->setCell(cell);
+                                                map_animation_object.animatedObject=object;
+                                                /// \todo control the animation is not out of rame
+                                                tempMapObject->animatedObject[ms].animatedObjectList << map_animation_object;
                                             }
-                                            Tiled::ObjectGroup *objectGroup=NULL;
-                                            if(index<(tempMapObject->tiledMap->layerCount()))
-                                                if(Tiled::ObjectGroup *objectGroupTemp = tempMapObject->tiledMap->layerAt(index+1)->asObjectGroup())
-                                                    objectGroup=objectGroupTemp;
-                                            if(objectGroup==NULL)
-                                            {
-                                                objectGroup=new Tiled::ObjectGroup;
-                                                objectGroup->setName("Layer for animation "+tileLayer->name());
-                                                tempMapObject->tiledMap->insertLayer(index+1,objectGroup);
-                                            }
-                                            Tiled::MapObject *object=new Tiled::MapObject();
-                                            objectGroup->addObject(object);
-                                            object->setPosition(QPointF(x,y+1));
-                                            Tiled::Cell cell=object->cell();
-                                            if(!tempMapObject->animatedObject.contains(ms))
-                                            {
-                                                Map_animation tempAnimationDescriptor;
-                                                tempAnimationDescriptor.count=0;
-                                                tempAnimationDescriptor.frameCountTotal=frames;
-                                                tempMapObject->animatedObject[ms]=tempAnimationDescriptor;
-                                            }
-                                            Map_animation_object map_animation_object;
-                                            map_animation_object.randomOffset=0;
-                                            if(animationList.size()>=3 && animationList.at(2)==MapVisualiserThread::text_randomoffset)
-                                                map_animation_object.randomOffset=rand()%frames;
-                                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                                            map_animation_object.minId=tile->id();
-                                            map_animation_object.maxId=tile->id()+frames;
-                                            #endif
-                                            cell.tile=tile->tileset()->tileAt(tile->id()+map_animation_object.randomOffset);
-                                            object->setCell(cell);
-                                            map_animation_object.animatedObject=object;
-                                            /// \todo control the animation is not out of rame
-                                            tempMapObject->animatedObject[ms].animatedObjectList << map_animation_object;
+                                            else
+                                                qDebug() << "frames is not in good range";
                                         }
                                         else
-                                            qDebug() << "ms is 0 or frame is <=1";
+                                            qDebug() << "ms is not in good range";
                                     }
                                     else
                                         qDebug() << "Wrong animation tile args regex match";

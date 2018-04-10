@@ -182,20 +182,21 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
         all_map[QString::fromStdString(tempMapObject->logicalMap.map_file)]=tempMapObject;
         QHash<uint16_t,MapVisualiserThread::Map_animation>::const_iterator i = tempMapObject->animatedObject.constBegin();
         while (i != tempMapObject->animatedObject.constEnd()) {
-            if(!animationTimer.contains(static_cast<uint8_t>(i.key())))
+            const uint16_t &interval=static_cast<uint16_t>(i.key());
+            if(!animationTimer.contains(interval))
             {
                 QTimer *newTimer=new QTimer();
-                newTimer->setInterval(i.key());
-                animationTimer[static_cast<uint8_t>(i.key())]=newTimer;
-                animationFrame[static_cast<uint8_t>(i.key())];//creation
+                newTimer->setInterval(interval);
+                animationTimer[interval]=newTimer;
+                animationFrame[interval];//creation
                 connect(newTimer,&QTimer::timeout,this,&MapVisualiser::applyTheAnimationTimer);
                 newTimer->start();
             }
-            if(!animationFrame.value(static_cast<uint8_t>(i.key())).contains(i.value().count))
-                animationFrame[static_cast<uint8_t>(i.key())][i.value().count]=0;
+            if(!animationFrame.value(interval).contains(i.value().count))
+                animationFrame[interval][i.value().count]=0;
             else
             {
-                const uint8_t &count=animationFrame.value(static_cast<uint8_t>(i.key())).value(i.value().count);
+                const uint8_t &count=animationFrame.value(interval).value(i.value().count);
                 const int &oldcount=tempMapObject->animatedObject[i.key()].count;
                 const int &count_diff=count-oldcount;
                 tempMapObject->animatedObject[i.key()].count+=count_diff;
@@ -396,7 +397,7 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
 void MapVisualiser::applyTheAnimationTimer()
 {
     QTimer *timer=qobject_cast<QTimer *>(QObject::sender());
-    const uint8_t &interval=static_cast<uint8_t>(timer->interval());
+    const uint16_t &interval=static_cast<uint16_t>(timer->interval());
     if(animationFrame.contains(interval))
     {
         QHash<uint8_t/*frame total*/,uint8_t/*actual frame*/> countList=animationFrame.value(interval);
@@ -460,6 +461,9 @@ void MapVisualiser::applyTheAnimationTimer()
     }
     if(!isUsed)
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        std::cout << "MapVisualiser::applyTheAnimationTimer() : !isUsed for timer: " << std::to_string(interval) << std::endl;
+        #endif
         animationTimer.remove(interval);
         timer->stop();
         delete timer;

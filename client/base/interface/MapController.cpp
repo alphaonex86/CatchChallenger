@@ -492,70 +492,77 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     if(parsedMap->logicalMap.bots.value(Qtpos).step.find(1)!=parsedMap->logicalMap.bots.value(Qtpos).step.cend())
     {
         auto stepBot=parsedMap->logicalMap.bots.value(Qtpos).step.at(1);
-        if(stepBot->Attribute(std::string("type"))!=NULL && *stepBot->Attribute(std::string("type"))=="fight" && stepBot->Attribute(std::string("fightid"))!=NULL)
+        if(stepBot->Attribute(std::string("type"))!=NULL && *stepBot->Attribute(std::string("type"))=="fight")
         {
-            bool ok;
-            //16Bit: \see CommonDatapackServerSpec, Map_to_send,struct Bot_Semi,uint16_t id
-            const uint16_t fightid=stringtouint16(*stepBot->Attribute(std::string("fightid")),&ok);
-            if(ok)
+            if(stepBot->Attribute(std::string("fightid"))!=NULL)
             {
-                if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
+                bool ok;
+                //16Bit: \see CommonDatapackServerSpec, Map_to_send,struct Bot_Semi,uint16_t id
+                const uint16_t fightid=stringtouint16(*stepBot->Attribute(std::string("fightid")),&ok);
+                if(ok)
                 {
-                    #ifdef DEBUG_CLIENT_BOT
-                    qDebug() << (QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(parsedMap->logicalMap.map_file).arg(x).arg(y).arg(direction));
-                    #endif
-
-                    uint32_t fightRange=5;
-                    if(parsedMap->logicalMap.bots.value(Qtpos).properties.find("fightRange")!=parsedMap->logicalMap.bots.value(Qtpos).properties.cend())
+                    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
                     {
-                        fightRange=stringtouint32(parsedMap->logicalMap.bots.value(Qtpos).properties.at("fightRange"),&ok);
-                        if(!ok)
+                        #ifdef DEBUG_CLIENT_BOT
+                        qDebug() << (QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(parsedMap->logicalMap.map_file).arg(x).arg(y).arg(direction));
+                        #endif
+
+                        uint32_t fightRange=5;
+                        if(parsedMap->logicalMap.bots.value(Qtpos).properties.find("fightRange")!=parsedMap->logicalMap.bots.value(Qtpos).properties.cend())
                         {
-                            qDebug() << (QStringLiteral("fightRange is not a number at %1 (%2,%3): %4")
-                                .arg(QString::fromStdString(parsedMap->logicalMap.map_file)).arg(x).arg(y)
-                                .arg(QString::fromStdString(parsedMap->logicalMap.bots.value(Qtpos).properties.at("fightRange"))));
-                            fightRange=5;
-                        }
-                        else
-                        {
-                            if(fightRange>10)
+                            fightRange=stringtouint32(parsedMap->logicalMap.bots.value(Qtpos).properties.at("fightRange"),&ok);
+                            if(!ok)
                             {
-                                qDebug() << (QStringLiteral("fightRange is greater than 10 at %1 (%2,%3): %4")
+                                qDebug() << (QStringLiteral("fightRange is not a number at %1 (%2,%3): %4")
                                     .arg(QString::fromStdString(parsedMap->logicalMap.map_file)).arg(x).arg(y)
-                                    .arg(fightRange)
-                                    );
+                                    .arg(QString::fromStdString(parsedMap->logicalMap.bots.value(Qtpos).properties.at("fightRange"))));
                                 fightRange=5;
                             }
+                            else
+                            {
+                                if(fightRange>10)
+                                {
+                                    qDebug() << (QStringLiteral("fightRange is greater than 10 at %1 (%2,%3): %4")
+                                        .arg(QString::fromStdString(parsedMap->logicalMap.map_file)).arg(x).arg(y)
+                                        .arg(fightRange)
+                                        );
+                                    fightRange=5;
+                                }
+                            }
+                        }
+
+                        uint8_t temp_x=x,temp_y=y;
+                        uint32_t index_botfight_range=0;
+                        CatchChallenger::CommonMap *map=&parsedMap->logicalMap;
+                        CatchChallenger::CommonMap *old_map=map;
+                        while(index_botfight_range<fightRange)
+                        {
+                            if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*map,temp_x,temp_y,true,false))
+                                break;
+                            if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&temp_x,&temp_y,true,false))
+                                break;
+                            if(map!=old_map)
+                                break;
+                            std::pair<uint8_t,uint8_t> temp_pos(temp_x,temp_y);
+                            QPair<uint8_t,uint8_t> Qttemp_pos(temp_x,temp_y);
+                            parsedMap->logicalMap.botsFightTrigger[temp_pos].push_back(fightid);
+                            parsedMap->logicalMap.botsFightTriggerExtra.insert(Qttemp_pos,Qtpos);
+                            index_botfight_range++;
                         }
                     }
-
-                    uint8_t temp_x=x,temp_y=y;
-                    uint32_t index_botfight_range=0;
-                    CatchChallenger::CommonMap *map=&parsedMap->logicalMap;
-                    CatchChallenger::CommonMap *old_map=map;
-                    while(index_botfight_range<fightRange)
-                    {
-                        if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*map,temp_x,temp_y,true,false))
-                            break;
-                        if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&temp_x,&temp_y,true,false))
-                            break;
-                        if(map!=old_map)
-                            break;
-                        std::pair<uint8_t,uint8_t> temp_pos(temp_x,temp_y);
-                        QPair<uint8_t,uint8_t> Qttemp_pos(temp_x,temp_y);
-                        parsedMap->logicalMap.botsFightTrigger[temp_pos].push_back(fightid);
-                        parsedMap->logicalMap.botsFightTriggerExtra.insert(Qttemp_pos,Qtpos);
-                        index_botfight_range++;
-                    }
+                    else
+                        qDebug() << QStringLiteral("No fightid %1 at MapController::loadBotOnTheMap").arg(fightid);
                 }
                 else
-                    qDebug() << QStringLiteral("No fightid %1 at MapController::loadBotOnTheMap").arg(fightid);
+                    qDebug() << QStringLiteral("fightid not a number: ") << QString::fromStdString(*stepBot->Attribute(std::string("fightid")));
             }
             else
-                qDebug() << QStringLiteral("fightid not a number: ") << QString::fromStdString(*stepBot->Attribute(std::string("fightid")));
+                qDebug() << QStringLiteral("stepBot->Attribute(std::string(\"type\"))!=NULL && *stepBot->Attribute(std::string(\"type\"))==\"fight\" && stepBot->Attribute(std::string(\"fightid\"))!=NULL")
+                         << " at " << QString::fromStdString(parsedMap->logicalMap.map_file) << "" << Qtpos.first << "," << Qtpos.second
+                         << QString::number(stepBot->Attribute(std::string("type"))!=NULL)
+                         << QString::number(*stepBot->Attribute(std::string("type"))=="fight")
+                         << QString::number(stepBot->Attribute(std::string("fightid"))!=NULL);
         }
-        else
-            qDebug() << QStringLiteral("stepBot->Attribute(std::string(\"type\"))!=NULL && *stepBot->Attribute(std::string(\"type\"))==\"fight\" && stepBot->Attribute(std::string(\"fightid\"))!=NULL");
     }
     /*else
         qDebug() << QStringLiteral("parsedMap->logicalMap.bots.value(Qtpos).step.find(1)!=parsedMap->logicalMap.bots.value(Qtpos).step.cend()");*/
