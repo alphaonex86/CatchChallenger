@@ -1,4 +1,5 @@
 #include "MultipleBotConnectionImplForGui.h"
+#include "../bot/actions/ActionsAction.h"
 
 #include <iostream>
 #ifdef QT_GUI_LIB
@@ -375,6 +376,7 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
 {
     qDebug() << "newSocketError()" << error;
     mHaveAnError=true;
+    ActionsAction::actionsAction->stopAll();
 
     QString errorString;
     switch(error)
@@ -487,6 +489,7 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
 void MultipleBotConnectionImplForGui::newError(QString error,QString detailedError)
 {
     mHaveAnError=true;
+    ActionsAction::actionsAction->stopAll();
 
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)

@@ -19,14 +19,25 @@ ActionsAction::ActionsAction()
     ActionsAction::actionsAction=this;
     minitemprice=0;
     maxitemprice=0;
+    mStop=false;
 }
 
 ActionsAction::~ActionsAction()
 {
+    mStop=true;
+}
+
+void ActionsAction::stopAll()
+{
+    moveTimer.stop();
+    textTimer.stop();
+    mStop=true;
 }
 
 void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
 {
+    if(mStop)
+        return;
     Q_UNUSED(player);
     Q_UNUSED(mapId);
     Q_UNUSED(x);
@@ -64,9 +75,12 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
     {
         botplayer.fightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
         ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
-        connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection);
-        connect(api,&CatchChallenger::Api_protocol::seed_planted,   actionsAction,&ActionsAction::seed_planted_slot);
-        connect(api,&CatchChallenger::Api_protocol::plant_collected,   actionsAction,&ActionsAction::plant_collected_slot);
+        if(!connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection))
+            abort();
+        if(!connect(api,&CatchChallenger::Api_protocol::seed_planted,       actionsAction,&ActionsAction::seed_planted_slot))
+            abort();
+        if(!connect(api,&CatchChallenger::Api_protocol::plant_collected,    actionsAction,&ActionsAction::plant_collected_slot))
+            abort();
 
         if(!moveTimer.isActive())
             moveTimer.start(player_private_and_public_informations.public_informations.speed);
@@ -731,6 +745,8 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
 
 void ActionsAction::doMove()
 {
+    if(mStop)
+        return;
     QHashIterator<CatchChallenger::Api_protocol *,Player> i(clientList);
     while (i.hasNext()) {
         i.next();
@@ -871,6 +887,8 @@ void ActionsAction::doMove()
 
 void ActionsAction::doText()
 {
+    if(mStop)
+        return;
     if(!randomText)
         return;
     if(clientList.isEmpty())
