@@ -27,6 +27,7 @@ public:
     static ActionsAction *actionsAction;
     ActionsAction();
     ~ActionsAction();
+    void stopAll();
 
     enum BlockedOn
     {
@@ -210,6 +211,7 @@ public:
     QTimer moveTimer;
 
     uint64_t minitemprice,maxitemprice;
+    bool mStop;
 private:
     void doMove();
     void doText();
