@@ -60,6 +60,7 @@ void BotTargetList::updatePlayerStep()
                             abort();
                         const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
                         const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+
                         CatchChallenger::Direction newDirection=player.api->getDirection();/*=CatchChallenger::Direction::Direction_look_at_bottom no continue on same direction*/
                         switch(player.target.linkPoint.type)
                         {
@@ -173,7 +174,8 @@ void BotTargetList::updatePlayerStep()
                                 if(ActionsAction::canGoTo(api,newDirectionToMove,*playerMap,player.x,player.y,true,true))
                                 {
                                     ActionsAction::move(api,newDirectionToMove,&playerMap,&player.x,&player.y,true,true);
-                                    api->newDirection(newDirectionToMove);
+                                    if(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_NoLedges)
+                                        api->newDirection(newDirectionToMove);
                                     //enter into new zone, drop the entry
                                     if(player.target.bestPath.empty())
                                         abort();
