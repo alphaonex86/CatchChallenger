@@ -321,7 +321,7 @@ CatchChallenger::ParsedLayerLedges MoveOnTheMap::getLedge(const CommonMap &map, 
 {
     if(map.parsed_layer.ledges==NULL)
         return CatchChallenger::ParsedLayerLedges_NoLedges;
-    uint8_t i=map.parsed_layer.ledges[x+y*(map.width)];
+    const uint8_t &i=map.parsed_layer.ledges[x+y*(map.width)];
     return static_cast<ParsedLayerLedges>((uint32_t)i);
 }
 
