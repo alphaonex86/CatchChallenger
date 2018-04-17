@@ -7,10 +7,9 @@
 #include <stdint.h>
 #include <unordered_map>
 
-#include <QIcon>
 #include <QString>
 #include <QList>
-#include <QColor>
+#include <QtGui/QColor>
 
 #include "../../general/base/CommonMap.h"
 #include "../../client/base/Api_protocol.h"
@@ -123,18 +122,6 @@ public:
         struct Layer{
             std::string text;
             std::string name;
-            /*enum DestinationDisplay
-            {
-                All,
-                OnlyGui
-            };
-            struct Content{
-                QIcon icon;
-                QString text;
-                uint32_t mapId;
-                DestinationDisplay destinationDisplay;
-            };
-            std::vector<Content> contentList;*/
             BlockObject *blockObject;
         };
         uint16_t *map;//0x00 is not accessible, it's why don't have layer for it

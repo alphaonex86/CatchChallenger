@@ -294,16 +294,26 @@ std::string BotTargetList::graphLocalMap()
 
                 if(layer.name!="Lost layer" || !content.empty())
                 {
-                    graphvizText+="struct"+std::to_string(blockIndex+1)+" [label=\"";
-                    graphvizText+="<f0> "+layer.name;
-                    //graphvizText+="<f1> "+layer.text;
-
-                    if(!content.empty())
+                    bool isledge=false;
+                    if(!block.block.empty() && mapServer->parsed_layer.ledges!=NULL)
                     {
-                        graphvizText+="|<f1> ";
-                        graphvizText+=content;
+                        const std::pair<uint8_t,uint8_t> &coord=block.block.front();
+                        isledge=(mapServer->parsed_layer.ledges[coord.first+coord.second*mapServer->width]!=
+                                CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges);
                     }
-                    graphvizText+="\" style=filled fillcolor=\""+block.color.name(QColor::HexRgb).toStdString()+"\"]\n";
+                    if(!isledge)
+                    {
+                        graphvizText+="struct"+std::to_string(blockIndex+1)+" [label=\"";
+                        graphvizText+="<f0> "+layer.name;
+                        //graphvizText+="<f1> "+layer.text;
+
+                        if(!content.empty())
+                        {
+                            graphvizText+="|<f1> ";
+                            graphvizText+=content;
+                        }
+                        graphvizText+="\" style=filled fillcolor=\""+block.color.name(QColor::HexRgb).toStdString()+"\"]\n";
+                    }
                 }
                 pointerToIndex[&block]=blockIndex;
                 blockIndex++;
@@ -423,7 +433,30 @@ std::string BotTargetList::graphLocalMap()
 
 bool operator==(const CatchChallenger::MapCondition& lhs, const CatchChallenger::MapCondition& rhs)
 {
-    return std::memcmp(&lhs,&rhs,sizeof(CatchChallenger::MapCondition))==0;
+    if(lhs.type!=rhs.type)
+        return false;
+    switch (lhs.type) {
+        case CatchChallenger::MapConditionType_None:
+        case CatchChallenger::MapConditionType_Clan:
+        break;
+        case CatchChallenger::MapConditionType_FightBot:
+        if(lhs.data.fightBot!=rhs.data.fightBot)
+            return false;
+        break;
+        case CatchChallenger::MapConditionType_Item:
+        if(lhs.data.item!=rhs.data.item)
+            return false;
+        break;
+        case CatchChallenger::MapConditionType_Quest:
+        if(lhs.data.quest!=rhs.data.quest)
+            return false;
+        break;
+        default:
+        abort();
+        break;
+    }
+    return true;
+    //return std::memcmp(&lhs,&rhs,sizeof(CatchChallenger::MapCondition))==0;//produce bug
 }
 
 bool BotTargetList::nextZoneIsAccessible(const CatchChallenger::Api_protocol *api,const MapServerMini::BlockObject * const blockObject)

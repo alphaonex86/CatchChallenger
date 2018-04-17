@@ -15,3 +15,6 @@ SOURCES += $$PWD/ActionsBotInterface.cpp \
 HEADERS  += $$PWD/ActionsBotInterface.h \
     $$PWD/ActionsAction.h \
     $$PWD/MapServerMini.h
+
+#needed for QColor into MultipleBotConnectionImplForGui
+QT       += gui
