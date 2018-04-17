@@ -19,6 +19,6 @@
         <file>playerloclm.png</file>
         <file>playerlocrm.png</file>
         <file>playerloctm.png</file>
-        <file>chat.db</file>
+        <file>config.db</file>
     </qresource>
 </RCC>
