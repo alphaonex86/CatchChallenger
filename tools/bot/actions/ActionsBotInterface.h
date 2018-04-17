@@ -13,7 +13,7 @@
 #include <QRegularExpression>
 #include <QTime>
 #include <QList>
-#include <QListWidgetItem>
+#include <QtWidgets/QListWidgetItem>
 
 class ActionsBotInterface : public BotInterface
 {
