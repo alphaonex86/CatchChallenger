@@ -268,7 +268,8 @@ bool MapServerMini::preload_step2b()
                                             CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges)
                                         break;
                                 }
-                                otherCodeZone=step2.map[current_x+current_y*casted_map->width];
+                                const MapParsedForBot &otherStep2=casted_map->step[1];
+                                otherCodeZone=otherStep2.map[current_x+current_y*casted_map->width];
                             } while(needrepeate);
                             if(canMove && otherCodeZone!=0 && (current_map!=this || codeZone!=otherCodeZone))
                             {
@@ -304,7 +305,8 @@ bool MapServerMini::preload_step2b()
                                             CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges)
                                         break;
                                 }
-                                otherCodeZone=step2.map[current_x+current_y*casted_map->width];
+                                const MapParsedForBot &otherStep2=casted_map->step[1];
+                                otherCodeZone=otherStep2.map[current_x+current_y*casted_map->width];
                             } while(needrepeate);
                             if(canMove && otherCodeZone!=0 && (current_map!=this || codeZone!=otherCodeZone))
                             {
@@ -340,7 +342,8 @@ bool MapServerMini::preload_step2b()
                                             CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges)
                                         break;
                                 }
-                                otherCodeZone=step2.map[current_x+current_y*casted_map->width];
+                                const MapParsedForBot &otherStep2=casted_map->step[1];
+                                otherCodeZone=otherStep2.map[current_x+current_y*casted_map->width];
                             } while(needrepeate);
                             if(canMove && otherCodeZone!=0 && (current_map!=this || codeZone!=otherCodeZone))
                             {
@@ -376,7 +379,8 @@ bool MapServerMini::preload_step2b()
                                 }
                                 else
                                     break;
-                                otherCodeZone=step2.map[current_x+current_y*casted_map->width];
+                                const MapParsedForBot &otherStep2=casted_map->step[1];
+                                otherCodeZone=otherStep2.map[current_x+current_y*casted_map->width];
                             } while(needrepeate);
                             if(canMove && otherCodeZone!=0 && (current_map!=this || codeZone!=otherCodeZone))
                             {
