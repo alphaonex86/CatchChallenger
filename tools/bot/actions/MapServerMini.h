@@ -99,7 +99,7 @@ public:
         std::vector<PathFindingCacheEntry> pathFindingCache;
         std::map<const BlockObject */*to where*/,LinkInformation/*how, if single way or both way*/> links;
         MapServerMini * map;
-        uint8_t id;
+        uint8_t id;//the displayed value is id+1
 
         //things into each zone
         std::map<std::pair<uint8_t,uint8_t>,ItemOnMap/*,pairhash*/> pointOnMap_Item;
