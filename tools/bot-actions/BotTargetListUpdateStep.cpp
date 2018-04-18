@@ -219,6 +219,21 @@ void BotTargetList::updatePlayerStep()
                             break;
                         }
 
+                        {
+                            while(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_LedgesRight)
+                                if(!ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_right,&playerMap,&player.x,&player.y,true,true))
+                                    break;
+                            while(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_LedgesLeft)
+                                if(!ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_left,&playerMap,&player.x,&player.y,true,true))
+                                    break;
+                            while(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_LedgesBottom)
+                                if(!ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_bottom,&playerMap,&player.x,&player.y,true,true))
+                                    break;
+                            while(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_LedgesTop)
+                                if(!ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_top,&playerMap,&player.x,&player.y,true,true))
+                                    break;
+                        }
+
                         if(playerMap->step.size()<2)
                             abort();
                         const uint16_t &currentCodeZone=playerMap->step.at(1).map[player.x+player.y*playerMap->width];
