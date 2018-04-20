@@ -150,6 +150,7 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
                 abort();
             MapServerMini::BlockObject::LinkPoint linkPoint;
             linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+            linkPoint.inLedge=false;
             linkPoint.x=point1.first;
             linkPoint.y=point1.second;
             player.target.linkPoint=linkPoint;

@@ -878,8 +878,9 @@ void ActionsAction::doMove()
             }
             else
             {
-                //stop the player if is not stopped
-                api->stopMove();
+                /*if(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_NoLedges)
+                //stop the player if is not stopped, for ledge better into BotTargetList::updatePlayerStep()
+                    api->stopMove();*/
             }
         }
     }

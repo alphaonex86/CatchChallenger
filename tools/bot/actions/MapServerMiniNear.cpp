@@ -52,7 +52,6 @@ std::unordered_set<const MapServerMini::BlockObject *> MapServerMini::getAccessi
         while(indexBlockToParse<blockToParse.size())
         {
             const BlockObject * const currentBlock=blockToParse.at(indexBlockToParse);
-            MapParsedForBot::Layer * const layer=static_cast<MapParsedForBot::Layer * const>(currentBlock->layer);
             accessibleBlock.insert(currentBlock);
 
             for(const auto& n:currentBlock->links) {
