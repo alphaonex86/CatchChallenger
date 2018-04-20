@@ -65,6 +65,7 @@ public:
         struct LinkPoint
         {
             LinkType type;
+            bool inLedge;
             //point to go
             uint8_t x,y;
         };

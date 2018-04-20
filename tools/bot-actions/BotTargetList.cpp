@@ -412,6 +412,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
             destinations.push_back(destinationForPath);
             MapServerMini::BlockObject::LinkPoint linkPoint;
             linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+            linkPoint.inLedge=false;
             linkPoint.x=point.first;
             linkPoint.y=point.second;
             pointsList.push_back(linkPoint);
