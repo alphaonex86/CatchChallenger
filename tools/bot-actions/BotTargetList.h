@@ -48,6 +48,9 @@ public:
     void updatePlayerMapSlot();
     void updatePlayerMap(const bool &force=false);
     void updatePlayerStep();
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    void checkDuplicatePointOnMap_Item(const std::map<std::pair<uint8_t,uint8_t>,MapServerMini::ItemOnMap/*,pairhash*/> &pointOnMap_Item);
+    #endif
     void startPlayerMove();
     void startPlayerMove(CatchChallenger::Api_protocol *api);
     void autoStartAction();

@@ -197,6 +197,7 @@ bool MapServerMini::addBlockLink(BlockObject &blockObjectFrom, BlockObject &bloc
 {
     //search into the destination
     BlockObject::LinkPoint linkPoint;
+    linkPoint.inLedge=false;
     linkPoint.type=linkSourceFrom;
     linkPoint.x=x;
     linkPoint.y=y;

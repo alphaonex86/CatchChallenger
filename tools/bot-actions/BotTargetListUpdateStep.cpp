@@ -12,6 +12,20 @@
 #include <stdlib.h>
 #include "MainWindow.h"
 
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+void BotTargetList::checkDuplicatePointOnMap_Item(const std::map<std::pair<uint8_t, uint8_t>, MapServerMini::ItemOnMap> &pointOnMap_Item)
+{
+    std::unordered_set<uint32_t> known_indexOfItemOnMap;
+    for ( const auto &item : pointOnMap_Item )
+    {
+        const MapServerMini::ItemOnMap &itemOnMap=item.second;
+        if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
+            abort();
+        known_indexOfItemOnMap.insert(itemOnMap.indexOfItemOnMap);
+    }
+}
+#endif
+
 void BotTargetList::updatePlayerStep()
 {
     if(MainWindow::multipleBotConnexion.haveAnError())
@@ -60,6 +74,21 @@ void BotTargetList::updatePlayerStep()
                             abort();
                         const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
                         const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+
+                        {
+                            if(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_LedgesRight)
+                                if(ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_right,&playerMap,&player.x,&player.y,true,true))
+                                    continue;
+                            if(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_LedgesLeft)
+                                if(ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_left,&playerMap,&player.x,&player.y,true,true))
+                                    continue;
+                            if(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_LedgesBottom)
+                                if(ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_bottom,&playerMap,&player.x,&player.y,true,true))
+                                    continue;
+                            if(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_LedgesTop)
+                                if(ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_top,&playerMap,&player.x,&player.y,true,true))
+                                    continue;
+                        }
 
                         CatchChallenger::Direction newDirection=player.api->getDirection();/*=CatchChallenger::Direction::Direction_look_at_bottom no continue on same direction*/
                         switch(player.target.linkPoint.type)
@@ -110,16 +139,7 @@ void BotTargetList::updatePlayerStep()
                             if(ActionsAction::move(api,newDirectionToMove,&destMap,&x,&y,false,false))
                             {
                                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                                {
-                                    std::unordered_set<uint32_t> known_indexOfItemOnMap;
-                                    for ( const auto &item : playerMap->pointOnMap_Item )
-                                    {
-                                        const MapServerMini::ItemOnMap &itemOnMap=item.second;
-                                        if(known_indexOfItemOnMap.find(itemOnMap.indexOfItemOnMap)!=known_indexOfItemOnMap.cend())
-                                            abort();
-                                        known_indexOfItemOnMap.insert(itemOnMap.indexOfItemOnMap);
-                                    }
-                                }
+                                checkDuplicatePointOnMap_Item(playerMap->pointOnMap_Item);
                                 #endif
                                 //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                                 std::pair<uint8_t,uint8_t> p(x,y);
@@ -160,78 +180,72 @@ void BotTargetList::updatePlayerStep()
                                 player.target.bestPath.erase(player.target.bestPath.cbegin());
                         }
 
-                        //do the final move
-                        switch(player.target.linkPoint.type)
+                        if(player.target.linkPoint.inLedge==false)
                         {
-                            case MapServerMini::BlockObject::LinkType::SourceTopMap:
-                            case MapServerMini::BlockObject::LinkType::SourceInternalTopBlock:
-                            case MapServerMini::BlockObject::LinkType::SourceRightMap:
-                            case MapServerMini::BlockObject::LinkType::SourceInternalRightBlock:
-                            case MapServerMini::BlockObject::LinkType::SourceBottomMap:
-                            case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
-                            case MapServerMini::BlockObject::LinkType::SourceLeftMap:
-                            case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
-                                if(ActionsAction::canGoTo(api,newDirectionToMove,*playerMap,player.x,player.y,true,true))
-                                {
-                                    ActionsAction::move(api,newDirectionToMove,&playerMap,&player.x,&player.y,true,true);
-                                    if(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_NoLedges)
+                            //do the final move
+                            switch(player.target.linkPoint.type)
+                            {
+                                case MapServerMini::BlockObject::LinkType::SourceTopMap:
+                                case MapServerMini::BlockObject::LinkType::SourceInternalTopBlock:
+                                case MapServerMini::BlockObject::LinkType::SourceRightMap:
+                                case MapServerMini::BlockObject::LinkType::SourceInternalRightBlock:
+                                case MapServerMini::BlockObject::LinkType::SourceBottomMap:
+                                case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
+                                case MapServerMini::BlockObject::LinkType::SourceLeftMap:
+                                case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
+                                    if(ActionsAction::canGoTo(api,newDirectionToMove,*playerMap,player.x,player.y,true,true))
+                                    {
                                         api->newDirection(newDirectionToMove);
-                                    //enter into new zone, drop the entry
-                                    if(player.target.bestPath.empty())
-                                        abort();
-                                    player.target.bestPath.erase(player.target.bestPath.cbegin());
-                                    player.mapId=playerMap->id;
-                                    ActionsAction::checkOnTileEvent(player);
-                                }
-                                else
+                                        ActionsAction::move(api,newDirectionToMove,&playerMap,&player.x,&player.y,true,true);
+                                        //enter into new zone, drop the entry
+                                        if(player.target.bestPath.empty())
+                                            abort();
+                                        player.target.bestPath.erase(player.target.bestPath.cbegin());
+                                        player.mapId=playerMap->id;
+                                        ActionsAction::checkOnTileEvent(player);
+                                    }
+                                    else
+                                    {
+                                        if(player.target.bestPath.size()>2)
+                                            abort();
+                                        //std::cerr << "The current case is: " << std::to_string(player.x) << "," << std::to_string(player.y) << " can't do the next step for internal block change" << std::endl;
+                                        player.target.bestPath.clear();
+                                    }
+                                break;
+                                default:
+                                //change the look below
+                                switch(newDirection)
                                 {
-                                    if(player.target.bestPath.size()>2)
-                                        abort();
-                                    //std::cerr << "The current case is: " << std::to_string(player.x) << "," << std::to_string(player.y) << " can't do the next step for internal block change" << std::endl;
-                                    player.target.bestPath.clear();
+                                    case CatchChallenger::Direction::Direction_move_at_top:
+                                    case CatchChallenger::Direction::Direction_look_at_top:
+                                        api->newDirection(CatchChallenger::Direction::Direction_look_at_top);
+                                    break;
+                                    case CatchChallenger::Direction::Direction_move_at_bottom:
+                                    case CatchChallenger::Direction::Direction_look_at_bottom:
+                                        api->newDirection(CatchChallenger::Direction::Direction_look_at_bottom);
+                                    break;
+                                    case CatchChallenger::Direction::Direction_move_at_right:
+                                    case CatchChallenger::Direction::Direction_look_at_right:
+                                        api->newDirection(CatchChallenger::Direction::Direction_look_at_right);
+                                    break;
+                                    case CatchChallenger::Direction::Direction_move_at_left:
+                                    case CatchChallenger::Direction::Direction_look_at_left:
+                                        api->newDirection(CatchChallenger::Direction::Direction_look_at_left);
+                                    break;
+                                    default:
+                                    abort();
+                                    break;
                                 }
-                            break;
-                            default:
-                            break;
+                                break;
+                            }
                         }
+                        else
+                            player.target.linkPoint.inLedge=false;
 
-                        //change the look below
-                        switch(newDirection)
+                        if(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)!=CatchChallenger::ParsedLayerLedges_NoLedges)
                         {
-                            case CatchChallenger::Direction::Direction_move_at_top:
-                            case CatchChallenger::Direction::Direction_look_at_top:
-                                api->newDirection(CatchChallenger::Direction::Direction_look_at_top);
-                            break;
-                            case CatchChallenger::Direction::Direction_move_at_bottom:
-                            case CatchChallenger::Direction::Direction_look_at_bottom:
-                                api->newDirection(CatchChallenger::Direction::Direction_look_at_bottom);
-                            break;
-                            case CatchChallenger::Direction::Direction_move_at_right:
-                            case CatchChallenger::Direction::Direction_look_at_right:
-                                api->newDirection(CatchChallenger::Direction::Direction_look_at_right);
-                            break;
-                            case CatchChallenger::Direction::Direction_move_at_left:
-                            case CatchChallenger::Direction::Direction_look_at_left:
-                                api->newDirection(CatchChallenger::Direction::Direction_look_at_left);
-                            break;
-                            default:
-                            abort();
-                            break;
-                        }
-
-                        {
-                            while(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_LedgesRight)
-                                if(!ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_right,&playerMap,&player.x,&player.y,true,true))
-                                    break;
-                            while(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_LedgesLeft)
-                                if(!ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_left,&playerMap,&player.x,&player.y,true,true))
-                                    break;
-                            while(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_LedgesBottom)
-                                if(!ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_bottom,&playerMap,&player.x,&player.y,true,true))
-                                    break;
-                            while(CatchChallenger::MoveOnTheMap::getLedge(*playerMap,player.x,player.y)==CatchChallenger::ParsedLayerLedges_LedgesTop)
-                                if(!ActionsAction::move(api,CatchChallenger::Direction::Direction_move_at_top,&playerMap,&player.x,&player.y,true,true))
-                                    break;
+                            player.target.linkPoint.inLedge=true;
+                            continue;
                         }
 
                         if(playerMap->step.size()<2)
@@ -342,6 +356,7 @@ void BotTargetList::updatePlayerStep()
                                     destinations.push_back(destinationForPath);
                                     MapServerMini::BlockObject::LinkPoint linkPoint;
                                     linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+                                    linkPoint.inLedge=false;
                                     linkPoint.x=point.first;
                                     linkPoint.y=point.second;
                                     pointsList.push_back(linkPoint);
@@ -452,6 +467,11 @@ void BotTargetList::updatePlayerStep()
                     if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                     {
                         std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        abort();
+                    }
+                    if(CatchChallenger::MoveOnTheMap::getLedge(*mapServer,player.x,player.y)!=CatchChallenger::ParsedLayerLedges_NoLedges)
+                    {
+                        std::cerr << "can't api->stopMove() on Ledge" << std::endl;
                         abort();
                     }
                     api->stopMove();
