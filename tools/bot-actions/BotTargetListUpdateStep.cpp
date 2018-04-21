@@ -67,7 +67,7 @@ void BotTargetList::updatePlayerStep()
                 if(player.target.localStep.empty())
                 {
                     //was: !player.target.bestPath.empty() but block the first step
-                    if(!player.target.bestPath.empty())/// need set out of here, \see startPlayerMove()
+                    if(!player.target.bestPath.empty() || player.target.linkPoint.inLedge)/// need set out of here, \see startPlayerMove()
                     {
                         haveChange=true;
                         if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
@@ -193,6 +193,7 @@ void BotTargetList::updatePlayerStep()
                                 case MapServerMini::BlockObject::LinkType::SourceInternalBottomBlock:
                                 case MapServerMini::BlockObject::LinkType::SourceLeftMap:
                                 case MapServerMini::BlockObject::LinkType::SourceInternalLeftBlock:
+                                    player.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
                                     if(ActionsAction::canGoTo(api,newDirectionToMove,*playerMap,player.x,player.y,true,true))
                                     {
                                         api->newDirection(newDirectionToMove);
