@@ -19,14 +19,8 @@
 using namespace CatchChallenger;
 
 EpollClient::EpollClient(const int &infd) :
-    #ifndef SERVERNOBUFFER
-    bufferSize(0),
-    #endif
     infd(infd)
 {
-    #ifndef SERVERNOBUFFER
-    memset(buffer,0,4096);
-    #endif
 }
 
 EpollClient::~EpollClient()
@@ -42,9 +36,6 @@ void EpollClient::reopen(const int &infd)
 
 void EpollClient::close()
 {
-    #ifndef SERVERNOBUFFER
-    bufferSize=0;
-    #endif
     if(infd!=-1)
     {
         char tempBuffer[4096];
@@ -122,77 +113,12 @@ ssize_t EpollClient::write(const char *buffer, const size_t &bufferSize)
         else
         {
             std::cerr << "Write socket full: EAGAIN for size:" << bufferSize << std::endl;
-            #ifndef SERVERNOBUFFER
-            if(this->bufferSize<BUFFER_MAX_SIZE)
-            {
-                if(size<0)
-                {
-                    if((this->bufferSize+bufferSize)<BUFFER_MAX_SIZE)
-                    {
-                        memcpy(this->buffer+this->bufferSize,buffer,bufferSize);
-                        this->bufferSize+=bufferSize;
-                        return bufferSize;
-                    }
-                    else
-                    {
-                        memcpy(this->buffer+this->bufferSize,buffer,BUFFER_MAX_SIZE-this->bufferSize);
-                        this->bufferSize=BUFFER_MAX_SIZE;
-                        return BUFFER_MAX_SIZE-this->bufferSize;
-                    }
-                }
-                else
-                {
-                    const int &diff=bufferSize-size;
-                    if((this->bufferSize+diff)<BUFFER_MAX_SIZE)
-                    {
-                        memcpy(this->buffer+this->bufferSize,buffer+size,diff);
-                        this->bufferSize+=bufferSize;
-                        return bufferSize;
-                    }
-                    else
-                    {
-                        memcpy(this->buffer+this->bufferSize,buffer+size,BUFFER_MAX_SIZE-this->bufferSize);
-                        this->bufferSize=BUFFER_MAX_SIZE;
-                        return BUFFER_MAX_SIZE-this->bufferSize;
-                    }
-                }
-            }
-            #else
             return size;
-            #endif
         }
     }
     else
         return size;
 }
-
-#ifndef SERVERNOBUFFER
-void EpollClient::flush()
-{
-    if(bufferSize>0)
-    {
-        char buf[512];
-        size_t count=512;
-        if(bufferSize<count)
-            count=bufferSize;
-        memcpy(buf,buffer,count);
-        ssize_t size = ::write(infd, buf, count);
-        if(size<0)
-        {
-            if(errno != EAGAIN)
-            {
-                std::cerr << "Write socket buffer error" << std::endl;
-                close();
-            }
-        }
-        else
-        {
-            bufferSize-=size;
-            memmove(buffer,buffer+size,bufferSize);
-        }
-    }
-}
-#endif
 
 BaseClassSwitch::EpollObjectType EpollClient::getType() const
 {

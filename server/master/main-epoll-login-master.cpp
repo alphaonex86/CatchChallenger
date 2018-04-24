@@ -80,11 +80,6 @@ int main(int argc, char *argv[])
 
     EpollServerLoginMaster::epollServerLoginMaster=new EpollServerLoginMaster();
 
-    #ifndef SERVERNOBUFFER
-    #ifdef SERVERSSL
-    EpollSslClient::staticInit();
-    #endif
-    #endif
     char buf[4096];
     memset(buf,0,4096);
     /* Buffer where events are returned */
@@ -276,12 +271,6 @@ int main(int argc, char *argv[])
                     //ready to read
                     if(events[i].events & EPOLLIN)
                         client->parseIncommingData();
-                    #ifndef SERVERNOBUFFER
-                    //ready to write
-                    if(events[i].events & EPOLLOUT)
-                        if(!closed)
-                            client->flush();
-                    #endif
                     if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || client->socketIsClosed())
                     {
                         numberOfConnectedClient--;

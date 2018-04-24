@@ -48,6 +48,9 @@ public:
         #ifdef CATCHCHALLENGER_CLASS_QT
             Database,
         #endif
+        #ifdef CATCHCHALLENGER_CLASS_P2PCLUSTER
+            ClientUDP,
+        #endif
     };
     virtual EpollObjectType getType() const = 0;
 };
