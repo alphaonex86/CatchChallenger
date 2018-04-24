@@ -9,7 +9,6 @@
 
 QT       -= gui widgets sql xml network core
 
-DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
 
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT

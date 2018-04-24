@@ -14,27 +14,13 @@ class EpollSslClient : public BaseClassSwitch
 public:
     EpollSslClient(const int &infd, SSL_CTX *ctx);
     ~EpollSslClient();
-    #ifndef SERVERNOBUFFER
-    static void staticInit();
-    #endif
     void close();
     ssize_t read(char *bufferClearToOutput,const size_t &bufferSizeClearToOutput);
     ssize_t write(const char *bufferClearToOutput, const size_t &bufferSizeClearToOutput);
-    #ifndef SERVERNOBUFFER
-    void flush();
-    #endif
     Type getType() const;
     bool isValid() const;
     long int bytesAvailable() const;
-    #ifndef SERVERNOBUFFER
 private:
-    static char rawbuf[BUFFER_MAX_SIZE];
-    #endif
-private:
-    #ifndef SERVERNOBUFFER
-    char bufferClearToOutput[BUFFER_MAX_SIZE];
-    size_t bufferSizeClearToOutput;
-    #endif
     int infd;
     BIO* sbio;
     SSL* ssl;

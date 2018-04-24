@@ -48,11 +48,6 @@ int main(int argc, char *argv[])
     //blocking due to db connexion
     EpollServerLoginSlave::epollServerLoginSlave=new EpollServerLoginSlave();
 
-    #ifndef SERVERNOBUFFER
-    #ifdef SERVERSSL
-    EpollSslClient::staticInit();
-    #endif
-    #endif
     char buf[4096];
     memset(buf,0,4096);
     /* Buffer where events are returned */

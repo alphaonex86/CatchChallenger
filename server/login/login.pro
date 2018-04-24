@@ -8,7 +8,6 @@ QT       -= gui widgets network sql xml
 QT       -= xml core
 
 DEFINES += TIXML_USE_STL
-DEFINES += SERVERNOBUFFER
 #DEFINES += SERVERSSL
 
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
