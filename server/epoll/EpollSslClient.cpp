@@ -21,7 +21,6 @@ EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
     ssl(SSL_new(ctx)),
     bHandShakeOver(false)
 {
-    ssl = SSL_new(ctx);
     sbio=BIO_new(BIO_s_socket());
     BIO_set_fd(sbio, infd, BIO_NOCLOSE);
     SSL_set_bio(ssl, sbio, sbio);
@@ -32,7 +31,7 @@ EpollSslClient::EpollSslClient(const int &infd,SSL_CTX *ctx) :
     int32_t ssl_error = SSL_get_error(ssl, err);
     switch (ssl_error) {
         case SSL_ERROR_NONE:
-        std::cout << "SSL_ERROR_NONE" << std::endl;
+        //std::cout << "SSL_ERROR_NONE" << std::endl;
         break;
         case SSL_ERROR_WANT_READ:
         std::cout << "SSL_ERROR_WANT_READ" << std::endl;
@@ -103,9 +102,9 @@ ssize_t EpollSslClient::write(const char *buffer,const size_t &bufferSize)
         return size;
 }
 
-BaseClassSwitch::Type EpollSslClient::getType() const
+BaseClassSwitch::EpollObjectType EpollSslClient::getType() const
 {
-    return BaseClassSwitch::Type::Client;
+    return BaseClassSwitch::EpollObjectType::Client;
 }
 
 bool EpollSslClient::isValid() const

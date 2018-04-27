@@ -284,8 +284,9 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::Timer:
                 {
-                    static_cast<EpollTimer *>(events[i].data.ptr)->exec();
-                    static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
+                    EpollTimer * const timer=static_cast<EpollTimer *>(events[i].data.ptr);
+                    timer->exec();
+                    timer->validateTheTimer();
                 }
                 break;
                 case BaseClassSwitch::EpollObjectType::Database:
