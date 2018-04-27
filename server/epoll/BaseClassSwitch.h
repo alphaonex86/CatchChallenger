@@ -49,7 +49,9 @@ public:
             Database,
         #endif
         #ifdef CATCHCHALLENGER_CLASS_P2PCLUSTER
-            ClientUDP,
+            ServerP2P,
+            ClientP2P,
+            Timer
         #endif
     };
     virtual EpollObjectType getType() const = 0;

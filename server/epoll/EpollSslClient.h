@@ -17,7 +17,7 @@ public:
     void close();
     ssize_t read(char *bufferClearToOutput,const size_t &bufferSizeClearToOutput);
     ssize_t write(const char *bufferClearToOutput, const size_t &bufferSizeClearToOutput);
-    Type getType() const;
+    virtual EpollObjectType getType() const;
     bool isValid() const;
     long int bytesAvailable() const;
 private:
