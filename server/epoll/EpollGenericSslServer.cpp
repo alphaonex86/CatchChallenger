@@ -53,7 +53,6 @@ SSL_CTX* EpollGenericSslServer::InitServerCTX()
 //Graph: Load the certificat into SSL_CTX
 void EpollGenericSslServer::LoadCertificates(SSL_CTX* ctx, const char* const CertFile, const char* const KeyFile)
 {
-
     SSL_CTX_set_verify(ctx,SSL_VERIFY_NONE,NULL);
     //no ca cert because I use self signed certicat
     //SSL_CTX_load_verify_locations(ctx,"/home/user/cacert.pem",NULL);
