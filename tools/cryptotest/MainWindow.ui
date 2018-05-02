@@ -50,11 +50,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="privatekey">
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <widget class="QLineEdit" name="privatekey"/>
       </item>
      </layout>
     </item>
@@ -65,14 +61,14 @@
         <item>
          <widget class="QPlainTextEdit" name="sign_input">
           <property name="placeholderText">
-           <string>Put your text to firm here</string>
+           <string>Put your hex to firm here</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLineEdit" name="sign_privatekey">
           <property name="placeholderText">
-           <string>Your base64 private key</string>
+           <string>Your hex private key</string>
           </property>
          </widget>
         </item>
@@ -86,7 +82,7 @@
         <item>
          <widget class="QLineEdit" name="sign_output">
           <property name="placeholderText">
-           <string>Get base64 firm here</string>
+           <string>Get hex firm here</string>
           </property>
          </widget>
         </item>
@@ -97,21 +93,21 @@
         <item>
          <widget class="QPlainTextEdit" name="verify_input">
           <property name="placeholderText">
-           <string>Put your firmed text here</string>
+           <string>Put your firmed hex here</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLineEdit" name="verify_firm">
           <property name="placeholderText">
-           <string>Put base64 firm here</string>
+           <string>Put hex firm here</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLineEdit" name="verify_publickey">
           <property name="placeholderText">
-           <string>Your base64 public key</string>
+           <string>Your hex public key</string>
           </property>
          </widget>
         </item>

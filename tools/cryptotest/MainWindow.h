@@ -2,8 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <nettle/eddsa.h>
-#include <nettle/curve25519.h>
 
 namespace Ui {
 class MainWindow;
@@ -20,6 +18,7 @@ private slots:
     void on_makekeys_clicked();
     void on_sign_clicked();
     void on_verify_clicked();
+    void on_privatekey_textChanged(const QString &arg1);
 private:
     Ui::MainWindow *ui;
 };
