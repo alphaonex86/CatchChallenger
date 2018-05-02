@@ -50,7 +50,6 @@ public:
         #endif
         #ifdef CATCHCHALLENGER_CLASS_P2PCLUSTER
             ServerP2P,
-            ClientP2P,
             Timer
         #endif
     };
