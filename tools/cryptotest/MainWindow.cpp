@@ -4,6 +4,7 @@
 #include <QMessageBox>
 #include <iostream>
 #include <stdio.h>
+#include <nettle/eddsa.h>
 
 /*Constant: ED25519_KEY_SIZE
 The size of a private or public Ed25519 key, 32 octets.
@@ -37,7 +38,6 @@ MainWindow::~MainWindow()
 void MainWindow::on_makekeys_clicked()
 {
     uint8_t privatekey[ED25519_KEY_SIZE];
-    uint8_t publickey[ED25519_KEY_SIZE];
 
     FILE *ptr = fopen("/dev/random","rb");  // r for read, b for binary
     if(ptr == NULL)
@@ -47,18 +47,27 @@ void MainWindow::on_makekeys_clicked()
         abort();
     fclose(ptr);
 
-    ed25519_sha512_public_key(publickey,privatekey);
+    QString privatekeyhex(QByteArray((char *)privatekey,sizeof(privatekey)).toHex());
+    ui->privatekey->setText(privatekeyhex);
+    on_privatekey_textChanged(privatekeyhex);
+}
 
-    ui->publickey->setText(QString(QByteArray((char *)publickey,sizeof(publickey)).toBase64()));
-    ui->privatekey->setText(QString(QByteArray((char *)privatekey,sizeof(privatekey)).toBase64()));
+void MainWindow::on_privatekey_textChanged(const QString &arg1)
+{
+    const QByteArray privatekey=QByteArray::fromHex(arg1.toUtf8());
+    if(privatekey.size()!=ED25519_KEY_SIZE)
+        return;
+    uint8_t publickey[ED25519_KEY_SIZE];
+    ed25519_sha512_public_key(publickey,reinterpret_cast<const uint8_t *>(privatekey.constData()));
+    ui->publickey->setText(QString(QByteArray((char *)publickey,sizeof(publickey)).toHex()));
 }
 
 void MainWindow::on_sign_clicked()
 {
-    QByteArray data=QByteArray::fromBase64(ui->sign_privatekey->text().toUtf8());
+    QByteArray data=QByteArray::fromHex(ui->sign_privatekey->text().toUtf8());
     if(data.size()!=ED25519_KEY_SIZE)
     {
-        QMessageBox::critical(this,"Key size","The input key size is wrong o not into base64");
+        QMessageBox::critical(this,"Key size","The input key size is wrong o not into Hex");
         return;
     }
 
@@ -67,29 +76,29 @@ void MainWindow::on_sign_clicked()
     ed25519_sha512_public_key(publickey,privatekey);
     uint8_t signature[ED25519_SIGNATURE_SIZE];
 
-    const QByteArray msg=ui->sign_input->toPlainText().toUtf8();
+    const QByteArray msg=QByteArray::fromHex(ui->sign_input->toPlainText().toUtf8());
 
     ed25519_sha512_sign(publickey,privatekey,msg.size(),reinterpret_cast<const uint8_t *>(msg.constData()),signature);
 
-    ui->sign_output->setText(QString(QByteArray(reinterpret_cast<char *>(signature),sizeof(signature)).toBase64()));
+    ui->sign_output->setText(QString(QByteArray(reinterpret_cast<char *>(signature),sizeof(signature)).toHex()));
 }
 
 void MainWindow::on_verify_clicked()
 {
-    const QByteArray msg=ui->verify_input->toPlainText().toUtf8();
+    const QByteArray msg=QByteArray::fromHex(ui->verify_input->toPlainText().toUtf8());
 
-    QByteArray data=QByteArray::fromBase64(ui->verify_publickey->text().toUtf8());
+    QByteArray data=QByteArray::fromHex(ui->verify_publickey->text().toUtf8());
     if(data.size()!=ED25519_KEY_SIZE)
     {
-        QMessageBox::critical(this,"Key size","The input key size is wrong o not into base64");
+        QMessageBox::critical(this,"Key size","The input key size is wrong o not into Hex");
         return;
     }
     const uint8_t *publickey=reinterpret_cast<const uint8_t *>(data.constData());
 
-    QByteArray datasignature=QByteArray::fromBase64(ui->verify_firm->text().toUtf8());
+    QByteArray datasignature=QByteArray::fromHex(ui->verify_firm->text().toUtf8());
     if(datasignature.size()!=ED25519_SIGNATURE_SIZE)
     {
-        QMessageBox::critical(this,"Key size","The input key size is wrong o not into base64");
+        QMessageBox::critical(this,"Key size","The input key size is wrong o not into Hex");
         return;
     }
     const uint8_t *signature=reinterpret_cast<const uint8_t *>(datasignature.constData());
