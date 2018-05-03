@@ -33,19 +33,15 @@ public:
     };
     std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostConnected> hostConnected;
 
-    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,std::string> reemitHandShake3;
-
     struct HostToSecondReply {
         uint8_t round;
-        char random[8];
-        char reply[8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
-        HostConnected hostConnected;
+        char reply[8+4+1+8+ED25519_SIGNATURE_SIZE];
     };
-    std::vector<HostToSecondReply> hostToSecondReply;
+    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostToSecondReply> hostToSecondReply;
     size_t hostToSecondReplyIndex;
 
     struct HostToFirstReply {
-        uint8_t round;
+        uint8_t round;//if timeout, remove from connect
         char random[8];
         char reply[8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
         HostConnected hostConnected;
