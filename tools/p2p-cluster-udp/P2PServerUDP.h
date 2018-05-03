@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <unordered_map>
 #include <nettle/eddsa.h>
 
 namespace CatchChallenger {
@@ -26,11 +27,22 @@ public:
     static char readBuffer[4096];
 
     struct HostConnected {
-        sockaddr_in serv_addr;
         uint8_t publickey[ED25519_KEY_SIZE];
         uint64_t local_sequence_number;
         uint64_t remote_sequence_number;
     };
+    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostConnected> hostConnected;
+
+    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,std::string> reemitHandShake3;
+
+    struct HostToSecondReply {
+        uint8_t round;
+        char random[8];
+        char reply[8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
+        HostConnected hostConnected;
+    };
+    std::vector<HostToSecondReply> hostToSecondReply;
+    size_t hostToSecondReplyIndex;
 
     struct HostToFirstReply {
         uint8_t round;
@@ -60,9 +72,10 @@ private:
 
     //[8(sequence number)+4(size)+1(request type)+8(random from 1)+8(random for 2)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
     static char handShake2[8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
-
+    //[8(sequence number)+4(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
+    static char handShake3[8+4+1+8+ED25519_SIGNATURE_SIZE];
     //[8(sequence number)+4(size)+1(request type)+ED25519_SIGNATURE_SIZE]
-    static char handShake4[8+4+1+8+8+ED25519_SIGNATURE_SIZE];
+    static char handShake4[8+4+1+ED25519_SIGNATURE_SIZE];
 };
 }
 
