@@ -13,8 +13,6 @@ using namespace CatchChallenger;
 
 //[8(sequence number)+4(size)+1(request type)+8(random)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
 char P2PTimerConnect::handShake1[];
-//[8(sequence number)+4(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
-char P2PTimerConnect::handShake3[];
 
 P2PTimerConnect::P2PTimerConnect()
 {
