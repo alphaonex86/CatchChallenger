@@ -1,5 +1,5 @@
-#ifndef CATCHCHALLENGER_P2PTimerConnect2_H
-#define CATCHCHALLENGER_P2PTimerConnect2_H
+#ifndef CATCHCHALLENGER_P2PTimerConnect3_H
+#define CATCHCHALLENGER_P2PTimerConnect3_H
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
 
@@ -8,11 +8,11 @@
 #include <chrono>
 
 namespace CatchChallenger {
-class P2PTimerHandshake2
+class P2PTimerHandshake3
         : public EpollTimer
 {
 public:
-    explicit P2PTimerHandshake2();
+    explicit P2PTimerHandshake3();
     void exec();
 private:
     std::chrono::time_point<std::chrono::steady_clock> startTime;

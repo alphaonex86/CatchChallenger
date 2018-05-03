@@ -39,11 +39,15 @@ void P2PTimerConnect::exec()
         const std::chrono::time_point<std::chrono::steady_clock> end=std::chrono::steady_clock::now();
         if(end<startTime)
             startTime=end;
-        else if(std::chrono::duration_cast<std::chrono::milliseconds>(end - startTime).count()<5000)
+        else if(std::chrono::duration_cast<std::chrono::milliseconds>(end - startTime).count()<5000 &&
+                P2PServerUDP::p2pserver->hostToConnectIndex>=P2PServerUDP::p2pserver->hostToConnect.size())
             return;
     }
     if(P2PServerUDP::p2pserver->hostToConnectIndex>=P2PServerUDP::p2pserver->hostToConnect.size())
+    {
         P2PServerUDP::p2pserver->hostToConnectIndex=0;
+        startTime=std::chrono::steady_clock::now();
+    }
     size_t lastScannedIndex=P2PServerUDP::p2pserver->hostToConnectIndex;
     do
     {
@@ -70,6 +74,7 @@ void P2PTimerConnect::exec()
             return;
         }
     } while(lastScannedIndex!=P2PServerUDP::p2pserver->hostToConnectIndex);
+    P2PServerUDP::p2pserver->hostToConnectIndex=lastScannedIndex;
 
     std::cout << "P2PTimerConnect::exec()" << std::endl;
 }
