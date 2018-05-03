@@ -8,19 +8,13 @@
 #include <chrono>
 
 namespace CatchChallenger {
-class P2PTimerConnect
+class P2PTimerHandshake2
         : public EpollTimer
 {
 public:
-    explicit P2PTimerConnect();
+    explicit P2PTimerHandshake2();
     void exec();
 private:
-    //[8(sequence number)+4(size)+1(request type)+8(random)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
-    static char handShake1[8+4+1+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
-
-    //[8(sequence number)+4(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
-    static char handShake3[8+4+1+8+ED25519_SIGNATURE_SIZE];
-
     std::chrono::time_point<std::chrono::steady_clock> startTime;
 };
 }

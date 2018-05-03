@@ -23,7 +23,8 @@ SOURCES += main.cpp \
     ../../general/base/cpp11additionstringtointcpp.cpp \
     P2PServerUDP.cpp \
     P2PTimerConnect.cpp \
-    ../../server/epoll/EpollTimer.cpp
+    ../../server/epoll/EpollTimer.cpp \
+    P2PTimerHandshake2.cpp
 
 HEADERS += \
     ../../server/epoll/Epoll.h \
@@ -36,7 +37,8 @@ HEADERS += \
     ../../general/base/PortableEndian.h \
     P2PServerUDP.h \
     P2PTimerConnect.h \
-    ../../server/epoll/EpollTimer.h
+    ../../server/epoll/EpollTimer.h \
+    P2PTimerHandshake2.h
 
 #choose one of:
 #DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1

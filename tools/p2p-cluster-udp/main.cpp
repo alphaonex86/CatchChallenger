@@ -4,6 +4,7 @@
 #include <netdb.h>
 #include <fcntl.h>
 #include <nettle/eddsa.h>
+#include <arpa/inet.h>
 
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/cpp11addition.h"
@@ -154,11 +155,33 @@ int main(int argc, char *argv[])
         while(index<known_nodes.size())
         {
             bool ok=false;
-            const std::string &host=known_nodes.at(index);
-            const std::string &portstring=known_nodes.at(index+1);
-            const uint16_t &port=stringtouint16(portstring,&ok);
 
-            P2PServerUDP::hostToConnect.push_back(std::pair<std::string,uint16_t>(host,port));
+            P2PServerUDP::HostToConnect hostToConnect;
+            const std::string host=known_nodes.at(index);
+            const std::string &portstring=known_nodes.at(index+1);
+            const uint16_t port=stringtouint16(portstring,&ok);
+            if(ok)
+            {
+                sockaddr_in serv_addr;
+                memset(&serv_addr, 0, sizeof(serv_addr));
+                serv_addr.sin_family = AF_INET;
+                serv_addr.sin_port = htobe16(port);
+                const char * const hostC=host.c_str();
+                const int convertResult=inet_pton(AF_INET6,hostC,&serv_addr.sin_addr);
+                if(convertResult!=1)
+                {
+                    const int convertResult=inet_pton(AF_INET,hostC,&serv_addr.sin_addr);
+                    if(convertResult!=1)
+                        std::cerr << "not IPv4 and IPv6 address, errno: " << std::to_string(errno) << std::endl;
+                }
+                if(convertResult==1)
+                {
+                    hostToConnect.round=0;
+                    hostToConnect.serv_addr=serv_addr;
+                    P2PServerUDP::p2pserver->hostToConnect.push_back(hostToConnect);
+                }
+            }
+
             index+=2;
         }
 
