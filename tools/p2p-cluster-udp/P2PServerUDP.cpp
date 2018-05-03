@@ -196,8 +196,6 @@ void P2PServerUDP::read()
                 //in: handShake2, out: handShake3
                 if(recv_len==(8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE))
                 {
-                    if(P2PServerUDP::p2pserver->hostToFirstReply.size()>64)
-                        return;
                     //check if the public key of node is signed by ca
                     const int rc = ed25519_sha512_verify(ca_publickey,//pub
                         ED25519_KEY_SIZE,//length
@@ -250,6 +248,10 @@ void P2PServerUDP::read()
 
                     reemitHandShake3[removeClient]=std::string(handShake3,sizeof(handShake3));
                     P2PServerUDP::p2pserver->write(handShake3,sizeof(handShake3),si_other);
+
+                    if(currentIndex<P2PServerUDP::p2pserver->hostToSecondReplyIndex)
+                        lastScannedIndex--;
+                    hostToConnectIndex.erase();
                 }
             }
             break;
