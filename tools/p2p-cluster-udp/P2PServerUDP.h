@@ -17,32 +17,37 @@ public:
     ~P2PServerUDP();
     bool tryListen(const uint16_t &port);
     void read();
-    int write(const std::string &data,const sockaddr_in &si_other);
+    int write(const char * const data, const uint32_t dataSize, const sockaddr_in &si_other);
     EpollObjectType getType() const;
-    void ed25519_sha512_sign(size_t length, const uint8_t *msg,uint8_t *signature);
+    void sign(size_t length, uint8_t *msg);
     char * getPublicKey();
     char * getCaSignature();
 
     static char readBuffer[4096];
-    enum HostStatus {
-        NoHandShakeValidated,
-        HandShake1Validated,
-        HandShake2Validated,
-        HandShake3Validated,
-        HandShake4Validated,
-    };
-    struct HostToConnect {
-        std::string host;
-        uint16_t port;
-        uint8_t round;
+
+    struct HostConnected {
         sockaddr_in serv_addr;
-        HostStatus hostStatus;
         uint8_t publickey[ED25519_KEY_SIZE];
         uint64_t local_sequence_number;
         uint64_t remote_sequence_number;
     };
-    static std::vector<HostToConnect> hostToConnect;
-    static size_t hostToConnectIndex;
+
+    struct HostToFirstReply {
+        uint8_t round;
+        char random[8];
+        char reply[8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
+        HostConnected hostConnected;
+    };
+    std::vector<HostToFirstReply> hostToFirstReply;
+    size_t hostToFirstReplyIndex;
+
+    struct HostToConnect {
+        uint8_t round;
+        sockaddr_in serv_addr;
+        char random[8];
+    };
+    std::vector<HostToConnect> hostToConnect;
+    size_t hostToConnectIndex;
     static P2PServerUDP *p2pserver;
     FILE *ptr_random;
 private:

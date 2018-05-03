@@ -11,9 +11,15 @@
 
 using namespace CatchChallenger;
 
+//[8(sequence number)+4(size)+1(request type)+8(random)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
+char P2PTimerConnect::handShake1[];
+//[8(sequence number)+4(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
+char P2PTimerConnect::handShake3[];
+
 P2PTimerConnect::P2PTimerConnect()
 {
     setInterval(100);
+    startTime=std::chrono::steady_clock::now();
 
     //[8(sequence number)+4(size)+1(request type)+8(random)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
     uint64_t sequencenumber=0;
@@ -29,65 +35,43 @@ P2PTimerConnect::P2PTimerConnect()
 
 void P2PTimerConnect::exec()
 {
-    if(P2PServerUDP::hostToConnect.empty())
+    if(P2PServerUDP::p2pserver->hostToConnect.empty())
         return;
     {
         const std::chrono::time_point<std::chrono::steady_clock> end=std::chrono::steady_clock::now();
-        if(end<start)
-            start=end;
-        else if(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()<5000)
+        if(end<startTime)
+            startTime=end;
+        else if(std::chrono::duration_cast<std::chrono::milliseconds>(end - startTime).count()<5000)
             return;
     }
-    if(P2PServerUDP::hostToConnectIndex>=P2PServerUDP::hostToConnect.size())
-        P2PServerUDP::hostToConnectIndex=0;
-    if(P2PServerUDP::hostToConnectIndex==0)
-        start=std::chrono::steady_clock::now();
-    size_t lastScannedIndex=P2PServerUDP::hostToConnectIndex;
+    if(P2PServerUDP::p2pserver->hostToConnectIndex>=P2PServerUDP::p2pserver->hostToConnect.size())
+        P2PServerUDP::p2pserver->hostToConnectIndex=0;
+    size_t lastScannedIndex=P2PServerUDP::p2pserver->hostToConnectIndex;
     do
     {
-        const P2PServerUDP::HostToConnect &peerToConnect=P2PServerUDP::hostToConnect.at(lastScannedIndex);
+        P2PServerUDP::HostToConnect &peerToConnect=P2PServerUDP::p2pserver->hostToConnect.at(lastScannedIndex);
         lastScannedIndex++;
-        if(lastScannedIndex>=P2PServerUDP::hostToConnect.size())
+        if(lastScannedIndex>=P2PServerUDP::p2pserver->hostToConnect.size())
             lastScannedIndex=0;
-        if(peerToConnect.hostStatus==P2PServerUDP::HostStatus::NoHandShakeValidated)
-        {
-            const std::string host=peerToConnect.first;
-            const char * const hostC=host.c_str();
-            const uint16_t portBigEndian=htons(peerToConnect.second);
 
-            sockaddr_in serv_addr;
-            memset(&serv_addr, 0, sizeof(serv_addr));
-            serv_addr.sin_family = AF_INET;
-            serv_addr.sin_port = portBigEndian;
-            const int convertResult=inet_pton(AF_INET6,hostC,&serv_addr.sin_addr);
-            if(convertResult!=1)
-            {
-                const int convertResult=inet_pton(AF_INET,hostC,&serv_addr.sin_addr);
-                if(convertResult!=1)
-                {
-                    std::cerr << "not IPv4 and IPv6 address (abort), errno: " << std::to_string(errno) << std::endl;
-                    return;
-                }
-            }
+        peerToConnect.round++;
+        if(peerToConnect.round<3 || peerToConnect.round==13)
+        {
+            if(peerToConnect.round==13)
+                peerToConnect.round=3;
 
             //[8(sequence number)+4(size)+1(request type)+8(random)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
             const int readSize=fread(handShake1+8+4+1,1,8,P2PServerUDP::p2pserver->ptr_random);
             if(readSize != 8)
                 abort();
-            P2PServerUDP::p2pserver->ed25519_sha512_sign(8+4+1+8,reinterpret_cast<const uint8_t *>(handShake1),handShake1+8+4+1+8);
-            P2PServerUDP::p2pserver->write(handShake1,serv_addr);
+            P2PServerUDP::p2pserver->sign(8+4+1+8,reinterpret_cast<uint8_t *>(handShake1));
+            P2PServerUDP::p2pserver->write(handShake1,sizeof(handShake1),peerToConnect.serv_addr);
 
-            P2PServerUDP::hostToConnectIndex=lastScannedIndex;
+            P2PServerUDP::p2pserver->hostToConnectIndex=lastScannedIndex;
+            std::cout << "P2PTimerConnect::exec() try co" << std::endl;
             return;
         }
-    } while(lastScannedIndex!=P2PServerUDP::hostToConnectIndex);
-
-    /*//first time
-    P2PServerUDP::p2pserver.write("publique key, firmed by master",serv_addr);
-    P2PServerUDP::p2pserver.write("request, firmed by local",serv_addr);
-
-    //send neighbour, second time
-    firm local(sequence number (32Bits) + data size + data)*/
+    } while(lastScannedIndex!=P2PServerUDP::p2pserver->hostToConnectIndex);
 
     std::cout << "P2PTimerConnect::exec()" << std::endl;
 }

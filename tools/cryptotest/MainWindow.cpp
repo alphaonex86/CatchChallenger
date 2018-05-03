@@ -103,7 +103,7 @@ void MainWindow::on_verify_clicked()
     }
     const uint8_t *signature=reinterpret_cast<const uint8_t *>(datasignature.constData());
 
-    const int rc = ed25519_sha512_verify (publickey,msg.size(),reinterpret_cast<const uint8_t *>(msg.constData()),signature);
+    const int rc = ed25519_sha512_verify(publickey,msg.size(),reinterpret_cast<const uint8_t *>(msg.constData()),signature);
 
     if(rc == 1) {
         QMessageBox::information(this,"Verification","Verified signature");
