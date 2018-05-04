@@ -36,6 +36,7 @@ public:
     struct HostToSecondReply {
         uint8_t round;
         char reply[8+4+1+8+ED25519_SIGNATURE_SIZE];
+        HostConnected hostConnected;
     };
     std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostToSecondReply> hostToSecondReply;
     size_t hostToSecondReplyIndex;
