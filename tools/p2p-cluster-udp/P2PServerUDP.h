@@ -18,6 +18,7 @@ public:
     ~P2PServerUDP();
     bool tryListen(const uint16_t &port);
     void read();
+    static std::string sockSerialised(const sockaddr_in &si_other);
     int write(const char * const data, const uint32_t dataSize, const sockaddr_in &si_other);
     EpollObjectType getType() const;
     void sign(size_t length, uint8_t *msg);
@@ -31,7 +32,8 @@ public:
         uint64_t local_sequence_number;
         uint64_t remote_sequence_number;
     };
-    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostConnected> hostConnected;
+    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostConnected> hostConnectionEstablished;
+    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostConnected> hostConnectionValidated;
 
     struct HostToSecondReply {
         uint8_t round;
@@ -47,7 +49,7 @@ public:
         char reply[8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
         HostConnected hostConnected;
     };
-    std::vector<HostToFirstReply> hostToFirstReply;
+    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostToFirstReply> hostToFirstReply;
     size_t hostToFirstReplyIndex;
 
     struct HostToConnect {

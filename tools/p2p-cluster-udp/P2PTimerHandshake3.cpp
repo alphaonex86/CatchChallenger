@@ -55,7 +55,7 @@ void P2PTimerHandshake3::exec()
         {
             lastScannedIndex--;
             P2PServerUDP::p2pserver->hostToSecondReply.erase(peerToConnect.socketdest);
-            P2PServerUDP::p2pserver->hostConnected.erase(peerToConnect.socketdest);
+            P2PServerUDP::p2pserver->hostConnectionEstablished.erase(peerToConnect.socketdest);
         }
     } while(lastScannedIndex!=P2PServerUDP::p2pserver->hostToSecondReplyIndex);
     P2PServerUDP::p2pserver->hostToSecondReplyIndex=lastScannedIndex;
