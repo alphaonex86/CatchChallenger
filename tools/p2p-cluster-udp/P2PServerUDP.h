@@ -69,12 +69,12 @@ private:
     uint8_t ca_publickey[ED25519_KEY_SIZE];
     uint8_t ca_signature[ED25519_SIGNATURE_SIZE];
 
-    //[8(sequence number)+4(size)+1(request type)+8(random from 1)+8(random for 2)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
-    static char handShake2[8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
-    //[8(sequence number)+4(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
-    static char handShake3[8+4+1+8+ED25519_SIGNATURE_SIZE];
-    //[8(sequence number)+4(size)+1(request type)+ED25519_SIGNATURE_SIZE]
-    static char handShake4[8+4+1+ED25519_SIGNATURE_SIZE];
+    //[8(current sequence number)+8(next sequence number -> random)+4(size)+1(request type)+8(random from 1)+8(random for 2)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
+    static char handShake2[8+8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
+    //[8(current sequence number)+8(next sequence number -> random)+4(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
+    static char handShake3[8+8+4+1+8+ED25519_SIGNATURE_SIZE];
+    //[8(current sequence number)+8(next sequence number -> random)+4(size)+1(request type)+ED25519_SIGNATURE_SIZE]
+    static char handShake4[8+8+4+1+ED25519_SIGNATURE_SIZE];
 };
 }
 
