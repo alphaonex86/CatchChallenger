@@ -19,16 +19,17 @@ P2PTimerConnect::P2PTimerConnect()
     setInterval(100);
     startTime=std::chrono::steady_clock::now();
 
-    //[8(sequence number)+4(size)+1(request type)+8(random)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
+    //[8(current sequence number)+8(next sequence number -> random)+4(size)+1(request type)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
     uint64_t sequencenumber=0;
     memcpy(handShake1,&sequencenumber,sizeof(sequencenumber));
-    const uint32_t size=htole16(1+8);
-    memcpy(handShake1+8,&size,sizeof(size));
+    memcpy(handShake1+8,&sequencenumber,sizeof(sequencenumber));
+    const uint32_t size=htole16(1);
+    memcpy(handShake1+8+8,&size,sizeof(size));
     const uint8_t requestType=1;
-    memcpy(handShake1+8+4,&requestType,sizeof(requestType));
-    memset(handShake1+8+4+1,0,8+ED25519_SIGNATURE_SIZE);
-    memcpy(handShake1+8+4+1+8+ED25519_SIGNATURE_SIZE,P2PServerUDP::p2pserver->getPublicKey(),ED25519_KEY_SIZE);
-    memcpy(handShake1+8+4+1+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE,P2PServerUDP::p2pserver->getCaSignature(),ED25519_SIGNATURE_SIZE);
+    memcpy(handShake1+8+8+4,&requestType,sizeof(requestType));
+    memset(handShake1+8+8+4+1,0,8+ED25519_SIGNATURE_SIZE);
+    memcpy(handShake1+8+8+4+1+ED25519_SIGNATURE_SIZE,P2PServerUDP::p2pserver->getPublicKey(),ED25519_KEY_SIZE);
+    memcpy(handShake1+8+8+4+1+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE,P2PServerUDP::p2pserver->getCaSignature(),ED25519_SIGNATURE_SIZE);
 }
 
 void P2PTimerConnect::exec()
