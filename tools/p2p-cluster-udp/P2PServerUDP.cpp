@@ -36,11 +36,11 @@ P2PServerUDP::P2PServerUDP(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_
 
     //[8(sequence number)+4(size)+1(request type)+8(random from 1)+8(random for 2)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
     memset(handShake2,0,8);
-    const uint32_t size=1+8+8;
+    const uint32_t size=1+8;
     memcpy(handShake2+8,&size,sizeof(size));
     handShake2[8+sizeof(size)]=1;
-    memcpy(handShake2+8+4+1+8+8+ED25519_SIGNATURE_SIZE,publickey,ED25519_KEY_SIZE);
-    memcpy(handShake2+8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE,ca_signature,ED25519_SIGNATURE_SIZE);
+    memcpy(handShake2+8+4+1+8+ED25519_SIGNATURE_SIZE,publickey,ED25519_KEY_SIZE);
+    memcpy(handShake2+8+4+1+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE,ca_signature,ED25519_SIGNATURE_SIZE);
 
     //[8(sequence number)+4(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
     memset(handShake3,0,8);
