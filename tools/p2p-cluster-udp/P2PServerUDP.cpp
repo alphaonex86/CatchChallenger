@@ -14,11 +14,8 @@ using namespace CatchChallenger;
 
 char P2PServerUDP::readBuffer[];
 P2PServerUDP *P2PServerUDP::p2pserver=NULL;
-//[8(sequence number)+4(size)+1(request type)+8(random from 1)+8(random for 2)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
 char P2PServerUDP::handShake2[];
-//[8(sequence number)+4(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
 char P2PServerUDP::handShake3[];
-//[8(sequence number)+4(size)+1(request type)+ED25519_SIGNATURE_SIZE]
 char P2PServerUDP::handShake4[];
 
 P2PServerUDP::P2PServerUDP(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_publickey/*ED25519_KEY_SIZE*/, uint8_t *ca_signature/*ED25519_SIGNATURE_SIZE*/) :
@@ -34,19 +31,27 @@ P2PServerUDP::P2PServerUDP(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_
     if(ptr_random == NULL)
         abort();
 
-    //[8(sequence number)+4(size)+1(request type)+8(random from 1)+8(random for 2)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
-    memset(handShake2,0,8);
-    const uint32_t size=1+8;
-    memcpy(handShake2+8,&size,sizeof(size));
-    handShake2[8+sizeof(size)]=1;
-    memcpy(handShake2+8+4+1+8+ED25519_SIGNATURE_SIZE,publickey,ED25519_KEY_SIZE);
-    memcpy(handShake2+8+4+1+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE,ca_signature,ED25519_SIGNATURE_SIZE);
+    const uint8_t requestType1=1;
 
-    //[8(sequence number)+4(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
-    memset(handShake3,0,8);
-    const uint32_t size2=1+8;
-    memcpy(handShake3+8,&size2,sizeof(size2));
-    handShake3[8+sizeof(size2)]=1;
+    //[8(current sequence number)+8(acknowledgement number)+2(size)+1(request type)+8(sequence number from 1)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
+    memset(handShake2,0,sizeof(handShake2));
+    const uint16_t size=1+8;
+    memcpy(handShake2+8+8,&size,sizeof(size));
+    memcpy(handShake2+8+8+sizeof(size),&requestType1,sizeof(requestType1));
+    memcpy(handShake2+8+8+sizeof(size)+1+8+ED25519_SIGNATURE_SIZE,publickey,ED25519_KEY_SIZE);
+    memcpy(handShake2+8+8+sizeof(size)+1+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE,ca_signature,ED25519_SIGNATURE_SIZE);
+
+    //[8(current sequence number)+8(acknowledgement number)+2(size)+1(request type)+8(sequence number from 2)+ED25519_SIGNATURE_SIZE
+    memset(handShake3,0,sizeof(handShake3));
+    const uint16_t size2=1+8;
+    memcpy(handShake3+8+8,&size2,sizeof(size2));
+    memcpy(handShake3+8+8+sizeof(size),&requestType1,sizeof(requestType1));
+
+    //[8(current sequence number)+8(acknowledgement number)+2(size)+1(request type)+ED25519_SIGNATURE_SIZE]
+    memset(handShake4,0,sizeof(handShake4));
+    const uint16_t size3=1;
+    memcpy(handShake4+8+8,&size3,sizeof(size3));
+    memcpy(handShake4+8+8+sizeof(size),&requestType1,sizeof(requestType1));
 }
 
 P2PServerUDP::~P2PServerUDP()
@@ -146,50 +151,50 @@ void P2PServerUDP::read()
     std::cout << "Data: " << data << std::endl;
 
     //now reply the client with the same data
-    //[8(sequence number)+4(size)+1(request type)+8(random)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
-    if(recv_len>=(8+4+1+ED25519_SIGNATURE_SIZE))
+    //[8(sequence number)+2(size)+1(request type)+8(random)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
+    if(recv_len>=(8+2+1+ED25519_SIGNATURE_SIZE))
     {
-        switch(P2PServerUDP::readBuffer[8+4])
+        switch(P2PServerUDP::readBuffer[8+2])
         {
             case 0x01:
             {
                 //in: handShake1, out: handShake2
-                if(recv_len==(8+4+1+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE))
+                if(recv_len==(8+2+1+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE))
                 {
                     if(P2PServerUDP::p2pserver->hostToFirstReply.size()>64)
                         return;
                     //check if the public key of node is signed by ca
                     const int rc = ed25519_sha512_verify(ca_publickey,//pub
                         ED25519_KEY_SIZE,//length
-                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+4+1+8+ED25519_SIGNATURE_SIZE),//msg
-                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+4+1+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE)//signature
+                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+2+1+8+ED25519_SIGNATURE_SIZE),//msg
+                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+2+1+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE)//signature
                                                          );
                     if(rc != 1)
                         return;
                     //check the message content
                     const int rc2 = ed25519_sha512_verify(
-                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+4+1+8+ED25519_SIGNATURE_SIZE),//pub
-                        8+4+1+8,//length
+                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+2+1+8+ED25519_SIGNATURE_SIZE),//pub
+                        8+2+1+8,//length
                         reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
-                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+4+1+8)//signature
+                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+2+1+8)//signature
                                                          );
                     if(rc2 != 1)
                         return;
 
-                    //[8(sequence number)+4(size)+1(request type)+8(random from 1)+8(random for 2)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
-                    memcpy(handShake2+8+4+1,P2PServerUDP::readBuffer+8+4+1,8);
-                    const int readSize=fread(handShake2+8+4+1+8,1,8,P2PServerUDP::p2pserver->ptr_random);
+                    //[8(sequence number)+2(size)+1(request type)+8(random from 1)+8(random for 2)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
+                    memcpy(handShake2+8+2+1,P2PServerUDP::readBuffer+8+2+1,8);
+                    const int readSize=fread(handShake2+8+2+1+8,1,8,P2PServerUDP::p2pserver->ptr_random);
                     if(readSize != 8)
                         abort();
-                    P2PServerUDP::p2pserver->sign(8+4+1+8+8,reinterpret_cast<uint8_t *>(handShake2));
+                    P2PServerUDP::p2pserver->sign(8+2+1+8+8,reinterpret_cast<uint8_t *>(handShake2));
 
                     HostToFirstReply hostToFirstReply;
-                    memcpy(hostToFirstReply.random,P2PServerUDP::readBuffer+8+4+1+8,8);
+                    memcpy(hostToFirstReply.random,P2PServerUDP::readBuffer+8+2+1+8,8);
                     hostToFirstReply.round=0;
                     hostToFirstReply.hostConnected.local_sequence_number=0;
                     hostToFirstReply.hostConnected.remote_sequence_number=0;
                     hostToFirstReply.hostConnected..serv_addr=si_other;
-                    memcpy(hostToFirstReply.hostConnected.publickey,P2PServerUDP::readBuffer+8+4+1+8+ED25519_SIGNATURE_SIZE,ED25519_KEY_SIZE);
+                    memcpy(hostToFirstReply.hostConnected.publickey,P2PServerUDP::readBuffer+8+2+1+8+ED25519_SIGNATURE_SIZE,ED25519_KEY_SIZE);
                     memcpy(hostToFirstReply.reply,handShake2,sizeof(handShake2));
                     uint32_t indexSearch=0;
                     while(indexSearch<P2PServerUDP::hostToFirstReply.size())
@@ -210,29 +215,29 @@ void P2PServerUDP::read()
                     }
                 }
                 //in: handShake2, out: handShake3
-                else if(recv_len==(8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE))
+                else if(recv_len==(8+2+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE))
                 {
                     //check if the public key of node is signed by ca
                     const int rc = ed25519_sha512_verify(ca_publickey,//pub
                         ED25519_KEY_SIZE,//length
-                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+4+1+8+8+ED25519_SIGNATURE_SIZE),//msg
-                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE)//signature
+                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+2+1+8+8+ED25519_SIGNATURE_SIZE),//msg
+                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+2+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE)//signature
                                                          );
                     if(rc != 1)
                         return;
                     //check the message content
                     const int rc2 = ed25519_sha512_verify(
-                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+4+1+8+8+ED25519_SIGNATURE_SIZE),//pub
-                        8+4+1+8+8,//length
+                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+2+1+8+8+ED25519_SIGNATURE_SIZE),//pub
+                        8+2+1+8+8,//length
                         reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
-                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+4+1+8+8)//signature
+                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+2+1+8+8)//signature
                                                          );
                     if(rc2 != 1)
                         return;
 
-                    std::string randomFrom1(P2PServerUDP::readBuffer+8+4+1,8);
-                    std::string randomToReplyFrom2(P2PServerUDP::readBuffer+8+4+1+8,8);
-                    std::string nodePublicKey(P2PServerUDP::readBuffer+8+4+1+8+8,ED25519_KEY_SIZE);
+                    std::string randomFrom1(P2PServerUDP::readBuffer+8+2+1,8);
+                    std::string randomToReplyFrom2(P2PServerUDP::readBuffer+8+2+1+8,8);
+                    std::string nodePublicKey(P2PServerUDP::readBuffer+8+2+1+8+8,ED25519_KEY_SIZE);
                     //search into the connect and check the random
                     unsigned int indexSearch=0;
                     while(indexSearch<P2PServerUDP::p2pserver->hostToConnect.size())
@@ -248,9 +253,9 @@ void P2PServerUDP::read()
                         if(P2PServerUDP::hostConnectionEstablished.find(removeClient)==P2PServerUDP::hostConnectionEstablished.cend())
                             return;
 
-                    //[8(sequence number)+4(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
-                    memcpy(handShake3+8+4+1,randomToReplyFrom2.data(),8);
-                    sign(8+4+1+8,handShake3);
+                    //[8(sequence number)+2(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
+                    memcpy(handShake3+8+2+1,randomToReplyFrom2.data(),8);
+                    sign(8+2+1+8,handShake3);
 
                     HostConnected newHostConnected;
                     newHostConnected.serv_addr=si_other;
@@ -268,16 +273,16 @@ void P2PServerUDP::read()
                     hostToConnectIndex.erase();
                 }
                 //in: handShake3, out: handShake4
-                else if(recv_len==(8+4+1+8+ED25519_SIGNATURE_SIZE))
+                else if(recv_len==(8+2+1+8+ED25519_SIGNATURE_SIZE))
                 {
                     //get valid public key from in: handShake1, out: handShake2
                     char *publickey=;
                     //check the message content
                     const int rc2 = ed25519_sha512_verify(
                         reinterpret_cast<const uint8_t *>(hostConnectionEstablished.publickey),//pub
-                        8+4+1+8,//length
+                        8+2+1+8,//length
                         reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
-                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+4+1+8)//signature
+                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+2+1+8)//signature
                                                          );
                     if(rc2 != 1)
                         return;
@@ -309,9 +314,9 @@ void P2PServerUDP::read()
                         if(P2PServerUDP::hostConnectionEstablished.find(nodePublicKey)==P2PServerUDP::hostConnectionEstablished.cend())
                             return;
 
-                    //[8(sequence number)+4(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
-                    memcpy(handShake3+8+4+1,randomToReplyFrom2.data(),8);
-                    sign(8+4+1+8,handShake3);
+                    //[8(sequence number)+2(size)+1(request type)+8(random from 2)+ED25519_SIGNATURE_SIZE
+                    memcpy(handShake3+8+2+1,randomToReplyFrom2.data(),8);
+                    sign(8+2+1+8,handShake3);
 
                     P2PServerUDP::p2pserver->write(handShake3,sizeof(handShake3),si_other);
 
@@ -320,16 +325,16 @@ void P2PServerUDP::read()
                     hostToConnectIndex.erase();
                 }
                 //in: handShake4
-                else if(recv_len==(8+4+1+ED25519_SIGNATURE_SIZE))
+                else if(recv_len==(8+2+1+ED25519_SIGNATURE_SIZE))
                 {
                     //get valid public key from in: handShake1, out: handShake2
                     char *publickey=;
                     //check the message content
                     const int rc2 = ed25519_sha512_verify(
                         reinterpret_cast<const uint8_t *>(hostConnectionEstablished.publickey),//pub
-                        8+4+1+8,//length
+                        8+2+1+8,//length
                         reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
-                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+4+1+8)//signature
+                        reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+2+1+8)//signature
                                                          );
                     if(rc2 != 1)
                         return;
