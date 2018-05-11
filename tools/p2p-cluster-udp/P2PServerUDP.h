@@ -33,7 +33,6 @@ public:
         uint64_t remote_sequence_number;
     };
     std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostConnected> hostConnectionEstablished;
-    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostConnected> hostConnectionValidated;
 
     struct HostToSecondReply {
         uint8_t round;
