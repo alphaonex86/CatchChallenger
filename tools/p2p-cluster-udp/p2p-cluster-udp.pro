@@ -25,7 +25,9 @@ SOURCES += main.cpp \
     P2PTimerConnect.cpp \
     ../../server/epoll/EpollTimer.cpp \
     P2PTimerHandshake2.cpp \
-    P2PTimerHandshake3.cpp
+    P2PTimerHandshake3.cpp \
+    HostConnected.cpp \
+    P2PPeer.cpp
 
 HEADERS += \
     ../../server/epoll/Epoll.h \
@@ -40,7 +42,9 @@ HEADERS += \
     P2PTimerConnect.h \
     ../../server/epoll/EpollTimer.h \
     P2PTimerHandshake2.h \
-    P2PTimerHandshake3.h
+    P2PTimerHandshake3.h \
+    HostConnected.h \
+    P2PPeer.h
 
 #choose one of:
 #DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML1

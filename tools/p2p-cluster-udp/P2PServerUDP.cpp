@@ -147,7 +147,9 @@ void P2PServerUDP::read()
     //now reply the client with the same data
     if(recv_len>=(8+8+2+1+ED25519_SIGNATURE_SIZE))
     {
-        switch(P2PServerUDP::readBuffer[8+2])
+        uint8_t messageType=0;
+        memcpy(messageType,P2PServerUDP::readBuffer+8+8+2,1);
+        switch(messageType)
         {
             case 0x01:
             {
@@ -256,12 +258,12 @@ void P2PServerUDP::read()
                                 return;
                             else
                             {
-                                HostConnected &currentHostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
+                                P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
+                                HostConnected &currentHostConnected=P2PServerUDP::hostConnectionEstablished[remoteClient];
                                 memcpy(currentHostConnected.local_sequence_number,P2PServerUDP::readBuffer+8,8);
                                 newHostConnected.local_sequence_number++;
                                 memcpy(currentHostConnected.remote_sequence_number,P2PServerUDP::readBuffer,8);
                                 memcpy(currentHostConnected.publickey,P2PServerUDP::readBuffer+8+8+2+1,ED25519_KEY_SIZE);
-                                currentHostConnected.reset();//drop sending buffer, new peer
                             }
                         }
                         //[8(current sequence number)+8(acknowledgement number)+2(size)+1(request type)+ED25519_SIGNATURE_SIZE(node)]
@@ -269,7 +271,7 @@ void P2PServerUDP::read()
                         P2PServerUDP::p2pserver->sign(sizeof(handShake3)-ED25519_SIGNATURE_SIZE,reinterpret_cast<uint8_t *>(handShake3));
 
                         HostConnected &currentHostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
-                        currentHostConnected.addAndEmitbuffer(handShake3);//and emit
+                        currentHostConnected.addAndEmitbuffer(handShake3,sizeof(handShake3));//and emit
                     }
                     break;
                     default:
@@ -306,11 +308,10 @@ void P2PServerUDP::read()
                         {
                             P2PServerUDP::p2pserver->hostToConnect.erase(hostToConnect);
                             P2PServerUDP::hostConnectionEstablished[remoteClient]=hostToFirstReply.hostConnected;
+                            P2PServerUDP::hostConnectionEstablished.at(remoteClient).emitAck();
                         }
                         else
                             return;
-
-                        hostToFirstReply.addAndEmitAck();
                     }
                     break;
                     default:
@@ -318,6 +319,7 @@ void P2PServerUDP::read()
                 }
             }
             break;
+            case 0x04:
             case 0xFF:
             {
                 switch(recv_len)
@@ -339,8 +341,52 @@ void P2PServerUDP::read()
                         if(rc2 != 1)
                             return;
 
-                        //flush buffer, if have more buffer send
-                        hostConnected.addAndEmitAck(P2PServerUDP::readBuffer+8/*ack number*/);
+                        //check the size
+                        uint16_t size=0;
+                        memcpy(&size,P2PServerUDP::readBuffer+8+8,2);
+                        if((recv_len-8-8-2-1-ED25519_SIGNATURE_SIZE)!=size)
+                        {
+                            std::cerr << "P2P peer missing data (disconnect)" << std::endl;
+                            P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
+                            return;
+                        }
+
+                        //the data
+                        uint64_t sequenceNumber=0;
+                        memcpy(sequenceNumber,P2PServerUDP::readBuffer,8);
+                        if(P2PServerUDP::readBuffer==hostConnected.remoteNumber)
+                        {
+                            //flush buffer, if have more buffer send else ACK
+                            uint64_t ackNumber=0;
+                            memcpy(ackNumber,P2PServerUDP::readBuffer+8,8);
+                            hostConnected.discardBuffer(ackNumber);
+
+                            hostConnected.remoteNumber++;
+                            switch(messageType)
+                            {
+                                case 0x04:
+                                if(!hostConnected.parseData(P2PServerUDP::readBuffer+8+8+2+1,size))
+                                {
+                                    std::cerr << "P2P peer bug !hostConnected.parseData()" << std::endl;
+                                    P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
+                                    return;
+                                }
+                                break;
+                                case 0xFF:
+                                    if(size!=0)
+                                    {
+                                        std::cerr << "P2P peer missing data (disconnect)" << std::endl;
+                                        P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
+                                        return;
+                                    }
+                                break;
+                                default:
+                                    std::cerr << "P2P peer bug not known message" << std::endl;
+                                break;
+                            }
+                        }
+                        else
+                            std::cerr << "P2P peer missing packet" << std::endl;
                     }
                     break;
                     default:
