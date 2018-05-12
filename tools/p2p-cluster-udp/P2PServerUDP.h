@@ -64,10 +64,10 @@ private:
     uint8_t ca_publickey[ED25519_KEY_SIZE];
     uint8_t ca_signature[ED25519_SIGNATURE_SIZE];
 
-    //[8(current sequence number)+8(acknowledgement number)+2(size)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
-    static char handShake2[8+8+2+1+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
-    //[8(current sequence number)+8(acknowledgement number)+2(size)+1(request type)+ED25519_SIGNATURE_SIZE(node)]
-    static char handShake3[8+8+2+1+ED25519_SIGNATURE_SIZE];
+    //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
+    static char handShake2[8+8+1+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
+    //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_SIGNATURE_SIZE(node)]
+    static char handShake3[8+8+1+ED25519_SIGNATURE_SIZE];
 };
 }
 

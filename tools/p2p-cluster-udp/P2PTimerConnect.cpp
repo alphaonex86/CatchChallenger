@@ -11,7 +11,7 @@
 
 using namespace CatchChallenger;
 
-//[8(sequence number)+2(size)+1(request type)+8(random)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
+//[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
 char P2PTimerConnect::handShake1[];
 
 P2PTimerConnect::P2PTimerConnect()
@@ -19,14 +19,12 @@ P2PTimerConnect::P2PTimerConnect()
     setInterval(100);
     startTime=std::chrono::steady_clock::now();
 
-    //[8(current sequence number)+8(acknowledgement number)+2(size)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
+    //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
     memset(handShake1,0,sizeof(handShake1));
-    const uint16_t size=htole16(1+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE);
-    memcpy(handShake1+8+8,&size,sizeof(size));
     const uint8_t requestType=1;
-    memcpy(handShake1+8+8+sizeof(size),&requestType,sizeof(requestType));
-    memcpy(handShake1+8+8+sizeof(size)+1,P2PServerUDP::p2pserver->getPublicKey(),ED25519_KEY_SIZE);
-    memcpy(handShake1+8+8+sizeof(size)+1+ED25519_KEY_SIZE,P2PServerUDP::p2pserver->getCaSignature(),ED25519_SIGNATURE_SIZE);
+    memcpy(handShake1+8+8,&requestType,sizeof(requestType));
+    memcpy(handShake1+8+8+1,P2PServerUDP::p2pserver->getPublicKey(),ED25519_KEY_SIZE);
+    memcpy(handShake1+8+8+1+ED25519_KEY_SIZE,P2PServerUDP::p2pserver->getCaSignature(),ED25519_SIGNATURE_SIZE);
 }
 
 void P2PTimerConnect::exec()
@@ -60,14 +58,14 @@ void P2PTimerConnect::exec()
             if(peerToConnect.round==13)
                 peerToConnect.round=3;
 
-            //[8(sequence number)+2(size)+1(request type)+8(random)+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE]
+            //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
             do
             {
                 const int readSize=fread(handShake1,1,8,P2PServerUDP::p2pserver->ptr_random);
                 if(readSize != 8)
                     abort();
             } while(*static_cast<uint64_t *>(handShake1)==0);
-            P2PServerUDP::p2pserver->sign(8+8+2+1+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE+,reinterpret_cast<uint8_t *>(handShake1));
+            P2PServerUDP::p2pserver->sign(8+8+1+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE+,reinterpret_cast<uint8_t *>(handShake1));
             P2PServerUDP::p2pserver->write(handShake1,sizeof(handShake1),peerToConnect.serv_addr);
 
             P2PServerUDP::p2pserver->hostToConnectIndex=lastScannedIndex;
