@@ -9,6 +9,7 @@
 #include <utility>
 #include <unordered_map>
 #include <nettle/eddsa.h>
+#include "HostConnected.h"
 
 namespace CatchChallenger {
 class P2PServerUDP : public BaseClassSwitch
@@ -27,11 +28,6 @@ public:
 
     static char readBuffer[4096];
 
-    struct HostConnected {
-        uint8_t publickey[ED25519_KEY_SIZE];
-        uint64_t local_sequence_number;
-        uint64_t remote_sequence_number;
-    };
     std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostConnected> hostConnectionEstablished;
 
     struct HostToSecondReply {
