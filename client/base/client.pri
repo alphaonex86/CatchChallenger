@@ -63,7 +63,6 @@ SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/interface/WithAnotherPlayer.cpp \
     $$PWD/render/MapVisualiserThread.cpp \
     $$PWD/render/MapVisualiserOrder.cpp \
-    $$PWD/interface/QuestJS.cpp \
     $$PWD/interface/GetPrice.cpp \
     $$PWD/LanguagesSelect.cpp \
     $$PWD/interface/NewProfile.cpp \
@@ -109,7 +108,6 @@ HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/interface/WithAnotherPlayer.h \
     $$PWD/render/MapVisualiserThread.h \
     $$PWD/render/MapVisualiserOrder.h \
-    $$PWD/interface/QuestJS.h \
     $$PWD/interface/GetPrice.h \
     $$PWD/LanguagesSelect.h \
     $$PWD/interface/NewProfile.h \

@@ -7,26 +7,27 @@ using namespace CatchChallenger;
 #include <utime.h>
 #include <sys/stat.h>
 #endif
+#include <QString>
 
 //need host + port here to have datapack base
 
 Api_client_virtual::Api_client_virtual(ConnectedSocket *socket) :
     Api_protocol(socket)
 {
-    mDatapackBase=QStringLiteral("%1/datapack/").arg(QCoreApplication::applicationDirPath());
+    mDatapackBase=QStringLiteral("%1/datapack/").arg(QCoreApplication::applicationDirPath()).toStdString();
 }
 
 Api_client_virtual::~Api_client_virtual()
 {
 }
 
-void Api_client_virtual::sendDatapackContentBase(const QByteArray &hashBase)
+void Api_client_virtual::sendDatapackContentBase(const std::string &hashBase)
 {
     Q_UNUSED(hashBase);
     /*emit */haveTheDatapack();
 }
 
-void Api_client_virtual::sendDatapackContentMainSub(const QByteArray &hashMain,const QByteArray &hashSub)
+void Api_client_virtual::sendDatapackContentMainSub(const std::string &hashMain,const std::string &hashSub)
 {
     Q_UNUSED(hashMain);
     Q_UNUSED(hashSub);

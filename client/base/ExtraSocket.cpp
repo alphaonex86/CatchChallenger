@@ -9,12 +9,12 @@
 #include <QByteArray>
 #include <stdio.h>
 
-QString ExtraSocket::pathSocket(const QString &name)
+std::string ExtraSocket::pathSocket(const std::string &name)
 {
 #if defined(__unix__) || defined(Q_OS_UNIX) || !defined(Q_OS_WIN32)
     return name+"-"+QString::number(getuid());
 #else
-    QString userName;
+    std::string userName;
 
     /* bad way for catchcopy compatibility
     char uname[1024];

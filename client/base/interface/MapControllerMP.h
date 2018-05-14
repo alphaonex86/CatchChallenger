@@ -38,7 +38,7 @@ public slots:
     bool dropAllPlayerOnTheMap_final(bool inReplayMode);
 
     void teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
-    virtual bool asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject);
+    virtual bool asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject);
 
     //player info
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
@@ -59,7 +59,7 @@ private:
         uint8_t x,y;
         bool inMove;
         bool stepAlternance;
-        QString current_map;
+        std::string current_map;
         QSet<QString> mapUsed;
         CatchChallenger::Player_public_informations informations;
         Tiled::MapObject * labelMapObject;
@@ -150,7 +150,7 @@ private:
     {
         struct StartPoint
         {
-            QString map;
+            std::string map;
             uint8_t x,y;
         };
         StartPoint startPoint;
@@ -164,7 +164,7 @@ protected:
     CatchChallenger::Player_private_and_public_informations player_informations;
     bool player_informations_is_set;
 private slots:
-    bool loadPlayerMap(const QString &fileName,const uint8_t &x,const uint8_t &y);
+    bool loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y);
     void moveOtherPlayerStepSlot();
     void moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer);
     void doMoveOtherAnimation();
@@ -179,7 +179,7 @@ protected slots:
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadOtherPlayerFromMap(OtherPlayer otherPlayer);
-    void pathFindingResult(const QString &current_map, const uint8_t &x, const uint8_t &y, const QList<QPair<CatchChallenger::Orientation, uint8_t> > &path);
+    void pathFindingResult(const std::string &current_map, const uint8_t &x, const uint8_t &y, const QList<QPair<CatchChallenger::Orientation, uint8_t> > &path);
     bool nextPathStep();//true if have step
     virtual void keyPressParse();
 signals:
