@@ -234,9 +234,9 @@ void P2PServerUDP::read()
                                     memcmp(hostToConnect.random,P2PServerUDP::readBuffer+8,8)==0)
                             {
                                 //new peer
-                                HostConnected newHostConnected;
-                                memcpy(newHostConnected.local_sequence_number,P2PServerUDP::readBuffer+8,8);
-                                newHostConnected.local_sequence_number++;
+                                P2PPeer newHostConnected;
+                                memcpy(newHostConnected.local_sequence_number_validated,P2PServerUDP::readBuffer+8,8);
+                                newHostConnected.local_sequence_number_validated++;
                                 memcpy(newHostConnected.remote_sequence_number,P2PServerUDP::readBuffer,8);
                                 memcpy(newHostConnected.publickey,P2PServerUDP::readBuffer+8+8+1,ED25519_KEY_SIZE);
                                 if(indexSearch<P2PServerUDP::p2pserver->hostToSecondReplyIndex)
@@ -255,8 +255,8 @@ void P2PServerUDP::read()
                             else
                             {
                                 P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
-                                HostConnected &currentHostConnected=P2PServerUDP::hostConnectionEstablished[remoteClient];
-                                memcpy(currentHostConnected.local_sequence_number,P2PServerUDP::readBuffer+8,8);
+                                P2PPeer &currentHostConnected=P2PServerUDP::hostConnectionEstablished[remoteClient];
+                                memcpy(currentHostConnected.local_sequence_number_validated,P2PServerUDP::readBuffer+8,8);
                                 newHostConnected.local_sequence_number++;
                                 memcpy(currentHostConnected.remote_sequence_number,P2PServerUDP::readBuffer,8);
                                 memcpy(currentHostConnected.publickey,P2PServerUDP::readBuffer+8+8+1,ED25519_KEY_SIZE);
@@ -266,7 +266,7 @@ void P2PServerUDP::read()
                         memcpy(handShake3+8,P2PServerUDP::readBuffer,8);
                         P2PServerUDP::p2pserver->sign(sizeof(handShake3)-ED25519_SIGNATURE_SIZE,reinterpret_cast<uint8_t *>(handShake3));
 
-                        HostConnected &currentHostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
+                        P2PPeer &currentHostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
                         currentHostConnected.addAndEmitbuffer(handShake3,sizeof(handShake3));//and emit
                     }
                     break;
@@ -326,7 +326,7 @@ void P2PServerUDP::read()
                         //get valid public key from in: handShake1, out: handShake2
                         if(P2PServerUDP::hostConnectionEstablished.find(remoteClient)==P2PServerUDP::hostConnectionEstablished.cend())
                             return;
-                        HostConnected &hostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
+                        P2PPeer &hostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
                         //check the message content
                         const int rc2 = ed25519_sha512_verify(
                             reinterpret_cast<const uint8_t *>(hostToFirstReply.hostConnected.publickey),//pub
@@ -347,7 +347,8 @@ void P2PServerUDP::read()
                             //flush buffer, if have more buffer send else ACK
                             uint64_t ackNumber=0;
                             memcpy(ackNumber,P2PServerUDP::readBuffer+8,8);
-                            hostConnected.discardBuffer(ackNumber);
+                            if(!hostConnected.discardBuffer(ackNumber))
+                                return;
 
                             hostConnected.remoteNumber++;
                             switch(messageType)
@@ -405,11 +406,6 @@ int P2PServerUDP::write(const char * const data,const uint32_t dataSize,const so
 P2PServerUDP::EpollObjectType P2PServerUDP::getType() const
 {
     return P2PServerUDP::EpollObjectType::ServerP2P;
-}
-
-void P2PServerUDP::sign(size_t length, uint8_t *msg)
-{
-    ::ed25519_sha512_sign(ca_publickey,privatekey,length,msg,msg+length);
 }
 
 char * P2PServerUDP::getPublicKey()
