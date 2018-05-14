@@ -43,7 +43,7 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
 {
     if(!is_logged)
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("is not logged with main ident: %1 %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted","is not logged with main ident: "+std::to_string(packetCode)+" %2").arg(packetCode).arg(std::string("%1:%2").arg(__FILE__).arg(__LINE__)));
         return false;
     }
     QDataStream in(data);
@@ -56,14 +56,14 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
             uint32_t mapId;
             if(number_of_map==0)
             {
-                parseError(QStringLiteral("Internal error"),QStringLiteral("number_of_map==0 with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                parseError("Internal error","number_of_map==0 with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             else if(number_of_map<=255)
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
                 {
-                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 uint8_t mapTempId;
@@ -74,7 +74,7 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
                 {
-                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 uint16_t mapTempId;
@@ -85,7 +85,7 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
             {
                 if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
                 {
-                    parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 in >> mapId;
@@ -93,7 +93,7 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
             uint8_t x,y;
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t)*2)
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             in >> x;
@@ -101,13 +101,13 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
             uint8_t directionInt;
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             in >> directionInt;
             if(directionInt<1 || directionInt>4)
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("direction have wrong value: %1, at main ident: %2, line: %3").arg(directionInt).arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                parseError("Procotol wrong or corrupted","direction have wrong value: %1, at main ident: %2, line: %3").arg(directionInt).arg(packetCode).arg(std::string("%1:%2").arg(__FILE__).arg(__LINE__)));
                 return false;
             }
             Direction direction=(Direction)directionInt;
@@ -125,7 +125,7 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
             uint8_t event,event_value;
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t)*2)
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             in >> event;
@@ -139,24 +139,24 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
         {
             if(!tradeRequestId.isEmpty() || isInTrade)
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("Already on trade"));
+                parseError("Procotol wrong or corrupted","Already on trade"));
                 return false;
             }
             if(!battleRequestId.isEmpty() || isInBattle)
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("Already on battle"));
+                parseError("Procotol wrong or corrupted","Already on battle"));
                 return false;
             }
             uint8_t pseudoSize;
             in >> pseudoSize;
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
                               .arg(packetCode)
                               .arg('X')
                               .arg(pseudoSize)
                               .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
-                              .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
+                              .arg(std::string("%1:%2").arg(__FILE__).arg(__LINE__))
                               );
                 return false;
             }
@@ -165,19 +165,19 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
             in.device()->seek(in.device()->pos()+rawText.size());
             if(pseudo.isEmpty())
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: packetCode: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
+                parseError("Procotol wrong or corrupted","UTF8 decoding failed: packetCode: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
                               .arg(packetCode)
                               .arg('X')
                               .arg(QString(rawText.toHex()))
                               .arg(rawText.size())
-                              .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
+                              .arg(std::string("%1:%2").arg(__FILE__).arg(__LINE__))
                               );
                 return false;
             }
             uint8_t skinInt;
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             in >> skinInt;
@@ -190,24 +190,24 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
         {
             if(!tradeRequestId.isEmpty() || isInTrade)
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("Already on trade"));
+                parseError("Procotol wrong or corrupted","Already on trade"));
                 return false;
             }
             if(!battleRequestId.isEmpty() || isInBattle)
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("Already on battle"));
+                parseError("Procotol wrong or corrupted","Already on battle"));
                 return false;
             }
             uint8_t pseudoSize;
             in >> pseudoSize;
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
+                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", subCodeType: %2, pseudoSize: %3, data: %4, line: %5")
                               .arg(packetCode)
                               .arg('X')
                               .arg(pseudoSize)
                               .arg(QString(data.mid(static_cast<int>(in.device()->pos())).toHex()))
-                              .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
+                              .arg(std::string("%1:%2").arg(__FILE__).arg(__LINE__))
                               );
                 return false;
             }
@@ -216,19 +216,19 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
             in.device()->seek(in.device()->pos()+rawText.size());
             if(pseudo.isEmpty())
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("UTF8 decoding failed: packetCode: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
+                parseError("Procotol wrong or corrupted","UTF8 decoding failed: packetCode: %1, subCodeType: %2, rawText.data(): %3, rawText.size(): %4, line: %5")
                               .arg(packetCode)
                               .arg('X')
                               .arg(QString(rawText.toHex()))
                               .arg(rawText.size())
-                              .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
+                              .arg(std::string("%1:%2").arg(__FILE__).arg(__LINE__))
                               );
                 return false;
             }
             uint8_t skinInt;
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
             {
-                parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size with main ident: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             in >> skinInt;
@@ -237,17 +237,17 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
         }
         break;
         default:
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("unknown ident main code: %1, line: %2").arg(packetCode).arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            parseError("Procotol wrong or corrupted","unknown ident main code: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         break;
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("remaining data: parseFullQuery(%1,%2 %3) line %4")
+        parseError("Procotol wrong or corrupted","remaining data: parseFullQuery(%1,%2 %3) line %4")
                       .arg(packetCode)
                       .arg(QString(data.mid(0,static_cast<int>(in.device()->pos())).toHex()))
                       .arg(QString(data.mid(static_cast<int>(in.device()->pos()),static_cast<int>(in.device()->size()-in.device()->pos())).toHex()))
-                      .arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__))
+                      .arg(std::string("%1:%2").arg(__FILE__).arg(__LINE__))
                       );
         return false;
     }
