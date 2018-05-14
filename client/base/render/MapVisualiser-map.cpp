@@ -24,7 +24,7 @@ void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
     //logicalMap.plantList, delete plants useless, destroyed into removeMap()
     //logicalMap.botsDisplay, delete bot useless, destroyed into removeMap()
     //remove from the list
-    QHashIterator<QPair<uint8_t,uint8_t>,MapDoor*> i(map->doors);
+    std::unordered_map<std::pair<uint8_t,uint8_t>,MapDoor*,pairhash> i(map->doors);
     while (i.hasNext()) {
         i.next();
         //object pointer removed by group

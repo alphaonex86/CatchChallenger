@@ -3,9 +3,9 @@
 
 using namespace CatchChallenger;
 
-QString FacilityLibClient::timeToString(const uint32_t &sec)
+std::string FacilityLibClient::timeToString(const uint32_t &sec)
 {
-    QString timeText;
+    std::string timeText;
     if(sec>3600*24*365*50)
         timeText="Time player: bug";
     else if(sec>=3600*24*10)
@@ -21,7 +21,7 @@ QString FacilityLibClient::timeToString(const uint32_t &sec)
     return timeText;
 }
 
-QStringList FacilityLibClient::stdvectorstringToQStringList(const std::vector<std::string> &vector)
+std::vector<std::string> FacilityLibClient::stdvectorstringToQStringList(const std::vector<std::string> &vector)
 {
     QStringList list;
     unsigned int index=0;

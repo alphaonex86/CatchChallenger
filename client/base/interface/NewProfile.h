@@ -15,12 +15,12 @@ class NewProfile : public QDialog
 public:
     struct ProfileText
     {
-        QString name;
-        QString description;
+        std::string name;
+        std::string description;
     };
     QList<ProfileText> profileTextList;
     int getProfileIndex();
-    explicit NewProfile(const QString &datapackPath,QWidget *parent = 0);
+    explicit NewProfile(const std::string &datapackPath,QWidget *parent = 0);
     ~NewProfile();
     void loadProfileText();
     bool ok();
@@ -32,10 +32,10 @@ private slots:
 private:
     bool mOk;
     Ui::NewProfile *ui;
-    QString datapackPath;
+    std::string datapackPath;
     bool isParsingDatapack;
 signals:
-    void parseDatapack(const QString &datapackPath);
+    void parseDatapack(const std::string &datapackPath);
 };
 
 #endif // NEWPROFILE_H

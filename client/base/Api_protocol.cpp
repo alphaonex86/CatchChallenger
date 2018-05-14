@@ -43,17 +43,17 @@ char Api_protocol::hurgeBufferMove[4];
 
 //need host + port here to have datapack base
 
-QSet<QString> Api_protocol::extensionAllowed;
+std::unordered_set<std::string> Api_protocol::extensionAllowed;
 
 bool Api_protocol::internalVersionDisplayed=false;
 
-QString Api_protocol::text_balise_root_start="<root>";
-QString Api_protocol::text_balise_root_stop="</root>";
-QString Api_protocol::text_name="name";
-QString Api_protocol::text_description="description";
-QString Api_protocol::text_en="en";
-QString Api_protocol::text_lang="lang";
-QString Api_protocol::text_slash="/";
+std::string Api_protocol::text_balise_root_start="<root>";
+std::string Api_protocol::text_balise_root_stop="</root>";
+std::string Api_protocol::text_name="name";
+std::string Api_protocol::text_description="description";
+std::string Api_protocol::text_en="en";
+std::string Api_protocol::text_lang="lang";
+std::string Api_protocol::text_slash="/";
 
 Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     ProtocolParsingInputOutput(socket,PacketModeTransmission_Client),
@@ -68,8 +68,11 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
         hurgeBufferMove[0]=0x40;
     }
     #endif
-    if(extensionAllowed.isEmpty())
-        extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(";").toSet();
+    if(extensionAllowed.empty())
+    {
+        const std::vector<std::string> &v=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED),';');
+        extensionAllowed=std::unordered_set<std::string>(v.cbegin(),v.cend());
+    }
 
     player_informations.recipes=NULL;
     player_informations.encyclopedia_monster=NULL;
@@ -78,14 +81,11 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     stageConnexion=StageConnexion::Stage1;
     resetAll();
 
-    connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::socketDestroyed,Qt::DirectConnection);
-    //connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::DirectConnection);-> why direct?
+    QObject::connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::QtsocketDestroyed);
     if(socket->sslSocket!=NULL)
     {
-        if(!connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader,Qt::DirectConnection))
+        if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader))
             abort();
-        /*if(!connect(socket->sslSocket,&QSslSocket::readyRead,this,&Api_protocol::readForFirstHeader,Qt::DirectConnection))
-            abort();*/
         if(socket->bytesAvailable())
             readForFirstHeader();
     }
@@ -93,7 +93,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     {
         if(socket->fakeSocket!=NULL)
             haveFirstHeader=true;
-        connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
+        QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
         if(socket->bytesAvailable())
             parseIncommingData();
     }
@@ -101,16 +101,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     if(!Api_protocol::internalVersionDisplayed)
     {
         Api_protocol::internalVersionDisplayed=true;
-        #if defined(Q_CC_GNU)
-            qDebug() << QStringLiteral("GCC %1.%2.%3 build: ").arg(__GNUC__).arg(__GNUC_MINOR__).arg(__GNUC_PATCHLEVEL__);
-        #else
-            #if defined(__DATE__) && defined(__TIME__)
-                qDebug() << QStringLiteral("Unknown compiler: ")+__DATE__+" "+__TIME__;
-            #else
-                qDebug() << QStringLiteral("Unknown compiler");
-            #endif
-        #endif
-        qDebug() << QStringLiteral("Qt version: %1 (%2)").arg(qVersion()).arg(QT_VERSION);
+        std::cout << "Qt version: " << qVersion() << std::endl;
     }
 
     {
@@ -158,12 +149,17 @@ bool Api_protocol::disconnectClient()
     return true;
 }
 
+void Api_protocol::QtsocketDestroyed()
+{
+    socketDestroyed();
+}
+
 void Api_protocol::socketDestroyed()
 {
     socket=NULL;
 }
 
-QMap<uint8_t,QTime> Api_protocol::getQuerySendTimeList() const
+std::map<uint8_t,uint64_t> Api_protocol::getQuerySendTimeList() const
 {
     return querySendTime;
 }
@@ -178,7 +174,7 @@ void Api_protocol::errorParsingLayer(const std::string &error)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     abort();
     #endif
-    emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QString::fromStdString(error));
+    newError(("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)),error);
 }
 
 void Api_protocol::messageParsingLayer(const std::string &message) const
@@ -186,13 +182,13 @@ void Api_protocol::messageParsingLayer(const std::string &message) const
     qDebug() << QString::fromStdString(message);
 }
 
-void Api_protocol::parseError(const QString &userMessage,const QString &errorString)
+void Api_protocol::parseError(const std::string &userMessage,const std::string &errorString)
 {
     if(tolerantMode)
-        std::cerr << "packet ignored due to: " << errorString.toStdString() << std::endl;
+        std::cerr << "packet ignored due to: " << errorString << std::endl;
     else
     {
-        std::cerr << userMessage.toStdString() << " " << errorString.toStdString() << std::endl;
+        std::cerr << userMessage << " " << errorString << std::endl;
         newError(userMessage,errorString);
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -220,14 +216,14 @@ const Player_private_and_public_informations &Api_protocol::get_player_informati
     return player_informations;
 }
 
-QString Api_protocol::getPseudo()
+std::string Api_protocol::getPseudo()
 {
     if(!getCaracterSelected())
     {
         std::cerr << "Api_protocol::getPseudo(): !getCaracterSelected() (internal error)" << std::endl;
-        return QString();
+        return std::string();
     }
-    return QString::fromUtf8(player_informations.public_informations.pseudo.data(),static_cast<int>(player_informations.public_informations.pseudo.size()));
+    return player_informations.public_informations.pseudo;
 }
 
 uint16_t Api_protocol::getId()
@@ -248,7 +244,8 @@ uint8_t Api_protocol::queryNumber()
         abort();
     }
     const uint8_t lastQueryNumberTemp=this->lastQueryNumber.back();
-    querySendTime[lastQueryNumberTemp].start();
+    const std::time_t result = std::time(nullptr);
+    querySendTime[lastQueryNumberTemp]=result;
     this->lastQueryNumber.pop_back();
     return lastQueryNumberTemp;
 }
@@ -257,12 +254,12 @@ bool Api_protocol::sendProtocol()
 {
     if(have_send_protocol)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::sendProtocol() Have already send the protocol"));
+        newError("Internal problem","Api_protocol::sendProtocol() Have already send the protocol");
         return false;
     }
     if(!haveFirstHeader)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::sendProtocol() !haveFirstHeader"));
+        newError("Internal problem","Api_protocol::sendProtocol() !haveFirstHeader");
         return false;
     }
 
@@ -275,47 +272,47 @@ bool Api_protocol::sendProtocol()
         packOutcommingQuery(0xA0,queryNumber(),reinterpret_cast<const char *>(protocolHeaderToMatchGameServer),sizeof(protocolHeaderToMatchGameServer));
     }
     else
-        newError(QStringLiteral("Internal problem"),QStringLiteral("stageConnexion!=StageConnexion::Stage1/3"));
+        newError("Internal problem","stageConnexion!=StageConnexion::Stage1/3");
     return true;
 }
 
-QString Api_protocol::socketDisconnectedForReconnect()
+std::string Api_protocol::socketDisconnectedForReconnect()
 {
     if(stageConnexion!=StageConnexion::Stage2)
     {
         if(stageConnexion!=StageConnexion::Stage3)
         {
-            newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::socketDisconnectedForReconnect(): %1").arg((int)stageConnexion));
-            return QString();
+            newError("Internal problem","Api_protocol::socketDisconnectedForReconnect(): "+std::to_string((int)stageConnexion));
+            return std::string();
         }
         else
         {
             std::cerr << "socketDisconnectedForReconnect() double call detected, just drop it" << std::endl;
-            return QString();
+            return std::string();
         }
     }
     if(selectedServerIndex==-1)
     {
-        parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("selectedServerIndex==-1 with Api_protocol::socketDisconnectedForReconnect()"));
-        return QString();
+        parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("selectedServerIndex==-1 with Api_protocol::socketDisconnectedForReconnect()"));
+        return std::string();
     }
     const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);
-    if(serverFromPoolForDisplay.host.isEmpty())
+    if(serverFromPoolForDisplay.host.empty())
     {
-        parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("serverFromPoolForDisplay.host.isEmpty() with Api_protocol::socketDisconnectedForReconnect()"));
-        return QString();
+        parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("serverFromPoolForDisplay.host.isEmpty() with Api_protocol::socketDisconnectedForReconnect()"));
+        return std::string();
     }
     if(socket==NULL)
     {
-        parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("socket==NULL with Api_protocol::socketDisconnectedForReconnect()"));
-        return serverFromPoolForDisplay.host+":"+QString::number(serverFromPoolForDisplay.port);
+        parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("socket==NULL with Api_protocol::socketDisconnectedForReconnect()"));
+        return serverFromPoolForDisplay.host+":"+std::to_string(serverFromPoolForDisplay.port);
     }
-    message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3 set at "+QString(__FILE__)+":"+QString::number(__LINE__));
+    message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
     stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3;//prevent loop in stage2
     haveFirstHeader=false;
-    qDebug() << "Api_protocol::socketDisconnectedForReconnect(), Try connect to: " << serverFromPoolForDisplay.host << ":" << serverFromPoolForDisplay.port;
-    socket->connectToHost(serverFromPoolForDisplay.host,serverFromPoolForDisplay.port);
-    return serverFromPoolForDisplay.host+":"+QString::number(serverFromPoolForDisplay.port);
+    std::cout << "Api_protocol::socketDisconnectedForReconnect(), Try connect to: " << serverFromPoolForDisplay.host << ":" << serverFromPoolForDisplay.port << std::endl;
+    socket->connectToHost(QString::fromStdString(serverFromPoolForDisplay.host),serverFromPoolForDisplay.port);
+    return serverFromPoolForDisplay.host+":"+std::to_string(serverFromPoolForDisplay.port);
 }
 
 bool Api_protocol::protocolWrong() const
@@ -323,67 +320,66 @@ bool Api_protocol::protocolWrong() const
     return have_send_protocol && !have_receive_protocol;
 }
 
-bool Api_protocol::tryLogin(const QString &login, const QString &pass)
+bool Api_protocol::tryLogin(const std::string &login, const std::string &pass)
 {
     if(!have_send_protocol)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Have not send the protocol"));
+        newError(std::string("Internal problem"),std::string("Have not send the protocol"));
         return false;
     }
     if(is_logged)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Is already logged"));
+        newError(std::string("Internal problem"),std::string("Is already logged"));
         return false;
     }
-    if(token.isEmpty())
+    if(token.empty())
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Token is empty"));
+        newError(std::string("Internal problem"),std::string("Token is empty"));
         return false;
     }
-    QByteArray outputData;
+    std::string outputData;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    QByteArray tempDoubleHash;
+    std::string tempDoubleHash;
     #endif
     {
         QCryptographicHash hashLogin(QCryptographicHash::Sha224);
-        hashLogin.addData((login+/*salt*/"RtR3bm9Z1DFMfAC3").toUtf8());
-        loginHash=hashLogin.result();
+        hashLogin.addData((QString::fromStdString(login)+/*salt*/"RtR3bm9Z1DFMfAC3").toUtf8());
+        loginHash=std::string(hashLogin.result().constData(),hashLogin.result().size());
         outputData+=loginHash;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
             QCryptographicHash hashLogin2(QCryptographicHash::Sha224);
-            hashLogin2.addData(loginHash);
-            tempDoubleHash=hashLogin2.result();
+            hashLogin2.addData(QByteArray(loginHash.data(),loginHash.size()));
+            tempDoubleHash=std::string(hashLogin2.result().data(),hashLogin2.result().size());
         }
         #endif
     }
     QCryptographicHash hashAndToken(QCryptographicHash::Sha224);
     {
         QCryptographicHash hashPass(QCryptographicHash::Sha224);
-        hashPass.addData((pass+/*salt*/"AwjDvPIzfJPTTgHs"+login/*add unique salt*/).toUtf8());
-        passHash=hashPass.result();
+        hashPass.addData((QString::fromStdString(pass)+/*salt*/"AwjDvPIzfJPTTgHs"+QString::fromStdString(login)/*add unique salt*/).toUtf8());
+        passHash=std::string(hashPass.result().data(),hashPass.result().size());
 
-        hashAndToken.addData(passHash);
-        hashAndToken.addData(token);
-        outputData+=hashAndToken.result();
+        hashAndToken.addData(QByteArray(passHash.data(),passHash.size()));
+        hashAndToken.addData(QByteArray(token.data(),token.size()));
+        outputData+=std::string(hashAndToken.result().data(),hashAndToken.result().size());
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    qDebug() << QStringLiteral("Try auth: password %1, token: %4, password+token %3 (%5) for the login: %2")
-                 .arg(QString(passHash.toHex()))
-                 .arg(QString(tempDoubleHash.toHex()))
-                 .arg(QString(hashAndToken.result().toHex()))
-                 .arg(QString(token.toHex()))
-                 .arg(QString(passHash.toHex())+QString(token.toHex()))
-                 ;
+    std::cout << "Try auth: password " << binarytoHexa(passHash.data(),passHash.size())
+              << ", token: " << binarytoHexa(token.data(),token.size())
+              << ", password+token " << binarytoHexa(hashAndToken.result().data(),hashAndToken.result().size())
+              << " (" << binarytoHexa(tempDoubleHash.data(),tempDoubleHash.size())
+              << ") for the login: "
+              << binarytoHexa(passHash.data(),passHash.size());
     #endif
-    QString peerName=socket->peerName();
+    std::string peerName=socket->peerName().toStdString();
     if(peerName.size()>255)
     {
-        newError(tr("Hostname too big"),QStringLiteral("Hostname too big"));
+        newError(QObject::tr("Hostname too big").toStdString(),std::string("Hostname too big"));
         return false;
     }
 
-    packOutcommingQuery(0xA8,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0xA8,queryNumber(),outputData.data(),outputData.size());
     return true;
 }
 
@@ -391,31 +387,29 @@ bool Api_protocol::tryCreateAccount()
 {
     if(!have_send_protocol)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Have not send the protocol"));
+        newError(std::string("Internal problem"),std::string("Have not send the protocol"));
         return false;
     }
     if(is_logged)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Is already logged"));
+        newError(std::string("Internal problem"),std::string("Is already logged"));
         return false;
     }
     /*double hashing on client part
      * '''Prevent login leak in case of MiM attack re-ask the password''' (Trafic modification, replace the server return code OK by ACCOUNT CREATION)
      * Do some DDOS protection because it offload the hashing */
-    QByteArray outputData;
+    std::string outputData;
     {
         QCryptographicHash hashLogin(QCryptographicHash::Sha224);
-        hashLogin.addData(loginHash);
-        outputData+=hashLogin.result();
+        hashLogin.addData(QByteArray(loginHash.data(),loginHash.size()));
+        outputData+=std::string(hashLogin.result().data(),hashLogin.result().size());
     }
     //pass
     outputData+=passHash;
 
-    packOutcommingQuery(0xA9,queryNumber(),outputData.constData(),outputData.size());
-    qDebug() << QStringLiteral("Try create account: login: %1 and pass: %2")
-             .arg(QString(loginHash.toHex()))
-             .arg(QString(passHash.toHex()))
-             ;
+    packOutcommingQuery(0xA9,queryNumber(),outputData.data(),outputData.size());
+    std::cout << "Try create account: login: " << binarytoHexa(loginHash.data(),loginHash.size())
+              << " and pass: " << binarytoHexa(passHash.data(),passHash.size()) << std::endl;
     return true;
 }
 
@@ -522,7 +516,7 @@ void Api_protocol::send_player_direction(const Direction &the_direction)
     newDirection(the_direction);
 }
 
-void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
+void Api_protocol::sendChatText(const Chat_type &chatType, const std::string &text)
 {
     if(!is_logged)
     {
@@ -544,20 +538,20 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const QString &text)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)chatType;
     {
-        const QByteArray &tempText=text.toUtf8();
+        const std::string &tempText=text;
         if(tempText.size()>255)
         {
             std::cerr << "text in Utf8 too big, line: " << __FILE__ << ": " << __LINE__ << std::endl;
             return;
         }
         out << (uint8_t)tempText.size();
-        outputData+=tempText;
+        outputData+=QByteArray(tempText.data(),tempText.size());
         out.device()->seek(out.device()->pos()+tempText.size());
     }
     is_logged=character_selected=packOutcommingData(0x03,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::sendPM(const QString &text,const QString &pseudo)
+void Api_protocol::sendPM(const std::string &text,const std::string &pseudo)
 {
     if(!is_logged)
     {
@@ -569,32 +563,32 @@ void Api_protocol::sendPM(const QString &text,const QString &pseudo)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(this->player_informations.public_informations.pseudo==pseudo.toStdString())
+    if(this->player_informations.public_informations.pseudo==pseudo)
         return;
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)Chat_type_pm;
     {
-        const QByteArray &tempText=text.toUtf8();
+        const std::string &tempText=text;
         if(tempText.size()>255)
         {
             std::cerr << "text in Utf8 too big, line: " << __FILE__ << ": " << __LINE__ << std::endl;
             return;
         }
         out << (uint8_t)tempText.size();
-        outputData+=tempText;
+        outputData+=QByteArray(tempText.data(),tempText.size());
         out.device()->seek(out.device()->pos()+tempText.size());
     }
     {
-        const QByteArray &tempText=pseudo.toUtf8();
+        const std::string &tempText=pseudo;
         if(tempText.size()>255)
         {
             std::cerr << "text in Utf8 too big, line: " << __FILE__ << ": " << __LINE__ << std::endl;
             return;
         }
         out << (uint8_t)tempText.size();
-        outputData+=tempText;
+        outputData+=QByteArray(tempText.data(),tempText.size());
         out.device()->seek(out.device()->pos()+tempText.size());
     }
     is_logged=character_selected=packOutcommingData(0x03,outputData.constData(),outputData.size());
@@ -612,20 +606,21 @@ bool Api_protocol::teleportDone()
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
-    const TeleportQueryInformation &teleportQueryInformation=teleportList.first();
+    const TeleportQueryInformation &teleportQueryInformation=teleportList.front();
     if(!last_direction_is_set)
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("Api_protocol::teleportDone() !last_direction_is_set value, line: %3").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",
+                   "Api_protocol::teleportDone() !last_direction_is_set value, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     last_direction=teleportQueryInformation.direction;
     last_step=0;
     is_logged=character_selected=postReplyData(teleportQueryInformation.queryId,NULL,0);
-    teleportList.removeFirst();
+    teleportList.erase(teleportList.cbegin());
     return true;
 }
 
-bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_t &profileIndex, const QString &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
+bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
     if(!is_logged)
     {
@@ -634,13 +629,13 @@ bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_
     }
     if(skinId>=CommonDatapack::commonDatapack.skins.size())
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("skin provided: %1 is not into skin listed").arg(skinId));
+        newError(std::string("Internal problem"),"skin provided: "+std::to_string(skinId)+" is not into skin listed");
         return false;
     }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
     if(!profile.forcedskin.empty() && !vectorcontainsAtLeastOne(profile.forcedskin,skinId))
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("skin provided: %1 is not into profile %2 forced skin list").arg(skinId).arg(profileIndex));
+        newError(std::string("Internal problem"),"skin provided: "+std::to_string(skinId)+" is not into profile "+std::to_string(profileIndex)+" forced skin list");
         return false;
     }
     QByteArray outputData;
@@ -649,13 +644,13 @@ bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_
     out << (uint8_t)charactersGroupIndex;
     out << (uint8_t)profileIndex;
     {
-        const QByteArray &rawPseudo=toUTF8WithHeader(pseudo);
-        if(rawPseudo.size()>255 || rawPseudo.isEmpty())
+        const std::string &rawPseudo=toUTF8WithHeader(pseudo);
+        if(rawPseudo.size()>255 || rawPseudo.empty())
         {
             std::cerr << "rawPseudo too big or not compatible with utf8" << std::endl;
             return false;
         }
-        outputData+=rawPseudo;
+        outputData+=QByteArray(rawPseudo.data(),rawPseudo.size());
         out.device()->seek(out.device()->size());
     }
     out << (uint8_t)monsterGroupId;
@@ -687,7 +682,7 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
         std::cerr << "Api_protocol::selectCharacter() can't have characterId==0" << std::endl;
         abort();
     }
-    int index=0;
+    unsigned int index=0;
     while(index<serverOrdenedList.size())
     {
         const ServerFromPoolForDisplay * const server=serverOrdenedList.at(index);
@@ -858,7 +853,7 @@ bool Api_protocol::useObject(const uint16_t &object)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << object;
     is_logged=character_selected=packOutcommingQuery(0x86,queryNumber(),outputData.constData(),outputData.size());
-    lastObjectUsed << object;
+    lastObjectUsed.push_back(object);
     return true;
 }
 
@@ -884,7 +879,8 @@ bool Api_protocol::useObjectOnMonsterByPosition(const uint16_t &object,const uin
 }
 
 
-void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<uint16_t,int32_t> > &items, const QList<uint32_t> &withdrawMonsters, const QList<uint32_t> &depositeMonsters)
+void Api_protocol::wareHouseStore(const int64_t &cash, const std::vector<std::pair<uint16_t,int32_t> > &items,
+                                  const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters)
 {
     if(!is_logged)
     {
@@ -899,10 +895,10 @@ void Api_protocol::wareHouseStore(const qint64 &cash, const QList<QPair<uint16_t
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << cash;
+    out << (quint64)cash;
 
     out << (uint16_t)items.size();
-    int index=0;
+    unsigned int index=0;
     while(index<items.size())
     {
         out << (uint16_t)items.at(index).first;
@@ -1253,7 +1249,7 @@ void Api_protocol::nextQuestStep(const uint16_t &questId)
     is_logged=character_selected=packOutcommingData(0x1E,outputData.constData(),outputData.size());
 }
 
-void Api_protocol::createClan(const QString &name)
+void Api_protocol::createClan(const std::string &name)
 {
     if(!is_logged)
     {
@@ -1270,13 +1266,13 @@ void Api_protocol::createClan(const QString &name)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
     {
-        const QByteArray &rawText=toUTF8WithHeader(name);
-        if(rawText.size()>255 || rawText.isEmpty())
+        const std::string &rawText=toUTF8WithHeader(name);
+        if(rawText.size()>255 || rawText.empty())
         {
             std::cerr << "rawText too big or not compatible with utf8" << std::endl;
             return;
         }
-        outputData+=rawText;
+        outputData+=QByteArray(rawText.data(),rawText.size());
         out.device()->seek(out.device()->size());
     }
     is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
@@ -1320,7 +1316,7 @@ void Api_protocol::dissolveClan()
     is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::inviteClan(const QString &pseudo)
+void Api_protocol::inviteClan(const std::string &pseudo)
 {
     if(!is_logged)
     {
@@ -1337,19 +1333,19 @@ void Api_protocol::inviteClan(const QString &pseudo)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x04;
     {
-        const QByteArray &rawText=toUTF8WithHeader(pseudo);
-        if(rawText.size()>255 || rawText.isEmpty())
+        const std::string &rawText=toUTF8WithHeader(pseudo);
+        if(rawText.size()>255 || rawText.empty())
         {
             std::cerr << "rawText too big or not compatible with utf8" << std::endl;
             return;
         }
-        outputData+=rawText;
+        outputData+=QByteArray(rawText.data(),rawText.size());
         out.device()->seek(out.device()->size());
     }
     is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
 }
 
-void Api_protocol::ejectClan(const QString &pseudo)
+void Api_protocol::ejectClan(const std::string &pseudo)
 {
     if(!is_logged)
     {
@@ -1366,13 +1362,13 @@ void Api_protocol::ejectClan(const QString &pseudo)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x05;
     {
-        const QByteArray &rawText=toUTF8WithHeader(pseudo);
-        if(rawText.size()>255 || rawText.isEmpty())
+        const std::string &rawText=toUTF8WithHeader(pseudo);
+        if(rawText.size()>255 || rawText.empty())
         {
             std::cerr << "rawText too big or not compatible with utf8" << std::endl;
             return;
         }
-        outputData+=rawText;
+        outputData+=QByteArray(rawText.data(),rawText.size());
         out.device()->seek(out.device()->size());
     }
     is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
@@ -1638,17 +1634,17 @@ void Api_protocol::battleRefused()
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(battleRequestId.isEmpty())
+    if(battleRequestId.empty())
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("no battle request to refuse"));
+        newError(std::string("Internal problem"),std::string("no battle request to refuse"));
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    is_logged=character_selected=postReplyData(battleRequestId.first(),outputData.constData(),outputData.size());
-    battleRequestId.removeFirst();
+    is_logged=character_selected=postReplyData(battleRequestId.front(),outputData.data(),outputData.size());
+    battleRequestId.erase(battleRequestId.cbegin());
 }
 
 void Api_protocol::battleAccepted()
@@ -1663,17 +1659,17 @@ void Api_protocol::battleAccepted()
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(battleRequestId.isEmpty())
+    if(battleRequestId.empty())
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("no battle request to accept"));
+        newError(std::string("Internal problem"),std::string("no battle request to accept"));
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
-    is_logged=character_selected=postReplyData(battleRequestId.first(),outputData.constData(),outputData.size());
-    battleRequestId.removeFirst();
+    is_logged=character_selected=postReplyData(battleRequestId.front(),outputData.data(),outputData.size());
+    battleRequestId.erase(battleRequestId.cbegin());
 }
 
 //trade
@@ -1689,17 +1685,17 @@ void Api_protocol::tradeRefused()
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(tradeRequestId.isEmpty())
+    if(tradeRequestId.empty())
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("no trade request to refuse"));
+        newError(std::string("Internal problem"),std::string("no trade request to refuse"));
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    is_logged=character_selected=postReplyData(tradeRequestId.first(),outputData.constData(),outputData.size());
-    tradeRequestId.removeFirst();
+    is_logged=character_selected=postReplyData(tradeRequestId.front(),outputData.data(),outputData.size());
+    tradeRequestId.erase(tradeRequestId.cbegin());
 }
 
 void Api_protocol::tradeAccepted()
@@ -1714,17 +1710,17 @@ void Api_protocol::tradeAccepted()
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(tradeRequestId.isEmpty())
+    if(tradeRequestId.empty())
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("no trade request to accept"));
+        newError(std::string("Internal problem"),std::string("no trade request to accept"));
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
-    is_logged=character_selected=postReplyData(tradeRequestId.first(),outputData.constData(),outputData.size());
-    tradeRequestId.removeFirst();
+    is_logged=character_selected=postReplyData(tradeRequestId.front(),outputData.constData(),outputData.size());
+    tradeRequestId.erase(tradeRequestId.cbegin());
     isInTrade=true;
 }
 
@@ -1742,7 +1738,7 @@ void Api_protocol::tradeCanceled()
     }
     if(!isInTrade)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("in not in trade"));
+        newError(std::string("Internal problem"),std::string("in not in trade"));
         return;
     }
     isInTrade=false;
@@ -1763,13 +1759,13 @@ void Api_protocol::tradeFinish()
     }
     if(!isInTrade)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("in not in trade"));
+        newError(std::string("Internal problem"),std::string("in not in trade"));
         return;
     }
     is_logged=character_selected=packOutcommingData(0x15,NULL,0);
 }
 
-void Api_protocol::addTradeCash(const quint64 &cash)
+void Api_protocol::addTradeCash(const uint64_t &cash)
 {
     if(!is_logged)
     {
@@ -1783,20 +1779,20 @@ void Api_protocol::addTradeCash(const quint64 &cash)
     }
     if(cash==0)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("can't send 0 for the cash"));
+        newError(std::string("Internal problem"),std::string("can't send 0 for the cash"));
         return;
     }
     if(!isInTrade)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("no in trade to send cash"));
+        newError(std::string("Internal problem"),std::string("no in trade to send cash"));
         return;
     }
     QByteArray outputData;
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
-    out << cash;
-    is_logged=character_selected=packOutcommingData(0x14,outputData.constData(),outputData.size());
+    out << (quint64)cash;
+    is_logged=character_selected=packOutcommingData(0x14,outputData.data(),outputData.size());
 }
 
 void Api_protocol::addObject(const uint16_t &item, const uint32_t &quantity)
@@ -1813,12 +1809,12 @@ void Api_protocol::addObject(const uint16_t &item, const uint32_t &quantity)
     }
     if(quantity==0)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("can't send a quantity of 0"));
+        newError(std::string("Internal problem"),std::string("can't send a quantity of 0"));
         return;
     }
     if(!isInTrade)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("no in trade to send object"));
+        newError(std::string("Internal problem"),std::string("no in trade to send object"));
         return;
     }
     QByteArray outputData;
@@ -1844,7 +1840,7 @@ void Api_protocol::addMonsterByPosition(const uint8_t &monsterPosition)
     }
     if(!isInTrade)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("no in trade to send monster"));
+        newError(std::string("Internal problem"),std::string("no in trade to send monster"));
         return;
     }
     QByteArray outputData;
@@ -1867,7 +1863,7 @@ void Api_protocol::resetAll()
         qDebug() << "Api_protocol::resetAll() Suspect internal bug";
     //status for the query
     token.clear();
-    message("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+QString(__FILE__)+":"+QString::number(__LINE__));
+    message("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
     stageConnexion=StageConnexion::Stage1;
     if(socket==NULL || socket->fakeSocket==NULL)
         haveFirstHeader=false;
@@ -1918,7 +1914,7 @@ void Api_protocol::resetAll()
     tradeRequestId.clear();
     isInBattle=false;
     battleRequestId.clear();
-    mDatapackBase=QStringLiteral("%1/datapack/").arg(QCoreApplication::applicationDirPath());
+    mDatapackBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
     mDatapackMain=mDatapackBase+"map/main/[main]/";
     mDatapackSub=mDatapackMain+"sub/[sub]/";
     CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
@@ -1966,34 +1962,34 @@ ServerFromPoolForDisplay Api_protocol::getCurrentServer(const int &index)
     return tempVar;
 }
 
-QString Api_protocol::datapackPathBase() const
+std::string Api_protocol::datapackPathBase() const
 {
     return mDatapackBase;
 }
 
-QString Api_protocol::datapackPathMain() const
+std::string Api_protocol::datapackPathMain() const
 {
     return mDatapackMain;
 }
 
-QString Api_protocol::datapackPathSub() const
+std::string Api_protocol::datapackPathSub() const
 {
     return mDatapackSub;
 }
 
-QString Api_protocol::mainDatapackCode() const
+std::string Api_protocol::mainDatapackCode() const
 {
-    return QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode);
+    return CommonSettingsServer::commonSettingsServer.mainDatapackCode;
 }
 
-QString Api_protocol::subDatapackCode() const
+std::string Api_protocol::subDatapackCode() const
 {
-    return QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode);
+    return CommonSettingsServer::commonSettingsServer.subDatapackCode;
 }
 
-void Api_protocol::setDatapackPath(const QString &datapack_path)
+void Api_protocol::setDatapackPath(const std::string &datapack_path)
 {
-    if(datapack_path.endsWith("/"))
+    if(stringEndsWith(datapack_path,'/'))
         mDatapackBase=datapack_path;
     else
         mDatapackBase=datapack_path+"/";
@@ -2013,16 +2009,17 @@ bool Api_protocol::getCaracterSelected() const
     return character_selected;
 }
 
-LogicialGroup * Api_protocol::addLogicalGroup(const QString &path,const QString &xml,const QString &language)
+LogicialGroup * Api_protocol::addLogicalGroup(const std::string &path,const std::string &xml,const std::string &language)
 {
-    QString nameString;
+    std::string nameString;
 
     QDomDocument domDocument;
     QString errorStr;
     int errorLine,errorColumn;
-    if (!domDocument.setContent(Api_protocol::text_balise_root_start+xml+Api_protocol::text_balise_root_stop, false, &errorStr,&errorLine,&errorColumn))
+    if (!domDocument.setContent(QString::fromStdString(Api_protocol::text_balise_root_start+xml+Api_protocol::text_balise_root_stop), false, &errorStr,&errorLine,&errorColumn))
     {
-        qDebug() << (QStringLiteral("Xml not correct for addLogicalGroup: %1, Parse error at line %2, column %3: %4").arg(xml).arg(errorLine).arg(errorColumn).arg(errorStr));
+        qDebug() << (QString("Xml not correct for addLogicalGroup: %1, Parse error at line %2, column %3: %4")
+                     .arg(QString::fromStdString(xml)).arg(errorLine).arg(errorColumn).arg(errorStr));
     }
     else
     {
@@ -2030,36 +2027,36 @@ LogicialGroup * Api_protocol::addLogicalGroup(const QString &path,const QString 
         //load the name
         {
             bool name_found=false;
-            QDomElement name = root.firstChildElement(Api_protocol::text_name);
-            if(!language.isEmpty() && language!=Api_protocol::text_en)
+            QDomElement name = root.firstChildElement("name");
+            if(!language.empty() && language!="en")
                 while(!name.isNull())
                 {
                     if(name.isElement())
                     {
-                        if(name.hasAttribute(Api_protocol::text_lang) && name.attribute(Api_protocol::text_lang)==language)
+                        if(name.hasAttribute("lang") && name.attribute("lang").toStdString()==language)
                         {
-                            nameString=name.text();
+                            nameString=name.text().toStdString();
                             name_found=true;
                             break;
                         }
                     }
-                    name = name.nextSiblingElement(Api_protocol::text_name);
+                    name = name.nextSiblingElement("name");
                 }
             if(!name_found)
             {
-                name = root.firstChildElement(Api_protocol::text_name);
+                name = root.firstChildElement("name");
                 while(!name.isNull())
                 {
                     if(name.isElement())
                     {
-                        if(!name.hasAttribute(Api_protocol::text_lang) || name.attribute(Api_protocol::text_lang)==Api_protocol::text_en)
+                        if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
                         {
-                            nameString=name.text();
+                            nameString=name.text().toStdString();
                             name_found=true;
                             break;
                         }
                     }
-                    name = name.nextSiblingElement(Api_protocol::text_name);
+                    name = name.nextSiblingElement("name");
                 }
             }
             if(!name_found)
@@ -2069,34 +2066,32 @@ LogicialGroup * Api_protocol::addLogicalGroup(const QString &path,const QString 
         }
     }
     LogicialGroup *logicialGroupCursor=&this->logicialGroup;
-    QStringList pathSplited=path.split(Api_protocol::text_slash,QString::SkipEmptyParts);
-    while(!pathSplited.isEmpty())
+    std::vector<std::string> pathSplited=stringsplit(path,'/');
+    while(!pathSplited.empty())
     {
-        const QString &node=pathSplited.first();
-        if(!logicialGroupCursor->logicialGroupList.contains(node))
-        {
-            LogicialGroup tempGroup;
-            logicialGroupCursor->logicialGroupList[node]=tempGroup;
-        }
-        logicialGroupCursor=&logicialGroupCursor->logicialGroupList[node];
-        pathSplited.removeFirst();
+        const std::string &node=pathSplited.front();
+        if(logicialGroupCursor->logicialGroupList.find(node)==logicialGroupCursor->logicialGroupList.cend())
+            logicialGroupCursor->logicialGroupList[node]=new LogicialGroup;
+        logicialGroupCursor=logicialGroupCursor->logicialGroupList[node];
+        pathSplited.erase(pathSplited.cbegin());
     }
-    if(!nameString.isEmpty())
+    if(!nameString.empty())
         logicialGroupCursor->name=nameString;
     return logicialGroupCursor;
 }
 
-ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolForDisplayTemp &server, const QString &language)
+ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolForDisplayTemp &server, const std::string &language)
 {
-    QString nameString;
-    QString descriptionString;
+    std::string nameString;
+    std::string descriptionString;
 
     QDomDocument domDocument;
     QString errorStr;
     int errorLine,errorColumn;
-    if (!domDocument.setContent(Api_protocol::text_balise_root_start+server.xml+Api_protocol::text_balise_root_stop, false, &errorStr,&errorLine,&errorColumn))
+    if (!domDocument.setContent(QString::fromStdString(Api_protocol::text_balise_root_start+server.xml+Api_protocol::text_balise_root_stop), false, &errorStr,&errorLine,&errorColumn))
     {
-        qDebug() << (QStringLiteral("Xml not correct for addLogicalGroup: %1, Parse error at line %2, column %3: %4").arg(server.xml).arg(errorLine).arg(errorColumn).arg(errorStr));
+        qDebug() << (QString("Xml not correct for addLogicalGroup: %1, Parse error at line %2, column %3: %4")
+                     .arg(QString::fromStdString(server.xml)).arg(errorLine).arg(errorColumn).arg(errorStr));
     }
     else
     {
@@ -2105,36 +2100,36 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
         //load the name
         {
             bool name_found=false;
-            QDomElement name = root.firstChildElement(Api_protocol::text_name);
-            if(!language.isEmpty() && language!=Api_protocol::text_en)
+            QDomElement name = root.firstChildElement("name");
+            if(!language.empty() && language!="en")
                 while(!name.isNull())
                 {
                     if(name.isElement())
                     {
-                        if(name.hasAttribute(Api_protocol::text_lang) && name.attribute(Api_protocol::text_lang)==language)
+                        if(name.hasAttribute("lang") && name.attribute("lang").toStdString()==language)
                         {
-                            nameString=name.text();
+                            nameString=name.text().toStdString();
                             name_found=true;
                             break;
                         }
                     }
-                    name = name.nextSiblingElement(Api_protocol::text_name);
+                    name = name.nextSiblingElement("name");
                 }
             if(!name_found)
             {
-                name = root.firstChildElement(Api_protocol::text_name);
+                name = root.firstChildElement("name");
                 while(!name.isNull())
                 {
                     if(name.isElement())
                     {
-                        if(!name.hasAttribute(Api_protocol::text_lang) || name.attribute(Api_protocol::text_lang)==Api_protocol::text_en)
+                        if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
                         {
-                            nameString=name.text();
+                            nameString=name.text().toStdString();
                             name_found=true;
                             break;
                         }
                     }
-                    name = name.nextSiblingElement(Api_protocol::text_name);
+                    name = name.nextSiblingElement("name");
                 }
             }
             if(!name_found)
@@ -2146,36 +2141,36 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
         //load the description
         {
             bool description_found=false;
-            QDomElement description = root.firstChildElement(Api_protocol::text_description);
-            if(!language.isEmpty() && language!=Api_protocol::text_en)
+            QDomElement description = root.firstChildElement("description");
+            if(!language.empty() && language!="en")
                 while(!description.isNull())
                 {
                     if(description.isElement())
                     {
-                        if(description.hasAttribute(Api_protocol::text_lang) && description.attribute(Api_protocol::text_lang)==language)
+                        if(description.hasAttribute("lang") && description.attribute("lang").toStdString()==language)
                         {
-                            descriptionString=description.text();
+                            descriptionString=description.text().toStdString();
                             description_found=true;
                             break;
                         }
                     }
-                    description = description.nextSiblingElement(Api_protocol::text_description);
+                    description = description.nextSiblingElement("description");
                 }
             if(!description_found)
             {
-                description = root.firstChildElement(Api_protocol::text_description);
+                description = root.firstChildElement("description");
                 while(!description.isNull())
                 {
                     if(description.isElement())
                     {
-                        if(!description.hasAttribute(Api_protocol::text_lang) || description.attribute(Api_protocol::text_lang)==Api_protocol::text_en)
+                        if(!description.hasAttribute("lang") || description.attribute("lang")=="en")
                         {
-                            descriptionString=description.text();
+                            descriptionString=description.text().toStdString();
                             description_found=true;
                             break;
                         }
                     }
-                    description = description.nextSiblingElement(Api_protocol::text_description);
+                    description = description.nextSiblingElement("description");
                 }
             }
             if(!description_found)
@@ -2188,8 +2183,8 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
     LogicialGroup * logicialGroupCursor;
     if(server.logicalGroupIndex>=logicialGroupIndexList.size())
     {
-        qDebug() << (QStringLiteral("out of range for addLogicalGroup: %1, server.logicalGroupIndex %2 <= logicialGroupIndexList.size() %3 (defaulting to root folder)")
-                     .arg(server.xml)
+        qDebug() << (QString("out of range for addLogicalGroup: %1, server.logicalGroupIndex %2 <= logicialGroupIndexList.size() %3 (defaulting to root folder)")
+                     .arg(QString::fromStdString(server.xml))
                      .arg(server.logicalGroupIndex)
                      .arg(logicialGroupIndexList.size())
                      );
@@ -2210,8 +2205,8 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
     newServer.lastConnect=0;
     newServer.playedTime=0;
 
-    logicialGroupCursor->servers << newServer;
-    return &logicialGroupCursor->servers.last();
+    logicialGroupCursor->servers.push_back(newServer);
+    return &logicialGroupCursor->servers.back();
 }
 
 LogicialGroup Api_protocol::getLogicialGroup() const
@@ -2225,23 +2220,23 @@ void Api_protocol::readForFirstHeader()
         return;
     if(socket->sslSocket==NULL)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
+        newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
         return;
     }
     if(stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2 && stageConnexion!=StageConnexion::Stage3)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::readForFirstHeader() stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2"));
+        newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2"));
         return;
     }
     if(stageConnexion==StageConnexion::Stage2)
     {
-        message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3 set at "+QString(__FILE__)+":"+QString::number(__LINE__));
+        message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         stageConnexion=StageConnexion::Stage3;
     }
     {
         if(socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
         {
-            newError(QStringLiteral("Internal problem"),QStringLiteral("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
+            newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
             return;
         }
         uint8_t value;
@@ -2253,7 +2248,7 @@ void Api_protocol::readForFirstHeader()
                 socket->sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
                 socket->sslSocket->ignoreSslErrors();
                 socket->sslSocket->startClientEncryption();
-                connect(socket->sslSocket,&QSslSocket::encrypted,this,&Api_protocol::sslHandcheckIsFinished);
+                QObject::connect(socket->sslSocket,&QSslSocket::encrypted,this,&Api_protocol::sslHandcheckIsFinished);
             }
             else
                 connectTheExternalSocketInternal();
@@ -2270,19 +2265,20 @@ void Api_protocol::connectTheExternalSocketInternal()
 {
     if(socket->sslSocket==NULL)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::connectTheExternalSocket() socket->sslSocket==NULL"));
+        newError(std::string("Internal problem"),std::string("Api_protocol::connectTheExternalSocket() socket->sslSocket==NULL"));
         return;
     }
     if(socket->peerName().isEmpty() || socket->sslSocket->state()!=QSslSocket::SocketState::ConnectedState)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("Api_protocol::connectTheExternalSocket() socket->sslSocket->peerAddress()==QHostAddress::Null: ")+socket->peerName()+"-"+QString::number(socket->peerPort())+
-                 QString(", state: %1").arg(socket->sslSocket->state())
+        newError(std::string("Internal problem"),std::string("Api_protocol::connectTheExternalSocket() socket->sslSocket->peerAddress()==QHostAddress::Null: ")+
+                 socket->peerName().toStdString()+"-"+std::to_string(socket->peerPort())+
+                 ", state: "+std::to_string(socket->sslSocket->state())
                  );
         return;
     }
     //check the certificat
     {
-        QDir datapackCert(QStringLiteral("%1/cert/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)));
+        QDir datapackCert(QString("%1/cert/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)));
         datapackCert.mkpath(datapackCert.absolutePath());
         QFile certFile;
         if(stageConnexion==StageConnexion::Stage1)
@@ -2291,19 +2287,19 @@ void Api_protocol::connectTheExternalSocketInternal()
         {
             if(selectedServerIndex==-1)
             {
-                parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("Api_protocol::connectTheExternalSocket() selectedServerIndex==-1"));
+                parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("Api_protocol::connectTheExternalSocket() selectedServerIndex==-1"));
                 return;
             }
             const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);
             certFile.setFileName(
-                        datapackCert.absolutePath()+QStringLiteral("/")+
-                                 serverFromPoolForDisplay.host+QStringLiteral("-")+
+                        datapackCert.absolutePath()+QString("/")+
+                                 QString::fromStdString(serverFromPoolForDisplay.host)+QString("-")+
                         QString::number(serverFromPoolForDisplay.port)
                         );
         }
         else
         {
-            parseError(QStringLiteral("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("Api_protocol::connectTheExternalSocket() stageConnexion!=StageConnexion::Stage1/3"));
+            parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("Api_protocol::connectTheExternalSocket() stageConnexion!=StageConnexion::Stage1/3"));
             return;
         }
         if(certFile.exists())
@@ -2314,7 +2310,7 @@ void Api_protocol::connectTheExternalSocketInternal()
                 SslCert sslCert(NULL);
                 sslCert.exec();
                 if(sslCert.validated())
-                    saveCert(certFile.fileName());
+                    saveCert(certFile.fileName().toStdString());
                 else
                 {
                     socket->sslSocket->disconnectFromHost();
@@ -2330,7 +2326,7 @@ void Api_protocol::connectTheExternalSocketInternal()
                     SslCert sslCert(NULL);
                     sslCert.exec();
                     if(sslCert.validated())
-                        saveCert(certFile.fileName());
+                        saveCert(certFile.fileName().toStdString());
                     else
                     {
                         socket->sslSocket->disconnectFromHost();
@@ -2344,7 +2340,7 @@ void Api_protocol::connectTheExternalSocketInternal()
         else
         {
             if(socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
-                saveCert(certFile.fileName());
+                saveCert(certFile.fileName().toStdString());
 
         }
     }
@@ -2353,24 +2349,24 @@ void Api_protocol::connectTheExternalSocketInternal()
         connectedOnLoginServer();
     if(stageConnexion==StageConnexion::Stage2 || stageConnexion==StageConnexion::Stage3)
     {
-        message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3 set at "+QString(__FILE__)+":"+QString::number(__LINE__));
+        message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         stageConnexion=StageConnexion::Stage3;
         connectedOnGameServer();
     }
 
     if(stageConnexion==StageConnexion::Stage1)
-        connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
+        QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
     //need wait the sslHandcheck
     sendProtocol();
     if(socket->bytesAvailable())
         parseIncommingData();
 }
 
-void Api_protocol::saveCert(const QString &file)
+void Api_protocol::saveCert(const std::string &file)
 {
     if(socket->sslSocket==NULL)
         return;
-    QFile certFile(file);
+    QFile certFile(QString::fromStdString(file));
     if(socket->sslSocket->mode()==QSslSocket::UnencryptedMode)
         certFile.remove();
     else
@@ -2400,7 +2396,8 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
     {
         if(fixedSize!=size)
         {
-            std::cout << "postReplyData() Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
+            std::cout << "postReplyData() Sended packet size: " << size << ": " << binarytoHexa(data,size)
+                      << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             abort();
             #endif
@@ -2444,7 +2441,8 @@ bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * con
     {
         if(fixedSize!=size)
         {
-            std::cout << "packOutcommingData(): Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
+            std::cout << "packOutcommingData(): Sended packet size: " << size << ": " << binarytoHexa(data,size)
+                      << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             abort();
             #endif
@@ -2486,7 +2484,8 @@ bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode,const uint8_t &
     {
         if(fixedSize!=size)
         {
-            std::cout << "packOutcommingQuery(): Sended packet size: " << size << ": " << binarytoHexa(data,size) << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
+            std::cout << "packOutcommingQuery(): Sended packet size: " << size << ": " << binarytoHexa(data,size)
+                      << ", but the fixed packet size defined at: " << std::to_string((int)fixedSize) << std::endl;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             abort();
             #endif
@@ -2523,16 +2522,16 @@ bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode,const uint8_t &
     }
 }
 
-QByteArray Api_protocol::toUTF8WithHeader(const QString &text)
+std::string Api_protocol::toUTF8WithHeader(const std::string &text)
 {
-    if(text.isEmpty())
-        return QByteArray();
-    QByteArray data;
+    if(text.empty())
+        return std::string();
+    if(text.size()>254)
+        return std::string();
+    std::string data;
     data.resize(1);
-    data+=text.toUtf8();
-    if(data.size()>255)
-        return QByteArray();
-    data[0]=static_cast<uint8_t>(data.size())-1;
+    data+=text;
+    data[0]=static_cast<uint8_t>(text.size());
     return data;
 }
 
@@ -2568,49 +2567,49 @@ bool Api_protocol::dataToPlayerMonster(QDataStream &in,PlayerMonster &monster)
     PlayerMonster::PlayerSkill skill;
     /*if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster id bd, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster id bd, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     in >> monster.id;*/
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster id, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster id, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     in >> monster.monster;
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster level, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     in >> monster.level;
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster remaining_xp, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster remaining_xp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     in >> monster.remaining_xp;
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster hp, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster hp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     in >> monster.hp;
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster sp, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster sp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     in >> monster.sp;
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster captured_with, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster captured_with, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     in >> monster.catched_with;
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster captured_with, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster captured_with, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     quint8 gender;
@@ -2623,19 +2622,19 @@ bool Api_protocol::dataToPlayerMonster(QDataStream &in,PlayerMonster &monster)
             monster.gender=(Gender)gender;
         break;
         default:
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("gender code wrong: %2, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)).arg(gender));
+            parseError("Procotol wrong or corrupted",std::string("gender code wrong: ")+std::to_string(gender)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         break;
     }
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster egg_step, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster egg_step, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     in >> monster.egg_step;
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster character_origin, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster character_origin, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     {
@@ -2646,7 +2645,7 @@ bool Api_protocol::dataToPlayerMonster(QDataStream &in,PlayerMonster &monster)
 
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster size of list of the buff monsters, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster size of list of the buff monsters, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     uint8_t sub_size8;
@@ -2656,19 +2655,19 @@ bool Api_protocol::dataToPlayerMonster(QDataStream &in,PlayerMonster &monster)
     {
         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
         {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster buff, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster buff, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
         in >> buff.buff;
         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
         {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster buff level, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster buff level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
         in >> buff.level;
         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
         {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster buff level, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster buff level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
         in >> buff.remainingNumberOfTurn;
@@ -2678,7 +2677,7 @@ bool Api_protocol::dataToPlayerMonster(QDataStream &in,PlayerMonster &monster)
 
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
     {
-        parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster size of list of the skill monsters, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster size of list of the skill monsters, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     uint16_t sub_size16;
@@ -2688,19 +2687,19 @@ bool Api_protocol::dataToPlayerMonster(QDataStream &in,PlayerMonster &monster)
     {
         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
         {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster skill, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster skill, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
         in >> skill.skill;
         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
         {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster skill level, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster skill level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
         in >> skill.level;
         if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
         {
-            parseError(QStringLiteral("Procotol wrong or corrupted"),QStringLiteral("wrong size to get the monster skill level, line: %1").arg(QStringLiteral("%1:%2").arg(__FILE__).arg(__LINE__)));
+            parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster skill level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
         in >> skill.endurance;

@@ -20,7 +20,7 @@ public:
         WithAnotherPlayerType_Trade,
         WithAnotherPlayerType_Battle
     };
-    explicit WithAnotherPlayer(QWidget *parent, const WithAnotherPlayerType &type, const QPixmap &skin, const QString &pseudo);
+    explicit WithAnotherPlayer(QWidget *parent, const WithAnotherPlayerType &type, const QPixmap &skin, const std::string &pseudo);
     ~WithAnotherPlayer();
     bool actionIsAccepted();
 private slots:

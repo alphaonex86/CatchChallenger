@@ -6,6 +6,7 @@
 #include <QString>
 #include <QList>
 #include <QTranslator>
+#include "unordered_map"
 
 namespace Ui {
 class LanguagesSelect;
@@ -20,26 +21,26 @@ public:
     ~LanguagesSelect();
     struct Language
     {
-        QString fullName;
-        QString path;
+        std::string fullName;
+        std::string path;
     };
-    QString getCurrentLanguages();
+    std::string getCurrentLanguages();
 public slots:
     void show();
     void updateContent();
     int exec();
 private slots:
     void on_automatic_clicked();
-    QString getTheRightLanguage() const;
-    void setCurrentLanguage(const QString &newLanguage);
+    std::string getTheRightLanguage() const;
+    void setCurrentLanguage(const std::string &newLanguage);
     void on_cancel_clicked();
     void on_ok_clicked();
 private:
     Ui::LanguagesSelect *ui;
-    QHash<QString,Language> languagesByMainCode;
-    QHash<QString,QString> languagesByShortName;
-    QList<QTranslator *> installedTranslator;
-    QString currentLanguage;
+    std::unordered_map<std::string,Language> languagesByMainCode;
+    std::unordered_map<std::string,std::string> languagesByShortName;
+    std::vector<QTranslator *> installedTranslator;
+    std::string currentLanguage;
 };
 
 #endif // LANGUAGESSELECT_H
