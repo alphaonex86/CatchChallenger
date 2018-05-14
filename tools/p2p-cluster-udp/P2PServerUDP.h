@@ -9,7 +9,7 @@
 #include <utility>
 #include <unordered_map>
 #include <nettle/eddsa.h>
-#include "HostConnected.h"
+#include "P2PPeer.h"
 
 namespace CatchChallenger {
 class P2PServerUDP : public BaseClassSwitch
@@ -22,13 +22,12 @@ public:
     static std::string sockSerialised(const sockaddr_in &si_other);
     int write(const char * const data, const uint32_t dataSize, const sockaddr_in &si_other);
     EpollObjectType getType() const;
-    void sign(size_t length, uint8_t *msg);
     char * getPublicKey();
     char * getCaSignature();
 
     static char readBuffer[4096];
 
-    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostConnected> hostConnectionEstablished;
+    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,P2PPeer> hostConnectionEstablished;
 
     struct HostToSecondReply {
         uint8_t round;
