@@ -1,6 +1,6 @@
 include(../tiled/tiled.pri)
 
-QT       += script opengl widgets qml quick
+QT       += widgets qml quick
 QT       += gui network xml core
 
 DEFINES += CATCHCHALLENGER_CLIENT
