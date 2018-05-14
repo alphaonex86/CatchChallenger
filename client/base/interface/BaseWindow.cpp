@@ -579,7 +579,7 @@ void BaseWindow::battleRequested(const QString &pseudo, const uint8_t &skinInt)
     client->battleAccepted();
 }
 
-QString BaseWindow::lastLocation() const
+std::string BaseWindow::lastLocation() const
 {
     return mapController->lastLocation();
 }

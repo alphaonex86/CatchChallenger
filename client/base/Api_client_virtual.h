@@ -26,8 +26,8 @@ class Api_client_virtual : public Api_protocol
 public:
     explicit Api_client_virtual(ConnectedSocket *socket);
     ~Api_client_virtual();
-    void sendDatapackContentBase(const QByteArray &hashBase=QByteArray());
-    void sendDatapackContentMainSub(const QByteArray &hashMain=QByteArray(),const QByteArray &hashSub=QByteArray());
+    void sendDatapackContentBase(const std::string &hashBase=std::string());
+    void sendDatapackContentMainSub(const std::string &hashMain=std::string(),const std::string &hashSub=std::string());
     void tryDisconnect();
 protected:
     //general data

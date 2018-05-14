@@ -24,8 +24,8 @@ public:
     void setClan(const bool &haveClan);
     void setClient(CatchChallenger::Api_protocol *client);
 public slots:
-    void new_system_text(CatchChallenger::Chat_type chat_type,QString text);
-    void new_chat_text(CatchChallenger::Chat_type chat_type, QString text, QString pseudo, CatchChallenger::Player_type player_type);
+    void new_system_text(CatchChallenger::Chat_type chat_type,std::string text);
+    void new_chat_text(CatchChallenger::Chat_type chat_type, std::string text, std::string pseudo, CatchChallenger::Player_type player_type);
     void setMultiPlayer(const bool & multiplayer);
 private slots:
     void on_pushButtonChat_toggled(bool checked);
@@ -35,7 +35,7 @@ private slots:
     void comboBox_chat_type_currentIndexChanged(int index);
 private:
     Ui::Chat *ui;
-    QString lastMessageSend;
+    std::string lastMessageSend;
     QTimer stopFlood;
     int numberForFlood;
 

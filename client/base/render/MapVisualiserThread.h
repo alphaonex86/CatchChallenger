@@ -35,18 +35,18 @@ public:
 
     explicit MapVisualiserThread();
     ~MapVisualiserThread();
-    QString mLastError;
+    std::string mLastError;
     bool debugTags;
     Tiled::Tileset * tagTileset;
     int tagTilesetIndex;
     volatile bool stopIt;
     bool hideTheDoors;
-    QString error();
+    std::string error();
 signals:
-    void asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full *parsedMap);
+    void asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full *parsedMap);
 public slots:
-    void loadOtherMapAsync(const QString &fileName);
-    Map_full * loadOtherMap(const QString &fileName);
+    void loadOtherMapAsync(const std::string &fileName);
+    Map_full * loadOtherMap(const std::string &fileName);
     //drop and remplace by Map_loader info
     bool loadOtherMapClientPart(MapVisualiserThread::Map_full *parsedMap);
     bool loadOtherMapMetaData(MapVisualiserThread::Map_full *parsedMap);
@@ -57,7 +57,7 @@ private:
     QHash<QString,MapVisualiserThread::Map_full> mapCache;
     Tiled::MapReader reader;
     QHash<QString/*name*/,QHash<uint32_t/*bot id*/,CatchChallenger::Bot> > botFiles;
-    QString language;
+    std::string language;
 };
 
 #endif // MAPVISUALISERTHREAD_H
