@@ -18,7 +18,7 @@ public:
     uint16_t getFinalFPS() const;
     uint8_t getForcedZoom() const;
     uint8_t getAudioVolume() const;
-    QString getLanguage() const;//the main code
+    std::string getLanguage() const;//the main code
     int getIndexDevice() const;
 signals:
     void newFPS(const uint16_t &fps);
@@ -26,14 +26,14 @@ signals:
     void newFinalFPS(const uint16_t &fps);
     void newZoomEnabled(const uint8_t &zoom/*0 is no forced*/);
     void newAudioVolume(const uint8_t &audioVolume);
-    void newLanguage(const QString &language);//the main code
+    void newLanguage(const std::string &language);//the main code
     void newAudioDevice(const int &indexDevice);//the main code
 public slots:
     void setFPS(const uint16_t &fps);
     void setLimitedFPS(const bool &limitedFPS);
     void setForcedZoom(const uint8_t &zoom/*0 is no forced*/);
     void setAudioVolume(const uint8_t &audioVolume);
-    void setLanguage(const QString &language);//the main code
+    void setLanguage(const std::string &language);//the main code
     void setDeviceIndex(const int &indexDevice);
 
     void setAudioDeviceList(const QStringList &devices);
@@ -43,9 +43,9 @@ private:
     bool limitedFPS;
     uint8_t zoom;//0 is no forced
     uint8_t audioVolume;
-    QString language;
+    std::string language;
     int indexDevice;
-    QStringList devices;
+    std::vector<std::string> devices;
 };
 
 #endif // OPTIONS_H

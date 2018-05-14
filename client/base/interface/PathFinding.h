@@ -13,12 +13,12 @@ public:
     explicit PathFinding();
     virtual ~PathFinding();
 signals:
-    void result(const QString &current_map,const uint8_t &x,const uint8_t &y,QList<QPair<CatchChallenger::Orientation,uint8_t> > path);
+    void result(const std::string &current_map,const uint8_t &x,const uint8_t &y,QList<QPair<CatchChallenger::Orientation,uint8_t> > path);
     void internalCancel();
-    void emitSearchPath(const QString &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const QString &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
+    void emitSearchPath(const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
 public slots:
-    void searchPath(const QHash<QString, MapVisualiserThread::Map_full *> &all_map,const QString &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const QString &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
-    void internalSearchPath(const QString &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const QString &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
+    void searchPath(const QHash<QString, MapVisualiserThread::Map_full *> &all_map,const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
+    void internalSearchPath(const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
     void cancel();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     static void extraControlOnData(const QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > &controlVar,const CatchChallenger::Orientation &orientation);
@@ -64,7 +64,7 @@ private:
 
     struct MapPointToParse
     {
-        QString map;
+        std::string map;
         uint8_t x,y;
     };
 

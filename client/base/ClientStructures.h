@@ -1,9 +1,9 @@
 #ifndef CATCHCHALLENGER_CLIENT_STRUCTURES_H
 #define CATCHCHALLENGER_CLIENT_STRUCTURES_H
 
-#include <QString>
-#include <QHash>
-#include <QList>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace CatchChallenger {
 enum MapEvent
@@ -15,13 +15,13 @@ class ServerFromPoolForDisplay
 {
 public:
     //connect info
-    QString host;
+    std::string host;
     uint16_t port;
     uint32_t uniqueKey;
 
     //displayed info
-    QString name;
-    QString description;
+    std::string name;
+    std::string description;
     uint8_t charactersGroupIndex;
     uint16_t maxPlayer;
     uint16_t currentPlayer;
@@ -36,7 +36,7 @@ public:
 struct ServerFromPoolForDisplayTemp
 {
     //connect info
-    QString host;
+    std::string host;
     uint16_t port;
     uint32_t uniqueKey;
 
@@ -47,13 +47,13 @@ struct ServerFromPoolForDisplayTemp
 
     //temp
     uint8_t logicalGroupIndex;
-    QString xml;
+    std::string xml;
 };
 struct LogicialGroup
 {
-    QString name;
-    QHash<QString,LogicialGroup> logicialGroupList;
-    QList<ServerFromPoolForDisplay> servers;
+    std::string name;
+    std::unordered_map<std::string,LogicialGroup *> logicialGroupList;
+    std::vector<ServerFromPoolForDisplay> servers;
 };
 struct ServerForSelection
 {

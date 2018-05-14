@@ -46,9 +46,9 @@ public:
     void setOpenGl(const bool &OpenGL);
     virtual void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,uint8_t x,uint8_t y);
 
-    MapVisualiserThread::Map_full * getMap(const QString &map) const;
+    MapVisualiserThread::Map_full * getMap(const std::string &map) const;
 
-    QString current_map;
+    std::string current_map;
     QHash<QString,MapVisualiserThread::Map_full *> all_map,old_all_map;
     QHash<QString,QDateTime> old_all_map_time;
 protected:
@@ -60,7 +60,7 @@ protected:
     int tagTilesetIndex;
 
     bool debugTags;
-    QString mLastError;
+    std::string mLastError;
 
     uint8_t waitRenderTime;
     QTimer timerRender;
@@ -84,8 +84,8 @@ protected:
 protected slots:
     virtual void resetAll();
 public slots:
-    void loadOtherMap(const QString &resolvedFileName);
-    virtual void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y, const QString &lookAt, const QString &skin);
+    void loadOtherMap(const std::string &resolvedFileName);
+    virtual void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y, const std::string &lookAt, const std::string &skin);
     //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map, const bool &display);
     virtual void removeUnusedMap();
     virtual void hideNotloadedMap();
@@ -97,11 +97,11 @@ private slots:
     void applyTheAnimationTimer();
 protected slots:
     void render();
-    virtual bool asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject);
+    virtual bool asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject);
     void passMapIntoOld();
 signals:
-    void loadOtherMapAsync(const QString &fileName);
-    void mapDisplayed(const QString &fileName);
+    void loadOtherMapAsync(const std::string &fileName);
+    void mapDisplayed(const std::string &fileName);
 };
 
 #endif

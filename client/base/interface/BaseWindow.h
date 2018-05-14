@@ -55,7 +55,7 @@ public:
     void resetAll();
     void serverIsLoading();
     void serverIsReady();
-    QString lastLocation() const;
+    std::string lastLocation() const;
     std::unordered_map<uint16_t, PlayerQuest> getQuests() const;
     uint16_t getActualBotId() const;
     bool haveNextStepQuestRequirements(const Quest &quest) const;
@@ -117,7 +117,7 @@ public:
     };
     struct BattleInformations
     {
-        QString pseudo;
+        std::string pseudo;
         uint8_t skinId;
         QList<uint8_t> stat;
         uint8_t monsterPlace;
@@ -126,7 +126,7 @@ public:
     MapController *mapController;
 protected:
     void changeEvent(QEvent *e);
-    static void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
+    static void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const std::string &msg);
     static QFile debugFile;
     static uint8_t debugFileStatus;
 public slots:
@@ -135,12 +135,12 @@ public slots:
     void objectSelection(const bool &ok, const uint16_t &itemId=0, const uint32_t &quantity=1);
     void connectAllSignals();
 private slots:
-    void message(QString message) const;
+    void message(std::string message) const;
     void stdmessage(std::string message) const;
-    void disconnected(QString reason);
-    void notLogged(QString reason);
+    void disconnected(std::string reason);
+    void notLogged(std::string reason);
     void protocol_is_good();
-    void error(QString error);
+    void error(std::string error);
     void stderror(const std::string &error);
     void errorWithTheCurrentMap();
     void repelEffectIsOver();
@@ -156,8 +156,8 @@ private slots:
     void on_listPlantList_itemSelectionChanged();
     void tipTimeout();
     void gainTimeout();
-    void showTip(const QString &tip);
-    void showPlace(const QString &place);
+    void showTip(const std::string &tip);
+    void showPlace(const std::string &place);
     void showGain();
     void composeAndDisplayGain();
     void addQuery(const QueryType &queryType);
@@ -193,13 +193,13 @@ private slots:
     void addCash(const uint32_t &cash);
     void removeCash(const uint32_t &cash);
     void updatePlayerType();
-    QPixmap getFrontSkin(const QString &skinName);
+    QPixmap getFrontSkin(const std::string &skinName);
     QPixmap getFrontSkin(const uint32_t &skinId);
-    QString getFrontSkinPath(const QString &skin);
-    QString getFrontSkinPath(const uint32_t &skinId);
+    std::string getFrontSkinPath(const std::string &skin);
+    std::string getFrontSkinPath(const uint32_t &skinId);
     QPixmap getBackSkin(const uint32_t &skinId) const;
-    QString getBackSkinPath(const uint32_t &skinId) const;
-    QString getSkinPath(const QString &skinName, const QString &type) const;
+    std::string getBackSkinPath(const uint32_t &skinId) const;
+    std::string getSkinPath(const std::string &skinName, const std::string &type) const;
     void monsterCatch(const bool &success);
     //render
     void stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
@@ -218,8 +218,8 @@ private slots:
     void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
     void animationFinished();
     void evolutionCanceled();
-    void teleportConditionNotRespected(const QString &text);
-    static QString reputationRequirementsToText(const ReputationRequirements &reputationRequirements);
+    void teleportConditionNotRespected(const std::string &text);
+    static std::string reputationRequirementsToText(const ReputationRequirements &reputationRequirements);
 
     #ifndef CATCHCHALLENGER_NOAUDIO
     static void vlceventStatic(const libvlc_event_t *event, void *ptr);
@@ -240,8 +240,8 @@ private slots:
     void objectUsed(const ObjectUsage &objectUsage);
     uint32_t itemQuantity(const uint16_t &itemId) const;
     //trade
-    void tradeRequested(const QString &pseudo, const uint8_t &skinInt);
-    void tradeAcceptedByOther(const QString &pseudo,const uint8_t &skinInt);
+    void tradeRequested(const std::string &pseudo, const uint8_t &skinInt);
+    void tradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt);
     void tradeCanceledByOther();
     void tradeFinishedByOther();
     void tradeValidatedByTheServer();
@@ -251,8 +251,8 @@ private slots:
     void tradeUpdateCurrentObject();
     QList<PlayerMonster> warehouseMonsterOnPlayer() const;
     //battle
-    void battleRequested(const QString &pseudo, const uint8_t &skinInt);
-    void battleAcceptedByOther(const QString &pseudo, const uint8_t &skinId, const QList<uint8_t> &stat, const uint8_t &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
+    void battleRequested(const std::string &pseudo, const uint8_t &skinInt);
+    void battleAcceptedByOther(const std::string &pseudo, const uint8_t &skinId, const QList<uint8_t> &stat, const uint8_t &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
     void battleAcceptedByOtherFull(const BattleInformations &battleInformations);
     void battleCanceledByOther();
     void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn);
@@ -271,7 +271,7 @@ private slots:
     //plant
     void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
     void remove_plant(const uint32_t &mapId, const uint8_t &x, const uint8_t &y);
-    void cancelAllPlantQuery(const QString map, const uint8_t x, const uint8_t y);//without ref because after reset them self will failed all reset
+    void cancelAllPlantQuery(const std::string map, const uint8_t x, const uint8_t y);//without ref because after reset them self will failed all reset
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
     //crafting
@@ -282,7 +282,7 @@ private slots:
 
     //bot
     void goToBotStep(const uint8_t &step);
-    QString parseHtmlToDisplay(const QString &htmlContent);
+    std::string parseHtmlToDisplay(const std::string &htmlContent);
 
     //fight
     void wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
@@ -311,7 +311,7 @@ private slots:
     void pageChanged();
     void displayAttack();
     bool displayFirstAttackText(bool firstText);
-    void displayText(const QString &text);
+    void displayText(const std::string &text);
     void resetPosition(bool outOfScreen=false, bool topMonster=true, bool bottomMonster=true);
     void init_environement_display(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void init_current_monster_display(PlayerMonster *fightMonster=NULL);
@@ -343,19 +343,19 @@ private slots:
     bool botHaveQuest(const uint16_t &botId) const;
     QList<QPair<uint16_t, QString> > getQuestList(const uint16_t &botId) const;
     void updateDisplayedQuests();
-    void appendReputationPoint(const QString &type,const int32_t &point);
+    void appendReputationPoint(const std::string &type,const int32_t &point);
 
     //clan
     void clanActionSuccess(const uint32_t &clanId);
     void clanActionFailed();
     void clanDissolved();
     void updateClanDisplay();
-    void clanInformations(const QString &name);
-    void clanInvite(const uint32_t &clanId, const QString &name);
+    void clanInformations(const std::string &name);
+    void clanInvite(const uint32_t &clanId, const std::string &name);
 
     //city
     void captureCityYourAreNotLeader();
-    void captureCityYourLeaderHaveStartInOtherCity(const QString &zone);
+    void captureCityYourLeaderHaveStartInOtherCity(const std::string &zone);
     void captureCityPreviousNotFinished();
     void captureCityStartBattle(const uint16_t &player_count,const uint16_t &clan_count);
     void captureCityStartBotFight(const uint16_t &player_count, const uint16_t &clan_count, const uint16_t &fightId);
@@ -393,7 +393,7 @@ private slots:
     void on_toolButtonOptions_clicked();
     void on_checkBoxLimitFPS_toggled(bool checked);
     void on_spinBoxMaxFPS_editingFinished();
-    void on_IG_dialog_text_linkActivated(const QString &rawlink);
+    void on_IG_dialog_text_linkActivated(const std::string &rawlink);
     void on_toolButton_quit_shop_clicked();
     void on_shopItemList_itemActivated(QListWidgetItem *item);
     void on_shopItemList_itemSelectionChanged();
@@ -491,7 +491,7 @@ protected slots:
 private:
     Ui::BaseWindowUI *ui;
     QFrame *renderFrame;
-    QString imagesInterfaceRepeatableString,imagesInterfaceInProgressString;
+    std::string imagesInterfaceRepeatableString,imagesInterfaceInProgressString;
     QTimer tip_timeout;
     QTimer gain_timeout;
     QList<QueryType> queryList;
@@ -503,9 +503,9 @@ private:
     bool waitToSell;
     QList<ItemToSellOrBuy> itemsToSell,itemsToBuy;
     QPixmap playerFrontImage,playerBackImage;
-    QString playerFrontImagePath,playerBackImagePath;
+    std::string playerFrontImagePath,playerBackImagePath;
     QList<ActionClan> actionClan;
-    QString clanName;
+    std::string clanName;
     bool haveClanInformations;
     uint16_t factoryId;
     IndustryStatus industryStatus;
@@ -532,9 +532,9 @@ private:
     uint32_t mLastGivenXP;
     uint8_t currentMonsterLevel;
     QSet<QString> supportedImageFormats;
-    QString lastPlaceDisplayed;
+    std::string lastPlaceDisplayed;
     std::vector<uint8_t> events;
-    QString visualCategory;
+    std::string visualCategory;
     QTimer botFightTimer;
     QStringList add_to_inventoryGainList;
     QList<QTime> add_to_inventoryGainTime;
@@ -559,12 +559,12 @@ private:
     {
         uint16_t seedItemId;
         uint8_t x,y;
-        QString map;
+        std::string map;
     };
     QList<SeedInWaiting> seed_in_waiting;
     struct ClientPlantInCollecting
     {
-        QString map;
+        std::string map;
         uint8_t x,y;
         uint8_t plant_id;
         uint16_t seconds_to_mature;
@@ -575,10 +575,10 @@ private:
     QTime updateRXTXTime;
     QTimer updateRXTXTimer;
     uint64_t previousRXSize,previousTXSize;
-    QString toHtmlEntities(QString text);
+    std::string toHtmlEntities(std::string text);
     QSettings settings;
     bool haveShowDisconnectionReason;
-    QString toSmilies(QString text);
+    std::string toSmilies(std::string text);
     QStringList server_list;
     QAbstractSocket::SocketState socketState;
     bool haveDatapack,haveDatapackMainSub,haveCharacterPosition,haveCharacterInformation,haveInventory,datapackIsParsed,mainSubDatapackIsParsed;
@@ -667,7 +667,7 @@ private:
     City city;
     QTimer updater_page_zonecatch;
     QDateTime nextCatch,nextCatchOnScreen;
-    QString zonecatchName;
+    std::string zonecatchName;
     bool zonecatch;
 
     //trade
@@ -693,14 +693,14 @@ private:
         libvlc_media_player_t *player;
         libvlc_event_manager_t *manager;
         #endif
-        QString file;
+        std::string file;
     };
     Ambiance currentAmbiance;
 
-    static QString text_type;
-    static QString text_lang;
-    static QString text_en;
-    static QString text_text;
+    static std::string text_type;
+    static std::string text_lang;
+    static std::string text_en;
+    static std::string text_text;
 
     static QIcon icon_server_list_star1;
     static QIcon icon_server_list_star2;
@@ -729,10 +729,10 @@ private:
     //skin
     QHash<QString,QPixmap> frontSkinCacheString;
 signals:
-    void newError(QString error,QString detailedError);
+    void newError(std::string error,std::string detailedError);
     //datapack
-    void parseDatapack(const QString &datapackPath);
-    void parseDatapackMainSub(const QString &mainDatapackCode, const QString &subDatapackCode);
+    void parseDatapack(const std::string &datapackPath);
+    void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode);
     void datapackParsedMainSubMap();
     void teleportDone();
     //plant, can do action only if the previous is finish

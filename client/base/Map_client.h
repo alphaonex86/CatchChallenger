@@ -32,24 +32,24 @@ public:
         Tiled::MapObject* tileObject;
         uint16_t item;
         bool infinite;
-        uint16_t indexOfItemOnMap;//to see if the player have get it, DatapackClientLoader::QHash<QString,QHash<QPair<uint8_t,uint8_t>,uint16_t> > itemOnMap;
+        uint16_t indexOfItemOnMap;//to see if the player have get it, DatapackClientLoader::std::unordered_map<QString,std::unordered_map<QPair<uint8_t,uint8_t>,uint16_t> > itemOnMap;
     };
 
-    QList<Map_semi_teleport> teleport_semi;
-    QStringList teleport_condition_texts;
-    QList<Map_to_send::Map_Point> rescue_points;
-    QList<Map_to_send::Map_Point> bot_spawn_points;
+    std::vector<Map_semi_teleport> teleport_semi;
+    std::vector<std::string> teleport_condition_texts;
+    std::vector<Map_to_send::Map_Point> rescue_points;
+    std::vector<Map_to_send::Map_Point> bot_spawn_points;
 
     Map_semi_border border_semi;
 
     Map_client();
 
-    QList<ClientPlantWithTimer *> plantList;
-    QHash<QPair<uint8_t,uint8_t>,Bot> bots;
-    QHash<QPair<uint8_t,uint8_t>,BotDisplay> botsDisplay;
+    std::vector<ClientPlantWithTimer *> plantList;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,Bot,pairhash> bots;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,BotDisplay,pairhash> botsDisplay;
 
-    QMultiHash<QPair<uint8_t,uint8_t>,QPair<uint8_t,uint8_t> > botsFightTriggerExtra;//trigger line in front of bot fight, tigger x,y, bot x,y
-    QHash<QPair<uint8_t,uint8_t>,ItemOnMapForClient> itemsOnMap;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<std::pair<uint8_t,uint8_t> >,pairhash> botsFightTriggerExtra;//trigger line in front of bot fight, tigger x,y, bot x,y
+    std::unordered_map<std::pair<uint8_t,uint8_t>,ItemOnMapForClient,pairhash> itemsOnMap;
 
     const CATCHCHALLENGER_XMLELEMENT * xmlRoot;
 };
