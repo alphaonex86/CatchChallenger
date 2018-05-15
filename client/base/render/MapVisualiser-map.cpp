@@ -24,17 +24,14 @@ void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
     //logicalMap.plantList, delete plants useless, destroyed into removeMap()
     //logicalMap.botsDisplay, delete bot useless, destroyed into removeMap()
     //remove from the list
-    std::unordered_map<std::pair<uint8_t,uint8_t>,MapDoor*,pairhash> i(map->doors);
-    while (i.hasNext()) {
-        i.next();
-        //object pointer removed by group
-        i.value()->deleteLater();
+    for( const auto& n : map->doors ) {
+        n.second->deleteLater();
     }
     map->doors.clear();
     if(map->tiledMap!=NULL)
         mapItem->removeMap(map->tiledMap);
-    all_map.remove(QString::fromStdString(map->logicalMap.map_file));
-    old_all_map.remove(QString::fromStdString(map->logicalMap.map_file));
+    all_map.erase(map->logicalMap.map_file);
+    old_all_map.erase(map->logicalMap.map_file);
     //delete common variables
     CatchChallenger::CommonMap::removeParsedLayer(map->logicalMap.parsed_layer);
     map->logicalMap.parsed_layer.dirt=NULL;
@@ -54,17 +51,10 @@ void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
 void MapVisualiser::resetAll()
 {
     ///remove the not used map, then where no player is susceptible to switch (by border or teleporter)
-    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = old_all_map.constBegin();
-    while (i != old_all_map.constEnd()) {
-        destroyMap(i.value());
-        i = old_all_map.constBegin();//needed
-    }
-
-    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator j = all_map.constBegin();
-    while (j != all_map.constEnd()) {
-        destroyMap(j.value());
-        j = all_map.constBegin();//needed
-    }
+    for(const auto& n : old_all_map)
+        destroyMap(n.second);
+    for(const auto& n : all_map)
+        destroyMap(n.second);
     old_all_map.clear();
     old_all_map_time.clear();
     all_map.clear();
@@ -72,36 +62,36 @@ void MapVisualiser::resetAll()
 }
 
 //open the file, and load it into the variables
-void MapVisualiser::loadOtherMap(const QString &resolvedFileName)
+void MapVisualiser::loadOtherMap(const std::string &resolvedFileName)
 {
     //already loaded
-    if(all_map.contains(resolvedFileName))
+    if(all_map.find(resolvedFileName)!=all_map.cend())
         return;
     //already in progress
-    if(asyncMap.contains(resolvedFileName))
+    if(vectorcontainsAtLeastOne(asyncMap,resolvedFileName))
         return;
     //previously loaded
-    if(old_all_map.contains(resolvedFileName))
+    if(old_all_map.find(resolvedFileName)!=old_all_map.cend())
     {
-        MapVisualiserThread::Map_full * tempMapObject=old_all_map.value(resolvedFileName);
+        MapVisualiserThread::Map_full * tempMapObject=old_all_map.at(resolvedFileName);
         tempMapObject->displayed=false;
-        old_all_map.remove(resolvedFileName);
-        old_all_map_time.remove(resolvedFileName);
+        old_all_map.erase(resolvedFileName);
+        old_all_map_time.erase(resolvedFileName);
         tempMapObject->logicalMap.border.bottom.map=NULL;
         tempMapObject->logicalMap.border.top.map=NULL;
         tempMapObject->logicalMap.border.left.map=NULL;
         tempMapObject->logicalMap.border.right.map=NULL;
         tempMapObject->logicalMap.teleporter=NULL;
         tempMapObject->logicalMap.teleporter_list_size=0;
-        asyncMap << resolvedFileName;
+        asyncMap.push_back(resolvedFileName);
         asyncMapLoaded(resolvedFileName,tempMapObject);
         return;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(!QFileInfo(resolvedFileName).exists())
-        qDebug() << (QStringLiteral("file not found to async: %1").arg(resolvedFileName));
+    if(!QFileInfo(QString::fromStdString(resolvedFileName)).exists())
+        qDebug() << (QStringLiteral("file not found to async: %1").arg(QString::fromStdString(resolvedFileName)));
     #endif
-    asyncMap << resolvedFileName;
+    asyncMap.push_back(resolvedFileName);
     emit loadOtherMapAsync(resolvedFileName);
 }
 
@@ -113,8 +103,8 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
         return;
     }
     QRect current_map_rect;
-    if(!current_map.isEmpty() && all_map.contains(current_map))
-        current_map_rect=QRect(0,0,all_map.value(current_map)->logicalMap.width,all_map.value(current_map)->logicalMap.height);
+    if(!current_map.empty() && all_map.find(current_map)!=all_map.cend())
+        current_map_rect=QRect(0,0,all_map.at(current_map)->logicalMap.width,all_map.at(current_map)->logicalMap.height);
     else
     {
         qDebug() << "The current map is not set, crash prevented";
@@ -132,58 +122,59 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
                                 static_cast<uint16_t>(tempMapObject->relative_x_pixel),
                                 static_cast<uint16_t>(tempMapObject->relative_y_pixel)
                                 );
-        emit mapDisplayed(QString::fromStdString(tempMapObject->logicalMap.map_file));
+        emit mapDisplayed(tempMapObject->logicalMap.map_file);
         //display the bot
-        QHashIterator<QPair<uint8_t,uint8_t>,CatchChallenger::Bot> i(tempMapObject->logicalMap.bots);
-        while (i.hasNext()) {
-            i.next();
-            QString skin;
-            if(i.value().properties.find("skin")!=i.value().properties.cend())
-                skin=QString::fromStdString(i.value().properties.at("skin"));
-            QString direction;
-            if(i.value().properties.find("lookAt")!=i.value().properties.cend())
-                direction=QString::fromStdString(i.value().properties.at("lookAt"));
+        for( const auto& n : tempMapObject->logicalMap.bots ) {
+            std::string skin;
+            if(n.second.properties.find("skin")!=n.second.properties.cend())
+                skin=n.second.properties.at("skin");
+            std::string direction;
+            if(n.second.properties.find("lookAt")!=n.second.properties.cend())
+                direction=n.second.properties.at("lookAt");
             else
             {
-                if(!skin.isEmpty())
+                if(!skin.empty())
                     qDebug() << QStringLiteral("asyncDetectBorder(): lookAt: missing, fixed to bottom: %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
                 direction="bottom";
             }
-            loadBotOnTheMap(tempMapObject,i.value().botId,i.key().first,i.key().second,direction,skin);
+            loadBotOnTheMap(tempMapObject,n.second.botId,n.first.first,n.first.second,direction,skin);
         }
         if(!tempMapObject->logicalMap.border_semi.bottom.fileName.empty())
-            if(!asyncMap.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName)) && !all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName)))
-                loadOtherMap(QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName));
+            if(!vectorcontainsAtLeastOne(asyncMap,tempMapObject->logicalMap.border_semi.bottom.fileName) &&
+                    all_map.find(tempMapObject->logicalMap.border_semi.bottom.fileName)==all_map.cend())
+                loadOtherMap(tempMapObject->logicalMap.border_semi.bottom.fileName);
         if(!tempMapObject->logicalMap.border_semi.top.fileName.empty())
-            if(!asyncMap.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName)) && !all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName)))
-                loadOtherMap(QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName));
+            if(!vectorcontainsAtLeastOne(asyncMap,tempMapObject->logicalMap.border_semi.top.fileName) &&
+                    all_map.find(tempMapObject->logicalMap.border_semi.top.fileName)==all_map.cend())
+                loadOtherMap(tempMapObject->logicalMap.border_semi.top.fileName);
         if(!tempMapObject->logicalMap.border_semi.left.fileName.empty())
-            if(!asyncMap.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName)) && !all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName)))
-                loadOtherMap(QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName));
+            if(!vectorcontainsAtLeastOne(asyncMap,tempMapObject->logicalMap.border_semi.left.fileName) &&
+                    all_map.find(tempMapObject->logicalMap.border_semi.left.fileName)==all_map.cend())
+                loadOtherMap(tempMapObject->logicalMap.border_semi.left.fileName);
         if(!tempMapObject->logicalMap.border_semi.right.fileName.empty())
-            if(!asyncMap.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName)) && !all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName)))
-                loadOtherMap(QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName));
+            if(!vectorcontainsAtLeastOne(asyncMap,tempMapObject->logicalMap.border_semi.right.fileName) &&
+                    all_map.find(tempMapObject->logicalMap.border_semi.right.fileName)==all_map.cend())
+                loadOtherMap(tempMapObject->logicalMap.border_semi.right.fileName);
     }
 }
 
-bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread::Map_full * tempMapObject)
+bool MapVisualiser::asyncMapLoaded(const std::string &fileName, MapVisualiserThread::Map_full * tempMapObject)
 {
-    if(current_map.isEmpty())
+    if(current_map.empty())
         return false;
-    if(all_map.contains(fileName))
+    if(all_map.find(fileName)!=all_map.cend())
     {
-        asyncMap.removeOne(fileName);
-        qDebug() << (QStringLiteral("seam already loaded by sync call, internal bug on: %1").arg(fileName));
+        vectorremoveOne(asyncMap,fileName);
+        qDebug() << (QStringLiteral("seam already loaded by sync call, internal bug on: %1").arg(QString::fromStdString(fileName)));
         return false;
     }
     if(tempMapObject!=NULL)
     {
         tempMapObject->displayed=false;
-        all_map[QString::fromStdString(tempMapObject->logicalMap.map_file)]=tempMapObject;
-        QHash<uint16_t,MapVisualiserThread::Map_animation>::const_iterator i = tempMapObject->animatedObject.constBegin();
-        while (i != tempMapObject->animatedObject.constEnd()) {
-            const uint16_t &interval=static_cast<uint16_t>(i.key());
-            if(!animationTimer.contains(interval))
+        all_map[tempMapObject->logicalMap.map_file]=tempMapObject;
+        for( const auto& n : tempMapObject->animatedObject ) {
+            const uint16_t &interval=static_cast<uint16_t>(n.first);
+            if(animationTimer.find(interval)==animationTimer.cend())
             {
                 QTimer *newTimer=new QTimer();
                 newTimer->setInterval(interval);
@@ -192,26 +183,26 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                 connect(newTimer,&QTimer::timeout,this,&MapVisualiser::applyTheAnimationTimer);
                 newTimer->start();
             }
-            if(!animationFrame.value(interval).contains(i.value().count))
-                animationFrame[interval][i.value().count]=0;
+            if(animationFrame.at(interval).find(n.second.count)==animationFrame.at(interval).cend())
+                animationFrame[interval][n.second.count]=0;
             else
             {
-                const uint8_t &count=animationFrame.value(interval).value(i.value().count);
-                const int &oldcount=tempMapObject->animatedObject[i.key()].count;
+                const uint8_t &count=animationFrame.at(interval).at(n.second.count);
+                const int &oldcount=tempMapObject->animatedObject[interval].count;
                 const int &count_diff=count-oldcount;
-                tempMapObject->animatedObject[i.key()].count+=count_diff;
+                tempMapObject->animatedObject[interval].count+=count_diff;
                 if(count_diff!=0)
                 {
-                    int index=0;
-                    while(index<i.value().animatedObjectList.size())
+                    unsigned int index=0;
+                    while(index<n.second.animatedObjectList.size())
                     {
-                        Tiled::MapObject * mapObject=i.value().animatedObjectList.at(index).animatedObject;
+                        Tiled::MapObject * mapObject=n.second.animatedObjectList.at(index).animatedObject;
                         Tiled::Cell cell=mapObject->cell();
                         Tiled::Tile *tile=mapObject->cell().tile;
                         Tiled::Tile *newTile;
                         int diff=0;
-                        const uint8_t &randomOffset=i.value().animatedObjectList.at(index).randomOffset;
-                        const uint8_t &frameCountTotal=i.value().frameCountTotal;
+                        const uint8_t &randomOffset=n.second.animatedObjectList.at(index).randomOffset;
+                        const uint8_t &frameCountTotal=n.second.frameCountTotal;
                         if((oldcount+randomOffset)>=frameCountTotal)
                             diff=+frameCountTotal;
                         /*diff+=-oldcount;
@@ -222,8 +213,8 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             diff+=-frameCountTotal;
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         const int &tileid=tile->id();
-                        const int &minId=i.value().animatedObjectList.at(index).minId;
-                        const int &maxId=i.value().animatedObjectList.at(index).maxId;
+                        const int &minId=n.second.animatedObjectList.at(index).minId;
+                        const int &maxId=n.second.animatedObjectList.at(index).maxId;
                         if((tileid+diff)<minId)
                         {
                             qDebug() << "Frame out of range";
@@ -242,10 +233,9 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                     }
                 }
             }
-            ++i;
         }
         //try locate and place it
-        if(tempMapObject->logicalMap.map_file==current_map.toStdString())
+        if(tempMapObject->logicalMap.map_file==current_map)
         {
             tempMapObject->displayed=true;
             tempMapObject->relative_x=0;
@@ -258,14 +248,14 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
         else
         {
             QRect current_map_rect;
-            if(!current_map.isEmpty() && all_map.contains(current_map))
+            if(!current_map.empty() && all_map.find(current_map)!=all_map.cend())
             {
-                current_map_rect=QRect(0,0,all_map.value(current_map)->logicalMap.width,all_map.value(current_map)->logicalMap.height);
-                if(all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName)))
+                current_map_rect=QRect(0,0,all_map.at(current_map)->logicalMap.width,all_map.at(current_map)->logicalMap.height);
+                if(all_map.find(tempMapObject->logicalMap.border_semi.top.fileName)!=all_map.cend())
                 {
-                    if(all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName))->displayed)
+                    if(all_map.at(tempMapObject->logicalMap.border_semi.top.fileName)->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName));
+                        MapVisualiserThread::Map_full *border_map=all_map.at(tempMapObject->logicalMap.border_semi.top.fileName);
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
                         {
@@ -290,11 +280,11 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
                     }
                 }
-                if(all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName)))
+                if(all_map.find(tempMapObject->logicalMap.border_semi.bottom.fileName)!=all_map.cend())
                 {
-                    if(all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName))->displayed)
+                    if(all_map.at(tempMapObject->logicalMap.border_semi.bottom.fileName)->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName));
+                        MapVisualiserThread::Map_full *border_map=all_map.at(tempMapObject->logicalMap.border_semi.bottom.fileName);
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.top.fileName)
                         {
@@ -319,11 +309,11 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
                     }
                 }
-                if(all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName)))
+                if(all_map.find(tempMapObject->logicalMap.border_semi.right.fileName)!=all_map.cend())
                 {
-                    if(all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName))->displayed)
+                    if(all_map.at(tempMapObject->logicalMap.border_semi.right.fileName)->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName));
+                        MapVisualiserThread::Map_full *border_map=all_map.at(tempMapObject->logicalMap.border_semi.right.fileName);
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.left.fileName)
                         {
@@ -348,11 +338,11 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                             qDebug() << QStringLiteral("loadNearMap(): bottom: have not mutual border %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
                     }
                 }
-                if(all_map.contains(QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName)))
+                if(all_map.find(tempMapObject->logicalMap.border_semi.left.fileName)!=all_map.cend())
                 {
-                    if(all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName))->displayed)
+                    if(all_map.at(tempMapObject->logicalMap.border_semi.left.fileName)->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map.value(QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName));
+                        MapVisualiserThread::Map_full *border_map=all_map.at(tempMapObject->logicalMap.border_semi.left.fileName);
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.right.fileName)
                         {
@@ -382,8 +372,8 @@ bool MapVisualiser::asyncMapLoaded(const QString &fileName, MapVisualiserThread:
                 qDebug() << "The current map is not set, crash prevented";
         }
     }
-    if(asyncMap.removeOne(fileName))
-        if(asyncMap.isEmpty())
+    if(vectorremoveOne(asyncMap,fileName))
+        if(asyncMap.empty())
         {
             hideNotloadedMap();//hide the mpa loaded by mistake
             removeUnusedMap();
@@ -398,37 +388,36 @@ void MapVisualiser::applyTheAnimationTimer()
 {
     QTimer *timer=qobject_cast<QTimer *>(QObject::sender());
     const uint16_t &interval=static_cast<uint16_t>(timer->interval());
-    if(animationFrame.contains(interval))
+    if(animationFrame.find(interval)!=animationFrame.cend())
     {
-        QHash<uint8_t/*frame total*/,uint8_t/*actual frame*/> countList=animationFrame.value(interval);
-        QHashIterator<uint8_t/*frame total*/,uint8_t/*actual frame*/> i(countList);
-        while (i.hasNext()) {
-            i.next();
-            countList[i.key()]++;
-            if(countList.value(i.key())>=i.key())
-                countList[i.key()]=0;
+        std::unordered_map<uint8_t/*frame total*/,uint8_t/*actual frame*/> countList=animationFrame.at(interval);
+        for( const auto& n : countList ) {
+            countList[n.first]++;
+            if(countList.at(n.first)>=n.first)
+                countList[n.first]=0;
         }
         animationFrame[interval]=countList;
     }
     bool isUsed=false;
-    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
-    while (i != all_map.constEnd()) {
-        MapVisualiserThread::Map_full * tempMap=i.value();
+    for( const auto& n : all_map ) {
+        MapVisualiserThread::Map_full * tempMap=n.second;
         if(tempMap->displayed)
         {
-            if(tempMap->animatedObject.contains(interval))
+            if(tempMap->animatedObject.find(interval)!=tempMap->animatedObject.cend())
             {
-                if(tempMap->animatedObject.value(interval).frameCountTotal>1)
+                const MapVisualiserOrder::Map_animation &map_animation=tempMap->animatedObject.at(interval);
+                if(map_animation.frameCountTotal>1)
                 {
                     isUsed=true;
                     tempMap->animatedObject[interval].count++;
-                    const QList<MapVisualiserThread::Map_animation_object> &animatedObject=tempMap->animatedObject.value(interval).animatedObjectList;
-                    int index=0;
+                    const std::vector<MapVisualiserThread::Map_animation_object> &animatedObject=map_animation.animatedObjectList;
+                    unsigned int index=0;
                     while(index<animatedObject.size())
                     {
                         int8_t frameOffset=1;
-                        if((tempMap->animatedObject.value(interval).count+animatedObject.at(index).randomOffset)==tempMap->animatedObject.value(interval).frameCountTotal)
-                            frameOffset-=tempMap->animatedObject.value(interval).frameCountTotal;
+                        if((map_animation.count+animatedObject.at(index).randomOffset)==
+                                map_animation.frameCountTotal)
+                            frameOffset-=map_animation.frameCountTotal;
                         Tiled::MapObject * mapObject=animatedObject.at(index).animatedObject;
                         Tiled::Cell cell=mapObject->cell();
                         Tiled::Tile *tile=mapObject->cell().tile;
@@ -452,25 +441,25 @@ void MapVisualiser::applyTheAnimationTimer()
                         mapObject->setCell(cell);
                         index++;
                     }
-                    if(tempMap->animatedObject.value(interval).count>=tempMap->animatedObject.value(interval).frameCountTotal)
+                    if(map_animation.count>=map_animation.frameCountTotal)
                         tempMap->animatedObject[interval].count=0;
                 }
             }
         }
-        ++i;
     }
     if(!isUsed)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         std::cout << "MapVisualiser::applyTheAnimationTimer() : !isUsed for timer: " << std::to_string(interval) << std::endl;
         #endif
-        animationTimer.remove(interval);
+        animationTimer.erase(interval);
         timer->stop();
         delete timer;
     }
 }
 
-void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const uint32_t &botId,const uint8_t &x,const uint8_t &y,const QString &lookAt,const QString &skin)
+void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const uint32_t &botId,
+                                    const uint8_t &x,const uint8_t &y,const std::string &lookAt,const std::string &skin)
 {
     Q_UNUSED(botId);
     Q_UNUSED(parsedMap);
@@ -484,59 +473,42 @@ void MapVisualiser::removeUnusedMap()
 {
     const QDateTime &currentTime=QDateTime::currentDateTime();
     //undisplay the unused map
-    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = old_all_map.constBegin();
-    while (i != old_all_map.constEnd()) {
-        if(!old_all_map_time.contains(i.key()) || (currentTime.toTime_t()-old_all_map_time.value(i.key()).toTime_t())>CATCHCHALLENGER_CLIENT_MAP_CACHE_TIMEOUT || old_all_map.size()>CATCHCHALLENGER_CLIENT_MAP_CACHE_SIZE)
-        {
-            destroyMap(i.value());
-            i = old_all_map.constBegin();
-        }
-        else
-            ++i;
+    for( const auto& n : old_all_map ) {
+        if(old_all_map_time.find(n.first)==old_all_map_time.cend() ||
+                (currentTime.toTime_t()-old_all_map_time.at(n.first).toTime_t())>CATCHCHALLENGER_CLIENT_MAP_CACHE_TIMEOUT ||
+                old_all_map.size()>CATCHCHALLENGER_CLIENT_MAP_CACHE_SIZE)
+            destroyMap(n.second);
     }
 }
 
 void MapVisualiser::hideNotloadedMap()
 {
     //undisplay the map not in dirrect contact with the current_map
-    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
-    while (i != all_map.constEnd()) {
-        if(i.value()->logicalMap.map_file!=current_map.toStdString())
-            if(!i.value()->displayed)
-                mapItem->removeMap(i.value()->tiledMap);
-        ++i;
-    }
-    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator j = old_all_map.constBegin();
-    while (j != old_all_map.constEnd()) {
-        mapItem->removeMap(j.value()->tiledMap);
-        ++j;
-    }
+    for( const auto& n : all_map )
+        if(n.second->logicalMap.map_file!=current_map)
+            if(!n.second->displayed)
+                mapItem->removeMap(n.second->tiledMap);
+    for( const auto& n : old_all_map )
+        mapItem->removeMap(n.second->tiledMap);
 }
 
 void MapVisualiser::passMapIntoOld()
 {
     const QDateTime &currentTime=QDateTime::currentDateTime();
-/*    if(old_all_map.isEmpty())
-        old_all_map=all_map;
-    else
-    {*/
-        QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
-        while (i != all_map.constEnd()) {
-            old_all_map[i.key()]=i.value();
-            old_all_map_time[i.key()]=currentTime;
-            ++i;
-        }
-    //}
+    for( const auto& n : all_map ) {
+        old_all_map[n.first]=n.second;
+        old_all_map_time[n.first]=currentTime;
+    }
     all_map.clear();
 }
 
 void MapVisualiser::loadTeleporter(MapVisualiserThread::Map_full *map)
 {
     //load the teleporter
-    int index=0;
+    unsigned int index=0;
     while(index<map->logicalMap.teleport_semi.size())
     {
-        loadOtherMap(QString::fromStdString(map->logicalMap.teleport_semi.value(index).map));
+        loadOtherMap(map->logicalMap.teleport_semi.at(index).map);
         index++;
     }
 }
