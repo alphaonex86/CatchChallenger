@@ -119,7 +119,7 @@ public:
     {
         std::string pseudo;
         uint8_t skinId;
-        QList<uint8_t> stat;
+        std::vector<uint8_t> stat;
         uint8_t monsterPlace;
         PublicPlayerMonster publicPlayerMonster;
     };
@@ -145,7 +145,7 @@ private slots:
     void errorWithTheCurrentMap();
     void repelEffectIsOver();
     void send_player_direction(const CatchChallenger::Direction &the_direction);
-    void setEvents(const QList<QPair<uint8_t, uint8_t> > &events);
+    void setEvents(const std::vector<std::pair<uint8_t, uint8_t> > &events);
     void newEvent(const uint8_t &event,const uint8_t &event_value);
     void forcedEvent(const uint8_t &event,const uint8_t &event_value);
 
@@ -168,7 +168,7 @@ private slots:
     void updateTheWareHouseContent();
     QListWidgetItem * itemToGraphic(const uint16_t &itemid, const uint32_t &quantity);
     //player
-    void logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CharacterEntry> > &characterEntryList);
+    void logged(const std::vector<ServerFromPoolForDisplay *> &serverOrdenedList,const std::vector<std::vector<CharacterEntry> > &characterEntryList);
     void updatePlayerImage();
     void have_character_position();
     void haveCharacter();
@@ -176,11 +176,11 @@ private slots:
     void have_main_and_sub_datapack_loaded();
     void have_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
     void add_to_inventory(const uint16_t &item, const uint32_t &quantity=1, const bool &showGain=true);
-    void add_to_inventory(const QList<QPair<uint16_t,uint32_t> > &items,const bool &showGain=true);
-    void add_to_inventory(const QHash<uint16_t,uint32_t> &items, const bool &showGain=true);
-    void add_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
-    void remove_to_inventory(const QHash<uint16_t,uint32_t> &items);
-    void remove_to_inventory_slot(const QHash<uint16_t,uint32_t> &items);
+    void add_to_inventory(const std::vector<std::pair<uint16_t,uint32_t> > &items,const bool &showGain=true);
+    void add_to_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const bool &showGain=true);
+    void add_to_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items);
+    void remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items);
+    void remove_to_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items);
     void remove_to_inventory(const uint16_t &itemId, const uint32_t &quantity=1);
     void load_inventory();
     void load_plant_inventory();
@@ -249,16 +249,16 @@ private slots:
     void tradeAddTradeObject(const uint16_t &item, const uint32_t &quantity);
     void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
     void tradeUpdateCurrentObject();
-    QList<PlayerMonster> warehouseMonsterOnPlayer() const;
+    std::vector<PlayerMonster> warehouseMonsterOnPlayer() const;
     //battle
     void battleRequested(const std::string &pseudo, const uint8_t &skinInt);
-    void battleAcceptedByOther(const std::string &pseudo, const uint8_t &skinId, const QList<uint8_t> &stat, const uint8_t &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
+    void battleAcceptedByOther(const std::string &pseudo, const uint8_t &skinId, const std::vector<uint8_t> &stat, const uint8_t &monsterPlace, const PublicPlayerMonster &publicPlayerMonster);
     void battleAcceptedByOtherFull(const BattleInformations &battleInformations);
     void battleCanceledByOther();
-    void sendBattleReturn(const QList<Skill::AttackReturn> &attackReturn);
+    void sendBattleReturn(const std::vector<Skill::AttackReturn> &attackReturn);
 
     //shop
-    void haveShopList(const QList<ItemToSellOrBuy> &items);
+    void haveShopList(const std::vector<ItemToSellOrBuy> &items);
     void haveBuyObject(const BuyStat &stat,const uint32_t &newPrice);
     void haveSellObject(const SoldStat &stat,const uint32_t &newPrice);
     void displaySellList();
@@ -266,7 +266,7 @@ private slots:
     //shop
     void haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice);
     void haveSellFactoryObject(const SoldStat &stat,const uint32_t &newPrice);
-    void haveFactoryList(const uint32_t &remainingProductionTime, const QList<ItemToSellOrBuy> &resources, const QList<ItemToSellOrBuy> &products);
+    void haveFactoryList(const uint32_t &remainingProductionTime, const std::vector<ItemToSellOrBuy> &resources, const std::vector<ItemToSellOrBuy> &products);
 
     //plant
     void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
@@ -331,9 +331,7 @@ private slots:
     bool learnSkillByPosition(const uint8_t &monsterPosition, const uint16_t &skill);
 
     //quest
-    bool haveReputationRequirements(const QList<ReputationRequirements> &reputationList) const;
     bool haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const;
-    void appendReputationRewards(const QList<ReputationRewards> &reputationList);
     void appendReputationRewards(const std::vector<ReputationRewards> &reputationList);
     void getTextEntryPoint();
     void showQuestText(const uint32_t &textId);
@@ -341,7 +339,7 @@ private slots:
     bool nextStepQuest(const Quest &quest);
     bool startQuest(const Quest &quest);
     bool botHaveQuest(const uint16_t &botId) const;
-    QList<QPair<uint16_t, QString> > getQuestList(const uint16_t &botId) const;
+    std::vector<std::pair<uint16_t, std::string> > getQuestList(const uint16_t &botId) const;
     void updateDisplayedQuests();
     void appendReputationPoint(const std::string &type,const int32_t &point);
 
@@ -363,7 +361,7 @@ private slots:
     void captureCityWin();
 
     //market
-    void marketList(const uint64_t &price,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList);
+    void marketList(const uint64_t &price,const std::vector<MarketObject> &marketObjectList,const std::vector<MarketMonster> &marketMonsterList,const std::vector<MarketObject> &marketOwnObjectList,const std::vector<MarketMonster> &marketOwnMonsterList);
     void addOwnMonster(const MarketMonster &marketMonster);
     void marketBuy(const bool &success);
     void marketBuyMonster(const PlayerMonster &playerMonster);
@@ -494,17 +492,17 @@ private:
     std::string imagesInterfaceRepeatableString,imagesInterfaceInProgressString;
     QTimer tip_timeout;
     QTimer gain_timeout;
-    QList<QueryType> queryList;
+    std::vector<QueryType> queryList;
     uint16_t shopId;/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
-    QHash<uint32_t,ItemToSellOrBuy> itemsIntoTheShop;
+    std::unordered_map<uint32_t,ItemToSellOrBuy> itemsIntoTheShop;
     int64_t temp_warehouse_cash;// if >0 then Withdraw
     //selection of quantity
     uint32_t tempQuantityForSell;
     bool waitToSell;
-    QList<ItemToSellOrBuy> itemsToSell,itemsToBuy;
+    std::vector<ItemToSellOrBuy> itemsToSell,itemsToBuy;
     QPixmap playerFrontImage,playerBackImage;
     std::string playerFrontImagePath,playerBackImagePath;
-    QList<ActionClan> actionClan;
+    std::vector<ActionClan> actionClan;
     std::string clanName;
     bool haveClanInformations;
     uint16_t factoryId;
@@ -514,7 +512,7 @@ private:
     uint32_t datapackDownloadedCount;
     uint32_t datapackDownloadedSize;
     uint32_t progressingDatapackFileSize;
-    QHash<uint8_t,uint8_t> datapackGatewayProgression;
+    std::unordered_map<uint8_t,uint8_t> datapackGatewayProgression;
     bool protocolIsGood;
 
     NewProfile *newProfile;
@@ -531,15 +529,15 @@ private:
     uint8_t monsterEvolutionPostion;
     uint32_t mLastGivenXP;
     uint8_t currentMonsterLevel;
-    QSet<QString> supportedImageFormats;
+    std::unordered_set<std::string> supportedImageFormats;
     std::string lastPlaceDisplayed;
     std::vector<uint8_t> events;
     std::string visualCategory;
     QTimer botFightTimer;
-    QStringList add_to_inventoryGainList;
-    QList<QTime> add_to_inventoryGainTime;
-    QStringList add_to_inventoryGainExtraList;
-    QList<QTime> add_to_inventoryGainExtraTime;
+    std::vector<std::string> add_to_inventoryGainList;
+    std::vector<QTime> add_to_inventoryGainTime;
+    std::vector<std::string> add_to_inventoryGainExtraList;
+    std::vector<QTime> add_to_inventoryGainExtraTime;
 
     //cache
     QFont disableIntoListFont;
@@ -548,10 +546,10 @@ private:
     //for server/character selection
     bool isLogged;
     uint32_t averagePlayedTime,averageLastConnect;
-    QList<ServerFromPoolForDisplay *> serverOrdenedList;
-    QHash<uint8_t/*character group index*/,QPair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
-    QList<QList<CharacterEntry> > characterListForSelection;
-    QList<CharacterEntry> characterEntryListInWaiting;
+    std::vector<ServerFromPoolForDisplay *> serverOrdenedList;
+    std::unordered_map<uint8_t/*character group index*/,std::pair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
+    std::vector<std::vector<CharacterEntry> > characterListForSelection;
+    std::vector<CharacterEntry> characterEntryListInWaiting;
     int serverSelected;
 
     //plant seed in waiting
@@ -561,7 +559,7 @@ private:
         uint8_t x,y;
         std::string map;
     };
-    QList<SeedInWaiting> seed_in_waiting;
+    std::vector<SeedInWaiting> seed_in_waiting;
     struct ClientPlantInCollecting
     {
         std::string map;
@@ -569,7 +567,7 @@ private:
         uint8_t plant_id;
         uint16_t seconds_to_mature;
     };
-    QList<ClientPlantInCollecting> plant_collect_in_waiting;
+    std::vector<ClientPlantInCollecting> plant_collect_in_waiting;
     //bool seedWait,collectWait;
 
     QTime updateRXTXTime;
@@ -579,48 +577,48 @@ private:
     QSettings settings;
     bool haveShowDisconnectionReason;
     std::string toSmilies(std::string text);
-    QStringList server_list;
+    std::vector<std::string> server_list;
     QAbstractSocket::SocketState socketState;
     bool haveDatapack,haveDatapackMainSub,haveCharacterPosition,haveCharacterInformation,haveInventory,datapackIsParsed,mainSubDatapackIsParsed;
     bool characterSelected;
     uint16_t fightId;
 
     //market buy
-    QList<QPair<uint16_t,uint32_t> > marketBuyObjectList;
+    std::vector<std::pair<uint16_t,uint32_t> > marketBuyObjectList;
     uint32_t marketBuyCashInSuspend;
     bool marketBuyInSuspend;
     //market put
     uint32_t marketPutCashInSuspend;
-    QList<QPair<uint16_t,uint32_t> > marketPutObjectInSuspendList;
-    QList<CatchChallenger::PlayerMonster> marketPutMonsterList;
-    QList<uint8_t> marketPutMonsterPlaceList;
+    std::vector<std::pair<uint16_t,uint32_t> > marketPutObjectInSuspendList;
+    std::vector<CatchChallenger::PlayerMonster> marketPutMonsterList;
+    std::vector<uint8_t> marketPutMonsterPlaceList;
     bool marketPutInSuspend;
     //market withdraw
     bool marketWithdrawInSuspend;
-    QList<MarketObject> marketWithdrawObjectList;
-    QList<MarketMonster> marketWithdrawMonsterList;
+    std::vector<MarketObject> marketWithdrawObjectList;
+    std::vector<MarketMonster> marketWithdrawMonsterList;
 
     //player items
-    QHash<uint16_t,int32_t> change_warehouse_items;//negative = deposite, positive = withdraw
-    QHash<QListWidgetItem *,uint16_t> items_graphical;
-    QHash<uint16_t,QListWidgetItem *> items_to_graphical;
-    QHash<QListWidgetItem *,uint16_t> shop_items_graphical;
-    QHash<uint16_t,QListWidgetItem *> shop_items_to_graphical;
-    QHash<QListWidgetItem *,uint8_t> plants_items_graphical;
-    QHash<uint8_t,QListWidgetItem *> plants_items_to_graphical;
-    QHash<QListWidgetItem *,uint16_t> crafting_recipes_items_graphical;
-    QHash<uint16_t,QListWidgetItem *> crafting_recipes_items_to_graphical;
-    QHash<QListWidgetItem *,uint16_t> fight_attacks_graphical;
-    QHash<QListWidgetItem *,uint8_t> monsterspos_items_graphical;
-    QHash<QListWidgetItem *,uint16_t> attack_to_learn_graphical;
-    QHash<QListWidgetItem *,uint16_t> quests_to_id_graphical;
+    std::unordered_map<uint16_t,int32_t> change_warehouse_items;//negative = deposite, positive = withdraw
+    std::unordered_map<QListWidgetItem *,uint16_t> items_graphical;
+    std::unordered_map<uint16_t,QListWidgetItem *> items_to_graphical;
+    std::unordered_map<QListWidgetItem *,uint16_t> shop_items_graphical;
+    std::unordered_map<uint16_t,QListWidgetItem *> shop_items_to_graphical;
+    std::unordered_map<QListWidgetItem *,uint8_t> plants_items_graphical;
+    std::unordered_map<uint8_t,QListWidgetItem *> plants_items_to_graphical;
+    std::unordered_map<QListWidgetItem *,uint16_t> crafting_recipes_items_graphical;
+    std::unordered_map<uint16_t,QListWidgetItem *> crafting_recipes_items_to_graphical;
+    std::unordered_map<QListWidgetItem *,uint16_t> fight_attacks_graphical;
+    std::unordered_map<QListWidgetItem *,uint8_t> monsterspos_items_graphical;
+    std::unordered_map<QListWidgetItem *,uint16_t> attack_to_learn_graphical;
+    std::unordered_map<QListWidgetItem *,uint16_t> quests_to_id_graphical;
     bool inSelection;
-    QList<uint16_t> objectInUsing;
-    QList<uint32_t> monster_to_deposit,monster_to_withdraw;
+    std::vector<uint16_t> objectInUsing;
+    std::vector<uint32_t> monster_to_deposit,monster_to_withdraw;
 
     //crafting
-    QList<QList<QPair<uint16_t,uint32_t> > > materialOfRecipeInUsing;
-    QList<QPair<uint16_t,uint32_t> > productOfRecipeInUsing;
+    std::vector<std::vector<std::pair<uint16_t,uint32_t> > > materialOfRecipeInUsing;
+    std::vector<std::pair<uint16_t,uint32_t> > productOfRecipeInUsing;
 
     //bot
     Bot actualBot;
@@ -657,9 +655,9 @@ private:
     QTimer displayTrapTimer;
     bool trapSuccess;
     int32_t attack_quantity_changed;
-    QList<BattleInformations> battleInformationsList;
-    QList<uint16_t> botFightList;
-    QHash<uint8_t,QListWidgetItem *> buffToGraphicalItemTop,buffToGraphicalItemBottom;
+    std::vector<BattleInformations> battleInformationsList;
+    std::vector<uint16_t> botFightList;
+    std::unordered_map<uint8_t,QListWidgetItem *> buffToGraphicalItemTop,buffToGraphicalItemBottom;
     bool useTheRescueSkill;
 
     //city
@@ -672,9 +670,9 @@ private:
 
     //trade
     TradeOtherStat tradeOtherStat;
-    QHash<uint16_t,uint32_t> tradeOtherObjects,tradeCurrentObjects;
-    QList<CatchChallenger::PlayerMonster> tradeOtherMonsters,tradeCurrentMonsters;
-    QList<uint8_t> tradeCurrentMonstersPosition;
+    std::unordered_map<uint16_t,uint32_t> tradeOtherObjects,tradeCurrentObjects;
+    std::vector<CatchChallenger::PlayerMonster> tradeOtherMonsters,tradeCurrentMonsters;
+    std::vector<uint8_t> tradeCurrentMonstersPosition;
     std::vector<uint8_t> tradeEvolutionMonsters;
 
     //learn
@@ -713,7 +711,7 @@ private:
     static QIcon icon_server_list_stat3;
     static QIcon icon_server_list_stat4;
     static QIcon icon_server_list_bug;
-    static QList<QIcon> icon_server_list_color;
+    static std::vector<QIcon> icon_server_list_color;
 
     bool monsterBeforeMoveForChangeInWaiting;
     QTimer checkQueryTime;
@@ -727,7 +725,7 @@ private:
     Chat *chat;
 
     //skin
-    QHash<QString,QPixmap> frontSkinCacheString;
+    std::unordered_map<std::string,QPixmap> frontSkinCacheString;
 signals:
     void newError(std::string error,std::string detailedError);
     //datapack
