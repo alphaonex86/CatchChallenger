@@ -130,13 +130,13 @@ private:
     {
         uint8_t packetCode;
         uint8_t queryNumber;
-        QByteArray data;
+        std::string data;
     };
     DelayedReply delayedLogin;
     struct DelayedMessage
     {
         uint8_t packetCode;
-        QByteArray data;
+        std::string data;
     };
     std::vector<DelayedMessage> delayedMessages;
 protected:
@@ -151,8 +151,8 @@ protected:
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;
 
-    bool parseCharacterBlockServer(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data);
-    bool parseCharacterBlockCharacter(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data);
+    bool parseCharacterBlockServer(const uint8_t &packetCode,const uint8_t &queryNumber,const std::string &data);
+    bool parseCharacterBlockCharacter(const uint8_t &packetCode,const uint8_t &queryNumber,const std::string &data);
 
     /// \note This is note into server part to force to write manually the serial and improve the performance, this function is more easy but implies lot of memory copy via SIMD
     //send message without reply
@@ -172,11 +172,11 @@ protected:
     virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     //have message without reply
-    virtual bool parseMessage(const uint8_t &packetCode,const QByteArray &data);
+    virtual bool parseMessage(const uint8_t &packetCode,const std::string &data);
     //have query with reply
-    virtual bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data);
+    virtual bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const std::string &data);
     //send reply
-    virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const QByteArray &data);
+    virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const std::string &data);
 
     //servers list
     LogicialGroup * addLogicalGroup(const std::string &path, const std::string &xml, const std::string &language);

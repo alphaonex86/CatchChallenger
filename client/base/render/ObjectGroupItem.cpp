@@ -4,7 +4,7 @@
 #include <QDebug>
 #include <QtCore/qmath.h>
 
-QHash<Tiled::ObjectGroup *,ObjectGroupItem *> ObjectGroupItem::objectGroupLink;
+std::unordered_map<Tiled::ObjectGroup *,ObjectGroupItem *> ObjectGroupItem::objectGroupLink;
 
 ObjectGroupItem::ObjectGroupItem(Tiled::ObjectGroup *objectGroup,
                 QGraphicsItem *parent)

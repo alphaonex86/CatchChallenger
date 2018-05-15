@@ -2537,7 +2537,7 @@ std::string Api_protocol::toUTF8WithHeader(const std::string &text)
 
 void Api_protocol::have_main_and_sub_datapack_loaded()//can now load player_informations
 {
-    if(!delayedLogin.data.isEmpty())
+    if(!delayedLogin.data.empty())
     {
         bool returnCode=parseCharacterBlockCharacter(delayedLogin.packetCode,delayedLogin.queryNumber,delayedLogin.data);
         delayedLogin.data.clear();

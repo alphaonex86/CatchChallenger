@@ -61,7 +61,7 @@ protected:
     Tiled::MapObject * playerMapObject;
     Tiled::Tileset * playerTileset;
     std::string playerSkinPath;
-    QHash<QString,Tiled::Tileset *> playerTilesetCache;
+    std::unordered_map<std::string,Tiled::Tileset *> playerTilesetCache;
     std::string lastTileset;
     std::string defaultTileset;
     int moveStep;

@@ -49,8 +49,8 @@ public:
     MapVisualiserThread::Map_full * getMap(const std::string &map) const;
 
     std::string current_map;
-    QHash<QString,MapVisualiserThread::Map_full *> all_map,old_all_map;
-    QHash<QString,QDateTime> old_all_map_time;
+    std::unordered_map<std::string,MapVisualiserThread::Map_full *> all_map,old_all_map;
+    std::unordered_map<std::string,QDateTime> old_all_map_time;
 protected:
     Tiled::MapReader reader;
     QGraphicsScene *mScene;
@@ -77,15 +77,16 @@ protected:
 
     MapVisualiserThread mapVisualiserThread;
     QStringList asyncMap;
-    QHash<uint16_t/*intervale*/,QTimer *> animationTimer;
-    QHash<uint16_t/*intervale*/,QHash<uint8_t/*frame total*/,uint8_t/*actual frame*/> > animationFrame;
+    std::unordered_map<uint16_t/*intervale*/,QTimer *> animationTimer;
+    std::unordered_map<uint16_t/*intervale*/,std::unordered_map<uint8_t/*frame total*/,uint8_t/*actual frame*/> > animationFrame;
 
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
 protected slots:
     virtual void resetAll();
 public slots:
     void loadOtherMap(const std::string &resolvedFileName);
-    virtual void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y, const std::string &lookAt, const std::string &skin);
+    virtual void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y,
+                                 const std::string &lookAt, const std::string &skin);
     //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map, const bool &display);
     virtual void removeUnusedMap();
     virtual void hideNotloadedMap();

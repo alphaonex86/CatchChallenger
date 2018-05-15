@@ -72,19 +72,19 @@ void FakeBot::start_step()
 void FakeBot::random_new_step()
 {
     Direction final_direction;
-    while(predefinied_step.size()>0 && !canGoTo(predefinied_step.first(),*map,x,y,true))
+    while(predefinied_step.size()>0 && !canGoTo(predefinied_step.front(),*map,x,y,true))
     {
         qDebug() << (QStringLiteral("FakeBot::random_new_step(), step 1, id: %1, map: %2 (%3,%4), unable to go on: %5").arg(api.getId()).arg(
                          QString::fromStdString(map->map_file)
                          ).arg(x).arg(y).arg(
-                         QString::fromStdString(MoveOnTheMap::directionToString(predefinied_step.first()))
+                         QString::fromStdString(MoveOnTheMap::directionToString(predefinied_step.front()))
                          ));
-        predefinied_step.removeFirst();
+        predefinied_step.erase(predefinied_step.cbegin());
     }
     if(predefinied_step.size()>0)
     {
-        final_direction=predefinied_step.first();
-        predefinied_step.removeFirst();
+        final_direction=predefinied_step.front();
+        predefinied_step.erase(predefinied_step.cbegin());
     }
     else
     {
@@ -175,9 +175,12 @@ void FakeBot::have_current_player_info(const CatchChallenger::Player_private_and
 //    qDebug() << (QStringLiteral("FakeBot::have_current_player_info() pseudo: %1").arg(informations.public_informations.pseudo));
 }
 
-void FakeBot::newError(QString error,QString detailedError)
+void FakeBot::newError(std::string error,std::string detailedError)
 {
-    qDebug() << (QStringLiteral("FakeBot::newError() error: %1, detailedError: %2").arg(error).arg(detailedError));
+    qDebug() << (QStringLiteral("FakeBot::newError() error: %1, detailedError: %2")
+                 .arg(QString::fromStdString(error))
+                 .arg(QString::fromStdString(detailedError))
+                 );
     socket.disconnectFromHost();
     this->map=NULL;
 }
