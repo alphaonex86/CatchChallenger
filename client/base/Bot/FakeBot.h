@@ -41,7 +41,7 @@ private:
     bool do_step;
     CommonMap *map;
     COORD_TYPE x,y;
-    QList<Direction> predefinied_step;
+    std::vector<Direction> predefinied_step;
 public slots:
     void stop_step();
     void stop();
@@ -50,7 +50,7 @@ private slots:
     void random_new_step();
     void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
-    void newError(QString error,QString detailedError);
+    void newError(std::string error, std::string detailedError);
     void newSocketError(QAbstractSocket::SocketError error);
     void disconnected();
     void tryLink();
