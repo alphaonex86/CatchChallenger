@@ -21,6 +21,7 @@
 #include <QSet>
 #include <QMultiMap>
 #include <QHash>
+#include <unordered_map>
 
 class ObjectGroupItem : public QGraphicsItem
 {
@@ -36,7 +37,7 @@ public:
     Tiled::ObjectGroup *mObjectGroup;
 
     //the link tiled with viewer
-    static QHash<Tiled::ObjectGroup *,ObjectGroupItem *> objectGroupLink;
+    static std::unordered_map<Tiled::ObjectGroup *,ObjectGroupItem *> objectGroupLink;
 };
 
 #endif

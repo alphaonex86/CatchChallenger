@@ -16,9 +16,9 @@
 
 using namespace CatchChallenger;
 
-bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const uint8_t &queryNumber, const QByteArray &data)
+bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const uint8_t &queryNumber, const std::string &data)
 {
-    QDataStream in(data);
+    QDataStream in(QByteArray(data.data(),data.size()));
     in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
     {
@@ -199,7 +199,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
                 parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            QByteArray rawText=data.mid(static_cast<int>(in.device()->pos()),textSize);
+            QByteArray rawText=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()),textSize);
             CommonSettingsServer::commonSettingsServer.mainDatapackCode=std::string(rawText.data(),rawText.size());
             in.device()->seek(in.device()->pos()+rawText.size());
 
@@ -241,7 +241,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
                 parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            QByteArray rawText=data.mid(static_cast<int>(in.device()->pos()),textSize);
+            QByteArray rawText=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()),textSize);
             CommonSettingsServer::commonSettingsServer.subDatapackCode=std::string(rawText.data(),rawText.size());
             in.device()->seek(in.device()->pos()+rawText.size());
 
@@ -269,7 +269,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         return false;
     }
     CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(28);
-    memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),data.mid(static_cast<int>(in.device()->pos()),28).constData(),28);
+    memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()),28).constData(),28);
     in.device()->seek(in.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size());
 
     if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
@@ -280,7 +280,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
             return false;
         }
         CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(28);
-        memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),data.mid(static_cast<int>(in.device()->pos()),28).constData(),28);
+        memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()),28).constData(),28);
         in.device()->seek(in.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size());
     }
 
@@ -300,7 +300,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
                 parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            QByteArray rawText=data.mid(static_cast<int>(in.device()->pos()),mirrorSize);
+            QByteArray rawText=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()),mirrorSize);
             CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=std::string(rawText.data(),rawText.size());
             in.device()->seek(in.device()->pos()+rawText.size());
             if(!regex_search(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer,std::regex("^https?://")))
@@ -316,9 +316,13 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
 
     if(!CatchChallenger::CommonDatapack::commonDatapack.isParsedContent())//for bit array
     {
-        if(delayedLogin.data.isEmpty())
+        if(delayedLogin.data.empty())
         {
-            delayedLogin.data=data.mid(static_cast<int>(in.device()->pos()),static_cast<int>(in.device()->size()-in.device()->pos()));
+            QByteArray tdata=QByteArray(data.data(),data.size()).mid(
+                        static_cast<int>(in.device()->pos()),
+                        static_cast<int>(in.device()->size()-in.device()->pos())
+                        );
+            delayedLogin.data=std::string(tdata.data(),tdata.size());
             delayedLogin.packetCode=packetCode;
             delayedLogin.queryNumber=queryNumber;
             return true;
@@ -335,9 +339,13 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
     }
     if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.isParsedContent())//for botid
     {
-        if(delayedLogin.data.isEmpty())
+        if(delayedLogin.data.empty())
         {
-            delayedLogin.data=data.mid(static_cast<int>(in.device()->pos()),static_cast<int>(in.device()->size()-in.device()->pos()));
+            QByteArray tdata=QByteArray(data.data(),data.size()).mid(
+                        static_cast<int>(in.device()->pos()),
+                        static_cast<int>(in.device()->size()-in.device()->pos())
+                        );
+            delayedLogin.data=std::string(tdata.data(),tdata.size());
             delayedLogin.packetCode=packetCode;
             delayedLogin.queryNumber=queryNumber;
             return true;
@@ -353,13 +361,18 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         }
     }
 
-    parseCharacterBlockCharacter(packetCode,queryNumber,data.mid(static_cast<int>(in.device()->pos()),static_cast<int>(in.device()->size()-in.device()->pos())));
+    QByteArray tdata=QByteArray(data.data(),data.size()).mid(
+                static_cast<int>(in.device()->pos()),
+                static_cast<int>(in.device()->size()-in.device()->pos())
+                );
+    delayedLogin.data=std::string(tdata.data(),tdata.size());
+    parseCharacterBlockCharacter(packetCode,queryNumber,std::string(tdata.data(),tdata.size()));
     return true;
 }
 
-bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const uint8_t &queryNumber, const QByteArray &data)
+bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const uint8_t &queryNumber, const std::string &data)
 {
-    QDataStream in(data);
+    QDataStream in(QByteArray(data.data(),data.size()));
     in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
     if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
     {
@@ -436,7 +449,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            QByteArray rawText=data.mid(static_cast<int>(in.device()->pos()),textSize);
+            QByteArray rawText=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()),textSize);
             player_informations.public_informations.pseudo=std::string(rawText.data(),rawText.size());
             in.device()->seek(in.device()->pos()+rawText.size());
         }
