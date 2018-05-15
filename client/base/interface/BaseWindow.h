@@ -126,7 +126,7 @@ public:
     MapController *mapController;
 protected:
     void changeEvent(QEvent *e);
-    static void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const std::string &msg);
+    //static void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const std::string &msg);
     static QFile debugFile;
     static uint8_t debugFileStatus;
 public slots:
@@ -722,7 +722,7 @@ private:
     uint32_t worseQueryTime;
     bool multiplayer;
 
-    CatchChallenger::Api_protocol * client;
+    CatchChallenger::Api_client_real * client;
     ClientFightEngine fightEngine;
     Chat *chat;
 

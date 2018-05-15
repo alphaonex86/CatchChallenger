@@ -621,7 +621,7 @@ void Api_client_real::httpErrorEventBase()
     return;
 }
 
-void Api_client_real::sendDatapackContentBase(const QByteArray &hashBase)
+void Api_client_real::sendDatapackContentBase(const std::string &hashBase)
 {
     if(wait_datapack_content_base)
     {

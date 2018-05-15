@@ -232,114 +232,114 @@ protected:
     std::vector<std::vector<CharacterEntry> > characterListForSelection;
     std::string tokenForGameServer;
 protected:
-    virtual void newError(const std::string &error,const std::string &detailedError) const = 0;
-    virtual void message(const std::string &message) const = 0;
-    virtual void lastReplyTime(const uint32_t &time) const = 0;
+    virtual void newError(const std::string &error,const std::string &detailedError) = 0;
+    virtual void message(const std::string &message) = 0;
+    virtual void lastReplyTime(const uint32_t &time) = 0;
 
     //protocol/connection info
-    virtual void disconnected(const std::string &reason) const = 0;
-    virtual void notLogged(const std::string &reason) const = 0;
-    virtual void logged(const std::vector<ServerFromPoolForDisplay *> &serverOrdenedList,const std::vector<std::vector<CharacterEntry> > &characterEntryList) const = 0;
-    virtual void protocol_is_good() const = 0;
-    virtual void connectedOnLoginServer() const = 0;
-    virtual void connectingOnGameServer() const = 0;
-    virtual void connectedOnGameServer() const = 0;
+    virtual void disconnected(const std::string &reason) = 0;
+    virtual void notLogged(const std::string &reason) = 0;
+    virtual void logged(const std::vector<ServerFromPoolForDisplay *> &serverOrdenedList,const std::vector<std::vector<CharacterEntry> > &characterEntryList) = 0;
+    virtual void protocol_is_good() = 0;
+    virtual void connectedOnLoginServer() = 0;
+    virtual void connectingOnGameServer() = 0;
+    virtual void connectedOnGameServer() = 0;
     virtual void haveDatapackMainSubCode() = 0;
     virtual void gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression) = 0;
 
     //general info
-    virtual void number_of_player(const uint16_t &number,const uint16_t &max_players) const = 0;
-    virtual void random_seeds(const std::string &data) const = 0;
+    virtual void number_of_player(const uint16_t &number,const uint16_t &max_players) = 0;
+    virtual void random_seeds(const std::string &data) = 0;
 
     //character
-    virtual void newCharacterId(const uint8_t &returnCode,const uint32_t &characterId) const = 0;
-    virtual void haveCharacter() const = 0;
+    virtual void newCharacterId(const uint8_t &returnCode,const uint32_t &characterId) = 0;
+    virtual void haveCharacter() = 0;
     //events
-    virtual void setEvents(const std::vector<std::pair<uint8_t,uint8_t> > &events) const = 0;
-    virtual void newEvent(const uint8_t &event,const uint8_t &event_value) const = 0;
+    virtual void setEvents(const std::vector<std::pair<uint8_t,uint8_t> > &events) = 0;
+    virtual void newEvent(const uint8_t &event,const uint8_t &event_value) = 0;
 
     //map move
-    virtual void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) const = 0;
-    virtual void move_player(const uint16_t &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) const = 0;
-    virtual void remove_player(const uint16_t &id) const = 0;
-    virtual void reinsert_player(const uint16_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) const = 0;
-    virtual void full_reinsert_player(const uint16_t &id,const uint32_t &mapId,const uint8_t &x,const uint8_t y,const CatchChallenger::Direction &direction) const = 0;
-    virtual void dropAllPlayerOnTheMap() const = 0;
-    virtual void teleportTo(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) const = 0;
+    virtual void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
+    virtual void move_player(const uint16_t &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) = 0;
+    virtual void remove_player(const uint16_t &id) = 0;
+    virtual void reinsert_player(const uint16_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
+    virtual void full_reinsert_player(const uint16_t &id,const uint32_t &mapId,const uint8_t &x,const uint8_t y,const CatchChallenger::Direction &direction) = 0;
+    virtual void dropAllPlayerOnTheMap() = 0;
+    virtual void teleportTo(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
 
     //plant
-    virtual void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature) const = 0;
-    virtual void remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y) const = 0;
-    virtual void seed_planted(const bool &ok) const = 0;
-    virtual void plant_collected(const CatchChallenger::Plant_collect &stat) const = 0;
+    virtual void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature) = 0;
+    virtual void remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y) = 0;
+    virtual void seed_planted(const bool &ok) = 0;
+    virtual void plant_collected(const CatchChallenger::Plant_collect &stat) = 0;
     //crafting
-    virtual void recipeUsed(const RecipeUsage &recipeUsage) const = 0;
+    virtual void recipeUsed(const RecipeUsage &recipeUsage) = 0;
     //inventory
-    virtual void objectUsed(const ObjectUsage &objectUsage) const = 0;
-    virtual void monsterCatch(const bool &success) const = 0;
+    virtual void objectUsed(const ObjectUsage &objectUsage) = 0;
+    virtual void monsterCatch(const bool &success) = 0;
 
     //chat
-    virtual void new_chat_text(const CatchChallenger::Chat_type &chat_type,const std::string &text,const std::string &pseudo,const CatchChallenger::Player_type &player_type) const = 0;
-    virtual void new_system_text(const CatchChallenger::Chat_type &chat_type,const std::string &text) const = 0;
+    virtual void new_chat_text(const CatchChallenger::Chat_type &chat_type,const std::string &text,const std::string &pseudo,const CatchChallenger::Player_type &player_type) = 0;
+    virtual void new_system_text(const CatchChallenger::Chat_type &chat_type,const std::string &text) = 0;
 
     //player info
-    virtual void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations) const = 0;
-    virtual void have_inventory(const std::unordered_map<uint16_t,uint32_t> &items,const std::unordered_map<uint16_t,uint32_t> &warehouse_items) const = 0;
-    virtual void add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items) const = 0;
-    virtual void remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items) const = 0;
+    virtual void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations) = 0;
+    virtual void have_inventory(const std::unordered_map<uint16_t,uint32_t> &items,const std::unordered_map<uint16_t,uint32_t> &warehouse_items) = 0;
+    virtual void add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items) = 0;
+    virtual void remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items) = 0;
 
     //datapack
-    virtual void haveTheDatapack() const = 0;
-    virtual void haveTheDatapackMainSub() const = 0;
+    virtual void haveTheDatapack() = 0;
+    virtual void haveTheDatapackMainSub() = 0;
     //base
-    virtual void newFileBase(const std::string &fileName,const std::string &data) const = 0;
-    virtual void newHttpFileBase(const std::string &url,const std::string &fileName) const = 0;
-    virtual void removeFileBase(const std::string &fileName) const = 0;
-    virtual void datapackSizeBase(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) const = 0;
+    virtual void newFileBase(const std::string &fileName,const std::string &data) = 0;
+    virtual void newHttpFileBase(const std::string &url,const std::string &fileName) = 0;
+    virtual void removeFileBase(const std::string &fileName) = 0;
+    virtual void datapackSizeBase(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) = 0;
     //main
-    virtual void newFileMain(const std::string &fileName,const std::string &data) const = 0;
-    virtual void newHttpFileMain(const std::string &url,const std::string &fileName) const = 0;
-    virtual void removeFileMain(const std::string &fileName) const = 0;
-    virtual void datapackSizeMain(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) const = 0;
+    virtual void newFileMain(const std::string &fileName,const std::string &data) = 0;
+    virtual void newHttpFileMain(const std::string &url,const std::string &fileName) = 0;
+    virtual void removeFileMain(const std::string &fileName) = 0;
+    virtual void datapackSizeMain(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) = 0;
     //sub
-    virtual void newFileSub(const std::string &fileName,const std::string &data) const = 0;
-    virtual void newHttpFileSub(const std::string &url,const std::string &fileName) const = 0;
-    virtual void removeFileSub(const std::string &fileName) const = 0;
-    virtual void datapackSizeSub(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) const = 0;
+    virtual void newFileSub(const std::string &fileName,const std::string &data) = 0;
+    virtual void newHttpFileSub(const std::string &url,const std::string &fileName) = 0;
+    virtual void removeFileSub(const std::string &fileName) = 0;
+    virtual void datapackSizeSub(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) = 0;
 
     //shop
-    virtual void haveShopList(const std::vector<ItemToSellOrBuy> &items) const = 0;
-    virtual void haveBuyObject(const BuyStat &stat,const uint32_t &newPrice) const = 0;
-    virtual void haveSellObject(const SoldStat &stat,const uint32_t &newPrice) const = 0;
+    virtual void haveShopList(const std::vector<ItemToSellOrBuy> &items) = 0;
+    virtual void haveBuyObject(const BuyStat &stat,const uint32_t &newPrice) = 0;
+    virtual void haveSellObject(const SoldStat &stat,const uint32_t &newPrice) = 0;
 
     //factory
-    virtual void haveFactoryList(const uint32_t &remainingProductionTime,const std::vector<ItemToSellOrBuy> &resources,const std::vector<ItemToSellOrBuy> &products) const = 0;
-    virtual void haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice) const = 0;
-    virtual void haveSellFactoryObject(const SoldStat &stat,const uint32_t &newPrice) const = 0;
+    virtual void haveFactoryList(const uint32_t &remainingProductionTime,const std::vector<ItemToSellOrBuy> &resources,const std::vector<ItemToSellOrBuy> &products) = 0;
+    virtual void haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice) = 0;
+    virtual void haveSellFactoryObject(const SoldStat &stat,const uint32_t &newPrice) = 0;
 
     //trade
-    virtual void tradeRequested(const std::string &pseudo,const uint8_t &skinInt) const = 0;
-    virtual void tradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt) const = 0;
-    virtual void tradeCanceledByOther() const = 0;
-    virtual void tradeFinishedByOther() const = 0;
-    virtual void tradeValidatedByTheServer() const = 0;
-    virtual void tradeAddTradeCash(const uint64_t &cash) const = 0;
-    virtual void tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity) const = 0;
-    virtual void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster) const = 0;
+    virtual void tradeRequested(const std::string &pseudo,const uint8_t &skinInt) = 0;
+    virtual void tradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt) = 0;
+    virtual void tradeCanceledByOther() = 0;
+    virtual void tradeFinishedByOther() = 0;
+    virtual void tradeValidatedByTheServer() = 0;
+    virtual void tradeAddTradeCash(const uint64_t &cash) = 0;
+    virtual void tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity) = 0;
+    virtual void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster) = 0;
 
     //battle
-    virtual void battleRequested(const std::string &pseudo,const uint8_t &skinInt) const = 0;
-    virtual void battleAcceptedByOther(const std::string &pseudo,const uint8_t &skinId,const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster) const = 0;
-    virtual void battleCanceledByOther() const;
-    virtual void sendBattleReturn(const std::vector<Skill::AttackReturn> &attackReturn) const = 0;
+    virtual void battleRequested(const std::string &pseudo,const uint8_t &skinInt) = 0;
+    virtual void battleAcceptedByOther(const std::string &pseudo,const uint8_t &skinId,const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster) = 0;
+    virtual void battleCanceledByOther();
+    virtual void sendBattleReturn(const std::vector<Skill::AttackReturn> &attackReturn) = 0;
 
     //clan
-    virtual void clanActionSuccess(const uint32_t &clanId) const = 0;
-    virtual void clanActionFailed() const = 0;
-    virtual void clanDissolved() const = 0;
-    virtual void clanInformations(const std::string &name) const = 0;
-    virtual void clanInvite(const uint32_t &clanId,const std::string &name) const = 0;
-    virtual void cityCapture(const uint32_t &remainingTime,const uint8_t &type) const = 0;
+    virtual void clanActionSuccess(const uint32_t &clanId) = 0;
+    virtual void clanActionFailed() = 0;
+    virtual void clanDissolved() = 0;
+    virtual void clanInformations(const std::string &name) = 0;
+    virtual void clanInvite(const uint32_t &clanId,const std::string &name) = 0;
+    virtual void cityCapture(const uint32_t &remainingTime,const uint8_t &type) = 0;
 
     //city
     virtual void captureCityYourAreNotLeader() = 0;
@@ -351,14 +351,14 @@ protected:
     virtual void captureCityWin() = 0;
 
     //market
-    virtual void marketList(const uint64_t &price,const std::vector<MarketObject> &marketObjectList,const std::vector<MarketMonster> &marketMonsterList,const std::vector<MarketObject> &marketOwnObjectList,const std::vector<MarketMonster> &marketOwnMonsterList) const = 0;
-    virtual void marketBuy(const bool &success) const = 0;
-    virtual void marketBuyMonster(const PlayerMonster &playerMonster) const = 0;
-    virtual void marketPut(const bool &success) const = 0;
-    virtual void marketGetCash(const uint64_t &cash) const = 0;
-    virtual void marketWithdrawCanceled() const = 0;
-    virtual void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity) const = 0;
-    virtual void marketWithdrawMonster(const PlayerMonster &playerMonster) const = 0;
+    virtual void marketList(const uint64_t &price,const std::vector<MarketObject> &marketObjectList,const std::vector<MarketMonster> &marketMonsterList,const std::vector<MarketObject> &marketOwnObjectList,const std::vector<MarketMonster> &marketOwnMonsterList) = 0;
+    virtual void marketBuy(const bool &success) = 0;
+    virtual void marketBuyMonster(const PlayerMonster &playerMonster) = 0;
+    virtual void marketPut(const bool &success) = 0;
+    virtual void marketGetCash(const uint64_t &cash) = 0;
+    virtual void marketWithdrawCanceled() = 0;
+    virtual void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity) = 0;
+    virtual void marketWithdrawMonster(const PlayerMonster &playerMonster) = 0;
 public:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const uint8_t &moved_unit,const CatchChallenger::Direction &direction);

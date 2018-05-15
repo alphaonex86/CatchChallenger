@@ -20,7 +20,6 @@ SOURCES += $$PWD/Api_client_virtual.cpp \
     $$PWD/Api_protocol_message.cpp \
     $$PWD/Api_protocol_query.cpp \
     $$PWD/Api_protocol_reply.cpp \
-    $$PWD/Bot/FakeBot.cpp \
     $$PWD/render/TileLayerItem.cpp \
     $$PWD/render/ObjectGroupItem.cpp \
     $$PWD/render/MapVisualiserPlayer.cpp \
@@ -83,7 +82,6 @@ HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/DatapackChecksum.h \
     $$PWD/Api_client_virtual.h \
     $$PWD/Api_protocol.h \
-    $$PWD/Bot/FakeBot.h \
     $$PWD/render/TileLayerItem.h \
     $$PWD/render/ObjectGroupItem.h \
     $$PWD/render/MapVisualiserPlayer.h \

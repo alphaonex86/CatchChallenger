@@ -23,8 +23,6 @@
 #include <QMessageBox>
 #include <QDesktopServices>
 #include <QRegularExpression>
-#include <QScriptValue>
-#include <QScriptEngine>
 #include <QtQml>
 #include <QComboBox>
 #include <iostream>
@@ -37,10 +35,10 @@
 
 using namespace CatchChallenger;
 
-QString BaseWindow::text_type=QStringLiteral("type");
-QString BaseWindow::text_lang=QStringLiteral("lang");
-QString BaseWindow::text_en=QStringLiteral("en");
-QString BaseWindow::text_text=QStringLiteral("text");
+std::string BaseWindow::text_type="type";
+std::string BaseWindow::text_lang="lang";
+std::string BaseWindow::text_en="en";
+std::string BaseWindow::text_text="text";
 QFile BaseWindow::debugFile;
 uint8_t BaseWindow::debugFileStatus=0;
 
@@ -289,14 +287,14 @@ BaseWindow::BaseWindow() :
     /// \todo able to cancel quest
     ui->cancelQuest->hide();
     loadSoundSettings();
-    qInstallMessageHandler(&BaseWindow::customMessageHandler);
+    //qInstallMessageHandler(&BaseWindow::customMessageHandler);
 
     #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
     {
         QFile file(":/images/interface/repeatable.png");
         if(file.open(QIODevice::ReadOnly))
         {
-            imagesInterfaceRepeatableString=QStringLiteral("<img src=\"data:image/png;base64,%1\" alt=\"Repeatable\" title=\"Repeatable\" />").arg(QString(file.readAll().toBase64()));
+            imagesInterfaceRepeatableString=QStringLiteral("<img src=\"data:image/png;base64,%1\" alt=\"Repeatable\" title=\"Repeatable\" />").arg(QString(file.readAll().toBase64())).toStdString();
             file.close();
         }
     }
@@ -304,7 +302,7 @@ BaseWindow::BaseWindow() :
         QFile file(":/images/interface/in-progress.png");
         if(file.open(QIODevice::ReadOnly))
         {
-            imagesInterfaceInProgressString=QStringLiteral("<img src=\"data:image/png;base64,%1\" alt=\"In progress\" title=\"In progress\" />").arg(QString(file.readAll().toBase64()));
+            imagesInterfaceInProgressString=QStringLiteral("<img src=\"data:image/png;base64,%1\" alt=\"In progress\" title=\"In progress\" />").arg(QString(file.readAll().toBase64())).toStdString();
             file.close();
         }
     }
@@ -361,9 +359,9 @@ void BaseWindow::connectAllSignals()
     mapController->connectAllSignals(client);
 
     //for bug into solo player: Api_client_real -> Api_protocol
-    if(!connect(client,&CatchChallenger::Api_client_real::lastReplyTime,      this,&BaseWindow::lastReplyTime,    Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtlastReplyTime,      this,&BaseWindow::lastReplyTime,    Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::protocol_is_good,   this,&BaseWindow::protocol_is_good, Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtprotocol_is_good,   this,&BaseWindow::protocol_is_good, Qt::QueuedConnection))
         abort();
     if(!connect(client,&CatchChallenger::Api_protocol::disconnected,          this,&BaseWindow::disconnected,     Qt::QueuedConnection))
         abort();
