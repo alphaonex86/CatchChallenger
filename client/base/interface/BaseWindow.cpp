@@ -54,7 +54,7 @@ QIcon BaseWindow::icon_server_list_stat2;
 QIcon BaseWindow::icon_server_list_stat3;
 QIcon BaseWindow::icon_server_list_stat4;
 QIcon BaseWindow::icon_server_list_bug;
-QList<QIcon> BaseWindow::icon_server_list_color;
+std::vector<QIcon> BaseWindow::icon_server_list_color;
 
 BaseWindow::BaseWindow() :
     ui(new Ui::BaseWindowUI)
@@ -133,7 +133,7 @@ BaseWindow::BaseWindow() :
         int index=0;
         while(index<supportedImageFormats.size())
         {
-            this->supportedImageFormats << QString(supportedImageFormats.at(index));
+            this->supportedImageFormats.insert(QString(supportedImageFormats.at(index)).toStdString());
             index++;
         }
     }
@@ -363,160 +363,160 @@ void BaseWindow::connectAllSignals()
         abort();
     if(!connect(client,&CatchChallenger::Api_client_real::Qtprotocol_is_good,   this,&BaseWindow::protocol_is_good, Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::disconnected,          this,&BaseWindow::disconnected,     Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtdisconnected,          this,&BaseWindow::disconnected,     Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::newError,           this,&BaseWindow::newError,         Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtnewError,           this,&BaseWindow::newError,         Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::message,          this,&BaseWindow::message,          Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtmessage,          this,&BaseWindow::message,          Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::notLogged,          this,&BaseWindow::notLogged,        Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtnotLogged,          this,&BaseWindow::notLogged,        Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::logged,             this,&BaseWindow::logged,           Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtlogged,             this,&BaseWindow::logged,           Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::haveTheDatapack,    this,&BaseWindow::haveTheDatapack,  Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QthaveTheDatapack,    this,&BaseWindow::haveTheDatapack,  Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::haveTheDatapackMainSub,    this,&BaseWindow::haveTheDatapackMainSub,  Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QthaveTheDatapackMainSub,    this,&BaseWindow::haveTheDatapackMainSub,  Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::haveDatapackMainSubCode,    this,&BaseWindow::haveDatapackMainSubCode,  Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QthaveDatapackMainSubCode,    this,&BaseWindow::haveDatapackMainSubCode,  Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::clanActionFailed,   this,&BaseWindow::clanActionFailed, Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtclanActionFailed,   this,&BaseWindow::clanActionFailed, Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::clanActionSuccess,  this,&BaseWindow::clanActionSuccess,Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtclanActionSuccess,  this,&BaseWindow::clanActionSuccess,Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::clanDissolved,      this,&BaseWindow::clanDissolved,    Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtclanDissolved,      this,&BaseWindow::clanDissolved,    Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::clanInformations,   this,&BaseWindow::clanInformations, Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtclanInformations,   this,&BaseWindow::clanInformations, Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::clanInvite,         this,&BaseWindow::clanInvite,       Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtclanInvite,         this,&BaseWindow::clanInvite,       Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::cityCapture,        this,&BaseWindow::cityCapture,      Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtcityCapture,        this,&BaseWindow::cityCapture,      Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::setEvents,          this,&BaseWindow::setEvents,        Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtsetEvents,          this,&BaseWindow::setEvents,        Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::newEvent,           this,&BaseWindow::newEvent,         Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtnewEvent,           this,&BaseWindow::newEvent,         Qt::QueuedConnection))
         abort();
 
-    if(!connect(client,&CatchChallenger::Api_protocol::captureCityYourAreNotLeader,                this,&BaseWindow::captureCityYourAreNotLeader,              Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtcaptureCityYourAreNotLeader,                this,&BaseWindow::captureCityYourAreNotLeader,              Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::captureCityYourLeaderHaveStartInOtherCity,  this,&BaseWindow::captureCityYourLeaderHaveStartInOtherCity,Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtcaptureCityYourLeaderHaveStartInOtherCity,  this,&BaseWindow::captureCityYourLeaderHaveStartInOtherCity,Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::captureCityPreviousNotFinished,             this,&BaseWindow::captureCityPreviousNotFinished,           Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtcaptureCityPreviousNotFinished,             this,&BaseWindow::captureCityPreviousNotFinished,           Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::captureCityStartBattle,                     this,&BaseWindow::captureCityStartBattle,                   Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtcaptureCityStartBattle,                     this,&BaseWindow::captureCityStartBattle,                   Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::captureCityStartBotFight,                   this,&BaseWindow::captureCityStartBotFight,                 Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtcaptureCityStartBotFight,                   this,&BaseWindow::captureCityStartBotFight,                 Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::captureCityDelayedStart,                    this,&BaseWindow::captureCityDelayedStart,                  Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtcaptureCityDelayedStart,                    this,&BaseWindow::captureCityDelayedStart,                  Qt::QueuedConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::captureCityWin,                             this,&BaseWindow::captureCityWin,                           Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtcaptureCityWin,                             this,&BaseWindow::captureCityWin,                           Qt::QueuedConnection))
         abort();
 
     //connect the map controler
-    if(!connect(client,&CatchChallenger::Api_protocol::have_current_player_info,this,&BaseWindow::have_character_position,Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qthave_current_player_info,this,&BaseWindow::have_character_position,Qt::QueuedConnection))
         abort();
 
     //inventory
-    if(!connect(client,&CatchChallenger::Api_protocol::have_inventory,     this,&BaseWindow::have_inventory))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qthave_inventory,     this,&BaseWindow::have_inventory))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::add_to_inventory,   this,&BaseWindow::add_to_inventory_slot))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtadd_to_inventory,   this,&BaseWindow::add_to_inventory_slot))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::remove_to_inventory,this,&BaseWindow::remove_to_inventory_slot))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtremove_to_inventory,this,&BaseWindow::remove_to_inventory_slot))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::monsterCatch,       this,&BaseWindow::monsterCatch))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtmonsterCatch,       this,&BaseWindow::monsterCatch))
         abort();
 
     //character
-    if(!connect(client,&CatchChallenger::Api_protocol::newCharacterId,     this,&BaseWindow::newCharacterId))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtnewCharacterId,     this,&BaseWindow::newCharacterId))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::haveCharacter,     this,&BaseWindow::haveCharacter))
+    if(!connect(client,&CatchChallenger::Api_client_real::QthaveCharacter,     this,&BaseWindow::haveCharacter))
         abort();
 
     //chat
-    if(!connect(client,&CatchChallenger::Api_protocol::new_chat_text,  chat,&Chat::new_chat_text))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtnew_chat_text,  chat,&Chat::new_chat_text))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::new_system_text,chat,&Chat::new_system_text))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtnew_system_text,chat,&Chat::new_system_text))
         abort();
 
     //plants
-    if(!connect(this,&BaseWindow::useSeed,              client,&CatchChallenger::Api_protocol::useSeed))
+    if(!connect(this,&BaseWindow::useSeed,              client,&CatchChallenger::Api_client_real::useSeed))
         abort();
-    if(!connect(this,&BaseWindow::collectMaturePlant,   client,&CatchChallenger::Api_protocol::collectMaturePlant))
+    if(!connect(this,&BaseWindow::collectMaturePlant,   client,&CatchChallenger::Api_client_real::collectMaturePlant))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::insert_plant,   this,&BaseWindow::insert_plant))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtinsert_plant,   this,&BaseWindow::insert_plant))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::remove_plant,   this,&BaseWindow::remove_plant))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtremove_plant,   this,&BaseWindow::remove_plant))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::seed_planted,   this,&BaseWindow::seed_planted))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtseed_planted,   this,&BaseWindow::seed_planted))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::plant_collected,this,&BaseWindow::plant_collected))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtplant_collected,this,&BaseWindow::plant_collected))
         abort();
     //crafting
-    if(!connect(client,&CatchChallenger::Api_protocol::recipeUsed,     this,&BaseWindow::recipeUsed))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtrecipeUsed,     this,&BaseWindow::recipeUsed))
         abort();
     //trade
-    if(!connect(client,&CatchChallenger::Api_protocol::tradeRequested,             this,&BaseWindow::tradeRequested))
+    if(!connect(client,&CatchChallenger::Api_client_real::QttradeRequested,             this,&BaseWindow::tradeRequested))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::tradeAcceptedByOther,       this,&BaseWindow::tradeAcceptedByOther))
+    if(!connect(client,&CatchChallenger::Api_client_real::QttradeAcceptedByOther,       this,&BaseWindow::tradeAcceptedByOther))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::tradeCanceledByOther,       this,&BaseWindow::tradeCanceledByOther))
+    if(!connect(client,&CatchChallenger::Api_client_real::QttradeCanceledByOther,       this,&BaseWindow::tradeCanceledByOther))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::tradeFinishedByOther,       this,&BaseWindow::tradeFinishedByOther))
+    if(!connect(client,&CatchChallenger::Api_client_real::QttradeFinishedByOther,       this,&BaseWindow::tradeFinishedByOther))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::tradeValidatedByTheServer,  this,&BaseWindow::tradeValidatedByTheServer))
+    if(!connect(client,&CatchChallenger::Api_client_real::QttradeValidatedByTheServer,  this,&BaseWindow::tradeValidatedByTheServer))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::tradeAddTradeCash,          this,&BaseWindow::tradeAddTradeCash))
+    if(!connect(client,&CatchChallenger::Api_client_real::QttradeAddTradeCash,          this,&BaseWindow::tradeAddTradeCash))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::tradeAddTradeObject,        this,&BaseWindow::tradeAddTradeObject))
+    if(!connect(client,&CatchChallenger::Api_client_real::QttradeAddTradeObject,        this,&BaseWindow::tradeAddTradeObject))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::tradeAddTradeMonster,       this,&BaseWindow::tradeAddTradeMonster))
+    if(!connect(client,&CatchChallenger::Api_client_real::QttradeAddTradeMonster,       this,&BaseWindow::tradeAddTradeMonster))
         abort();
     //inventory
-    if(!connect(client,&CatchChallenger::Api_protocol::objectUsed,                 this,&BaseWindow::objectUsed))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtobjectUsed,                 this,&BaseWindow::objectUsed))
         abort();
     //shop
-    if(!connect(client,&CatchChallenger::Api_protocol::haveShopList,               this,&BaseWindow::haveShopList))
+    if(!connect(client,&CatchChallenger::Api_client_real::QthaveShopList,               this,&BaseWindow::haveShopList))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::haveSellObject,             this,&BaseWindow::haveSellObject))
+    if(!connect(client,&CatchChallenger::Api_client_real::QthaveSellObject,             this,&BaseWindow::haveSellObject))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::haveBuyObject,              this,&BaseWindow::haveBuyObject))
+    if(!connect(client,&CatchChallenger::Api_client_real::QthaveBuyObject,              this,&BaseWindow::haveBuyObject))
         abort();
     //factory
-    if(!connect(client,&CatchChallenger::Api_protocol::haveFactoryList,            this,&BaseWindow::haveFactoryList))
+    if(!connect(client,&CatchChallenger::Api_client_real::QthaveFactoryList,            this,&BaseWindow::haveFactoryList))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::haveSellFactoryObject,      this,&BaseWindow::haveSellFactoryObject))
+    if(!connect(client,&CatchChallenger::Api_client_real::QthaveSellFactoryObject,      this,&BaseWindow::haveSellFactoryObject))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::haveBuyFactoryObject,       this,&BaseWindow::haveBuyFactoryObject))
+    if(!connect(client,&CatchChallenger::Api_client_real::QthaveBuyFactoryObject,       this,&BaseWindow::haveBuyFactoryObject))
         abort();
     //battle
-    if(!connect(client,&CatchChallenger::Api_protocol::battleRequested,            this,&BaseWindow::battleRequested))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtbattleRequested,            this,&BaseWindow::battleRequested))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::battleAcceptedByOther,      this,&BaseWindow::battleAcceptedByOther))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtbattleAcceptedByOther,      this,&BaseWindow::battleAcceptedByOther))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::battleCanceledByOther,      this,&BaseWindow::battleCanceledByOther))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtbattleCanceledByOther,      this,&BaseWindow::battleCanceledByOther))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::sendBattleReturn,           this,&BaseWindow::sendBattleReturn))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtsendBattleReturn,           this,&BaseWindow::sendBattleReturn))
         abort();
     //market
-    if(!connect(client,&CatchChallenger::Api_protocol::marketList,                 this,&BaseWindow::marketList))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketList,                 this,&BaseWindow::marketList))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::marketBuy,                  this,&BaseWindow::marketBuy))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketBuy,                  this,&BaseWindow::marketBuy))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::marketBuyMonster,           this,&BaseWindow::marketBuyMonster))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketBuyMonster,           this,&BaseWindow::marketBuyMonster))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::marketPut,                  this,&BaseWindow::marketPut))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketPut,                  this,&BaseWindow::marketPut))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::marketGetCash,              this,&BaseWindow::marketGetCash))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketGetCash,              this,&BaseWindow::marketGetCash))
         abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::marketWithdrawCanceled,     this,&BaseWindow::marketWithdrawCanceled))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketWithdrawCanceled,     this,&BaseWindow::marketWithdrawCanceled))
        abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::marketWithdrawObject,       this,&BaseWindow::marketWithdrawObject))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketWithdrawObject,       this,&BaseWindow::marketWithdrawObject))
        abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::marketWithdrawMonster,      this,&BaseWindow::marketWithdrawMonster))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketWithdrawMonster,      this,&BaseWindow::marketWithdrawMonster))
        abort();
     //datapack
-    if(!connect(client,&CatchChallenger::Api_protocol::datapackSizeBase,this,&BaseWindow::datapackSize))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtdatapackSizeBase,this,&BaseWindow::datapackSize))
        abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::gatewayCacheUpdate,this,&BaseWindow::gatewayCacheUpdate))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtgatewayCacheUpdate,this,&BaseWindow::gatewayCacheUpdate))
        abort();
     #ifdef CATCHCHALLENGER_MULTI
     if(!connect(static_cast<CatchChallenger::Api_client_real*>(client),&CatchChallenger::Api_client_real::newDatapackFileBase,            this,&BaseWindow::newDatapackFile))
@@ -533,20 +533,20 @@ void BaseWindow::connectAllSignals()
        abort();
     #endif
 
-    if(!connect(this,&BaseWindow::destroyObject,client,&CatchChallenger::Api_protocol::destroyObject))
+    if(!connect(this,&BaseWindow::destroyObject,client,&CatchChallenger::Api_client_real::destroyObject))
        abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::teleportTo,this,&BaseWindow::teleportTo,Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtteleportTo,this,&BaseWindow::teleportTo,Qt::QueuedConnection))
        abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::number_of_player,this,&BaseWindow::number_of_player))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtnumber_of_player,this,&BaseWindow::number_of_player))
        abort();
-    if(!connect(client,&CatchChallenger::Api_protocol::random_seeds,&fightEngine,&ClientFightEngine::newRandomNumber))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtrandom_seeds,&fightEngine,&ClientFightEngine::newRandomNumber))
        abort();
 
-    if(!connect(client,&CatchChallenger::Api_protocol::insert_player,              this,&BaseWindow::insert_player,Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtinsert_player,              this,&BaseWindow::insert_player,Qt::QueuedConnection))
        abort();
 }
 
-void BaseWindow::tradeRequested(const QString &pseudo,const uint8_t &skinInt)
+void BaseWindow::tradeRequested(const std::string &pseudo,const uint8_t &skinInt)
 {
     WithAnotherPlayer withAnotherPlayerDialog(this,WithAnotherPlayer::WithAnotherPlayerType_Trade,getFrontSkin(skinInt),pseudo);
     withAnotherPlayerDialog.exec();
@@ -559,7 +559,7 @@ void BaseWindow::tradeRequested(const QString &pseudo,const uint8_t &skinInt)
     tradeAcceptedByOther(pseudo,skinInt);
 }
 
-void BaseWindow::battleRequested(const QString &pseudo, const uint8_t &skinInt)
+void BaseWindow::battleRequested(const std::string &pseudo, const uint8_t &skinInt)
 {
     if(fightEngine.isInFight())
     {
@@ -605,9 +605,9 @@ void BaseWindow::changeEvent(QEvent *e)
     }
 }
 
-void BaseWindow::message(QString message) const
+void BaseWindow::message(std::string message) const
 {
-    qDebug() << message;
+    qDebug() << QString::fromStdString(message);
 }
 
 void BaseWindow::stdmessage(std::string message) const
@@ -651,22 +651,22 @@ void BaseWindow::on_pushButton_interface_trainer_clicked()
     ui->stackedWidget->setCurrentWidget(ui->page_player);
 }
 
-void BaseWindow::add_to_inventory_slot(const QHash<uint16_t,uint32_t> &items)
+void BaseWindow::add_to_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items)
 {
     add_to_inventory(items);
 }
 
 void BaseWindow::add_to_inventory(const uint16_t &item,const uint32_t &quantity,const bool &showGain)
 {
-    QList<QPair<uint16_t,uint32_t> > items;
-    items << QPair<uint16_t,uint32_t>(item,quantity);
+    std::vector<std::pair<uint16_t,uint32_t> > items;
+    items << std::pair<uint16_t,uint32_t>(item,quantity);
     add_to_inventory(items,showGain);
 }
 
-void BaseWindow::add_to_inventory(const QList<QPair<uint16_t,uint32_t> > &items,const bool &showGain)
+void BaseWindow::add_to_inventory(const std::vector<std::pair<uint16_t,uint32_t> > &items,const bool &showGain)
 {
     int index=0;
-    QHash<uint16_t,uint32_t> tempHash;
+    std::unordered_map<uint16_t,uint32_t> tempHash;
     while(index<items.size())
     {
         tempHash[items.at(index).first]=items.at(index).second;
@@ -675,7 +675,7 @@ void BaseWindow::add_to_inventory(const QList<QPair<uint16_t,uint32_t> > &items,
     add_to_inventory(tempHash,showGain);
 }
 
-void BaseWindow::add_to_inventory(const QHash<uint16_t,uint32_t> &items,const bool &showGain)
+void BaseWindow::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items,const bool &showGain)
 {
     Player_private_and_public_informations &playerInformations=client->get_player_informations();
     if(items.empty())
