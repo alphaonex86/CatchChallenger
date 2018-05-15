@@ -322,7 +322,7 @@ void Api_client_real::tryConnect(QString host,uint16_t port)
     socket->connectToHost(QHostAddress(host),port);
 }
 
-void Api_client_real::disconnected()
+void Api_client_real::disconnected(const std::string &reason)
 {
     if(stage()==StageConnexion::Stage1 || stage()==StageConnexion::Stage4)
     {
@@ -349,7 +349,7 @@ uint16_t Api_client_real::getPort()
     return port;
 }
 
-void Api_client_real::sendDatapackContentMainSub(const QByteArray &hashMain,const QByteArray &hashSub)
+void Api_client_real::sendDatapackContentMainSub(const std::string &hashMain, const std::string &hashSub)
 {
     bool mainNeedUpdate=true;
     if(!hashMain.isEmpty())

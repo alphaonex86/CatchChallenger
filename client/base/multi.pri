@@ -3,6 +3,7 @@ SOURCES += $$PWD/FeedNews.cpp \
     $$PWD/Api_client_real_base.cpp \
     $$PWD/Api_client_real_main.cpp \
     $$PWD/Api_client_real_sub.cpp \
+    $$PWD/Api_client_real_Qt.cpp \
     $$PWD/qt-tar-compressed/QZstdDecodeThread.cpp \
     $$PWD/qt-tar-compressed/QTarDecode.cpp \
     $$PWD/BlacklistPassword.cpp \
