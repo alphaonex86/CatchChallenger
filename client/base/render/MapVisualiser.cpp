@@ -124,10 +124,10 @@ void MapVisualiser::setOpenGl(const bool &OpenGL)
     }
 }
 
-MapVisualiserThread::Map_full * MapVisualiser::getMap(const QString &map) const
+MapVisualiserThread::Map_full * MapVisualiser::getMap(const std::string &map) const
 {
-    if(all_map.contains(map))
-        return all_map.value(map);
+    if(all_map.find(map)!=all_map.cend())
+        return all_map.at(map);
     abort();
     return NULL;
 }
@@ -209,7 +209,7 @@ void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThre
         mapObject->setCell(cell);
         mapObject->setPosition(QPointF(x,y+1));
         mark=new MapMark(mapObject);
-        ObjectGroupItem::objectGroupLink.value(tempMapObject->objectGroup)->addObject(mapObject);
+        ObjectGroupItem::objectGroupLink.at(tempMapObject->objectGroup)->addObject(mapObject);
         if(MapObjectItem::objectLink.contains(mapObject))
             MapObjectItem::objectLink.value(mapObject)->setZValue(9999);
     }
