@@ -13,7 +13,7 @@ void BaseWindow::marketList(const uint64_t &price,const std::vector<MarketObject
 {
     ui->marketWithdraw->setVisible(true);
     ui->marketStat->setText(tr("Cash to withdraw: %1$").arg(price));
-    int index;
+    unsigned int index;
     //the object list
     ui->marketObject->clear();
     index=0;
@@ -37,19 +37,23 @@ void BaseWindow::marketList(const uint64_t &price,const std::vector<MarketObject
         item->setData(96,marketMonster.level);
         std::string price;
         if(marketMonster.price>0)
-            price=tr("Price: %1$").arg(marketMonster.price);
+            price=tr("Price: %1$").arg(marketMonster.price).toStdString();
         else
-            price=tr("Price: Free");
-        if(DatapackClientLoader::datapackLoader.monsterExtra.contains(marketMonster.monster))
+            price=tr("Price: Free").toStdString();
+        if(DatapackClientLoader::datapackLoader.monsterExtra.find(marketMonster.monster)!=DatapackClientLoader::datapackLoader.monsterExtra.cend())
         {
-            item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(marketMonster.monster).thumb);
-            item->setText(QStringLiteral("%1 level %2\n%3").arg(DatapackClientLoader::datapackLoader.monsterExtra.value(marketMonster.monster).name).arg(marketMonster.level).arg(price));
-            item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(marketMonster.monster).description);
+            item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.at(marketMonster.monster).thumb);
+            item->setText(QStringLiteral("%1 level %2\n%3").arg(
+                              QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(marketMonster.monster).name)
+                              )
+                          .arg(marketMonster.level).arg(QString::fromStdString(price)));
+            item->setToolTip(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(marketMonster.monster).description));
         }
         else
         {
             item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
-            item->setText(QStringLiteral("Unknown item with id %1 level %2\n%3").arg(marketMonster.monster).arg(marketMonster.level).arg(price));
+            item->setText(QStringLiteral("Unknown item with id %1 level %2\n%3").arg(marketMonster.monster).arg(marketMonster.level)
+                          .arg(QString::fromStdString(price)));
         }
         ui->marketMonster->addItem(item);
         index++;
@@ -82,19 +86,23 @@ void BaseWindow::addOwnMonster(const MarketMonster &marketMonster)
     item->setData(98,(quint64)marketMonster.price);
     std::string price;
     if(marketMonster.price>0)
-        price=tr("Price: %1$").arg(marketMonster.price);
+        price=tr("Price: %1$").arg(marketMonster.price).toStdString();
     else
-        price=tr("Price: Free");
-    if(DatapackClientLoader::datapackLoader.monsterExtra.contains(marketMonster.monster))
+        price=tr("Price: Free").toStdString();
+    if(DatapackClientLoader::datapackLoader.monsterExtra.find(marketMonster.monster)!=DatapackClientLoader::datapackLoader.monsterExtra.cend())
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(marketMonster.monster).thumb);
-        item->setText(QStringLiteral("%1 level %2\n%3").arg(DatapackClientLoader::datapackLoader.monsterExtra.value(marketMonster.monster).name).arg(marketMonster.level).arg(price));
-        item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(marketMonster.monster).description);
+        item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.at(marketMonster.monster).thumb);
+        item->setText(QStringLiteral("%1 level %2\n%3")
+                      .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(marketMonster.monster).name))
+                      .arg(marketMonster.level)
+                      .arg(QString::fromStdString(price)));
+        item->setToolTip(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(marketMonster.monster).description));
     }
     else
     {
         item->setIcon(QIcon(":/images/monsters/default/small.png"));
-        item->setText(QStringLiteral("Unknown monster with id %1 level %2\n%3").arg(marketMonster.monster).arg(marketMonster.level).arg(price));
+        item->setText(QStringLiteral("Unknown monster with id %1 level %2\n%3").arg(marketMonster.monster)
+                      .arg(marketMonster.level).arg(QString::fromStdString(price)));
     }
     ui->marketOwnMonster->addItem(item);
 }
@@ -105,15 +113,15 @@ void BaseWindow::marketBuy(const bool &success)
     if(!success)
     {
         addCash(marketBuyCashInSuspend);
-        marketBuyObjectList.removeFirst();
+        marketBuyObjectList.erase(marketBuyObjectList.cbegin());
         QMessageBox::warning(this,tr("Warning"),tr("Your buy in the market have failed"));
     }
     else
     {
         std::unordered_map<uint16_t,uint32_t> items;
-        items[marketBuyObjectList.first().first]=marketBuyObjectList.first().second;
+        items[marketBuyObjectList.front().first]=marketBuyObjectList.front().second;
         add_to_inventory(items);
-        marketBuyObjectList.removeFirst();
+        marketBuyObjectList.erase(marketBuyObjectList.cend());
     }
     marketBuyCashInSuspend=0;
 }
@@ -130,33 +138,33 @@ void BaseWindow::marketPut(const bool &success)
 {
     if(!success)
     {
-        if(!marketPutObjectInSuspendList.isEmpty())
+        if(!marketPutObjectInSuspendList.empty())
             add_to_inventory(marketPutObjectInSuspendList,false);
-        if(!marketPutMonsterList.isEmpty())
+        if(!marketPutMonsterList.empty())
         {
-            fightEngine.insertPlayerMonster(marketPutMonsterPlaceList.first(),marketPutMonsterList.first());
+            fightEngine.insertPlayerMonster(marketPutMonsterPlaceList.front(),marketPutMonsterList.front());
             load_monsters();
         }
         QMessageBox::warning(this,tr("Warning"),tr("Unable to put into the market"));
     }
     else
     {
-        if(!marketPutMonsterList.isEmpty())
+        if(!marketPutMonsterList.empty())
         {
             MarketMonster marketMonster;
             marketMonster.price=marketPutCashInSuspend;
-            marketMonster.level=marketPutMonsterList.first().level;
-            marketMonster.monster=marketPutMonsterList.first().monster;
+            marketMonster.level=marketPutMonsterList.front().level;
+            marketMonster.monster=marketPutMonsterList.front().monster;
             //marketMonster.monsterId=marketPutMonsterList.first().id;
             addOwnMonster(marketMonster);
         }
-        if(!marketPutObjectInSuspendList.isEmpty())
+        if(!marketPutObjectInSuspendList.empty())
         {
             MarketObject marketObject;
             marketObject.price=marketPutCashInSuspend;
             //marketObject.marketObjectId=0;
-            marketObject.item=marketPutObjectInSuspendList.first().first;
-            marketObject.quantity=marketPutObjectInSuspendList.first().second;
+            marketObject.item=marketPutObjectInSuspendList.front().first;
+            marketObject.quantity=marketPutObjectInSuspendList.front().second;
             QListWidgetItem *item=new QListWidgetItem();
             updateMarketObject(item,marketObject);
             ui->marketOwnObject->addItem(item);
@@ -178,14 +186,14 @@ void BaseWindow::marketWithdrawCanceled()
 {
     QMessageBox::warning(this,tr("Warning"),tr("Unable to withdraw from the market"));
     marketWithdrawInSuspend=false;
-    if(!marketWithdrawObjectList.isEmpty())
+    if(!marketWithdrawObjectList.empty())
     {
         QListWidgetItem *item=new QListWidgetItem();
-        updateMarketObject(item,marketWithdrawObjectList.first());
+        updateMarketObject(item,marketWithdrawObjectList.front());
         ui->marketOwnObject->addItem(item);
     }
-    if(!marketWithdrawMonsterList.isEmpty())
-        addOwnMonster(marketWithdrawMonsterList.first());
+    if(!marketWithdrawMonsterList.empty())
+        addOwnMonster(marketWithdrawMonsterList.front());
     marketWithdrawObjectList.clear();
     marketWithdrawMonsterList.clear();
 }
@@ -234,22 +242,26 @@ void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &ma
     item->setData(95,marketObject.item);
     std::string price;
     if(marketObject.price>0)
-        price=tr("Price: %1$").arg(marketObject.price);
+        price=tr("Price: %1$").arg(marketObject.price).toStdString();
     else
-        price=tr("Price: Free");
+        price=tr("Price: Free").toStdString();
     std::string quantity;
     if(marketObject.quantity>1)
-        quantity=QStringLiteral(", ")+tr("quantity: %1").arg(marketObject.quantity);
-    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(marketObject.item))
+        quantity=", "+tr("quantity: %1").arg(marketObject.quantity).toStdString();
+    if(DatapackClientLoader::datapackLoader.itemsExtra.find(marketObject.item)!=DatapackClientLoader::datapackLoader.itemsExtra.cend())
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(marketObject.item).image);
-        item->setText(QStringLiteral("%1%2\n%3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(marketObject.item).name).arg(quantity).arg(price));
-        item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra.value(marketObject.item).description);
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.at(marketObject.item).image);
+        item->setText(QStringLiteral("%1%2\n%3").arg(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra.at(marketObject.item).name))
+                      .arg(QString::fromStdString(quantity)).arg(QString::fromStdString(price)));
+        item->setToolTip(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra.at(marketObject.item).description));
     }
     else
     {
         item->setIcon(QIcon(":/images/monsters/default/small.png"));
-        item->setText(QStringLiteral("Unknown item with id %1%2\n%3").arg(marketObject.item).arg(quantity).arg(price));
+        item->setText(QStringLiteral("Unknown item with id %1%2\n%3")
+                      .arg(marketObject.item)
+                      .arg(QString::fromStdString(quantity))
+                      .arg(QString::fromStdString(price)));
     }
 }
 
@@ -292,7 +304,7 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
     std::pair<uint32_t,uint32_t> newEntry;
     newEntry.first=item->data(95).toUInt();
     newEntry.second=quantity;
-    marketBuyObjectList << newEntry;
+    marketBuyObjectList.push_back(newEntry);
     marketBuyInSuspend=true;
     marketBuyCashInSuspend=quantity*item->data(97).toUInt();
     removeCash(marketBuyCashInSuspend);
@@ -332,7 +344,7 @@ void BaseWindow::on_marketOwnObject_itemActivated(QListWidgetItem *item)
     marketObject.quantity=item->data(98).toUInt();
     marketObject.price=item->data(97).toUInt();
     marketObject.item=static_cast<uint16_t>(item->data(95).toUInt());
-    marketWithdrawObjectList << marketObject;
+    marketWithdrawObjectList.push_back(marketObject);
     item->setData(98,item->data(98).toUInt()-quantity);
     if(item->data(98).toUInt()==0)
         delete item;
@@ -383,7 +395,7 @@ void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
     playerMonster.monster=static_cast<uint16_t>(item->data(99).toUInt());
     playerMonster.price=item->data(98).toUInt();
     playerMonster.level=static_cast<uint8_t>(item->data(96).toUInt());
-    marketWithdrawMonsterList << playerMonster;
+    marketWithdrawMonsterList.push_back(playerMonster);
     client->withdrawMarketMonster(item->data(99).toUInt());
     marketWithdrawInSuspend=true;
     delete item;
@@ -414,7 +426,7 @@ void BaseWindow::tradeAcceptedByOther(const std::string &pseudo,const uint8_t &s
         ui->tradeOtherImage->setVisible(true);
         ui->tradeOtherPseudo->setVisible(true);
         ui->tradeOtherImage->setPixmap(skin);
-        ui->tradeOtherPseudo->setText(pseudo);
+        ui->tradeOtherPseudo->setText(QString::fromStdString(pseudo));
     }
     else
     {
@@ -434,7 +446,7 @@ void BaseWindow::tradeCanceledByOther()
     if(ui->stackedWidget->currentWidget()!=ui->page_trade)
         return;
     ui->stackedWidget->setCurrentWidget(ui->page_map);
-    showTip(tr("The other player have canceled your trade request"));
+    showTip(tr("The other player have canceled your trade request").toStdString());
     addCash(ui->tradePlayerCash->value());
     add_to_inventory(tradeCurrentObjects,false);
     fightEngine.addPlayerMonster(tradeCurrentMonsters);
@@ -458,7 +470,7 @@ void BaseWindow::tradeValidatedByTheServer()
 {
     if(ui->stackedWidget->currentWidget()==ui->page_trade)
         ui->stackedWidget->setCurrentWidget(ui->page_map);
-    showTip(tr("Your trade is successfull"));
+    showTip(tr("Your trade is successfull").toStdString());
     add_to_inventory(tradeOtherObjects);
     addCash(ui->tradeOtherCash->value());
     removeCash(ui->tradePlayerCash->value());
@@ -478,24 +490,20 @@ void BaseWindow::tradeAddTradeCash(const uint64_t &cash)
 
 void BaseWindow::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
 {
-    if(tradeOtherObjects.contains(item))
+    if(tradeOtherObjects.find(item)!=tradeOtherObjects.cend())
         tradeOtherObjects[item]+=quantity;
     else
         tradeOtherObjects[item]=quantity;
     ui->tradeOtherItems->clear();
-    QHashIterator<uint16_t,uint32_t> i(tradeOtherObjects);
-    while (i.hasNext()) {
-        i.next();
-        ui->tradeOtherItems->addItem(itemToGraphic(i.key(),i.value()));
+    for(const auto &n : tradeOtherObjects) {
+        ui->tradeOtherItems->addItem(itemToGraphic(n.first,n.second));
     }
 }
 
 void BaseWindow::tradeUpdateCurrentObject()
 {
     ui->tradePlayerItems->clear();
-    QHashIterator<uint16_t,uint32_t> i(tradeCurrentObjects);
-    while (i.hasNext()) {
-        i.next();
-        ui->tradePlayerItems->addItem(itemToGraphic(i.key(),i.value()));
+    for(const auto &n : tradeCurrentObjects) {
+        ui->tradePlayerItems->addItem(itemToGraphic(n.first,n.second));
     }
 }
