@@ -1,7 +1,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QRegularExpression>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QDomDocument>
 #include <QDebug>
 #include <QImage>
@@ -220,7 +220,7 @@ void parseItemsExtra()
         qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="items")
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
@@ -229,7 +229,7 @@ void parseItemsExtra()
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement("item");
+    tinyxml2::XMLElement item = root.FirstChildElement("item");
     while(!item.isNull())
     {
         if(item.isElement())
@@ -241,7 +241,7 @@ void parseItemsExtra()
                 {
                     //load the name
                     {
-                        QDomElement name = item.firstChildElement("name");
+                        tinyxml2::XMLElement name = item.FirstChildElement("name");
                         while(!name.isNull())
                         {
                             if(name.isElement())
@@ -260,7 +260,7 @@ void parseItemsExtra()
                                     break;
                                 }
                             }
-                            name = name.nextSiblingElement("name");
+                            name = name.NextSiblingElement("name");
                         }
                     }
                 }
@@ -272,7 +272,7 @@ void parseItemsExtra()
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
-        item = item.nextSiblingElement("item");
+        item = item.NextSiblingElement("item");
     }
 
     qDebug() << QStringLiteral("%1 item(s) extra loaded").arg(itemNameToId.size());
@@ -299,7 +299,7 @@ void parseSkillsExtra()
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
         return;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="skills")
     {
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
@@ -310,7 +310,7 @@ void parseSkillsExtra()
     bool found;
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(text_skill);
+    tinyxml2::XMLElement item = root.FirstChildElement(text_skill);
     while(!item.isNull())
     {
         if(item.isElement())
@@ -327,7 +327,7 @@ void parseSkillsExtra()
                     #endif
                     found=false;
                     QString nameText;
-                    QDomElement name = item.firstChildElement(text_name);
+                    tinyxml2::XMLElement name = item.FirstChildElement(text_name);
                     if(!language.isEmpty() && language!=text_en)
                         while(!name.isNull())
                         {
@@ -342,11 +342,11 @@ void parseSkillsExtra()
                             }
                             else
                                 qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                            name = name.nextSiblingElement(text_name);
+                            name = name.NextSiblingElement(text_name);
                         }
                     if(!found)
                     {
-                        name = item.firstChildElement(text_name);
+                        name = item.FirstChildElement(text_name);
                         while(!name.isNull())
                         {
                             if(name.isElement())
@@ -359,7 +359,7 @@ void parseSkillsExtra()
                             }
                             else
                                 qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                            name = name.nextSiblingElement(text_name);
+                            name = name.NextSiblingElement(text_name);
                         }
                     }
                     if(!nameText.isEmpty())
@@ -371,7 +371,7 @@ void parseSkillsExtra()
         }
         else
             qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(text_skill);
+        item = item.NextSiblingElement(text_skill);
     }
 
     qDebug() << QStringLiteral("%1 skill(s) extra loaded").arg(skillNameToId.size());
@@ -399,7 +399,7 @@ void parseMonstersExtra()
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
         return;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="monsters")
     {
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
@@ -409,7 +409,7 @@ void parseMonstersExtra()
     const QString &language="en";
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(text_monster);
+    tinyxml2::XMLElement item = root.FirstChildElement(text_monster);
     while(!item.isNull())
     {
         if(item.isElement())
@@ -427,7 +427,7 @@ void parseMonstersExtra()
                     #endif
                     {
                         bool found=false;
-                        QDomElement name = item.firstChildElement(text_name);
+                        tinyxml2::XMLElement name = item.FirstChildElement(text_name);
                         if(!language.isEmpty() && language!=text_en)
                             while(!name.isNull())
                             {
@@ -442,11 +442,11 @@ void parseMonstersExtra()
                                 }
                                 else
                                     qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                name = name.nextSiblingElement(text_name);
+                                name = name.NextSiblingElement(text_name);
                             }
                         if(!found)
                         {
-                            name = item.firstChildElement(text_name);
+                            name = item.FirstChildElement(text_name);
                             while(!name.isNull())
                             {
                                 if(name.isElement())
@@ -459,7 +459,7 @@ void parseMonstersExtra()
                                 }
                                 else
                                     qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                name = name.nextSiblingElement(text_name);
+                                name = name.NextSiblingElement(text_name);
                             }
                         }
                     }
@@ -475,7 +475,7 @@ void parseMonstersExtra()
         }
         else
             qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(text_monster);
+        item = item.NextSiblingElement(text_monster);
     }
 
     qDebug() << QStringLiteral("%1 monster(s) extra loaded").arg(monsterNameToId.size());
@@ -501,7 +501,7 @@ void updateMonsterXml(const QString &file)
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
         return;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="monsters")
     {
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"list\" root balise not found for the xml file").arg(file));
@@ -510,7 +510,7 @@ void updateMonsterXml(const QString &file)
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(text_monster);
+    tinyxml2::XMLElement item = root.FirstChildElement(text_monster);
     while(!item.isNull())
     {
         if(item.isElement())
@@ -536,13 +536,13 @@ void updateMonsterXml(const QString &file)
                     if(ok)
                     {
                         {
-                            QDomElement attack_list = item.firstChildElement(text_attack_list);
+                            tinyxml2::XMLElement attack_list = item.FirstChildElement(text_attack_list);
                             if(!attack_list.isNull())
                             {
                                 if(attack_list.isElement())
                                 {
                                     //QSet<quint32> learnByItem;
-                                    QDomElement attack = attack_list.firstChildElement(text_attack);
+                                    tinyxml2::XMLElement attack = attack_list.FirstChildElement(text_attack);
                                     while(!attack.isNull())
                                     {
                                         if(attack.isElement())
@@ -576,7 +576,7 @@ void updateMonsterXml(const QString &file)
                                         }
                                         else
                                             qDebug() << (QStringLiteral("Unable to open the xml file: %1, attack_list balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(attack.tagName()).arg(attack.lineNumber()));
-                                        attack = attack.nextSiblingElement(text_attack);
+                                        attack = attack.NextSiblingElement(text_attack);
                                     }
                                     //add the missing skill
                                     if(monsterIdToName.contains(id))
@@ -596,7 +596,7 @@ void updateMonsterXml(const QString &file)
                                                         {
                                                             byitemAlreadySet << byitem;
                                                             skillAlreadySet << skill;
-                                                            QDomElement newElement=attack_list.ownerDocument().createElement("attack");
+                                                            tinyxml2::XMLElement newElement=attack_list.ownerDocument().createElement("attack");
                                                             newElement.setAttribute("byitem",byitem);
                                                             newElement.setAttribute("id",skill);
                                                             if(!newElement.isNull())
@@ -623,7 +623,7 @@ void updateMonsterXml(const QString &file)
         }
         else
             qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(text_monster);
+        item = item.NextSiblingElement(text_monster);
     }
     {
         if(!xmlFile.open(QIODevice::WriteOnly))

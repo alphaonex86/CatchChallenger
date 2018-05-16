@@ -149,11 +149,11 @@ MainWindow::MainWindow(QWidget *parent) :
                             }
                             xmlfile.close();
 
-                            const QDomElement root = domDocument.documentElement();
+                            const tinyxml2::XMLElement root = domDocument.RootElement();
                             if(root.tagName()=="map")
                             {
                                 //load the content
-                                const QDomElement nameItem = root.firstChildElement("name");
+                                const tinyxml2::XMLElement nameItem = root.FirstChildElement("name");
                                 if(!nameItem.isNull())
                                     mapContent.name=nameItem.text();
 

@@ -148,7 +148,7 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
                         return;
                     emit collectMaturePlant();
 
-                    client->remove_plant(mapController->getMap(QString::fromStdString(map->map_file))->logicalMap.id,x,y);
+                    client->remove_plant(mapController->getMap(map->map_file)->logicalMap.id,x,y);
                     client->plant_collected(Plant_collect::Plant_collect_correctly_collected);
                 }
             }
@@ -170,7 +170,7 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
     else if(map->itemsOnMap.find(std::pair<uint8_t,uint8_t>(x,y))!=map->itemsOnMap.cend())
     {
         Player_private_and_public_informations &informations=client->get_player_informations();
-        const Map_client::ItemOnMapForClient &item=map->itemsOnMap.value(std::pair<uint8_t,uint8_t>(x,y));
+        const Map_client::ItemOnMapForClient &item=map->itemsOnMap.at(std::pair<uint8_t,uint8_t>(x,y));
         if(informations.itemOnMap.find(item.indexOfItemOnMap)==informations.itemOnMap.cend())
         {
             if(!item.infinite)
@@ -213,9 +213,9 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
 
 bool BaseWindow::actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
 {
-    if(!map->bots.contains(std::pair<uint8_t,uint8_t>(x,y)))
+    if(map->bots.find(std::pair<uint8_t,uint8_t>(x,y))==map->bots.cend())
         return false;
-    actualBot=map->bots.value(std::pair<uint8_t,uint8_t>(x,y));
+    actualBot=map->bots.at(std::pair<uint8_t,uint8_t>(x,y));
     isInQuest=false;
     goToBotStep(1);
     return true;
@@ -223,31 +223,31 @@ bool BaseWindow::actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x, u
 
 void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
 {
-    if(!map->bots.contains(std::pair<uint8_t,uint8_t>(x,y)))
+    if(map->bots.find(std::pair<uint8_t,uint8_t>(x,y))==map->bots.cend())
     {
-        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Bot trigged but no bot at this place");
+        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Bot trigged but no bot at this place");
         return;
     }
     uint8_t step=1;
-    actualBot=map->bots.value(std::pair<uint8_t,uint8_t>(x,y));
+    actualBot=map->bots.at(std::pair<uint8_t,uint8_t>(x,y));
     isInQuest=false;
     if(actualBot.step.find(step)==actualBot.step.cend())
     {
-        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Bot trigged but no step found");
+        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Bot trigged but no step found");
         return;
     }
     if(*actualBot.step.at(step)->Attribute(std::string("type"))==std::string("fight"))
     {
         if(actualBot.step.at(step)->Attribute(std::string("fightid"))==NULL)
         {
-            showTip(tr("Bot step missing data error, repport this error please"));
+            showTip(tr("Bot step missing data error, repport this error please").toStdString());
             return;
         }
         bool ok;
         uint16_t fightId=stringtouint16(*actualBot.step.at(step)->Attribute(std::string("fightid")),&ok);
         if(!ok)
         {
-            showTip(tr("Bot step wrong data type error, repport this error please"));
+            showTip(tr("Bot step wrong data type error, repport this error please").toStdString());
             return;
         }
         botFight(fightId);
@@ -255,7 +255,7 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, 
     }
     else
     {
-        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Bot trigged but not found");
+        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Bot trigged but not found");
         return;
     }
 }
@@ -267,48 +267,52 @@ void BaseWindow::blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar)
         case MapVisualiserPlayer::BlockedOn_ZoneFight:
         case MapVisualiserPlayer::BlockedOn_Fight:
             qDebug() << "You can't enter to the fight zone if you are not able to fight";
-            showTip(tr("You can't enter to the fight zone if you are not able to fight"));
+            showTip(tr("You can't enter to the fight zone if you are not able to fight").toStdString());
         break;
         case MapVisualiserPlayer::BlockedOn_ZoneItem:
             qDebug() << "You can't enter to this zone without the correct item";
-            showTip(tr("You can't enter to this zone without the correct item"));
+            showTip(tr("You can't enter to this zone without the correct item").toStdString());
         break;
         case MapVisualiserPlayer::BlockedOn_RandomNumber:
             qDebug() << "You can't enter to the fight zone, because have not random number";
-            showTip(tr("You can't enter to the fight zone, because have not random number"));
+            showTip(tr("You can't enter to the fight zone, because have not random number").toStdString());
         break;
         default:
             qDebug() << "You can't enter to the zone, for unknown reason";
-            showTip(tr("You can't enter to the zone"));
+            showTip(tr("You can't enter to the zone").toStdString());
         break;
     }
 }
 
 void BaseWindow::pathFindingNotFound()
 {
-    showTip(tr("No path to go here"));
+    showTip(tr("No path to go here").toStdString());
     //showTip(tr("Path finding disabled"));
 }
 
 void BaseWindow::currentMapLoaded()
 {
-    qDebug() << "BaseWindow::currentMapLoaded(): map: " << mapController->currentMap() << " with type: " << mapController->currentMapType();
+    qDebug() << "BaseWindow::currentMapLoaded(): map: " << QString::fromStdString(mapController->currentMap())
+             << " with type: " << QString::fromStdString(mapController->currentMapType());
     //name
     {
         MapVisualiserThread::Map_full *mapFull=mapController->currentMapFull();
         std::string visualName;
-        if(!mapFull->zone.isEmpty())
-            if(DatapackClientLoader::datapackLoader.zonesExtra.contains(mapFull->zone))
+        if(!mapFull->zone.empty())
+            if(DatapackClientLoader::datapackLoader.zonesExtra.find(mapFull->zone)!=
+                    DatapackClientLoader::datapackLoader.zonesExtra.cend())
             {
-                const DatapackClientLoader::ZoneExtra &zoneExtra=DatapackClientLoader::datapackLoader.zonesExtra.value(mapFull->zone);
+                const DatapackClientLoader::ZoneExtra &zoneExtra=DatapackClientLoader::datapackLoader.zonesExtra.at(mapFull->zone);
                 visualName=zoneExtra.name;
             }
-        if(visualName.isEmpty())
+        if(visualName.empty())
             visualName=mapFull->name;
-        if(!visualName.isEmpty() && lastPlaceDisplayed!=visualName)
+        if(!visualName.empty() && lastPlaceDisplayed!=visualName)
         {
             lastPlaceDisplayed=visualName;
-            showPlace(tr("You arrive at <b><i>%1</i></b>").arg(visualName));
+            showPlace(tr("You arrive at <b><i>%1</i></b>")
+                      .arg(QString::fromStdString(visualName))
+                      .toStdString());
         }
     }
     const std::string &type=mapController->currentMapType();
@@ -408,10 +412,12 @@ void BaseWindow::currentMapLoaded()
         if(visualCategory!=type)
         {
             visualCategory=type;
-            if(DatapackClientLoader::datapackLoader.visualCategories.contains(type))
+            if(DatapackClientLoader::datapackLoader.visualCategories.find(type)!=
+                    DatapackClientLoader::datapackLoader.visualCategories.cend())
             {
-                const std::vector<DatapackClientLoader::VisualCategory::VisualCategoryCondition> &conditions=DatapackClientLoader::datapackLoader.visualCategories.value(type).conditions;
-                int index=0;
+                const std::vector<DatapackClientLoader::VisualCategory::VisualCategoryCondition> &conditions=
+                        DatapackClientLoader::datapackLoader.visualCategories.at(type).conditions;
+                unsigned int index=0;
                 while(index<conditions.size())
                 {
                     const DatapackClientLoader::VisualCategory::VisualCategoryCondition &condition=conditions.at(index);
@@ -428,7 +434,7 @@ void BaseWindow::currentMapLoaded()
                     index++;
                 }
                 if(index==conditions.size())
-                    mapController->setColor(DatapackClientLoader::datapackLoader.visualCategories.value(type).defaultColor);
+                    mapController->setColor(DatapackClientLoader::datapackLoader.visualCategories.at(type).defaultColor);
             }
             else
                 mapController->setColor(Qt::transparent);

@@ -416,7 +416,7 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
         qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg("server_list.xml").arg(errorLine).arg(errorColumn).arg(errorStr);
         return returnedVar;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!=QStringLiteral("servers"))
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"servers\" root balise not found for the xml file").arg("server_list.xml");
@@ -426,7 +426,7 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
     QRegularExpression regexHost("^[a-zA-Z0-9\\.\\-_]+$");
     bool ok;
     //load the content
-    QDomElement server = root.firstChildElement(QStringLiteral("server"));
+    tinyxml2::XMLElement server = root.FirstChildElement(QStringLiteral("server"));
     while(!server.isNull())
     {
         if(server.isElement())
@@ -448,28 +448,28 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                 else
                 {
                     connexionInfo.port=static_cast<uint16_t>(temp_port);
-                    QDomElement lang;
+                    tinyxml2::XMLElement lang;
                     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
                     bool found=false;
                     if(!language.isEmpty() && language!=QStringLiteral("en"))
                     {
-                        lang = server.firstChildElement(QStringLiteral("lang"));
+                        lang = server.FirstChildElement(QStringLiteral("lang"));
                         while(!lang.isNull())
                         {
                             if(lang.isElement())
                             {
                                 if(lang.hasAttribute(QStringLiteral("lang")) && lang.attribute(QStringLiteral("lang"))==language)
                                 {
-                                    QDomElement name = lang.firstChildElement(QStringLiteral("name"));
+                                    tinyxml2::XMLElement name = lang.FirstChildElement(QStringLiteral("name"));
                                     if(!name.isNull())
                                         connexionInfo.name=name.text();
-                                    QDomElement register_page = lang.firstChildElement(QStringLiteral("register_page"));
+                                    tinyxml2::XMLElement register_page = lang.FirstChildElement(QStringLiteral("register_page"));
                                     if(!register_page.isNull())
                                         connexionInfo.register_page=register_page.text();
-                                    QDomElement lost_passwd_page = lang.firstChildElement(QStringLiteral("lost_passwd_page"));
+                                    tinyxml2::XMLElement lost_passwd_page = lang.FirstChildElement(QStringLiteral("lost_passwd_page"));
                                     if(!lost_passwd_page.isNull())
                                         connexionInfo.lost_passwd_page=lost_passwd_page.text();
-                                    QDomElement site_page = lang.firstChildElement(QStringLiteral("site_page"));
+                                    tinyxml2::XMLElement site_page = lang.FirstChildElement(QStringLiteral("site_page"));
                                     if(!site_page.isNull())
                                         connexionInfo.site_page=site_page.text();
                                     found=true;
@@ -478,28 +478,28 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                             }
                             else
                                 qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(lang.tagName()).arg(lang.lineNumber());
-                            lang = lang.nextSiblingElement(QStringLiteral("lang"));
+                            lang = lang.NextSiblingElement(QStringLiteral("lang"));
                         }
                     }
                     if(!found)
                     {
-                        lang = server.firstChildElement(QStringLiteral("lang"));
+                        lang = server.FirstChildElement(QStringLiteral("lang"));
                         while(!lang.isNull())
                         {
                             if(lang.isElement())
                             {
                                 if(!lang.hasAttribute(QStringLiteral("lang")) || lang.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
                                 {
-                                    QDomElement name = lang.firstChildElement(QStringLiteral("name"));
+                                    tinyxml2::XMLElement name = lang.FirstChildElement(QStringLiteral("name"));
                                     if(!name.isNull())
                                         connexionInfo.name=name.text();
-                                    QDomElement register_page = lang.firstChildElement(QStringLiteral("register_page"));
+                                    tinyxml2::XMLElement register_page = lang.FirstChildElement(QStringLiteral("register_page"));
                                     if(!register_page.isNull())
                                         connexionInfo.register_page=register_page.text();
-                                    QDomElement lost_passwd_page = lang.firstChildElement(QStringLiteral("lost_passwd_page"));
+                                    tinyxml2::XMLElement lost_passwd_page = lang.FirstChildElement(QStringLiteral("lost_passwd_page"));
                                     if(!lost_passwd_page.isNull())
                                         connexionInfo.lost_passwd_page=lost_passwd_page.text();
-                                    QDomElement site_page = lang.firstChildElement(QStringLiteral("site_page"));
+                                    tinyxml2::XMLElement site_page = lang.FirstChildElement(QStringLiteral("site_page"));
                                     if(!site_page.isNull())
                                         connexionInfo.site_page=site_page.text();
                                     break;
@@ -507,7 +507,7 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                             }
                             else
                                 qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(lang.tagName()).arg(lang.lineNumber());
-                            lang = lang.nextSiblingElement(QStringLiteral("lang"));
+                            lang = lang.NextSiblingElement(QStringLiteral("lang"));
                         }
                     }
                     settings.beginGroup(QStringLiteral("Xml-%1").arg(server.attribute("unique_code")));
@@ -553,7 +553,7 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber());
-        server = server.nextSiblingElement(QStringLiteral("server"));
+        server = server.NextSiblingElement(QStringLiteral("server"));
     }
     return returnedVar;
 }
@@ -1392,7 +1392,7 @@ QPair<QString,QString> MainWindow::getDatapackInformations(const QString &filePa
         qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return returnVar;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!=QStringLiteral("informations"))
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"informations\" root balise not found for the xml file").arg(itemsFile.fileName());
@@ -1401,7 +1401,7 @@ QPair<QString,QString> MainWindow::getDatapackInformations(const QString &filePa
 
     QStringList authors;
     //load the content
-    QDomElement item = root.firstChildElement(QStringLiteral("author"));
+    tinyxml2::XMLElement item = root.FirstChildElement(QStringLiteral("author"));
     while(!item.isNull())
     {
         if(item.isElement())
@@ -1413,7 +1413,7 @@ QPair<QString,QString> MainWindow::getDatapackInformations(const QString &filePa
             else if(item.hasAttribute(QStringLiteral("pseudo")))
                 authors << item.attribute(QStringLiteral("pseudo"));
         }
-        item = item.nextSiblingElement(QStringLiteral("author"));
+        item = item.NextSiblingElement(QStringLiteral("author"));
     }
     if(authors.isEmpty())
         returnVar.first=tr("Unknown");
@@ -1421,7 +1421,7 @@ QPair<QString,QString> MainWindow::getDatapackInformations(const QString &filePa
         returnVar.first=authors.join(QStringLiteral(", "));
 
     returnVar.second=tr("Unknown");
-    item = root.firstChildElement(QStringLiteral("name"));
+    item = root.FirstChildElement(QStringLiteral("name"));
     bool found=false;
     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     if(!language.isEmpty() && language!=QStringLiteral("en"))
@@ -1436,11 +1436,11 @@ QPair<QString,QString> MainWindow::getDatapackInformations(const QString &filePa
                     break;
                 }
             }
-            item = item.nextSiblingElement(QStringLiteral("name"));
+            item = item.NextSiblingElement(QStringLiteral("name"));
         }
     if(!found)
     {
-        item = root.firstChildElement(QStringLiteral("name"));
+        item = root.FirstChildElement(QStringLiteral("name"));
         while(!item.isNull())
         {
             if(item.isElement())
@@ -1451,7 +1451,7 @@ QPair<QString,QString> MainWindow::getDatapackInformations(const QString &filePa
                     break;
                 }
             }
-            item = item.nextSiblingElement(QStringLiteral("name"));
+            item = item.NextSiblingElement(QStringLiteral("name"));
         }
     }
     return returnVar;

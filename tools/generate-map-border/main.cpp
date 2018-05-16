@@ -5,7 +5,7 @@
 #include <QFileInfoList>
 #include <QRegularExpression>
 #include <QDomDocument>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QDirIterator>
 #include <QLabel>
 #include <QPainter>
@@ -2795,12 +2795,12 @@ void loadMonster()
                 int errorLine,errorColumn;
                 if(domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
                 {
-                    QDomElement root = domDocument.documentElement();
+                    tinyxml2::XMLElement root = domDocument.RootElement();
                     if(root.tagName()=="monsters")
                     {
                         //load the content
                         bool ok;
-                        QDomElement item = root.firstChildElement("monster");
+                        tinyxml2::XMLElement item = root.FirstChildElement("monster");
                         while(!item.isNull())
                         {
                             if(item.isElement())
@@ -2810,7 +2810,7 @@ void loadMonster()
                                     quint32 id=item.attribute("id").toUInt(&ok);
                                     if(ok)
                                     {
-                                        QDomElement itemName = item.firstChildElement("name");
+                                        tinyxml2::XMLElement itemName = item.FirstChildElement("name");
                                         while(!itemName.isNull())
                                         {
                                             if(itemName.isElement())
@@ -2818,12 +2818,12 @@ void loadMonster()
                                                 monsterNameToMonsterId[simplifyItemName(itemName.text())]=id;
                                                 break;
                                             }
-                                            itemName = itemName.nextSiblingElement("name");
+                                            itemName = itemName.NextSiblingElement("name");
                                         }
                                     }
                                 }
                             }
-                            item = item.nextSiblingElement("monster");
+                            item = item.NextSiblingElement("monster");
                         }
                         std::cout << "Loaded monsters from: " << filePath.toStdString() << std::endl;
                     }
@@ -2859,26 +2859,26 @@ void loadShop()
         int errorLine,errorColumn;
         if(domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
-            QDomElement root = domDocument.documentElement();
+            tinyxml2::XMLElement root = domDocument.RootElement();
             if(root.tagName()=="itemDatabase")
             {
                 //load the content
                 bool ok;
-                QDomElement items = root.firstChildElement("items");
+                tinyxml2::XMLElement items = root.FirstChildElement("items");
                 while(!items.isNull())
                 {
-                    QDomElement item = items.firstChildElement("item");
+                    tinyxml2::XMLElement item = items.FirstChildElement("item");
                     while(!item.isNull())
                     {
                         if(item.isElement())
                         {
                             QString name;
-                            QDomElement nameXml = item.firstChildElement("name");
+                            tinyxml2::XMLElement nameXml = item.FirstChildElement("name");
                             if(!nameXml.isNull())
                                 name=nameXml.text();
                             name=simplifyItemName(name);
                             QString shop;
-                            QDomElement shopXml = item.firstChildElement("shop");
+                            tinyxml2::XMLElement shopXml = item.FirstChildElement("shop");
                             if(!shopXml.isNull())
                                 shop=shopXml.text();
                             const unsigned int shopId=shop.toUInt(&ok);
@@ -2898,9 +2898,9 @@ void loadShop()
                                     shopList[shopId].itemsId.push_back(itemNameToId.value(name));
                             }
                         }
-                        item = item.nextSiblingElement("item");
+                        item = item.NextSiblingElement("item");
                     }
-                    items = items.nextSiblingElement("items");
+                    items = items.NextSiblingElement("items");
                 }
                 std::cout << "Loaded item from: " << "../itemdex.xml" << std::endl;
             }

@@ -1,8 +1,7 @@
 #ifndef CATCHCHALLENGER_DISPLAY_STRUCTURES_H
 #define CATCHCHALLENGER_DISPLAY_STRUCTURES_H
 
-#include <QHash>
-#include <QDomElement>
+#include <unordered_map>
 
 #include "../tiled/tiled_mapobject.h"
 #include "../tiled/tiled_tileset.h"
