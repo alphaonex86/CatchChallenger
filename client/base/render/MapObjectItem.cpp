@@ -1,7 +1,7 @@
 #include "MapObjectItem.h"
 
-QHash<Tiled::ObjectGroup *,Tiled::MapRenderer *> MapObjectItem::mRendererList;
-QHash<Tiled::MapObject *,MapObjectItem *> MapObjectItem::objectLink;
+std::unordered_map<Tiled::ObjectGroup *,Tiled::MapRenderer *> MapObjectItem::mRendererList;
+std::unordered_map<Tiled::MapObject *,MapObjectItem *> MapObjectItem::objectLink;
 
 MapObjectItem::MapObjectItem(Tiled::MapObject *mapObject,
               QGraphicsItem *parent)

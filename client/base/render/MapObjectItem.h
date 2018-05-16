@@ -10,17 +10,10 @@
 #ifndef MAPOBJECTITEM_H
 #define MAPOBJECTITEM_H
 
-#include <QGraphicsView>
-#include <QTimer>
-#include <QKeyEvent>
 #include <QGraphicsItem>
 #include <QRectF>
 #include <QPainter>
-#include <QStyleOptionGraphicsItem>
-#include <QWidget>
-#include <QSet>
-#include <QMultiMap>
-#include <QHash>
+#include <unordered_map>
 
 /**
  * Item that represents a map object.
@@ -35,10 +28,10 @@ private:
     Tiled::MapObject *mMapObject;
 public:
     //interresting if have lot of object by group layer
-    static QHash<Tiled::ObjectGroup *,Tiled::MapRenderer *> mRendererList;
+    static std::unordered_map<Tiled::ObjectGroup *,Tiled::MapRenderer *> mRendererList;
 
     //the link tiled with viewer
-    static QHash<Tiled::MapObject *,MapObjectItem *> objectLink;
+    static std::unordered_map<Tiled::MapObject *,MapObjectItem *> objectLink;
 };
 
 #endif

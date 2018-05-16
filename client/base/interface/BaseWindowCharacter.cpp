@@ -25,7 +25,7 @@ void BaseWindow::on_character_add_clicked()
 
 void BaseWindow::newProfileFinished()
 {
-    const QString &datapackPath=client->datapackPathBase();
+    const std::string &datapackPath=client->datapackPathBase();
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
         if(!newProfile->ok())
         {
@@ -119,7 +119,7 @@ void BaseWindow::updateCharacterList()
         item->setData(99,characterEntry.character_id);
         item->setData(98,characterEntry.delete_time_left);
         //item->setData(97,characterEntry.mapId);
-        QString text=QString::fromStdString(characterEntry.pseudo+"\n");
+        std::string text=QString::fromStdString(characterEntry.pseudo+"\n");
         if(characterEntry.played_time>0)
             text+=tr("%1 played").arg(FacilityLibClient::timeToString(characterEntry.played_time));
         else
@@ -148,7 +148,7 @@ void BaseWindow::on_character_back_clicked()
 
 void BaseWindow::on_character_select_clicked()
 {
-    QList<QListWidgetItem *> selectedItems=ui->characterEntryList->selectedItems();
+    std::vector<QListWidgetItem *> selectedItems=ui->characterEntryList->selectedItems();
     if(selectedItems.size()!=1)
         return;
     on_characterEntryList_itemDoubleClicked(selectedItems.first());
@@ -156,7 +156,7 @@ void BaseWindow::on_character_select_clicked()
 
 void BaseWindow::on_character_remove_clicked()
 {
-    QList<QListWidgetItem *> selectedItems=ui->characterEntryList->selectedItems();
+    std::vector<QListWidgetItem *> selectedItems=ui->characterEntryList->selectedItems();
     if(selectedItems.size()!=1)
         return;
     const uint32_t &character_id=selectedItems.first()->data(99).toUInt();
@@ -326,8 +326,8 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
         {
             const ServerFromPoolForDisplay &server=logicialGroup.servers.at(index);
             QTreeWidgetItem *itemServer=new QTreeWidgetItem(item);
-            QString text;
-            QString groupText;
+            std::string text;
+            std::string groupText;
             if(characterListForSelection.size()>1 && serverByCharacterGroup.size()>1)
             {
                 const uint8_t groupInt=serverByCharacterGroup.value(server.charactersGroupIndex).second;
@@ -336,7 +336,7 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
                 if(!icon_server_list_color.isEmpty())
                     itemServer->setIcon(0,icon_server_list_color.at(groupInt%icon_server_list_color.size()));
             }
-            QString name=server.name;
+            std::string name=server.name;
             if(name.isEmpty())
                 name=tr("Default server");
             if(fullView)
