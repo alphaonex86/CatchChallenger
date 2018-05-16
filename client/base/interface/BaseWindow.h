@@ -51,7 +51,7 @@ class BaseWindow : public QWidget
 public:
     explicit BaseWindow();
     ~BaseWindow();
-    void setMultiPlayer(bool multiplayer,CatchChallenger::Api_protocol * client);
+    void setMultiPlayer(bool multiplayer, Api_client_real *client);
     void resetAll();
     void serverIsLoading();
     void serverIsReady();

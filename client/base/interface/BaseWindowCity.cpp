@@ -27,7 +27,10 @@ void BaseWindow::updatePageZoneCatch()
             timeText="Time player: bug";
         else
             timeText=FacilityLibClient::timeToString(sec);
-        ui->zonecaptureWaitTime->setText(tr("Remaining time: %1").arg(QStringLiteral("<b>%1</b>").arg(timeText)));
+        ui->zonecaptureWaitTime->setText(tr("Remaining time: %1")
+                                         .arg(QStringLiteral("<b>%1</b>")
+                                         .arg(QString::fromStdString(timeText)))
+                                         );
         ui->zonecaptureCancel->setVisible(true);
     }
     else
@@ -50,7 +53,7 @@ void BaseWindow::captureCityYourAreNotLeader()
 {
     updater_page_zonecatch.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
-    showTip(tr("You are not a clan leader to start a city capture"));
+    showTip(tr("You are not a clan leader to start a city capture").toStdString());
     zonecatch=false;
 }
 
@@ -58,10 +61,12 @@ void BaseWindow::captureCityYourLeaderHaveStartInOtherCity(const std::string &zo
 {
     updater_page_zonecatch.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
-    if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
-        showTip(tr("Your clan leader have start a capture for another city")+QStringLiteral(": %1").arg(QStringLiteral("<b>%1</b>").arg(DatapackClientLoader::datapackLoader.zonesExtra.value(zone).name)));
+    if(DatapackClientLoader::datapackLoader.zonesExtra.find(zone)!=DatapackClientLoader::datapackLoader.zonesExtra.cend())
+        showTip(tr("Your clan leader have start a capture for another city").toStdString()+": <b>"+
+                DatapackClientLoader::datapackLoader.zonesExtra.at(zone).name+
+                "</b>");
     else
-        showTip(tr("Your clan leader have start a capture for another city"));
+        showTip(tr("Your clan leader have start a capture for another city").toStdString());
     zonecatch=false;
 }
 
@@ -69,7 +74,7 @@ void BaseWindow::captureCityPreviousNotFinished()
 {
     updater_page_zonecatch.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
-    showTip(tr("Previous capture of this city is not finished"));
+    showTip(tr("Previous capture of this city is not finished").toStdString());
     zonecatch=false;
 }
 
@@ -99,9 +104,10 @@ void BaseWindow::captureCityWin()
 {
     updater_page_zonecatch.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);
-    if(!zonecatchName.isEmpty())
-        showTip(tr("Your clan win the city")+QStringLiteral(": %1").arg(QStringLiteral("<b>%1</b>").arg(zonecatchName)));
+    if(!zonecatchName.empty())
+        showTip(tr("Your clan win the city").toStdString()+": <b>"+
+                zonecatchName+"</b>");
     else
-        showTip(tr("Your clan win the city"));
+        showTip(tr("Your clan win the city").toStdString());
     zonecatch=false;
 }
