@@ -102,7 +102,7 @@ void BaseWindow::on_clanActionDissolve_clicked()
 void BaseWindow::on_clanActionInvite_clicked()
 {
     bool ok;
-    QString text = QInputDialog::getText(this,tr("Give the player pseudo"),tr("Player pseudo to invite:"),QLineEdit::Normal,QString(), &ok);
+    std::string text = QInputDialog::getText(this,tr("Give the player pseudo"),tr("Player pseudo to invite:"),QLineEdit::Normal,QString(), &ok);
     if(ok && !text.isEmpty())
     {
         actionClan << ActionClan_Invite;
@@ -113,7 +113,7 @@ void BaseWindow::on_clanActionInvite_clicked()
 void BaseWindow::on_clanActionEject_clicked()
 {
     bool ok;
-    QString text = QInputDialog::getText(this,tr("Give the player pseudo"),tr("Player pseudo to invite:"),QLineEdit::Normal,QString(), &ok);
+    std::string text = QInputDialog::getText(this,tr("Give the player pseudo"),tr("Player pseudo to invite:"),QLineEdit::Normal,QString(), &ok);
     if(ok && !text.isEmpty())
     {
         actionClan << ActionClan_Eject;
@@ -121,14 +121,14 @@ void BaseWindow::on_clanActionEject_clicked()
     }
 }
 
-void BaseWindow::clanInformations(const QString &name)
+void BaseWindow::clanInformations(const std::string &name)
 {
     haveClanInformations=true;
     clanName=name;
     updateClanDisplay();
 }
 
-void BaseWindow::clanInvite(const uint32_t &clanId,const QString &name)
+void BaseWindow::clanInvite(const uint32_t &clanId,const std::string &name)
 {
     QMessageBox::StandardButton button=QMessageBox::question(this,tr("Invite"),tr("The clan %1 invite you to become a member. Do you accept?").arg(QStringLiteral("<b>%1</b>").arg(name)));
     client->inviteAccept(button==QMessageBox::Yes);

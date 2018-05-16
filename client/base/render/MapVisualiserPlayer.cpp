@@ -402,7 +402,7 @@ void MapVisualiserPlayer::moveStepSlot()
         }
         break;
         case 1:
-        MapObjectItem::objectLink.value(playerMapObject)->setZValue(qCeil(playerMapObject->y()));
+        MapObjectItem::objectLink.at(playerMapObject)->setZValue(qCeil(playerMapObject->y()));
         break;
         //transition step
         case 2:
@@ -427,7 +427,7 @@ void MapVisualiserPlayer::moveStepSlot()
     }
 
     if(centerOnPlayer)
-        centerOn(MapObjectItem::objectLink.value(playerMapObject));
+        centerOn(MapObjectItem::objectLink.at(playerMapObject));
     loadGrassTile();
 
     moveStep++;
@@ -619,7 +619,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         return;
     }
 
-    /// \see into haveStopTileAction(), to NPC fight: QList<QPair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
+    /// \see into haveStopTileAction(), to NPC fight: std::vector<std::pair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
     if(!CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.empty())
     {
         const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(current_map_pointer->logicalMap,x,y);
@@ -684,9 +684,9 @@ void MapVisualiserPlayer::finalPlayerStep()
     }
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
-    MapObjectItem::objectLink.value(playerMapObject)->setZValue(y);
+    MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
     if(centerOnPlayer)
-        centerOn(MapObjectItem::objectLink.value(playerMapObject));
+        centerOn(MapObjectItem::objectLink.at(playerMapObject));
     //stopGrassAnimation();
 
     if(haveStopTileAction())
@@ -1343,9 +1343,9 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
-    MapObjectItem::objectLink.value(playerMapObject)->setZValue(y);
+    MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
     if(centerOnPlayer)
-        centerOn(MapObjectItem::objectLink.value(playerMapObject));
+        centerOn(MapObjectItem::objectLink.at(playerMapObject));
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())

@@ -13,21 +13,21 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x
         return;
     else if(CatchChallenger::MoveOnTheMap::isDirt(*map,x,y))
     {
-        int index=0;
+        unsigned int index=0;
         while(index<map->plantList.size())
         {
             if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
             {
                 uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
                 if(map->plantList.at(index)->mature_at<=current_time)
-                    showTip(tr("To recolt the plant press <i>Enter</i>"));
+                    showTip(tr("To recolt the plant press <i>Enter</i>").toStdString());
                 else
-                    showTip(tr("This plant is growing and can't be collected"));
+                    showTip(tr("This plant is growing and can't be collected").toStdString());
                 return;
             }
             index++;
         }
-        showTip(tr("To plant a seed press <i>Enter</i>"));
+        showTip(tr("To plant a seed press <i>Enter</i>").toStdString());
         return;
     }
     else
@@ -67,9 +67,9 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x
 
 bool BaseWindow::stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
 {
-    if(!map->bots.contains(QPair<uint8_t,uint8_t>(x,y)))
+    if(map->bots.find(std::pair<uint8_t,uint8_t>(x,y))==map->bots.cend())
         return false;
-    showTip(tr("To interact with the bot press <i><b>Enter</b></i>"));
+    showTip(tr("To interact with the bot press <i><b>Enter</b></i>").toStdString());
     return true;
 }
 
@@ -78,7 +78,7 @@ int32_t BaseWindow::havePlant(CatchChallenger::Map_client *map, uint8_t x, uint8
 {
     if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
     {
-        int index=0;
+        unsigned int index=0;
         while(index<map->plantList.size())
         {
             if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
@@ -89,11 +89,13 @@ int32_t BaseWindow::havePlant(CatchChallenger::Map_client *map, uint8_t x, uint8
     }
     else
     {
-        if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(QString::fromStdString(map->map_file)))
+        if(DatapackClientLoader::datapackLoader.plantOnMap.find(map->map_file)==
+                DatapackClientLoader::datapackLoader.plantOnMap.cend())
             return -1;
-        if(!DatapackClientLoader::datapackLoader.plantOnMap.value(QString::fromStdString(map->map_file)).contains(QPair<uint8_t,uint8_t>(x,y)))
+        const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=DatapackClientLoader::datapackLoader.plantOnMap.at(map->map_file);
+        if(plant.find(std::pair<uint8_t,uint8_t>(x,y))==plant.cend())
             return -1;
-        int index=0;
+        unsigned int index=0;
         while(index<map->plantList.size())
         {
             if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
@@ -127,20 +129,22 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
                 if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
                 {
                     ClientPlantInCollecting clientPlantInCollecting;
-                    clientPlantInCollecting.map=QString::fromStdString(map->map_file);
+                    clientPlantInCollecting.map=map->map_file;
                     clientPlantInCollecting.plant_id=map->plantList.at(index)->plant_id;
                     clientPlantInCollecting.seconds_to_mature=0;
                     clientPlantInCollecting.x=x;
                     clientPlantInCollecting.y=y;
-                    plant_collect_in_waiting << clientPlantInCollecting;
+                    plant_collect_in_waiting.push_back(clientPlantInCollecting);
                     addQuery(QueryType_CollectPlant);
                     emit collectMaturePlant();
                 }
                 else
                 {
-                    if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(QString::fromStdString(map->map_file)))
+                    if(DatapackClientLoader::datapackLoader.plantOnMap.find(map->map_file)==
+                            DatapackClientLoader::datapackLoader.plantOnMap.cend())
                         return;
-                    if(!DatapackClientLoader::datapackLoader.plantOnMap.value(QString::fromStdString(map->map_file)).contains(QPair<uint8_t,uint8_t>(x,y)))
+                    const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=DatapackClientLoader::datapackLoader.plantOnMap.at(map->map_file);
+                    if(plant.find(std::pair<uint8_t,uint8_t>(x,y))==plant.cend())
                         return;
                     emit collectMaturePlant();
 
@@ -149,24 +153,24 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
                 }
             }
             else
-                showTip(tr("This plant is growing and can't be collected"));
+                showTip(tr("This plant is growing and can't be collected").toStdString());
         }
         else
         {
             SeedInWaiting seedInWaiting;
-            seedInWaiting.map=QString::fromStdString(map->map_file);
+            seedInWaiting.map=map->map_file;
             seedInWaiting.x=x;
             seedInWaiting.y=y;
-            seed_in_waiting << seedInWaiting;
+            seed_in_waiting.push_back(seedInWaiting);
 
             selectObject(ObjectType_Seed);
         }
         return;
     }
-    else if(map->itemsOnMap.contains(QPair<uint8_t,uint8_t>(x,y)))
+    else if(map->itemsOnMap.find(std::pair<uint8_t,uint8_t>(x,y))!=map->itemsOnMap.cend())
     {
         Player_private_and_public_informations &informations=client->get_player_informations();
-        const Map_client::ItemOnMapForClient &item=map->itemsOnMap.value(QPair<uint8_t,uint8_t>(x,y));
+        const Map_client::ItemOnMapForClient &item=map->itemsOnMap.value(std::pair<uint8_t,uint8_t>(x,y));
         if(informations.itemOnMap.find(item.indexOfItemOnMap)==informations.itemOnMap.cend())
         {
             if(!item.infinite)
@@ -209,9 +213,9 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
 
 bool BaseWindow::actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
 {
-    if(!map->bots.contains(QPair<uint8_t,uint8_t>(x,y)))
+    if(!map->bots.contains(std::pair<uint8_t,uint8_t>(x,y)))
         return false;
-    actualBot=map->bots.value(QPair<uint8_t,uint8_t>(x,y));
+    actualBot=map->bots.value(std::pair<uint8_t,uint8_t>(x,y));
     isInQuest=false;
     goToBotStep(1);
     return true;
@@ -219,13 +223,13 @@ bool BaseWindow::actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x, u
 
 void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
 {
-    if(!map->bots.contains(QPair<uint8_t,uint8_t>(x,y)))
+    if(!map->bots.contains(std::pair<uint8_t,uint8_t>(x,y)))
     {
         newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Bot trigged but no bot at this place");
         return;
     }
     uint8_t step=1;
-    actualBot=map->bots.value(QPair<uint8_t,uint8_t>(x,y));
+    actualBot=map->bots.value(std::pair<uint8_t,uint8_t>(x,y));
     isInQuest=false;
     if(actualBot.step.find(step)==actualBot.step.cend())
     {
@@ -292,7 +296,7 @@ void BaseWindow::currentMapLoaded()
     //name
     {
         MapVisualiserThread::Map_full *mapFull=mapController->currentMapFull();
-        QString visualName;
+        std::string visualName;
         if(!mapFull->zone.isEmpty())
             if(DatapackClientLoader::datapackLoader.zonesExtra.contains(mapFull->zone))
             {
@@ -307,12 +311,12 @@ void BaseWindow::currentMapLoaded()
             showPlace(tr("You arrive at <b><i>%1</i></b>").arg(visualName));
         }
     }
-    const QString &type=mapController->currentMapType();
+    const std::string &type=mapController->currentMapType();
     #ifndef CATCHCHALLENGER_NOAUDIO
     //sound
     {
         QStringList soundList;
-        const QString &backgroundsound=mapController->currentBackgroundsound();
+        const std::string &backgroundsound=mapController->currentBackgroundsound();
         //map sound
         if(!backgroundsound.isEmpty() && !soundList.contains(backgroundsound))
             soundList << backgroundsound;
@@ -324,7 +328,7 @@ void BaseWindow::currentMapLoaded()
                 const DatapackClientLoader::ZoneExtra &zoneExtra=DatapackClientLoader::datapackLoader.zonesExtra.value(mapFull->zone);
                 if(zoneExtra.audioAmbiance.contains(type))
                 {
-                    const QString &backgroundsound=zoneExtra.audioAmbiance.value(type);
+                    const std::string &backgroundsound=zoneExtra.audioAmbiance.value(type);
                     if(!backgroundsound.isEmpty() && !soundList.contains(backgroundsound))
                         soundList << backgroundsound;
                 }
@@ -332,24 +336,24 @@ void BaseWindow::currentMapLoaded()
         //general sound
         if(DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
         {
-            const QString &backgroundsound=DatapackClientLoader::datapackLoader.audioAmbiance.value(type);
+            const std::string &backgroundsound=DatapackClientLoader::datapackLoader.audioAmbiance.value(type);
             if(!backgroundsound.isEmpty() && !soundList.contains(backgroundsound))
                 soundList << backgroundsound;
         }
 
-        QString finalSound;
+        std::string finalSound;
         int index=0;
         while(index<soundList.size())
         {
             //search into main datapack
-            const QString &fileToSearchMain=QDir::toNativeSeparators(client->datapackPathMain()+soundList.at(index));
+            const std::string &fileToSearchMain=QDir::toNativeSeparators(client->datapackPathMain()+soundList.at(index));
             if(QFileInfo(fileToSearchMain).isFile())
             {
                 finalSound=fileToSearchMain;
                 break;
             }
             //search into base datapack
-            const QString &fileToSearchBase=QDir::toNativeSeparators(client->datapackPathBase()+soundList.at(index));
+            const std::string &fileToSearchBase=QDir::toNativeSeparators(client->datapackPathBase()+soundList.at(index));
             if(QFileInfo(fileToSearchBase).isFile())
             {
                 finalSound=fileToSearchBase;
@@ -406,7 +410,7 @@ void BaseWindow::currentMapLoaded()
             visualCategory=type;
             if(DatapackClientLoader::datapackLoader.visualCategories.contains(type))
             {
-                const QList<DatapackClientLoader::VisualCategory::VisualCategoryCondition> &conditions=DatapackClientLoader::datapackLoader.visualCategories.value(type).conditions;
+                const std::vector<DatapackClientLoader::VisualCategory::VisualCategoryCondition> &conditions=DatapackClientLoader::datapackLoader.visualCategories.value(type).conditions;
                 int index=0;
                 while(index<conditions.size())
                 {

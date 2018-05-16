@@ -127,7 +127,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 animationWidget->rootContext()->setContextProperty("itemEvolution",QUrl::fromLocalFile(DatapackClientLoader::datapackLoader.itemsExtra.value(item).imagePath));
                 animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
                 animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
-                const QString datapackQmlFile=client->datapackPathBase()+"qml/evolution-animation.qml";
+                const std::string datapackQmlFile=client->datapackPathBase()+"qml/evolution-animation.qml";
                 if(QFile(datapackQmlFile).exists())
                     animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
                 else
@@ -217,7 +217,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             client->putMarketObject(itemId,quantity,getPrice.price());
             marketPutCashInSuspend=getPrice.price();
             remove_to_inventory(itemId,quantity);
-            QPair<uint16_t,uint32_t> pair;
+            std::pair<uint16_t,uint32_t> pair;
             pair.first=itemId;
             pair.second=quantity;
             marketPutObjectInSuspendList << pair;
@@ -561,7 +561,7 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
         const CrafingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.at(recipeId);
         if(!haveReputationRequirements(recipe.requirements.reputation))
         {
-            QString string;
+            std::string string;
             unsigned int index=0;
             while(index<recipe.requirements.reputation.size())
             {

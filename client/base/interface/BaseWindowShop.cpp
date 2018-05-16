@@ -65,7 +65,7 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
 
 void BaseWindow::on_shopItemList_itemSelectionChanged()
 {
-    QList<QListWidgetItem *> items=ui->shopItemList->selectedItems();
+    std::vector<QListWidgetItem *> items=ui->shopItemList->selectedItems();
     if(items.size()!=1)
     {
         ui->shopName->setText("");
@@ -92,7 +92,7 @@ void BaseWindow::on_shopItemList_itemSelectionChanged()
 
 void BaseWindow::on_shopBuy_clicked()
 {
-    QList<QListWidgetItem *> items=ui->shopItemList->selectedItems();
+    std::vector<QListWidgetItem *> items=ui->shopItemList->selectedItems();
     if(items.size()!=1)
     {
         qDebug() << "on_shopBuy_clicked() no correct selection";
@@ -101,7 +101,7 @@ void BaseWindow::on_shopBuy_clicked()
     on_shopItemList_itemActivated(items.first());
 }
 
-void BaseWindow::haveShopList(const QList<ItemToSellOrBuy> &items)
+void BaseWindow::haveShopList(const std::vector<ItemToSellOrBuy> &items)
 {
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveShopList()";
@@ -189,7 +189,7 @@ void BaseWindow::displaySellList()
 void BaseWindow::haveBuyObject(const BuyStat &stat,const uint32_t &newPrice)
 {
     const ItemToSellOrBuy &itemToSellOrBuy=itemsToBuy.first();
-    QHash<uint32_t,uint32_t> items;
+    std::unordered_map<uint32_t,uint32_t> items;
     switch(stat)
     {
         case BuyStat_Done:

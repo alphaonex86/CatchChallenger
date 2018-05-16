@@ -9,7 +9,7 @@
 
 using namespace CatchChallenger;
 
-void BaseWindow::marketList(const uint64_t &price,const QList<MarketObject> &marketObjectList,const QList<MarketMonster> &marketMonsterList,const QList<MarketObject> &marketOwnObjectList,const QList<MarketMonster> &marketOwnMonsterList)
+void BaseWindow::marketList(const uint64_t &price,const std::vector<MarketObject> &marketObjectList,const std::vector<MarketMonster> &marketMonsterList,const std::vector<MarketObject> &marketOwnObjectList,const std::vector<MarketMonster> &marketOwnMonsterList)
 {
     ui->marketWithdraw->setVisible(true);
     ui->marketStat->setText(tr("Cash to withdraw: %1$").arg(price));
@@ -35,7 +35,7 @@ void BaseWindow::marketList(const uint64_t &price,const QList<MarketObject> &mar
         item->setData(99,marketMonster.index);
         item->setData(98,(quint64)marketMonster.price);
         item->setData(96,marketMonster.level);
-        QString price;
+        std::string price;
         if(marketMonster.price>0)
             price=tr("Price: %1$").arg(marketMonster.price);
         else
@@ -80,7 +80,7 @@ void BaseWindow::addOwnMonster(const MarketMonster &marketMonster)
     QListWidgetItem *item=new QListWidgetItem();
     item->setData(99,marketMonster.index);
     item->setData(98,(quint64)marketMonster.price);
-    QString price;
+    std::string price;
     if(marketMonster.price>0)
         price=tr("Price: %1$").arg(marketMonster.price);
     else
@@ -110,7 +110,7 @@ void BaseWindow::marketBuy(const bool &success)
     }
     else
     {
-        QHash<uint16_t,uint32_t> items;
+        std::unordered_map<uint16_t,uint32_t> items;
         items[marketBuyObjectList.first().first]=marketBuyObjectList.first().second;
         add_to_inventory(items);
         marketBuyObjectList.removeFirst();
@@ -232,12 +232,12 @@ void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &ma
     item->setData(98,marketObject.quantity);
     item->setData(97,(quint64)marketObject.price);
     item->setData(95,marketObject.item);
-    QString price;
+    std::string price;
     if(marketObject.price>0)
         price=tr("Price: %1$").arg(marketObject.price);
     else
         price=tr("Price: Free");
-    QString quantity;
+    std::string quantity;
     if(marketObject.quantity>1)
         quantity=QStringLiteral(", ")+tr("quantity: %1").arg(marketObject.quantity);
     if(DatapackClientLoader::datapackLoader.itemsExtra.contains(marketObject.item))
@@ -289,7 +289,7 @@ void BaseWindow::on_marketObject_itemActivated(QListWidgetItem *item)
     item->setData(97,(quint64)marketObject.price);
     item->setData(95,marketObject.item);*/
 
-    QPair<uint32_t,uint32_t> newEntry;
+    std::pair<uint32_t,uint32_t> newEntry;
     newEntry.first=item->data(95).toUInt();
     newEntry.second=quantity;
     marketBuyObjectList << newEntry;
@@ -389,7 +389,7 @@ void BaseWindow::on_marketOwnMonster_itemActivated(QListWidgetItem *item)
     delete item;
 }
 
-void BaseWindow::tradeAcceptedByOther(const QString &pseudo,const uint8_t &skinInt)
+void BaseWindow::tradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt)
 {
     ui->stackedWidget->setCurrentWidget(ui->page_trade);
     tradeOtherStat=TradeOtherStat_InWait;

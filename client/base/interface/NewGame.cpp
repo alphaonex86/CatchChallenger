@@ -10,7 +10,7 @@
 #include <QDebug>
 #include <QLabel>
 
-NewGame::NewGame(const QString &skinPath, const QString &monsterPath, std::vector<std::vector<CatchChallenger::Profile::Monster> > monstergroup, const std::vector<uint8_t> &forcedSkin, QWidget *parent) :
+NewGame::NewGame(const std::string &skinPath, const std::string &monsterPath, std::vector<std::vector<CatchChallenger::Profile::Monster> > monstergroup, const std::vector<uint8_t> &forcedSkin, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NewGame)
 {
@@ -145,12 +145,12 @@ bool NewGame::okCanBeEnabled()
     return !ui->pseudo->text().isEmpty() && skinLoaded;
 }
 
-QString NewGame::pseudo()
+std::string NewGame::pseudo()
 {
     return ui->pseudo->text();
 }
 
-QString NewGame::skin()
+std::string NewGame::skin()
 {
     return QString::fromStdString(skinList.at(currentSkin));
 }
@@ -198,7 +198,7 @@ void NewGame::on_ok_clicked()
         return;
 }
 
-void NewGame::on_pseudo_textChanged(const QString &)
+void NewGame::on_pseudo_textChanged(const std::string &)
 {
     ui->ok->setEnabled(okCanBeEnabled());
 }

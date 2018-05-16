@@ -4,7 +4,7 @@
 #include "../../base/render/MapVisualiserPlayer.h"
 #include "../../fight/interface/ClientFightEngine.h"
 
-#include <QSet>
+#include <QObject>
 
 class MapVisualiserPlayerWithFight : public MapVisualiserPlayer
 {
@@ -28,7 +28,7 @@ protected:
     Tiled::Tileset *fightCollisionBot;
 signals:
     void repelEffectIsOver() const;
-    void teleportConditionNotRespected(const QString &text) const;
+    void teleportConditionNotRespected(const std::string &text) const;
 };
 
 #endif

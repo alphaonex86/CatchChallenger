@@ -27,7 +27,7 @@ void MapItem::addMap(MapVisualiserThread::Map_full * tempMapObject,Tiled::Map *m
     }
     //align zIndex to "Dyna management" Layer
     int index=-playerLayerIndex;
-    const QList<Tiled::Layer *> &layers=map->layers();
+    const QVector<Tiled::Layer *> &layers=map->layers();
 
     QImage image;
     QGraphicsItem * graphicsItem=NULL;
@@ -118,7 +118,7 @@ bool MapItem::haveMap(Tiled::Map *map)
 
 void MapItem::removeMap(Tiled::Map *map)
 {
-    QList<QGraphicsItem *> values = displayed_layer.values(map);
+    QVector<QGraphicsItem *> values = displayed_layer.values(map);
     int index=0;
     while(index<values.size())
     {
@@ -130,7 +130,7 @@ void MapItem::removeMap(Tiled::Map *map)
 
 void MapItem::setMapPosition(Tiled::Map *map, int16_t x/*pixel, need be 16Bits*/, int16_t y/*pixel, need be 16Bits*/)
 {
-    QList<QGraphicsItem *> values = displayed_layer.values(map);
+    QVector<QGraphicsItem *> values = displayed_layer.values(map);
     int index=0;
     while(index<values.size())
     {

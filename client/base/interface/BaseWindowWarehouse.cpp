@@ -44,7 +44,7 @@ void BaseWindow::on_warehouseDepositCash_clicked()
 
 void BaseWindow::on_warehouseWithdrawItem_clicked()
 {
-    QList<QListWidgetItem *> itemList=ui->warehousePlayerStoredInventory->selectedItems();
+    std::vector<QListWidgetItem *> itemList=ui->warehousePlayerStoredInventory->selectedItems();
     if(itemList.size()!=1)
     {
         if(ui->warehousePlayerStoredInventory->count()==1)
@@ -60,7 +60,7 @@ void BaseWindow::on_warehouseWithdrawItem_clicked()
 
 void BaseWindow::on_warehouseDepositItem_clicked()
 {
-    QList<QListWidgetItem *> itemList=ui->warehousePlayerInventory->selectedItems();
+    std::vector<QListWidgetItem *> itemList=ui->warehousePlayerInventory->selectedItems();
     if(itemList.size()!=1)
     {
         if(ui->warehousePlayerInventory->count()==1)
@@ -76,7 +76,7 @@ void BaseWindow::on_warehouseDepositItem_clicked()
 
 void BaseWindow::on_warehouseWithdrawMonster_clicked()
 {
-    QList<QListWidgetItem *> itemList=ui->warehousePlayerStoredMonster->selectedItems();
+    std::vector<QListWidgetItem *> itemList=ui->warehousePlayerStoredMonster->selectedItems();
     if(itemList.size()!=1)
     {
         if(ui->warehousePlayerStoredMonster->count()==1)
@@ -92,7 +92,7 @@ void BaseWindow::on_warehouseWithdrawMonster_clicked()
 
 void BaseWindow::on_warehouseDepositMonster_clicked()
 {
-    QList<QListWidgetItem *> itemList=ui->warehousePlayerMonster->selectedItems();
+    std::vector<QListWidgetItem *> itemList=ui->warehousePlayerMonster->selectedItems();
     if(itemList.size()!=1)
     {
         if(ui->warehousePlayerMonster->count()==1)
@@ -176,7 +176,7 @@ void BaseWindow::on_warehousePlayerMonster_itemActivated(QListWidgetItem *item)
         return;
     bool remain_valid_monster=false;
     int index=0;
-    QList<PlayerMonster> warehouseMonsterOnPlayerList=warehouseMonsterOnPlayer();
+    std::vector<PlayerMonster> warehouseMonsterOnPlayerList=warehouseMonsterOnPlayer();
     while(index<warehouseMonsterOnPlayerList.size())
     {
         const PlayerMonster &monster=warehouseMonsterOnPlayerList.at(index);
@@ -202,7 +202,7 @@ void BaseWindow::on_warehousePlayerStoredMonster_itemActivated(QListWidgetItem *
     int pos=ui->warehousePlayerMonster->row(item);
     if(pos<0)
         return;
-    QList<PlayerMonster> warehouseMonsterOnPlayerList=warehouseMonsterOnPlayer();
+    std::vector<PlayerMonster> warehouseMonsterOnPlayerList=warehouseMonsterOnPlayer();
     if(warehouseMonsterOnPlayerList.size()>CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
     {
         QMessageBox::warning(this,tr("Error"),tr("You can't wear more monster!"));
@@ -213,10 +213,10 @@ void BaseWindow::on_warehousePlayerStoredMonster_itemActivated(QListWidgetItem *
     updateTheWareHouseContent();
 }
 
-QList<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
+std::vector<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    QList<PlayerMonster> warehouseMonsterOnPlayerList;
+    std::vector<PlayerMonster> warehouseMonsterOnPlayerList;
     {
         const std::vector<PlayerMonster> &playerMonster=fightEngine.getPlayerMonster();
         unsigned int index=0;
@@ -254,10 +254,10 @@ void BaseWindow::on_warehouseValidate_clicked()
 {
     Player_private_and_public_informations &playerInformations=client->get_player_informations();
     {
-        QList<QPair<uint16_t,int32_t> > change_warehouse_items_list;
-        QHash<uint16_t,int32_t>::const_iterator i = change_warehouse_items.constBegin();
+        std::vector<std::pair<uint16_t,int32_t> > change_warehouse_items_list;
+        std::unordered_map<uint16_t,int32_t>::const_iterator i = change_warehouse_items.constBegin();
         while (i != change_warehouse_items.constEnd()) {
-            change_warehouse_items_list << QPair<uint16_t,int32_t>(i.key(),i.value());
+            change_warehouse_items_list << std::pair<uint16_t,int32_t>(i.key(),i.value());
             ++i;
         }
         client->wareHouseStore(temp_warehouse_cash,change_warehouse_items_list,monster_to_withdraw,monster_to_deposit);
@@ -269,7 +269,7 @@ void BaseWindow::on_warehouseValidate_clicked()
         removeCash(static_cast<uint32_t>(-temp_warehouse_cash));
     playerInformations.warehouse_cash-=temp_warehouse_cash;
     {
-        QHash<uint16_t,int32_t>::const_iterator i = change_warehouse_items.constBegin();
+        std::unordered_map<uint16_t,int32_t>::const_iterator i = change_warehouse_items.constBegin();
         while (i != change_warehouse_items.constEnd()) {
             if(i.value()>0)
             {
@@ -297,7 +297,7 @@ void BaseWindow::on_warehouseValidate_clicked()
         load_plant_inventory();
     }
     {
-        QList<PlayerMonster> playerMonsterToWithdraw;
+        std::vector<PlayerMonster> playerMonsterToWithdraw;
         int index=0;
         while(index<monster_to_withdraw.size())
         {

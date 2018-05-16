@@ -96,7 +96,7 @@ MapVisualiser::~MapVisualiser()
         delete mark;
     //remove the not used map
     /// \todo re-enable this
-    /*QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
+    /*std::unordered_map<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
     while (i != all_map.constEnd()) {
         destroyMap(*i);
         i = all_map.constBegin();//needed
@@ -210,7 +210,7 @@ void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThre
         mapObject->setPosition(QPointF(x,y+1));
         mark=new MapMark(mapObject);
         ObjectGroupItem::objectGroupLink.at(tempMapObject->objectGroup)->addObject(mapObject);
-        if(MapObjectItem::objectLink.contains(mapObject))
-            MapObjectItem::objectLink.value(mapObject)->setZValue(9999);
+        if(MapObjectItem::objectLink.find(mapObject)!=MapObjectItem::objectLink.cend())
+            MapObjectItem::objectLink.at(mapObject)->setZValue(9999);
     }
 }

@@ -62,20 +62,20 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
-    qRegisterMetaType<QList<ServerFromPoolForDisplay *> >("QList<ServerFromPoolForDisplay *>");
+    qRegisterMetaType<std::vector<ServerFromPoolForDisplay *> >("std::vector<ServerFromPoolForDisplay *>");
     qRegisterMetaType<MapVisualiserPlayer::BlockedOn>("MapVisualiserPlayer::BlockedOn");
 
     qRegisterMetaType<Chat_type>("Chat_type");
     qRegisterMetaType<Player_type>("Player_type");
     qRegisterMetaType<Player_private_and_public_informations>("Player_private_and_public_informations");
 
-    qRegisterMetaType<QHash<uint32_t,uint32_t> >("QHash<uint32_t,uint32_t>");
-    qRegisterMetaType<QHash<uint32_t,uint32_t> >("CatchChallenger::Plant_collect");
-    qRegisterMetaType<QList<ItemToSellOrBuy> >("QList<ItemToSell>");
-    qRegisterMetaType<QList<QPair<uint8_t,uint8_t> > >("QList<QPair<uint8_t,uint8_t> >");
+    qRegisterMetaType<std::unordered_map<uint32_t,uint32_t> >("std::unordered_map<uint32_t,uint32_t>");
+    qRegisterMetaType<std::unordered_map<uint32_t,uint32_t> >("CatchChallenger::Plant_collect");
+    qRegisterMetaType<std::vector<ItemToSellOrBuy> >("std::vector<ItemToSell>");
+    qRegisterMetaType<std::vector<std::pair<uint8_t,uint8_t> > >("std::vector<std::pair<uint8_t,uint8_t> >");
     qRegisterMetaType<Skill::AttackReturn>("Skill::AttackReturn");
-    qRegisterMetaType<QList<uint32_t> >("QList<uint32_t>");
-    qRegisterMetaType<QList<QList<CharacterEntry> > >("QList<QList<CharacterEntry> >");
+    qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
+    qRegisterMetaType<std::vector<std::vector<CharacterEntry> > >("std::vector<std::vector<CharacterEntry> >");
     qRegisterMetaType<std::vector<MarketMonster> >("std::vector<MarketMonster>");
 
     qRegisterMetaType<std::unordered_map<uint16_t,uint16_t> >("std::unordered_map<uint16_t,uint16_t>");
@@ -129,7 +129,7 @@ BaseWindow::BaseWindow() :
     ui->label_ultimate->setVisible(false);
     #endif
     {
-        const QList<QByteArray> &supportedImageFormats=QImageReader::supportedImageFormats();
+        const std::vector<QByteArray> &supportedImageFormats=QImageReader::supportedImageFormats();
         int index=0;
         while(index<supportedImageFormats.size())
         {
@@ -622,12 +622,12 @@ void BaseWindow::number_of_player(uint16_t number,uint16_t max)
     else
     {
         ui->frame_main_display_interface_player->show();
-        QString stringMax;
+        std::string stringMax;
         if(max>1000)
             stringMax=QStringLiteral("%1K").arg(max/1000);
         else
             stringMax=QString::number(max);
-        QString stringNumber;
+        std::string stringNumber;
         if(number>1000)
             stringNumber=QStringLiteral("%1K").arg(number/1000);
         else
@@ -834,7 +834,7 @@ void BaseWindow::on_toolButton_quit_inventory_clicked()
 
 void BaseWindow::on_inventory_itemSelectionChanged()
 {
-    QList<QListWidgetItem *> items=ui->inventory->selectedItems();
+    std::vector<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
     {
         ui->inventory_image->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
@@ -1299,7 +1299,7 @@ void BaseWindow::appendReputationPoint(const std::string &type,const int32_t &po
 
 std::string BaseWindow::parseHtmlToDisplay(const std::string &htmlContent)
 {
-    QString newContent=QString::fromStdString(htmlContent);
+    std::string newContent=QString::fromStdString(htmlContent);
     #ifdef NOREMOTE
     QRegularExpression remote(QRegularExpression::escape("<span class=\"remote\">")+".*"+QRegularExpression::escape("</span>"));
     remote.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
@@ -1361,7 +1361,7 @@ void BaseWindow::on_inventoryDestroy_clicked()
 {
     Player_private_and_public_informations &playerInformations=client->get_player_informations();
     qDebug() << "on_inventoryDestroy_clicked()";
-    QList<QListWidgetItem *> items=ui->inventory->selectedItems();
+    std::vector<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
         return;
     const uint16_t itemId=items_graphical.at(items.first());
@@ -1407,7 +1407,7 @@ uint32_t BaseWindow::itemQuantity(const uint16_t &itemId) const
 
 void BaseWindow::on_inventoryUse_clicked()
 {
-    QList<QListWidgetItem *> items=ui->inventory->selectedItems();
+    std::vector<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
         return;
     on_inventory_itemActivated(items.first());
@@ -1415,7 +1415,7 @@ void BaseWindow::on_inventoryUse_clicked()
 
 void BaseWindow::on_inventoryInformation_clicked()
 {
-    QList<QListWidgetItem *> items=ui->inventory->selectedItems();
+    std::vector<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
     {
         qDebug() << "on_inventoryInformation_clicked() should not be accessible here";
@@ -1561,7 +1561,7 @@ void BaseWindow::on_tradeAddMonster_clicked()
 
 void BaseWindow::on_selectMonster_clicked()
 {
-    QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
+    std::vector<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
         return;
     on_monsterList_itemActivated(selectedMonsters.first());
@@ -1585,7 +1585,7 @@ void BaseWindow::on_monsterDetailsQuit_clicked()
 
 void BaseWindow::on_monsterListMoveUp_clicked()
 {
-    QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
+    std::vector<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
         return;
     const uint8_t &currentRow=static_cast<uint8_t>(ui->monsterList->row(selectedMonsters.first()));
@@ -1604,7 +1604,7 @@ void BaseWindow::on_monsterListMoveUp_clicked()
 
 void BaseWindow::on_monsterListMoveDown_clicked()
 {
-    QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
+    std::vector<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
         return;
     const int &currentRow=ui->monsterList->row(selectedMonsters.first());
@@ -1625,7 +1625,7 @@ void BaseWindow::on_monsterListMoveDown_clicked()
 
 void BaseWindow::on_monsterList_itemSelectionChanged()
 {
-    QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
+    std::vector<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
     {
         ui->monsterListMoveUp->setEnabled(false);
@@ -1689,13 +1689,15 @@ void BaseWindow::detectSlowDown()
     std::vector<std::string> middleQueryList;
     const std::map<uint8_t,uint64_t> &values=client->getQuerySendTimeList();
     queryCount+=values.size();
-    QMapIterator<uint8_t,QTime> i(values);
-    while (i.hasNext()) {
-        i.next();
-        middleQueryList << QString::number(i.key());
-        const uint32_t &time=i.value().elapsed();
-        if(time>worseQueryTime)
-            worseQueryTime=time;
+    for(const auto n : values) {
+        middleQueryList.push_back(std::to_string(n.first));
+        std::time_t result = std::time(nullptr);
+        if((uint64_t)result>=n.second)
+        {
+            const uint32_t &time=result-n.second;
+            if(time>worseQueryTime)
+                worseQueryTime=time;
+        }
     }
     if(queryCount>0)
         ui->labelQueryList->setText(
@@ -1703,7 +1705,7 @@ void BaseWindow::detectSlowDown()
                     .arg(queryCount)
                     .arg(worseQueryTime)
                     .arg(QString::fromStdString(stringimplode(client->getQueryRunningList(),';')))
-                    .arg(middleQueryList.join(QStringLiteral(";")))
+                    .arg(QString::fromStdString(stringimplode(middleQueryList,";")))
                     );
     else
         ui->labelQueryList->setText(tr("No query running"));
@@ -1749,7 +1751,7 @@ void BaseWindow::on_serverList_activated(const QModelIndex &index)
 
 void BaseWindow::on_serverListSelect_clicked()
 {
-    const QList<QTreeWidgetItem *> &selectedItems=ui->serverList->selectedItems();
+    const std::vector<QTreeWidgetItem *> &selectedItems=ui->serverList->selectedItems();
     if(selectedItems.size()!=1)
         return;
 
@@ -1772,21 +1774,23 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
     if(informations.encyclopedia_monster!=NULL)
     {
         bool firstFound=false;
-        std::vector<uint16_t> keys=DatapackClientLoader::datapackLoader.monsterExtra.keys();
+        std::vector<uint16_t> keys;
+        for(const auto n : DatapackClientLoader::datapackLoader.monsterExtra)
+            keys.push_back(n.first);
         qSort(keys.begin(),keys.end());
-        uint16_t max=keys.last();
+        uint16_t max=keys.back();
         while(max>0 && !(informations.encyclopedia_monster[max/8] & (1<<(7-max%8))))
             max--;
         uint32_t i=0;
         while (i<max)
         {
-            const uint16_t &monsterId=keys.value(i);
+            const uint16_t &monsterId=keys.at(i);
             const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.at(monsterId);
             QListWidgetItem *item=new QListWidgetItem();
             const uint16_t &bitgetUp=monsterId;
             if(informations.encyclopedia_monster[bitgetUp/8] & (1<<(7-bitgetUp%8)))
             {
-                item->setText(monsterExtra.name);
+                item->setText(QString::fromStdString(monsterExtra.name));
                 item->setData(99,monsterId);
                 item->setIcon(QIcon(monsterExtra.thumb));
                 firstFound=true;
@@ -1816,21 +1820,23 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
     if(informations.encyclopedia_item!=NULL)
     {
         bool firstFound=false;
-        QList<uint16_t> keys=DatapackClientLoader::datapackLoader.itemsExtra.keys();
+        std::vector<uint16_t> keys;
+        for(const auto n : DatapackClientLoader::datapackLoader.itemsExtra)
+            keys.push_back(n.first);
         qSort(keys.begin(),keys.end());
-        uint16_t max=keys.last();
+        uint16_t max=keys.back();
         while(max>0 && !(informations.encyclopedia_item[max/8] & (1<<(7-max%8))))
             max--;
         uint32_t i=0;
         while (i<max)
         {
-            const uint16_t &itemId=keys.value(i);
-            const DatapackClientLoader::ItemExtra &itemsExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(itemId);
+            const uint16_t &itemId=keys.at(i);
+            const DatapackClientLoader::ItemExtra &itemsExtra=DatapackClientLoader::datapackLoader.itemsExtra.at(itemId);
             QListWidgetItem *item=new QListWidgetItem();
             const uint16_t &bitgetUp=itemId;
             if(informations.encyclopedia_item[bitgetUp/8] & (1<<(7-bitgetUp%8)))
             {
-                item->setText(itemsExtra.name);
+                item->setText(QString::fromStdString(itemsExtra.name));
                 item->setData(99,itemId);
                 item->setIcon(QIcon(itemsExtra.image));
                 firstFound=true;
