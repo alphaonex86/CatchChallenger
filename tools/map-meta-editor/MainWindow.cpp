@@ -6,7 +6,7 @@
 #include <QFile>
 #include <QString>
 #include <QDomDocument>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QDebug>
 #include <QInputDialog>
 #include <QRegularExpression>
@@ -67,7 +67,7 @@ void MainWindow::on_openMapMetaFile_clicked()
         return;
     }
     bool ok;
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="map")
     {
         QMessageBox::warning(this,tr("Error"),tr("Unable to open the file %1:\nThe root balise is not maps").arg(xmlFile.fileName()));
@@ -83,7 +83,7 @@ void MainWindow::on_openMapMetaFile_clicked()
         ui->zone->setText(root.attribute("zone"));
     //load the name
     {
-        QDomElement child = root.firstChildElement("name");
+        tinyxml2::XMLElement child = root.FirstChildElement("name");
         while(!child.isNull())
         {
             QString lang="en";
@@ -94,7 +94,7 @@ void MainWindow::on_openMapMetaFile_clicked()
             if(child.text().isEmpty())
             {
                 child.parentNode().removeChild(child);
-                child = child.nextSiblingElement("name");
+                child = child.NextSiblingElement("name");
                 continue;
             }
             QListWidgetItem * item=new QListWidgetItem();
@@ -102,23 +102,23 @@ void MainWindow::on_openMapMetaFile_clicked()
             item->setData(98,child.text());
             item->setText(QStringLiteral("%1: %2").arg(lang).arg(child.text()));
             ui->nameList->addItem(item);
-            child = child.nextSiblingElement("name");
+            child = child.NextSiblingElement("name");
         }
     }
     //load the grass
     {
-        QDomElement grass = root.firstChildElement("grass");
+        tinyxml2::XMLElement grass = root.FirstChildElement("grass");
         if(!grass.isNull())
         {
             grassTotalLuck=0;
             error=false;
-            QDomElement monster = grass.firstChildElement("monster");
+            tinyxml2::XMLElement monster = grass.FirstChildElement("monster");
             while(!monster.isNull())
             {
                 if(!monster.hasAttribute("id"))
                 {
                     error=true;
-                    monster = monster.nextSiblingElement("monster");
+                    monster = monster.NextSiblingElement("monster");
                     monster.parentNode().removeChild(monster);
                     continue;
                 }
@@ -126,7 +126,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                 if(!ok)
                 {
                     error=true;
-                    monster = monster.nextSiblingElement("monster");
+                    monster = monster.NextSiblingElement("monster");
                     monster.parentNode().removeChild(monster);
                     continue;
                 }
@@ -137,7 +137,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                     if(!ok)
                     {
                         error=true;
-                        monster = monster.nextSiblingElement("monster");
+                        monster = monster.NextSiblingElement("monster");
                         monster.parentNode().removeChild(monster);
                         continue;
                     }
@@ -152,7 +152,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                         if(!ok)
                         {
                             error=true;
-                            monster = monster.nextSiblingElement("monster");
+                            monster = monster.NextSiblingElement("monster");
                             monster.parentNode().removeChild(monster);
                             continue;
                         }
@@ -160,7 +160,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                         if(!ok)
                         {
                             error=true;
-                            monster = monster.nextSiblingElement("monster");
+                            monster = monster.NextSiblingElement("monster");
                             monster.parentNode().removeChild(monster);
                             continue;
                         }
@@ -168,7 +168,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                     else
                     {
                         error=true;
-                        monster = monster.nextSiblingElement("monster");
+                        monster = monster.NextSiblingElement("monster");
                         monster.parentNode().removeChild(monster);
                         continue;
                     }
@@ -187,7 +187,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                     if(!ok)
                     {
                         error=true;
-                        monster = monster.nextSiblingElement("monster");
+                        monster = monster.NextSiblingElement("monster");
                         monster.parentNode().removeChild(monster);
                         continue;
                     }
@@ -205,7 +205,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                 else
                     item->setText(QStringLiteral("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
                 ui->grassList->addItem(item);
-                monster = monster.nextSiblingElement("monster");
+                monster = monster.NextSiblingElement("monster");
             }
             QStringList errorList;
             if(error)
@@ -227,18 +227,18 @@ void MainWindow::on_openMapMetaFile_clicked()
     }
     //load the wather
     {
-        QDomElement wather = root.firstChildElement("wather");
+        tinyxml2::XMLElement wather = root.FirstChildElement("wather");
         if(!wather.isNull())
         {
             watherTotalLuck=0;
             error=false;
-            QDomElement monster = wather.firstChildElement("monster");
+            tinyxml2::XMLElement monster = wather.FirstChildElement("monster");
             while(!monster.isNull())
             {
                 if(!monster.hasAttribute("id"))
                 {
                     error=true;
-                    monster = monster.nextSiblingElement("monster");
+                    monster = monster.NextSiblingElement("monster");
                     monster.parentNode().removeChild(monster);
                     continue;
                 }
@@ -246,7 +246,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                 if(!ok)
                 {
                     error=true;
-                    monster = monster.nextSiblingElement("monster");
+                    monster = monster.NextSiblingElement("monster");
                     monster.parentNode().removeChild(monster);
                     continue;
                 }
@@ -257,7 +257,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                     if(!ok)
                     {
                         error=true;
-                        monster = monster.nextSiblingElement("monster");
+                        monster = monster.NextSiblingElement("monster");
                         monster.parentNode().removeChild(monster);
                         continue;
                     }
@@ -272,7 +272,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                         if(!ok)
                         {
                             error=true;
-                            monster = monster.nextSiblingElement("monster");
+                            monster = monster.NextSiblingElement("monster");
                             monster.parentNode().removeChild(monster);
                             continue;
                         }
@@ -280,7 +280,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                         if(!ok)
                         {
                             error=true;
-                            monster = monster.nextSiblingElement("monster");
+                            monster = monster.NextSiblingElement("monster");
                             monster.parentNode().removeChild(monster);
                             continue;
                         }
@@ -288,7 +288,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                     else
                     {
                         error=true;
-                        monster = monster.nextSiblingElement("monster");
+                        monster = monster.NextSiblingElement("monster");
                         monster.parentNode().removeChild(monster);
                         continue;
                     }
@@ -307,7 +307,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                     if(!ok)
                     {
                         error=true;
-                        monster = monster.nextSiblingElement("monster");
+                        monster = monster.NextSiblingElement("monster");
                         monster.parentNode().removeChild(monster);
                         continue;
                     }
@@ -325,7 +325,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                 else
                     item->setText(QStringLiteral("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
                 ui->watherList->addItem(item);
-                monster = monster.nextSiblingElement("monster");
+                monster = monster.NextSiblingElement("monster");
             }
             QStringList errorList;
             if(error)
@@ -347,18 +347,18 @@ void MainWindow::on_openMapMetaFile_clicked()
     }
     //load the cave
     {
-        QDomElement cave = root.firstChildElement("cave");
+        tinyxml2::XMLElement cave = root.FirstChildElement("cave");
         if(!cave.isNull())
         {
             caveTotalLuck=0;
             error=false;
-            QDomElement monster = cave.firstChildElement("monster");
+            tinyxml2::XMLElement monster = cave.FirstChildElement("monster");
             while(!monster.isNull())
             {
                 if(!monster.hasAttribute("id"))
                 {
                     error=true;
-                    monster = monster.nextSiblingElement("monster");
+                    monster = monster.NextSiblingElement("monster");
                     monster.parentNode().removeChild(monster);
                     continue;
                 }
@@ -366,7 +366,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                 if(!ok)
                 {
                     error=true;
-                    monster = monster.nextSiblingElement("monster");
+                    monster = monster.NextSiblingElement("monster");
                     monster.parentNode().removeChild(monster);
                     continue;
                 }
@@ -377,7 +377,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                     if(!ok)
                     {
                         error=true;
-                        monster = monster.nextSiblingElement("monster");
+                        monster = monster.NextSiblingElement("monster");
                         monster.parentNode().removeChild(monster);
                         continue;
                     }
@@ -392,7 +392,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                         if(!ok)
                         {
                             error=true;
-                            monster = monster.nextSiblingElement("monster");
+                            monster = monster.NextSiblingElement("monster");
                             monster.parentNode().removeChild(monster);
                             continue;
                         }
@@ -400,7 +400,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                         if(!ok)
                         {
                             error=true;
-                            monster = monster.nextSiblingElement("monster");
+                            monster = monster.NextSiblingElement("monster");
                             monster.parentNode().removeChild(monster);
                             continue;
                         }
@@ -408,7 +408,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                     else
                     {
                         error=true;
-                        monster = monster.nextSiblingElement("monster");
+                        monster = monster.NextSiblingElement("monster");
                         monster.parentNode().removeChild(monster);
                         continue;
                     }
@@ -427,7 +427,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                     if(!ok)
                     {
                         error=true;
-                        monster = monster.nextSiblingElement("monster");
+                        monster = monster.NextSiblingElement("monster");
                         monster.parentNode().removeChild(monster);
                         continue;
                     }
@@ -445,7 +445,7 @@ void MainWindow::on_openMapMetaFile_clicked()
                 else
                     item->setText(QStringLiteral("Monster %1, minLevel: %2, maxLevel: %3, luck: %4").arg(id).arg(minLevel).arg(maxLevel).arg(luck));
                 ui->caveList->addItem(item);
-                monster = monster.nextSiblingElement("monster");
+                monster = monster.NextSiblingElement("monster");
             }
             QStringList errorList;
             if(error)
@@ -483,11 +483,11 @@ void MainWindow::on_nameAdd_clicked()
     item->setData(98,name);
     item->setText(QStringLiteral("%1: %2").arg(lang).arg(name));
     ui->nameList->addItem(item);
-    QDomElement newXmlElement=domDocument.createElement("name");
+    tinyxml2::XMLElement newXmlElement=domDocument.createElement("name");
     newXmlElement.setAttribute("lang",lang);
     QDomText newTextElement=domDocument.createTextNode(name);
     newXmlElement.appendChild(newTextElement);
-    domDocument.documentElement().appendChild(newXmlElement);
+    domDocument.RootElement().appendChild(newXmlElement);
 }
 
 void MainWindow::on_nameRemove_clicked()
@@ -496,7 +496,7 @@ void MainWindow::on_nameRemove_clicked()
     if(selectedItems.size()!=1)
         return;
     QString selectedLang=selectedItems.first()->data(99).toString();
-    QDomElement child = domDocument.documentElement().firstChildElement("name");
+    tinyxml2::XMLElement child = domDocument.RootElement().FirstChildElement("name");
     while(!child.isNull())
     {
         QString lang="en";
@@ -509,7 +509,7 @@ void MainWindow::on_nameRemove_clicked()
             child.parentNode().removeChild(child);
             break;
         }
-        child = child.nextSiblingElement("name");
+        child = child.NextSiblingElement("name");
     }
     delete selectedItems.first();
 }
@@ -517,25 +517,25 @@ void MainWindow::on_nameRemove_clicked()
 void MainWindow::on_type_editingFinished()
 {
     if(ui->type->text().isEmpty())
-        domDocument.documentElement().removeAttribute("type");
+        domDocument.RootElement().removeAttribute("type");
     else
-        domDocument.documentElement().setAttribute("type",ui->type->text());
+        domDocument.RootElement().setAttribute("type",ui->type->text());
 }
 
 void MainWindow::on_backgroundsound_editingFinished()
 {
     if(ui->backgroundsound->text().isEmpty())
-        domDocument.documentElement().removeAttribute("backgroundsound");
+        domDocument.RootElement().removeAttribute("backgroundsound");
     else
-        domDocument.documentElement().setAttribute("backgroundsound",ui->backgroundsound->text());
+        domDocument.RootElement().setAttribute("backgroundsound",ui->backgroundsound->text());
 }
 
 void MainWindow::on_zone_editingFinished()
 {
     if(ui->zone->text().isEmpty())
-        domDocument.documentElement().removeAttribute("zone");
+        domDocument.RootElement().removeAttribute("zone");
     else
-        domDocument.documentElement().setAttribute("zone",ui->zone->text());
+        domDocument.RootElement().setAttribute("zone",ui->zone->text());
 }
 
 void MainWindow::on_save_clicked()
@@ -574,13 +574,13 @@ void MainWindow::on_grassAdd_clicked()
     }
     else
         ui->grassWarning->setVisible(false);
-    QDomElement grass = domDocument.documentElement().firstChildElement("grass");
+    tinyxml2::XMLElement grass = domDocument.RootElement().FirstChildElement("grass");
     if(grass.isNull())
     {
-        QDomElement grass=domDocument.createElement("grass");
-        domDocument.documentElement().appendChild(grass);
+        tinyxml2::XMLElement grass=domDocument.createElement("grass");
+        domDocument.RootElement().appendChild(grass);
     }
-    QDomElement monster=domDocument.createElement("monster");
+    tinyxml2::XMLElement monster=domDocument.createElement("monster");
     QListWidgetItem * item=new QListWidgetItem();
     item->setData(99,id);
     item->setData(98,minLevel);
@@ -608,10 +608,10 @@ void MainWindow::on_grassRemove_clicked()
     QList<QListWidgetItem *> selectedItems=ui->grassList->selectedItems();
     if(selectedItems.size()!=1)
         return;
-    QDomElement grass = domDocument.documentElement().firstChildElement("grass");
+    tinyxml2::XMLElement grass = domDocument.RootElement().FirstChildElement("grass");
     if(!grass.isNull())
     {
-        QDomElement monster = grass.firstChildElement("monster");
+        tinyxml2::XMLElement monster = grass.FirstChildElement("monster");
         while(!monster.isNull())
         {
             if(monster.hasAttribute("id") && monster.attribute("id")==selectedItems.first()->data(99))
@@ -627,7 +627,7 @@ void MainWindow::on_grassRemove_clicked()
                     ui->grassWarning->setVisible(false);
                 break;
             }
-            monster = monster.nextSiblingElement("monster");
+            monster = monster.NextSiblingElement("monster");
         }
         delete selectedItems.first();
         if(ui->grassList->count()<=0)
@@ -660,13 +660,13 @@ void MainWindow::on_watherAdd_clicked()
     }
     else
         ui->watherWarning->setVisible(false);
-    QDomElement wather = domDocument.documentElement().firstChildElement("wather");
+    tinyxml2::XMLElement wather = domDocument.RootElement().FirstChildElement("wather");
     if(wather.isNull())
     {
-        QDomElement wather=domDocument.createElement("wather");
-        domDocument.documentElement().appendChild(wather);
+        tinyxml2::XMLElement wather=domDocument.createElement("wather");
+        domDocument.RootElement().appendChild(wather);
     }
-    QDomElement monster=domDocument.createElement("monster");
+    tinyxml2::XMLElement monster=domDocument.createElement("monster");
     QListWidgetItem * item=new QListWidgetItem();
     item->setData(99,id);
     item->setData(98,minLevel);
@@ -694,10 +694,10 @@ void MainWindow::on_watherRemove_clicked()
     QList<QListWidgetItem *> selectedItems=ui->watherList->selectedItems();
     if(selectedItems.size()!=1)
         return;
-    QDomElement wather = domDocument.documentElement().firstChildElement("wather");
+    tinyxml2::XMLElement wather = domDocument.RootElement().FirstChildElement("wather");
     if(!wather.isNull())
     {
-        QDomElement monster = wather.firstChildElement("monster");
+        tinyxml2::XMLElement monster = wather.FirstChildElement("monster");
         while(!monster.isNull())
         {
             if(monster.hasAttribute("id") && monster.attribute("id")==selectedItems.first()->data(99))
@@ -713,7 +713,7 @@ void MainWindow::on_watherRemove_clicked()
                     ui->watherWarning->setVisible(false);
                 break;
             }
-            monster = monster.nextSiblingElement("monster");
+            monster = monster.NextSiblingElement("monster");
         }
         delete selectedItems.first();
         if(ui->watherList->count()<=0)
@@ -746,13 +746,13 @@ void MainWindow::on_caveAdd_clicked()
     }
     else
         ui->caveWarning->setVisible(false);
-    QDomElement cave = domDocument.documentElement().firstChildElement("cave");
+    tinyxml2::XMLElement cave = domDocument.RootElement().FirstChildElement("cave");
     if(cave.isNull())
     {
-        QDomElement cave=domDocument.createElement("cave");
-        domDocument.documentElement().appendChild(cave);
+        tinyxml2::XMLElement cave=domDocument.createElement("cave");
+        domDocument.RootElement().appendChild(cave);
     }
-    QDomElement monster=domDocument.createElement("monster");
+    tinyxml2::XMLElement monster=domDocument.createElement("monster");
     QListWidgetItem * item=new QListWidgetItem();
     item->setData(99,id);
     item->setData(98,minLevel);
@@ -780,10 +780,10 @@ void MainWindow::on_caveRemove_clicked()
     QList<QListWidgetItem *> selectedItems=ui->caveList->selectedItems();
     if(selectedItems.size()!=1)
         return;
-    QDomElement cave = domDocument.documentElement().firstChildElement("cave");
+    tinyxml2::XMLElement cave = domDocument.RootElement().FirstChildElement("cave");
     if(!cave.isNull())
     {
-        QDomElement monster = cave.firstChildElement("monster");
+        tinyxml2::XMLElement monster = cave.FirstChildElement("monster");
         while(!monster.isNull())
         {
             if(monster.hasAttribute("id") && monster.attribute("id")==selectedItems.first()->data(99))
@@ -799,7 +799,7 @@ void MainWindow::on_caveRemove_clicked()
                     ui->caveWarning->setVisible(false);
                 break;
             }
-            monster = monster.nextSiblingElement("monster");
+            monster = monster.NextSiblingElement("monster");
         }
         delete selectedItems.first();
         if(ui->caveList->count()<=0)

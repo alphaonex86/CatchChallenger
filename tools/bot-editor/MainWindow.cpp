@@ -6,7 +6,7 @@
 #include <QFile>
 #include <QString>
 #include <QDomDocument>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QDebug>
 #include <QInputDialog>
 
@@ -92,7 +92,7 @@ void MainWindow::on_openBotFile_clicked()
         return;
     }
     bool ok;
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="bots")
     {
         QMessageBox::warning(this,tr("Error"),tr("Unable to open the file %1:\nThe root balise is not bots").arg(xmlFile.fileName()));
@@ -100,7 +100,7 @@ void MainWindow::on_openBotFile_clicked()
     }
     bool error=false;
     //load the bots
-    QDomElement child = root.firstChildElement("bot");
+    tinyxml2::XMLElement child = root.FirstChildElement("bot");
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
@@ -118,7 +118,7 @@ void MainWindow::on_openBotFile_clicked()
             quint8 id=child.attribute("id").toUShort(&ok);
             if(ok)
             {
-                QDomElement step = child.firstChildElement("step");
+                tinyxml2::XMLElement step = child.FirstChildElement("step");
                 while(!step.isNull())
                 {
                     if(!step.hasAttribute("id"))
@@ -145,7 +145,7 @@ void MainWindow::on_openBotFile_clicked()
                             botFiles[id].botId=id;
                         }
                     }
-                    step = step.nextSiblingElement("step");
+                    step = step.NextSiblingElement("step");
                 }
             }
             else
@@ -154,7 +154,7 @@ void MainWindow::on_openBotFile_clicked()
                 error=true;
             }
         }
-        child = child.nextSiblingElement("bot");
+        child = child.NextSiblingElement("bot");
     }
     if(error)
         QMessageBox::warning(this,tr("Error"),tr("Some error have been found into the file").arg(xmlFile.fileName()));
@@ -193,9 +193,9 @@ void MainWindow::on_botListAdd_clicked()
     Bot tempBot;
     tempBot.botId=id;
     botFiles[id]=tempBot;
-    QDomElement newXmlElement=domDocument.createElement("bot");
+    tinyxml2::XMLElement newXmlElement=domDocument.createElement("bot");
     newXmlElement.setAttribute("id",id);
-    domDocument.documentElement().appendChild(newXmlElement);
+    domDocument.RootElement().appendChild(newXmlElement);
     updateBotList();
 }
 
@@ -215,7 +215,7 @@ void MainWindow::on_botListDelete_clicked()
     }
     bool ok;
     //load the bots
-    QDomElement child = domDocument.documentElement().firstChildElement("bot");
+    tinyxml2::XMLElement child = domDocument.RootElement().FirstChildElement("bot");
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
@@ -236,7 +236,7 @@ void MainWindow::on_botListDelete_clicked()
             else
                 qDebug() << QStringLiteral("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         }
-        child = child.nextSiblingElement("bot");
+        child = child.NextSiblingElement("bot");
     }
     botFiles.remove(id);
     updateBotList();
@@ -256,7 +256,7 @@ void MainWindow::on_botListEdit_clicked()
 void MainWindow::updateStepList()
 {
     ui->stepList->clear();
-    QHash<quint8,QDomElement>::const_iterator i = botFiles[selectedBot].step.constBegin();
+    QHash<quint8,tinyxml2::XMLElement>::const_iterator i = botFiles[selectedBot].step.constBegin();
     while (i != botFiles[selectedBot].step.constEnd()) {
         QListWidgetItem *item=new QListWidgetItem();
         if(i.value().hasAttribute("type"))
@@ -289,7 +289,7 @@ void MainWindow::on_stepListAdd_clicked()
     botFiles[selectedBot].step[id]=domDocument.createElement("step");
     botFiles[selectedBot].step[id].setAttribute("id",id);
     //load the bots
-    QDomElement child = domDocument.documentElement().firstChildElement("bot");
+    tinyxml2::XMLElement child = domDocument.RootElement().FirstChildElement("bot");
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
@@ -310,7 +310,7 @@ void MainWindow::on_stepListAdd_clicked()
             else
                 qDebug() << QStringLiteral("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         }
-        child = child.nextSiblingElement("bot");
+        child = child.NextSiblingElement("bot");
     }
     //load the edit
     editStep(id,true);
@@ -367,7 +367,7 @@ void MainWindow::on_stepEditBack_clicked()
 void MainWindow::editStep(quint8 id,bool newStep)
 {
     selectedStep=id;
-    QDomElement step=botFiles[selectedBot].step[selectedStep];
+    tinyxml2::XMLElement step=botFiles[selectedBot].step[selectedStep];
     bool needType=false;
     if(!step.hasAttribute("type"))
         needType=true;
@@ -401,7 +401,7 @@ void MainWindow::editStep(quint8 id,bool newStep)
     if(type=="text")
     {
         ui->stepEditLanguageList->clear();
-        QDomElement text = step.firstChildElement("text");
+        tinyxml2::XMLElement text = step.FirstChildElement("text");
         while(!text.isNull())
         {
             if(!text.hasAttribute("lang"))
@@ -416,7 +416,7 @@ void MainWindow::editStep(quint8 id,bool newStep)
             }
             else
                 ui->stepEditLanguageList->addItem(text.attribute("lang"));
-            text = text.nextSiblingElement("text");
+            text = text.NextSiblingElement("text");
         }
         updateTextDisplayed();
     }
@@ -499,8 +499,8 @@ void MainWindow::editStep(quint8 id,bool newStep)
 void MainWindow::updateTextDisplayed()
 {
     bool found=false;
-    QDomElement step=botFiles[selectedBot].step[selectedStep];
-    QDomElement text = step.firstChildElement("text");
+    tinyxml2::XMLElement step=botFiles[selectedBot].step[selectedStep];
+    tinyxml2::XMLElement text = step.FirstChildElement("text");
     while(!text.isNull())
     {
         if(text.hasAttribute("lang") && text.isElement() && text.attribute("lang")==ui->stepEditLanguageList->currentText())
@@ -509,7 +509,7 @@ void MainWindow::updateTextDisplayed()
             found=true;
             break;
         }
-        text = text.nextSiblingElement("text");
+        text = text.NextSiblingElement("text");
     }
     if(!found)
         ui->plainTextEdit->setPlainText(QString());
@@ -517,8 +517,8 @@ void MainWindow::updateTextDisplayed()
 
 void MainWindow::on_plainTextEdit_textChanged()
 {
-    QDomElement step=botFiles[selectedBot].step[selectedStep];
-    QDomElement text = step.firstChildElement("text");
+    tinyxml2::XMLElement step=botFiles[selectedBot].step[selectedStep];
+    tinyxml2::XMLElement text = step.FirstChildElement("text");
     while(!text.isNull())
     {
         if(text.hasAttribute("lang") && text.isElement() && text.attribute("lang")==ui->stepEditLanguageList->currentText())
@@ -534,13 +534,13 @@ void MainWindow::on_plainTextEdit_textChanged()
             text.appendChild(newTextElement);
             return;
         }
-        text = text.nextSiblingElement("text");
+        text = text.NextSiblingElement("text");
     }
 }
 
 void MainWindow::on_stepEditLanguageRemove_clicked()
 {
-    QDomElement text = botFiles[selectedBot].step[selectedStep].firstChildElement("text");
+    tinyxml2::XMLElement text = botFiles[selectedBot].step[selectedStep].FirstChildElement("text");
     while(!text.isNull())
     {
         if(text.hasAttribute("lang") && text.isElement() && text.attribute("lang")==ui->stepEditLanguageList->currentText())
@@ -550,7 +550,7 @@ void MainWindow::on_stepEditLanguageRemove_clicked()
             updateTextDisplayed();
             return;
         }
-        text = text.nextSiblingElement("text");
+        text = text.NextSiblingElement("text");
     }
 }
 
@@ -562,7 +562,7 @@ void MainWindow::on_stepEditLanguageAdd_clicked()
                                          "en", &ok);
     if (!ok || text.isEmpty())
         return;
-    QDomElement textBalise = botFiles[selectedBot].step[selectedStep].firstChildElement("text");
+    tinyxml2::XMLElement textBalise = botFiles[selectedBot].step[selectedStep].FirstChildElement("text");
     while(!textBalise.isNull())
     {
         if(textBalise.hasAttribute("lang") && textBalise.isElement() && textBalise.attribute("lang")==text)
@@ -570,14 +570,14 @@ void MainWindow::on_stepEditLanguageAdd_clicked()
             QMessageBox::warning(this,tr("Error"),tr("This country letter is already found"));
             return;
         }
-        textBalise = textBalise.nextSiblingElement("text");
+        textBalise = textBalise.NextSiblingElement("text");
     }
     if(!text.contains(QRegExp("^[a-z]{2}(_[A-Z]{2})?$")))
     {
         QMessageBox::warning(this,tr("Error"),tr("The country code is ISO code, then 2 letters only"));
         return;
     }
-    QDomElement newElement=botFiles[selectedBot].step[selectedStep].ownerDocument().createElement("text");
+    tinyxml2::XMLElement newElement=botFiles[selectedBot].step[selectedStep].ownerDocument().createElement("text");
     newElement.setAttribute("lang",text);
     if(!newElement.isNull())
         botFiles[selectedBot].step[selectedStep].appendChild(newElement);

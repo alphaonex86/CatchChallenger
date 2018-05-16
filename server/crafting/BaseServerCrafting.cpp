@@ -14,8 +14,6 @@
 
 #include <QFile>
 #include <vector>
-#include <QDomDocument>
-#include <QDomElement>
 #endif
 
 using namespace CatchChallenger;

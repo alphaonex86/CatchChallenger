@@ -3,11 +3,7 @@
 #include "../../../general/base/FacilityLib.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
-#ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-#include "../../../general/base/tinyXML/tinyxml.h"
-#elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
 #include "../../../general/base/tinyXML2/tinyxml2.h"
-#endif
 #include "../../tiled/tiled_mapobject.h"
 #include <QFileInfo>
 #include <QRegularExpression>
@@ -558,7 +554,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
         }
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[fileName.toStdString()]=domDocument;
     }
-    const QDomElement &root = domDocument.documentElement();
+    const tinyxml2::XMLElement &root = domDocument.RootElement();
     if(root.tagName()!=MapVisualiserThread::text_map)
     {
         qDebug() << fileName << QStringLiteral(", MapVisualiserThread::loadOtherMapClientPart(): \"map\" root balise not found for the xml file: ") << root.tagName();
@@ -566,7 +562,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
     }
     bool ok,ok2;
     //load the bots (map->bots)
-    QDomElement child = root.firstChildElement(MapVisualiserThread::text_objectgroup);
+    tinyxml2::XMLElement child = root.FirstChildElement(MapVisualiserThread::text_objectgroup);
     while(!child.isNull())
     {
         if(!child.hasAttribute(MapVisualiserThread::text_name))
@@ -577,7 +573,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
         {
             if(child.attribute(MapVisualiserThread::text_name)==MapVisualiserThread::text_Object)
             {
-                QDomElement bot = child.firstChildElement(MapVisualiserThread::text_object);
+                tinyxml2::XMLElement bot = child.FirstChildElement(MapVisualiserThread::text_object);
                 while(!bot.isNull())
                 {
                     if(!bot.hasAttribute(MapVisualiserThread::text_type))
@@ -594,7 +590,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                         const uint32_t &y=(bot.attribute(MapVisualiserThread::text_y).toUInt(&ok2)/CLIENT_BASE_TILE_SIZE)-1;
                         if(ok && ok2 && (bot.attribute(MapVisualiserThread::text_type)==MapVisualiserThread::text_bot || bot.attribute(MapVisualiserThread::text_type)==MapVisualiserThread::text_botfight))
                         {
-                            QDomElement properties = bot.firstChildElement(MapVisualiserThread::text_properties);
+                            tinyxml2::XMLElement properties = bot.FirstChildElement(MapVisualiserThread::text_properties);
                             while(!properties.isNull())
                             {
                                 if(!properties.isElement())
@@ -602,7 +598,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                 else
                                 {
                                     std::unordered_map<std::string,std::string> property_parsed;
-                                    QDomElement property = properties.firstChildElement(MapVisualiserThread::text_property);
+                                    tinyxml2::XMLElement property = properties.FirstChildElement(MapVisualiserThread::text_property);
                                     while(!property.isNull())
                                     {
                                         if(!property.hasAttribute(MapVisualiserThread::text_name))
@@ -613,7 +609,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                             qDebug() << (QStringLiteral("Is not an element: properties.tagName(): %1, name: %2 (at line: %3)").arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
                                         else
                                             property_parsed[property.attribute(MapVisualiserThread::text_name).toStdString()]=property.attribute(MapVisualiserThread::text_value).toStdString();
-                                        property = property.nextSiblingElement(MapVisualiserThread::text_property);
+                                        property = property.NextSiblingElement(MapVisualiserThread::text_property);
                                     }
                                     if(property_parsed.find("file")!=property_parsed.cend() && property_parsed.find("id")!=property_parsed.cend())
                                     {
@@ -743,15 +739,15 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                             qDebug() << (QStringLiteral("Is not a number: properties.tagName(): %1, name: %2 (at line: %3)").arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
                                     }
                                 }
-                                properties = properties.nextSiblingElement(MapVisualiserThread::text_properties);
+                                properties = properties.NextSiblingElement(MapVisualiserThread::text_properties);
                             }
                         }
                     }
-                    bot = bot.nextSiblingElement(MapVisualiserThread::text_object);
+                    bot = bot.NextSiblingElement(MapVisualiserThread::text_object);
                 }
             }
         }
-        child = child.nextSiblingElement(MapVisualiserThread::text_objectgroup);
+        child = child.NextSiblingElement(MapVisualiserThread::text_objectgroup);
     }
     return true;
 }
@@ -787,7 +783,7 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
         }
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[fileName.toStdString()]=domDocument;
     }
-    const QDomElement &root = domDocument.documentElement();
+    const tinyxml2::XMLElement &root = domDocument.RootElement();
     if(root.tagName()!=MapVisualiserThread::text_map)
     {
         qDebug() << fileName << QStringLiteral(", MapVisualiserThread::loadOtherMapMetaData(): \"map\" root balise not found for the xml file");
@@ -800,7 +796,7 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
     //load the name
     {
         bool name_found=false;
-        QDomElement name = root.firstChildElement(MapVisualiserThread::text_name);
+        tinyxml2::XMLElement name = root.FirstChildElement(MapVisualiserThread::text_name);
         if(!language.isEmpty() && language!=MapVisualiserThread::text_en)
             while(!name.isNull())
             {
@@ -813,11 +809,11 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
                         break;
                     }
                 }
-                name = name.nextSiblingElement(MapVisualiserThread::text_name);
+                name = name.NextSiblingElement(MapVisualiserThread::text_name);
             }
         if(!name_found)
         {
-            name = root.firstChildElement(MapVisualiserThread::text_name);
+            name = root.FirstChildElement(MapVisualiserThread::text_name);
             while(!name.isNull())
             {
                 if(name.isElement())
@@ -829,7 +825,7 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
                         break;
                     }
                 }
-                name = name.nextSiblingElement(MapVisualiserThread::text_name);
+                name = name.NextSiblingElement(MapVisualiserThread::text_name);
             }
         }
     }

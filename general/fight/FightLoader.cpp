@@ -4,11 +4,7 @@
 #include "../base/CommonSettingsServer.h"
 #include "../base/FacilityLibGeneral.h"
 #include "../base/CommonDatapack.h"
-#ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-#include "../base/tinyXML/tinyxml.h"
-#elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
 #include "../base/tinyXML2/tinyxml2.h"
-#endif
 #include "../base/CachedString.h"
 
 #include <vector>
@@ -189,7 +185,8 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
     }
     #endif
     std::unordered_map<uint16_t,Monster> monsters;
-    const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
+    const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=
+            CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
     unsigned int file_index=0;
     while(file_index<(uint32_t)fileList.size())
     {

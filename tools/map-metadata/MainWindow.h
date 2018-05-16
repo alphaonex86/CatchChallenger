@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <QListWidgetItem>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QHash>
 #include <QString>
 #include <QSettings>

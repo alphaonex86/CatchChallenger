@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <QListWidgetItem>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QHash>
 #include <QString>
 #include <QSettings>
@@ -22,7 +22,7 @@ public:
     //permanent bot on client, temp to parse on the server
     struct Bot
     {
-        QHash<quint8,QDomElement> step;
+        QHash<quint8,tinyxml2::XMLElement> step;
         quint32 botId;
     };
 private slots:

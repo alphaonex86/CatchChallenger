@@ -1,7 +1,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QRegularExpression>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QDomDocument>
 #include <QDebug>
 #include <QImage>
@@ -112,7 +112,7 @@ void parseItemsExtra()
         qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="items")
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
@@ -121,7 +121,7 @@ void parseItemsExtra()
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement("item");
+    tinyxml2::XMLElement item = root.FirstChildElement("item");
     while(!item.isNull())
     {
         if(item.isElement())
@@ -135,7 +135,7 @@ void parseItemsExtra()
                     {
                         //load the name
                         {
-                            QDomElement name = item.firstChildElement("name");
+                            tinyxml2::XMLElement name = item.FirstChildElement("name");
                             while(!name.isNull())
                             {
                                 if(name.isElement())
@@ -149,7 +149,7 @@ void parseItemsExtra()
                                         break;
                                     }
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
                         }
                     }
@@ -164,7 +164,7 @@ void parseItemsExtra()
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
-        item = item.nextSiblingElement("item");
+        item = item.NextSiblingElement("item");
     }
 
     qDebug() << QStringLiteral("%1 item(s) extra loaded").arg(itemsExtra.size());
@@ -189,7 +189,7 @@ void createPlantImage()
         qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="plants")
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
@@ -198,7 +198,7 @@ void createPlantImage()
 
     //load the content
     bool ok,ok2;
-    QDomElement skillitem = root.firstChildElement("plant");
+    tinyxml2::XMLElement skillitem = root.FirstChildElement("plant");
     while(!skillitem.isNull())
     {
         if(skillitem.isElement())
@@ -265,7 +265,7 @@ void createPlantImage()
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(skillitem.tagName()).arg(skillitem.lineNumber());
-        skillitem = skillitem.nextSiblingElement("plant");
+        skillitem = skillitem.NextSiblingElement("plant");
     }
 }
 

@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
         std::cerr << mapFile.fileName().toStdString() << ", Parse error at line " << std::to_string(errorLine) << " column " << std::to_string(errorColumn) << ": " << errorStr.toStdString() << std::endl;
         return -1;
     }
-    const QDomElement &root = domDocument.documentElement();
+    const tinyxml2::XMLElement &root = domDocument.RootElement();
     if(root.tagName().toStdString()!="map")
     {
         std::cerr << "\"map\" root balise not found for the xml file" << std::endl;
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
     }
 
     // layer
-    QDomElement child = root.firstChildElement("layer");
+    tinyxml2::XMLElement child = root.FirstChildElement("layer");
     while(!child.isNull())
     {
         if(!child.isElement())
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
         else
         {
             std::cout << "Do the layer: " << child.attribute("name").toStdString() << " at line " << child.lineNumber() << std::endl;
-            const QDomElement &data=child.firstChildElement("data");
+            const tinyxml2::XMLElement &data=child.FirstChildElement("data");
             const std::string name=child.attribute("name").toStdString();
             if(data.isNull())
             {
@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
 
                     newCompressedSize+=recompressedSizeFinal;
 
-                    QDomElement newXmlElement=domDocument.createElement("data");
+                    tinyxml2::XMLElement newXmlElement=domDocument.createElement("data");
                     newXmlElement.setAttribute("encoding","base64");
                     if(recompressedSizeGzip<recompressedSizeZlib)
                         newXmlElement.setAttribute("compression","gzip");
@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        child = child.nextSiblingElement("layer");
+        child = child.NextSiblingElement("layer");
     }
 
     if(oldCompressedSize>newCompressedSize)

@@ -17,7 +17,7 @@
 
 #include <QDebug>
 #include <QFile>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QDomDocument>
 #include <QByteArray>
 #include <QDir>
@@ -296,7 +296,7 @@ void DatapackClientLoader::parseVisualCategory()
         //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[file.toStdString()]=domDocument;
     }
-    const QDomElement &root = domDocument.documentElement();
+    const tinyxml2::XMLElement &root = domDocument.RootElement();
     if(root.tagName()!=DatapackClientLoader::text_visual)
     {
         qDebug() << (QStringLiteral("Unable to open the file: %1, \"visual\" root balise not found for the xml file").arg(file));
@@ -304,7 +304,7 @@ void DatapackClientLoader::parseVisualCategory()
     }
 
     //load the content
-    QDomElement item = root.firstChildElement(DatapackClientLoader::text_category);
+    tinyxml2::XMLElement item = root.FirstChildElement(DatapackClientLoader::text_category);
     while(!item.isNull())
     {
         if(item.isElement())
@@ -339,7 +339,7 @@ void DatapackClientLoader::parseVisualCategory()
                             else
                                 qDebug() << (QStringLiteral("Unable to open the file: %1, color is not valid: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
                         }
-                        QDomElement event = item.firstChildElement(DatapackClientLoader::text_event);
+                        tinyxml2::XMLElement event = item.FirstChildElement(DatapackClientLoader::text_event);
                         while(!event.isNull())
                         {
                             if(event.isElement())
@@ -399,7 +399,7 @@ void DatapackClientLoader::parseVisualCategory()
                                 else
                                     qDebug() << (QStringLiteral("Unable to open the file: %1, attribute id is already found: child.tagName(): %2 (at line: %3)").arg(file).arg(event.tagName()).arg(event.lineNumber()));
                             }
-                            event = event.nextSiblingElement(DatapackClientLoader::text_event);
+                            event = event.NextSiblingElement(DatapackClientLoader::text_event);
                         }
                     }
                     else
@@ -411,7 +411,7 @@ void DatapackClientLoader::parseVisualCategory()
             else
                 qDebug() << (QStringLiteral("Unable to open the file: %1, have not the attribute id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
         }
-        item = item.nextSiblingElement(DatapackClientLoader::text_category);
+        item = item.NextSiblingElement(DatapackClientLoader::text_category);
     }
 
     qDebug() << QStringLiteral("%1 visual cat loaded").arg(DatapackClientLoader::datapackLoader.visualCategories.size());
@@ -452,7 +452,7 @@ void DatapackClientLoader::parseReputationExtra()
         //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[file.toStdString()]=domDocument;
     }
-    const QDomElement &root = domDocument.documentElement();
+    const tinyxml2::XMLElement &root = domDocument.RootElement();
     if(root.tagName()!="reputations")
     {
         qDebug() << (QStringLiteral("Unable to open the file: %1, \"reputations\" root balise not found for the xml file").arg(file));
@@ -461,7 +461,7 @@ void DatapackClientLoader::parseReputationExtra()
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement(DatapackClientLoader::text_reputation);
+    tinyxml2::XMLElement item = root.FirstChildElement(DatapackClientLoader::text_reputation);
     while(!item.isNull())
     {
         if(item.isElement())
@@ -473,7 +473,7 @@ void DatapackClientLoader::parseReputationExtra()
                 //load the name
                 {
                     bool name_found=false;
-                    QDomElement name = item.firstChildElement(DatapackClientLoader::text_name);
+                    tinyxml2::XMLElement name = item.FirstChildElement(DatapackClientLoader::text_name);
                     if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                         while(!name.isNull())
                         {
@@ -486,11 +486,11 @@ void DatapackClientLoader::parseReputationExtra()
                                     break;
                                 }
                             }
-                            name = name.nextSiblingElement(DatapackClientLoader::text_name);
+                            name = name.NextSiblingElement(DatapackClientLoader::text_name);
                         }
                     if(!name_found)
                     {
-                        name = item.firstChildElement(DatapackClientLoader::text_name);
+                        name = item.FirstChildElement(DatapackClientLoader::text_name);
                         while(!name.isNull())
                         {
                             if(name.isElement())
@@ -502,7 +502,7 @@ void DatapackClientLoader::parseReputationExtra()
                                     break;
                                 }
                             }
-                            name = name.nextSiblingElement(DatapackClientLoader::text_name);
+                            name = name.NextSiblingElement(DatapackClientLoader::text_name);
                         }
                     }
                     if(!name_found)
@@ -514,7 +514,7 @@ void DatapackClientLoader::parseReputationExtra()
 
                 std::vector<int32_t> point_list_positive,point_list_negative;
                 QStringList text_positive,text_negative;
-                QDomElement level = item.firstChildElement(DatapackClientLoader::text_level);
+                tinyxml2::XMLElement level = item.FirstChildElement(DatapackClientLoader::text_level);
                 ok=true;
                 while(!level.isNull() && ok)
                 {
@@ -532,7 +532,7 @@ void DatapackClientLoader::parseReputationExtra()
                                 //load the name
                                 {
                                     bool name_found=false;
-                                    QDomElement name = level.firstChildElement(DatapackClientLoader::text_text);
+                                    tinyxml2::XMLElement name = level.FirstChildElement(DatapackClientLoader::text_text);
                                     if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                         while(!name.isNull())
                                         {
@@ -545,11 +545,11 @@ void DatapackClientLoader::parseReputationExtra()
                                                     break;
                                                 }
                                             }
-                                            name = name.nextSiblingElement(DatapackClientLoader::text_text);
+                                            name = name.NextSiblingElement(DatapackClientLoader::text_text);
                                         }
                                     if(!name_found)
                                     {
-                                        name = level.firstChildElement(DatapackClientLoader::text_text);
+                                        name = level.FirstChildElement(DatapackClientLoader::text_text);
                                         while(!name.isNull())
                                         {
                                             if(name.isElement())
@@ -561,7 +561,7 @@ void DatapackClientLoader::parseReputationExtra()
                                                     break;
                                                 }
                                             }
-                                            name = name.nextSiblingElement(DatapackClientLoader::text_text);
+                                            name = name.NextSiblingElement(DatapackClientLoader::text_text);
                                         }
                                     }
                                     if(!name_found)
@@ -632,7 +632,7 @@ void DatapackClientLoader::parseReputationExtra()
                     }
                     else
                         qDebug() << (QStringLiteral("Unable to open the file: %1, point attribute not found: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                    level = level.nextSiblingElement(DatapackClientLoader::text_level);
+                    level = level.NextSiblingElement(DatapackClientLoader::text_level);
                 }
                 qSort(point_list_positive);
                 qSort(point_list_negative.end(),point_list_negative.begin());
@@ -680,7 +680,7 @@ void DatapackClientLoader::parseReputationExtra()
         }
         else
             qDebug() << (QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-        item = item.nextSiblingElement(DatapackClientLoader::text_reputation);
+        item = item.NextSiblingElement(DatapackClientLoader::text_reputation);
     }
     {
         unsigned int index=0;
@@ -749,7 +749,7 @@ void DatapackClientLoader::parseItemsExtra()
             //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
             CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[file.toStdString()]=domDocument;
         }
-        const QDomElement &root = domDocument.documentElement();
+        const tinyxml2::XMLElement &root = domDocument.RootElement();
         if(root.tagName()!=DatapackClientLoader::text_items)
         {
             //qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(file);
@@ -760,7 +760,7 @@ void DatapackClientLoader::parseItemsExtra()
         const std::string &folder=QFileInfo(file).absolutePath()+DatapackClientLoader::text_slash;
         //load the content
         bool ok;
-        QDomElement item = root.firstChildElement(DatapackClientLoader::text_item);
+        tinyxml2::XMLElement item = root.FirstChildElement(DatapackClientLoader::text_item);
         while(!item.isNull())
         {
             if(item.isElement())
@@ -803,7 +803,7 @@ void DatapackClientLoader::parseItemsExtra()
                             //load the name
                             {
                                 bool name_found=false;
-                                QDomElement name = item.firstChildElement(DatapackClientLoader::text_name);
+                                tinyxml2::XMLElement name = item.FirstChildElement(DatapackClientLoader::text_name);
                                 if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                     while(!name.isNull())
                                     {
@@ -816,11 +816,11 @@ void DatapackClientLoader::parseItemsExtra()
                                                 break;
                                             }
                                         }
-                                        name = name.nextSiblingElement(DatapackClientLoader::text_name);
+                                        name = name.NextSiblingElement(DatapackClientLoader::text_name);
                                     }
                                 if(!name_found)
                                 {
-                                    name = item.firstChildElement(DatapackClientLoader::text_name);
+                                    name = item.FirstChildElement(DatapackClientLoader::text_name);
                                     while(!name.isNull())
                                     {
                                         if(name.isElement())
@@ -832,7 +832,7 @@ void DatapackClientLoader::parseItemsExtra()
                                                 break;
                                             }
                                         }
-                                        name = name.nextSiblingElement(DatapackClientLoader::text_name);
+                                        name = name.NextSiblingElement(DatapackClientLoader::text_name);
                                     }
                                 }
                                 if(!name_found)
@@ -845,7 +845,7 @@ void DatapackClientLoader::parseItemsExtra()
                             //load the description
                             {
                                 bool description_found=false;
-                                QDomElement description = item.firstChildElement(DatapackClientLoader::text_description);
+                                tinyxml2::XMLElement description = item.FirstChildElement(DatapackClientLoader::text_description);
                                 if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                     while(!description.isNull())
                                     {
@@ -858,11 +858,11 @@ void DatapackClientLoader::parseItemsExtra()
                                                 break;
                                             }
                                         }
-                                        description = description.nextSiblingElement(DatapackClientLoader::text_description);
+                                        description = description.NextSiblingElement(DatapackClientLoader::text_description);
                                     }
                                 if(!description_found)
                                 {
-                                    description = item.firstChildElement(DatapackClientLoader::text_description);
+                                    description = item.FirstChildElement(DatapackClientLoader::text_description);
                                     while(!description.isNull())
                                     {
                                         if(description.isElement())
@@ -874,7 +874,7 @@ void DatapackClientLoader::parseItemsExtra()
                                                 break;
                                             }
                                         }
-                                        description = description.nextSiblingElement(DatapackClientLoader::text_description);
+                                        description = description.NextSiblingElement(DatapackClientLoader::text_description);
                                     }
                                 }
                                 if(!description_found)
@@ -896,7 +896,7 @@ void DatapackClientLoader::parseItemsExtra()
             }
             else
                 qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
-            item = item.nextSiblingElement(DatapackClientLoader::text_item);
+            item = item.NextSiblingElement(DatapackClientLoader::text_item);
         }
         file_index++;
     }
@@ -959,7 +959,7 @@ void DatapackClientLoader::parseMaps()
                 index++;
                 continue;
             }
-            const QDomElement &root = domDocument.documentElement();
+            const tinyxml2::XMLElement &root = domDocument.RootElement();
             if(root.tagName()!=DatapackClientLoader::text_map)
             {
                 qDebug() << QStringLiteral("Unable to open the file: %1, \"map\" root balise not found for the xml file").arg(fileName);
@@ -990,7 +990,7 @@ void DatapackClientLoader::parseMaps()
 
             bool haveDirtLayer=false;
             {
-                QDomElement layergroup = root.firstChildElement(DatapackClientLoader::text_layer);
+                tinyxml2::XMLElement layergroup = root.FirstChildElement(DatapackClientLoader::text_layer);
                 while(!layergroup.isNull())
                 {
                     if(layergroup.isElement())
@@ -1001,7 +1001,7 @@ void DatapackClientLoader::parseMaps()
                             break;
                         }
                     }
-                    layergroup = layergroup.nextSiblingElement(DatapackClientLoader::text_layer);
+                    layergroup = layergroup.NextSiblingElement(DatapackClientLoader::text_layer);
                 }
             }
             if(haveDirtLayer)
@@ -1027,14 +1027,14 @@ void DatapackClientLoader::parseMaps()
 
             //load name
             {
-                QDomElement objectgroup = root.firstChildElement(DatapackClientLoader::text_objectgroup);
+                tinyxml2::XMLElement objectgroup = root.FirstChildElement(DatapackClientLoader::text_objectgroup);
                 while(!objectgroup.isNull())
                 {
                     if(objectgroup.isElement())
                     {
                         if(objectgroup.hasAttribute(DatapackClientLoader::text_name) && objectgroup.attribute(DatapackClientLoader::text_name)==DatapackClientLoader::text_Object)
                         {
-                            QDomElement object = objectgroup.firstChildElement(DatapackClientLoader::text_object);
+                            tinyxml2::XMLElement object = objectgroup.FirstChildElement(DatapackClientLoader::text_object);
                             while(!object.isNull())
                             {
                                 if(object.isElement())
@@ -1066,13 +1066,13 @@ void DatapackClientLoader::parseMaps()
                                 }
                                 else
                                     qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(fileName).arg(object.tagName()).arg(object.lineNumber());
-                                object = object.nextSiblingElement(DatapackClientLoader::text_object);
+                                object = object.NextSiblingElement(DatapackClientLoader::text_object);
                             }
                         }
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(fileName).arg(objectgroup.tagName()).arg(objectgroup.lineNumber());
-                    objectgroup = objectgroup.nextSiblingElement(DatapackClientLoader::text_objectgroup);
+                    objectgroup = objectgroup.NextSiblingElement(DatapackClientLoader::text_objectgroup);
                 }
             }
         }
@@ -1197,7 +1197,7 @@ void DatapackClientLoader::parseQuestsExtra()
             //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
             CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[file.toStdString()]=domDocument;
         }
-        const QDomElement &root = domDocument.documentElement();
+        const tinyxml2::XMLElement &root = domDocument.RootElement();
         if(root.tagName()!=DatapackClientLoader::text_quest)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(file);
@@ -1209,7 +1209,7 @@ void DatapackClientLoader::parseQuestsExtra()
 
         //load name
         {
-            QDomElement name = root.firstChildElement(DatapackClientLoader::text_name);
+            tinyxml2::XMLElement name = root.FirstChildElement(DatapackClientLoader::text_name);
             bool found=false;
             if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                 while(!name.isNull())
@@ -1225,11 +1225,11 @@ void DatapackClientLoader::parseQuestsExtra()
                         else
                             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(name.tagName()).arg(name.lineNumber());
                     }
-                    name = name.nextSiblingElement(DatapackClientLoader::text_name);
+                    name = name.NextSiblingElement(DatapackClientLoader::text_name);
                 }
             if(!found)
             {
-                name = root.firstChildElement(DatapackClientLoader::text_name);
+                name = root.FirstChildElement(DatapackClientLoader::text_name);
                 while(!name.isNull())
                 {
                     if(name.isElement())
@@ -1242,14 +1242,14 @@ void DatapackClientLoader::parseQuestsExtra()
                         else
                             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(name.tagName()).arg(name.lineNumber());
                     }
-                    name = name.nextSiblingElement(DatapackClientLoader::text_name);
+                    name = name.NextSiblingElement(DatapackClientLoader::text_name);
                 }
             }
         }
 
         //load showRewards
         {
-            const QDomElement &rewards = root.firstChildElement(DatapackClientLoader::text_rewards);
+            const tinyxml2::XMLElement &rewards = root.FirstChildElement(DatapackClientLoader::text_rewards);
             if(!rewards.isNull() && rewards.isElement())
             {
                 if(rewards.hasAttribute(DatapackClientLoader::text_show))
@@ -1267,7 +1267,7 @@ void DatapackClientLoader::parseQuestsExtra()
         std::unordered_map<uint32_t,QString> steps;
         {
             //load step
-            QDomElement step = root.firstChildElement(DatapackClientLoader::text_step);
+            tinyxml2::XMLElement step = root.FirstChildElement(DatapackClientLoader::text_step);
             while(!step.isNull())
             {
                 if(step.isElement())
@@ -1293,7 +1293,7 @@ void DatapackClientLoader::parseQuestsExtra()
                                         index++;
                                     }
                                 }
-                                QDomElement stepItem = step.firstChildElement(DatapackClientLoader::text_text);
+                                tinyxml2::XMLElement stepItem = step.FirstChildElement(DatapackClientLoader::text_text);
                                 bool found=false;
                                 if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                 {
@@ -1309,12 +1309,12 @@ void DatapackClientLoader::parseQuestsExtra()
                                         }
                                         else
                                             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
-                                        stepItem = stepItem.nextSiblingElement(DatapackClientLoader::text_text);
+                                        stepItem = stepItem.NextSiblingElement(DatapackClientLoader::text_text);
                                     }
                                 }
                                 if(!found)
                                 {
-                                    stepItem = step.firstChildElement(DatapackClientLoader::text_text);
+                                    stepItem = step.FirstChildElement(DatapackClientLoader::text_text);
                                     while(!stepItem.isNull())
                                     {
                                         if(stepItem.isElement())
@@ -1326,7 +1326,7 @@ void DatapackClientLoader::parseQuestsExtra()
                                         }
                                         else
                                             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(stepItem.tagName()).arg(stepItem.lineNumber());
-                                        stepItem = stepItem.nextSiblingElement(DatapackClientLoader::text_text);
+                                        stepItem = stepItem.NextSiblingElement(DatapackClientLoader::text_text);
                                     }
                                     if(!steps.contains(id))
                                         steps[id]=tr("No text");
@@ -1343,7 +1343,7 @@ void DatapackClientLoader::parseQuestsExtra()
                 }
                 else
                     qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(step.tagName()).arg(step.lineNumber());
-                step = step.nextSiblingElement(DatapackClientLoader::text_step);
+                step = step.NextSiblingElement(DatapackClientLoader::text_step);
             }
         }
 
@@ -1402,7 +1402,7 @@ void DatapackClientLoader::parseQuestsText()
             index++;
             continue;
         }
-        const QDomElement &root = domDocument.documentElement();
+        const tinyxml2::XMLElement &root = domDocument.RootElement();
         if(root.tagName()!=DatapackClientLoader::text_text)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(file);
@@ -1414,7 +1414,7 @@ void DatapackClientLoader::parseQuestsText()
         bool ok;
         std::unordered_map<uint32_t,QString> client_logic_texts;
         //load text
-        QDomElement client_logic = root.firstChildElement(DatapackClientLoader::text_client_logic);
+        tinyxml2::XMLElement client_logic = root.FirstChildElement(DatapackClientLoader::text_client_logic);
         while(!client_logic.isNull())
         {
             if(client_logic.isElement())
@@ -1425,7 +1425,7 @@ void DatapackClientLoader::parseQuestsText()
                     if(ok && tempid<65536)
                     {
                         const uint16_t &id=static_cast<uint16_t>(tempid);
-                        QDomElement text = client_logic.firstChildElement(DatapackClientLoader::text_text);
+                        tinyxml2::XMLElement text = client_logic.FirstChildElement(DatapackClientLoader::text_text);
                         bool found=false;
                         if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                             while(!text.isNull())
@@ -1440,11 +1440,11 @@ void DatapackClientLoader::parseQuestsText()
                                 }
                                 else
                                     qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(client_logic.tagName()).arg(client_logic.lineNumber());
-                                text = text.nextSiblingElement(DatapackClientLoader::text_text);
+                                text = text.NextSiblingElement(DatapackClientLoader::text_text);
                             }
                         if(!found)
                         {
-                            text = client_logic.firstChildElement(DatapackClientLoader::text_text);
+                            text = client_logic.FirstChildElement(DatapackClientLoader::text_text);
                             while(!text.isNull())
                             {
                                 if(text.isElement())
@@ -1456,7 +1456,7 @@ void DatapackClientLoader::parseQuestsText()
                                 }
                                 else
                                     qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(text.tagName()).arg(text.lineNumber());
-                                text = text.nextSiblingElement(DatapackClientLoader::text_text);
+                                text = text.NextSiblingElement(DatapackClientLoader::text_text);
                             }
                             if(!client_logic_texts.contains(id))
                                 client_logic_texts[id]=tr("No text");
@@ -1470,7 +1470,7 @@ void DatapackClientLoader::parseQuestsText()
             }
             else
                 qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(client_logic.tagName()).arg(client_logic.lineNumber());
-            client_logic = client_logic.nextSiblingElement(DatapackClientLoader::text_client_logic);
+            client_logic = client_logic.NextSiblingElement(DatapackClientLoader::text_client_logic);
         }
         #ifdef DEBUG_CLIENT_QUEST
         qDebug() << QStringLiteral("%1 quest(s) text loaded for quest %2").arg(client_logic_texts.size()).arg(questsPathToId.value(entryList.at(index).absoluteFilePath()));
@@ -1510,7 +1510,7 @@ void DatapackClientLoader::parseAudioAmbiance()
         //qDebug() << (QStringLiteral("Xml not already loaded: %1").arg(file));
         CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[file.toStdString()]=domDocument;
     }
-    const QDomElement &root = domDocument.documentElement();
+    const tinyxml2::XMLElement &root = domDocument.RootElement();
     if(root.tagName()!="musics")
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"musics\" root balise not found for the xml file").arg(file);
@@ -1518,7 +1518,7 @@ void DatapackClientLoader::parseAudioAmbiance()
     }
 
     //load the content
-    QDomElement item = root.firstChildElement(DatapackClientLoader::text_map);
+    tinyxml2::XMLElement item = root.FirstChildElement(DatapackClientLoader::text_map);
     while(!item.isNull())
     {
         if(item.isElement())
@@ -1536,7 +1536,7 @@ void DatapackClientLoader::parseAudioAmbiance()
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
-        item = item.nextSiblingElement(DatapackClientLoader::text_map);
+        item = item.NextSiblingElement(DatapackClientLoader::text_map);
     }
 
     qDebug() << QStringLiteral("%1 audio ambiance(s) link loaded").arg(audioAmbiance.size());
@@ -1603,7 +1603,7 @@ void DatapackClientLoader::parseZoneExtra()
             index++;
             continue;
         }
-        const QDomElement &root = domDocument.documentElement();
+        const tinyxml2::XMLElement &root = domDocument.RootElement();
         if(root.tagName()!=DatapackClientLoader::text_zone)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(file);
@@ -1616,7 +1616,7 @@ void DatapackClientLoader::parseZoneExtra()
         DatapackClientLoader::ZoneExtra zone;
 
         //load name
-        QDomElement name = root.firstChildElement(DatapackClientLoader::text_name);
+        tinyxml2::XMLElement name = root.FirstChildElement(DatapackClientLoader::text_name);
         bool found=false;
         if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
             while(!name.isNull())
@@ -1632,11 +1632,11 @@ void DatapackClientLoader::parseZoneExtra()
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(name.tagName()).arg(name.lineNumber());
                 }
-                name = name.nextSiblingElement(DatapackClientLoader::text_name);
+                name = name.NextSiblingElement(DatapackClientLoader::text_name);
             }
         if(!found)
         {
-            name = root.firstChildElement(DatapackClientLoader::text_name);
+            name = root.FirstChildElement(DatapackClientLoader::text_name);
             while(!name.isNull())
             {
                 if(name.isElement())
@@ -1650,7 +1650,7 @@ void DatapackClientLoader::parseZoneExtra()
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(name.tagName()).arg(name.lineNumber());
                 }
-                name = name.nextSiblingElement(DatapackClientLoader::text_name);
+                name = name.NextSiblingElement(DatapackClientLoader::text_name);
             }
         }
         if(haveName)
@@ -1658,7 +1658,7 @@ void DatapackClientLoader::parseZoneExtra()
 
         //load the audio ambiance
         {
-            QDomElement item = root.firstChildElement(DatapackClientLoader::text_music);
+            tinyxml2::XMLElement item = root.FirstChildElement(DatapackClientLoader::text_music);
             while(!item.isNull())
             {
                 if(item.isElement())
@@ -1674,7 +1674,7 @@ void DatapackClientLoader::parseZoneExtra()
                 }
                 else
                     qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber());
-                item = item.nextSiblingElement(DatapackClientLoader::text_music);
+                item = item.NextSiblingElement(DatapackClientLoader::text_music);
             }
         }
 

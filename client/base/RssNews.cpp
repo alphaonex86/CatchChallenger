@@ -5,7 +5,7 @@
 #include <QNetworkRequest>
 #include <QUrl>
 #include <QDomDocument>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QRegularExpression>
 
 RssNews *RssNews::rssNews=NULL;
@@ -72,24 +72,24 @@ void RssNews::loadRss(const QByteArray &data)
         qDebug() << QStringLiteral("Unable to open the rss, Parse error at line %1, column %2: %3").arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!=QStringLiteral("rss"))
         return;
 
     //load the content
-    QDomElement channelItem = root.firstChildElement(QStringLiteral("channel"));
+    tinyxml2::XMLElement channelItem = root.FirstChildElement(QStringLiteral("channel"));
     if(!channelItem.isNull())
     {
         if(channelItem.isElement())
         {
-            QDomElement item = channelItem.firstChildElement(QStringLiteral("item"));
+            tinyxml2::XMLElement item = channelItem.FirstChildElement(QStringLiteral("item"));
             while(!item.isNull())
             {
                 if(item.isElement())
                 {
                     QString description,title,link,pubDate;
                     {
-                        QDomElement descriptionItem = item.firstChildElement(QStringLiteral("description"));
+                        tinyxml2::XMLElement descriptionItem = item.FirstChildElement(QStringLiteral("description"));
                         if(!descriptionItem.isNull())
                         {
                             if(descriptionItem.isElement())
@@ -97,7 +97,7 @@ void RssNews::loadRss(const QByteArray &data)
                         }
                     }
                     {
-                        QDomElement titleItem = item.firstChildElement(QStringLiteral("title"));
+                        tinyxml2::XMLElement titleItem = item.FirstChildElement(QStringLiteral("title"));
                         if(!titleItem.isNull())
                         {
                             if(titleItem.isElement())
@@ -105,7 +105,7 @@ void RssNews::loadRss(const QByteArray &data)
                         }
                     }
                     {
-                        QDomElement linkItem = item.firstChildElement(QStringLiteral("link"));
+                        tinyxml2::XMLElement linkItem = item.FirstChildElement(QStringLiteral("link"));
                         if(!linkItem.isNull())
                         {
                             if(linkItem.isElement())
@@ -113,7 +113,7 @@ void RssNews::loadRss(const QByteArray &data)
                         }
                     }
                     {
-                        QDomElement pubDateItem = item.firstChildElement(QStringLiteral("pubDate"));
+                        tinyxml2::XMLElement pubDateItem = item.FirstChildElement(QStringLiteral("pubDate"));
                         if(!pubDateItem.isNull())
                         {
                             if(pubDateItem.isElement())
@@ -132,7 +132,7 @@ void RssNews::loadRss(const QByteArray &data)
                     rssEntry.link=link;
                     entryList << rssEntry;
                 }
-                item = item.nextSiblingElement(QStringLiteral("item"));
+                item = item.NextSiblingElement(QStringLiteral("item"));
             }
         }
     }

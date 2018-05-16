@@ -6,7 +6,7 @@
 #include <QDir>
 #include <QFile>
 #include <QDomDocument>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QByteArray>
 #include <QDebug>
 #include <QLibraryInfo>
@@ -62,7 +62,7 @@ LanguagesSelect::LanguagesSelect() :
             index++;
             continue;
         }
-        QDomElement root = domDocument.documentElement();
+        tinyxml2::XMLElement root = domDocument.RootElement();
         if(root.tagName()!=QStringLiteral("language"))
         {
             qDebug() << QStringLiteral("Unable to open the xml file: %1, \"language\" root balise not found for the xml file").arg(xmlFile.fileName());
@@ -71,7 +71,7 @@ LanguagesSelect::LanguagesSelect() :
         }
 
         //load the content
-        QDomElement fullName = root.firstChildElement(QStringLiteral("fullName"));
+        tinyxml2::XMLElement fullName = root.FirstChildElement(QStringLiteral("fullName"));
         if(fullName.isNull() || !fullName.isElement())
         {
             qDebug() << QStringLiteral("Unable to open the xml file: %1, \"fullName\" balise not found for the xml file").arg(xmlFile.fileName());
@@ -81,7 +81,7 @@ LanguagesSelect::LanguagesSelect() :
 
         QString shortNameMain;
         QStringList shortNameList;
-        QDomElement shortName = root.firstChildElement(QStringLiteral("shortName"));
+        tinyxml2::XMLElement shortName = root.FirstChildElement(QStringLiteral("shortName"));
         while(!shortName.isNull())
         {
             if(shortName.isElement())
@@ -90,7 +90,7 @@ LanguagesSelect::LanguagesSelect() :
                     shortNameMain=shortName.text();
                 shortNameList << shortName.text();
             }
-            shortName = shortName.nextSiblingElement(QStringLiteral("shortName"));
+            shortName = shortName.NextSiblingElement(QStringLiteral("shortName"));
         }
 
         if(shortNameMain.isEmpty())
