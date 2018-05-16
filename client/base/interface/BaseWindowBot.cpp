@@ -6,6 +6,7 @@
 
 #include <QDesktopServices>
 #include <QInputDialog>
+#include <QString>
 
 using namespace CatchChallenger;
 
@@ -74,7 +75,7 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
     auto i=playerInformations.quests.begin();
     while(i!=playerInformations.quests.cend())
     {
-        if(botQuests.find(i->first)==botQuests.cend() && i->second.step>0)
+        if(!vectorcontainsAtLeastOne(botQuests,i->first) && i->second.step>0)
         {
             CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i->first);
             auto bots=currentQuest.steps.at(i->second.step-1).bots;
@@ -99,28 +100,29 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         showTip(tr("Error into the bot, repport this error please").toStdString());
         return;
     }
-    if(*actualBot.step.at(step)->Attribute(std::string("type"))=="text")
+    const CATCHCHALLENGER_XMLELEMENT * stepXml=actualBot.step.at(step);
+    if(strcmp(stepXml->Attribute("type"),"text")==0)
     {
         const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-        auto text = actualBot.step.at(step)->FirstChildElement(std::string("text"));
+        auto text = stepXml->FirstChildElement("text");
         if(!language.empty() && language!=BaseWindow::text_en)
             while(text!=NULL)
             {
-                if(text->Attribute("lang")!=NULL && *text->Attribute("lang")==language)
+                if(text->Attribute("lang")!=NULL && text->Attribute("lang")==language)
                 {
                     std::string textToShow=text->GetText();
                     textToShow=parseHtmlToDisplay(textToShow);
-                    ui->IG_dialog_text->setText(textToShow);
+                    ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
                     ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
                     ui->IG_dialog->setVisible(true);
                     return;
                 }
-                text = text->NextSiblingElement(std::string("text"));
+                text = text->NextSiblingElement("text");
             }
-        text = actualBot.step.at(step)->FirstChildElement(std::string("text"));
+        text = stepXml->FirstChildElement("text");
         while(text!=NULL)
         {
-            if(text->Attribute("lang")==NULL || *text->Attribute("lang")==language.toStdString())
+            if(text->Attribute("lang")==NULL || text->Attribute("lang")==language)
             {
                 std::string textToShow=text->GetText();
                 textToShow=parseHtmlToDisplay(textToShow);
@@ -129,33 +131,33 @@ void BaseWindow::goToBotStep(const uint8_t &step)
                 ui->IG_dialog->setVisible(true);
                 return;
             }
-            text = text->NextSiblingElement(std::string("text"));
+            text = text->NextSiblingElement("text");
         }
-        showTip(tr("Bot text not found, repport this error please"));
+        showTip(tr("Bot text not found, repport this error please").toStdString());
         return;
     }
-    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="shop")
+    else if(strcmp(stepXml->Attribute("type"),"shop")==0)
     {
-        if(actualBot.step.at(step)->Attribute(std::string("shop"))==NULL)
+        if(stepXml->Attribute("shop")==NULL)
         {
-            showTip(tr("Shop called but missing informations"));
+            showTip(tr("Shop called but missing informations").toStdString());
             return;
         }
         bool ok;
-        shopId=stringtouint16(*actualBot.step.at(step)->Attribute(std::string("shop")),&ok);
+        shopId=stringtouint16(stepXml->Attribute("shop"),&ok);
         if(!ok)
         {
-            showTip(tr("Shop called but wrong id"));
+            showTip(tr("Shop called but wrong id").toStdString());
             return;
         }
         if(CommonDatapackServerSpec::commonDatapackServerSpec.shops.find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.shops.cend())
         {
-            showTip(tr("Shop not found"));
+            showTip(tr("Shop not found").toStdString());
             return;
         }
         if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         {
-            QPixmap skin=getFrontSkinPath(QString::fromStdString(actualBot.properties.at("skin")));
+            QPixmap skin(QString::fromStdString(getFrontSkinPath(actualBot.properties.at("skin"))));
             if(!skin.isNull())
             {
                 ui->shopSellerImage->setPixmap(skin.scaled(160,160));
@@ -196,23 +198,23 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         #endif
         return;
     }
-    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="sell")
+    else if(strcmp(stepXml->Attribute("type"),"sell")==0)
     {
-        if(actualBot.step.at(step)->Attribute(std::string("shop"))==NULL)
+        if(stepXml->Attribute("shop")==NULL)
         {
-            showTip(tr("Shop called but missing informations"));
+            showTip(tr("Shop called but missing informations").toStdString());
             return;
         }
         bool ok;
-        shopId=stringtouint16(*actualBot.step.at(step)->Attribute(std::string("shop")),&ok);
+        shopId=stringtouint16(stepXml->Attribute("shop"),&ok);
         if(!ok)
         {
-            showTip(tr("Shop called but wrong id"));
+            showTip(tr("Shop called but wrong id").toStdString());
             return;
         }
         if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         {
-            QPixmap skin=getFrontSkinPath(QString::fromStdString(actualBot.properties.at("skin")));
+            QPixmap skin=QString::fromStdString(getFrontSkinPath(actualBot.properties.at("skin")));
             if(!skin.isNull())
             {
                 ui->shopSellerImage->setPixmap(skin.scaled(160,160));
@@ -227,79 +229,82 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         selectObject(ObjectType_Sell);
         return;
     }
-    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="learn")
+    else if(strcmp(stepXml->Attribute("type"),"learn")==0)
     {
         selectObject(ObjectType_MonsterToLearn);
         return;
     }
-    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="heal")
+    else if(strcmp(stepXml->Attribute("type"),"heal")==0)
     {
         fightEngine.healAllMonsters();
         client->heal();
         load_monsters();
-        showTip(tr("You are healed"));
+        showTip(tr("You are healed").toStdString());
         return;
     }
-    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="quests")
+    else if(strcmp(stepXml->Attribute("type"),"quests")==0)
     {
         std::string textToShow;
-        const std::vector<std::pair<uint16_t,QString> > &quests=BaseWindow::getQuestList(actualBot.botId);
+        const std::vector<std::pair<uint16_t,std::string> > &quests=BaseWindow::getQuestList(actualBot.botId);
         if(step==1)
         {
             if(quests.size()==1)
             {
-                const std::pair<uint16_t,QString> &quest=quests.at(0);
-                if(DatapackClientLoader::datapackLoader.questsExtra.value(quest.first).autostep)
+                const std::pair<uint16_t,std::string> &quest=quests.at(0);
+                if(DatapackClientLoader::datapackLoader.questsExtra.at(quest.first).autostep)
                 {
-                    on_IG_dialog_text_linkActivated(QString("quest_%1").arg(quest.first));
+                    on_IG_dialog_text_linkActivated("quest_"+std::to_string(quest.first));
                     return;
                 }
             }
         }
-        if(quests.isEmpty())
+        if(quests.empty())
         {
             if(actualBot.step.find(step+1)!=actualBot.step.cend())
                 on_IG_dialog_text_linkActivated("next");
             else
-                textToShow+=tr("No quests at the moment or you don't meat the requirements");
+                textToShow+=tr("No quests at the moment or you don't meat the requirements").toStdString();
         }
         else
         {
-            textToShow+=QStringLiteral("<ul>");
-            int index=0;
+            textToShow+="<ul>";
+            unsigned int index=0;
             while(index<quests.size())
             {
-                const std::pair<uint32_t,QString> &quest=quests.at(index);
-                textToShow+=QStringLiteral("<li><a href=\"quest_%1\">%2</a></li>").arg(quest.first).arg(quest.second);
+                const std::pair<uint32_t,std::string> &quest=quests.at(index);
+                textToShow+=QString("<li><a href=\"quest_%1\">%2</a></li>")
+                        .arg(quest.first)
+                        .arg(QString::fromStdString(quest.second))
+                        .toStdString();
                 index++;
             }
-            if(quests.isEmpty())
-                textToShow+=tr("No quests at the moment or you don't meat the requirements");
-            textToShow+=QStringLiteral("</ul>");
+            if(quests.empty())
+                textToShow+=tr("No quests at the moment or you don't meat the requirements").toStdString();
+            textToShow+="</ul>";
         }
-        ui->IG_dialog_text->setText(textToShow);
+        ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
         ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
         ui->IG_dialog->setVisible(true);
         return;
     }
-    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="clan")
+    else if(strcmp(stepXml->Attribute("type"),"clan")==0)
     {
         std::string textToShow;
         if(playerInformations.clan==0)
         {
             if(playerInformations.allow.find(ActionAllow_Clan)!=playerInformations.allow.cend())
-                textToShow=QStringLiteral("<center><a href=\"clan_create\">%1</a></center>").arg(tr("Clan create"));
+                textToShow=QStringLiteral("<center><a href=\"clan_create\">%1</a></center>").arg(tr("Clan create")).toStdString();
             else
-                textToShow=QStringLiteral("<center>You can't create your clan</center>");
+                textToShow=QStringLiteral("<center>You can't create your clan</center>").toStdString();
         }
         else
-            textToShow=QStringLiteral("<center>%1</center>").arg(tr("You are already into a clan. Use the clan dongle into the player information."));
-        ui->IG_dialog_text->setText(textToShow);
+            textToShow=QStringLiteral("<center>%1</center>").arg(tr("You are already into a clan. Use the clan dongle into the player information.")).toStdString();
+        ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
         ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
         ui->IG_dialog->setVisible(true);
         return;
     }
-    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="warehouse")
+    else if(strcmp(stepXml->Attribute("type"),"warehouse")==0)
     {
         monster_to_withdraw.clear();
         monster_to_deposit.clear();
@@ -312,7 +317,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             ui->warehousePlayerPseudo->setVisible(true);
             ui->warehouseBotImage->setVisible(true);
             ui->warehouseBotPseudo->setVisible(true);
-            pixmap=getFrontSkinPath(QString::fromStdString(actualBot.properties.at("skin")));
+            pixmap=QString::fromStdString(getFrontSkinPath(actualBot.properties.at("skin")));
             if(pixmap.isNull())
             {
                 ui->warehousePlayerImage->setVisible(false);
@@ -335,7 +340,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         updateTheWareHouseContent();
         return;
     }
-    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="market")
+    else if(strcmp(stepXml->Attribute("type"),"market")==0)
     {
         ui->marketMonster->clear();
         ui->marketObject->clear();
@@ -347,24 +352,24 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         ui->stackedWidget->setCurrentWidget(ui->page_market);
         return;
     }
-    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="industry")
+    else if(strcmp(stepXml->Attribute("type"),"industry")==0)
     {
-        if(actualBot.step.at(step)->Attribute("industry")==NULL)
+        if(stepXml->Attribute("industry")==NULL)
         {
-            showTip(tr("Industry called but missing informations"));
+            showTip(tr("Industry called but missing informations").toStdString());
             return;
         }
 
         bool ok;
-        factoryId=stringtouint16(*actualBot.step.at(step)->Attribute(std::string("industry")),&ok);
+        factoryId=stringtouint16(stepXml->Attribute("industry"),&ok);
         if(!ok)
         {
-            showTip(tr("Industry called but wrong id"));
+            showTip(tr("Industry called but wrong id").toStdString());
             return;
         }
         if(CommonDatapack::commonDatapack.industriesLink.find(factoryId)==CommonDatapack::commonDatapack.industriesLink.cend())
         {
-            showTip(tr("The factory is not found"));
+            showTip(tr("The factory is not found").toStdString());
             return;
         }
         ui->factoryResources->clear();
@@ -372,7 +377,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         ui->factoryStatus->setText(tr("Waiting of status"));
         if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         {
-            QPixmap skin=getFrontSkinPath(QString::fromStdString(actualBot.properties.at("skin")));
+            QPixmap skin=QString::fromStdString(getFrontSkinPath(actualBot.properties.at("skin")));
             if(!skin.isNull())
             {
                 ui->factoryBotImage->setPixmap(skin.scaled(80,80));
@@ -387,28 +392,28 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         client->getFactoryList(factoryId);
         return;
     }
-    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="zonecapture")
+    else if(strcmp(stepXml->Attribute("type"),"zonecapture")==0)
     {
-        if(!actualBot.step.at(step)->Attribute(std::string("zone")))
+        if(stepXml->Attribute("zone")==NULL)
         {
-            showTip(tr("Missing attribute for the step"));
+            showTip(tr("Missing attribute for the step").toStdString());
             return;
         }
         if(playerInformations.clan==0)
         {
-            showTip(tr("You can't try capture if you are not in a clan"));
+            showTip(tr("You can't try capture if you are not in a clan").toStdString());
             return;
         }
         if(!nextCityCatchTimer.isActive())
         {
-            showTip(tr("City capture disabled"));
+            showTip(tr("City capture disabled").toStdString());
             return;
         }
-        std::string zone=QString::fromStdString(*actualBot.step.at(step)->Attribute(std::string("zone")));
-        if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
+        const std::string zone=stepXml->Attribute("zone");
+        if(DatapackClientLoader::datapackLoader.zonesExtra.find(zone)!=DatapackClientLoader::datapackLoader.zonesExtra.cend())
         {
-            zonecatchName=DatapackClientLoader::datapackLoader.zonesExtra.value(zone).name;
-            ui->zonecaptureWaitText->setText(tr("You are waiting to capture %1").arg(QStringLiteral("<b>%1</b>").arg(zonecatchName)));
+            zonecatchName=DatapackClientLoader::datapackLoader.zonesExtra.at(zone).name;
+            ui->zonecaptureWaitText->setText(tr("You are waiting to capture %1").arg(QString("<b>%1</b>").arg(QString::fromStdString(zonecatchName))));
         }
         else
         {
@@ -423,10 +428,9 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         updatePageZoneCatch();
         return;
     }
-    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="script")
+    /*else if(strcmp(stepXml->Attribute("type"),"script")==0)
     {
-        QScriptEngine engine;
-        std::string contents = QString::fromStdString(actualBot.step.at(step)->GetText());
+        std::string contents = stepXml->GetText();
         contents=QStringLiteral("function getTextEntryPoint()\n{\n")+contents+QStringLiteral("\n}");
         QScriptValue result = engine.evaluate(contents);
         if (result.isError()) {
@@ -464,24 +468,24 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         }
         qDebug() << QStringLiteral("textEntryPoint:") << textEntryPoint;
         return;
-    }
-    else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="fight")
+    }*/
+    else if(strcmp(stepXml->Attribute("type"),"fight")==0)
     {
-        if(actualBot.step.at(step)->Attribute(std::string("fightid"))==NULL)
+        if(stepXml->Attribute("fightid")==NULL)
         {
-            showTip(tr("Bot step missing data error, repport this error please"));
+            showTip(tr("Bot step missing data error, repport this error please").toStdString());
             return;
         }
         bool ok;
-        const uint16_t &fightId=stringtouint16(*actualBot.step.at(step)->Attribute(std::string("fightid")),&ok);
+        const uint16_t &fightId=stringtouint16(stepXml->Attribute("fightid"),&ok);
         if(!ok)
         {
-            showTip(tr("Bot step wrong data type error, repport this error please"));
+            showTip(tr("Bot step wrong data type error, repport this error please").toStdString());
             return;
         }
         if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightId)==CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
         {
-            showTip(tr("Bot fight not found"));
+            showTip(tr("Bot fight not found").toStdString());
             return;
         }
         if(mapController->haveBeatBot(fightId))
@@ -489,7 +493,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             if(actualBot.step.find(step+1)!=actualBot.step.cend())
                 goToBotStep(step+1);
             else
-                showTip(tr("Already beaten!"));
+                showTip(tr("Already beaten!").toStdString());
             return;
         }
         client->requestFight(fightId);
@@ -498,7 +502,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     }
     else
     {
-        showTip(tr("Bot step type error, repport this error please"));
+        showTip(tr("Bot step type error, repport this error please").toStdString());
         return;
     }
 }
@@ -508,7 +512,7 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint16_t &b
     if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
     {
         if(!silent)
-            showTip(tr("Quest not found"));
+            showTip(tr("Quest not found").toStdString());
         return
                 false;
     }
@@ -529,7 +533,7 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint16_t &b
         else
         {
             if(!silent)
-                showTip(tr("You don't have the requirement to start this quest"));
+                showTip(tr("You don't have the requirement to start this quest").toStdString());
             return false;
         }
     }
@@ -548,20 +552,23 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint16_t &b
         else
         {
             if(!silent)
-                showTip(tr("You don't have the requirement to start this quest"));
+                showTip(tr("You don't have the requirement to start this quest").toStdString());
             return false;
         }
     }
     if(!haveNextStepQuestRequirements(quest))
     {
         if(!silent)
-            showTip(tr("You don't have the requirement to continue this quest"));
+            showTip(tr("You don't have the requirement to continue this quest").toStdString());
         return false;
     }
     if(playerInformations.quests.at(questId).step>=(quest.steps.size()))
     {
         if(!silent)
-            showTip(tr("You have finish the quest <b>%1</b>").arg(DatapackClientLoader::datapackLoader.questsExtra.value(questId).name));
+            showTip(tr("You have finish the quest <b>%1</b>")
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.questsExtra.at(questId).name))
+                    .toStdString()
+                    );
         client->finishQuest(questId);
         nextStepQuest(quest);
         updateDisplayedQuests();
@@ -570,7 +577,7 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint16_t &b
     if(vectorcontainsAtLeastOne(quest.steps.at(playerInformations.quests.at(questId).step).bots,botId))
     {
         if(!silent)
-            showTip(tr("You need talk to another bot"));
+            showTip(tr("You need talk to another bot").toStdString());
         return false;
     }
     client->nextQuestStep(questId);
@@ -581,26 +588,25 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint16_t &b
 
 void BaseWindow::getTextEntryPoint()
 {
-    if(!isInQuest)
+/* todo    if(!isInQuest)
     {
-        showTip(QStringLiteral("Internal error: Is not in quest"));
+        showTip(QStringLiteral("Internal error: Is not in quest").toStdString());
         return;
     }
-    QScriptEngine engine;
 
     Player_private_and_public_informations &playerInformations=client->get_player_informations();
-    const std::string &client_logic=client->datapackPathMain()+DATAPACK_BASE_PATH_QUESTS2+"/"+QString::number(questId)+"/client_logic.js";
-    if(!QFile(client_logic).exists())
+    const std::string &client_logic=client->datapackPathMain()+DATAPACK_BASE_PATH_QUESTS2+"/"+std::to_string(questId)+"/client_logic.js";
+    if(!QFile(QString::fromStdString(client_logic)).exists())
     {
-        showTip(tr("Client file missing"));
-        qDebug() << "client_logic file is missing:" << client_logic;
+        showTip(tr("Client file missing").toStdString());
+        qDebug() << "client_logic file is missing:" << QString::fromStdString(client_logic);
         return;
     }
 
     QFile scriptFile(client_logic);
     scriptFile.open(QIODevice::ReadOnly);
     QTextStream stream(&scriptFile);
-    std::string contents = stream.readAll();
+    std::string contents = stream.readAll().toStdString();
     contents="function getTextEntryPoint()\n{\n"+contents+"\n}";
     uint8_t currentQuestStepVar;
     bool haveNextStepQuestRequirementsVar;
@@ -692,26 +698,28 @@ void BaseWindow::getTextEntryPoint()
 
     Q_UNUSED(currentQuestStepVar);
     Q_UNUSED(haveNextStepQuestRequirementsVar);
-    Q_UNUSED(finishOneTimeVar);
+    Q_UNUSED(finishOneTimeVar);*/
 }
 
 void BaseWindow::showQuestText(const uint32_t &textId)
 {
-    if(!DatapackClientLoader::datapackLoader.questsText.contains(questId))
+    if(DatapackClientLoader::datapackLoader.questsText.find(questId)==
+            DatapackClientLoader::datapackLoader.questsText.cend())
     {
         qDebug() << QStringLiteral("No quest text for this quest: %1").arg(questId);
-        showTip(tr("No quest text for this quest"));
+        showTip(tr("No quest text for this quest").toStdString());
         return;
     }
-    if(!DatapackClientLoader::datapackLoader.questsText.value(questId).text.contains(textId))
+    if(DatapackClientLoader::datapackLoader.questsText.at(questId).text.find(textId)==
+            DatapackClientLoader::datapackLoader.questsText.at(questId).text.cend())
     {
         qDebug() << "No quest text entry point";
-        showTip(tr("No quest text entry point"));
+        showTip(tr("No quest text entry point").toStdString());
         return;
     }
 
-    std::string textToShow=parseHtmlToDisplay(DatapackClientLoader::datapackLoader.questsText.value(questId).text.value(textId));
-    ui->IG_dialog_text->setText(textToShow);
+    std::string textToShow=parseHtmlToDisplay(DatapackClientLoader::datapackLoader.questsText.at(questId).text.at(textId));
+    ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
     ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
     ui->IG_dialog->setVisible(true);
 }
@@ -828,41 +836,42 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
 void BaseWindow::on_IG_dialog_text_linkActivated(const std::string &rawlink)
 {
     ui->IG_dialog->setVisible(false);
-    QStringList stringList=rawlink.split(";");
-    int index=0;
+    std::vector<std::string> stringList=stringsplit(rawlink,';');
+    unsigned int index=0;
     while(index<stringList.size())
     {
         const std::string &link=stringList.at(index);
-        qDebug() << "parsed link to use: " << link;
-        if(link.startsWith("http://") || link.startsWith("https://"))
+        qDebug() << "parsed link to use: " << QString::fromStdString(link);
+        if(stringStartWith(link,"http://") || stringStartWith(link,"https://"))
         {
-            if(!QDesktopServices::openUrl(QUrl(link)))
-                showTip(QStringLiteral("Unable to open the url: %1").arg(link));
+            if(!QDesktopServices::openUrl(QUrl(QString::fromStdString(link))))
+                showTip(QStringLiteral("Unable to open the url: %1").arg(QString::fromStdString(link)).toStdString());
             index++;
             continue;
         }
         bool ok;
-        if(link.startsWith("quest_"))
+        if(stringStartWith(link,"quest_"))
         {
             std::string tempLink=link;
-            tempLink.remove("quest_");
-            const uint16_t &questId=tempLink.toUShort(&ok);
+            stringreplaceOne(tempLink,"quest_","");
+            const uint16_t &questId=stringtouint16(tempLink,&ok);
             if(!ok)
             {
-                showTip(QStringLiteral("Unable to open the link: %1").arg(link));
+                showTip(QStringLiteral("Unable to open the link: %1").arg(QString::fromStdString(link)).toStdString());
                 index++;
                 continue;
             }
             if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
             {
-                showTip(tr("Quest not found"));
+                showTip(tr("Quest not found").toStdString());
                 index++;
                 continue;
             }
             isInQuest=true;
             this->questId=questId;
-            if(DatapackClientLoader::datapackLoader.questsExtra.contains(questId))
-                if(DatapackClientLoader::datapackLoader.questsExtra.value(questId).autostep)
+            if(DatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
+                    DatapackClientLoader::datapackLoader.questsExtra.cend())
+                if(DatapackClientLoader::datapackLoader.questsExtra.at(questId).autostep)
                 {
                     int index=0;
                     bool ok;
@@ -873,7 +882,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const std::string &rawlink)
                     } while(ok && index<99);
                     if(index==99)
                     {
-                        emit error(QString("Infinity loop into autostep for quest: %1").arg(questId));
+                        emit error("Infinity loop into autostep for quest: "+std::to_string(questId));
                         return;
                     }
                 }
@@ -884,10 +893,10 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const std::string &rawlink)
         else if(link=="clan_create")
         {
             bool ok;
-            std::string text = QInputDialog::getText(this,tr("Give the clan name"),tr("Clan name:"),QLineEdit::Normal,QString(), &ok);
-            if(ok && !text.isEmpty())
+            std::string text = QInputDialog::getText(this,tr("Give the clan name"),tr("Clan name:"),QLineEdit::Normal,QString(), &ok).toStdString();
+            if(ok && !text.empty())
             {
-                actionClan << ActionClan_Create;
+                actionClan.push_back(ActionClan_Create);
                 client->createClan(text);
             }
             index++;
@@ -907,10 +916,10 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const std::string &rawlink)
             index++;
             continue;
         }
-        uint8_t step=static_cast<uint8_t>(link.toUShort(&ok));
+        uint8_t step=stringtouint8(link,&ok);
         if(!ok)
         {
-            showTip(QStringLiteral("Unable to open the link: %1").arg(link));
+            showTip(QStringLiteral("Unable to open the link: %1").arg(QString::fromStdString(link)).toStdString());
             index++;
             continue;
         }
@@ -938,14 +947,14 @@ bool BaseWindow::startQuest(const Quest &quest)
     return true;
 }
 
-std::vector<std::pair<uint16_t,QString> > BaseWindow::getQuestList(const uint16_t &botId) const
+std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uint16_t &botId) const
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    std::vector<std::pair<uint16_t,QString> > entryList;
-    std::pair<uint16_t,QString> oneEntry;
+    std::vector<std::pair<uint16_t,std::string> > entryList;
+    std::pair<uint16_t,std::string> oneEntry;
     //do the not started quest here
-    std::vector<uint16_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
-    int index=0;
+    std::vector<uint16_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.at(botId);
+    unsigned int index=0;
     while(index<botQuests.size())
     {
         const uint16_t &questId=botQuests.at(index);
@@ -960,14 +969,15 @@ std::vector<std::pair<uint16_t,QString> > BaseWindow::getQuestList(const uint16_
             if(haveStartQuestRequirement(currentQuest))
             {
                 oneEntry.first=questId;
-                if(DatapackClientLoader::datapackLoader.questsExtra.contains(questId))
-                    oneEntry.second=DatapackClientLoader::datapackLoader.questsExtra.value(questId).name;
+                if(DatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
+                        DatapackClientLoader::datapackLoader.questsExtra.cend())
+                    oneEntry.second=DatapackClientLoader::datapackLoader.questsExtra.at(questId).name;
                 else
                 {
                     qDebug() << "internal bug: quest extra not found";
                     oneEntry.second="???";
                 }
-                entryList << oneEntry;
+                entryList.push_back(oneEntry);
             }
             else
                 {}//have not the requirement
@@ -988,14 +998,15 @@ std::vector<std::pair<uint16_t,QString> > BaseWindow::getQuestList(const uint16_
                             if(haveStartQuestRequirement(currentQuest))
                             {
                                 oneEntry.first=questId;
-                                if(DatapackClientLoader::datapackLoader.questsExtra.contains(questId))
-                                    oneEntry.second=DatapackClientLoader::datapackLoader.questsExtra.value(questId).name;
+                                if(DatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
+                                        DatapackClientLoader::datapackLoader.questsExtra.cend())
+                                    oneEntry.second=DatapackClientLoader::datapackLoader.questsExtra.at(questId).name;
                                 else
                                 {
                                     qDebug() << "internal bug: quest extra not found";
                                     oneEntry.second="???";
                                 }
-                                entryList << oneEntry;
+                                entryList.push_back(oneEntry);
                             }
                             else
                                 {}//have not the requirement
@@ -1012,14 +1023,16 @@ std::vector<std::pair<uint16_t,QString> > BaseWindow::getQuestList(const uint16_
                     if(vectorcontainsAtLeastOne(bots,botId))
                     {
                         oneEntry.first=questId;
-                        if(DatapackClientLoader::datapackLoader.questsExtra.contains(questId))
-                            oneEntry.second=tr("%1 (in progress)").arg(DatapackClientLoader::datapackLoader.questsExtra.value(questId).name);
+                        if(DatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
+                                DatapackClientLoader::datapackLoader.questsExtra.cend())
+                            oneEntry.second=tr("%1 (in progress)")
+                                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.questsExtra.at(questId).name)).toStdString();
                         else
                         {
                             qDebug() << "internal bug: quest extra not found";
-                            oneEntry.second=tr("??? (in progress)");
+                            oneEntry.second=tr("??? (in progress)").toStdString();
                         }
-                        entryList << oneEntry;
+                        entryList.push_back(oneEntry);
                     }
                     else
                         {}//Need got to another bot to progress, this it's just the starting bot
@@ -1032,7 +1045,8 @@ std::vector<std::pair<uint16_t,QString> > BaseWindow::getQuestList(const uint16_
     auto i=playerInformations.quests.begin();
     while(i!=playerInformations.quests.cend())
     {
-        if(!botQuests.contains(i->first) && i->second.step>0)
+        if(!vectorcontainsAtLeastOne(botQuests,i->first) &&
+                i->second.step>0)
         {
             CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i->first);
             auto bots=currentQuest.steps.at(i->second.step-1).bots;
@@ -1040,8 +1054,10 @@ std::vector<std::pair<uint16_t,QString> > BaseWindow::getQuestList(const uint16_
             {
                 //in progress, but not the starting bot
                 oneEntry.first=i->first;
-                oneEntry.second=tr("%1 (in progress)").arg(DatapackClientLoader::datapackLoader.questsExtra.value(i->first).name);
-                entryList << oneEntry;
+                oneEntry.second=tr("%1 (in progress)")
+                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.questsExtra.at(i->first).name))
+                        .toStdString();
+                entryList.push_back(oneEntry);
             }
             else
                 {}//it's another bot
