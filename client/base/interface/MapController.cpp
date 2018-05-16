@@ -6,21 +6,21 @@
 #include "../../../general/base/CommonSettingsServer.h"
 #include "../../../general/base/GeneralStructures.h"
 
-QString MapController::text_random=QStringLiteral("random");
-QString MapController::text_loop=QStringLiteral("loop");
-QString MapController::text_move=QStringLiteral("move");
-QString MapController::text_left=QStringLiteral("left");
-QString MapController::text_right=QStringLiteral("right");
-QString MapController::text_top=QStringLiteral("top");
-QString MapController::text_bottom=QStringLiteral("bottom");
-QString MapController::text_slash=QStringLiteral("/");
-QString MapController::text_type=QStringLiteral("type");
-QString MapController::text_fightRange=QStringLiteral("fightRange");
-QString MapController::text_fight=QStringLiteral("fight");
-QString MapController::text_fightid=QStringLiteral("fightid");
-QString MapController::text_bot=QStringLiteral("bot");
-QString MapController::text_slashtrainerpng=QStringLiteral("/trainer.png");
-QString MapController::text_DATAPACK_BASE_PATH_SKIN=QStringLiteral(DATAPACK_BASE_PATH_SKIN);
+std::string MapController::text_random=QStringLiteral("random");
+std::string MapController::text_loop=QStringLiteral("loop");
+std::string MapController::text_move=QStringLiteral("move");
+std::string MapController::text_left=QStringLiteral("left");
+std::string MapController::text_right=QStringLiteral("right");
+std::string MapController::text_top=QStringLiteral("top");
+std::string MapController::text_bottom=QStringLiteral("bottom");
+std::string MapController::text_slash=QStringLiteral("/");
+std::string MapController::text_type=QStringLiteral("type");
+std::string MapController::text_fightRange=QStringLiteral("fightRange");
+std::string MapController::text_fight=QStringLiteral("fight");
+std::string MapController::text_fightid=QStringLiteral("fightid");
+std::string MapController::text_bot=QStringLiteral("bot");
+std::string MapController::text_slashtrainerpng=QStringLiteral("/trainer.png");
+std::string MapController::text_DATAPACK_BASE_PATH_SKIN=QStringLiteral(DATAPACK_BASE_PATH_SKIN);
 
 #define IMAGEOVERSIZEWITDH 800*2*2
 #define IMAGEOVERSIZEHEIGHT 600*2*2
@@ -60,7 +60,7 @@ MapController::~MapController()
     }
 }
 
-bool MapController::asyncMapLoaded(const QString &fileName,MapVisualiserThread::Map_full * tempMapObject)
+bool MapController::asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject)
 {
     if(MapControllerMP::asyncMapLoaded(fileName,tempMapObject))
     {
@@ -70,8 +70,8 @@ bool MapController::asyncMapLoaded(const QString &fileName,MapVisualiserThread::
             {
                 if(plantOnMap==NULL)
                     abort();
-                const QHash<QPair<uint8_t,uint8_t>,uint16_t> &plantCoor=DatapackClientLoader::datapackLoader.plantOnMap.value(fileName);
-                QHashIterator<QPair<uint8_t,uint8_t>,uint16_t> i(plantCoor);
+                const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t> &plantCoor=DatapackClientLoader::datapackLoader.plantOnMap.value(fileName);
+                QHashIterator<std::pair<uint8_t,uint8_t>,uint16_t> i(plantCoor);
                 while (i.hasNext()) {
                     i.next();
                     const uint16_t indexOfMap=i.value();
@@ -120,7 +120,7 @@ void MapController::updateBot()
     MapVisualiserThread::Map_full * currentMap=all_map.value(current_map);
     if(currentMap==NULL)
         return;
-    QHash<QPair<uint8_t,uint8_t>,CatchChallenger::BotDisplay>::const_iterator i = currentMap->logicalMap.botsDisplay.constBegin();
+    std::unordered_map<std::pair<uint8_t,uint8_t>,CatchChallenger::BotDisplay>::const_iterator i = currentMap->logicalMap.botsDisplay.constBegin();
 
     while (i != currentMap->logicalMap.botsDisplay.constEnd())
     {
@@ -233,13 +233,13 @@ bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchCha
         return false;
     CatchChallenger::CommonMap *new_map=&map;
     CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
-    if(all_map.value(QString::fromStdString(new_map->map_file))->logicalMap.bots.contains(QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))))
+    if(all_map.value(QString::fromStdString(new_map->map_file))->logicalMap.bots.contains(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))))
         return false;
     return true;
 }
 
 void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const uint32_t &botId,const uint8_t &x,const uint8_t &y,
-                                    const QString &lookAt,const QString &skin)
+                                    const std::string &lookAt,const std::string &skin)
 {
     Q_UNUSED(botId);
     if(skin.isEmpty())
@@ -248,15 +248,15 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         return;
     }
 
-    if(parsedMap->logicalMap.botsDisplay.contains(QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))))
+    if(parsedMap->logicalMap.botsDisplay.contains(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))))
     {
-        /*CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
+        /*CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
         ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(botDisplay->mapObject);
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         botDisplay->mapObject->setPosition(QPoint(x,y+1));
         MapObjectItem::objectLink.value(botDisplay->mapObject)->setZValue(y);*/
 
-        std::cerr << "MapController::loadBotOnTheMap() parsedMap->logicalMap.botsDisplay.contains(QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))" << std::endl;
+        std::cerr << "MapController::loadBotOnTheMap() parsedMap->logicalMap.botsDisplay.contains(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))" << std::endl;
         return;
     }
 
@@ -265,7 +265,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         qDebug() << QStringLiteral("loadBotOnTheMap(), ObjectGroupItem::objectGroupLink not contains parsedMap->objectGroup");
         return;
     }
-    CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[QPair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
+    CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
     botDisplay->botMove=CatchChallenger::BotMove::BotMove_Fixed;
     CatchChallenger::Direction direction;
     int baseTile=-1;
@@ -324,7 +324,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     botDisplay->mapObject=new Tiled::MapObject();
     botDisplay->mapObject->setName("botDisplay");
     botDisplay->tileset=new Tiled::Tileset(MapController::text_bot,16,24);
-    QString skinPath=datapackPath+MapController::text_DATAPACK_BASE_PATH_SKIN+MapController::text_slash+skin+MapController::text_slashtrainerpng;
+    std::string skinPath=datapackPath+MapController::text_DATAPACK_BASE_PATH_SKIN+MapController::text_slash+skin+MapController::text_slashtrainerpng;
     if(!QFile(skinPath).exists())
     {
         QDir folderList(QStringLiteral("%1/skin/").arg(datapackPath));
@@ -364,7 +364,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
     }
 
     std::pair<uint8_t,uint8_t> pos(x,y);
-    QPair<uint8_t,uint8_t> Qtpos(x,y);
+    std::pair<uint8_t,uint8_t> Qtpos(x,y);
     {
         //add flags
         if(botFlags==NULL)
@@ -544,7 +544,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                             if(map!=old_map)
                                 break;
                             std::pair<uint8_t,uint8_t> temp_pos(temp_x,temp_y);
-                            QPair<uint8_t,uint8_t> Qttemp_pos(temp_x,temp_y);
+                            std::pair<uint8_t,uint8_t> Qttemp_pos(temp_x,temp_y);
                             parsedMap->logicalMap.botsFightTrigger[temp_pos].push_back(fightid);
                             parsedMap->logicalMap.botsFightTriggerExtra.insert(Qttemp_pos,Qtpos);
                             index_botfight_range++;

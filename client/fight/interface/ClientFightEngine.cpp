@@ -20,7 +20,7 @@ ClientFightEngine::~ClientFightEngine()
 {
 }
 
-void ClientFightEngine::setBattleMonster(const QList<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
+void ClientFightEngine::setBattleMonster(const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
     if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !botFightMonsters.empty())
     {
@@ -44,7 +44,7 @@ void ClientFightEngine::setBattleMonster(const QList<uint8_t> &stat,const uint8_
     mLastGivenXP=0;
 }
 
-void ClientFightEngine::setBotMonster(const QList<PlayerMonster> &botFightMonsters,const uint16_t &fightId)
+void ClientFightEngine::setBotMonster(const std::vector<PlayerMonster> &botFightMonsters,const uint16_t &fightId)
 {
     if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !this->botFightMonsters.empty())
     {
@@ -228,7 +228,7 @@ void ClientFightEngine::resetAll()
     CommonFightEngine::resetAll();
 }
 
-std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const QList<PlayerMonster> &playerMonster)
+std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
 {
     std::vector<uint8_t> positionList;
     const uint8_t basePosition=static_cast<uint8_t>(public_and_private_informations.playerMonster.size());
@@ -413,7 +413,7 @@ bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectRetu
     return true;
 }
 
-void ClientFightEngine::addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &attackReturnList)
+void ClientFightEngine::addAndApplyAttackReturnList(const std::vector<Skill::AttackReturn> &attackReturnList)
 {
     qDebug() << "addAndApplyAttackReturnList()";
     int index=0;
@@ -489,7 +489,7 @@ uint8_t ClientFightEngine::getOtherSelectedMonsterNumber() const
     return 0;
 }
 
-QList<Skill::AttackReturn> ClientFightEngine::getAttackReturnList() const
+std::vector<Skill::AttackReturn> ClientFightEngine::getAttackReturnList() const
 {
     return fightEffectList;
 }
@@ -758,7 +758,7 @@ uint8_t ClientFightEngine::getOneSeed(const uint8_t &max)
     return number%(max+1);
 }
 
-void ClientFightEngine::newRandomNumber(const QByteArray &data)
+void ClientFightEngine::newRandomNumber(const std::string &data)
 {
     randomSeeds.append(data);
 }

@@ -15,9 +15,8 @@ ObjectGroupItem::ObjectGroupItem(Tiled::ObjectGroup *objectGroup,
 
     // Create a child item for each object
     QList<Tiled::MapObject *> objects=mObjectGroup->objects();
-    const int &loopSize=objects.size();
     int index=0;
-    while(index<loopSize)
+    while(index<objects.size())
     {
         MapObjectItem *mapObjectItem=new MapObjectItem(objects.at(index), this);
         mapObjectItem->setZValue(qCeil(objects.at(index)->y()));
@@ -30,14 +29,13 @@ ObjectGroupItem::~ObjectGroupItem()
 {
     {
         QList<Tiled::MapObject *> objects=mObjectGroup->objects();
-        const int &loopSize=objects.size();
         int index=0;
-        while(index<loopSize)
+        while(index<objects.size())
         {
-            if(!MapObjectItem::objectLink.contains(objects.at(index)))
+            if(MapObjectItem::objectLink.find(objects.at(index))==MapObjectItem::objectLink.cend())
                 qDebug() << "The tiled object not exist on this layer (destructor)";
             else
-                MapObjectItem::objectLink.remove(objects.at(index));
+                MapObjectItem::objectLink.erase(objects.at(index));
             index++;
         }
     }
@@ -59,7 +57,7 @@ bool ObjectGroupItem::isVisible() const
 
 void ObjectGroupItem::addObject(Tiled::MapObject *object)
 {
-    if(MapObjectItem::objectLink.contains(object))
+    if(MapObjectItem::objectLink.find(object)!=MapObjectItem::objectLink.cend())
     {
         qDebug() << "Tiled object already present on the layer:" << object;
         return;
@@ -71,7 +69,7 @@ void ObjectGroupItem::addObject(Tiled::MapObject *object)
 
 void ObjectGroupItem::removeObject(Tiled::MapObject *object)
 {
-    if(!MapObjectItem::objectLink.contains(object))
+    if(MapObjectItem::objectLink.find(object)==MapObjectItem::objectLink.cend())
     {
         qDebug() << "The tiled object not exist on this layer";
         #ifndef CATCHCHALLENGER_EXTRA_CHECK
@@ -81,7 +79,7 @@ void ObjectGroupItem::removeObject(Tiled::MapObject *object)
     else
     {
         delete MapObjectItem::objectLink[object];
-        MapObjectItem::objectLink.remove(object);
+        MapObjectItem::objectLink.erase(object);
     }
     mObjectGroup->removeObject(object);
 }

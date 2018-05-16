@@ -192,7 +192,7 @@ void BaseWindow::setMultiPlayer(bool multiplayer, Api_protocol *client)
     //ui->frame_main_display_interface_player->setVisible(multiplayer);//displayed when have the player connected (if have)
 }
 
-void BaseWindow::disconnected(QString reason)
+void BaseWindow::disconnected(std::string reason)
 {
     if(haveShowDisconnectionReason)
         return;
@@ -202,14 +202,14 @@ void BaseWindow::disconnected(QString reason)
     resetAll();
 }
 
-void BaseWindow::notLogged(QString reason)
+void BaseWindow::notLogged(std::string reason)
 {
     QMessageBox::information(this,tr("Unable to login"),tr("Unable to login: %1").arg(reason));
     newError("Unable to login",QStringLiteral("Unable to login: %1").arg(reason));
     resetAll();
 }
 
-void BaseWindow::logged(const QList<ServerFromPoolForDisplay *> &serverOrdenedList, const QList<QList<CharacterEntry> > &characterEntryList)
+void BaseWindow::logged(const std::vector<ServerFromPoolForDisplay *> &serverOrdenedList, const std::vector<std::vector<CharacterEntry> > &characterEntryList)
 {
     this->serverOrdenedList=serverOrdenedList;
     this->characterListForSelection=characterEntryList;
@@ -599,13 +599,13 @@ void BaseWindow::loadSoundSettings()
     }
 }
 
-void BaseWindow::setEvents(const QList<QPair<uint8_t,uint8_t> > &events)
+void BaseWindow::setEvents(const std::vector<std::pair<uint8_t,uint8_t> > &events)
 {
     this->events.clear();
     int index=0;
     while(index<events.size())
     {
-        const QPair<uint8_t,uint8_t> event=events.at(index);
+        const std::pair<uint8_t,uint8_t> event=events.at(index);
         if(event.first>=CommonDatapack::commonDatapack.events.size())
         {
             emit error("BaseWindow::setEvents() event out of range");
@@ -687,7 +687,7 @@ void BaseWindow::updateConnectingStatus()
                 if(multiplayer)
                     ui->stackedWidget->setCurrentWidget(ui->page_character);
                 const uint8_t &charactersGroupIndex=serverOrdenedList.at(serverSelected)->charactersGroupIndex;
-                const QList<CharacterEntry> &characterEntryList=characterListForSelection.at(charactersGroupIndex);
+                const std::vector<CharacterEntry> &characterEntryList=characterListForSelection.at(charactersGroupIndex);
                 ui->character_add->setEnabled(characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character);
                 ui->character_remove->setEnabled(characterEntryList.size()>CommonSettingsCommon::commonSettingsCommon.min_character);
                 if(characterEntryList.isEmpty())
@@ -857,7 +857,7 @@ bool BaseWindow::check_senddata()
 
 void BaseWindow::show_reputation()
 {
-    QString html="<ul>";
+    std::string html="<ul>";
     auto i=client->player_informations.reputation.begin();
     while(i!=client->player_informations.reputation.cend())
     {
@@ -876,7 +876,7 @@ void BaseWindow::show_reputation()
                     error("Next level can't be need 0 xp");
                     return;
                 }
-                QString text=DatapackClientLoader::datapackLoader.reputationExtra.value(
+                std::string text=DatapackClientLoader::datapackLoader.reputationExtra.value(
                             QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).name)
                             ).reputation_positive.at(i->second.level);
                 html+=QStringLiteral("<li>%1% %2</li>").arg((i->second.point*100)/next_level_xp).arg(text);
@@ -897,7 +897,7 @@ void BaseWindow::show_reputation()
                     error("Next level can't be need 0 xp");
                     return;
                 }
-                QString text=DatapackClientLoader::datapackLoader.reputationExtra.value(
+                std::string text=DatapackClientLoader::datapackLoader.reputationExtra.value(
                             QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(i->first).name)
                             ).reputation_negative.at(-i->second.level-1);
                 html+=QStringLiteral("<li>%1% %2</li>")
@@ -911,7 +911,7 @@ void BaseWindow::show_reputation()
     ui->labelReputation->setText(html);
 }
 
-QPixmap BaseWindow::getFrontSkin(const QString &skinName)
+QPixmap BaseWindow::getFrontSkin(const std::string &skinName)
 {
     if(frontSkinCacheString.contains(skinName))
         return frontSkinCacheString.value(skinName);
@@ -939,7 +939,7 @@ QPixmap BaseWindow::getBackSkin(const uint32_t &skinId) const
     return QPixmap(":/images/player_default/back.png");
 }
 
-QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) const
+std::string BaseWindow::getSkinPath(const std::string &skinName,const std::string &type) const
 {
     {
         QFileInfo pngFile(client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.png").arg(type));
@@ -971,7 +971,7 @@ QString BaseWindow::getSkinPath(const QString &skinName,const QString &type) con
     return QString();
 }
 
-QString BaseWindow::getFrontSkinPath(const uint32_t &skinId)
+std::string BaseWindow::getFrontSkinPath(const uint32_t &skinId)
 {
     /// \todo merge it cache string + id
     const QStringList &skinFolderList=DatapackClientLoader::datapackLoader.skins;
@@ -983,12 +983,12 @@ QString BaseWindow::getFrontSkinPath(const uint32_t &skinId)
     return ":/images/player_default/front.png";
 }
 
-QString BaseWindow::getFrontSkinPath(const QString &skin)
+std::string BaseWindow::getFrontSkinPath(const std::string &skin)
 {
     return getSkinPath(skin,"front");
 }
 
-QString BaseWindow::getBackSkinPath(const uint32_t &skinId) const
+std::string BaseWindow::getBackSkinPath(const uint32_t &skinId) const
 {
     const QStringList &skinFolderList=DatapackClientLoader::datapackLoader.skins;
     //front image
@@ -1019,7 +1019,7 @@ void BaseWindow::updatePlayerImage()
 void BaseWindow::updateDisplayedQuests()
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    QString html=QStringLiteral("<ul>");
+    std::string html=QStringLiteral("<ul>");
     ui->questsList->clear();
     quests_to_id_graphical.clear();
     auto i=playerInformations.quests.begin();
@@ -1059,7 +1059,7 @@ void BaseWindow::updateDisplayedQuests()
 void BaseWindow::on_questsList_itemSelectionChanged()
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    QList<QListWidgetItem *> items=ui->questsList->selectedItems();
+    std::vector<QListWidgetItem *> items=ui->questsList->selectedItems();
     if(items.size()!=1)
     {
         ui->questDetails->setText(tr("Select a quest"));
@@ -1084,8 +1084,8 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         ui->questDetails->setText(tr("Select a quest"));
         return;
     }
-    const QString &stepDescription=DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.value(playerInformations.quests.at(questId).step-1)+"<br />";
-    QString stepRequirements;
+    const std::string &stepDescription=DatapackClientLoader::datapackLoader.questsExtra.value(questId).steps.value(playerInformations.quests.at(questId).step-1)+"<br />";
+    std::string stepRequirements;
     {
         std::vector<Quest::Item> items=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId).steps.at(playerInformations.quests.at(questId).step-1).requirements.items;
         QStringList objects;
@@ -1093,7 +1093,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         while(index<items.size())
         {
             QPixmap image;
-            QString name;
+            std::string name;
             if(DatapackClientLoader::datapackLoader.itemsExtra.contains(items.at(index).item))
             {
                 image=DatapackClientLoader::datapackLoader.itemsExtra.value(items.at(index).item).image;
@@ -1122,7 +1122,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             objects << "...";
         stepRequirements+=tr("Step requirements: ")+QStringLiteral("%1<br />").arg(objects.join(", "));
     }
-    QString finalRewards;
+    std::string finalRewards;
     if(DatapackClientLoader::datapackLoader.questsExtra.value(questId).showRewards
         #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
             || true
@@ -1137,7 +1137,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             while(index<items.size())
             {
                 QPixmap image;
-                QString name;
+                std::string name;
                 if(DatapackClientLoader::datapackLoader.itemsExtra.contains(items.at(index).item))
                 {
                     image=DatapackClientLoader::datapackLoader.itemsExtra.value(items.at(index).item).image;
@@ -1444,13 +1444,13 @@ void BaseWindow::evolutionCanceled()
     checkEvolution();
 }
 
-void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+void BaseWindow::customMessageHandler(QtMsgType type, const QMessageLogContext &context, const std::string &msg)
 {
     Q_UNUSED(context);
 
-    //QString dt = QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss");
-    //QString txt = QString("[%1] ").arg(dt);
-    QString txt;
+    //std::string dt = QDateTime::currentDateTime().toString("dd/MM/yyyy hh:mm:ss");
+    //std::string txt = QString("[%1] ").arg(dt);
+    std::string txt;
 
     switch (type)
     {

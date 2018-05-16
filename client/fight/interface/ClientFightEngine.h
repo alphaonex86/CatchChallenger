@@ -30,11 +30,11 @@ public:
     std::vector<uint8_t> addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
     std::vector<uint8_t> addPlayerMonster(const PlayerMonster &playerMonster);
     //current fight
-    QList<PublicPlayerMonster> battleCurrentMonster;
-    QList<uint8_t> battleStat,botMonstersStat;
-    QList<uint8_t> battleMonsterPlace;//is number with range of 1-max (2 if have 2 monster)
-    QList<uint32_t> otherMonsterAttack;
-    QList<PlayerMonster> playerMonster_catchInProgress;
+    std::vector<PublicPlayerMonster> battleCurrentMonster;
+    std::vector<uint8_t> battleStat,botMonstersStat;
+    std::vector<uint8_t> battleMonsterPlace;//is number with range of 1-max (2 if have 2 monster)
+    std::vector<uint32_t> otherMonsterAttack;
+    std::vector<PlayerMonster> playerMonster_catchInProgress;
     virtual void fightFinished();
     void setBattleMonster(const QList<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     void setBotMonster(const QList<PlayerMonster> &publicPlayerMonster, const uint16_t &fightId);
@@ -70,15 +70,15 @@ public:
     void addToEncyclopedia(const uint16_t &monster);
     bool giveXPSP(int xp,int sp);
     uint32_t lastGivenXP();
-    void newRandomNumber(const QByteArray &data);
+    void newRandomNumber(const std::string &data);
     void setClient(Api_protocol * client);
     uint32_t randomSeedsSize() const;
 private:
     uint32_t mLastGivenXP;
-    QList<uint8_t> mEvolutionByLevelUp;
-    QList<Skill::AttackReturn> fightEffectList;
+    std::vector<uint8_t> mEvolutionByLevelUp;
+    std::vector<Skill::AttackReturn> fightEffectList;
     Player_private_and_public_informations player_informations_local;
-    QByteArray randomSeeds;
+    std::string randomSeeds;
     Api_protocol * client;
     uint16_t fightId;
     Skill::AttackReturn doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel);
@@ -92,9 +92,9 @@ public:
     explicit ClientFightEngine();
     ~ClientFightEngine();
 signals:
-    void newError(QString error,QString detailedError);
-    void error(QString error);
-    void message(QString message);
+    void newError(std::string error,std::string detailedError);
+    void error(std::string error);
+    void message(std::string message);
 };
 }
 
