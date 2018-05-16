@@ -11,7 +11,8 @@ using namespace CatchChallenger;
 
 void BaseWindow::on_character_add_clicked()
 {
-    if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
+    if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=
+            CommonSettingsCommon::commonSettingsCommon.max_character)
     {
         QMessageBox::warning(this,tr("Error"),tr("You have already the max characters count"));
         return;
@@ -29,7 +30,8 @@ void BaseWindow::newProfileFinished()
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
         if(!newProfile->ok())
         {
-            if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
+            if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).empty() &&
+                    CommonSettingsCommon::commonSettingsCommon.min_character>0)
                 client->tryDisconnect();
             return;
         }
@@ -44,15 +46,20 @@ void BaseWindow::newProfileFinished()
     NewGame nameGame(datapackPath+DATAPACK_BASE_PATH_SKIN,datapackPath+DATAPACK_BASE_PATH_MONSTERS,profile.monstergroup,profile.forcedskin,this);
     if(!nameGame.haveSkin())
     {
-        if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
+        if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).empty() &&
+                CommonSettingsCommon::commonSettingsCommon.min_character>0)
             client->tryDisconnect();
-        QMessageBox::critical(this,tr("Error"),QStringLiteral("Sorry but no skin found into: %1").arg(QFileInfo(datapackPath+DATAPACK_BASE_PATH_SKIN).absoluteFilePath()));
+        QMessageBox::critical(this,tr("Error"),
+                              QStringLiteral("Sorry but no skin found into: %1")
+                              .arg(QFileInfo(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_SKIN).absoluteFilePath())
+                              );
         return;
     }
     nameGame.exec();
     if(!nameGame.haveTheInformation())
     {
-        if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).isEmpty() && CommonSettingsCommon::commonSettingsCommon.min_character>0)
+        if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).empty() &&
+                CommonSettingsCommon::commonSettingsCommon.min_character>0)
             client->tryDisconnect();
         return;
     }
@@ -62,7 +69,7 @@ void BaseWindow::newProfileFinished()
     characterEntry.last_connect=QDateTime::currentMSecsSinceEpoch()/1000;
     //characterEntry.mapId=DatapackClientLoader::datapackLoader.mapToId.value(profile.map);
     characterEntry.played_time=0;
-    characterEntry.pseudo=nameGame.pseudo().toStdString();
+    characterEntry.pseudo=nameGame.pseudo();
     if(characterEntry.pseudo.find(" ")!=std::string::npos)
     {
         QMessageBox::warning(this,tr("Error"),tr("Your psuedo can't contains space"));
@@ -72,9 +79,9 @@ void BaseWindow::newProfileFinished()
     characterEntry.charactersGroupIndex=nameGame.monsterGroupId();
     characterEntry.skinId=nameGame.skinId();
     client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,
-                         static_cast<uint8_t>(profileIndex),QString::fromStdString(characterEntry.pseudo),
+                         static_cast<uint8_t>(profileIndex),characterEntry.pseudo,
                          characterEntry.charactersGroupIndex,characterEntry.skinId);
-    characterEntryListInWaiting << characterEntry;
+    characterEntryListInWaiting.push_back(characterEntry);
     if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
         ui->character_add->setEnabled(false);
     ui->stackedWidget->setCurrentWidget(ui->page_init);
@@ -83,12 +90,12 @@ void BaseWindow::newProfileFinished()
 
 void BaseWindow::newCharacterId(const uint8_t &returnCode, const uint32_t &characterId)
 {
-    CharacterEntry characterEntry=characterEntryListInWaiting.first();
-    characterEntryListInWaiting.removeFirst();
+    CharacterEntry characterEntry=characterEntryListInWaiting.front();
+    characterEntryListInWaiting.erase(characterEntryListInWaiting.cbegin());
     if(returnCode==0x00)
     {
         characterEntry.character_id=characterId;
-        characterListForSelection[serverOrdenedList.at(serverSelected)->charactersGroupIndex] << characterEntry;
+        characterListForSelection[serverOrdenedList.at(serverSelected)->charactersGroupIndex].push_back(characterEntry);
         updateCharacterList();
         ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
         //if(characterEntryList.size().size()>=CommonSettings::commonSettings.min_character && characterEntryList.size().size()<=CommonSettings::commonSettings.max_character)
@@ -111,7 +118,7 @@ void BaseWindow::newCharacterId(const uint8_t &returnCode, const uint32_t &chara
 void BaseWindow::updateCharacterList()
 {
     ui->characterEntryList->clear();
-    int index=0;
+    unsigned int index=0;
     while(index<characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())
     {
         const CharacterEntry &characterEntry=characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).at(index);
@@ -119,18 +126,27 @@ void BaseWindow::updateCharacterList()
         item->setData(99,characterEntry.character_id);
         item->setData(98,characterEntry.delete_time_left);
         //item->setData(97,characterEntry.mapId);
-        std::string text=QString::fromStdString(characterEntry.pseudo+"\n");
+        std::string text=characterEntry.pseudo+"\n";
         if(characterEntry.played_time>0)
-            text+=tr("%1 played").arg(FacilityLibClient::timeToString(characterEntry.played_time));
+            text+=tr("%1 played")
+                    .arg(QString::fromStdString(FacilityLibClient::timeToString(characterEntry.played_time)))
+                    .toStdString();
         else
-            text+=tr("Never played");
+            text+=tr("Never played").toStdString();
         if(characterEntry.delete_time_left>0)
-            text+="\n"+tr("%1 to be deleted").arg(FacilityLibClient::timeToString(characterEntry.delete_time_left));
+            text+="\n"+tr("%1 to be deleted")
+                    .arg(QString::fromStdString(FacilityLibClient::timeToString(characterEntry.delete_time_left)))
+                    .toStdString();
         /*if(characterEntry.mapId==-1)
             text+="\n"+tr("Map missing, can't play");*/
-        item->setText(text);
+        item->setText(QString::fromStdString(text));
         if(characterEntry.skinId<DatapackClientLoader::datapackLoader.skins.size())
-            item->setIcon(QIcon(client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN+DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId)+"/front.png"));
+            item->setIcon(QIcon(
+                              QString::fromStdString(client->datapackPathBase())+
+                              DATAPACK_BASE_PATH_SKIN+
+                              QString::fromStdString(DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId))+
+                              "/front.png"
+                              ));
         else
             item->setIcon(QIcon(QStringLiteral(":/images/player_default/front.png")));
         ui->characterEntryList->addItem(item);
@@ -148,7 +164,7 @@ void BaseWindow::on_character_back_clicked()
 
 void BaseWindow::on_character_select_clicked()
 {
-    std::vector<QListWidgetItem *> selectedItems=ui->characterEntryList->selectedItems();
+    QList<QListWidgetItem *> selectedItems=ui->characterEntryList->selectedItems();
     if(selectedItems.size()!=1)
         return;
     on_characterEntryList_itemDoubleClicked(selectedItems.first());
@@ -156,7 +172,7 @@ void BaseWindow::on_character_select_clicked()
 
 void BaseWindow::on_character_remove_clicked()
 {
-    std::vector<QListWidgetItem *> selectedItems=ui->characterEntryList->selectedItems();
+    QList<QListWidgetItem *> selectedItems=ui->characterEntryList->selectedItems();
     if(selectedItems.size()!=1)
         return;
     const uint32_t &character_id=selectedItems.first()->data(99).toUInt();
@@ -167,7 +183,7 @@ void BaseWindow::on_character_remove_clicked()
         return;
     }
     client->removeCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,character_id);
-    int index=0;
+    unsigned int index=0;
     while(index<characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())
     {
         const CharacterEntry &characterEntry=characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).at(index);
@@ -180,7 +196,9 @@ void BaseWindow::on_character_remove_clicked()
     }
     updateCharacterList();
     QMessageBox::information(this,tr("Information"),tr("Your charater will be deleted into %1")
-                             .arg(FacilityLibClient::timeToString(CommonSettingsCommon::commonSettingsCommon.character_delete_time))
+                             .arg(QString::fromStdString(
+                                      FacilityLibClient::timeToString(CommonSettingsCommon::commonSettingsCommon.character_delete_time))
+                                  )
                              );
 }
 
@@ -195,7 +213,7 @@ void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     ui->label_connecting_status->setText(tr("Selecting your character"));
 
-    QDir dir(client->datapackPathBase()+"/loading/");
+    QDir dir(QString::fromStdString(client->datapackPathBase())+"/loading/");
     dir.setFilter(QDir::Files | QDir::NoSymLinks | QDir::NoDotAndDotDot);
     dir.setSorting(QDir::Size | QDir::Reversed);
 
@@ -219,12 +237,12 @@ void BaseWindow::updateServerList()
     //do the grouping for characterGroup count
     {
         serverByCharacterGroup.clear();
-        int index=0;
+        unsigned int index=0;
         int serverByCharacterGroupTempIndexToDisplay=1;
         while(index<serverOrdenedList.size())
         {
             const ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
-            if(serverByCharacterGroup.contains(server.charactersGroupIndex))
+            if(serverByCharacterGroup.find(server.charactersGroupIndex)!=serverByCharacterGroup.cend())
                 serverByCharacterGroup[server.charactersGroupIndex].first++;
             else
             {
@@ -272,7 +290,7 @@ void BaseWindow::updateServerList()
         averagePlayedTime=0;
         averageLastConnect=0;
         int entryCount=0;
-        int index=0;
+        unsigned int index=0;
         while(index<serverOrdenedList.size())
         {
             const ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
@@ -304,24 +322,26 @@ bool ServerFromPoolForDisplay::operator<(const ServerFromPoolForDisplay &serverF
 
 void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView)
 {
-    item->setText(0,logicialGroup.name);
+    item->setText(0,QString::fromStdString(logicialGroup.name));
     {
         //to order the group
-        QStringList keys=logicialGroup.logicialGroupList.keys();
-        keys.sort();
+        std::vector<std::string> keys;
+        for(const auto &n : logicialGroup.logicialGroupList)
+            keys.push_back(n.first);
+        qSort(keys);
         //list the group
-        int index=0;
+        unsigned int index=0;
         while(index<keys.size())
         {
             QTreeWidgetItem * const itemGroup=new QTreeWidgetItem(item);
-            addToServerList(logicialGroup.logicialGroupList[keys.value(index)],itemGroup,currentDate,fullView);
+            addToServerList(*logicialGroup.logicialGroupList[keys.at(index)],itemGroup,currentDate,fullView);
             index++;
         }
     }
     {
         qSort(logicialGroup.servers);
         //list the server
-        int index=0;
+        unsigned int index=0;
         while(index<logicialGroup.servers.size())
         {
             const ServerFromPoolForDisplay &server=logicialGroup.servers.at(index);
@@ -330,36 +350,36 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
             std::string groupText;
             if(characterListForSelection.size()>1 && serverByCharacterGroup.size()>1)
             {
-                const uint8_t groupInt=serverByCharacterGroup.value(server.charactersGroupIndex).second;
+                const uint8_t groupInt=serverByCharacterGroup.at(server.charactersGroupIndex).second;
                 if(groupInt>=icon_server_list_color.size())
-                    groupText=QStringLiteral(" (%1)").arg(groupInt);
-                if(!icon_server_list_color.isEmpty())
+                    groupText=QStringLiteral(" (%1)").arg(groupInt).toStdString();
+                if(!icon_server_list_color.empty())
                     itemServer->setIcon(0,icon_server_list_color.at(groupInt%icon_server_list_color.size()));
             }
             std::string name=server.name;
-            if(name.isEmpty())
-                name=tr("Default server");
+            if(name.empty())
+                name=tr("Default server").toStdString();
             if(fullView)
             {
                 text=name+groupText;
                 if(server.playedTime>0)
                 {
-                    if(!server.description.isEmpty())
-                        text+=" "+tr("%1 played").arg(FacilityLibClient::timeToString(server.playedTime));
+                    if(!server.description.empty())
+                        text+=" "+tr("%1 played").arg(QString::fromStdString(FacilityLibClient::timeToString(server.playedTime))).toStdString();
                     else
-                        text+="\n"+tr("%1 played").arg(FacilityLibClient::timeToString(server.playedTime));
+                        text+="\n"+tr("%1 played").arg(QString::fromStdString(FacilityLibClient::timeToString(server.playedTime))).toStdString();
                 }
-                if(!server.description.isEmpty())
+                if(!server.description.empty())
                     text+="\n"+server.description;
             }
             else
             {
-                if(server.description.isEmpty())
+                if(server.description.empty())
                     text=name+groupText;
                 else
                     text=name+groupText+" - "+server.description;
             }
-            itemServer->setText(0,text);
+            itemServer->setText(0,QString::fromStdString(text));
 
             //do the icon here
             if(server.playedTime>5*365*24*3600)

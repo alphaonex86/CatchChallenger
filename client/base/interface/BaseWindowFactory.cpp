@@ -5,12 +5,13 @@
 #include "../../../general/base/CommonDatapack.h"
 
 #include <QInputDialog>
+#include <iostream>
 
 using namespace CatchChallenger;
 
 void BaseWindow::on_factoryBuy_clicked()
 {
-    std::vector<QListWidgetItem *> selectedItems=ui->factoryProducts->selectedItems();
+    QList<QListWidgetItem *> selectedItems=ui->factoryProducts->selectedItems();
     if(selectedItems.size()!=1)
         return;
     on_factoryProducts_itemActivated(selectedItems.first());
@@ -37,7 +38,7 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
     {
         bool ok;
         quantityToBuy = QInputDialog::getInt(this, tr("Buy"),tr("Amount %1 to buy:")
-                                             .arg(DatapackClientLoader::datapackLoader.itemsExtra.value(id).name),
+                                             .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra.at(id).name)),
                                              0, 0, static_cast<int>(quantity), 1, &ok);
         if(!ok || quantityToBuy<=0)
             return;
@@ -66,7 +67,7 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
     itemToSellOrBuy.quantity=quantityToBuy;
     itemToSellOrBuy.object=id;
     itemToSellOrBuy.price=quantityToBuy*price;
-    itemsToBuy << itemToSellOrBuy;
+    itemsToBuy.push_back(itemToSellOrBuy);
     removeCash(itemToSellOrBuy.object);
     client->buyFactoryProduct(factoryId,id,quantityToBuy,price);
     appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
@@ -74,7 +75,7 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
 
 void BaseWindow::on_factorySell_clicked()
 {
-    std::vector<QListWidgetItem *> selectedItems=ui->factoryResources->selectedItems();
+    QList<QListWidgetItem *> selectedItems=ui->factoryResources->selectedItems();
     if(selectedItems.size()!=1)
         return;
     on_factoryResources_itemActivated(selectedItems.first());
@@ -103,7 +104,9 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         if(playerInformations.items.at(itemid)<quantityToSell)
             quantityToSell=playerInformations.items.at(itemid);
         bool ok;
-        i = QInputDialog::getInt(this, tr("Sell"),tr("Amount %1 to sell:").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(itemid).name), 0, 0, quantityToSell, 1, &ok);
+        i = QInputDialog::getInt(this, tr("Sell"),tr("Amount %1 to sell:")
+                                 .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra.at(itemid).name)),
+                                 0, 0, quantityToSell, 1, &ok);
         if(!ok || i<=0)
             return;
     }
@@ -131,7 +134,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
     tempItem.object=itemid;
     tempItem.quantity=i;
     tempItem.price=price;
-    itemsToSell << tempItem;
+    itemsToSell.push_back(tempItem);
     remove_to_inventory(itemid,i);
     client->sellFactoryResource(factoryId,itemid,i,price);
     appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
@@ -139,7 +142,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
 
 void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice)
 {
-    const ItemToSellOrBuy &itemToSellOrBuy=itemsToBuy.first();
+    const ItemToSellOrBuy &itemToSellOrBuy=itemsToBuy.front();
     std::unordered_map<uint16_t,uint32_t> items;
     switch(stat)
     {
@@ -197,7 +200,7 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPri
         default:
         break;
     }
-    itemsToBuy.removeFirst();
+    itemsToBuy.erase(itemsToBuy.cbegin());
 }
 
 void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const uint32_t &newPrice)
@@ -206,11 +209,11 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const uint32_t &newP
     switch(stat)
     {
         case SoldStat_Done:
-            if(industryStatus.resources.find(itemsToSell.first().object)==industryStatus.resources.cend())
-                industryStatus.resources[itemsToSell.first().object]=0;
-            industryStatus.resources[itemsToSell.first().object]+=itemsToSell.first().quantity;
-            addCash(itemsToSell.first().price*itemsToSell.first().quantity);
-            showTip(tr("Item sold"));
+            if(industryStatus.resources.find(itemsToSell.front().object)==industryStatus.resources.cend())
+                industryStatus.resources[itemsToSell.front().object]=0;
+            industryStatus.resources[itemsToSell.front().object]+=itemsToSell.front().quantity;
+            addCash(itemsToSell.front().price*itemsToSell.front().quantity);
+            showTip(tr("Item sold").toStdString());
         break;
         case SoldStat_BetterPrice:
             if(newPrice==0)
@@ -219,20 +222,20 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const uint32_t &newP
                 QMessageBox::information(this,tr("Information"),tr("Bug into returned price"));
                 return;
             }
-            if(industryStatus.resources.find(itemsToSell.first().object)==industryStatus.resources.cend())
-                industryStatus.resources[itemsToSell.first().object]=0;
-            industryStatus.resources[itemsToSell.first().object]+=itemsToSell.first().quantity;
-            addCash(newPrice*itemsToSell.first().quantity);
-            showTip(tr("Item sold at better price"));
+            if(industryStatus.resources.find(itemsToSell.front().object)==industryStatus.resources.cend())
+                industryStatus.resources[itemsToSell.front().object]=0;
+            industryStatus.resources[itemsToSell.front().object]+=itemsToSell.front().quantity;
+            addCash(newPrice*itemsToSell.front().quantity);
+            showTip(tr("Item sold at better price").toStdString());
         break;
         case SoldStat_WrongQuantity:
-            add_to_inventory(itemsToSell.first().object,itemsToSell.first().quantity,false);
+            add_to_inventory(itemsToSell.front().object,itemsToSell.front().quantity,false);
             load_inventory();
             load_plant_inventory();
             QMessageBox::information(this,tr("Information"),tr("Sorry but have not the quantity of this item"));
         break;
         case SoldStat_PriceHaveChanged:
-            add_to_inventory(itemsToSell.first().object,itemsToSell.first().quantity,false);
+            add_to_inventory(itemsToSell.front().object,itemsToSell.front().quantity,false);
             load_inventory();
             load_plant_inventory();
             QMessageBox::information(this,tr("Information"),tr("Sorry but now the price is worse"));
@@ -241,7 +244,7 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const uint32_t &newP
             qDebug() << "haveSellFactoryObject(stat) have unknow value";
         break;
     }
-    itemsToSell.removeFirst();
+    itemsToSell.erase(itemsToSell.cbegin());
     switch(stat)
     {
         case BuyStat_Done:
@@ -269,7 +272,7 @@ void BaseWindow::haveFactoryList(const uint32_t &remainingProductionTime,const s
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveFactoryList()";
     #endif
-    int index;
+    unsigned int index;
     ui->factoryResources->clear();
     index=0;
     while(index<resources.size())
@@ -342,13 +345,13 @@ void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatu
             remainingProductionTime=industry.time;
         if(remainingProductionTime>0)
         {
-            productionTime=tr("Remaining time:")+"<br />";
+            productionTime=tr("Remaining time:").toStdString()+"<br />";
             if(remainingProductionTime<60)
-                productionTime+=tr("Less than a minute");
+                productionTime+=tr("Less than a minute").toStdString();
             else
-                productionTime+=tr("%n minute(s)","",static_cast<uint32_t>(remainingProductionTime/60));
+                productionTime+=tr("%n minute(s)","",static_cast<uint32_t>(remainingProductionTime/60)).toStdString();
         }
-        ui->factoryStatText->setText(QStringLiteral("%1<br />%2").arg(tr("In production")).arg(productionTime));
+        ui->factoryStatText->setText(tr("In production")+"<br />"+QString::fromStdString(productionTime));
         #else
         ui->factoryStatText->setText(tr("In production"));
         #endif
@@ -370,13 +373,15 @@ void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
     else
         item->setText(QStringLiteral("%1$").arg(item->data(98).toUInt()));
     const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
-    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(itemId))
+    if(DatapackClientLoader::datapackLoader.itemsExtra.find(itemId)!=DatapackClientLoader::datapackLoader.itemsExtra.cend())
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).image);
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.at(itemId).image);
         if(item->data(97).toUInt()==0)
-            item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name).arg(item->data(98).toUInt()));
+            item->setToolTip(tr("%1\nPrice: %2$").arg(QString::fromStdString(
+                DatapackClientLoader::datapackLoader.itemsExtra.at(itemId).name)).arg(item->data(98).toUInt()));
         else
-            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(QString::fromStdString(
+                DatapackClientLoader::datapackLoader.itemsExtra.at(itemId).name)).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
     else
     {
@@ -403,13 +408,15 @@ void BaseWindow::factoryToProductItem(QListWidgetItem *item)
     else
         item->setText(QStringLiteral("%1$").arg(item->data(98).toUInt()));
     const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
-    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(itemId))
+    if(DatapackClientLoader::datapackLoader.itemsExtra.find(itemId)!=DatapackClientLoader::datapackLoader.itemsExtra.cend())
     {
-        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).image);
+        item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.at(itemId).image);
         if(item->data(97).toUInt()==0)
-            item->setToolTip(tr("%1\nPrice: %2$").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name).arg(item->data(98).toUInt()));
+            item->setToolTip(tr("%1\nPrice: %2$").arg(QString::fromStdString(
+                DatapackClientLoader::datapackLoader.itemsExtra.at(itemId).name)).arg(item->data(98).toUInt()));
         else
-            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
+            item->setToolTip(tr("%1 at %2$\nQuantity: %3").arg(QString::fromStdString(
+                DatapackClientLoader::datapackLoader.itemsExtra.at(itemId).name)).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
     else
     {
