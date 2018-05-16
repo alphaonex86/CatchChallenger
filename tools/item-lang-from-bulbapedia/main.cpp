@@ -1,7 +1,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QRegularExpression>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QDomDocument>
 #include <QDebug>
 
@@ -151,7 +151,7 @@ void parseItemsExtra()
         qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="items")
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
@@ -160,7 +160,7 @@ void parseItemsExtra()
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement("item");
+    tinyxml2::XMLElement item = root.FirstChildElement("item");
     while(!item.isNull())
     {
         if(item.isElement())
@@ -177,7 +177,7 @@ void parseItemsExtra()
                     QString englishName;
                     //load the name
                     {
-                        QDomElement name = item.firstChildElement("name");
+                        tinyxml2::XMLElement name = item.FirstChildElement("name");
                         if(!language.isEmpty() && language!="en")
                             while(!name.isNull())
                             {
@@ -192,7 +192,7 @@ void parseItemsExtra()
                                         break;
                                     }
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
                     }
                     if(!englishName.isEmpty() && itemList.contains(englishName))
@@ -205,7 +205,7 @@ void parseItemsExtra()
                         {
                             bool found=false;
                             //set the english name
-                            QDomElement name = item.firstChildElement("name");
+                            tinyxml2::XMLElement name = item.FirstChildElement("name");
                             while(!name.isNull())
                             {
                                 if(name.isElement())
@@ -224,11 +224,11 @@ void parseItemsExtra()
                                         found=true;
                                     }
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
                             if(!found)
                             {
-                                QDomElement name=domDocument.createElement("name");
+                                tinyxml2::XMLElement name=domDocument.createElement("name");
                                 item.appendChild(name);
                                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[englishName].nameEn);
                                 name.appendChild(newTextElement);
@@ -238,7 +238,7 @@ void parseItemsExtra()
                         {
                             bool found=false;
                             //set the jp name
-                            QDomElement name = item.firstChildElement("name");
+                            tinyxml2::XMLElement name = item.FirstChildElement("name");
                             while(!name.isNull())
                             {
                                 if(name.isElement())
@@ -257,11 +257,11 @@ void parseItemsExtra()
                                         found=true;
                                     }
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
                             if(!found)
                             {
-                                QDomElement name=domDocument.createElement("name");
+                                tinyxml2::XMLElement name=domDocument.createElement("name");
                                 name.setAttribute("lang","jp");
                                 item.appendChild(name);
                                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[englishName].nameJp);
@@ -272,7 +272,7 @@ void parseItemsExtra()
                         {
                             bool found=false;
                             //set the fr name
-                            QDomElement name = item.firstChildElement("name");
+                            tinyxml2::XMLElement name = item.FirstChildElement("name");
                             while(!name.isNull())
                             {
                                 if(name.isElement())
@@ -291,11 +291,11 @@ void parseItemsExtra()
                                         found=true;
                                     }
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
                             if(!found)
                             {
-                                QDomElement name=domDocument.createElement("name");
+                                tinyxml2::XMLElement name=domDocument.createElement("name");
                                 name.setAttribute("lang","fr");
                                 item.appendChild(name);
                                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[englishName].nameFr);
@@ -306,7 +306,7 @@ void parseItemsExtra()
                         {
                             bool found=false;
                             //set the de name
-                            QDomElement name = item.firstChildElement("name");
+                            tinyxml2::XMLElement name = item.FirstChildElement("name");
                             while(!name.isNull())
                             {
                                 if(name.isElement())
@@ -325,11 +325,11 @@ void parseItemsExtra()
                                         found=true;
                                     }
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
                             if(!found)
                             {
-                                QDomElement name=domDocument.createElement("name");
+                                tinyxml2::XMLElement name=domDocument.createElement("name");
                                 name.setAttribute("lang","de");
                                 item.appendChild(name);
                                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[englishName].nameDe);
@@ -340,7 +340,7 @@ void parseItemsExtra()
                         {
                             bool found=false;
                             //set the it name
-                            QDomElement name = item.firstChildElement("name");
+                            tinyxml2::XMLElement name = item.FirstChildElement("name");
                             while(!name.isNull())
                             {
                                 if(name.isElement())
@@ -359,11 +359,11 @@ void parseItemsExtra()
                                         found=true;
                                     }
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
                             if(!found)
                             {
-                                QDomElement name=domDocument.createElement("name");
+                                tinyxml2::XMLElement name=domDocument.createElement("name");
                                 name.setAttribute("lang","it");
                                 item.appendChild(name);
                                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[englishName].nameIt);
@@ -374,7 +374,7 @@ void parseItemsExtra()
                         {
                             bool found=false;
                             //set the es name
-                            QDomElement name = item.firstChildElement("name");
+                            tinyxml2::XMLElement name = item.FirstChildElement("name");
                             while(!name.isNull())
                             {
                                 if(name.isElement())
@@ -393,11 +393,11 @@ void parseItemsExtra()
                                         found=true;
                                     }
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
                             if(!found)
                             {
-                                QDomElement name=domDocument.createElement("name");
+                                tinyxml2::XMLElement name=domDocument.createElement("name");
                                 name.setAttribute("lang","es");
                                 item.appendChild(name);
                                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[englishName].nameEs);
@@ -408,7 +408,7 @@ void parseItemsExtra()
                         {
                             bool found=false;
                             //set the ko name
-                            QDomElement name = item.firstChildElement("name");
+                            tinyxml2::XMLElement name = item.FirstChildElement("name");
                             while(!name.isNull())
                             {
                                 if(name.isElement())
@@ -427,11 +427,11 @@ void parseItemsExtra()
                                         found=true;
                                     }
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
                             if(!found)
                             {
-                                QDomElement name=domDocument.createElement("name");
+                                tinyxml2::XMLElement name=domDocument.createElement("name");
                                 name.setAttribute("lang","ko");
                                 item.appendChild(name);
                                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[englishName].nameKo);
@@ -448,7 +448,7 @@ void parseItemsExtra()
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
-        item = item.nextSiblingElement("item");
+        item = item.NextSiblingElement("item");
     }
 
     QHashIterator<QString, Item> i(itemList);
@@ -457,7 +457,7 @@ void parseItemsExtra()
         if(!itemLoaded.contains(i.key()))
         {
             maxId++;
-            QDomElement item=domDocument.createElement("item");
+            tinyxml2::XMLElement item=domDocument.createElement("item");
             item.setAttribute("id",maxId);
             if(QFile(itemList[i.key()].image).exists())
                 QFile::remove(datapackPath+QStringLiteral("items/%1.png").arg(maxId));
@@ -465,14 +465,14 @@ void parseItemsExtra()
                 item.setAttribute("image",QStringLiteral("%1.png").arg(maxId));
             if(!itemList[i.key()].nameEn.isEmpty())
             {
-                QDomElement name=domDocument.createElement("name");
+                tinyxml2::XMLElement name=domDocument.createElement("name");
                 item.appendChild(name);
                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[i.key()].nameEn);
                 name.appendChild(newTextElement);
             }
             if(!itemList[i.key()].nameJp.isEmpty())
             {
-                QDomElement name=domDocument.createElement("name");
+                tinyxml2::XMLElement name=domDocument.createElement("name");
                 name.setAttribute("lang","jp");
                 item.appendChild(name);
                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[i.key()].nameJp);
@@ -480,7 +480,7 @@ void parseItemsExtra()
             }
             if(!itemList[i.key()].nameFr.isEmpty())
             {
-                QDomElement name=domDocument.createElement("name");
+                tinyxml2::XMLElement name=domDocument.createElement("name");
                 name.setAttribute("lang","fr");
                 item.appendChild(name);
                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[i.key()].nameFr);
@@ -488,7 +488,7 @@ void parseItemsExtra()
             }
             if(!itemList[i.key()].nameDe.isEmpty())
             {
-                QDomElement name=domDocument.createElement("name");
+                tinyxml2::XMLElement name=domDocument.createElement("name");
                 name.setAttribute("lang","de");
                 item.appendChild(name);
                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[i.key()].nameDe);
@@ -496,7 +496,7 @@ void parseItemsExtra()
             }
             if(!itemList[i.key()].nameIt.isEmpty())
             {
-                QDomElement name=domDocument.createElement("name");
+                tinyxml2::XMLElement name=domDocument.createElement("name");
                 name.setAttribute("lang","it");
                 item.appendChild(name);
                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[i.key()].nameIt);
@@ -504,7 +504,7 @@ void parseItemsExtra()
             }
             if(!itemList[i.key()].nameEs.isEmpty())
             {
-                QDomElement name=domDocument.createElement("name");
+                tinyxml2::XMLElement name=domDocument.createElement("name");
                 name.setAttribute("lang","es");
                 item.appendChild(name);
                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[i.key()].nameEs);
@@ -512,7 +512,7 @@ void parseItemsExtra()
             }
             if(!itemList[i.key()].nameKo.isEmpty())
             {
-                QDomElement name=domDocument.createElement("name");
+                tinyxml2::XMLElement name=domDocument.createElement("name");
                 name.setAttribute("lang","ko");
                 item.appendChild(name);
                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[i.key()].nameKo);

@@ -6,7 +6,7 @@
 #include <QFile>
 #include <QString>
 #include <QDomDocument>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QDebug>
 #include <QInputDialog>
 #include <QRegularExpression>
@@ -67,7 +67,7 @@ void MainWindow::on_openItemFile_clicked()
         return;
     }
     bool ok;
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="list")
     {
         QMessageBox::warning(this,tr("Error"),tr("Unable to open the file %1:\nThe root balise is not Items").arg(xmlFile.fileName()));
@@ -75,7 +75,7 @@ void MainWindow::on_openItemFile_clicked()
     }
     bool error=false;
     //load the Items
-    QDomElement child = root.firstChildElement("skill");
+    tinyxml2::XMLElement child = root.FirstChildElement("skill");
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
@@ -99,7 +99,7 @@ void MainWindow::on_openItemFile_clicked()
                 error=true;
             }
         }
-        child = child.nextSiblingElement("skill");
+        child = child.NextSiblingElement("skill");
     }
     if(error)
         QMessageBox::warning(this,tr("Error"),tr("Some error have been found into the file").arg(xmlFile.fileName()));
@@ -110,7 +110,7 @@ void MainWindow::on_openItemFile_clicked()
 void MainWindow::updateItemList()
 {
     ui->itemList->clear();
-    QHash<quint32,QDomElement>::const_iterator i = skills.constBegin();
+    QHash<quint32,tinyxml2::XMLElement>::const_iterator i = skills.constBegin();
     while (i != skills.constEnd()) {
         QListWidgetItem *item=new QListWidgetItem(ui->itemList);
         item->setText(tr("Skill %1").arg(i.key()));
@@ -128,27 +128,27 @@ void MainWindow::on_itemList_itemDoubleClicked(QListWidgetItem *item)
     //load name
     {
         ui->nameEditLanguageList->clear();
-        QDomElement name = skills[selectedItem].firstChildElement("name");
+        tinyxml2::XMLElement name = skills[selectedItem].FirstChildElement("name");
         while(!name.isNull())
         {
             if(!name.hasAttribute("lang"))
                 ui->nameEditLanguageList->addItem("en");
             else
                 ui->nameEditLanguageList->addItem(name.attribute("lang"));
-            name = name.nextSiblingElement("name");
+            name = name.NextSiblingElement("name");
         }
     }
     //load description
     {
         ui->descriptionEditLanguageList->clear();
-        QDomElement description = skills[selectedItem].firstChildElement("description");
+        tinyxml2::XMLElement description = skills[selectedItem].FirstChildElement("description");
         while(!description.isNull())
         {
             if(!description.hasAttribute("lang"))
                 ui->descriptionEditLanguageList->addItem("en");
             else
                 ui->descriptionEditLanguageList->addItem(description.attribute("lang"));
-            description = description.nextSiblingElement("description");
+            description = description.NextSiblingElement("description");
         }
     }
     if(!skills[selectedItem].hasAttribute("type"))
@@ -172,11 +172,11 @@ void MainWindow::updateLevelList()
     {
         bool ok;
         ui->level->clear();
-        QDomElement effect = skills[selectedItem].firstChildElement("effect");
+        tinyxml2::XMLElement effect = skills[selectedItem].FirstChildElement("effect");
         if(!effect.isNull() && effect.isElement())
         {
             QSet<quint32> levelNumberList;
-            QDomElement level = effect.firstChildElement("level");
+            tinyxml2::XMLElement level = effect.FirstChildElement("level");
             while(!level.isNull())
             {
                 if(!level.hasAttribute("number"))
@@ -200,7 +200,7 @@ void MainWindow::updateLevelList()
                     else
                         level.parentNode().removeChild(level);
                 }
-                level = level.nextSiblingElement("level");
+                level = level.NextSiblingElement("level");
             }
         }
     }
@@ -220,9 +220,9 @@ void MainWindow::on_itemListAdd_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Id already taken"));
         return;
     }
-    QDomElement newXmlElement=domDocument.createElement("skill");
+    tinyxml2::XMLElement newXmlElement=domDocument.createElement("skill");
     newXmlElement.setAttribute("id",index);
-    domDocument.documentElement().appendChild(newXmlElement);
+    domDocument.RootElement().appendChild(newXmlElement);
     skills[index]=newXmlElement;
     updateItemList();
 }
@@ -251,7 +251,7 @@ void MainWindow::on_itemListDelete_clicked()
     }
     bool ok;
     //load the bots
-    QDomElement child = domDocument.documentElement().firstChildElement("skill");
+    tinyxml2::XMLElement child = domDocument.RootElement().FirstChildElement("skill");
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
@@ -272,7 +272,7 @@ void MainWindow::on_itemListDelete_clicked()
             else
                 qDebug() << QStringLiteral("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         }
-        child = child.nextSiblingElement("skill");
+        child = child.NextSiblingElement("skill");
     }
     skills.remove(id);
     updateItemList();
@@ -303,7 +303,7 @@ void MainWindow::on_nameEditLanguageList_currentIndexChanged(int index)
     Q_UNUSED(index);
     loadingTheInformations=true;
     quint32 selectedItem=itemsUI.first()->data(99).toUInt();
-    QDomElement name = skills[selectedItem].firstChildElement("name");
+    tinyxml2::XMLElement name = skills[selectedItem].FirstChildElement("name");
     while(!name.isNull())
     {
         if((!name.hasAttribute("lang") && ui->nameEditLanguageList->currentText()=="en")
@@ -315,7 +315,7 @@ void MainWindow::on_nameEditLanguageList_currentIndexChanged(int index)
             loadingTheInformations=false;
             return;
         }
-        name = name.nextSiblingElement("name");
+        name = name.NextSiblingElement("name");
     }
     loadingTheInformations=false;
     QMessageBox::warning(this,tr("Warning"),tr("Text not found"));
@@ -333,7 +333,7 @@ void MainWindow::on_descriptionEditLanguageList_currentIndexChanged(int index)
     Q_UNUSED(index);
     loadingTheInformations=true;
     quint32 selectedItem=itemsUI.first()->data(99).toUInt();
-    QDomElement description = skills[selectedItem].firstChildElement("description");
+    tinyxml2::XMLElement description = skills[selectedItem].FirstChildElement("description");
     while(!description.isNull())
     {
         if((!description.hasAttribute("lang") && ui->descriptionEditLanguageList->currentText()=="en")
@@ -345,7 +345,7 @@ void MainWindow::on_descriptionEditLanguageList_currentIndexChanged(int index)
             loadingTheInformations=false;
             return;
         }
-        description = description.nextSiblingElement("description");
+        description = description.NextSiblingElement("description");
     }
     loadingTheInformations=false;
     QMessageBox::warning(this,tr("Warning"),tr("Text not found"));
@@ -364,7 +364,7 @@ void MainWindow::on_namePlainTextEdit_textChanged()
     if(itemsUI.size()!=1)
         return;
     quint32 selectedItem=itemsUI.first()->data(99).toUInt();
-    QDomElement name = skills[selectedItem].firstChildElement("name");
+    tinyxml2::XMLElement name = skills[selectedItem].FirstChildElement("name");
     while(!name.isNull())
     {
         if((!name.hasAttribute("lang") && ui->nameEditLanguageList->currentText()=="en")
@@ -383,7 +383,7 @@ void MainWindow::on_namePlainTextEdit_textChanged()
             name.appendChild(newTextElement);
             return;
         }
-        name = name.nextSiblingElement("name");
+        name = name.NextSiblingElement("name");
     }
     QMessageBox::warning(this,tr("Warning"),tr("Text not found"));
 }
@@ -396,7 +396,7 @@ void MainWindow::on_descriptionPlainTextEdit_textChanged()
     if(itemsUI.size()!=1)
         return;
     quint32 selectedItem=itemsUI.first()->data(99).toUInt();
-    QDomElement description = skills[selectedItem].firstChildElement("description");
+    tinyxml2::XMLElement description = skills[selectedItem].FirstChildElement("description");
     while(!description.isNull())
     {
         if((!description.hasAttribute("lang") && ui->descriptionEditLanguageList->currentText()=="en")
@@ -415,7 +415,7 @@ void MainWindow::on_descriptionPlainTextEdit_textChanged()
             description.appendChild(newTextElement);
             return;
         }
-        description = description.nextSiblingElement("description");
+        description = description.NextSiblingElement("description");
     }
     QMessageBox::warning(this,tr("Warning"),tr("Text not found"));
 }
@@ -467,7 +467,7 @@ void MainWindow::on_nameEditLanguageAdd_clicked()
     item->setData(99,lang);
     item->setData(98,name);
     item->setText(QStringLiteral("%1: %2").arg(lang).arg(name));
-    QDomElement newXmlElement=domDocument.createElement("name");
+    tinyxml2::XMLElement newXmlElement=domDocument.createElement("name");
     newXmlElement.setAttribute("lang",lang);
     QDomText newTextElement=domDocument.createTextNode(name);
     newXmlElement.appendChild(newTextElement);
@@ -483,7 +483,7 @@ void MainWindow::on_nameEditLanguageAdd_clicked()
 void MainWindow::on_nameEditLanguageRemove_clicked()
 {
     QString selectedLang=ui->nameEditLanguageList->currentText();
-    QDomElement child = domDocument.documentElement().firstChildElement("name");
+    tinyxml2::XMLElement child = domDocument.RootElement().FirstChildElement("name");
     while(!child.isNull())
     {
         QString lang="en";
@@ -494,7 +494,7 @@ void MainWindow::on_nameEditLanguageRemove_clicked()
             child.parentNode().removeChild(child);
             break;
         }
-        child = child.nextSiblingElement("name");
+        child = child.NextSiblingElement("name");
     }
     ui->nameEditLanguageList->removeItem(ui->nameEditLanguageList->currentIndex());
 }
@@ -511,7 +511,7 @@ void MainWindow::on_descriptionEditLanguageAdd_clicked()
     item->setData(99,lang);
     item->setData(98,description);
     item->setText(QStringLiteral("%1: %2").arg(lang).arg(description));
-    QDomElement newXmlElement=domDocument.createElement("description");
+    tinyxml2::XMLElement newXmlElement=domDocument.createElement("description");
     newXmlElement.setAttribute("lang",lang);
     QDomText newTextElement=domDocument.createTextNode(description);
     newXmlElement.appendChild(newTextElement);
@@ -527,7 +527,7 @@ void MainWindow::on_descriptionEditLanguageAdd_clicked()
 void MainWindow::on_descriptionEditLanguageRemove_clicked()
 {
     QString selectedLang=ui->descriptionEditLanguageList->currentText();
-    QDomElement child = domDocument.documentElement().firstChildElement("description");
+    tinyxml2::XMLElement child = domDocument.RootElement().FirstChildElement("description");
     while(!child.isNull())
     {
         QString lang="en";
@@ -538,7 +538,7 @@ void MainWindow::on_descriptionEditLanguageRemove_clicked()
             child.parentNode().removeChild(child);
             break;
         }
-        child = child.nextSiblingElement("description");
+        child = child.NextSiblingElement("description");
     }
     ui->descriptionEditLanguageList->removeItem(ui->descriptionEditLanguageList->currentIndex());
 }
@@ -553,10 +553,10 @@ void MainWindow::on_levelAdd_clicked()
     if(!skills.contains(selectedItem))
         return;
     quint32 maxLevel=1;
-    QDomElement effect = skills[selectedItem].firstChildElement("effect");
+    tinyxml2::XMLElement effect = skills[selectedItem].FirstChildElement("effect");
     if(!effect.isNull() && effect.isElement())
     {
-        QDomElement level = effect.firstChildElement("level");
+        tinyxml2::XMLElement level = effect.FirstChildElement("level");
         while(!level.isNull())
         {
             if(!level.hasAttribute("number"))
@@ -572,7 +572,7 @@ void MainWindow::on_levelAdd_clicked()
                 else
                     level.parentNode().removeChild(level);
             }
-            level = level.nextSiblingElement("level");
+            level = level.NextSiblingElement("level");
         }
     }
     else
@@ -580,7 +580,7 @@ void MainWindow::on_levelAdd_clicked()
         effect=domDocument.createElement("effect");
         skills[selectedItem].appendChild(effect);
     }
-    QDomElement newXmlElement=domDocument.createElement("level");
+    tinyxml2::XMLElement newXmlElement=domDocument.createElement("level");
     newXmlElement.setAttribute("number",maxLevel);
     effect.appendChild(newXmlElement);
     ui->stackedWidget->setCurrentWidget(ui->page_level);
@@ -592,7 +592,7 @@ void MainWindow::on_levelRemove_clicked()
     QList<QListWidgetItem *> itemsLevelUI=ui->level->selectedItems();
     if(itemsLevelUI.size()!=1)
         return;
-    QDomElement currentLevelInfo=getCurrentLevelInfo();
+    tinyxml2::XMLElement currentLevelInfo=getCurrentLevelInfo();
     currentLevelInfo.parentNode().removeChild(currentLevelInfo);
     updateLevelList();
 }
@@ -610,7 +610,7 @@ void MainWindow::on_level_itemDoubleClicked(QListWidgetItem *item)
     Q_UNUSED(item);
     ui->stackedWidget->setCurrentWidget(ui->page_level);
     bool ok;
-    const QDomElement &level=getCurrentLevelInfo();
+    const tinyxml2::XMLElement &level=getCurrentLevelInfo();
     //number
     {
         if(level.hasAttribute("number"))
@@ -656,12 +656,12 @@ void MainWindow::on_level_itemDoubleClicked(QListWidgetItem *item)
 
 void MainWindow::updateBuffList()
 {
-    const QDomElement &level=getCurrentLevelInfo();
+    const tinyxml2::XMLElement &level=getCurrentLevelInfo();
     //buff
     {
         ui->level_buff->clear();
         int index=0;
-        QDomElement child = level.firstChildElement("buff");
+        tinyxml2::XMLElement child = level.FirstChildElement("buff");
         while(!child.isNull())
         {
             if(!child.hasAttribute("id"))
@@ -729,19 +729,19 @@ void MainWindow::updateBuffList()
                 ui->level_buff->addItem(item);
             }
             index++;
-            child = child.nextSiblingElement("buff");
+            child = child.NextSiblingElement("buff");
         }
     }
 }
 
 void MainWindow::updateLifeList()
 {
-    const QDomElement &level=getCurrentLevelInfo();
+    const tinyxml2::XMLElement &level=getCurrentLevelInfo();
     //life
     {
         ui->level_life->clear();
         int index=0;
-        QDomElement child = level.firstChildElement("life");
+        tinyxml2::XMLElement child = level.FirstChildElement("life");
         while(!child.isNull())
         {
             if(!child.hasAttribute("quantity"))
@@ -795,28 +795,28 @@ void MainWindow::updateLifeList()
                 ui->level_life->addItem(item);
             }
             index++;
-            child = child.nextSiblingElement("life");
+            child = child.NextSiblingElement("life");
         }
     }
 }
 
-QDomElement MainWindow::getCurrentLevelInfo()
+tinyxml2::XMLElement MainWindow::getCurrentLevelInfo()
 {
     bool ok;
     QList<QListWidgetItem *> itemsUI=ui->itemList->selectedItems();
     if(itemsUI.size()!=1)
-        return QDomElement();
+        return tinyxml2::XMLElement();
     quint32 selectedItem=itemsUI.first()->data(99).toUInt();
     if(!skills.contains(selectedItem))
-        return QDomElement();
+        return tinyxml2::XMLElement();
     QList<QListWidgetItem *> itemsLevelUI=ui->level->selectedItems();
     if(itemsLevelUI.size()!=1)
-        return QDomElement();
+        return tinyxml2::XMLElement();
     quint32 selectedLevel=itemsLevelUI.first()->data(99).toUInt();
-    QDomElement effect = skills[selectedItem].firstChildElement("effect");
+    tinyxml2::XMLElement effect = skills[selectedItem].FirstChildElement("effect");
     if(!effect.isNull() && effect.isElement())
     {
-        QDomElement level = effect.firstChildElement("level");
+        tinyxml2::XMLElement level = effect.FirstChildElement("level");
         while(!level.isNull())
         {
             if(!level.hasAttribute("number"))
@@ -832,50 +832,50 @@ QDomElement MainWindow::getCurrentLevelInfo()
                 else
                     level.parentNode().removeChild(level);
             }
-            level = level.nextSiblingElement("level");
+            level = level.NextSiblingElement("level");
         }
     }
     else
-        return QDomElement();
-    return QDomElement();
+        return tinyxml2::XMLElement();
+    return tinyxml2::XMLElement();
 }
 
-QDomElement MainWindow::getCurrentBuffInfo()
+tinyxml2::XMLElement MainWindow::getCurrentBuffInfo()
 {
     QList<QListWidgetItem *> selectedItems=ui->level_buff->selectedItems();
     if(selectedItems.size()!=1)
-        return QDomElement();
+        return tinyxml2::XMLElement();
     const int &selectedIndex=selectedItems.first()->data(99).toUInt();
-    QDomElement currentLevelInfo=getCurrentLevelInfo();
-    QDomElement buff = currentLevelInfo.firstChildElement("buff");
+    tinyxml2::XMLElement currentLevelInfo=getCurrentLevelInfo();
+    tinyxml2::XMLElement buff = currentLevelInfo.FirstChildElement("buff");
     int index=0;
     while(!buff.isNull())
     {
         if(index==selectedIndex)
             return buff;
         index++;
-        buff = buff.nextSiblingElement("buff");
+        buff = buff.NextSiblingElement("buff");
     }
-    return QDomElement();
+    return tinyxml2::XMLElement();
 }
 
-QDomElement MainWindow::getCurrentLifeInfo()
+tinyxml2::XMLElement MainWindow::getCurrentLifeInfo()
 {
     QList<QListWidgetItem *> selectedItems=ui->level_life->selectedItems();
     if(selectedItems.size()!=1)
-        return QDomElement();
+        return tinyxml2::XMLElement();
     const int &selectedIndex=selectedItems.first()->data(99).toUInt();
-    QDomElement currentLevelInfo=getCurrentLevelInfo();
-    QDomElement life = currentLevelInfo.firstChildElement("life");
+    tinyxml2::XMLElement currentLevelInfo=getCurrentLevelInfo();
+    tinyxml2::XMLElement life = currentLevelInfo.FirstChildElement("life");
     int index=0;
     while(!life.isNull())
     {
         if(index==selectedIndex)
             return life;
         index++;
-        life = life.nextSiblingElement("life");
+        life = life.NextSiblingElement("life");
     }
-    return QDomElement();
+    return tinyxml2::XMLElement();
 }
 
 void MainWindow::on_skillLevelBack_clicked()
@@ -906,7 +906,7 @@ void MainWindow::on_level_life_itemDoubleClicked(QListWidgetItem *item)
     ui->stackedWidget->setCurrentWidget(ui->page_life);
     bool ok;
     Q_UNUSED(item);
-    QDomElement currentLifeInfo=getCurrentLifeInfo();
+    tinyxml2::XMLElement currentLifeInfo=getCurrentLifeInfo();
     //quantity
     {
         QString quantityText;
@@ -971,7 +971,7 @@ void MainWindow::on_level_buff_itemDoubleClicked(QListWidgetItem *item)
     ui->stackedWidget->setCurrentWidget(ui->page_buff);
     bool ok;
     Q_UNUSED(item);
-    QDomElement currentBuffInfo=getCurrentBuffInfo();
+    tinyxml2::XMLElement currentBuffInfo=getCurrentBuffInfo();
     //id
     {
         QString idText;
@@ -1028,7 +1028,7 @@ void MainWindow::on_level_buff_itemDoubleClicked(QListWidgetItem *item)
 
 void MainWindow::on_life_quantity_editingFinished()
 {
-    QDomElement currentLifeInfo=getCurrentLifeInfo();
+    tinyxml2::XMLElement currentLifeInfo=getCurrentLifeInfo();
     if(ui->life_quantity_type->currentIndex()==0)
         currentLifeInfo.setAttribute("quantity",ui->life_quantity->value());
     else
@@ -1038,7 +1038,7 @@ void MainWindow::on_life_quantity_editingFinished()
 void MainWindow::on_life_quantity_type_currentIndexChanged(int index)
 {
     Q_UNUSED(index);
-    QDomElement currentLifeInfo=getCurrentLifeInfo();
+    tinyxml2::XMLElement currentLifeInfo=getCurrentLifeInfo();
     if(ui->life_quantity_type->currentIndex()==0)
         currentLifeInfo.setAttribute("quantity",ui->life_quantity->value());
     else
@@ -1047,7 +1047,7 @@ void MainWindow::on_life_quantity_type_currentIndexChanged(int index)
 
 void MainWindow::on_life_success_editingFinished()
 {
-    QDomElement currentLifeInfo=getCurrentLifeInfo();
+    tinyxml2::XMLElement currentLifeInfo=getCurrentLifeInfo();
     if(ui->life_success->value()==100)
         currentLifeInfo.removeAttribute("success");
     else
@@ -1056,7 +1056,7 @@ void MainWindow::on_life_success_editingFinished()
 
 void MainWindow::on_life_apply_on_currentIndexChanged(int index)
 {
-    QDomElement currentLifeInfo=getCurrentLifeInfo();
+    tinyxml2::XMLElement currentLifeInfo=getCurrentLifeInfo();
     switch(index)
     {
         default:
@@ -1077,13 +1077,13 @@ void MainWindow::on_life_apply_on_currentIndexChanged(int index)
 
 void MainWindow::on_buff_id_editingFinished()
 {
-    QDomElement currentBuffInfo=getCurrentBuffInfo();
+    tinyxml2::XMLElement currentBuffInfo=getCurrentBuffInfo();
     currentBuffInfo.setAttribute("id",ui->buff_id->value());
 }
 
 void MainWindow::on_buff_level_editingFinished()
 {
-    QDomElement currentBuffInfo=getCurrentBuffInfo();
+    tinyxml2::XMLElement currentBuffInfo=getCurrentBuffInfo();
     if(ui->buff_level->value()==1)
         currentBuffInfo.removeAttribute("level");
     else
@@ -1092,7 +1092,7 @@ void MainWindow::on_buff_level_editingFinished()
 
 void MainWindow::on_buff_success_editingFinished()
 {
-    QDomElement currentBuffInfo=getCurrentBuffInfo();
+    tinyxml2::XMLElement currentBuffInfo=getCurrentBuffInfo();
     if(ui->buff_success->value()==100)
         currentBuffInfo.removeAttribute("success");
     else
@@ -1101,7 +1101,7 @@ void MainWindow::on_buff_success_editingFinished()
 
 void MainWindow::on_buff_apply_on_currentIndexChanged(int index)
 {
-    QDomElement currentBuffInfo=getCurrentBuffInfo();
+    tinyxml2::XMLElement currentBuffInfo=getCurrentBuffInfo();
     switch(index)
     {
         default:
@@ -1122,7 +1122,7 @@ void MainWindow::on_buff_apply_on_currentIndexChanged(int index)
 
 void MainWindow::on_level_level_editingFinished()
 {
-    QDomElement currentLevelInfo=getCurrentLevelInfo();
+    tinyxml2::XMLElement currentLevelInfo=getCurrentLevelInfo();
     bool ok;
     quint32 oldNumber=currentLevelInfo.attribute("number").toUInt(&ok);
     if(!ok)
@@ -1144,20 +1144,20 @@ void MainWindow::on_level_level_editingFinished()
 
 void MainWindow::on_level_sp_editingFinished()
 {
-    QDomElement currentLevelInfo=getCurrentLevelInfo();
+    tinyxml2::XMLElement currentLevelInfo=getCurrentLevelInfo();
     currentLevelInfo.setAttribute("sp",ui->level_sp->value());
 }
 
 void MainWindow::on_level_endurance_editingFinished()
 {
-    QDomElement currentLevelInfo=getCurrentLevelInfo();
+    tinyxml2::XMLElement currentLevelInfo=getCurrentLevelInfo();
     currentLevelInfo.setAttribute("endurance",ui->level_endurance->value());
 }
 
 void MainWindow::on_skillLifeEffectAdd_clicked()
 {
-    QDomElement currentLevelInfo=getCurrentLevelInfo();
-    QDomElement newXmlElement=domDocument.createElement("life");
+    tinyxml2::XMLElement currentLevelInfo=getCurrentLevelInfo();
+    tinyxml2::XMLElement newXmlElement=domDocument.createElement("life");
     newXmlElement.setAttribute("quantity",1);
     currentLevelInfo.appendChild(newXmlElement);
     updateLifeList();
@@ -1168,15 +1168,15 @@ void MainWindow::on_skillLifeEffectDelete_clicked()
     QList<QListWidgetItem *> itemsLevelUI=ui->level_life->selectedItems();
     if(itemsLevelUI.size()!=1)
         return;
-    QDomElement currentLifeInfo=getCurrentLifeInfo();
+    tinyxml2::XMLElement currentLifeInfo=getCurrentLifeInfo();
     currentLifeInfo.parentNode().removeChild(currentLifeInfo);
     updateLifeList();
 }
 
 void MainWindow::on_skillBuffEffectAdd_clicked()
 {
-    QDomElement currentLevelInfo=getCurrentLevelInfo();
-    QDomElement newXmlElement=domDocument.createElement("buff");
+    tinyxml2::XMLElement currentLevelInfo=getCurrentLevelInfo();
+    tinyxml2::XMLElement newXmlElement=domDocument.createElement("buff");
     newXmlElement.setAttribute("id",1);
     currentLevelInfo.appendChild(newXmlElement);
     updateBuffList();
@@ -1187,7 +1187,7 @@ void MainWindow::on_skillBuffEffectDelete_clicked()
     QList<QListWidgetItem *> itemsLevelUI=ui->level_buff->selectedItems();
     if(itemsLevelUI.size()!=1)
         return;
-    QDomElement currentBuffInfo=getCurrentBuffInfo();
+    tinyxml2::XMLElement currentBuffInfo=getCurrentBuffInfo();
     currentBuffInfo.parentNode().removeChild(currentBuffInfo);
     updateBuffList();
 }

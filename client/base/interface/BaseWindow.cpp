@@ -129,7 +129,7 @@ BaseWindow::BaseWindow() :
     ui->label_ultimate->setVisible(false);
     #endif
     {
-        const std::vector<QByteArray> &supportedImageFormats=QImageReader::supportedImageFormats();
+        const QList<QByteArray> &supportedImageFormats=QImageReader::supportedImageFormats();
         int index=0;
         while(index<supportedImageFormats.size())
         {
@@ -622,12 +622,12 @@ void BaseWindow::number_of_player(uint16_t number,uint16_t max)
     else
     {
         ui->frame_main_display_interface_player->show();
-        std::string stringMax;
+        QString stringMax;
         if(max>1000)
             stringMax=QStringLiteral("%1K").arg(max/1000);
         else
             stringMax=QString::number(max);
-        std::string stringNumber;
+        QString stringNumber;
         if(number>1000)
             stringNumber=QStringLiteral("%1K").arg(number/1000);
         else
@@ -834,7 +834,7 @@ void BaseWindow::on_toolButton_quit_inventory_clicked()
 
 void BaseWindow::on_inventory_itemSelectionChanged()
 {
-    std::vector<QListWidgetItem *> items=ui->inventory->selectedItems();
+    QList<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
     {
         ui->inventory_image->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
@@ -1299,7 +1299,7 @@ void BaseWindow::appendReputationPoint(const std::string &type,const int32_t &po
 
 std::string BaseWindow::parseHtmlToDisplay(const std::string &htmlContent)
 {
-    std::string newContent=QString::fromStdString(htmlContent);
+    QString newContent=QString::fromStdString(htmlContent);
     #ifdef NOREMOTE
     QRegularExpression remote(QRegularExpression::escape("<span class=\"remote\">")+".*"+QRegularExpression::escape("</span>"));
     remote.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
@@ -1361,7 +1361,7 @@ void BaseWindow::on_inventoryDestroy_clicked()
 {
     Player_private_and_public_informations &playerInformations=client->get_player_informations();
     qDebug() << "on_inventoryDestroy_clicked()";
-    std::vector<QListWidgetItem *> items=ui->inventory->selectedItems();
+    const QList<QListWidgetItem *> &items=ui->inventory->selectedItems();
     if(items.size()!=1)
         return;
     const uint16_t itemId=items_graphical.at(items.first());
@@ -1407,7 +1407,7 @@ uint32_t BaseWindow::itemQuantity(const uint16_t &itemId) const
 
 void BaseWindow::on_inventoryUse_clicked()
 {
-    std::vector<QListWidgetItem *> items=ui->inventory->selectedItems();
+    QList<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
         return;
     on_inventory_itemActivated(items.first());
@@ -1415,7 +1415,7 @@ void BaseWindow::on_inventoryUse_clicked()
 
 void BaseWindow::on_inventoryInformation_clicked()
 {
-    std::vector<QListWidgetItem *> items=ui->inventory->selectedItems();
+    QList<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
     {
         qDebug() << "on_inventoryInformation_clicked() should not be accessible here";
@@ -1561,7 +1561,7 @@ void BaseWindow::on_tradeAddMonster_clicked()
 
 void BaseWindow::on_selectMonster_clicked()
 {
-    std::vector<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
+    QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
         return;
     on_monsterList_itemActivated(selectedMonsters.first());
@@ -1585,7 +1585,7 @@ void BaseWindow::on_monsterDetailsQuit_clicked()
 
 void BaseWindow::on_monsterListMoveUp_clicked()
 {
-    std::vector<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
+    QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
         return;
     const uint8_t &currentRow=static_cast<uint8_t>(ui->monsterList->row(selectedMonsters.first()));
@@ -1604,7 +1604,7 @@ void BaseWindow::on_monsterListMoveUp_clicked()
 
 void BaseWindow::on_monsterListMoveDown_clicked()
 {
-    std::vector<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
+    QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
         return;
     const int &currentRow=ui->monsterList->row(selectedMonsters.first());
@@ -1625,7 +1625,7 @@ void BaseWindow::on_monsterListMoveDown_clicked()
 
 void BaseWindow::on_monsterList_itemSelectionChanged()
 {
-    std::vector<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
+    QList<QListWidgetItem *> selectedMonsters=ui->monsterList->selectedItems();
     if(selectedMonsters.size()!=1)
     {
         ui->monsterListMoveUp->setEnabled(false);
@@ -1751,7 +1751,7 @@ void BaseWindow::on_serverList_activated(const QModelIndex &index)
 
 void BaseWindow::on_serverListSelect_clicked()
 {
-    const std::vector<QTreeWidgetItem *> &selectedItems=ui->serverList->selectedItems();
+    const QList<QTreeWidgetItem *> &selectedItems=ui->serverList->selectedItems();
     if(selectedItems.size()!=1)
         return;
 

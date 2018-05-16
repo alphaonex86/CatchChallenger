@@ -8,7 +8,7 @@
 #include <QNetworkRequest>
 #include <QUrl>
 #include <QDomDocument>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QRegularExpression>
 
 FeedNews *FeedNews::feedNews=NULL;
@@ -98,7 +98,7 @@ void FeedNews::loadFeeds(const QByteArray &data)
         qDebug() << QStringLiteral("Unable to open the rss, Parse error at line %1, column %2: %3").arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()==QStringLiteral("rss"))
         loadRss(root);
     else if(root.tagName()==QStringLiteral("feed"))
@@ -107,23 +107,23 @@ void FeedNews::loadFeeds(const QByteArray &data)
         emit feedEntryList(QList<FeedEntry>(),tr("Not Rss or Atom feed"));
 }
 
-void FeedNews::loadRss(const QDomElement &root)
+void FeedNews::loadRss(const tinyxml2::XMLElement &root)
 {
     QList<FeedEntry> entryList;
     //load the content
-    QDomElement channelItem = root.firstChildElement(QStringLiteral("channel"));
+    tinyxml2::XMLElement channelItem = root.FirstChildElement(QStringLiteral("channel"));
     if(!channelItem.isNull())
     {
         if(channelItem.isElement())
         {
-            QDomElement item = channelItem.firstChildElement(QStringLiteral("item"));
+            tinyxml2::XMLElement item = channelItem.FirstChildElement(QStringLiteral("item"));
             while(!item.isNull())
             {
                 if(item.isElement())
                 {
                     QString description,title,link,pubDate;
                     {
-                        QDomElement descriptionItem = item.firstChildElement(QStringLiteral("description"));
+                        tinyxml2::XMLElement descriptionItem = item.FirstChildElement(QStringLiteral("description"));
                         if(!descriptionItem.isNull())
                         {
                             if(descriptionItem.isElement())
@@ -131,7 +131,7 @@ void FeedNews::loadRss(const QDomElement &root)
                         }
                     }
                     {
-                        QDomElement titleItem = item.firstChildElement(QStringLiteral("title"));
+                        tinyxml2::XMLElement titleItem = item.FirstChildElement(QStringLiteral("title"));
                         if(!titleItem.isNull())
                         {
                             if(titleItem.isElement())
@@ -139,7 +139,7 @@ void FeedNews::loadRss(const QDomElement &root)
                         }
                     }
                     {
-                        QDomElement linkItem = item.firstChildElement(QStringLiteral("link"));
+                        tinyxml2::XMLElement linkItem = item.FirstChildElement(QStringLiteral("link"));
                         if(!linkItem.isNull())
                         {
                             if(linkItem.isElement())
@@ -147,7 +147,7 @@ void FeedNews::loadRss(const QDomElement &root)
                         }
                     }
                     {
-                        QDomElement pubDateItem = item.firstChildElement(QStringLiteral("pubDate"));
+                        tinyxml2::XMLElement pubDateItem = item.FirstChildElement(QStringLiteral("pubDate"));
                         if(!pubDateItem.isNull())
                         {
                             if(pubDateItem.isElement())
@@ -166,25 +166,25 @@ void FeedNews::loadRss(const QDomElement &root)
                     rssEntry.link=link;
                     entryList << rssEntry;
                 }
-                item = item.nextSiblingElement(QStringLiteral("item"));
+                item = item.NextSiblingElement(QStringLiteral("item"));
             }
         }
     }
     emit feedEntryList(entryList);
 }
 
-void FeedNews::loadAtom(const QDomElement &root)
+void FeedNews::loadAtom(const tinyxml2::XMLElement &root)
 {
     QList<FeedEntry> entryList;
     //load the content
-    QDomElement item = root.firstChildElement(QStringLiteral("entry"));
+    tinyxml2::XMLElement item = root.FirstChildElement(QStringLiteral("entry"));
     while(!item.isNull())
     {
         if(item.isElement())
         {
             QString description,title,link,pubDate;
             {
-                QDomElement descriptionItem = item.firstChildElement(QStringLiteral("content"));
+                tinyxml2::XMLElement descriptionItem = item.FirstChildElement(QStringLiteral("content"));
                 if(!descriptionItem.isNull())
                 {
                     if(descriptionItem.isElement())
@@ -192,7 +192,7 @@ void FeedNews::loadAtom(const QDomElement &root)
                 }
             }
             {
-                QDomElement titleItem = item.firstChildElement(QStringLiteral("title"));
+                tinyxml2::XMLElement titleItem = item.FirstChildElement(QStringLiteral("title"));
                 if(!titleItem.isNull())
                 {
                     if(titleItem.isElement())
@@ -200,7 +200,7 @@ void FeedNews::loadAtom(const QDomElement &root)
                 }
             }
             {
-                QDomElement linkItem = item.firstChildElement(QStringLiteral("link"));
+                tinyxml2::XMLElement linkItem = item.FirstChildElement(QStringLiteral("link"));
                 if(!linkItem.isNull())
                 {
                     if(linkItem.isElement())
@@ -208,7 +208,7 @@ void FeedNews::loadAtom(const QDomElement &root)
                 }
             }
             {
-                QDomElement pubDateItem = item.firstChildElement(QStringLiteral("published"));
+                tinyxml2::XMLElement pubDateItem = item.FirstChildElement(QStringLiteral("published"));
                 if(!pubDateItem.isNull())
                 {
                     if(pubDateItem.isElement())
@@ -227,7 +227,7 @@ void FeedNews::loadAtom(const QDomElement &root)
             rssEntry.link=link;
             entryList << rssEntry;
         }
-        item = item.nextSiblingElement(QStringLiteral("entry"));
+        item = item.NextSiblingElement(QStringLiteral("entry"));
     }
     emit feedEntryList(entryList);
 }

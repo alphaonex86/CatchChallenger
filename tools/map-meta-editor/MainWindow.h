@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <QListWidgetItem>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QHash>
 #include <QString>
 #include <QSettings>
@@ -40,7 +40,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    QHash<quint32,QDomElement> items;
+    QHash<quint32,tinyxml2::XMLElement> items;
     QSettings settings;
     QDomDocument domDocument;
     bool loadingTheInformations;

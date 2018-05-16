@@ -2013,50 +2013,43 @@ LogicialGroup * Api_protocol::addLogicalGroup(const std::string &path,const std:
 {
     std::string nameString;
 
-    QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(QString::fromStdString(Api_protocol::text_balise_root_start+xml+Api_protocol::text_balise_root_stop), false, &errorStr,&errorLine,&errorColumn))
+    tinyxml2::XMLDocument domDocument;
+    const auto loadOkay = domDocument.Parse((Api_protocol::text_balise_root_start+xml+Api_protocol::text_balise_root_stop).c_str());
+    if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
     {
-        qDebug() << (QString("Xml not correct for addLogicalGroup: %1, Parse error at line %2, column %3: %4")
-                     .arg(QString::fromStdString(xml)).arg(errorLine).arg(errorColumn).arg(errorStr));
+        std::cerr << "Api_protocol::addLogicalGroup(): "+CATCHCHALLENGER_XMLDOCUMENTERROR(&domDocument) << std::endl;
+        return NULL;
     }
     else
     {
-        const QDomElement &root = domDocument.documentElement();
+        const tinyxml2::XMLElement *root = domDocument.RootElement();
         //load the name
         {
             bool name_found=false;
-            QDomElement name = root.firstChildElement("name");
+            const tinyxml2::XMLElement * const name = root->FirstChildElement("name");
             if(!language.empty() && language!="en")
-                while(!name.isNull())
+                while(name!=NULL)
                 {
-                    if(name.isElement())
+                    if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
                     {
-                        if(name.hasAttribute("lang") && name.attribute("lang").toStdString()==language)
-                        {
-                            nameString=name.text().toStdString();
-                            name_found=true;
-                            break;
-                        }
+                        nameString=name->GetText();
+                        name_found=true;
+                        break;
                     }
-                    name = name.nextSiblingElement("name");
+                    name = name->NextSiblingElement("name");
                 }
             if(!name_found)
             {
-                name = root.firstChildElement("name");
-                while(!name.isNull())
+                name = root->FirstChildElement("name");
+                while(name!=NULL)
                 {
-                    if(name.isElement())
+                    if(name->Attribute("lang")!=NULL || name->Attribute("lang")=="en")
                     {
-                        if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
-                        {
-                            nameString=name.text().toStdString();
-                            name_found=true;
-                            break;
-                        }
+                        nameString=name.GetText();
+                        name_found=true;
+                        break;
                     }
-                    name = name.nextSiblingElement("name");
+                    name = name->NextSiblingElement("name");
                 }
             }
             if(!name_found)
@@ -2095,12 +2088,12 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
     }
     else
     {
-        const QDomElement &root = domDocument.documentElement();
+        const tinyxml2::XMLElement &root = domDocument.RootElement();
 
         //load the name
         {
             bool name_found=false;
-            QDomElement name = root.firstChildElement("name");
+            tinyxml2::XMLElement name = root.FirstChildElement("name");
             if(!language.empty() && language!="en")
                 while(!name.isNull())
                 {
@@ -2113,11 +2106,11 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
                             break;
                         }
                     }
-                    name = name.nextSiblingElement("name");
+                    name = name.NextSiblingElement("name");
                 }
             if(!name_found)
             {
-                name = root.firstChildElement("name");
+                name = root.FirstChildElement("name");
                 while(!name.isNull())
                 {
                     if(name.isElement())
@@ -2129,7 +2122,7 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
                             break;
                         }
                     }
-                    name = name.nextSiblingElement("name");
+                    name = name.NextSiblingElement("name");
                 }
             }
             if(!name_found)
@@ -2141,7 +2134,7 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
         //load the description
         {
             bool description_found=false;
-            QDomElement description = root.firstChildElement("description");
+            tinyxml2::XMLElement description = root.FirstChildElement("description");
             if(!language.empty() && language!="en")
                 while(!description.isNull())
                 {
@@ -2154,11 +2147,11 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
                             break;
                         }
                     }
-                    description = description.nextSiblingElement("description");
+                    description = description.NextSiblingElement("description");
                 }
             if(!description_found)
             {
-                description = root.firstChildElement("description");
+                description = root.FirstChildElement("description");
                 while(!description.isNull())
                 {
                     if(description.isElement())
@@ -2170,7 +2163,7 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
                             break;
                         }
                     }
-                    description = description.nextSiblingElement("description");
+                    description = description.NextSiblingElement("description");
                 }
             }
             if(!description_found)

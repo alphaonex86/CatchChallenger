@@ -444,29 +444,29 @@ QString SoloWindow::getMapName(const QString &file)
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
         return QString();
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!=SoloWindow::text_map)
     {
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return QString();
     }
     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-    QDomElement item = root.firstChildElement(SoloWindow::text_name);
+    tinyxml2::XMLElement item = root.FirstChildElement(SoloWindow::text_name);
     if(!language.isEmpty() && language!=SoloWindow::text_en)
         while(!item.isNull())
         {
             if(item.isElement())
                 if(item.hasAttribute(SoloWindow::text_lang) && item.attribute(SoloWindow::text_lang)==language)
                     return item.text();
-            item = item.nextSiblingElement(SoloWindow::text_name);
+            item = item.NextSiblingElement(SoloWindow::text_name);
         }
-    item = root.firstChildElement(SoloWindow::text_name);
+    item = root.FirstChildElement(SoloWindow::text_name);
     while(!item.isNull())
     {
         if(item.isElement())
             if(!item.hasAttribute(SoloWindow::text_lang) || item.attribute(SoloWindow::text_lang)==SoloWindow::text_en)
                 return item.text();
-        item = item.nextSiblingElement(SoloWindow::text_name);
+        item = item.NextSiblingElement(SoloWindow::text_name);
     }
     return QString();
 }
@@ -491,28 +491,28 @@ QString SoloWindow::getMapZone(const QString &file)
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
         return QString();
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!=SoloWindow::text_map)
     {
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
         return QString();
     }
-    QDomElement properties = root.firstChildElement(SoloWindow::text_properties);
+    tinyxml2::XMLElement properties = root.FirstChildElement(SoloWindow::text_properties);
     while(!properties.isNull())
     {
         if(properties.isElement())
         {
-            QDomElement property = properties.firstChildElement(SoloWindow::text_property);
+            tinyxml2::XMLElement property = properties.FirstChildElement(SoloWindow::text_property);
             while(!property.isNull())
             {
                 if(property.isElement())
                     if(property.hasAttribute(SoloWindow::text_name) && property.hasAttribute(SoloWindow::text_value))
                         if(property.attribute(SoloWindow::text_name)==SoloWindow::text_zone)
                             return property.attribute(SoloWindow::text_value);
-                property = property.nextSiblingElement(SoloWindow::text_property);
+                property = property.NextSiblingElement(SoloWindow::text_property);
             }
         }
-        properties = properties.nextSiblingElement(SoloWindow::text_properties);
+        properties = properties.NextSiblingElement(SoloWindow::text_properties);
     }
     return QString();
 }
@@ -538,7 +538,7 @@ QString SoloWindow::getZoneName(const QString &zone)
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
         return QString();
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!=SoloWindow::text_zone)
     {
         qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
@@ -546,22 +546,22 @@ QString SoloWindow::getZoneName(const QString &zone)
     }
 
     //load the content
-    QDomElement item = root.firstChildElement(SoloWindow::text_name);
+    tinyxml2::XMLElement item = root.FirstChildElement(SoloWindow::text_name);
     const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     while(!item.isNull())
     {
         if(item.isElement())
             if(item.hasAttribute(SoloWindow::text_lang) && item.attribute(SoloWindow::text_lang)==language)
                 return item.text();
-        item = item.nextSiblingElement(SoloWindow::text_name);
+        item = item.NextSiblingElement(SoloWindow::text_name);
     }
-    item = root.firstChildElement(SoloWindow::text_name);
+    item = root.FirstChildElement(SoloWindow::text_name);
     while(!item.isNull())
     {
         if(item.isElement())
             if(!item.hasAttribute(SoloWindow::text_lang) || item.attribute(SoloWindow::text_lang)==SoloWindow::text_en)
                 return item.text();
-        item = item.nextSiblingElement(SoloWindow::text_name);
+        item = item.NextSiblingElement(SoloWindow::text_name);
     }
     return QString();
 }

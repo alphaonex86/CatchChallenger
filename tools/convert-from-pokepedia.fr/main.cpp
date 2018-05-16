@@ -1,7 +1,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QRegularExpression>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QDomDocument>
 #include <QDebug>
 
@@ -595,7 +595,7 @@ void parseItemsExtra()
         qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="items")
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
@@ -604,7 +604,7 @@ void parseItemsExtra()
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement("item");
+    tinyxml2::XMLElement item = root.FirstChildElement("item");
     while(!item.isNull())
     {
         if(item.isElement())
@@ -621,7 +621,7 @@ void parseItemsExtra()
                     //load the name
                     {
                         bool name_found_translated=false;
-                        QDomElement name = item.firstChildElement("name");
+                        tinyxml2::XMLElement name = item.FirstChildElement("name");
                         if(!language.isEmpty() && language!="en")
                             while(!name.isNull())
                             {
@@ -633,9 +633,9 @@ void parseItemsExtra()
                                         name_found_translated=true;
                                     }
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
-                        name = item.firstChildElement("name");
+                        name = item.FirstChildElement("name");
                         while(!name.isNull())
                         {
                             if(name.isElement())
@@ -651,7 +651,7 @@ void parseItemsExtra()
                                             QString stringIndex=name.text();
                                             //add the name
                                             {
-                                                QDomElement name=domDocument.createElement("name");
+                                                tinyxml2::XMLElement name=domDocument.createElement("name");
                                                 name.setAttribute("lang",language);
                                                 item.appendChild(name);
                                                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[stringIndex].name);
@@ -659,7 +659,7 @@ void parseItemsExtra()
                                             }
                                             //add the description
                                             {
-                                                QDomElement name=domDocument.createElement("description");
+                                                tinyxml2::XMLElement name=domDocument.createElement("description");
                                                 name.setAttribute("lang",language);
                                                 item.appendChild(name);
                                                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[stringIndex].description);
@@ -670,7 +670,7 @@ void parseItemsExtra()
                                     }
                                 }
                             }
-                            name = name.nextSiblingElement("name");
+                            name = name.NextSiblingElement("name");
                         }
                     }
                 }
@@ -682,7 +682,7 @@ void parseItemsExtra()
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
-        item = item.nextSiblingElement("item");
+        item = item.NextSiblingElement("item");
     }
 
     QHashIterator<QString, Item> i(itemList);
@@ -691,7 +691,7 @@ void parseItemsExtra()
         if(!itemLoaded.contains(i.key()) && !itemLoaded.contains(i.value().name))
         {
             maxId++;
-            QDomElement item=domDocument.createElement("item");
+            tinyxml2::XMLElement item=domDocument.createElement("item");
             item.setAttribute("id",maxId);
             QFileInfo fileInfo(i.value().image);
             QString fileName=QStringLiteral("%1.%2").arg(maxId).arg(fileInfo.suffix());
@@ -707,14 +707,14 @@ void parseItemsExtra()
             item.setAttribute("price",i.value().price);
             //add the english name
             {
-                QDomElement name=domDocument.createElement("name");
+                tinyxml2::XMLElement name=domDocument.createElement("name");
                 item.appendChild(name);
                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[name.text()].englishName);
                 name.appendChild(newTextElement);
             }
             //add the name
             {
-                QDomElement name=domDocument.createElement("name");
+                tinyxml2::XMLElement name=domDocument.createElement("name");
                 name.setAttribute("lang",LANG);
                 item.appendChild(name);
                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[name.text()].name);
@@ -722,7 +722,7 @@ void parseItemsExtra()
             }
             //add the description
             {
-                QDomElement name=domDocument.createElement("description");
+                tinyxml2::XMLElement name=domDocument.createElement("description");
                 name.setAttribute("lang",LANG);
                 item.appendChild(name);
                 QDomText newTextElement=name.ownerDocument().createTextNode(itemList[name.text()].description);
@@ -756,7 +756,7 @@ void parseMonstersExtra()
         qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="list")
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
@@ -765,7 +765,7 @@ void parseMonstersExtra()
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement("monster");
+    tinyxml2::XMLElement item = root.FirstChildElement("monster");
     while(!item.isNull())
     {
         if(item.isElement())
@@ -784,7 +784,7 @@ void parseMonstersExtra()
                         if(!item.hasAttribute("catch_rate") && monsterList.contains(id))
                             item.setAttribute("catch_rate",monsterList[id].capture_rate);
                         bool name_found_translated=false;
-                        QDomElement name = item.firstChildElement("name");
+                        tinyxml2::XMLElement name = item.FirstChildElement("name");
                         if(!language.isEmpty() && language!="en")
                         {
                             while(!name.isNull())
@@ -794,13 +794,13 @@ void parseMonstersExtra()
                                     if(name.hasAttribute("lang") && name.attribute("lang")==language)
                                         name_found_translated=true;
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
                             if(!name_found_translated && monsterList.contains(id))
                             {
                                 //add the name
                                 {
-                                    QDomElement name=domDocument.createElement("name");
+                                    tinyxml2::XMLElement name=domDocument.createElement("name");
                                     name.setAttribute("lang",language);
                                     item.appendChild(name);
                                     QDomText newTextElement=name.ownerDocument().createTextNode(monsterList[id].name);
@@ -808,7 +808,7 @@ void parseMonstersExtra()
                                 }
                                 //add the description
                                 {
-                                    QDomElement name=domDocument.createElement("description");
+                                    tinyxml2::XMLElement name=domDocument.createElement("description");
                                     name.setAttribute("lang",language);
                                     item.appendChild(name);
                                     QDomText newTextElement=name.ownerDocument().createTextNode(monsterList[id].description);
@@ -827,7 +827,7 @@ void parseMonstersExtra()
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
-        item = item.nextSiblingElement("monster");
+        item = item.NextSiblingElement("monster");
     }
     itemsFile.seek(0);
     itemsFile.resize(0);
@@ -855,7 +855,7 @@ void parseSkillsExtra()
         qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
         return;
     }
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="list")
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(itemsFile.fileName());
@@ -864,7 +864,7 @@ void parseSkillsExtra()
 
     //load the content
     bool ok;
-    QDomElement item = root.firstChildElement("skill");
+    tinyxml2::XMLElement item = root.FirstChildElement("skill");
     while(!item.isNull())
     {
         if(item.isElement())
@@ -881,7 +881,7 @@ void parseSkillsExtra()
                     //load the name
                     {
                         bool name_found_translated=false;
-                        QDomElement name = item.firstChildElement("name");
+                        tinyxml2::XMLElement name = item.FirstChildElement("name");
                         if(!language.isEmpty() && language!="en")
                         {
                             while(!name.isNull())
@@ -891,9 +891,9 @@ void parseSkillsExtra()
                                     if(name.hasAttribute("lang") && name.attribute("lang")==language)
                                         name_found_translated=true;
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
-                            name = item.firstChildElement("name");
+                            name = item.FirstChildElement("name");
                             while(!name.isNull())
                             {
                                 if(name.isElement())
@@ -907,7 +907,7 @@ void parseSkillsExtra()
                                                 QString stringIndex=name.text();
                                                 //add the name
                                                 {
-                                                    QDomElement name=domDocument.createElement("name");
+                                                    tinyxml2::XMLElement name=domDocument.createElement("name");
                                                     name.setAttribute("lang",language);
                                                     item.appendChild(name);
                                                     QString newText=skillList[stringIndex].name;
@@ -916,7 +916,7 @@ void parseSkillsExtra()
                                                 }
                                                 //add the description
                                                 {
-                                                    QDomElement name=domDocument.createElement("description");
+                                                    tinyxml2::XMLElement name=domDocument.createElement("description");
                                                     name.setAttribute("lang",language);
                                                     item.appendChild(name);
                                                     QDomText newTextElement=name.ownerDocument().createTextNode(skillList[stringIndex].description);
@@ -927,7 +927,7 @@ void parseSkillsExtra()
                                         }
                                     }
                                 }
-                                name = name.nextSiblingElement("name");
+                                name = name.NextSiblingElement("name");
                             }
                         }
                     }
@@ -940,7 +940,7 @@ void parseSkillsExtra()
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(itemsFile.fileName()).arg(item.tagName()).arg(item.lineNumber());
-        item = item.nextSiblingElement("skill");
+        item = item.NextSiblingElement("skill");
     }
     itemsFile.seek(0);
     itemsFile.resize(0);

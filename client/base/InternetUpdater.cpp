@@ -27,7 +27,7 @@
 #include <QStringList>
 #include <QFile>
 #include <QDomDocument>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #endif
 
 InternetUpdater *InternetUpdater::internetUpdater=NULL;
@@ -390,40 +390,40 @@ QString InternetUpdater::GetOSDisplayString()
             return "Mac OS X";
         else
         {
-            QDomElement root = domDocument.documentElement();
+            tinyxml2::XMLElement root = domDocument.RootElement();
             if(root.tagName()!="plist")
                 return "Mac OS X";
             else
             {
                 if(root.isElement())
                 {
-                    QDomElement SubChild=root.firstChildElement("dict");
+                    tinyxml2::XMLElement SubChild=root.FirstChildElement("dict");
                     while(!SubChild.isNull())
                     {
                         if(SubChild.isElement())
                         {
-                            QDomElement SubChild2=SubChild.firstChildElement("key");
+                            tinyxml2::XMLElement SubChild2=SubChild.FirstChildElement("key");
                             while(!SubChild2.isNull())
                             {
                                 if(SubChild2.isElement())
                                     key << SubChild2.text();
                                 else
                                     return "Mac OS X";
-                                SubChild2 = SubChild2.nextSiblingElement("key");
+                                SubChild2 = SubChild2.NextSiblingElement("key");
                             }
-                            SubChild2=SubChild.firstChildElement("string");
+                            SubChild2=SubChild.FirstChildElement("string");
                             while(!SubChild2.isNull())
                             {
                                 if(SubChild2.isElement())
                                     string << SubChild2.text();
                                 else
                                     return "Mac OS X";
-                                SubChild2 = SubChild2.nextSiblingElement("string");
+                                SubChild2 = SubChild2.NextSiblingElement("string");
                             }
                         }
                         else
                             return "Mac OS X";
-                        SubChild = SubChild.nextSiblingElement("property");
+                        SubChild = SubChild.NextSiblingElement("property");
                     }
                 }
                 else

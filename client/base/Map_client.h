@@ -12,7 +12,6 @@
 #include <QList>
 #include <QHash>
 #include <QTimer>
-#include <QDomElement>
 
 namespace CatchChallenger {
 class ClientPlantWithTimer : public QTimer

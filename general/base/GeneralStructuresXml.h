@@ -5,11 +5,7 @@
 #include <string>
 #include <unordered_map>
 
-#ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-#include "tinyXML/tinyxml.h"
-#elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
 #include "tinyXML2/tinyxml2.h"
-#endif
 #include "GeneralType.h"
 #include "GeneralStructures.h"
 #include "GeneralVariable.h"
