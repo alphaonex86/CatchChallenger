@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include <QListWidgetItem>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QHash>
 #include <QString>
 #include <QSettings>
@@ -44,9 +44,9 @@ private slots:
     void updateBuffList();
     void updateLifeList();
     void updateLevelList();
-    QDomElement getCurrentLevelInfo();
-    QDomElement getCurrentBuffInfo();
-    QDomElement getCurrentLifeInfo();
+    tinyxml2::XMLElement getCurrentLevelInfo();
+    tinyxml2::XMLElement getCurrentBuffInfo();
+    tinyxml2::XMLElement getCurrentLifeInfo();
     void on_skillLevelBack_clicked();
     void on_life_back_clicked();
     void on_buff_back_clicked();
@@ -72,7 +72,7 @@ private slots:
     void on_type_editingFinished();
 private:
     Ui::MainWindow *ui;
-    QHash<quint32,QDomElement> skills;
+    QHash<quint32,tinyxml2::XMLElement> skills;
     QSettings settings;
     QDomDocument domDocument;
     bool loadingTheInformations;

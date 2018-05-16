@@ -8,7 +8,7 @@
 #include <QDateTime>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 
 class FeedNews : public QThread
 {
@@ -36,8 +36,8 @@ private slots:
     void downloadFile();
     void httpFinished();
     void loadFeeds(const QByteArray &data);
-    void loadRss(const QDomElement &root);
-    void loadAtom(const QDomElement &root);
+    void loadRss(const tinyxml2::XMLElement &root);
+    void loadAtom(const tinyxml2::XMLElement &root);
 };
 
 #endif // RSSNEWS_H

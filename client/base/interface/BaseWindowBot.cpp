@@ -4,8 +4,6 @@
 #include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../fight/interface/ClientFightEngine.h"
 
-#include <QScriptValue>
-#include <QScriptEngine>
 #include <QDesktopServices>
 #include <QInputDialog>
 
@@ -18,8 +16,8 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
     qDebug() << "check bot quest for: " << botId;
     #endif
     //do the not started quest here
-    const std::vector<uint16_t> &botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
-    int index=0;
+    const std::vector<uint16_t> &botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.at(botId);
+    unsigned int index=0;
     while(index<botQuests.size())
     {
         const uint16_t &questId=botQuests.at(index);
@@ -76,7 +74,7 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
     auto i=playerInformations.quests.begin();
     while(i!=playerInformations.quests.cend())
     {
-        if(!botQuests.contains(i->first) && i->second.step>0)
+        if(botQuests.find(i->first)==botQuests.cend() && i->second.step>0)
         {
             CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i->first);
             auto bots=currentQuest.steps.at(i->second.step-1).bots;
@@ -98,19 +96,19 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     isInQuest=false;
     if(actualBot.step.find(step)==actualBot.step.cend())
     {
-        showTip(tr("Error into the bot, repport this error please"));
+        showTip(tr("Error into the bot, repport this error please").toStdString());
         return;
     }
     if(*actualBot.step.at(step)->Attribute(std::string("type"))=="text")
     {
         const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
         auto text = actualBot.step.at(step)->FirstChildElement(std::string("text"));
-        if(!language.isEmpty() && language!=BaseWindow::text_en)
+        if(!language.empty() && language!=BaseWindow::text_en)
             while(text!=NULL)
             {
-                if(text->Attribute(std::string("lang"))!=NULL && *text->Attribute(std::string("lang"))==language.toStdString())
+                if(text->Attribute("lang")!=NULL && *text->Attribute("lang")==language)
                 {
-                    std::string textToShow=QString::fromStdString(text->GetText());
+                    std::string textToShow=text->GetText();
                     textToShow=parseHtmlToDisplay(textToShow);
                     ui->IG_dialog_text->setText(textToShow);
                     ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
@@ -122,11 +120,11 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         text = actualBot.step.at(step)->FirstChildElement(std::string("text"));
         while(text!=NULL)
         {
-            if(text->Attribute(std::string("lang"))==NULL || *text->Attribute(std::string("lang"))==language.toStdString())
+            if(text->Attribute("lang")==NULL || *text->Attribute("lang")==language.toStdString())
             {
                 std::string textToShow=text->GetText();
                 textToShow=parseHtmlToDisplay(textToShow);
-                ui->IG_dialog_text->setText(textToShow);
+                ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
                 ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
                 ui->IG_dialog->setVisible(true);
                 return;

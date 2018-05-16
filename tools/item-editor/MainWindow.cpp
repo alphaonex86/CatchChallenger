@@ -6,7 +6,7 @@
 #include <QFile>
 #include <QString>
 #include <QDomDocument>
-#include <QDomElement>
+#include <tinyxml2::XMLElement>
 #include <QDebug>
 #include <QInputDialog>
 #include <QRegularExpression>
@@ -67,7 +67,7 @@ void MainWindow::on_openItemFile_clicked()
         return;
     }
     bool ok;
-    QDomElement root = domDocument.documentElement();
+    tinyxml2::XMLElement root = domDocument.RootElement();
     if(root.tagName()!="items")
     {
         QMessageBox::warning(this,tr("Error"),tr("Unable to open the file %1:\nThe root balise is not Items").arg(xmlFile.fileName()));
@@ -75,7 +75,7 @@ void MainWindow::on_openItemFile_clicked()
     }
     bool error=false;
     //load the Items
-    QDomElement child = root.firstChildElement("item");
+    tinyxml2::XMLElement child = root.FirstChildElement("item");
     while(!child.isNull())
     {
         if(!child.hasAttribute("id") || !child.hasAttribute("price"))
@@ -99,7 +99,7 @@ void MainWindow::on_openItemFile_clicked()
                 error=true;
             }
         }
-        child = child.nextSiblingElement("item");
+        child = child.NextSiblingElement("item");
     }
     if(error)
         QMessageBox::warning(this,tr("Error"),tr("Some error have been found into the file").arg(xmlFile.fileName()));
@@ -110,7 +110,7 @@ void MainWindow::on_openItemFile_clicked()
 void MainWindow::updateItemList()
 {
     ui->itemList->clear();
-    QHash<quint32,QDomElement>::const_iterator i = items.constBegin();
+    QHash<quint32,tinyxml2::XMLElement>::const_iterator i = items.constBegin();
     while (i != items.constEnd()) {
         QListWidgetItem *item=new QListWidgetItem(ui->itemList);
         item->setText(tr("Item %1").arg(i.key()));
@@ -141,27 +141,27 @@ void MainWindow::on_itemList_itemDoubleClicked(QListWidgetItem *item)
     //load name
     {
         ui->nameEditLanguageList->clear();
-        QDomElement name = items[selectedItem].firstChildElement("name");
+        tinyxml2::XMLElement name = items[selectedItem].FirstChildElement("name");
         while(!name.isNull())
         {
             if(!name.hasAttribute("lang"))
                 ui->nameEditLanguageList->addItem("en");
             else
                 ui->nameEditLanguageList->addItem(name.attribute("lang"));
-            name = name.nextSiblingElement("name");
+            name = name.NextSiblingElement("name");
         }
     }
     //load description
     {
         ui->descriptionEditLanguageList->clear();
-        QDomElement description = items[selectedItem].firstChildElement("description");
+        tinyxml2::XMLElement description = items[selectedItem].FirstChildElement("description");
         while(!description.isNull())
         {
             if(!description.hasAttribute("lang"))
                 ui->descriptionEditLanguageList->addItem("en");
             else
                 ui->descriptionEditLanguageList->addItem(description.attribute("lang"));
-            description = description.nextSiblingElement("description");
+            description = description.NextSiblingElement("description");
         }
     }
     ui->stackedWidget->setCurrentWidget(ui->page_edit);
@@ -185,9 +185,9 @@ void MainWindow::on_itemListAdd_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Id already taken"));
         return;
     }
-    QDomElement newXmlElement=domDocument.createElement("item");
+    tinyxml2::XMLElement newXmlElement=domDocument.createElement("item");
     newXmlElement.setAttribute("id",index);
-    domDocument.documentElement().appendChild(newXmlElement);
+    domDocument.RootElement().appendChild(newXmlElement);
     items[index]=newXmlElement;
     updateItemList();
 }
@@ -216,7 +216,7 @@ void MainWindow::on_itemListDelete_clicked()
     }
     bool ok;
     //load the bots
-    QDomElement child = domDocument.documentElement().firstChildElement("item");
+    tinyxml2::XMLElement child = domDocument.RootElement().FirstChildElement("item");
     while(!child.isNull())
     {
         if(!child.hasAttribute("id"))
@@ -237,7 +237,7 @@ void MainWindow::on_itemListDelete_clicked()
             else
                 qDebug() << QStringLiteral("Attribute \"id\" is not a number: bot.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber());
         }
-        child = child.nextSiblingElement("item");
+        child = child.NextSiblingElement("item");
     }
     items.remove(id);
     updateItemList();
@@ -268,7 +268,7 @@ void MainWindow::on_nameEditLanguageList_currentIndexChanged(int index)
     Q_UNUSED(index);
     loadingTheInformations=true;
     quint32 selectedItem=itemsUI.first()->data(99).toUInt();
-    QDomElement name = items[selectedItem].firstChildElement("name");
+    tinyxml2::XMLElement name = items[selectedItem].FirstChildElement("name");
     while(!name.isNull())
     {
         if((!name.hasAttribute("lang") && ui->nameEditLanguageList->currentText()=="en")
@@ -280,7 +280,7 @@ void MainWindow::on_nameEditLanguageList_currentIndexChanged(int index)
             loadingTheInformations=false;
             return;
         }
-        name = name.nextSiblingElement("name");
+        name = name.NextSiblingElement("name");
     }
     loadingTheInformations=false;
     QMessageBox::warning(this,tr("Warning"),tr("Text not found"));
@@ -298,7 +298,7 @@ void MainWindow::on_descriptionEditLanguageList_currentIndexChanged(int index)
     Q_UNUSED(index);
     loadingTheInformations=true;
     quint32 selectedItem=itemsUI.first()->data(99).toUInt();
-    QDomElement description = items[selectedItem].firstChildElement("description");
+    tinyxml2::XMLElement description = items[selectedItem].FirstChildElement("description");
     while(!description.isNull())
     {
         if((!description.hasAttribute("lang") && ui->descriptionEditLanguageList->currentText()=="en")
@@ -310,7 +310,7 @@ void MainWindow::on_descriptionEditLanguageList_currentIndexChanged(int index)
             loadingTheInformations=false;
             return;
         }
-        description = description.nextSiblingElement("description");
+        description = description.NextSiblingElement("description");
     }
     loadingTheInformations=false;
     QMessageBox::warning(this,tr("Warning"),tr("Text not found"));
@@ -329,7 +329,7 @@ void MainWindow::on_namePlainTextEdit_textChanged()
     if(itemsUI.size()!=1)
         return;
     quint32 selectedItem=itemsUI.first()->data(99).toUInt();
-    QDomElement name = items[selectedItem].firstChildElement("name");
+    tinyxml2::XMLElement name = items[selectedItem].FirstChildElement("name");
     while(!name.isNull())
     {
         if((!name.hasAttribute("lang") && ui->nameEditLanguageList->currentText()=="en")
@@ -348,7 +348,7 @@ void MainWindow::on_namePlainTextEdit_textChanged()
             name.appendChild(newTextElement);
             return;
         }
-        name = name.nextSiblingElement("name");
+        name = name.NextSiblingElement("name");
     }
     QMessageBox::warning(this,tr("Warning"),tr("Text not found"));
 }
@@ -361,7 +361,7 @@ void MainWindow::on_descriptionPlainTextEdit_textChanged()
     if(itemsUI.size()!=1)
         return;
     quint32 selectedItem=itemsUI.first()->data(99).toUInt();
-    QDomElement description = items[selectedItem].firstChildElement("description");
+    tinyxml2::XMLElement description = items[selectedItem].FirstChildElement("description");
     while(!description.isNull())
     {
         if((!description.hasAttribute("lang") && ui->descriptionEditLanguageList->currentText()=="en")
@@ -380,7 +380,7 @@ void MainWindow::on_descriptionPlainTextEdit_textChanged()
             description.appendChild(newTextElement);
             return;
         }
-        description = description.nextSiblingElement("description");
+        description = description.NextSiblingElement("description");
     }
     QMessageBox::warning(this,tr("Warning"),tr("Text not found"));
 }
@@ -432,7 +432,7 @@ void MainWindow::on_nameEditLanguageAdd_clicked()
     item->setData(99,lang);
     item->setData(98,name);
     item->setText(QStringLiteral("%1: %2").arg(lang).arg(name));
-    QDomElement newXmlElement=domDocument.createElement("name");
+    tinyxml2::XMLElement newXmlElement=domDocument.createElement("name");
     newXmlElement.setAttribute("lang",lang);
     QDomText newTextElement=domDocument.createTextNode(name);
     newXmlElement.appendChild(newTextElement);
@@ -448,7 +448,7 @@ void MainWindow::on_nameEditLanguageAdd_clicked()
 void MainWindow::on_nameEditLanguageRemove_clicked()
 {
     QString selectedLang=ui->nameEditLanguageList->currentText();
-    QDomElement child = domDocument.documentElement().firstChildElement("name");
+    tinyxml2::XMLElement child = domDocument.RootElement().FirstChildElement("name");
     while(!child.isNull())
     {
         QString lang="en";
@@ -459,7 +459,7 @@ void MainWindow::on_nameEditLanguageRemove_clicked()
             child.parentNode().removeChild(child);
             break;
         }
-        child = child.nextSiblingElement("name");
+        child = child.NextSiblingElement("name");
     }
     ui->nameEditLanguageList->removeItem(ui->nameEditLanguageList->currentIndex());
 }
@@ -476,7 +476,7 @@ void MainWindow::on_descriptionEditLanguageAdd_clicked()
     item->setData(99,lang);
     item->setData(98,description);
     item->setText(QStringLiteral("%1: %2").arg(lang).arg(description));
-    QDomElement newXmlElement=domDocument.createElement("description");
+    tinyxml2::XMLElement newXmlElement=domDocument.createElement("description");
     newXmlElement.setAttribute("lang",lang);
     QDomText newTextElement=domDocument.createTextNode(description);
     newXmlElement.appendChild(newTextElement);
@@ -492,7 +492,7 @@ void MainWindow::on_descriptionEditLanguageAdd_clicked()
 void MainWindow::on_descriptionEditLanguageRemove_clicked()
 {
     QString selectedLang=ui->descriptionEditLanguageList->currentText();
-    QDomElement child = domDocument.documentElement().firstChildElement("description");
+    tinyxml2::XMLElement child = domDocument.RootElement().FirstChildElement("description");
     while(!child.isNull())
     {
         QString lang="en";
@@ -503,7 +503,7 @@ void MainWindow::on_descriptionEditLanguageRemove_clicked()
             child.parentNode().removeChild(child);
             break;
         }
-        child = child.nextSiblingElement("description");
+        child = child.NextSiblingElement("description");
     }
     ui->descriptionEditLanguageList->removeItem(ui->descriptionEditLanguageList->currentIndex());
 }
