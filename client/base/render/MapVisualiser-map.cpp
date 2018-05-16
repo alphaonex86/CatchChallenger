@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <QFileInfo>
 #include <QPointer>
+#include <iostream>
 
 #include "../../../general/base/GeneralVariable.h"
 #include "../../../general/base/FacilityLib.h"
