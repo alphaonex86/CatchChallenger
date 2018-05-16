@@ -52,7 +52,7 @@ public:
     struct QuestStepWithConditionExtra
     {
         std::string text;
-        QuestConditionExtra condition;
+        std::vector<QuestConditionExtra> conditions;
     };
     struct QuestStepExtra
     {
