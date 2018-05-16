@@ -22,7 +22,7 @@ void BaseWindow::updatePageZoneCatch()
     if(QDateTime::currentMSecsSinceEpoch()<nextCatchOnScreen.toMSecsSinceEpoch())
     {
         int sec=static_cast<uint32_t>(nextCatchOnScreen.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch())/1000+1;
-        QString timeText;
+        std::string timeText;
         if(sec>3600*24*365*50)
             timeText="Time player: bug";
         else
@@ -54,7 +54,7 @@ void BaseWindow::captureCityYourAreNotLeader()
     zonecatch=false;
 }
 
-void BaseWindow::captureCityYourLeaderHaveStartInOtherCity(const QString &zone)
+void BaseWindow::captureCityYourLeaderHaveStartInOtherCity(const std::string &zone)
 {
     updater_page_zonecatch.stop();
     ui->stackedWidget->setCurrentWidget(ui->page_map);

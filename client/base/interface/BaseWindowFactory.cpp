@@ -10,7 +10,7 @@ using namespace CatchChallenger;
 
 void BaseWindow::on_factoryBuy_clicked()
 {
-    QList<QListWidgetItem *> selectedItems=ui->factoryProducts->selectedItems();
+    std::vector<QListWidgetItem *> selectedItems=ui->factoryProducts->selectedItems();
     if(selectedItems.size()!=1)
         return;
     on_factoryProducts_itemActivated(selectedItems.first());
@@ -74,7 +74,7 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
 
 void BaseWindow::on_factorySell_clicked()
 {
-    QList<QListWidgetItem *> selectedItems=ui->factoryResources->selectedItems();
+    std::vector<QListWidgetItem *> selectedItems=ui->factoryResources->selectedItems();
     if(selectedItems.size()!=1)
         return;
     on_factoryResources_itemActivated(selectedItems.first());
@@ -140,7 +140,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
 void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice)
 {
     const ItemToSellOrBuy &itemToSellOrBuy=itemsToBuy.first();
-    QHash<uint16_t,uint32_t> items;
+    std::unordered_map<uint16_t,uint32_t> items;
     switch(stat)
     {
         case BuyStat_Done:
@@ -260,7 +260,7 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const uint32_t &newP
     }
 }
 
-void BaseWindow::haveFactoryList(const uint32_t &remainingProductionTime,const QList<ItemToSellOrBuy> &resources,const QList<ItemToSellOrBuy> &products)
+void BaseWindow::haveFactoryList(const uint32_t &remainingProductionTime,const std::vector<ItemToSellOrBuy> &resources,const std::vector<ItemToSellOrBuy> &products)
 {
     industryStatus.products.clear();
     industryStatus.resources.clear();
@@ -332,7 +332,7 @@ void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatu
     {
         factoryInProduction=true;
         #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-        QString productionTime;
+        std::string productionTime;
         uint64_t remainingProductionTime=0;
         if((uint64_t)(industryStatus.last_update+industry.time)>(uint64_t)(QDateTime::currentMSecsSinceEpoch()/1000))
             remainingProductionTime=static_cast<uint32_t>((industryStatus.last_update+industry.time)-(QDateTime::currentMSecsSinceEpoch()/1000));

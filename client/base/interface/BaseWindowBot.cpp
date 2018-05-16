@@ -18,7 +18,7 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
     qDebug() << "check bot quest for: " << botId;
     #endif
     //do the not started quest here
-    const QList<uint16_t> &botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
+    const std::vector<uint16_t> &botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
     int index=0;
     while(index<botQuests.size())
     {
@@ -103,14 +103,14 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     }
     if(*actualBot.step.at(step)->Attribute(std::string("type"))=="text")
     {
-        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+        const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
         auto text = actualBot.step.at(step)->FirstChildElement(std::string("text"));
         if(!language.isEmpty() && language!=BaseWindow::text_en)
             while(text!=NULL)
             {
                 if(text->Attribute(std::string("lang"))!=NULL && *text->Attribute(std::string("lang"))==language.toStdString())
                 {
-                    QString textToShow=QString::fromStdString(text->GetText());
+                    std::string textToShow=QString::fromStdString(text->GetText());
                     textToShow=parseHtmlToDisplay(textToShow);
                     ui->IG_dialog_text->setText(textToShow);
                     ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
@@ -124,7 +124,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         {
             if(text->Attribute(std::string("lang"))==NULL || *text->Attribute(std::string("lang"))==language.toStdString())
             {
-                QString textToShow=text->GetText();
+                std::string textToShow=text->GetText();
                 textToShow=parseHtmlToDisplay(textToShow);
                 ui->IG_dialog_text->setText(textToShow);
                 ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
@@ -178,7 +178,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         client->getShopList(shopId);
         #else
         {
-            QList<ItemToSellOrBuy> items;
+            std::vector<ItemToSellOrBuy> items;
             const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
             unsigned int index=0;
             while(index<shop.items.size())
@@ -244,13 +244,13 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     }
     else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="quests")
     {
-        QString textToShow;
-        const QList<QPair<uint16_t,QString> > &quests=BaseWindow::getQuestList(actualBot.botId);
+        std::string textToShow;
+        const std::vector<std::pair<uint16_t,QString> > &quests=BaseWindow::getQuestList(actualBot.botId);
         if(step==1)
         {
             if(quests.size()==1)
             {
-                const QPair<uint16_t,QString> &quest=quests.at(0);
+                const std::pair<uint16_t,QString> &quest=quests.at(0);
                 if(DatapackClientLoader::datapackLoader.questsExtra.value(quest.first).autostep)
                 {
                     on_IG_dialog_text_linkActivated(QString("quest_%1").arg(quest.first));
@@ -271,7 +271,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             int index=0;
             while(index<quests.size())
             {
-                const QPair<uint32_t,QString> &quest=quests.at(index);
+                const std::pair<uint32_t,QString> &quest=quests.at(index);
                 textToShow+=QStringLiteral("<li><a href=\"quest_%1\">%2</a></li>").arg(quest.first).arg(quest.second);
                 index++;
             }
@@ -286,7 +286,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     }
     else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="clan")
     {
-        QString textToShow;
+        std::string textToShow;
         if(playerInformations.clan==0)
         {
             if(playerInformations.allow.find(ActionAllow_Clan)!=playerInformations.allow.cend())
@@ -406,7 +406,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             showTip(tr("City capture disabled"));
             return;
         }
-        QString zone=QString::fromStdString(*actualBot.step.at(step)->Attribute(std::string("zone")));
+        std::string zone=QString::fromStdString(*actualBot.step.at(step)->Attribute(std::string("zone")));
         if(DatapackClientLoader::datapackLoader.zonesExtra.contains(zone))
         {
             zonecatchName=DatapackClientLoader::datapackLoader.zonesExtra.value(zone).name;
@@ -428,7 +428,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     else if(*actualBot.step.at(step)->Attribute(std::string("type"))=="script")
     {
         QScriptEngine engine;
-        QString contents = QString::fromStdString(actualBot.step.at(step)->GetText());
+        std::string contents = QString::fromStdString(actualBot.step.at(step)->GetText());
         contents=QStringLiteral("function getTextEntryPoint()\n{\n")+contents+QStringLiteral("\n}");
         QScriptValue result = engine.evaluate(contents);
         if (result.isError()) {
@@ -591,7 +591,7 @@ void BaseWindow::getTextEntryPoint()
     QScriptEngine engine;
 
     Player_private_and_public_informations &playerInformations=client->get_player_informations();
-    const QString &client_logic=client->datapackPathMain()+DATAPACK_BASE_PATH_QUESTS2+"/"+QString::number(questId)+"/client_logic.js";
+    const std::string &client_logic=client->datapackPathMain()+DATAPACK_BASE_PATH_QUESTS2+"/"+QString::number(questId)+"/client_logic.js";
     if(!QFile(client_logic).exists())
     {
         showTip(tr("Client file missing"));
@@ -602,7 +602,7 @@ void BaseWindow::getTextEntryPoint()
     QFile scriptFile(client_logic);
     scriptFile.open(QIODevice::ReadOnly);
     QTextStream stream(&scriptFile);
-    QString contents = stream.readAll();
+    std::string contents = stream.readAll();
     contents="function getTextEntryPoint()\n{\n"+contents+"\n}";
     uint8_t currentQuestStepVar;
     bool haveNextStepQuestRequirementsVar;
@@ -712,7 +712,7 @@ void BaseWindow::showQuestText(const uint32_t &textId)
         return;
     }
 
-    QString textToShow=parseHtmlToDisplay(DatapackClientLoader::datapackLoader.questsText.value(questId).text.value(textId));
+    std::string textToShow=parseHtmlToDisplay(DatapackClientLoader::datapackLoader.questsText.value(questId).text.value(textId));
     ui->IG_dialog_text->setText(textToShow);
     ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
     ui->IG_dialog->setVisible(true);
@@ -827,14 +827,14 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
     return haveReputationRequirements(quest.requirements.reputation);
 }
 
-void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
+void BaseWindow::on_IG_dialog_text_linkActivated(const std::string &rawlink)
 {
     ui->IG_dialog->setVisible(false);
     QStringList stringList=rawlink.split(";");
     int index=0;
     while(index<stringList.size())
     {
-        const QString &link=stringList.at(index);
+        const std::string &link=stringList.at(index);
         qDebug() << "parsed link to use: " << link;
         if(link.startsWith("http://") || link.startsWith("https://"))
         {
@@ -846,7 +846,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
         bool ok;
         if(link.startsWith("quest_"))
         {
-            QString tempLink=link;
+            std::string tempLink=link;
             tempLink.remove("quest_");
             const uint16_t &questId=tempLink.toUShort(&ok);
             if(!ok)
@@ -886,7 +886,7 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
         else if(link=="clan_create")
         {
             bool ok;
-            QString text = QInputDialog::getText(this,tr("Give the clan name"),tr("Clan name:"),QLineEdit::Normal,QString(), &ok);
+            std::string text = QInputDialog::getText(this,tr("Give the clan name"),tr("Clan name:"),QLineEdit::Normal,QString(), &ok);
             if(ok && !text.isEmpty())
             {
                 actionClan << ActionClan_Create;
@@ -940,13 +940,13 @@ bool BaseWindow::startQuest(const Quest &quest)
     return true;
 }
 
-QList<QPair<uint16_t,QString> > BaseWindow::getQuestList(const uint16_t &botId) const
+std::vector<std::pair<uint16_t,QString> > BaseWindow::getQuestList(const uint16_t &botId) const
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    QList<QPair<uint16_t,QString> > entryList;
-    QPair<uint16_t,QString> oneEntry;
+    std::vector<std::pair<uint16_t,QString> > entryList;
+    std::pair<uint16_t,QString> oneEntry;
     //do the not started quest here
-    QList<uint16_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
+    std::vector<uint16_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.values(botId);
     int index=0;
     while(index<botQuests.size())
     {

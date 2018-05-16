@@ -27,71 +27,71 @@
 
 DatapackClientLoader DatapackClientLoader::datapackLoader;
 
-const QString DatapackClientLoader::text_list=QStringLiteral("list");
-const QString DatapackClientLoader::text_reputation=QStringLiteral("reputation");
-const QString DatapackClientLoader::text_type=QStringLiteral("type");
-const QString DatapackClientLoader::text_name=QStringLiteral("name");
-const QString DatapackClientLoader::text_en=QStringLiteral("en");
-const QString DatapackClientLoader::text_lang=QStringLiteral("lang");
-const QString DatapackClientLoader::text_level=QStringLiteral("level");
-const QString DatapackClientLoader::text_point=QStringLiteral("point");
-const QString DatapackClientLoader::text_text=QStringLiteral("text");
-const QString DatapackClientLoader::text_id=QStringLiteral("id");
-const QString DatapackClientLoader::text_image=QStringLiteral("image");
-const QString DatapackClientLoader::text_description=QStringLiteral("description");
-const QString DatapackClientLoader::text_item=QStringLiteral("item");
-const QString DatapackClientLoader::text_slashdefinitiondotxml=QStringLiteral("/definition.xml");
-const QString DatapackClientLoader::text_quest=QStringLiteral("quest");
-const QString DatapackClientLoader::text_rewards=QStringLiteral("rewards");
-const QString DatapackClientLoader::text_show=QStringLiteral("show");
-const QString DatapackClientLoader::text_autostep=QStringLiteral("autostep");
-const QString DatapackClientLoader::text_yes=QStringLiteral("yes");
-const QString DatapackClientLoader::text_true=QStringLiteral("true");
-const QString DatapackClientLoader::text_step=QStringLiteral("step");
-const QString DatapackClientLoader::text_bot=QStringLiteral("bot");
-const QString DatapackClientLoader::text_dotcomma=QStringLiteral(";");
-const QString DatapackClientLoader::text_client_logic=QStringLiteral("client_logic");
-const QString DatapackClientLoader::text_map=QStringLiteral("map");
-const QString DatapackClientLoader::text_items=QStringLiteral("items");
-const QString DatapackClientLoader::text_zone=QStringLiteral("zone");
-const QString DatapackClientLoader::text_music=QStringLiteral("music");
-const QString DatapackClientLoader::text_backgroundsound=QStringLiteral("backgroundsound");
+const std::string DatapackClientLoader::text_list=QStringLiteral("list");
+const std::string DatapackClientLoader::text_reputation=QStringLiteral("reputation");
+const std::string DatapackClientLoader::text_type=QStringLiteral("type");
+const std::string DatapackClientLoader::text_name=QStringLiteral("name");
+const std::string DatapackClientLoader::text_en=QStringLiteral("en");
+const std::string DatapackClientLoader::text_lang=QStringLiteral("lang");
+const std::string DatapackClientLoader::text_level=QStringLiteral("level");
+const std::string DatapackClientLoader::text_point=QStringLiteral("point");
+const std::string DatapackClientLoader::text_text=QStringLiteral("text");
+const std::string DatapackClientLoader::text_id=QStringLiteral("id");
+const std::string DatapackClientLoader::text_image=QStringLiteral("image");
+const std::string DatapackClientLoader::text_description=QStringLiteral("description");
+const std::string DatapackClientLoader::text_item=QStringLiteral("item");
+const std::string DatapackClientLoader::text_slashdefinitiondotxml=QStringLiteral("/definition.xml");
+const std::string DatapackClientLoader::text_quest=QStringLiteral("quest");
+const std::string DatapackClientLoader::text_rewards=QStringLiteral("rewards");
+const std::string DatapackClientLoader::text_show=QStringLiteral("show");
+const std::string DatapackClientLoader::text_autostep=QStringLiteral("autostep");
+const std::string DatapackClientLoader::text_yes=QStringLiteral("yes");
+const std::string DatapackClientLoader::text_true=QStringLiteral("true");
+const std::string DatapackClientLoader::text_step=QStringLiteral("step");
+const std::string DatapackClientLoader::text_bot=QStringLiteral("bot");
+const std::string DatapackClientLoader::text_dotcomma=QStringLiteral(";");
+const std::string DatapackClientLoader::text_client_logic=QStringLiteral("client_logic");
+const std::string DatapackClientLoader::text_map=QStringLiteral("map");
+const std::string DatapackClientLoader::text_items=QStringLiteral("items");
+const std::string DatapackClientLoader::text_zone=QStringLiteral("zone");
+const std::string DatapackClientLoader::text_music=QStringLiteral("music");
+const std::string DatapackClientLoader::text_backgroundsound=QStringLiteral("backgroundsound");
 
-const QString DatapackClientLoader::text_monster=QStringLiteral("monster");
-const QString DatapackClientLoader::text_monsters=QStringLiteral("monsters");
-const QString DatapackClientLoader::text_kind=QStringLiteral("kind");
-const QString DatapackClientLoader::text_habitat=QStringLiteral("habitat");
-const QString DatapackClientLoader::text_slash=QStringLiteral("/");
-const QString DatapackClientLoader::text_types=QStringLiteral("types");
-const QString DatapackClientLoader::text_buff=QStringLiteral("buff");
-const QString DatapackClientLoader::text_skill=QStringLiteral("skill");
-const QString DatapackClientLoader::text_buffs=QStringLiteral("buffs");
-const QString DatapackClientLoader::text_skills=QStringLiteral("skills");
-const QString DatapackClientLoader::text_fight=QStringLiteral("fight");
-const QString DatapackClientLoader::text_fights=QStringLiteral("fights");
-const QString DatapackClientLoader::text_start=QStringLiteral("start");
-const QString DatapackClientLoader::text_win=QStringLiteral("win");
-const QString DatapackClientLoader::text_dotxml=QStringLiteral(".xml");
-const QString DatapackClientLoader::text_dottsx=QStringLiteral(".tsx");
-const QString DatapackClientLoader::text_visual=QStringLiteral("visual");
-const QString DatapackClientLoader::text_category=QStringLiteral("category");
-const QString DatapackClientLoader::text_alpha=QStringLiteral("alpha");
-const QString DatapackClientLoader::text_color=QStringLiteral("color");
-const QString DatapackClientLoader::text_event=QStringLiteral("event");
-const QString DatapackClientLoader::text_value=QStringLiteral("value");
+const std::string DatapackClientLoader::text_monster=QStringLiteral("monster");
+const std::string DatapackClientLoader::text_monsters=QStringLiteral("monsters");
+const std::string DatapackClientLoader::text_kind=QStringLiteral("kind");
+const std::string DatapackClientLoader::text_habitat=QStringLiteral("habitat");
+const std::string DatapackClientLoader::text_slash=QStringLiteral("/");
+const std::string DatapackClientLoader::text_types=QStringLiteral("types");
+const std::string DatapackClientLoader::text_buff=QStringLiteral("buff");
+const std::string DatapackClientLoader::text_skill=QStringLiteral("skill");
+const std::string DatapackClientLoader::text_buffs=QStringLiteral("buffs");
+const std::string DatapackClientLoader::text_skills=QStringLiteral("skills");
+const std::string DatapackClientLoader::text_fight=QStringLiteral("fight");
+const std::string DatapackClientLoader::text_fights=QStringLiteral("fights");
+const std::string DatapackClientLoader::text_start=QStringLiteral("start");
+const std::string DatapackClientLoader::text_win=QStringLiteral("win");
+const std::string DatapackClientLoader::text_dotxml=QStringLiteral(".xml");
+const std::string DatapackClientLoader::text_dottsx=QStringLiteral(".tsx");
+const std::string DatapackClientLoader::text_visual=QStringLiteral("visual");
+const std::string DatapackClientLoader::text_category=QStringLiteral("category");
+const std::string DatapackClientLoader::text_alpha=QStringLiteral("alpha");
+const std::string DatapackClientLoader::text_color=QStringLiteral("color");
+const std::string DatapackClientLoader::text_event=QStringLiteral("event");
+const std::string DatapackClientLoader::text_value=QStringLiteral("value");
 
-const QString DatapackClientLoader::text_tileheight=QStringLiteral("tileheight");
-const QString DatapackClientLoader::text_tilewidth=QStringLiteral("tilewidth");
-const QString DatapackClientLoader::text_x=QStringLiteral("x");
-const QString DatapackClientLoader::text_y=QStringLiteral("y");
-const QString DatapackClientLoader::text_object=QStringLiteral("object");
-const QString DatapackClientLoader::text_objectgroup=QStringLiteral("objectgroup");
-const QString DatapackClientLoader::text_Object=QStringLiteral("Object");
-const QString DatapackClientLoader::text_layer=QStringLiteral("layer");
-const QString DatapackClientLoader::text_Dirt=QStringLiteral("Dirt");
-const QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPBASE=DATAPACK_BASE_PATH_MAPBASE;
-QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN;
-QString DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1 "na" DATAPACK_BASE_PATH_MAPSUB2;
+const std::string DatapackClientLoader::text_tileheight=QStringLiteral("tileheight");
+const std::string DatapackClientLoader::text_tilewidth=QStringLiteral("tilewidth");
+const std::string DatapackClientLoader::text_x=QStringLiteral("x");
+const std::string DatapackClientLoader::text_y=QStringLiteral("y");
+const std::string DatapackClientLoader::text_object=QStringLiteral("object");
+const std::string DatapackClientLoader::text_objectgroup=QStringLiteral("objectgroup");
+const std::string DatapackClientLoader::text_Object=QStringLiteral("Object");
+const std::string DatapackClientLoader::text_layer=QStringLiteral("layer");
+const std::string DatapackClientLoader::text_Dirt=QStringLiteral("Dirt");
+const std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPBASE=DATAPACK_BASE_PATH_MAPBASE;
+std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN;
+std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1 "na" DATAPACK_BASE_PATH_MAPSUB2;
 
 DatapackClientLoader::DatapackClientLoader()
 {
@@ -125,7 +125,7 @@ bool DatapackClientLoader::isParsingDatapack()
     return inProgress;
 }
 
-void DatapackClientLoader::parseDatapack(const QString &datapackPath)
+void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
 {
     if(inProgress)
     {
@@ -179,7 +179,7 @@ void DatapackClientLoader::parseDatapack(const QString &datapackPath)
     emit datapackParsed();
 }
 
-void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode, const QString &subDatapackCode)
+void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode)
 {
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+"/";
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1+mainDatapackCode+DATAPACK_BASE_PATH_MAPSUB2+subDatapackCode+"/";
@@ -254,17 +254,17 @@ void DatapackClientLoader::parseDatapackMainSub(const QString &mainDatapackCode,
     emit datapackParsedMainSub();
 }
 
-QString DatapackClientLoader::getDatapackPath()
+std::string DatapackClientLoader::getDatapackPath()
 {
     return datapackPath;
 }
 
-QString DatapackClientLoader::getMainDatapackPath()
+std::string DatapackClientLoader::getMainDatapackPath()
 {
     return DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN;
 }
 
-QString DatapackClientLoader::getSubDatapackPath()
+std::string DatapackClientLoader::getSubDatapackPath()
 {
     return DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB;
 }
@@ -273,7 +273,7 @@ void DatapackClientLoader::parseVisualCategory()
 {
     QDomDocument domDocument;
     //open and quick check the file
-    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("visualcategory.xml");
+    const std::string &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("visualcategory.xml");
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
         domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
     else
@@ -286,7 +286,7 @@ void DatapackClientLoader::parseVisualCategory()
         }
         const QByteArray &xmlContent=itemsFile.readAll();
         itemsFile.close();
-        QString errorStr;
+        std::string errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
@@ -429,7 +429,7 @@ void DatapackClientLoader::parseReputationExtra()
     }
     QDomDocument domDocument;
     //open and quick check the file
-    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYERBASE)+QStringLiteral("reputation.xml");
+    const std::string &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_PLAYERBASE)+QStringLiteral("reputation.xml");
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
         domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
     else
@@ -442,7 +442,7 @@ void DatapackClientLoader::parseReputationExtra()
         }
         const QByteArray &xmlContent=itemsFile.readAll();
         itemsFile.close();
-        QString errorStr;
+        std::string errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
@@ -512,7 +512,7 @@ void DatapackClientLoader::parseReputationExtra()
                     }
                 }
 
-                QList<int32_t> point_list_positive,point_list_negative;
+                std::vector<int32_t> point_list_positive,point_list_negative;
                 QStringList text_positive,text_negative;
                 QDomElement level = item.firstChildElement(DatapackClientLoader::text_level);
                 ok=true;
@@ -523,12 +523,12 @@ void DatapackClientLoader::parseReputationExtra()
                         if(level.hasAttribute(DatapackClientLoader::text_point))
                         {
                             const int32_t &point=level.attribute(DatapackClientLoader::text_point).toInt(&ok);
-                            //QString text_val;
+                            //std::string text_val;
                             if(ok)
                             {
                                 ok=true;
 
-                                QString text;
+                                std::string text;
                                 //load the name
                                 {
                                     bool name_found=false;
@@ -652,7 +652,7 @@ void DatapackClientLoader::parseReputationExtra()
                     if(!point_list_negative.empty() && !point_list_negative.contains(-1))
                     {
                         //qDebug() << (QStringLiteral("Unable to open the file: %1, no starting level for the negative client: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                        QList<int32_t> point_list_negative_new;
+                        std::vector<int32_t> point_list_negative_new;
                         int lastValue=-1;
                         int index=0;
                         while(index<point_list_negative.size())
@@ -712,7 +712,7 @@ void DatapackClientLoader::parseItemsExtra()
             file_index++;
             continue;
         }
-        const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+fileList.at(file_index);
+        const std::string &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_ITEM)+fileList.at(file_index);
         if(!QFileInfo(file).isFile())
         {
             file_index++;
@@ -738,7 +738,7 @@ void DatapackClientLoader::parseItemsExtra()
             }
             const QByteArray &xmlContent=itemsFile.readAll();
             itemsFile.close();
-            QString errorStr;
+            std::string errorStr;
             int errorLine,errorColumn;
             if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
@@ -757,7 +757,7 @@ void DatapackClientLoader::parseItemsExtra()
             continue;
         }
 
-        const QString &folder=QFileInfo(file).absolutePath()+DatapackClientLoader::text_slash;
+        const std::string &folder=QFileInfo(file).absolutePath()+DatapackClientLoader::text_slash;
         //load the content
         bool ok;
         QDomElement item = root.firstChildElement(DatapackClientLoader::text_item);
@@ -777,7 +777,7 @@ void DatapackClientLoader::parseItemsExtra()
                             //load the image
                             if(item.hasAttribute(DatapackClientLoader::text_image))
                             {
-                                const QString &imagePath=folder+item.attribute(DatapackClientLoader::text_image);
+                                const std::string &imagePath=folder+item.attribute(DatapackClientLoader::text_image);
                                 QPixmap image(imagePath);
                                 if(image.isNull())
                                 {
@@ -916,12 +916,12 @@ void DatapackClientLoader::parseMaps()
     int index=0;
     QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
     QRegularExpression mapExclude(QStringLiteral("[\"']"));
-    QHash<QString,QString> sortToFull;
+    std::unordered_map<QString,QString> sortToFull;
     QStringList tempMapList;
     while(index<size)
     {
-        const QString &fileName=returnList.at(index);
-        QString sortFileName=fileName;
+        const std::string &fileName=returnList.at(index);
+        std::string sortFileName=fileName;
         if(fileName.contains(mapFilter) && !fileName.contains(mapExclude))
         {
             sortFileName.remove(mapFilter);
@@ -931,7 +931,7 @@ void DatapackClientLoader::parseMaps()
         index++;
     }
     tempMapList.sort();
-    const QString &basePath=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN;
+    const std::string &basePath=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN;
     index=0;
     while(index<tempMapList.size())
     {
@@ -939,7 +939,7 @@ void DatapackClientLoader::parseMaps()
         fullMapPathToId[QFileInfo(basePath+sortToFull.value(tempMapList.at(index))).absoluteFilePath()]=index;
         maps << sortToFull.value(tempMapList.at(index));
 
-        const QString &fileName=sortToFull.value(tempMapList.at(index));
+        const std::string &fileName=sortToFull.value(tempMapList.at(index));
         {
             QDomDocument domDocument;
             QFile itemsFile(basePath+fileName);
@@ -951,7 +951,7 @@ void DatapackClientLoader::parseMaps()
             }
             const QByteArray &xmlContent=itemsFile.readAll();
             itemsFile.close();
-            QString errorStr;
+            std::string errorStr;
             int errorLine,errorColumn;
             if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
@@ -1013,7 +1013,7 @@ void DatapackClientLoader::parseMaps()
                     while(index<mapLoader.map_to_send.dirts.size())
                     {
                         const CatchChallenger::Map_to_send::DirtOnMap_Semi &dirt=mapLoader.map_to_send.dirts.at(index);
-                        plantOnMap[basePath+fileName][QPair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=pointOnMapIndexPlant;
+                        plantOnMap[basePath+fileName][std::pair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=pointOnMapIndexPlant;
                         PlantIndexContent plantIndexContent;
                         plantIndexContent.map=basePath+fileName;
                         plantIndexContent.x=dirt.point.x;
@@ -1054,7 +1054,7 @@ void DatapackClientLoader::parseMaps()
                                             if(ok && object_x<256)
                                             {
                                                 itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+fileName]
-                                                        [QPair<uint8_t,uint8_t>(static_cast<uint8_t>(object_x),static_cast<uint8_t>(object_y))]=pointOnMapIndexItem;
+                                                        [std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(object_x),static_cast<uint8_t>(object_y))]=pointOnMapIndexItem;
                                                 pointOnMapIndexItem++;
                                             }
                                             else
@@ -1172,7 +1172,7 @@ void DatapackClientLoader::parseQuestsExtra()
         const uint16_t &id=static_cast<uint16_t>(tempid);
 
         QDomDocument domDocument;
-        const QString &file=entryList.at(index).absoluteFilePath()+DatapackClientLoader::text_slashdefinitiondotxml;
+        const std::string &file=entryList.at(index).absoluteFilePath()+DatapackClientLoader::text_slashdefinitiondotxml;
         if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
             domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
         else
@@ -1186,7 +1186,7 @@ void DatapackClientLoader::parseQuestsExtra()
             }
             const QByteArray &xmlContent=itemsFile.readAll();
             itemsFile.close();
-            QString errorStr;
+            std::string errorStr;
             int errorLine,errorColumn;
             if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
             {
@@ -1264,7 +1264,7 @@ void DatapackClientLoader::parseQuestsExtra()
                     autostep=true;
         }
 
-        QHash<uint32_t,QString> steps;
+        std::unordered_map<uint32_t,QString> steps;
         {
             //load step
             QDomElement step = root.firstChildElement(DatapackClientLoader::text_step);
@@ -1383,7 +1383,7 @@ void DatapackClientLoader::parseQuestsText()
             index++;
             continue;
         }
-        const QString &file=entryList.at(index).absoluteFilePath()+QStringLiteral("/text.xml");
+        const std::string &file=entryList.at(index).absoluteFilePath()+QStringLiteral("/text.xml");
         QFile itemsFile(file);
         if(!itemsFile.open(QIODevice::ReadOnly))
         {
@@ -1394,7 +1394,7 @@ void DatapackClientLoader::parseQuestsText()
         const QByteArray &xmlContent=itemsFile.readAll();
         itemsFile.close();
         QDomDocument domDocument;
-        QString errorStr;
+        std::string errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
@@ -1412,7 +1412,7 @@ void DatapackClientLoader::parseQuestsText()
 
         //load the content
         bool ok;
-        QHash<uint32_t,QString> client_logic_texts;
+        std::unordered_map<uint32_t,QString> client_logic_texts;
         //load text
         QDomElement client_logic = root.firstChildElement(DatapackClientLoader::text_client_logic);
         while(!client_logic.isNull())
@@ -1484,7 +1484,7 @@ void DatapackClientLoader::parseQuestsText()
 
 void DatapackClientLoader::parseAudioAmbiance()
 {
-    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("music.xml");
+    const std::string &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+QStringLiteral("music.xml");
     QDomDocument domDocument;
     //open and quick check the file
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
@@ -1500,7 +1500,7 @@ void DatapackClientLoader::parseAudioAmbiance()
         const QByteArray &xmlContent=itemsFile.readAll();
         itemsFile.close();
 
-        QString errorStr;
+        std::string errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
@@ -1525,7 +1525,7 @@ void DatapackClientLoader::parseAudioAmbiance()
         {
             if(item.hasAttribute(DatapackClientLoader::text_type))
             {
-                const QString &type=item.attribute(DatapackClientLoader::text_type);
+                const std::string &type=item.attribute(DatapackClientLoader::text_type);
                 if(!DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
                     audioAmbiance[type]=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+item.text();
                 else
@@ -1582,8 +1582,8 @@ void DatapackClientLoader::parseZoneExtra()
             index++;
             continue;
         }
-        QString zoneCodeName=entryList.at(index).fileName();
-        const QString &file=entryList.at(index).absoluteFilePath();
+        std::string zoneCodeName=entryList.at(index).fileName();
+        const std::string &file=entryList.at(index).absoluteFilePath();
         zoneCodeName.remove(removeXml);
         QFile itemsFile(file);
         if(!itemsFile.open(QIODevice::ReadOnly))
@@ -1595,7 +1595,7 @@ void DatapackClientLoader::parseZoneExtra()
         const QByteArray &xmlContent=itemsFile.readAll();
         itemsFile.close();
         QDomDocument domDocument;
-        QString errorStr;
+        std::string errorStr;
         int errorLine,errorColumn;
         if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
         {
@@ -1665,8 +1665,8 @@ void DatapackClientLoader::parseZoneExtra()
                 {
                     if(item.hasAttribute(DatapackClientLoader::text_type) && item.hasAttribute(DatapackClientLoader::text_backgroundsound))
                     {
-                        const QString &type=item.attribute(DatapackClientLoader::text_type);
-                        const QString &backgroundsound=item.attribute(DatapackClientLoader::text_backgroundsound);
+                        const std::string &type=item.attribute(DatapackClientLoader::text_type);
+                        const std::string &backgroundsound=item.attribute(DatapackClientLoader::text_backgroundsound);
                         zonesExtra[zoneCodeName].audioAmbiance[type]=backgroundsound;
                     }
                     else
@@ -1690,10 +1690,10 @@ void DatapackClientLoader::parseTileset()
     int index=0;
     while(index<fileList.size())
     {
-        const QString &filePath=fileList.at(index);
+        const std::string &filePath=fileList.at(index);
         if(filePath.endsWith(DatapackClientLoader::text_dottsx))
         {
-            const QString &source=QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+filePath).absoluteFilePath();
+            const std::string &source=QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPBASE)+filePath).absoluteFilePath();
             QFile file(source);
             if(file.open(QIODevice::ReadOnly))
             {

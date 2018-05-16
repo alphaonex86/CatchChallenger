@@ -21,23 +21,23 @@ PathFinding::~PathFinding()
     wait();
 }
 
-void PathFinding::searchPath(const QHash<QString, MapVisualiserThread::Map_full *> &all_map,const QString &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const QString &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items)
+void PathFinding::searchPath(const std::unordered_map<QString, MapVisualiserThread::Map_full *> &all_map,const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::unordered_map<uint16_t,uint32_t> &items)
 {
     //path finding buggy
     /*{
-        QList<QPair<CatchChallenger::Orientation,uint8_t> > path;
+        QVector<std::pair<CatchChallenger::Orientation,uint8_t> > path;
         emit result(path);
         return;
     }*/
     if(!all_map.contains(current_map))
     {
-        QList<QPair<CatchChallenger::Orientation,uint8_t> > path;
+        QVector<std::pair<CatchChallenger::Orientation,uint8_t> > path;
         emit result(QString(),0,0,path);
         return;
     }
     tryCancel=false;
-    QHash<QString,SimplifiedMapForPathFinding> simplifiedMapList;
-    QHash<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
+    std::unordered_map<QString,SimplifiedMapForPathFinding> simplifiedMapList;
+    std::unordered_map<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
     //load the data
     while (i != all_map.constEnd()) {
         if(i.value()->displayed)
@@ -78,7 +78,7 @@ void PathFinding::searchPath(const QHash<QString, MapVisualiserThread::Map_full 
         ++i;
     }
     //resolv the border
-    QHash<QString,SimplifiedMapForPathFinding>::const_iterator j = simplifiedMapList.constBegin();
+    std::unordered_map<QString,SimplifiedMapForPathFinding>::const_iterator j = simplifiedMapList.constBegin();
     while (j != simplifiedMapList.constEnd()) {
         if(all_map.contains(QString::fromStdString(all_map.value(j.key())->logicalMap.border_semi.bottom.fileName)))
         {
@@ -125,7 +125,7 @@ void PathFinding::searchPath(const QHash<QString, MapVisualiserThread::Map_full 
     //load for thread and unload if needed
     {
         QMutexLocker locker(&mutex);
-        QHash<QString,SimplifiedMapForPathFinding>::const_iterator k = this->simplifiedMapList.constBegin();
+        std::unordered_map<QString,SimplifiedMapForPathFinding>::const_iterator k = this->simplifiedMapList.constBegin();
         while (k != this->simplifiedMapList.constEnd()) {
             delete k.value().dirt;
             delete k.value().ledges;
@@ -154,7 +154,7 @@ bool PathFinding::canGoOn(const SimplifiedMapForPathFinding &simplifiedMapForPat
 }
 
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
-void PathFinding::extraControlOnData(const QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > &controlVar,const CatchChallenger::Orientation &orientation)
+void PathFinding::extraControlOnData(const QVector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &controlVar,const CatchChallenger::Orientation &orientation)
 {
     if(!controlVar.isEmpty())
     {
@@ -162,7 +162,7 @@ void PathFinding::extraControlOnData(const QList<QPair<CatchChallenger::Orientat
         CatchChallenger::Orientation lastOrientation=controlVar.first().first;
         while(index<controlVar.size())
         {
-            const QPair<CatchChallenger::Orientation,uint8_t/*step number*/> &controlVarCurrent=controlVar.at(index);
+            const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &controlVarCurrent=controlVar.at(index);
             if(controlVarCurrent.second<1)
             {
                 qDebug() << "wrong path finding data, lower than 1 step";
@@ -212,14 +212,14 @@ void PathFinding::extraControlOnData(const QList<QPair<CatchChallenger::Orientat
 }
 #endif
 
-void PathFinding::internalSearchPath(const QString &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const QString &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items)
+void PathFinding::internalSearchPath(const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::unordered_map<uint16_t,uint32_t> &items)
 {
     Q_UNUSED(items);
 
     QTime time;
     time.restart();
 
-    QHash<QString,SimplifiedMapForPathFinding> simplifiedMapList;
+    std::unordered_map<QString,SimplifiedMapForPathFinding> simplifiedMapList;
     //transfer from object to local variable
     {
         QMutexLocker locker(&mutex);
@@ -229,7 +229,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
     //resolv the path
     if(!tryCancel)
     {
-        QList<MapPointToParse> mapPointToParseList;
+        QVector<MapPointToParse> mapPointToParseList;
 
         //init the first case
         {
@@ -239,19 +239,19 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
             tempPoint.y=y;
             mapPointToParseList <<  tempPoint;
 
-            QPair<uint8_t,uint8_t> coord(tempPoint.x,tempPoint.y);
+            std::pair<uint8_t,uint8_t> coord(tempPoint.x,tempPoint.y);
             SimplifiedMapForPathFinding &tempMap=simplifiedMapList[current_map];
             tempMap.pathToGo[coord].left <<
-                    QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1);
+                    std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1);
             tempMap.pathToGo[coord].right <<
-                    QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1);
+                    std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1);
             tempMap.pathToGo[coord].bottom <<
-                    QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1);
+                    std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1);
             tempMap.pathToGo[coord].top <<
-                    QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1);
+                    std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1);
         }
 
-        QPair<uint8_t,uint8_t> coord;
+        std::pair<uint8_t,uint8_t> coord;
         while(!mapPointToParseList.isEmpty())
         {
             const MapPointToParse &tempPoint=mapPointToParseList.takeFirst();
@@ -269,7 +269,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                 }
                 {
                     //if the right case have been parsed
-                    coord=QPair<uint8_t,uint8_t>(tempPoint.x+1,tempPoint.y);
+                    coord=std::pair<uint8_t,uint8_t>(tempPoint.x+1,tempPoint.y);
                     if(simplifiedMapList.value(current_map).pathToGo.contains(coord))
                     {
                         const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapList.value(current_map).pathToGo.value(coord);
@@ -281,16 +281,16 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                         if(pathToGo.top.isEmpty() || pathToGo.top.size()>(nearPathToGo.left.size()+1))
                         {
                             pathToGo.top=nearPathToGo.left;
-                            pathToGo.top << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1);
+                            pathToGo.top << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1);
                         }
                         if(pathToGo.bottom.isEmpty() || pathToGo.bottom.size()>(nearPathToGo.left.size()+1))
                         {
                             pathToGo.bottom=nearPathToGo.left;
-                            pathToGo.bottom << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1);
+                            pathToGo.bottom << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1);
                         }
                     }
                     //if the left case have been parsed
-                    coord=QPair<uint8_t,uint8_t>(tempPoint.x-1,tempPoint.y);
+                    coord=std::pair<uint8_t,uint8_t>(tempPoint.x-1,tempPoint.y);
                     if(simplifiedMapList.value(current_map).pathToGo.contains(coord))
                     {
                         const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapList.value(current_map).pathToGo.value(coord);
@@ -302,16 +302,16 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                         if(pathToGo.top.isEmpty() || pathToGo.top.size()>(nearPathToGo.right.size()+1))
                         {
                             pathToGo.top=nearPathToGo.right;
-                            pathToGo.top << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1);
+                            pathToGo.top << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1);
                         }
                         if(pathToGo.bottom.isEmpty() || pathToGo.bottom.size()>(nearPathToGo.right.size()+1))
                         {
                             pathToGo.bottom=nearPathToGo.right;
-                            pathToGo.bottom << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1);
+                            pathToGo.bottom << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1);
                         }
                     }
                     //if the top case have been parsed
-                    coord=QPair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y+1);
+                    coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y+1);
                     if(simplifiedMapList.value(current_map).pathToGo.contains(coord))
                     {
                         const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapList.value(current_map).pathToGo.value(coord);
@@ -323,16 +323,16 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                         if(pathToGo.left.isEmpty() || pathToGo.left.size()>(nearPathToGo.top.size()+1))
                         {
                             pathToGo.left=nearPathToGo.top;
-                            pathToGo.left << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1);
+                            pathToGo.left << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1);
                         }
                         if(pathToGo.right.isEmpty() || pathToGo.right.size()>(nearPathToGo.top.size()+1))
                         {
                             pathToGo.right=nearPathToGo.top;
-                            pathToGo.right << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1);
+                            pathToGo.right << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1);
                         }
                     }
                     //if the bottom case have been parsed
-                    coord=QPair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y-1);
+                    coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y-1);
                     if(simplifiedMapList.value(current_map).pathToGo.contains(coord))
                     {
                         const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapList.value(current_map).pathToGo.value(coord);
@@ -344,18 +344,18 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                         if(pathToGo.left.isEmpty() || pathToGo.left.size()>(nearPathToGo.bottom.size()+1))
                         {
                             pathToGo.left=nearPathToGo.bottom;
-                            pathToGo.left << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1);
+                            pathToGo.left << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1);
                         }
                         if(pathToGo.right.isEmpty() || pathToGo.right.size()>(nearPathToGo.bottom.size()+1))
                         {
                             pathToGo.right=nearPathToGo.bottom;
-                            pathToGo.right << QPair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1);
+                            pathToGo.right << std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1);
                         }
                     }
                 }
                 index++;
             }
-            coord=QPair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y);
+            coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y);
             if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -369,7 +369,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
             if(destination_map==current_map && tempPoint.x==destination_x && tempPoint.y==destination_y)
             {
                 tryCancel=false;
-                QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar;
+                QVector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > returnedVar;
                 if(returnedVar.isEmpty() || pathToGo.bottom.size()<returnedVar.size())
                     if(!pathToGo.bottom.isEmpty())
                         returnedVar=pathToGo.bottom;
@@ -408,7 +408,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
             //add to point to parse
             {
                 //if the right case have been parsed
-                coord=QPair<uint8_t,uint8_t>(tempPoint.x+1,tempPoint.y);
+                coord=std::pair<uint8_t,uint8_t>(tempPoint.x+1,tempPoint.y);
                 if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
                 {
                     MapPointToParse newPoint=tempPoint;
@@ -416,7 +416,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                     if(newPoint.x<simplifiedMapList.value(current_map).width)
                         if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
-                            QPair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
+                            std::pair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
                             if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
                             {
                                 simplifiedMapList[current_map].pointQueued << point;
@@ -425,7 +425,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                         }
                 }
                 //if the left case have been parsed
-                coord=QPair<uint8_t,uint8_t>(tempPoint.x-1,tempPoint.y);
+                coord=std::pair<uint8_t,uint8_t>(tempPoint.x-1,tempPoint.y);
                 if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
                 {
                     MapPointToParse newPoint=tempPoint;
@@ -434,7 +434,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                         newPoint.x--;
                         if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
-                            QPair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
+                            std::pair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
                             if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
                             {
                                 simplifiedMapList[current_map].pointQueued << point;
@@ -444,7 +444,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                     }
                 }
                 //if the bottom case have been parsed
-                coord=QPair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y+1);
+                coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y+1);
                 if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
                 {
                     MapPointToParse newPoint=tempPoint;
@@ -452,7 +452,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                     if(newPoint.y<simplifiedMapList.value(current_map).height)
                         if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
-                            QPair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
+                            std::pair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
                             if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
                             {
                                 simplifiedMapList[current_map].pointQueued << point;
@@ -461,7 +461,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                         }
                 }
                 //if the top case have been parsed
-                coord=QPair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y-1);
+                coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y-1);
                 if(!simplifiedMapList.value(current_map).pathToGo.contains(coord))
                 {
                     MapPointToParse newPoint=tempPoint;
@@ -470,7 +470,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                         newPoint.y--;
                         if(PathFinding::canGoOn(simplifiedMapList.value(current_map),newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
-                            QPair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
+                            std::pair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
                             if(!simplifiedMapList.value(current_map).pointQueued.contains(point))
                             {
                                 simplifiedMapList[current_map].pointQueued << point;
@@ -481,14 +481,14 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
                 }
             }
             /*uint8_t tempX=x,TempY=y;
-            QString tempMap=current_map;
+            std::string tempMap=current_map;
             SimplifiedMapForPathFinding::PathToGo pathToGoTemp;
-            simplifiedMapList[current_map].pathToGo[QPair<uint8_t,uint8_t>(x,y)]=pathToGoTemp;*/
+            simplifiedMapList[current_map].pathToGo[std::pair<uint8_t,uint8_t>(x,y)]=pathToGoTemp;*/
         }
     }
     //drop the local variable
     {
-        QHash<QString,SimplifiedMapForPathFinding>::const_iterator k = simplifiedMapList.constBegin();
+        std::unordered_map<QString,SimplifiedMapForPathFinding>::const_iterator k = simplifiedMapList.constBegin();
         while (k != simplifiedMapList.constEnd()) {
             delete k.value().dirt;
             delete k.value().ledges;
@@ -498,7 +498,7 @@ void PathFinding::internalSearchPath(const QString &destination_map,const uint8_
         }
     }
     tryCancel=false;
-    emit result(QString(),0,0,QList<QPair<CatchChallenger::Orientation,uint8_t> >());
+    emit result(QString(),0,0,QVector<std::pair<CatchChallenger::Orientation,uint8_t> >());
     qDebug() << "Path not found into " << time.elapsed() << "ms";
 }
 
