@@ -1172,11 +1172,7 @@ std::string MapVisualiserPlayer::currentMapType() const
         return std::string();
     if(mapFull->logicalMap.xmlRoot->Attribute("type")!=NULL)
         //if(!std::string(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("type")->empty()) if empty return empty or empty?
-        #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
             return mapFull->logicalMap.xmlRoot->Attribute("type");
-        #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
-            return *mapFull->logicalMap.xmlRoot->Attribute("type");
-        #endif
     return std::string();
 }
 
@@ -1192,11 +1188,7 @@ std::string MapVisualiserPlayer::currentZone() const
         return std::string();
     if(mapFull->logicalMap.xmlRoot->Attribute("zone")!=NULL)
         //if(!std::string(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("zone")->empty()) if empty return empty or empty?
-        #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
             return mapFull->logicalMap.xmlRoot->Attribute("zone");
-        #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
-            return *mapFull->logicalMap.xmlRoot->Attribute("zone");
-        #endif
     return std::string();
 }
 
@@ -1212,11 +1204,7 @@ std::string MapVisualiserPlayer::currentBackgroundsound() const
         return std::string();
     if(mapFull->logicalMap.xmlRoot->Attribute("backgroundsound")!=NULL)
         //if(!std::string(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("backgroundsound")->empty()) if empty return empty or empty?
-        #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
             return mapFull->logicalMap.xmlRoot->Attribute("backgroundsound");
-        #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
-            return *mapFull->logicalMap.xmlRoot->Attribute("backgroundsound");
-        #endif
     return std::string();
 }
 

@@ -236,15 +236,18 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, 
         newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Bot trigged but no step found");
         return;
     }
-    if(*actualBot.step.at(step)->Attribute(std::string("type"))==std::string("fight"))
+    const CATCHCHALLENGER_XMLELEMENT * stepXml=actualBot.step.at(step);
+    if(stepXml->Attribute("type")==NULL)
+        return;
+    if(strcmp(stepXml->Attribute("type"),"fight")==0)
     {
-        if(actualBot.step.at(step)->Attribute(std::string("fightid"))==NULL)
+        if(stepXml->Attribute("fightid")==NULL)
         {
             showTip(tr("Bot step missing data error, repport this error please").toStdString());
             return;
         }
         bool ok;
-        uint16_t fightId=stringtouint16(*actualBot.step.at(step)->Attribute(std::string("fightid")),&ok);
+        const uint16_t fightId=stringtouint16(stepXml->Attribute("fightid"),&ok);
         if(!ok)
         {
             showTip(tr("Bot step wrong data type error, repport this error please").toStdString());

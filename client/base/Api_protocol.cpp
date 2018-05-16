@@ -2026,7 +2026,7 @@ LogicialGroup * Api_protocol::addLogicalGroup(const std::string &path,const std:
         //load the name
         {
             bool name_found=false;
-            const tinyxml2::XMLElement * const name = root->FirstChildElement("name");
+            const tinyxml2::XMLElement * name = root->FirstChildElement("name");
             if(!language.empty() && language!="en")
                 while(name!=NULL)
                 {
@@ -2043,9 +2043,9 @@ LogicialGroup * Api_protocol::addLogicalGroup(const std::string &path,const std:
                 name = root->FirstChildElement("name");
                 while(name!=NULL)
                 {
-                    if(name->Attribute("lang")!=NULL || name->Attribute("lang")=="en")
+                    if(name->Attribute("lang")!=NULL || strcmp(name->Attribute("lang"),"en")==0)
                     {
-                        nameString=name.GetText();
+                        nameString=name->GetText();
                         name_found=true;
                         break;
                     }
@@ -2078,51 +2078,44 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
     std::string nameString;
     std::string descriptionString;
 
-    QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(QString::fromStdString(Api_protocol::text_balise_root_start+server.xml+Api_protocol::text_balise_root_stop), false, &errorStr,&errorLine,&errorColumn))
+    tinyxml2::XMLDocument domDocument;
+    const auto loadOkay = domDocument.Parse((Api_protocol::text_balise_root_start+server.xml+Api_protocol::text_balise_root_stop).c_str());
+    if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
     {
-        qDebug() << (QString("Xml not correct for addLogicalGroup: %1, Parse error at line %2, column %3: %4")
-                     .arg(QString::fromStdString(server.xml)).arg(errorLine).arg(errorColumn).arg(errorStr));
+        std::cerr << "Api_protocol::addLogicalServer(): "+CATCHCHALLENGER_XMLDOCUMENTERROR(&domDocument) << std::endl;
+        return NULL;
     }
     else
     {
-        const tinyxml2::XMLElement &root = domDocument.RootElement();
+        const tinyxml2::XMLElement *root = domDocument.RootElement();
 
         //load the name
         {
             bool name_found=false;
-            tinyxml2::XMLElement name = root.FirstChildElement("name");
+            const tinyxml2::XMLElement *name = root->FirstChildElement("name");
             if(!language.empty() && language!="en")
-                while(!name.isNull())
+                while(name!=NULL)
                 {
-                    if(name.isElement())
+                    if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
                     {
-                        if(name.hasAttribute("lang") && name.attribute("lang").toStdString()==language)
-                        {
-                            nameString=name.text().toStdString();
-                            name_found=true;
-                            break;
-                        }
+                        nameString=name->GetText();
+                        name_found=true;
+                        break;
                     }
-                    name = name.NextSiblingElement("name");
+                    name = name->NextSiblingElement("name");
                 }
             if(!name_found)
             {
-                name = root.FirstChildElement("name");
-                while(!name.isNull())
+                name = root->FirstChildElement("name");
+                while(name!=NULL)
                 {
-                    if(name.isElement())
+                    if(name->Attribute("lang")!=NULL || strcmp(name->Attribute("lang"),"en")==0)
                     {
-                        if(!name.hasAttribute("lang") || name.attribute("lang")=="en")
-                        {
-                            nameString=name.text().toStdString();
-                            name_found=true;
-                            break;
-                        }
+                        nameString=name->GetText();
+                        name_found=true;
+                        break;
                     }
-                    name = name.NextSiblingElement("name");
+                    name = name->NextSiblingElement("name");
                 }
             }
             if(!name_found)
@@ -2134,36 +2127,30 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
         //load the description
         {
             bool description_found=false;
-            tinyxml2::XMLElement description = root.FirstChildElement("description");
+            const tinyxml2::XMLElement *description = root->FirstChildElement("description");
             if(!language.empty() && language!="en")
-                while(!description.isNull())
+                while(description!=NULL)
                 {
-                    if(description.isElement())
+                    if(description->Attribute("lang")!=NULL || description->Attribute("lang")==language)
                     {
-                        if(description.hasAttribute("lang") && description.attribute("lang").toStdString()==language)
-                        {
-                            descriptionString=description.text().toStdString();
-                            description_found=true;
-                            break;
-                        }
+                        descriptionString=description->GetText();
+                        description_found=true;
+                        break;
                     }
-                    description = description.NextSiblingElement("description");
+                    description = description->NextSiblingElement("description");
                 }
             if(!description_found)
             {
-                description = root.FirstChildElement("description");
-                while(!description.isNull())
+                description = root->FirstChildElement("description");
+                while(description!=NULL)
                 {
-                    if(description.isElement())
+                    if(description->Attribute("lang")!=NULL || strcmp(description->Attribute("lang"),"en")==0)
                     {
-                        if(!description.hasAttribute("lang") || description.attribute("lang")=="en")
-                        {
-                            descriptionString=description.text().toStdString();
-                            description_found=true;
-                            break;
-                        }
+                        descriptionString=description->GetText();
+                        description_found=true;
+                        break;
                     }
-                    description = description.NextSiblingElement("description");
+                    description = description->NextSiblingElement("description");
                 }
             }
             if(!description_found)
