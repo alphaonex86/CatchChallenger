@@ -3,14 +3,16 @@
 #include "../../base/interface/DatapackClientLoader.h"
 
 
-QString MapController::mapIdToString(const uint32_t &mapId) const
+std::string MapController::mapIdToString(const uint32_t &mapId) const
 {
     if(mapId>=(uint32_t)DatapackClientLoader::datapackLoader.maps.size())
     {
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
-        return QString();
+        return std::string();
     }
-    return QFileInfo(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(mapId)).absoluteFilePath();
+    return QFileInfo(QString::fromStdString(datapackMapPathSpec+
+                                            DatapackClientLoader::datapackLoader.maps.at(mapId)))
+                     .absoluteFilePath().toStdString();
 }
 
 //plant
@@ -24,7 +26,7 @@ void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x, const 
         tempItem.y=y;
         tempItem.plant_id=plant_id;
         tempItem.seconds_to_mature=seconds_to_mature;
-        delayedPlantInsert << tempItem;
+        delayedPlantInsert.push_back(tempItem);
         return;
     }
     if(mapId>=(uint32_t)DatapackClientLoader::datapackLoader.maps.size())
@@ -32,23 +34,24 @@ void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x, const 
         qDebug() << "MapController::insert_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
-    const QString &map=QFileInfo(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.value(mapId)).absoluteFilePath();
-    if(!haveMapInMemory(map) || !mapItem->haveMap(all_map.value(map)->tiledMap))
+    const std::string &map=QFileInfo(QString::fromStdString(datapackMapPathSpec+
+                   DatapackClientLoader::datapackLoader.maps.at(mapId))).absoluteFilePath().toStdString();
+    if(!haveMapInMemory(map) || !mapItem->haveMap(all_map.at(map)->tiledMap))
     {
-        qDebug() << QStringLiteral("map (%1) not show or not loaded, delay it").arg(map);
+        qDebug() << QString("map (%1) not show or not loaded, delay it").arg(map);
         DelayedPlantInsert tempItem;
         tempItem.mapId=mapId;
         tempItem.x=x;
         tempItem.y=y;
         tempItem.plant_id=plant_id;
         tempItem.seconds_to_mature=seconds_to_mature;
-        delayedPlantInsertOnMap.insert(map,tempItem);
+        delayedPlantInsertOnMap[map].push_back(tempItem);
         return;
     }
     insert_plant_full(map,x,y,plant_id,seconds_to_mature);
 }
 
-void MapController::insert_plant_full(const QString &map,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature)
+void MapController::insert_plant_full(const std::string &map,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature)
 {
     if(CatchChallenger::CommonDatapack::commonDatapack.plants.find(plant_id)==CatchChallenger::CommonDatapack::commonDatapack.plants.cend())
     {
@@ -56,7 +59,7 @@ void MapController::insert_plant_full(const QString &map,const uint8_t &x,const 
         return;
     }
     MapVisualiserThread::Map_full * map_full=all_map[map];
-    int index=0;
+    unsigned int index=0;
     while(index<map_full->logicalMap.plantList.size())
     {
         if(map_full->logicalMap.plantList.at(index)->x==x && map_full->logicalMap.plantList.at(index)->y==y)
@@ -80,14 +83,14 @@ void MapController::insert_plant_full(const QString &map,const uint8_t &x,const 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     plant->mapObject->setPosition(QPoint(x,y+1));
 
-    map_full->logicalMap.plantList << plant;
+    map_full->logicalMap.plantList.push_back(plant);
     #ifdef DEBUG_CLIENT_PLANTS
-    qDebug() << QStringLiteral("insert_plant(), map: %1 at: %2,%3").arg(map).arg(x).arg(y);
+    qDebug() << std::stringLiteral("insert_plant(), map: %1 at: %2,%3").arg(map).arg(x).arg(y);
     #endif
-    if(ObjectGroupItem::objectGroupLink.contains(all_map[map]->objectGroup))
+    if(ObjectGroupItem::objectGroupLink.find(all_map[map]->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
         ObjectGroupItem::objectGroupLink[all_map[map]->objectGroup]->addObject(plant->mapObject);
     else
-        qDebug() << QStringLiteral("insert_plant(), all_map[map]->objectGroup not contains current_map->objectGroup");
+        qDebug() << "insert_plant(), all_map[map]->objectGroup not contains current_map->objectGroup";
     MapObjectItem::objectLink[plant->mapObject]->setZValue(y);
 }
 
@@ -144,12 +147,12 @@ void MapController::remove_plant(const uint32_t &mapId, const uint8_t &x, const 
 {
     if(!mHaveTheDatapack)
     {
-        int index=0;
+        unsigned int index=0;
         while(index<delayedPlantInsert.size())
         {
             if(delayedPlantInsert.at(index).mapId==mapId && delayedPlantInsert.at(index).x==x && delayedPlantInsert.at(index).y==y)
             {
-                delayedPlantInsert.removeAt(index);
+                delayedPlantInsert.erase(delayedPlantInsert.cbegin()+index);
                 return;
             }
             index++;
@@ -162,44 +165,45 @@ void MapController::remove_plant(const uint32_t &mapId, const uint8_t &x, const 
         qDebug() << "MapController::remove_plant() mapId greater than DatapackClientLoader::datapackLoader.maps.size()";
         return;
     }
-    remove_plant_full(QFileInfo(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.value(mapId)).absoluteFilePath(),x,y);
+    remove_plant_full(QFileInfo(QString::fromStdString(
+                                    datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(mapId)))
+                      .absoluteFilePath().toStdString(),x,y);
 }
 
-void MapController::remove_plant_full(const QString &map, const uint8_t &x, const uint8_t &y)
+void MapController::remove_plant_full(const std::string &map, const uint8_t &x, const uint8_t &y)
 {
     #ifdef DEBUG_CLIENT_PLANTS
-    qDebug() << QStringLiteral("remove_plant(%1,%2,%3)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
+    qDebug() << std::stringLiteral("remove_plant(%1,%2,%3)").arg(DatapackClientLoader::datapackLoader.maps[mapId]).arg(x).arg(y);
     #endif
-    if(!all_map.contains(map))
+    if(all_map.find(map)==all_map.cend())
     {
-        QStringList map_list;
-        QHashIterator<QString, MapVisualiserThread::Map_full *> i(all_map);
-        while (i.hasNext()) {
-            i.next();
-            map_list << i.key();
-        }
-        qDebug() << QStringLiteral("map (%1) is not into map list: %2, ignore it").arg(map).arg(map_list.join(";"));
+        std::vector<std::string> map_list;
+        for (const auto &n : all_map)
+            map_list.push_back(n.first);
+        qDebug() << QString("map (%1) is not into map list: %2, ignore it")
+                    .arg(QString::fromStdString(map))
+                    .arg(QString::fromStdString(stringimplode(map_list,";")));
         return;
     }
     if(!mapItem->haveMap(all_map[map]->tiledMap))
     {
-        qDebug() << QStringLiteral("map (%1) not show, ignore it").arg(map);
+        qDebug() << QString("map (%1) not show, ignore it").arg(QString::fromStdString(map));
         return;
     }
     MapVisualiserThread::Map_full * map_full=all_map[map];
-    int index=0;
+    unsigned int index=0;
     while(index<map_full->logicalMap.plantList.size())
     {
         if(map_full->logicalMap.plantList.at(index)->x==x && map_full->logicalMap.plantList.at(index)->y==y)
         {
             //unload the player sprite
-            if(ObjectGroupItem::objectGroupLink.contains(map_full->logicalMap.plantList.at(index)->mapObject->objectGroup()))
+            if(ObjectGroupItem::objectGroupLink.find(map_full->logicalMap.plantList.at(index)->mapObject->objectGroup())!=ObjectGroupItem::objectGroupLink.cend())
                 ObjectGroupItem::objectGroupLink[map_full->logicalMap.plantList.at(index)->mapObject->objectGroup()]->removeObject(map_full->logicalMap.plantList.at(index)->mapObject);
             else
-                qDebug() << QStringLiteral("remove_plant(), ObjectGroupItem::objectGroupLink not contains map_full->logicalMap.plantList.at(index).mapObject->objectGroup()");
+                qDebug() << "remove_plant(), ObjectGroupItem::objectGroupLink not contains map_full->logicalMap.plantList.at(index).mapObject->objectGroup()";
             delete map_full->logicalMap.plantList.at(index)->mapObject;
             delete map_full->logicalMap.plantList.at(index);
-            map_full->logicalMap.plantList.removeAt(index);
+            map_full->logicalMap.plantList.erase(map_full->logicalMap.plantList.cbegin()+index);
         }
         else
             index++;
@@ -233,7 +237,7 @@ void MapController::plant_collected(const CatchChallenger::Plant_collect &stat)
 void MapController::reinject_signals()
 {
     MapControllerMP::reinject_signals();
-    int index;
+    unsigned int index;
     if(mHaveTheDatapack && player_informations_is_set)
     {
         index=0;
@@ -246,15 +250,15 @@ void MapController::reinject_signals()
     }
 }
 
-void MapController::tryLoadPlantOnMapDisplayed(const QString &fileName)
+void MapController::tryLoadPlantOnMapDisplayed(const std::string &fileName)
 {
     int index=0;
-    QList<DelayedPlantInsert> values=delayedPlantInsertOnMap.values(fileName);
+    std::vector<DelayedPlantInsert> values=delayedPlantInsertOnMap.at(fileName);
     while(index<values.size())
     {
         insert_plant(values.at(index).mapId,values.at(index).x,values.at(index).y,values.at(index).plant_id,values.at(index).seconds_to_mature);
         index++;
     }
-    delayedPlantInsertOnMap.remove(fileName);
+    delayedPlantInsertOnMap.erase(fileName);
 }
 
