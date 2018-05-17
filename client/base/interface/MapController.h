@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_MAPCONTROLLER_H
 
 #include "MapControllerMP.h"
-#include "../Api_protocol.h"
+#include "../Api_client_real.h"
 
 #include <QString>
 #include <QList>
@@ -16,9 +16,9 @@ class MapController : public MapControllerMP
 {
     Q_OBJECT
 public:
-    explicit MapController(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &OpenGL=false);
+    explicit MapController(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true);
     ~MapController();
-    virtual void connectAllSignals(CatchChallenger::Api_protocol * client);
+    virtual void connectAllSignals(CatchChallenger::Api_client_real * client);
     virtual void resetAll();
     std::string mapIdToString(const uint32_t &mapId) const;
     void remove_plant_full(const std::string &map,const uint8_t &x,const uint8_t &y);

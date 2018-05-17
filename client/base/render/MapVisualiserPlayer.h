@@ -14,7 +14,7 @@ class MapVisualiserPlayer : public MapVisualiser
     Q_OBJECT
 
 public:
-    explicit MapVisualiserPlayer(const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
+    explicit MapVisualiserPlayer(const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true);
     ~MapVisualiserPlayer();
     virtual bool haveMapInMemory(const std::string &mapPath);
     void keyPressEvent(QKeyEvent * event);
@@ -86,8 +86,8 @@ protected:
     QTime lastAction;//to prevent flood
 
     //control
-    QSet<int> keyPressed;
-    QSet<int> keyAccepted;
+    std::unordered_set<int> keyPressed;
+    std::unordered_set<int> keyAccepted;
 
     //grass
     bool haveGrassCurrentObject;

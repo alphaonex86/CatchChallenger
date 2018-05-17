@@ -2,36 +2,34 @@
 #define CATCHCHALLENGER_MAPCONTROLLERMP_H
 
 #include "../../fight/interface/MapVisualiserPlayerWithFight.h"
-#include "../Api_protocol.h"
+#include "../Api_client_real.h"
 #include "PathFinding.h"
 
-#include <QString>
-#include <QList>
-#include <QStringList>
-#include <QHash>
+#include <string>
+#include <vector>
 #include <QTimer>
 
 class MapControllerMP : public MapVisualiserPlayerWithFight
 {
     Q_OBJECT
 public:
-    explicit MapControllerMP(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &OpenGL=false);
+    explicit MapControllerMP(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true);
     ~MapControllerMP();
 
     virtual void resetAll();
-    virtual void connectAllSignals(CatchChallenger::Api_protocol * client);
+    virtual void connectAllSignals(CatchChallenger::Api_client_real * client);
     void setScale(const float &scaleSize);
 public slots:
     //map move Qt
     void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
-    void move_player(const uint16_t &id, const QList<QPair<uint8_t,CatchChallenger::Direction> > &movement);
+    void move_player(const uint16_t &id, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement);
     void remove_player(const uint16_t &id);
     void reinsert_player(const uint16_t &id, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction);
     void full_reinsert_player(const uint16_t &id, const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction);
     void dropAllPlayerOnTheMap();
     //map move
     bool insert_player_final(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction,bool inReplayMode);
-    bool move_player_final(const uint16_t &id, const QList<QPair<uint8_t,CatchChallenger::Direction> > &movement, bool inReplayMode);
+    bool move_player_final(const uint16_t &id, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement, bool inReplayMode);
     bool remove_player_final(const uint16_t &id, bool inReplayMode);
     bool reinsert_player_final(const uint16_t &id, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction, bool inReplayMode);
     bool full_reinsert_player_final(const uint16_t &id, const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction, bool inReplayMode);
@@ -60,7 +58,7 @@ private:
         bool inMove;
         bool stepAlternance;
         std::string current_map;
-        QSet<QString> mapUsed;
+        std::unordered_set<std::string> mapUsed;
         CatchChallenger::Player_public_informations informations;
         Tiled::MapObject * labelMapObject;
         Tiled::Tileset * labelTileset;
@@ -76,12 +74,12 @@ private:
         QTimer *moveAnimationTimer;
     };
     PathFinding pathFinding;
-    QHash<uint16_t,OtherPlayer> otherPlayerList;
-    QHash<QTimer *,uint16_t> otherPlayerListByTimer,otherPlayerListByAnimationTimer;
-    QHash<QString,uint16_t> mapUsedByOtherPlayer;
+    std::unordered_map<uint16_t,OtherPlayer> otherPlayerList;
+    std::unordered_map<QTimer *,uint16_t> otherPlayerListByTimer,otherPlayerListByAnimationTimer;
+    std::unordered_map<std::string,uint16_t> mapUsedByOtherPlayer;
 
     //datapack
-    QStringList skinFolderList;
+    std::vector<std::string> skinFolderList;
 
     //the delayed action
     struct DelayedInsert
@@ -95,7 +93,7 @@ private:
     struct DelayedMove
     {
         uint16_t id;
-        QList<QPair<uint8_t,CatchChallenger::Direction> > movement;
+        std::vector<std::pair<uint8_t,CatchChallenger::Direction> > movement;
     };
     struct DelayedReinsertSingle
     {
@@ -130,7 +128,7 @@ private:
         DelayedReinsertSingle reinsert_single;
         DelayedReinsertFull reinsert_full;
     };
-    QList<DelayedMultiplex> delayedActions;
+    std::vector<DelayedMultiplex> delayedActions;
 
     struct DelayedTeleportTo
     {
@@ -139,7 +137,7 @@ private:
         uint16_t y;
         CatchChallenger::Direction direction;
     };
-    QList<DelayedTeleportTo> delayedTeleportTo;
+    std::vector<DelayedTeleportTo> delayedTeleportTo;
     float scaleSize;
     bool isTeleported;
     static QFont playerpseudofont;
@@ -154,11 +152,11 @@ private:
             uint8_t x,y;
         };
         StartPoint startPoint;
-        QList<QPair<CatchChallenger::Orientation,uint8_t> > path;
+        std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > path;
     };
-    QList<PathResolved> pathList;
+    std::vector<PathResolved> pathList;
 
-    CatchChallenger::Api_protocol * client;
+    CatchChallenger::Api_client_real * client;
 protected:
     //current player
     CatchChallenger::Player_private_and_public_informations player_informations;
@@ -172,18 +170,18 @@ private slots:
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
     void eventOnMap(CatchChallenger::MapEvent event, MapVisualiserThread::Map_full * tempMapObject, uint8_t x, uint8_t y);
     CatchChallenger::Direction moveFromPath();
-    //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map,const bool &display);
+    //virtual std::unordered_set<std::string> loadMap(MapVisualiserThread::Map_full *map,const bool &display);
 protected slots:
     virtual void finalPlayerStep();
     //call after enter on new map
     virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadOtherPlayerFromMap(OtherPlayer otherPlayer);
-    void pathFindingResult(const std::string &current_map, const uint8_t &x, const uint8_t &y, const QList<QPair<CatchChallenger::Orientation, uint8_t> > &path);
+    void pathFindingResult(const std::string &current_map, const uint8_t &x, const uint8_t &y, const std::vector<std::pair<CatchChallenger::Orientation, uint8_t> > &path);
     bool nextPathStep();//true if have step
     virtual void keyPressParse();
 signals:
-    void searchPath(QList<MapVisualiserThread::Map_full> mapList);
+    void searchPath(std::vector<MapVisualiserThread::Map_full> mapList);
     void pathFindingNotFound();
 };
 

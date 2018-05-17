@@ -13,15 +13,15 @@ public:
     explicit PathFinding();
     virtual ~PathFinding();
 signals:
-    void result(const std::string &current_map,const uint8_t &x,const uint8_t &y,QList<QPair<CatchChallenger::Orientation,uint8_t> > path);
+    void result(const std::string &current_map,const uint8_t &x,const uint8_t &y,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > path);
     void internalCancel();
-    void emitSearchPath(const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
+    void emitSearchPath(const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::unordered_map<uint16_t,uint32_t> &items);
 public slots:
-    void searchPath(const QHash<QString, MapVisualiserThread::Map_full *> &all_map,const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
-    void internalSearchPath(const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const QHash<uint16_t,uint32_t> &items);
+    void searchPath(const std::unordered_map<std::string, MapVisualiserThread::Map_full *> &all_map,const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::unordered_map<uint16_t,uint32_t> &items);
+    void internalSearchPath(const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::unordered_map<uint16_t,uint32_t> &items);
     void cancel();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    static void extraControlOnData(const QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > &controlVar,const CatchChallenger::Orientation &orientation);
+    static void extraControlOnData(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &controlVar,const CatchChallenger::Orientation &orientation);
     #endif
 private:
     struct SimplifiedMapForPathFinding
@@ -53,13 +53,13 @@ private:
         Map_Border border;
         struct PathToGo
         {
-            QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > left;
-            QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > right;
-            QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > top;
-            QList<QPair<CatchChallenger::Orientation,uint8_t/*step number*/> > bottom;
+            std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > left;
+            std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > right;
+            std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > top;
+            std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > bottom;
         };
-        QHash<QPair<uint8_t,uint8_t>,PathToGo> pathToGo;
-        QSet<QPair<uint8_t,uint8_t> > pointQueued;
+        std::unordered_map<std::pair<uint8_t,uint8_t>,PathToGo,pairhash> pathToGo;
+        std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> pointQueued;
     };
 
     struct MapPointToParse
@@ -69,9 +69,9 @@ private:
     };
 
     QMutex mutex;
-    QHash<QString,SimplifiedMapForPathFinding> simplifiedMapList;
+    std::unordered_map<std::string,SimplifiedMapForPathFinding> simplifiedMapList;
     bool tryCancel;
-    QList<MapVisualiserThread::Map_full> mapList;
+    std::vector<MapVisualiserThread::Map_full> mapList;
 public:
     static bool canGoOn(const SimplifiedMapForPathFinding &simplifiedMapForPathFinding,const uint8_t &x, const uint8_t &y);
 };

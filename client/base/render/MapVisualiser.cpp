@@ -15,7 +15,7 @@
 
 #include "../../../general/base/MoveOnTheMap.h"
 
-MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bool &OpenGL) :
+MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache) :
     mScene(new QGraphicsScene(this)),
     mark(NULL)
 {
@@ -61,7 +61,6 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     viewport()->setAttribute(Qt::WA_TranslucentBackground);
     viewport()->setAttribute(Qt::WA_NoSystemBackground);
     setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
-    setOpenGl(OpenGL);
 
     tagTilesetIndex=0;
     markPathFinding=new Tiled::Tileset(QStringLiteral("mark path finding"),16,24);
@@ -104,24 +103,6 @@ MapVisualiser::~MapVisualiser()
 
     //delete mapItem;
     //delete playerMapObject;
-}
-
-void MapVisualiser::setOpenGl(const bool &OpenGL)
-{
-    if(OpenGL)
-    {
-        /*QGLFormat format=QGLFormat::defaultFormat();//(QGL::StencilBuffer | QGL::AlphaChannel | QGL::DoubleBuffer | QGL::Rgba);
-        //setSampleBuffers
-        format.setRgba(true);
-        //format.setAlpha(true);
-        //format.setProfile(QGLFormat::CompatibilityProfile);
-
-        QGLWidget *widgetOpenGL=new QGLWidget(format);// | QGL::IndirectRendering -> do a crash
-        if(widgetOpenGL==NULL)
-            QMessageBox::critical(this,"No OpenGL","Sorry but OpenGL can't be enabled, be sure of support with your graphic drivers: create widget");
-        else
-            setViewport(widgetOpenGL);*/
-    }
 }
 
 MapVisualiserThread::Map_full * MapVisualiser::getMap(const std::string &map) const
