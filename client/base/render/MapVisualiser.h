@@ -37,13 +37,12 @@ class MapVisualiser : public QGraphicsView
     Q_OBJECT
 
 public:
-    explicit MapVisualiser(const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
+    explicit MapVisualiser(const bool &debugTags=false, const bool &useCache=true);
     ~MapVisualiser();
 
     bool showFPS();
     void setShowFPS(const bool &showFPS);
     void setTargetFPS(int targetFPS);
-    void setOpenGl(const bool &OpenGL);
     virtual void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,uint8_t x,uint8_t y);
 
     MapVisualiserThread::Map_full * getMap(const std::string &map) const;
@@ -87,7 +86,7 @@ public slots:
     void loadOtherMap(const std::string &resolvedFileName);
     virtual void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y,
                                  const std::string &lookAt, const std::string &skin);
-    //virtual QSet<QString> loadMap(MapVisualiserThread::Map_full *map, const bool &display);
+    //virtual std::unordered_set<QString> loadMap(MapVisualiserThread::Map_full *map, const bool &display);
     virtual void removeUnusedMap();
     virtual void hideNotloadedMap();
 private slots:

@@ -103,7 +103,7 @@ BaseWindow::BaseWindow() :
 
     socketState=QAbstractSocket::UnconnectedState;
 
-    mapController=new MapController(true,false,true,false);
+    mapController=new MapController(true,false,true);
     chat=new Chat(mapController);
     mapController->fightEngine=&fightEngine;
     client=NULL;
