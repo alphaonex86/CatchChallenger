@@ -4,10 +4,9 @@
 #include "MapControllerMP.h"
 #include "../Api_client_real.h"
 
-#include <QString>
-#include <QList>
-#include <QStringList>
-#include <QHash>
+#include <string>
+#include <vector>
+#include <unordered_map>
 #include <QTimer>
 #include <QGraphicsPixmapItem>
 #include <QColor>
@@ -34,8 +33,8 @@ private:
         uint8_t plant_id;
         uint16_t seconds_to_mature;
     };
-    QList<DelayedPlantInsert> delayedPlantInsert;
-    QMultiHash<QString,DelayedPlantInsert> delayedPlantInsertOnMap;
+    std::vector<DelayedPlantInsert> delayedPlantInsert;
+    std::unordered_map<std::string,std::vector<DelayedPlantInsert> > delayedPlantInsertOnMap;
     struct PlantTimer
     {
         Tiled::MapObject * mapObject;
