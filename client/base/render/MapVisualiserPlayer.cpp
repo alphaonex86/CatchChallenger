@@ -26,8 +26,8 @@ to be sync if connexion is stop, but use more bandwith
 To not send: store "is blocked but direction not send", cautch the close event, at close: if "is blocked but direction not send" then send it
 */
 
-MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    MapVisualiser(debugTags,useCache,OpenGL)
+MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool &debugTags, const bool &useCache) :
+    MapVisualiser(debugTags,useCache)
 {
     wasPathFindingUsed=false;
     blocked=false;
@@ -42,7 +42,11 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer,const bool &
     plantOnMap=NULL;
     animationDisplayed=false;
 
-    keyAccepted << Qt::Key_Left << Qt::Key_Right << Qt::Key_Up << Qt::Key_Down << Qt::Key_Return;
+    keyAccepted.insert(Qt::Key_Left);
+    keyAccepted.insert(Qt::Key_Right);
+    keyAccepted.insert(Qt::Key_Up);
+    keyAccepted.insert(Qt::Key_Down);
+    keyAccepted.insert(Qt::Key_Return);
 
     lookToMove.setInterval(200);
     lookToMove.setSingleShot(true);
@@ -113,7 +117,7 @@ void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
         return;
 
     //ignore the no arrow key
-    if(!keyAccepted.contains(event->key()))
+    if(keyAccepted.find(event->key())==keyAccepted.cend())
     {
         event->ignore();
         return;
@@ -124,7 +128,7 @@ void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
         return;
 
     //add to pressed key list
-    keyPressed << event->key();
+    keyPressed.insert(event->key());
 
     //apply the key
     keyPressParse();
@@ -136,14 +140,14 @@ void MapVisualiserPlayer::keyPressParse()
     if(inMove || blocked)
         return;
 
-    if(keyPressed.size()==1 && keyPressed.contains(Qt::Key_Return))
+    if(keyPressed.size()==1 && keyPressed.find(Qt::Key_Return)!=keyPressed.cend())
     {
-        keyPressed.remove(Qt::Key_Return);
+        keyPressed.erase(Qt::Key_Return);
         parseAction();
         return;
     }
 
-    if(keyPressed.contains(Qt::Key_Left))
+    if(keyPressed.find(Qt::Key_Left)!=keyPressed.cend())
     {
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_left)
@@ -170,7 +174,7 @@ void MapVisualiserPlayer::keyPressParse()
             parseStop();
         }
     }
-    else if(keyPressed.contains(Qt::Key_Right))
+    else if(keyPressed.find(Qt::Key_Right)!=keyPressed.cend())
     {
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_right)
@@ -197,7 +201,7 @@ void MapVisualiserPlayer::keyPressParse()
             parseStop();
         }
     }
-    else if(keyPressed.contains(Qt::Key_Up))
+    else if(keyPressed.find(Qt::Key_Up)!=keyPressed.cend())
     {
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_top)
@@ -224,7 +228,7 @@ void MapVisualiserPlayer::keyPressParse()
             parseStop();
         }
     }
-    else if(keyPressed.contains(Qt::Key_Down))
+    else if(keyPressed.find(Qt::Key_Down)!=keyPressed.cend())
     {
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_bottom)
@@ -719,12 +723,12 @@ void MapVisualiserPlayer::finalPlayerStep()
     }
 
     //check if one arrow key is pressed to continue to move into this direction
-    if(keyPressed.contains(Qt::Key_Left))
+    if(keyPressed.find(Qt::Key_Left)!=keyPressed.cend())
     {
         //can't go into this direction, then just look into this direction
         if(!canGoTo(CatchChallenger::Direction_move_at_left,current_map_pointer->logicalMap,x,y,true))
         {
-            keyPressed.remove(Qt::Key_Left);
+            keyPressed.erase(Qt::Key_Left);
             direction=CatchChallenger::Direction_look_at_left;
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(10);
@@ -745,12 +749,12 @@ void MapVisualiserPlayer::finalPlayerStep()
             //startGrassAnimation(direction);
         }
     }
-    else if(keyPressed.contains(Qt::Key_Right))
+    else if(keyPressed.find(Qt::Key_Right)!=keyPressed.cend())
     {
         //can't go into this direction, then just look into this direction
         if(!canGoTo(CatchChallenger::Direction_move_at_right,current_map_pointer->logicalMap,x,y,true))
         {
-            keyPressed.remove(Qt::Key_Right);
+            keyPressed.erase(Qt::Key_Right);
             direction=CatchChallenger::Direction_look_at_right;
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(4);
@@ -771,12 +775,12 @@ void MapVisualiserPlayer::finalPlayerStep()
             //startGrassAnimation(direction);
         }
     }
-    else if(keyPressed.contains(Qt::Key_Up))
+    else if(keyPressed.find(Qt::Key_Up)!=keyPressed.cend())
     {
         //can't go into this direction, then just look into this direction
         if(!canGoTo(CatchChallenger::Direction_move_at_top,current_map_pointer->logicalMap,x,y,true))
         {
-            keyPressed.remove(Qt::Key_Up);
+            keyPressed.erase(Qt::Key_Up);
             direction=CatchChallenger::Direction_look_at_top;
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(1);
@@ -797,12 +801,12 @@ void MapVisualiserPlayer::finalPlayerStep()
             //startGrassAnimation(direction);
         }
     }
-    else if(keyPressed.contains(Qt::Key_Down))
+    else if(keyPressed.find(Qt::Key_Down)!=keyPressed.cend())
     {
         //can't go into this direction, then just look into this direction
         if(!canGoTo(CatchChallenger::Direction_move_at_bottom,current_map_pointer->logicalMap,x,y,true))
         {
-            keyPressed.remove(Qt::Key_Down);
+            keyPressed.erase(Qt::Key_Down);
             direction=CatchChallenger::Direction_look_at_bottom;
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(7);
@@ -1064,7 +1068,8 @@ void MapVisualiserPlayer::transformLookToMove()
     switch(direction)
     {
         case CatchChallenger::Direction_look_at_left:
-        if(keyPressed.contains(Qt::Key_Left) && canGoTo(CatchChallenger::Direction_move_at_left,all_map.at(current_map)->logicalMap,x,y,true))
+        if(keyPressed.find(Qt::Key_Left)!=keyPressed.cend() &&
+                canGoTo(CatchChallenger::Direction_move_at_left,all_map.at(current_map)->logicalMap,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_left;
             inMove=true;
@@ -1075,7 +1080,8 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case CatchChallenger::Direction_look_at_right:
-        if(keyPressed.contains(Qt::Key_Right) && canGoTo(CatchChallenger::Direction_move_at_right,all_map.at(current_map)->logicalMap,x,y,true))
+        if(keyPressed.find(Qt::Key_Right)!=keyPressed.cend() &&
+                canGoTo(CatchChallenger::Direction_move_at_right,all_map.at(current_map)->logicalMap,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_right;
             inMove=true;
@@ -1086,7 +1092,8 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case CatchChallenger::Direction_look_at_top:
-        if(keyPressed.contains(Qt::Key_Up) && canGoTo(CatchChallenger::Direction_move_at_top,all_map.at(current_map)->logicalMap,x,y,true))
+        if(keyPressed.find(Qt::Key_Up)!=keyPressed.cend() &&
+                canGoTo(CatchChallenger::Direction_move_at_top,all_map.at(current_map)->logicalMap,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_top;
             inMove=true;
@@ -1097,7 +1104,8 @@ void MapVisualiserPlayer::transformLookToMove()
         }
         break;
         case CatchChallenger::Direction_look_at_bottom:
-        if(keyPressed.contains(Qt::Key_Down) && canGoTo(CatchChallenger::Direction_move_at_bottom,all_map.at(current_map)->logicalMap,x,y,true))
+        if(keyPressed.find(Qt::Key_Down)!=keyPressed.cend() &&
+                canGoTo(CatchChallenger::Direction_move_at_bottom,all_map.at(current_map)->logicalMap,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_bottom;
             inMove=true;
@@ -1119,7 +1127,7 @@ void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
         return;
 
     //ignore the no arrow key
-    if(!keyAccepted.contains(event->key()))
+    if(keyAccepted.find(event->key())==keyAccepted.cend())
     {
         event->ignore();
         return;
@@ -1130,7 +1138,7 @@ void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
         return;
 
     //remove from the key list pressed
-    keyPressed.remove(event->key());
+    keyPressed.erase(event->key());
 
     if(keyPressed.size()>0)//another key pressed, repeat
         keyPressParse();
@@ -1238,11 +1246,11 @@ void MapVisualiserPlayer::resetAll()
 
     //delete playerTileset;
     {
-        QSet<Tiled::Tileset *> deletedTileset;
+        std::unordered_set<Tiled::Tileset *> deletedTileset;
         for(auto iter = playerTilesetCache.begin(); iter != playerTilesetCache.end(); ++iter){
-                if(!deletedTileset.contains(iter->second))
+                if(deletedTileset.find(iter->second)==deletedTileset.cend())
                 {
-                    deletedTileset << iter->second;
+                    deletedTileset.insert(iter->second);
                     delete iter->second;
                 }
             }

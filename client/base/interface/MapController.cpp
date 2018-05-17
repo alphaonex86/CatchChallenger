@@ -26,7 +26,7 @@ std::string MapController::text_DATAPACK_BASE_PATH_SKIN=QStringLiteral(DATAPACK_
 #define IMAGEOVERSIZEHEIGHT 600*2*2
 
 
-MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
+MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
     MapControllerMP(centerOnPlayer,debugTags,useCache,OpenGL)
 {
     connect(this,&MapController::mapDisplayed,this,&MapController::tryLoadPlantOnMapDisplayed,Qt::QueuedConnection);
