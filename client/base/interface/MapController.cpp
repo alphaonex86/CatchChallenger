@@ -6,28 +6,30 @@
 #include "../../../general/base/CommonSettingsServer.h"
 #include "../../../general/base/GeneralStructures.h"
 
-std::string MapController::text_random=QStringLiteral("random");
-std::string MapController::text_loop=QStringLiteral("loop");
-std::string MapController::text_move=QStringLiteral("move");
-std::string MapController::text_left=QStringLiteral("left");
-std::string MapController::text_right=QStringLiteral("right");
-std::string MapController::text_top=QStringLiteral("top");
-std::string MapController::text_bottom=QStringLiteral("bottom");
-std::string MapController::text_slash=QStringLiteral("/");
-std::string MapController::text_type=QStringLiteral("type");
-std::string MapController::text_fightRange=QStringLiteral("fightRange");
-std::string MapController::text_fight=QStringLiteral("fight");
-std::string MapController::text_fightid=QStringLiteral("fightid");
-std::string MapController::text_bot=QStringLiteral("bot");
-std::string MapController::text_slashtrainerpng=QStringLiteral("/trainer.png");
-std::string MapController::text_DATAPACK_BASE_PATH_SKIN=QStringLiteral(DATAPACK_BASE_PATH_SKIN);
+#include <iostream>
+
+std::string MapController::text_random="random";
+std::string MapController::text_loop="loop";
+std::string MapController::text_move="move";
+std::string MapController::text_left="left";
+std::string MapController::text_right="right";
+std::string MapController::text_top="top";
+std::string MapController::text_bottom="bottom";
+std::string MapController::text_slash="/";
+std::string MapController::text_type="type";
+std::string MapController::text_fightRange="fightRange";
+std::string MapController::text_fight="fight";
+std::string MapController::text_fightid="fightid";
+std::string MapController::text_bot="bot";
+std::string MapController::text_slashtrainerpng="/trainer.png";
+std::string MapController::text_DATAPACK_BASE_PATH_SKIN=DATAPACK_BASE_PATH_SKIN;
 
 #define IMAGEOVERSIZEWITDH 800*2*2
 #define IMAGEOVERSIZEHEIGHT 600*2*2
 
 
 MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
-    MapControllerMP(centerOnPlayer,debugTags,useCache,OpenGL)
+    MapControllerMP(centerOnPlayer,debugTags,useCache)
 {
     connect(this,&MapController::mapDisplayed,this,&MapController::tryLoadPlantOnMapDisplayed,Qt::QueuedConnection);
     botFlags=NULL;
@@ -66,27 +68,27 @@ bool MapController::asyncMapLoaded(const std::string &fileName,MapVisualiserThre
     {
         if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
         {
-            if(DatapackClientLoader::datapackLoader.plantOnMap.contains(fileName))
+            if(DatapackClientLoader::datapackLoader.plantOnMap.find(fileName)!=
+                    DatapackClientLoader::datapackLoader.plantOnMap.cend())
             {
                 if(plantOnMap==NULL)
                     abort();
-                const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t> &plantCoor=DatapackClientLoader::datapackLoader.plantOnMap.value(fileName);
-                QHashIterator<std::pair<uint8_t,uint8_t>,uint16_t> i(plantCoor);
-                while (i.hasNext()) {
-                    i.next();
-                    const uint16_t indexOfMap=i.value();
+                const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plantCoor=DatapackClientLoader::datapackLoader.plantOnMap.at(fileName);
+                for (const auto &n : plantCoor) {
+                    const uint16_t indexOfMap=n.second;
                     if(plantOnMap->size()>1000000)
                         abort();
                     if(plantOnMap->find(indexOfMap)!=plantOnMap->cend())
                     {
-                        const uint8_t &x=i.key().first;
-                        const uint8_t &y=i.key().second;
+                        const uint8_t &x=n.first.first;
+                        const uint8_t &y=n.first.second;
                         const CatchChallenger::PlayerPlant &playerPlant=plantOnMap->at(indexOfMap);
                         uint32_t seconds_to_mature=0;
                         if(playerPlant.mature_at>(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
                             seconds_to_mature=static_cast<uint32_t>(playerPlant.mature_at-QDateTime::currentMSecsSinceEpoch()/1000);
-                        if(DatapackClientLoader::datapackLoader.fullMapPathToId.contains(fileName))
-                            insert_plant(DatapackClientLoader::datapackLoader.fullMapPathToId.value(fileName),
+                        if(DatapackClientLoader::datapackLoader.fullMapPathToId.find(fileName)!=
+                                DatapackClientLoader::datapackLoader.fullMapPathToId.cend())
+                            insert_plant(DatapackClientLoader::datapackLoader.fullMapPathToId.at(fileName),
                             static_cast<uint8_t>(x),static_cast<uint8_t>(y),playerPlant.plant,static_cast<uint16_t>(seconds_to_mature));
                         else
                             qDebug() << "!DatapackClientLoader::datapackLoader.fullMapPathToId.contains(plantIndexContent.map) for CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer";
@@ -113,23 +115,18 @@ void MapController::updateBot()
 {
     if(!player_informations_is_set)
         return;
-    if(current_map.isEmpty())
+    if(current_map.empty())
         return;
     if(all_map.find(current_map)==all_map.cend())
         return;
-    MapVisualiserThread::Map_full * currentMap=all_map.value(current_map);
+    MapVisualiserThread::Map_full * currentMap=all_map.at(current_map);
     if(currentMap==NULL)
         return;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,CatchChallenger::BotDisplay>::const_iterator i = currentMap->logicalMap.botsDisplay.constBegin();
 
-    while (i != currentMap->logicalMap.botsDisplay.constEnd())
-    {
-        CatchChallenger::BotDisplay &botDisplay=currentMap->logicalMap.botsDisplay[i.key()];
+    for (const auto &n : currentMap->logicalMap.botsDisplay) {
+        CatchChallenger::BotDisplay &botDisplay=currentMap->logicalMap.botsDisplay[n.first];
         if(botDisplay.mapObject==playerMapObject)
-        {
-            ++i;
             continue;
-        }
         if(botDisplay.tileset!=NULL && botDisplay.mapObject!=NULL)
         switch(botDisplay.botMove)
         {
@@ -185,18 +182,16 @@ void MapController::updateBot()
             }
             break;
         }
-
-        ++i;
     }
 }
 
-void MapController::connectAllSignals(CatchChallenger::Api_protocol *client)
+void MapController::connectAllSignals(CatchChallenger::Api_client_real *client)
 {
     MapControllerMP::connectAllSignals(client);
-    connect(client,&CatchChallenger::Api_client_real::insert_plant,this,&MapController::insert_plant);
-    connect(client,&CatchChallenger::Api_client_real::remove_plant,this,&MapController::remove_plant);
-    connect(client,&CatchChallenger::Api_client_real::seed_planted,this,&MapController::seed_planted);
-    connect(client,&CatchChallenger::Api_client_real::plant_collected,this,&MapController::plant_collected);
+    connect(client,&CatchChallenger::Api_client_real::Qtinsert_plant,this,&MapController::insert_plant);
+    connect(client,&CatchChallenger::Api_client_real::Qtremove_plant,this,&MapController::remove_plant);
+    connect(client,&CatchChallenger::Api_client_real::Qtseed_planted,this,&MapController::seed_planted);
+    connect(client,&CatchChallenger::Api_client_real::Qtplant_collected,this,&MapController::plant_collected);
 }
 
 void MapController::resetAll()
@@ -216,9 +211,7 @@ void MapController::datapackParsedMainSub()
     if(mHaveTheDatapack)
         return;
     MapControllerMP::datapackParsedMainSub();
-    int index;
-
-    index=0;
+    unsigned int index=0;
     while(index<delayedPlantInsert.size())
     {
         insert_plant(delayedPlantInsert.at(index).mapId,delayedPlantInsert.at(index).x,delayedPlantInsert.at(index).y,delayedPlantInsert.at(index).plant_id,delayedPlantInsert.at(index).seconds_to_mature);
@@ -233,7 +226,10 @@ bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchCha
         return false;
     CatchChallenger::CommonMap *new_map=&map;
     CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
-    if(all_map.value(QString::fromStdString(new_map->map_file))->logicalMap.bots.contains(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))))
+    if(all_map.at(new_map->map_file)->
+            logicalMap.bots.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
+            all_map.at(new_map->map_file)->
+                        logicalMap.bots.cend())
         return false;
     return true;
 }
@@ -242,13 +238,14 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                                     const std::string &lookAt,const std::string &skin)
 {
     Q_UNUSED(botId);
-    if(skin.isEmpty())
+    if(skin.empty())
     {
         std::cerr << "MapController::loadBotOnTheMap() skin empty" << std::endl;
         return;
     }
 
-    if(parsedMap->logicalMap.botsDisplay.contains(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))))
+    if(parsedMap->logicalMap.botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
+            parsedMap->logicalMap.botsDisplay.cend())
     {
         /*CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
         ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(botDisplay->mapObject);
@@ -260,7 +257,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         return;
     }
 
-    if(!ObjectGroupItem::objectGroupLink.contains(parsedMap->objectGroup))
+    if(ObjectGroupItem::objectGroupLink.find(parsedMap->objectGroup)==ObjectGroupItem::objectGroupLink.cend())
     {
         qDebug() << QStringLiteral("loadBotOnTheMap(), ObjectGroupItem::objectGroupLink not contains parsedMap->objectGroup");
         return;
@@ -323,29 +320,30 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
 
     botDisplay->mapObject=new Tiled::MapObject();
     botDisplay->mapObject->setName("botDisplay");
-    botDisplay->tileset=new Tiled::Tileset(MapController::text_bot,16,24);
+    botDisplay->tileset=new Tiled::Tileset("bot",16,24);
     std::string skinPath=datapackPath+MapController::text_DATAPACK_BASE_PATH_SKIN+MapController::text_slash+skin+MapController::text_slashtrainerpng;
-    if(!QFile(skinPath).exists())
+    if(!QFile(QString::fromStdString(skinPath)).exists())
     {
-        QDir folderList(QStringLiteral("%1/skin/").arg(datapackPath));
+        QDir folderList(QStringLiteral("%1/skin/").arg(QString::fromStdString(datapackPath)));
         const QStringList &entryList=folderList.entryList(QDir::Dirs|QDir::NoDotAndDotDot);
         int entryListIndex=0;
         while(entryListIndex<entryList.size())
         {
-            skinPath=datapackPath+DATAPACK_BASE_PATH_SKINBASE+entryList.at(entryListIndex)+MapController::text_slash+skin+MapController::text_slashtrainerpng;
-            if(QFile(skinPath).exists())
+            skinPath=datapackPath+DATAPACK_BASE_PATH_SKINBASE+entryList.at(entryListIndex).toStdString()+
+                    MapController::text_slash+skin+MapController::text_slashtrainerpng;
+            if(QFile(QString::fromStdString(skinPath)).exists())
                 break;
             entryListIndex++;
         }
     }
     //do a cache here?
-    if(!QFile(skinPath).exists())
+    if(!QFile(QString::fromStdString(skinPath)).exists())
     {
-        qDebug() << "Unable the load the bot tileset (not found):" << skinPath;
+        qDebug() << "Unable the load the bot tileset (not found):" << QString::fromStdString(skinPath);
         if(!botDisplay->tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
             qDebug() << "Unable the load the default bot tileset";
     }
-    else if(!botDisplay->tileset->loadFromImage(QImage(skinPath),skinPath))
+    else if(!botDisplay->tileset->loadFromImage(QImage(QString::fromStdString(skinPath)),QString::fromStdString(skinPath)))
     {
         qDebug() << "Unable the load the bot tileset";
         if(!botDisplay->tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
@@ -357,10 +355,10 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         cell.tile=botDisplay->tileset->tileAt(baseTile);
         botDisplay->mapObject->setCell(cell);
 
-        ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(botDisplay->mapObject);
+        ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(botDisplay->mapObject);
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         botDisplay->mapObject->setPosition(QPoint(x,y+1));
-        MapObjectItem::objectLink.value(botDisplay->mapObject)->setZValue(y);
+        MapObjectItem::objectLink.at(botDisplay->mapObject)->setZValue(y);
     }
 
     std::pair<uint8_t,uint8_t> pos(x,y);
@@ -379,36 +377,36 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
             Tiled::MapObject * flag=new Tiled::MapObject();
             flag->setName("fight collision bot");
             botDisplay->temporaryTile=new TemporaryTile(flag);
-            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             flag->setPosition(QPointF(x,y-1.5));
-            MapObjectItem::objectLink.value(flag)->setZValue(9999);
+            MapObjectItem::objectLink.at(flag)->setZValue(9999);
         }
         if(parsedMap->logicalMap.shops.find(pos)!=parsedMap->logicalMap.shops.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             flag->setName("Shops");
-            botDisplay->flags << flag;
+            botDisplay->flags.push_back(flag);
             Tiled::Cell cell=flag->cell();
             cell.tile=botFlags->tileAt(2);
             flag->setCell(cell);
-            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
-            MapObjectItem::objectLink.value(flag)->setZValue(y);
+            MapObjectItem::objectLink.at(flag)->setZValue(y);
         }
         if(parsedMap->logicalMap.learn.find(pos)!=parsedMap->logicalMap.learn.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             flag->setName("Learn");
-            botDisplay->flags << flag;
+            botDisplay->flags.push_back(flag);
             Tiled::Cell cell=flag->cell();
             cell.tile=botFlags->tileAt(3);
             flag->setCell(cell);
-            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
-            MapObjectItem::objectLink.value(flag)->setZValue(y);
+            MapObjectItem::objectLink.at(flag)->setZValue(y);
         }
         /*if(parsedMap->logicalMap.clan.find(pos)!=parsedMap->logicalMap.clan.cend())
         {
@@ -426,40 +424,40 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         if(parsedMap->logicalMap.heal.find(pos)!=parsedMap->logicalMap.heal.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
-            botDisplay->flags << flag;
+            botDisplay->flags.push_back(flag);
             Tiled::Cell cell=flag->cell();
             cell.tile=botFlags->tileAt(0);
             flag->setCell(cell);
-            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
-            MapObjectItem::objectLink.value(flag)->setZValue(y);
+            MapObjectItem::objectLink.at(flag)->setZValue(y);
         }
         if(parsedMap->logicalMap.market.find(pos)!=parsedMap->logicalMap.market.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             flag->setName("Market");
-            botDisplay->flags << flag;
+            botDisplay->flags.push_back(flag);
             Tiled::Cell cell=flag->cell();
             cell.tile=botFlags->tileAt(4);
             flag->setCell(cell);
-            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
-            MapObjectItem::objectLink.value(flag)->setZValue(y);
+            MapObjectItem::objectLink.at(flag)->setZValue(y);
         }
         if(parsedMap->logicalMap.zonecapture.find(pos)!=parsedMap->logicalMap.zonecapture.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             flag->setName("Zonecapture");
-            botDisplay->flags << flag;
+            botDisplay->flags.push_back(flag);
             Tiled::Cell cell=flag->cell();
             cell.tile=botFlags->tileAt(6);
             flag->setCell(cell);
-            ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(flag);
+            ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
-            MapObjectItem::objectLink.value(flag)->setZValue(y);
+            MapObjectItem::objectLink.at(flag)->setZValue(y);
         }
         /*if(parsedMap->logicalMap.industry.find(pos)!=parsedMap->logicalMap.industry.cend())
         {
@@ -489,16 +487,16 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
         }*/
     }
 
-    if(parsedMap->logicalMap.bots.value(Qtpos).step.find(1)!=parsedMap->logicalMap.bots.value(Qtpos).step.cend())
+    if(parsedMap->logicalMap.bots.at(Qtpos).step.find(1)!=parsedMap->logicalMap.bots.at(Qtpos).step.cend())
     {
-        auto stepBot=parsedMap->logicalMap.bots.value(Qtpos).step.at(1);
-        if(stepBot->Attribute(std::string("type"))!=NULL && *stepBot->Attribute(std::string("type"))=="fight")
+        auto stepBot=parsedMap->logicalMap.bots.at(Qtpos).step.at(1);
+        if(stepBot->Attribute("type")!=NULL && strcmp(stepBot->Attribute("type"),"fight")==0)
         {
-            if(stepBot->Attribute(std::string("fightid"))!=NULL)
+            if(stepBot->Attribute("fightid")!=NULL)
             {
                 bool ok;
                 //16Bit: \see CommonDatapackServerSpec, Map_to_send,struct Bot_Semi,uint16_t id
-                const uint16_t fightid=stringtouint16(*stepBot->Attribute(std::string("fightid")),&ok);
+                const uint16_t fightid=stringtouint16(stepBot->Attribute("fightid"),&ok);
                 if(ok)
                 {
                     if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
@@ -508,14 +506,14 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                         #endif
 
                         uint32_t fightRange=5;
-                        if(parsedMap->logicalMap.bots.value(Qtpos).properties.find("fightRange")!=parsedMap->logicalMap.bots.value(Qtpos).properties.cend())
+                        if(parsedMap->logicalMap.bots.at(Qtpos).properties.find("fightRange")!=parsedMap->logicalMap.bots.at(Qtpos).properties.cend())
                         {
-                            fightRange=stringtouint32(parsedMap->logicalMap.bots.value(Qtpos).properties.at("fightRange"),&ok);
+                            fightRange=stringtouint32(parsedMap->logicalMap.bots.at(Qtpos).properties.at("fightRange"),&ok);
                             if(!ok)
                             {
                                 qDebug() << (QStringLiteral("fightRange is not a number at %1 (%2,%3): %4")
                                     .arg(QString::fromStdString(parsedMap->logicalMap.map_file)).arg(x).arg(y)
-                                    .arg(QString::fromStdString(parsedMap->logicalMap.bots.value(Qtpos).properties.at("fightRange"))));
+                                    .arg(QString::fromStdString(parsedMap->logicalMap.bots.at(Qtpos).properties.at("fightRange"))));
                                 fightRange=5;
                             }
                             else
@@ -546,7 +544,7 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                             std::pair<uint8_t,uint8_t> temp_pos(temp_x,temp_y);
                             std::pair<uint8_t,uint8_t> Qttemp_pos(temp_x,temp_y);
                             parsedMap->logicalMap.botsFightTrigger[temp_pos].push_back(fightid);
-                            parsedMap->logicalMap.botsFightTriggerExtra.insert(Qttemp_pos,Qtpos);
+                            parsedMap->logicalMap.botsFightTriggerExtra[Qttemp_pos].push_back(Qtpos);
                             index_botfight_range++;
                         }
                     }
@@ -554,14 +552,14 @@ void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,con
                         qDebug() << QStringLiteral("No fightid %1 at MapController::loadBotOnTheMap").arg(fightid);
                 }
                 else
-                    qDebug() << QStringLiteral("fightid not a number: ") << QString::fromStdString(*stepBot->Attribute(std::string("fightid")));
+                    qDebug() << QStringLiteral("fightid not a number: ") << stepBot->Attribute("fightid");
             }
             else
                 qDebug() << QStringLiteral("stepBot->Attribute(std::string(\"type\"))!=NULL && *stepBot->Attribute(std::string(\"type\"))==\"fight\" && stepBot->Attribute(std::string(\"fightid\"))!=NULL")
                          << " at " << QString::fromStdString(parsedMap->logicalMap.map_file) << "" << Qtpos.first << "," << Qtpos.second
-                         << QString::number(stepBot->Attribute(std::string("type"))!=NULL)
-                         << QString::number(*stepBot->Attribute(std::string("type"))=="fight")
-                         << QString::number(stepBot->Attribute(std::string("fightid"))!=NULL);
+                         << QString::number(stepBot->Attribute("type")!=NULL)
+                         << QString::number(strcmp(stepBot->Attribute("type"),"fight"))
+                         << QString::number(stepBot->Attribute("fightid")!=NULL);
         }
     }
     /*else

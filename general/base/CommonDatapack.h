@@ -55,11 +55,6 @@ public:
     #endif
 
     std::unordered_map<std::string/*file*/,CATCHCHALLENGER_XMLDOCUMENT> xmlLoadedFile;//keep for Map_loader::getXmlCondition(), need to be deleted later
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    std::unordered_map<std::string/*file*/, tinyxml2::XMLDocument> xmlLoadedFileQt;
-    #endif
-    #endif
 
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     LayersOptions layersOptions;

@@ -1,7 +1,7 @@
 include(../tiled/tiled.pri)
 
-QT       += widgets qml quick
-QT       += gui network core
+QT       += gui network core widgets
+QT       += qml quick
 
 DEFINES += CATCHCHALLENGER_CLIENT
 

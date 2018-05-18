@@ -10,5 +10,7 @@ EvolutionControl::EvolutionControl(const CatchChallenger::Monster &fromMonsterIn
 
 QString EvolutionControl::evolutionText()
 {
-    return tr("Your %1 will evolve into %2").arg(fromMonsterInformationsExtra.name).arg(toMonsterInformationsExtra.name);
+    return tr("Your %1 will evolve into %2")
+            .arg(QString::fromStdString(fromMonsterInformationsExtra.name))
+            .arg(QString::fromStdString(toMonsterInformationsExtra.name));
 }

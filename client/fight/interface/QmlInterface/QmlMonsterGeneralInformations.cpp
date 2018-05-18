@@ -12,13 +12,13 @@ QmlMonsterGeneralInformations::QmlMonsterGeneralInformations(const CatchChalleng
 
 QString QmlMonsterGeneralInformations::name()
 {
-    return monsterInformationsExtra.name;
+    return QString::fromStdString(monsterInformationsExtra.name);
 }
 
 QString QmlMonsterGeneralInformations::image()
 {
-    if(monsterInformationsExtra.frontPath.startsWith(":/"))
-        return "qrc"+monsterInformationsExtra.frontPath;
+    if(stringStartWith(monsterInformationsExtra.frontPath,":/"))
+        return "qrc"+QString::fromStdString(monsterInformationsExtra.frontPath);
     else
-        return QUrl::fromLocalFile(monsterInformationsExtra.frontPath).toEncoded();
+        return QUrl::fromLocalFile(QString::fromStdString(monsterInformationsExtra.frontPath)).toEncoded();
 }

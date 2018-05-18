@@ -38,7 +38,7 @@ void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x, const 
                    DatapackClientLoader::datapackLoader.maps.at(mapId))).absoluteFilePath().toStdString();
     if(!haveMapInMemory(map) || !mapItem->haveMap(all_map.at(map)->tiledMap))
     {
-        qDebug() << QString("map (%1) not show or not loaded, delay it").arg(map);
+        qDebug() << QString("map (%1) not show or not loaded, delay it").arg(QString::fromStdString(map));
         DelayedPlantInsert tempItem;
         tempItem.mapId=mapId;
         tempItem.x=x;
@@ -252,7 +252,7 @@ void MapController::reinject_signals()
 
 void MapController::tryLoadPlantOnMapDisplayed(const std::string &fileName)
 {
-    int index=0;
+    unsigned int index=0;
     std::vector<DelayedPlantInsert> values=delayedPlantInsertOnMap.at(fileName);
     while(index<values.size())
     {
