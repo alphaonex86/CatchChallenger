@@ -7,22 +7,20 @@
 #include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../fight/interface/ClientFightEngine.h"
 
-#include <tinyxml2::XMLElement>
-#include <QDomDocument>
 #include <QFile>
 #include <QByteArray>
 #include <QDebug>
+#include <iostream>
 
 void DatapackClientLoader::parseMonstersExtra()
 {
-    QString STATIC_DATAPACK_BASE_PATH_MONSTERS=QStringLiteral(DATAPACK_BASE_PATH_MONSTERS);
-    const QString &frontgif=QStringLiteral("/front.gif");
-    const QString &frontpng=QStringLiteral("/front.png");
-    const QString &backgif=QStringLiteral("/back.gif");
-    const QString &backpng=QStringLiteral("/back.png");
-    const QString &smallgif=QStringLiteral("/small.gif");
-    const QString &smallpng=QStringLiteral("/small.png");
-    QDir dir(datapackPath+STATIC_DATAPACK_BASE_PATH_MONSTERS);
+    const std::string frontgif("/front.gif");
+    const std::string frontpng("/front.png");
+    const std::string backgif("/back.gif");
+    const std::string backpng("/back.png");
+    const std::string smallgif("/small.gif");
+    const std::string smallpng("/small.png");
+    QDir dir(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_MONSTERS);
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
     while(file_index<fileList.size())
@@ -32,266 +30,223 @@ void DatapackClientLoader::parseMonstersExtra()
             file_index++;
             continue;
         }
-        const QString &file=fileList.at(file_index).absoluteFilePath();
-        if(!file.endsWith(DatapackClientLoader::text_dotxml))
+        const std::string &file=fileList.at(file_index).absoluteFilePath().toStdString();
+        if(!stringEndsWith(file,".xml"))
         {
             file_index++;
             continue;
         }
-        QDomDocument domDocument;
+        tinyxml2::XMLDocument *domDocument=NULL;
         //open and quick check the file
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
-            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
+                CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
         else
         {
-            QFile xmlFile(file);
-            QByteArray xmlContent;
-            if(!xmlFile.open(QIODevice::ReadOnly))
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            if(loadOkay!=0)
             {
-                qDebug() << (QStringLiteral("Unable to open the xml monster extra file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
-                file_index++;
-                continue;
-            }
-            xmlContent=xmlFile.readAll();
-            xmlFile.close();
-            QString errorStr;
-            int errorLine,errorColumn;
-            if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-            {
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+                std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
                 file_index++;
                 continue;
             }
         }
-        tinyxml2::XMLElement root = domDocument.RootElement();
-        if(root.tagName()!=DatapackClientLoader::text_monsters)
+        const tinyxml2::XMLElement *root = domDocument->RootElement();
+        if(strcmp(root->Name(),"monsters")!=0)
         {
             //qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"monsters\" root balise not found for the xml file").arg(file));
             file_index++;
             continue;
         }
 
-        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+        const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
         //load the content
         bool ok;
-        tinyxml2::XMLElement item = root.FirstChildElement(DatapackClientLoader::text_monster);
-        while(!item.isNull())
+        const tinyxml2::XMLElement *item = root->FirstChildElement("monster");
+        while(item!=NULL)
         {
-            if(item.isElement())
+            if(item->Attribute("id")!=NULL)
             {
-                if(item.hasAttribute(DatapackClientLoader::text_id))
+                const uint32_t tempid=stringtouint32(item->Attribute("id"),&ok);
+                if(!ok)
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child->Name(): %2")
+                                 .arg(QString::fromStdString(file)).arg(item->Name()));
+                else
                 {
-                    uint32_t tempid=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
-                    if(!ok || tempid>65535)
-                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    const uint16_t id=static_cast<uint16_t>(tempid);
+                    if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(id)
+                            ==CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
+                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster list into monster extra: child->Name(): %2")
+                                     .arg(QString::fromStdString(file)).arg(item->Name()));
                     else
                     {
-                        const uint16_t id=static_cast<uint16_t>(tempid);
-                        if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(id)
-                                ==CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
-                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster list into monster extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                        else
+                        DatapackClientLoader::MonsterExtra monsterExtraEntry;
+                        #ifdef DEBUG_MESSAGE_MONSTER_LOAD
+                        qDebug() << (QStringLiteral("monster extra loading: %1").arg(id));
+                        #endif
                         {
-                            DatapackClientLoader::MonsterExtra monsterExtraEntry;
-                            #ifdef DEBUG_MESSAGE_MONSTER_LOAD
-                            qDebug() << (QStringLiteral("monster extra loading: %1").arg(id));
-                            #endif
-                            {
-                                bool found=false;
-                                tinyxml2::XMLElement name = item.FirstChildElement(DatapackClientLoader::text_name);
-                                if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
-                                    while(!name.isNull())
-                                    {
-                                        if(name.isElement())
-                                        {
-                                            if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
-                                            {
-                                                monsterExtraEntry.name=name.text();
-                                                found=true;
-                                                break;
-                                            }
-                                        }
-                                        else
-                                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                        name = name.NextSiblingElement(DatapackClientLoader::text_name);
-                                    }
-                                if(!found)
+                            bool found=false;
+                            const tinyxml2::XMLElement *name = item->FirstChildElement("name");
+                            if(!language.empty() && language!="en")
+                                while(name!=NULL)
                                 {
-                                    name = item.FirstChildElement(DatapackClientLoader::text_name);
-                                    while(!name.isNull())
+                                    if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
                                     {
-                                        if(name.isElement())
-                                        {
-                                            if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
-                                            {
-                                                monsterExtraEntry.name=name.text();
-                                                break;
-                                            }
-                                        }
-                                        else
-                                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                        name = name.NextSiblingElement(DatapackClientLoader::text_name);
+                                        monsterExtraEntry.name=name->GetText();
+                                        found=true;
+                                        break;
                                     }
+                                    name = name->NextSiblingElement("name");
+                                }
+                            if(!found)
+                            {
+                                name = item->FirstChildElement("name");
+                                while(name!=NULL)
+                                {
+                                    if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
+                                    {
+                                        monsterExtraEntry.name=name->GetText();
+                                        break;
+                                    }
+                                    name = name->NextSiblingElement("name");
                                 }
                             }
-                            {
-                                bool found=false;
-                                tinyxml2::XMLElement description = item.FirstChildElement(DatapackClientLoader::text_description);
-                                if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
-                                    while(!description.isNull())
-                                    {
-                                        if(description.isElement())
-                                        {
-                                            if(description.hasAttribute(DatapackClientLoader::text_lang) && description.attribute(DatapackClientLoader::text_lang)==language)
-                                            {
-                                                    monsterExtraEntry.description=description.text();
-                                                    found=true;
-                                                    break;
-                                            }
-                                        }
-                                        else
-                                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                        description = description.NextSiblingElement(DatapackClientLoader::text_description);
-                                    }
-                                if(!found)
+                        }
+                        {
+                            bool found=false;
+                            const tinyxml2::XMLElement *description = item->FirstChildElement("description");
+                            if(!language.empty() && language!="en")
+                                while(description!=NULL)
                                 {
-                                    description = item.FirstChildElement(DatapackClientLoader::text_description);
-                                    while(!description.isNull())
+                                    if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language)
                                     {
-                                        if(description.isElement())
-                                        {
-                                            if(!description.hasAttribute(DatapackClientLoader::text_lang) || description.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
-                                            {
-                                                    monsterExtraEntry.description=description.text();
-                                                    break;
-                                            }
-                                        }
-                                        else
-                                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                        description = description.NextSiblingElement(DatapackClientLoader::text_description);
+                                            monsterExtraEntry.description=description->GetText();
+                                            found=true;
+                                            break;
                                     }
+                                    description = description->NextSiblingElement("description");
+                                }
+                            if(!found)
+                            {
+                                description = item->FirstChildElement("description");
+                                while(description!=NULL)
+                                {
+                                    if(description->Attribute("lang")==NULL || strcmp(description->Attribute("lang"),"en")==0)
+                                    {
+                                            monsterExtraEntry.description=description->GetText();
+                                            break;
+                                    }
+                                    description = description->NextSiblingElement("description");
                                 }
                             }
-                            //load the kind
-                            {
-                                bool kind_found=false;
-                                tinyxml2::XMLElement kind = item.FirstChildElement(DatapackClientLoader::text_kind);
-                                if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
-                                    while(!kind.isNull())
-                                    {
-                                        if(kind.isElement())
-                                        {
-                                            if(kind.hasAttribute(DatapackClientLoader::text_lang) && kind.attribute(DatapackClientLoader::text_lang)==language)
-                                            {
-                                                monsterExtraEntry.kind=kind.text();
-                                                kind_found=true;
-                                                break;
-                                            }
-                                        }
-                                        kind = kind.NextSiblingElement(DatapackClientLoader::text_kind);
-                                    }
-                                if(!kind_found)
+                        }
+                        //load the kind
+                        {
+                            bool kind_found=false;
+                            const tinyxml2::XMLElement *kind = item->FirstChildElement("kind");
+                            if(!language.empty() && language!="en")
+                                while(kind!=NULL)
                                 {
-                                    kind = item.FirstChildElement(DatapackClientLoader::text_kind);
-                                    while(!kind.isNull())
+                                    if(kind->Attribute("lang")!=NULL && kind->Attribute("lang")==language)
                                     {
-                                        if(kind.isElement())
-                                        {
-                                            if(!kind.hasAttribute(DatapackClientLoader::text_lang) || kind.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
-                                            {
-                                                monsterExtraEntry.kind=kind.text();
-                                                kind_found=true;
-                                                break;
-                                            }
-                                        }
-                                        kind = kind.NextSiblingElement(DatapackClientLoader::text_kind);
+                                        monsterExtraEntry.kind=kind->GetText();
+                                        kind_found=true;
+                                        break;
                                     }
+                                    kind = kind->NextSiblingElement("kind");
+                                }
+                            if(!kind_found)
+                            {
+                                kind = item->FirstChildElement("kind");
+                                while(kind!=NULL)
+                                {
+                                    if(kind->Attribute("lang")==NULL || strcmp(kind->Attribute("lang"),"en")==0)
+                                    {
+                                        monsterExtraEntry.kind=kind->GetText();
+                                        kind_found=true;
+                                        break;
+                                    }
+                                    kind = kind->NextSiblingElement("kind");
                                 }
                             }
+                        }
 
-                            //load the habitat
-                            {
-                                bool habitat_found=false;
-                                tinyxml2::XMLElement habitat = item.FirstChildElement(DatapackClientLoader::text_habitat);
-                                if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
-                                    while(!habitat.isNull())
-                                    {
-                                        if(habitat.isElement())
-                                        {
-                                            if(habitat.hasAttribute(DatapackClientLoader::text_lang) && habitat.attribute(DatapackClientLoader::text_lang)==language)
-                                            {
-                                                monsterExtraEntry.habitat=habitat.text();
-                                                habitat_found=true;
-                                                break;
-                                            }
-                                        }
-                                        habitat = habitat.NextSiblingElement(DatapackClientLoader::text_habitat);
-                                    }
-                                if(!habitat_found)
+                        //load the habitat
+                        {
+                            bool habitat_found=false;
+                            const tinyxml2::XMLElement *habitat = item->FirstChildElement("habitat");
+                            if(!language.empty() && language!="en")
+                                while(habitat!=NULL)
                                 {
-                                    habitat = item.FirstChildElement(DatapackClientLoader::text_habitat);
-                                    while(!habitat.isNull())
+                                    if(habitat->Attribute("lang") && habitat->Attribute("lang")==language)
                                     {
-                                        if(habitat.isElement())
-                                        {
-                                            if(!habitat.hasAttribute(DatapackClientLoader::text_lang) || habitat.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
-                                            {
-                                                monsterExtraEntry.habitat=habitat.text();
-                                                habitat_found=true;
-                                                break;
-                                            }
-                                        }
-                                        habitat = habitat.NextSiblingElement(DatapackClientLoader::text_habitat);
+                                        monsterExtraEntry.habitat=habitat->GetText();
+                                        habitat_found=true;
+                                        break;
                                     }
+                                    habitat = habitat->NextSiblingElement("habitat");
+                                }
+                            if(!habitat_found)
+                            {
+                                habitat = item->FirstChildElement("habitat");
+                                while(habitat!=NULL)
+                                {
+                                    if(habitat->Attribute("lang")==NULL || strcmp(habitat->Attribute("lang"),"en")==0)
+                                    {
+                                        monsterExtraEntry.habitat=habitat->GetText();
+                                        habitat_found=true;
+                                        break;
+                                    }
+                                    habitat = habitat->NextSiblingElement("habitat");
                                 }
                             }
-                            const QString &basepath=datapackPath+DatapackClientLoader::text_slash+STATIC_DATAPACK_BASE_PATH_MONSTERS+QString::number(id);
-                            if(monsterExtraEntry.name.isEmpty())
-                                monsterExtraEntry.name=tr("Unknown");
-                            if(monsterExtraEntry.description.isEmpty())
-                                monsterExtraEntry.description=tr("Unknown");
-                            monsterExtraEntry.frontPath=basepath+frontpng;
-                            monsterExtraEntry.front=QPixmap(monsterExtraEntry.frontPath);
+                        }
+                        const std::string &basepath=datapackPath+DatapackClientLoader::text_slash+DATAPACK_BASE_PATH_MONSTERS+std::to_string(id);
+                        if(monsterExtraEntry.name.empty())
+                            monsterExtraEntry.name=tr("Unknown").toStdString();
+                        if(monsterExtraEntry.description.empty())
+                            monsterExtraEntry.description=tr("Unknown").toStdString();
+                        monsterExtraEntry.frontPath=basepath+frontpng;
+                        monsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
+                        if(monsterExtraEntry.front.isNull())
+                        {
+                            monsterExtraEntry.frontPath=basepath+frontgif;
+                            monsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
                             if(monsterExtraEntry.front.isNull())
                             {
-                                monsterExtraEntry.frontPath=basepath+frontgif;
-                                monsterExtraEntry.front=QPixmap(monsterExtraEntry.frontPath);
-                                if(monsterExtraEntry.front.isNull())
-                                {
-                                    monsterExtraEntry.frontPath=QStringLiteral(":/images/monsters/default/front.png");
-                                    monsterExtraEntry.front=QPixmap(monsterExtraEntry.frontPath);
-                                }
+                                monsterExtraEntry.frontPath=":/images/monsters/default/front.png";
+                                monsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
                             }
-                            monsterExtraEntry.backPath=basepath+backpng;
-                            monsterExtraEntry.back=QPixmap(monsterExtraEntry.backPath);
+                        }
+                        monsterExtraEntry.backPath=basepath+backpng;
+                        monsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
+                        if(monsterExtraEntry.back.isNull())
+                        {
+                            monsterExtraEntry.backPath=basepath+backgif;
+                            monsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
                             if(monsterExtraEntry.back.isNull())
                             {
-                                monsterExtraEntry.backPath=basepath+backgif;
-                                monsterExtraEntry.back=QPixmap(monsterExtraEntry.backPath);
-                                if(monsterExtraEntry.back.isNull())
-                                {
-                                    monsterExtraEntry.backPath=QStringLiteral(":/images/monsters/default/back.png");
-                                    monsterExtraEntry.back=QPixmap(monsterExtraEntry.backPath);
-                                }
+                                monsterExtraEntry.backPath=":/images/monsters/default/back.png";
+                                monsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
                             }
-                            monsterExtraEntry.thumb=basepath+smallpng;
-                            if(monsterExtraEntry.thumb.isNull())
-                            {
-                                monsterExtraEntry.thumb=basepath+smallgif;
-                                if(monsterExtraEntry.thumb.isNull())
-                                    monsterExtraEntry.thumb=QPixmap(QStringLiteral(":/images/monsters/default/small.png"));
-                            }
-                            monsterExtraEntry.thumb=monsterExtraEntry.thumb.scaled(64,64);
-                            DatapackClientLoader::datapackLoader.monsterExtra[id]=monsterExtraEntry;
                         }
+                        monsterExtraEntry.thumb=QString::fromStdString(basepath+smallpng);
+                        if(monsterExtraEntry.thumb.isNull())
+                        {
+                            monsterExtraEntry.thumb=QString::fromStdString(basepath+smallgif);
+                            if(monsterExtraEntry.thumb.isNull())
+                                monsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
+                        }
+                        monsterExtraEntry.thumb=monsterExtraEntry.thumb.scaled(64,64);
+                        DatapackClientLoader::datapackLoader.monsterExtra[id]=monsterExtraEntry;
                     }
                 }
-                else
-                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, have not the monster id at monster extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
             }
             else
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-            item = item.NextSiblingElement(DatapackClientLoader::text_monster);
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, have not the monster id at monster extra: child->Name(): %2")
+                             .arg(QString::fromStdString(file)).arg(item->Name()));
+            item = item->NextSiblingElement("monster");
         }
 
         file_index++;
@@ -300,15 +255,16 @@ void DatapackClientLoader::parseMonstersExtra()
     auto i=CatchChallenger::CommonDatapack::commonDatapack.monsters.begin();
     while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
     {
-        if(!DatapackClientLoader::datapackLoader.monsterExtra.contains(i->first))
+        if(DatapackClientLoader::datapackLoader.monsterExtra.find(i->first)==
+                DatapackClientLoader::datapackLoader.monsterExtra.cend())
         {
             qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i->first));
             DatapackClientLoader::MonsterExtra monsterExtraEntry;
-            monsterExtraEntry.name=tr("Unknown");
-            monsterExtraEntry.description=tr("Unknown");
-            monsterExtraEntry.front=QPixmap(QStringLiteral(":/images/monsters/default/front.png"));
-            monsterExtraEntry.back=QPixmap(QStringLiteral(":/images/monsters/default/back.png"));
-            monsterExtraEntry.thumb=QPixmap(QStringLiteral(":/images/monsters/default/small.png"));
+            monsterExtraEntry.name=tr("Unknown").toStdString();
+            monsterExtraEntry.description=tr("Unknown").toStdString();
+            monsterExtraEntry.front=QPixmap(":/images/monsters/default/front.png");
+            monsterExtraEntry.back=QPixmap(":/images/monsters/default/back.png");
+            monsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
             monsterExtraEntry.thumb=monsterExtraEntry.thumb.scaled(64,64);
             DatapackClientLoader::datapackLoader.monsterExtra[i->first]=monsterExtraEntry;
         }
@@ -320,118 +276,111 @@ void DatapackClientLoader::parseMonstersExtra()
 
 void DatapackClientLoader::parseTypesExtra()
 {
-    const QString &file=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MONSTERS)+QStringLiteral("type.xml");
-    QDomDocument domDocument;
+    const std::string &file=datapackPath+DATAPACK_BASE_PATH_MONSTERS+"type.xml";
+    tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
+            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
     else
     {
-        QFile itemsFile(file);
-        QByteArray xmlContent;
-        if(!itemsFile.open(QIODevice::ReadOnly))
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
-            qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(file).arg(itemsFile.errorString());
-            return;
-        }
-        xmlContent=itemsFile.readAll();
-        itemsFile.close();
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr);
+            std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
             return;
         }
     }
-    tinyxml2::XMLElement root = domDocument.RootElement();
-    if(root.tagName()!=DatapackClientLoader::text_types)
+    const tinyxml2::XMLElement *root = domDocument->RootElement();
+    if(strcmp(root->Name(),"types")!=0)
     {
-        qDebug() << QStringLiteral("Unable to open the file: %1, \"types\" root balise not found for the xml file").arg(file);
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"types\" root balise not found for the xml file").arg(QString::fromStdString(file));
         return;
     }
 
     //load the content
     {
-        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-        QSet<QString> duplicate;
-        tinyxml2::XMLElement typeItem = root.FirstChildElement(DatapackClientLoader::text_type);
-        while(!typeItem.isNull())
+        const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+        std::unordered_set<std::string> duplicate;
+        const tinyxml2::XMLElement *typeItem = root->FirstChildElement("type");
+        while(typeItem!=NULL)
         {
-            if(typeItem.isElement())
+            if(typeItem->Attribute("name")!=NULL)
             {
-                if(typeItem.hasAttribute(DatapackClientLoader::text_name))
+                std::string name=typeItem->Attribute("name");
+                if(duplicate.find(name)==duplicate.cend())
                 {
-                    QString name=typeItem.attribute(DatapackClientLoader::text_name);
-                    if(!duplicate.contains(name))
+                    TypeExtra type;
+
+                    duplicate << name;
+                    if(typeItem.hasAttribute(DatapackClientLoader::text_color))
                     {
-                        TypeExtra type;
-
-                        duplicate << name;
-                        if(typeItem.hasAttribute(DatapackClientLoader::text_color))
-                        {
-                            QColor color;
-                            color.setNamedColor(typeItem.attribute(DatapackClientLoader::text_color));
-                            if(color.isValid())
-                                type.color=color;
-                            else
-                                qDebug() << (QStringLiteral("Unable to open the file: %1, color is not valid: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber()));
-                        }
-
-                        bool found=false;
-                        tinyxml2::XMLElement nameItem = typeItem.FirstChildElement(DatapackClientLoader::text_name);
-                        if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
-                            while(!nameItem.isNull())
-                            {
-                                if(nameItem.isElement())
-                                {
-                                    if(nameItem.hasAttribute(DatapackClientLoader::text_lang) && nameItem.attribute(DatapackClientLoader::text_lang)==language)
-                                    {
-                                        type.name=nameItem.text();
-                                        found=true;
-                                        break;
-                                    }
-                                }
-                                else
-                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(nameItem.tagName()).arg(nameItem.lineNumber()));
-                                nameItem = nameItem.NextSiblingElement(DatapackClientLoader::text_name);
-                            }
-                        if(!found)
-                        {
-                            nameItem = typeItem.FirstChildElement(DatapackClientLoader::text_name);
-                            while(!nameItem.isNull())
-                            {
-                                if(nameItem.isElement())
-                                {
-                                    if(!nameItem.hasAttribute(DatapackClientLoader::text_lang) || nameItem.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
-                                    {
-                                        type.name=nameItem.text();
-                                        break;
-                                    }
-                                }
-                                else
-                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(nameItem.tagName()).arg(nameItem.lineNumber()));
-                                nameItem = nameItem.NextSiblingElement(DatapackClientLoader::text_name);
-                            }
-                        }
-                        if(DatapackClientLoader::datapackLoader.typeExtra.size()>255)
-                        {
-                            qDebug() << QStringLiteral("Unable to open the file: %1, DatapackClientLoader::datapackLoader.typeExtra.size()>255: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
-                            abort();
-                        }
-                        DatapackClientLoader::datapackLoader.typeExtra[
-                                static_cast<uint8_t>(DatapackClientLoader::datapackLoader.typeExtra.size())
-                                ]=type;
+                        QColor color;
+                        color.setNamedColor(typeItem.attribute(DatapackClientLoader::text_color));
+                        if(color.isValid())
+                            type.color=color;
+                        else
+                            qDebug() << (QStringLiteral("Unable to open the file: %1, color is not valid: child->Name(): %2")
+                                         .arg(QString::fromStdString(file)).arg(typeItem->Name()));
                     }
-                    else
-                        qDebug() << QStringLiteral("Unable to open the file: %1, name is already set for type: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+
+                    bool found=false;
+                    tinyxml2::XMLElement nameItem = typeItem->FirstChildElement(DatapackClientLoader::text_name);
+                    if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
+                        while(!nameItem.isNull())
+                        {
+                            if(nameItem.isElement())
+                            {
+                                if(nameItem.hasAttribute(DatapackClientLoader::text_lang) && nameItem.attribute(DatapackClientLoader::text_lang)==language)
+                                {
+                                    type.name=nameItem->GetText();
+                                    found=true;
+                                    break;
+                                }
+                            }
+                            else
+                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child->Name(): %2")
+                                             .arg(QString::fromStdString(file)).arg(nameItem->Name()));
+                            nameItem = nameItem->NextSiblingElement(DatapackClientLoader::text_name);
+                        }
+                    if(!found)
+                    {
+                        nameItem = typeItem->FirstChildElement(DatapackClientLoader::text_name);
+                        while(!nameItem.isNull())
+                        {
+                            if(nameItem.isElement())
+                            {
+                                if(!nameItem.hasAttribute(DatapackClientLoader::text_lang) || nameItem.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
+                                {
+                                    type.name=nameItem->GetText();
+                                    break;
+                                }
+                            }
+                            else
+                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child->Name(): %2")
+                                             .arg(QString::fromStdString(file)).arg(nameItem->Name()));
+                            nameItem = nameItem->NextSiblingElement(DatapackClientLoader::text_name);
+                        }
+                    }
+                    if(DatapackClientLoader::datapackLoader.typeExtra.size()>255)
+                    {
+                        qDebug() << QStringLiteral("Unable to open the file: %1, DatapackClientLoader::datapackLoader.typeExtra.size()>255: child->Name(): %2")
+                                    .arg(QString::fromStdString(file)).arg(typeItem->Name());
+                        abort();
+                    }
+                    DatapackClientLoader::datapackLoader.typeExtra[
+                            static_cast<uint8_t>(DatapackClientLoader::datapackLoader.typeExtra.size())
+                            ]=type;
                 }
                 else
-                    qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
+                    qDebug() << QStringLiteral("Unable to open the file: %1, name is already set for type: child->Name(): %2")
+                                .arg(QString::fromStdString(file)).arg(typeItem->Name());
             }
             else
-                qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(typeItem.tagName()).arg(typeItem.lineNumber());
-            typeItem = typeItem.NextSiblingElement(DatapackClientLoader::text_type);
+                qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child->Name(): %2")
+                            .arg(QString::fromStdString(file)).arg(typeItem->Name());
+            typeItem = typeItem->NextSiblingElement(DatapackClientLoader::text_type);
         }
     }
 
@@ -458,33 +407,24 @@ void DatapackClientLoader::parseBuffExtra()
         }
         const QString &dotpng=QStringLiteral(".png");
         const QString &dotgif=QStringLiteral(".gif");
-        QDomDocument domDocument;
+        tinyxml2::XMLDocument *domDocument;
         //open and quick check the file
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
-            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
+                CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
         else
         {
-            QFile xmlFile(file);
-            QByteArray xmlContent;
-            if(!xmlFile.open(QIODevice::ReadOnly))
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            if(loadOkay!=0)
             {
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
-                file_index++;
-                continue;
-            }
-            xmlContent=xmlFile.readAll();
-            xmlFile.close();
-            QString errorStr;
-            int errorLine,errorColumn;
-            if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-            {
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+                std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
                 file_index++;
                 continue;
             }
         }
         tinyxml2::XMLElement root = domDocument.RootElement();
-        if(root.tagName()!=DatapackClientLoader::text_buffs)
+        if(root->Name()!=DatapackClientLoader::text_buffs)
         {
             qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"buffs\" root balise not found for the xml file").arg(file));
             file_index++;
@@ -494,7 +434,7 @@ void DatapackClientLoader::parseBuffExtra()
         const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
         //load the content
         bool ok;
-        tinyxml2::XMLElement item = root.FirstChildElement(DatapackClientLoader::text_buff);
+        tinyxml2::XMLElement item = root->FirstChildElement(DatapackClientLoader::text_buff);
         while(!item.isNull())
         {
             if(item.isElement())
@@ -503,12 +443,14 @@ void DatapackClientLoader::parseBuffExtra()
                 {
                     uint32_t tempid=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                     if(!ok || tempid>255)
-                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child->Name(): %2")
+                                     .arg(QString::fromStdString(file)).arg(item->Name()));
                     else
                     {
                         const uint8_t &id=static_cast<uint8_t>(tempid);
                         if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.find(id)==CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
-                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster buff list into buff extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster buff list into buff extra: child->Name(): %2")
+                                         .arg(QString::fromStdString(file)).arg(item->Name()));
                         else
                         {
                             DatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
@@ -516,7 +458,7 @@ void DatapackClientLoader::parseBuffExtra()
                             qDebug() << (QStringLiteral("monster extra loading: %1").arg(id));
                             #endif
                             bool found=false;
-                            tinyxml2::XMLElement name = item.FirstChildElement(DatapackClientLoader::text_name);
+                            tinyxml2::XMLElement name = item->FirstChildElement(DatapackClientLoader::text_name);
                             if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                 while(!name.isNull())
                                 {
@@ -524,35 +466,37 @@ void DatapackClientLoader::parseBuffExtra()
                                     {
                                         if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
                                         {
-                                            monsterBuffExtraEntry.name=name.text();
+                                            monsterBuffExtraEntry.name=name->GetText();
                                             found=true;
                                             break;
                                         }
                                     }
                                     else
-                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    name = name.NextSiblingElement(DatapackClientLoader::text_name);
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child->Name(): %2")
+                                                     .arg(QString::fromStdString(file)).arg(item->Name()));
+                                    name = name->NextSiblingElement(DatapackClientLoader::text_name);
                                 }
                             if(!found)
                             {
-                                name = item.FirstChildElement(DatapackClientLoader::text_name);
+                                name = item->FirstChildElement(DatapackClientLoader::text_name);
                                 while(!name.isNull())
                                 {
                                     if(name.isElement())
                                     {
                                         if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                         {
-                                            monsterBuffExtraEntry.name=name.text();
+                                            monsterBuffExtraEntry.name=name->GetText();
                                             break;
                                         }
                                     }
                                     else
-                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    name = name.NextSiblingElement(DatapackClientLoader::text_name);
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child->Name(): %2")
+                                                     .arg(QString::fromStdString(file)).arg(item->Name()));
+                                    name = name->NextSiblingElement(DatapackClientLoader::text_name);
                                 }
                             }
                             found=false;
-                            tinyxml2::XMLElement description = item.FirstChildElement(DatapackClientLoader::text_description);
+                            tinyxml2::XMLElement description = item->FirstChildElement(DatapackClientLoader::text_description);
                             if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                 while(!description.isNull())
                                 {
@@ -560,31 +504,33 @@ void DatapackClientLoader::parseBuffExtra()
                                     {
                                         if(description.hasAttribute(DatapackClientLoader::text_lang) && description.attribute(DatapackClientLoader::text_lang)==language)
                                         {
-                                            monsterBuffExtraEntry.description=description.text();
+                                            monsterBuffExtraEntry.description=description->GetText();
                                             found=true;
                                             break;
                                         }
                                     }
                                     else
-                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    description = description.NextSiblingElement(DatapackClientLoader::text_description);
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child->Name(): %2")
+                                                     .arg(QString::fromStdString(file)).arg(item->Name()));
+                                    description = description->NextSiblingElement(DatapackClientLoader::text_description);
                                 }
                             if(!found)
                             {
-                                description = item.FirstChildElement(DatapackClientLoader::text_description);
+                                description = item->FirstChildElement(DatapackClientLoader::text_description);
                                 while(!description.isNull())
                                 {
                                     if(description.isElement())
                                     {
                                         if(!description.hasAttribute(DatapackClientLoader::text_lang) || description.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                         {
-                                            monsterBuffExtraEntry.description=description.text();
+                                            monsterBuffExtraEntry.description=description->GetText();
                                             break;
                                         }
                                     }
                                     else
-                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    description = description.NextSiblingElement(DatapackClientLoader::text_description);
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child->Name(): %2")
+                                                     .arg(QString::fromStdString(file)).arg(item->Name()));
+                                    description = description->NextSiblingElement(DatapackClientLoader::text_description);
                                 }
                             }
                             if(monsterBuffExtraEntry.name.isEmpty())
@@ -606,11 +552,13 @@ void DatapackClientLoader::parseBuffExtra()
                     }
                 }
                 else
-                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, have not the buff id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, have not the buff id: child->Name(): %2")
+                                 .arg(QString::fromStdString(file)).arg(item->Name()));
             }
             else
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-            item = item.NextSiblingElement(DatapackClientLoader::text_buff);
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child->Name(): %2")
+                             .arg(QString::fromStdString(file)).arg(item->Name()));
+            item = item->NextSiblingElement(DatapackClientLoader::text_buff);
         }
 
         file_index++;
@@ -653,32 +601,22 @@ void DatapackClientLoader::parseSkillsExtra()
             continue;
         }
         //open and quick check the file
-        QDomDocument domDocument;
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
-            domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
+                CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
         else
         {
-            QFile xmlFile(file);
-            QByteArray xmlContent;
-            if(!xmlFile.open(QIODevice::ReadOnly))
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            if(loadOkay!=0)
             {
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
-                file_index++;
-                continue;
-            }
-            xmlContent=xmlFile.readAll();
-            xmlFile.close();
-            QString errorStr;
-            int errorLine,errorColumn;
-            if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-            {
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
+                std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
                 file_index++;
                 continue;
             }
         }
         tinyxml2::XMLElement root = domDocument.RootElement();
-        if(root.tagName()!=DatapackClientLoader::text_skills)
+        if(root->Name()!=DatapackClientLoader::text_skills)
         {
             qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"skills\" root balise not found for the xml file").arg(file));
             file_index++;
@@ -689,7 +627,7 @@ void DatapackClientLoader::parseSkillsExtra()
         bool found;
         //load the content
         bool ok;
-        tinyxml2::XMLElement item = root.FirstChildElement(DatapackClientLoader::text_skill);
+        tinyxml2::XMLElement item = root->FirstChildElement(DatapackClientLoader::text_skill);
         while(!item.isNull())
         {
             if(item.isElement())
@@ -698,12 +636,13 @@ void DatapackClientLoader::parseSkillsExtra()
                 {
                     const uint32_t tempid=item.attribute(DatapackClientLoader::text_id).toUInt(&ok);
                     if(!ok || tempid>65535)
-                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child->Name(): %2")
+                                     .arg(QString::fromStdString(file)).arg(item->Name()));
                     else
                     {
                         const uint16_t &id=static_cast<uint16_t>(tempid);
                         if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(id)==CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
-                        {}//qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster skill list into skill extra: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                        {}
                         else
                         {
                             DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
@@ -711,7 +650,7 @@ void DatapackClientLoader::parseSkillsExtra()
                             qDebug() << (QStringLiteral("monster extra loading: %1").arg(id));
                             #endif
                             found=false;
-                            tinyxml2::XMLElement name = item.FirstChildElement(DatapackClientLoader::text_name);
+                            tinyxml2::XMLElement name = item->FirstChildElement(DatapackClientLoader::text_name);
                             if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                 while(!name.isNull())
                                 {
@@ -719,35 +658,37 @@ void DatapackClientLoader::parseSkillsExtra()
                                     {
                                         if(name.hasAttribute(DatapackClientLoader::text_lang) && name.attribute(DatapackClientLoader::text_lang)==language)
                                         {
-                                            monsterSkillExtraEntry.name=name.text();
+                                            monsterSkillExtraEntry.name=name->GetText();
                                             found=true;
                                             break;
                                         }
                                     }
                                     else
-                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    name = name.NextSiblingElement(DatapackClientLoader::text_name);
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child->Name(): %2")
+                                                     .arg(QString::fromStdString(file)).arg(item->Name()));
+                                    name = name->NextSiblingElement(DatapackClientLoader::text_name);
                                 }
                             if(!found)
                             {
-                                name = item.FirstChildElement(DatapackClientLoader::text_name);
+                                name = item->FirstChildElement(DatapackClientLoader::text_name);
                                 while(!name.isNull())
                                 {
                                     if(name.isElement())
                                     {
                                         if(!name.hasAttribute(DatapackClientLoader::text_lang) || name.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                         {
-                                            monsterSkillExtraEntry.name=name.text();
+                                            monsterSkillExtraEntry.name=name->GetText();
                                             break;
                                         }
                                     }
                                     else
-                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    name = name.NextSiblingElement(DatapackClientLoader::text_name);
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, name balise is not an element: child->Name(): %2")
+                                                     .arg(QString::fromStdString(file)).arg(item->Name()));
+                                    name = name->NextSiblingElement(DatapackClientLoader::text_name);
                                 }
                             }
                             found=false;
-                            tinyxml2::XMLElement description = item.FirstChildElement(DatapackClientLoader::text_description);
+                            tinyxml2::XMLElement description = item->FirstChildElement(DatapackClientLoader::text_description);
                             if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                 while(!description.isNull())
                                 {
@@ -755,31 +696,33 @@ void DatapackClientLoader::parseSkillsExtra()
                                     {
                                         if(description.hasAttribute(DatapackClientLoader::text_lang) && description.attribute(DatapackClientLoader::text_lang)==language)
                                         {
-                                            monsterSkillExtraEntry.description=description.text();
+                                            monsterSkillExtraEntry.description=description->GetText();
                                             found=true;
                                             break;
                                         }
                                     }
                                     else
-                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    description = description.NextSiblingElement(DatapackClientLoader::text_description);
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child->Name(): %2")
+                                                     .arg(QString::fromStdString(file)).arg(item->Name()));
+                                    description = description->NextSiblingElement(DatapackClientLoader::text_description);
                                 }
                             if(!found)
                             {
-                                description = item.FirstChildElement(DatapackClientLoader::text_description);
+                                description = item->FirstChildElement(DatapackClientLoader::text_description);
                                 while(!description.isNull())
                                 {
                                     if(description.isElement())
                                     {
                                         if(!description.hasAttribute(DatapackClientLoader::text_lang) || description.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                         {
-                                            monsterSkillExtraEntry.description=description.text();
+                                            monsterSkillExtraEntry.description=description->GetText();
                                             break;
                                         }
                                     }
                                     else
-                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                    description = description.NextSiblingElement(DatapackClientLoader::text_description);
+                                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, description balise is not an element: child->Name(): %2")
+                                                     .arg(QString::fromStdString(file)).arg(item->Name()));
+                                    description = description->NextSiblingElement(DatapackClientLoader::text_description);
                                 }
                             }
                             if(monsterSkillExtraEntry.name.isEmpty())
@@ -791,11 +734,13 @@ void DatapackClientLoader::parseSkillsExtra()
                     }
                 }
                 else
-                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, have not the skill id: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, have not the skill id: child->Name(): %2")
+                                 .arg(QString::fromStdString(file)).arg(item->Name()));
             }
             else
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-            item = item.NextSiblingElement(DatapackClientLoader::text_skill);
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child->Name(): %2")
+                             .arg(QString::fromStdString(file)).arg(item->Name()));
+            item = item->NextSiblingElement(DatapackClientLoader::text_skill);
         }
 
         file_index++;
@@ -830,42 +775,33 @@ void DatapackClientLoader::parseBotFightsExtra()
         if(list.at(index_file).isFile())
         {
             const QString &file=list.at(index_file).absoluteFilePath();
-            QDomDocument domDocument;
+            tinyxml2::XMLDocument *domDocument;
             //open and quick check the file
-            if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(file.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
-                domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(file.toStdString());
+            if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
+                    CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+                domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
             else
             {
-                QFile xmlFile(file);
-                QByteArray xmlContent;
-                if(!xmlFile.open(QIODevice::ReadOnly))
+                domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+                const auto loadOkay = domDocument->LoadFile(file.c_str());
+                if(loadOkay!=0)
                 {
-                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, error: %2").arg(file).arg(xmlFile.errorString()));
-                    index_file++;
-                    continue;
-                }
-                xmlContent=xmlFile.readAll();
-                xmlFile.close();
-                QString errorStr;
-                int errorLine,errorColumn;
-                if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-                {
-                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(file).arg(errorLine).arg(errorColumn).arg(errorStr));
-                    index_file++;
+                    std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
+                    file_index++;
                     continue;
                 }
             }
             tinyxml2::XMLElement root = domDocument.RootElement();
-            if(root.tagName()!=DatapackClientLoader::text_fights)
+            if(root->Name()!=DatapackClientLoader::text_fights)
             {
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"fights\" root balise not found for the xml file: %2!=%3").arg(file).arg(root.tagName()).arg(DatapackClientLoader::text_fights));
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"fights\" root balise not found for the xml file: %2!=%3").arg(file).arg(root->Name()).arg(DatapackClientLoader::text_fights));
                 index_file++;
                 continue;
             }
 
             //load the content
             bool ok;
-            tinyxml2::XMLElement item = root.FirstChildElement(DatapackClientLoader::text_fight);
+            tinyxml2::XMLElement item = root->FirstChildElement(DatapackClientLoader::text_fight);
             while(!item.isNull())
             {
                 if(item.isElement())
@@ -885,7 +821,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                                     botFightExtra.win=tr("You are so strong for me!");
                                     {
                                         found=false;
-                                        tinyxml2::XMLElement start = item.FirstChildElement(DatapackClientLoader::text_start);
+                                        tinyxml2::XMLElement start = item->FirstChildElement(DatapackClientLoader::text_start);
                                         if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                             while(!start.isNull())
                                             {
@@ -893,35 +829,37 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                 {
                                                     if(start.hasAttribute(DatapackClientLoader::text_lang) && start.attribute(DatapackClientLoader::text_lang)==language)
                                                     {
-                                                        botFightExtra.start=start.text();
+                                                        botFightExtra.start=start->GetText();
                                                         found=true;
                                                         break;
                                                     }
                                                 }
                                                 else
-                                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, start balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                                start = start.NextSiblingElement(DatapackClientLoader::text_start);
+                                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, start balise is not an element: child->Name(): %2")
+                                                                 .arg(QString::fromStdString(file)).arg(item->Name()));
+                                                start = start->NextSiblingElement(DatapackClientLoader::text_start);
                                             }
                                         if(!found)
                                         {
-                                            start = item.FirstChildElement(DatapackClientLoader::text_start);
+                                            start = item->FirstChildElement(DatapackClientLoader::text_start);
                                             while(!start.isNull())
                                             {
                                                 if(start.isElement())
                                                 {
                                                     if(!start.hasAttribute(DatapackClientLoader::text_lang) || start.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                                     {
-                                                        botFightExtra.start=start.text();
+                                                        botFightExtra.start=start->GetText();
                                                         break;
                                                     }
                                                 }
                                                 else
-                                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, start balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                                start = start.NextSiblingElement(DatapackClientLoader::text_start);
+                                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, start balise is not an element: child->Name(): %2")
+                                                                 .arg(QString::fromStdString(file)).arg(item->Name()));
+                                                start = start->NextSiblingElement(DatapackClientLoader::text_start);
                                             }
                                         }
                                         found=false;
-                                        tinyxml2::XMLElement win = item.FirstChildElement(DatapackClientLoader::text_win);
+                                        tinyxml2::XMLElement win = item->FirstChildElement(DatapackClientLoader::text_win);
                                         if(!language.isEmpty() && language!=DatapackClientLoader::text_en)
                                             while(!win.isNull())
                                             {
@@ -929,49 +867,55 @@ void DatapackClientLoader::parseBotFightsExtra()
                                                 {
                                                     if(win.hasAttribute(DatapackClientLoader::text_lang) && win.attribute(DatapackClientLoader::text_lang)==language)
                                                     {
-                                                        botFightExtra.win=win.text();
+                                                        botFightExtra.win=win->GetText();
                                                         found=true;
                                                         break;
                                                     }
                                                 }
                                                 else
-                                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, win balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                                win = win.NextSiblingElement(DatapackClientLoader::text_win);
+                                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, win balise is not an element: child->Name(): %2")
+                                                                 .arg(QString::fromStdString(file)).arg(item->Name()));
+                                                win = win->NextSiblingElement(DatapackClientLoader::text_win);
                                             }
                                         if(!found)
                                         {
-                                            win = item.FirstChildElement(DatapackClientLoader::text_win);
+                                            win = item->FirstChildElement(DatapackClientLoader::text_win);
                                             while(!win.isNull())
                                             {
                                                 if(win.isElement())
                                                 {
                                                     if(!win.hasAttribute(DatapackClientLoader::text_lang) || win.attribute(DatapackClientLoader::text_lang)==DatapackClientLoader::text_en)
                                                     {
-                                                        botFightExtra.win=win.text();
+                                                        botFightExtra.win=win->GetText();
                                                         break;
                                                     }
                                                 }
                                                 else
-                                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, win balise is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                                                win = win.NextSiblingElement(DatapackClientLoader::text_win);
+                                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, win balise is not an element: child->Name(): %2")
+                                                                 .arg(QString::fromStdString(file)).arg(item->Name()));
+                                                win = win->NextSiblingElement(DatapackClientLoader::text_win);
                                             }
                                         }
                                     }
                                     botFightsExtra[id]=botFightExtra;
                                 }
                                 else
-                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, id is already into the botFight extra, child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, id is already into the botFight extra, child->Name(): %2")
+                                                 .arg(QString::fromStdString(file)).arg(item->Name()));
                             }
                             else
-                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, bot fights have not the id %4, child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()).arg(id));
+                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, bot fights have not the id %3, child->Name(): %2")
+                                             .arg(QString::fromStdString(file)).arg(item->Name()).arg(id));
                         }
                         else
-                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, id is not a number to parse bot fight extra, child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
+                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, id is not a number to parse bot fight extra, child->Name(): %2")
+                                         .arg(QString::fromStdString(file)).arg(item->Name()));
                     }
                 }
                 else
-                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg(file).arg(item.tagName()).arg(item.lineNumber()));
-                item = item.NextSiblingElement(DatapackClientLoader::text_fight);
+                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, is not an element: child->Name(): %2")
+                                 .arg(QString::fromStdString(file)).arg(item->Name()));
+                item = item->NextSiblingElement(DatapackClientLoader::text_fight);
             }
             index_file++;
         }

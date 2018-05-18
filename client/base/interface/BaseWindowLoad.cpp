@@ -1115,48 +1115,16 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         return;
     }
     const uint8_t stepQuest=playerInformations.quests.at(questId).step-1;
-    const std::vector<DatapackClientLoader::QuestStepWithConditionExtra> &stepDescriptionList=questExtra.steps.at(stepQuest).texts;
     std::string stepDescription;
     {
-        unsigned int index=0;
-        while(index<stepDescriptionList.size())
-        {
-            const DatapackClientLoader::QuestStepWithConditionExtra &e=stepDescriptionList.at(index);
-            unsigned int indexCond=0;
-            while(indexCond<e.conditions.size())
-            {
-                const DatapackClientLoader::QuestConditionExtra &condition=e.conditions.at(indexCond);
-                switch(condition.type)
-                {
-                case DatapackClientLoader::QuestCondition_queststep:
-                    if((stepQuest+1)!=condition.value)
-                        indexCond=e.conditions.size()+999;//not validated condition
-                break;
-                case DatapackClientLoader::QuestCondition_haverequirements:
-                {
-                    const Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
-                    if(!haveNextStepQuestRequirements(quest))
-                        indexCond=e.conditions.size()+999;//not validated condition
-                }
-                break;
-                default:
-                break;
-                }
-                indexCond++;
-            }
-            if(indexCond==e.conditions.size())
-            {
-                stepDescription=e.text;
-                break;
-            }
-            index++;
-        }
-        if(index>=stepDescriptionList.size())
+        if(stepQuest>=questExtra.steps.size())
         {
             qDebug() << "no condition match into stepDescriptionList";
             ui->questDetails->setText(tr("Select a quest"));
             return;
         }
+        else
+            stepDescription=questExtra.steps.at(stepQuest);
     }
     stepDescription+="<br />";
     std::string stepRequirements;

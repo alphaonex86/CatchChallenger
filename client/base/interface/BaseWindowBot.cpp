@@ -703,22 +703,59 @@ void BaseWindow::getTextEntryPoint()
 
 void BaseWindow::showQuestText(const uint32_t &textId)
 {
-    if(DatapackClientLoader::datapackLoader.questsText.find(questId)==
-            DatapackClientLoader::datapackLoader.questsText.cend())
+    if(DatapackClientLoader::datapackLoader.questsExtra.find(questId)==
+            DatapackClientLoader::datapackLoader.questsExtra.cend())
     {
         qDebug() << QStringLiteral("No quest text for this quest: %1").arg(questId);
         showTip(tr("No quest text for this quest").toStdString());
         return;
     }
-    if(DatapackClientLoader::datapackLoader.questsText.at(questId).text.find(textId)==
-            DatapackClientLoader::datapackLoader.questsText.at(questId).text.cend())
+    const DatapackClientLoader::QuestExtra &questExtra=DatapackClientLoader::datapackLoader.questsExtra.at(questId);
+    if(questExtra.text.find(textId)==questExtra.text.cend())
     {
         qDebug() << "No quest text entry point";
         showTip(tr("No quest text entry point").toStdString());
         return;
     }
 
-    std::string textToShow=parseHtmlToDisplay(DatapackClientLoader::datapackLoader.questsText.at(questId).text.at(textId));
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+    const uint8_t stepQuest=playerInformations.quests.at(questId).step-1;
+    std::string text=tr("No text found").toStdString();
+    const DatapackClientLoader::QuestTextExtra &questTextExtra=questExtra.text.at(textId);
+    unsigned int index=0;
+    while(index<questTextExtra.texts.size())
+    {
+        const DatapackClientLoader::QuestStepWithConditionExtra &e=questTextExtra.texts.at(index);
+        unsigned int indexCond=0;
+        while(indexCond<e.conditions.size())
+        {
+            const DatapackClientLoader::QuestConditionExtra &condition=e.conditions.at(indexCond);
+            switch(condition.type)
+            {
+            case DatapackClientLoader::QuestCondition_queststep:
+                if((stepQuest+1)!=condition.value)
+                    indexCond=e.conditions.size()+999;//not validated condition
+            break;
+            case DatapackClientLoader::QuestCondition_haverequirements:
+            {
+                const Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
+                if(!haveNextStepQuestRequirements(quest))
+                    indexCond=e.conditions.size()+999;//not validated condition
+            }
+            break;
+            default:
+            break;
+            }
+            indexCond++;
+        }
+        if(indexCond==e.conditions.size())
+        {
+            text=e.text;
+            break;
+        }
+        index++;
+    }
+    std::string textToShow=parseHtmlToDisplay(text);
     ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
     ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
     ui->IG_dialog->setVisible(true);
