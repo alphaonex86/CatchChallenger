@@ -54,14 +54,15 @@ public:
         std::string text;
         std::vector<QuestConditionExtra> conditions;
     };
-    struct QuestStepExtra
+    struct QuestTextExtra
     {
         std::vector<QuestStepWithConditionExtra> texts;
     };
     struct QuestExtra
     {
         std::string name;
-        std::vector<QuestStepExtra> steps;
+        std::unordered_map<uint32_t,QuestTextExtra> text;
+        std::vector<std::string> steps;
         bool showRewards;
         bool autostep;
     };
@@ -75,10 +76,6 @@ public:
     {
         std::string start;
         std::string win;
-    };
-    struct QuestText
-    {
-        std::unordered_map<uint32_t,std::string> text;
     };
     struct MonsterExtra
     {
@@ -138,7 +135,6 @@ public:
     std::unordered_map<uint16_t,uint8_t> itemToPlants;
     std::unordered_map<uint8_t,PlantExtra> plantExtra;
     std::unordered_map<uint16_t,QuestExtra> questsExtra;
-    std::unordered_map<uint16_t,QuestText> questsText;
     std::unordered_map<std::string,uint16_t> questsPathToId;
     std::unordered_map<uint16_t,std::vector<uint16_t> > botToQuestStart;
     std::unordered_map<uint16_t,BotFightExtra> botFightsExtra;
