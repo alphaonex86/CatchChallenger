@@ -26,7 +26,6 @@ public:
     bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition);
     void errorFightEngine(const std::string &error);
     void messageFightEngine(const std::string &message) const;
-    std::vector<uint8_t> addPlayerMonster(const QList<PlayerMonster> &playerMonster);
     std::vector<uint8_t> addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
     std::vector<uint8_t> addPlayerMonster(const PlayerMonster &playerMonster);
     //current fight
@@ -36,12 +35,12 @@ public:
     std::vector<uint32_t> otherMonsterAttack;
     std::vector<PlayerMonster> playerMonster_catchInProgress;
     virtual void fightFinished();
-    void setBattleMonster(const QList<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
-    void setBotMonster(const QList<PlayerMonster> &publicPlayerMonster, const uint16_t &fightId);
+    void setBattleMonster(const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
+    void setBotMonster(const std::vector<PlayerMonster> &publicPlayerMonster, const uint16_t &fightId);
     bool addBattleMonster(const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     bool haveWin();
-    void addAndApplyAttackReturnList(const QList<Skill::AttackReturn> &fightEffectList);
-    QList<Skill::AttackReturn> getAttackReturnList() const;
+    void addAndApplyAttackReturnList(const std::vector<Skill::AttackReturn> &fightEffectList);
+    std::vector<Skill::AttackReturn> getAttackReturnList() const;
     Skill::AttackReturn getFirstAttackReturn() const;
     void removeTheFirstLifeEffectAttackReturn();
     void removeTheFirstBuffEffectAttackReturn();

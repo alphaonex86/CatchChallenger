@@ -1,7 +1,7 @@
 #include "WithAnotherPlayer.h"
 #include "ui_WithAnotherPlayer.h"
 
-WithAnotherPlayer::WithAnotherPlayer(QWidget *parent,const WithAnotherPlayerType &type,const QPixmap &skin,const QString &pseudo) :
+WithAnotherPlayer::WithAnotherPlayer(QWidget *parent,const WithAnotherPlayerType &type,const QPixmap &skin,const std::string &pseudo) :
     QDialog(parent),
     ui(new Ui::WithAnotherPlayer)
 {
@@ -12,15 +12,15 @@ WithAnotherPlayer::WithAnotherPlayer(QWidget *parent,const WithAnotherPlayerType
     switch(type)
     {
         case WithAnotherPlayerType_Battle:
-        ui->question->setText(tr("Do you want battle with the player %1?").arg(QStringLiteral("<b>%1</b>").arg(pseudo)));
+        ui->question->setText(tr("Do you want battle with the player %1?").arg("<b>"+QString::fromStdString(pseudo)+"</b>"));
         setWindowTitle(tr("Battle"));
         break;
         case WithAnotherPlayerType_Trade:
-        ui->question->setText(tr("Do you want trade with the player %1?").arg(QStringLiteral("<b>%1</b>").arg(pseudo)));
+        ui->question->setText(tr("Do you want trade with the player %1?").arg("<b>"+QString::fromStdString(pseudo)+"</b>"));
         setWindowTitle(tr("Trade"));
         break;
         default:
-        ui->question->setText(tr("Do you want do an action with the player %1?").arg(QStringLiteral("<b>%1</b>").arg(pseudo)));
+        ui->question->setText(tr("Do you want do an action with the player %1?").arg("<b>"+QString::fromStdString(pseudo)+"</b>"));
         setWindowTitle(tr("Action"));
         break;
     }

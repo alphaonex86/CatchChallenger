@@ -19,7 +19,7 @@ void BaseWindow::doNextAction()
             if(!fightEngine.getAttackReturnList().empty())
             {
                 qDebug() << "doNextAction(): escape failed: you take damage";
-                displayText(tr("You have failed to escape!"));
+                displayText(tr("You have failed to escape!").toStdString());
                 return;
             }
             else
@@ -31,7 +31,8 @@ void BaseWindow::doNextAction()
                     return;
                 }
                 qDebug() << "doNextAction(): escape fail but the wild monster can't attack";
-                displayText(tr("The wild %1 can't attack").arg(DatapackClientLoader::datapackLoader.monsterExtra.value(otherMonster->monster).name));
+                displayText(tr("The wild %1 can't attack").arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(
+                                                                   otherMonster->monster).name)).toStdString());
                 return;
             }
         }
@@ -45,7 +46,7 @@ void BaseWindow::doNextAction()
     //apply the effect
     if(!fightEngine.getAttackReturnList().empty())
     {
-        const Skill::AttackReturn returnAction=fightEngine.getAttackReturnList().first();
+        const Skill::AttackReturn returnAction=fightEngine.getAttackReturnList().front();
         PublicPlayerMonster * otherMonster=fightEngine.getOtherMonster();
         if(otherMonster)
         {
@@ -100,7 +101,9 @@ void BaseWindow::doNextAction()
         qDebug() << "doNextAction(): remplace KO current monster";
         PublicPlayerMonster * currentMonster=fightEngine.getCurrentMonster();
         ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-        ui->labelFightEnter->setText(tr("Your %1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra.value(currentMonster->monster).name));
+        ui->labelFightEnter->setText(tr("Your %1 have lost!")
+                                     .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(currentMonster->monster).name))
+                                     );
         doNextActionStep=DoNextActionStep_Start;
         moveType=MoveType_Dead;
         moveFightMonsterBottom();
@@ -113,7 +116,8 @@ void BaseWindow::doNextAction()
         uint32_t returnedLastGivenXP=fightEngine.lastGivenXP();
         if(returnedLastGivenXP>2*1000*1000)
         {
-            newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("returnedLastGivenXP is negative"));
+            newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
+                     "returnedLastGivenXP is negative");
             doNextAction();
             return;
         }
@@ -134,7 +138,7 @@ void BaseWindow::doNextAction()
         }
         updateCurrentMonsterInformationXp();
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(fightEngine.getAttackReturnList().isEmpty())
+        if(fightEngine.getAttackReturnList().empty())
         {
             PublicPlayerMonster * otherMonster=fightEngine.getOtherMonster();
             PublicPlayerMonster * currentMonster=fightEngine.getCurrentMonster();
@@ -144,7 +148,7 @@ void BaseWindow::doNextAction()
                     emit error(QStringLiteral("Current monster hp don't match with the internal value (do next action): %1!=%2")
                                .arg(currentMonster->hp)
                                .arg(ui->progressBarFightBottomHP->value())
-                               );
+                               .toStdString());
                     return;
                 }
             if(otherMonster!=NULL)
@@ -153,7 +157,7 @@ void BaseWindow::doNextAction()
                     emit error(QStringLiteral("Other monster hp don't match with the internal value (do next action): %1!=%2")
                                .arg(otherMonster->hp)
                                .arg(ui->progressBarFightTopHP->value())
-                               );
+                               .toStdString());
                     return;
                 }
         }
@@ -166,7 +170,8 @@ void BaseWindow::doNextAction()
             return;
         }
         ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-        ui->labelFightEnter->setText(tr("The other %1 have lost!").arg(DatapackClientLoader::datapackLoader.monsterExtra.value(otherMonster->monster).name));
+        ui->labelFightEnter->setText(tr("The other %1 have lost!")
+                                     .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(otherMonster->monster).name)));
         doNextActionStep=DoNextActionStep_Start;
         //current player monster is KO
         moveType=MoveType_Dead;
@@ -209,7 +214,7 @@ void BaseWindow::doNextAction()
     {
         if(CommonDatapack::commonDatapack.monsters.find(currentMonster->monster)==CommonDatapack::commonDatapack.monsters.cend())
         {
-            emit error(QStringLiteral("Current monster don't exists: %1").arg(currentMonster->monster));
+            emit error(QStringLiteral("Current monster don't exists: %1").arg(currentMonster->monster).toStdString());
             return;
         }
         if((int)currentMonster->hp!=ui->progressBarFightBottomHP->value())
@@ -217,7 +222,7 @@ void BaseWindow::doNextAction()
             emit error(QStringLiteral("Current monster damage don't match with the internal value (doNextAction && currentMonster): %1!=%2")
                        .arg(currentMonster->hp)
                        .arg(ui->progressBarFightBottomHP->value())
-                       );
+                       .toStdString());
             return;
         }
     }
@@ -226,7 +231,7 @@ void BaseWindow::doNextAction()
     {
         if(CommonDatapack::commonDatapack.monsters.find(otherMonster->monster)==CommonDatapack::commonDatapack.monsters.cend())
         {
-            emit error(QStringLiteral("Current monster don't exists: %1").arg(otherMonster->monster));
+            emit error(QStringLiteral("Current monster don't exists: %1").arg(otherMonster->monster).toStdString());
             return;
         }
         if((int)otherMonster->hp!=ui->progressBarFightTopHP->value())
@@ -234,7 +239,7 @@ void BaseWindow::doNextAction()
             emit error(QStringLiteral("Other monster damage don't match with the internal value (doNextAction && otherMonster): %1!=%2")
                        .arg(otherMonster->hp)
                        .arg(ui->progressBarFightTopHP->value())
-                       );
+                       .toStdString());
             return;
         }
     }
@@ -254,11 +259,12 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
     }
     if(currentMonster==NULL)
     {
-        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"displayAttack(): crash: unable to get the current monster");
+        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
+                 "displayAttack(): crash: unable to get the current monster");
         doNextAction();
         return false;
     }
-    if(fightEngine.getAttackReturnList().isEmpty())
+    if(fightEngine.getAttackReturnList().empty())
     {
         emit error("Display text for not existant attack");
         return false;
@@ -284,12 +290,14 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
     {
         if(currentAttack.doByTheCurrentMonster)
             displayText(tr("Your %1 have failed the attack %2")
-                          .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(currentMonster->monster).name)
-                          .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(currentAttack.attack).name));
+                          .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(currentMonster->monster).name))
+                          .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterSkillsExtra.at(currentAttack.attack).name))
+                        .toStdString());
         else
             displayText(tr("The other %1 have failed the attack %2")
-                          .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(otherMonster->monster).name)
-                          .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(currentAttack.attack).name));
+                          .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(otherMonster->monster).name))
+                          .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterSkillsExtra.at(currentAttack.attack).name))
+                        .toStdString());
         fightEngine.removeTheFirstAttackReturn();
         return false;
     }
@@ -299,19 +307,19 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
     {
         if(currentAttack.doByTheCurrentMonster)
             attackOwner=tr("Your %1 do the attack %2 and ")
-                .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(currentMonster->monster).name)
-                .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(currentAttack.attack).name);
+                .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(currentMonster->monster).name))
+                .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterSkillsExtra.at(currentAttack.attack).name));
         else
             attackOwner=tr("The other %1 do the attack %2 and ")
-                .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(otherMonster->monster).name)
-                .arg(DatapackClientLoader::datapackLoader.monsterSkillsExtra.value(currentAttack.attack).name);
+                .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(otherMonster->monster).name))
+                .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterSkillsExtra.at(currentAttack.attack).name));
     }
     else
     {
         if(currentAttack.doByTheCurrentMonster)
-            attackOwner=tr("Your %1 ").arg(DatapackClientLoader::datapackLoader.monsterExtra.value(currentMonster->monster).name);
+            attackOwner=tr("Your %1 ").arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(currentMonster->monster).name));
         else
-            attackOwner=tr("The other %1 ").arg(DatapackClientLoader::datapackLoader.monsterExtra.value(otherMonster->monster).name);
+            attackOwner=tr("The other %1 ").arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(otherMonster->monster).name));
     }
 
     //the life effect
@@ -324,11 +332,11 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             {
                 if(lifeEffectReturn.quantity>0)
                     attackOwner+=tr("heal of %2 the other %1")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(otherMonster->monster).name)
+                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(otherMonster->monster).name))
                         .arg(lifeEffectReturn.quantity);
                 else if(lifeEffectReturn.quantity<0)
                     attackOwner+=tr("hurt of %2 the other %1")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(otherMonster->monster).name)
+                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(otherMonster->monster).name))
                         .arg(-lifeEffectReturn.quantity);
             }
             if((lifeEffectReturn.on & ApplyOn_AllAlly) || (lifeEffectReturn.on & ApplyOn_Themself))
@@ -347,11 +355,11 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             {
                 if(lifeEffectReturn.quantity>0)
                     attackOwner+=tr("heal of %2 your %1")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(currentMonster->monster).name)
+                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(currentMonster->monster).name))
                         .arg(lifeEffectReturn.quantity);
                 else if(lifeEffectReturn.quantity<0)
                     attackOwner+=tr("hurt of %2 your %1")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(currentMonster->monster).name)
+                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(currentMonster->monster).name))
                         .arg(-lifeEffectReturn.quantity);
             }
             if((lifeEffectReturn.on & ApplyOn_AllAlly) || (lifeEffectReturn.on & ApplyOn_Themself))
@@ -396,7 +404,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
     if(!currentAttack.addBuffEffectMonster.empty())
     {
         const Skill::BuffEffect &addBuffEffectMonster=currentAttack.addBuffEffectMonster.front();
-        QHash<uint8_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
+        std::unordered_map<uint8_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
         QListWidget *listWidget=NULL;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         bool onBuffCurrentMonster=false;
@@ -406,8 +414,8 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             if((addBuffEffectMonster.on & ApplyOn_AllEnemy) || (addBuffEffectMonster.on & ApplyOn_AloneEnemy))
             {
                 attackOwner+=tr("add the buff %2 on the other %1")
-                    .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(otherMonster->monster).name)
-                    .arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra.value(addBuffEffectMonster.buff).name);
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(otherMonster->monster).name))
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterBuffsExtra.at(addBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemTop;
                 listWidget=ui->topBuff;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -417,7 +425,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             if((addBuffEffectMonster.on & ApplyOn_AllAlly) || (addBuffEffectMonster.on & ApplyOn_Themself))
             {
                 attackOwner+=tr("add the buff %1 on themself")
-                    .arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra.value(addBuffEffectMonster.buff).name);
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterBuffsExtra.at(addBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemBottom;
                 listWidget=ui->bottomBuff;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -430,8 +438,8 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             if((addBuffEffectMonster.on & ApplyOn_AllEnemy) || (addBuffEffectMonster.on & ApplyOn_AloneEnemy))
             {
                 attackOwner+=tr("add the buff %2 on your %1")
-                    .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(currentMonster->monster).name)
-                    .arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra.value(addBuffEffectMonster.buff).name);
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(currentMonster->monster).name))
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterBuffsExtra.at(addBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemBottom;
                 listWidget=ui->bottomBuff;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -441,7 +449,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             if((addBuffEffectMonster.on & ApplyOn_AllAlly) || (addBuffEffectMonster.on & ApplyOn_Themself))
             {
                 attackOwner+=tr("add the buff %1 on themself")
-                    .arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra.value(addBuffEffectMonster.buff).name);
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterBuffsExtra.at(addBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemTop;
                 listWidget=ui->topBuff;
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -449,7 +457,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                 #endif
             }
         }
-        displayText(attackOwner);
+        displayText(attackOwner.toStdString());
         if(buffToGraphicalItemCurrentbar!=NULL)
         {
             //search the buff
@@ -470,23 +478,24 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                 item=new QListWidgetItem();
                 item->setData(99,addBuffEffectMonster.buff);//to prevent duplicate buff, because add can be to re-enable an already enable buff (for larger period then)
             }
-            if(!DatapackClientLoader::datapackLoader.monsterBuffsExtra.contains(addBuffEffectMonster.buff))
+            if(DatapackClientLoader::datapackLoader.monsterBuffsExtra.find(addBuffEffectMonster.buff)==
+                    DatapackClientLoader::datapackLoader.monsterBuffsExtra.cend())
             {
                 item->setToolTip(tr("Unknown buff"));
                 item->setIcon(QIcon(":/images/interface/buff.png"));
             }
             else
             {
-                const DatapackClientLoader::MonsterExtra::Buff &buffExtra=DatapackClientLoader::datapackLoader.monsterBuffsExtra.value(addBuffEffectMonster.buff);
+                const DatapackClientLoader::MonsterExtra::Buff &buffExtra=DatapackClientLoader::datapackLoader.monsterBuffsExtra.at(addBuffEffectMonster.buff);
                 if(!buffExtra.icon.isNull())
                     item->setIcon(buffExtra.icon);
                 else
                     item->setIcon(QIcon(":/images/interface/buff.png"));
                 if(addBuffEffectMonster.level<=1)
-                    item->setToolTip(buffExtra.name);
+                    item->setToolTip(QString::fromStdString(buffExtra.name));
                 else
-                    item->setToolTip(tr("%1 at level %2").arg(buffExtra.name).arg(addBuffEffectMonster.level));
-                item->setToolTip(item->toolTip()+"\n"+buffExtra.description);
+                    item->setToolTip(tr("%1 at level %2").arg(QString::fromStdString(buffExtra.name)).arg(addBuffEffectMonster.level));
+                item->setToolTip(item->toolTip()+"\n"+QString::fromStdString(buffExtra.description));
             }
             (*buffToGraphicalItemCurrentbar)[addBuffEffectMonster.buff]=item;
             if(index==listWidget->count())
@@ -529,20 +538,20 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
     if(!currentAttack.removeBuffEffectMonster.empty())
     {
         const Skill::BuffEffect &removeBuffEffectMonster=currentAttack.removeBuffEffectMonster.front();
-        QHash<uint8_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
+        std::unordered_map<uint8_t,QListWidgetItem *> *buffToGraphicalItemCurrentbar=NULL;
         if(currentAttack.doByTheCurrentMonster)
         {
             if((removeBuffEffectMonster.on & ApplyOn_AllEnemy) || (removeBuffEffectMonster.on & ApplyOn_AloneEnemy))
             {
                 attackOwner+=tr("add the buff %2 on the other %1")
-                    .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(otherMonster->monster).name)
-                    .arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra.value(removeBuffEffectMonster.buff).name);
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(otherMonster->monster).name))
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterBuffsExtra.at(removeBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemTop;
             }
             if((removeBuffEffectMonster.on & ApplyOn_AllAlly) || (removeBuffEffectMonster.on & ApplyOn_Themself))
             {
                 attackOwner+=tr("add the buff %1 on themself")
-                    .arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra.value(removeBuffEffectMonster.buff).name);
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterBuffsExtra.at(removeBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemBottom;
             }
         }
@@ -551,23 +560,23 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             if((removeBuffEffectMonster.on & ApplyOn_AllEnemy) || (removeBuffEffectMonster.on & ApplyOn_AloneEnemy))
             {
                 attackOwner+=tr("add the buff %2 on your %1")
-                    .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(currentMonster->monster).name)
-                    .arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra.value(removeBuffEffectMonster.buff).name);
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(currentMonster->monster).name))
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterBuffsExtra.at(removeBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemBottom;
             }
             if((removeBuffEffectMonster.on & ApplyOn_AllAlly) || (removeBuffEffectMonster.on & ApplyOn_Themself))
             {
                 attackOwner+=tr("add the buff %1 on themself")
-                    .arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra.value(removeBuffEffectMonster.buff).name);
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterBuffsExtra.at(removeBuffEffectMonster.buff).name));
                 buffToGraphicalItemCurrentbar=&buffToGraphicalItemTop;
             }
         }
-        displayText(attackOwner);
+        displayText(attackOwner.toStdString());
         if(buffToGraphicalItemCurrentbar!=NULL)
         {
-            if(buffToGraphicalItemTop.contains(removeBuffEffectMonster.buff))
-                delete buffToGraphicalItemTop.value(removeBuffEffectMonster.buff);
-            buffToGraphicalItemTop.remove(removeBuffEffectMonster.buff);
+            if(buffToGraphicalItemTop.find(removeBuffEffectMonster.buff)!=buffToGraphicalItemTop.cend())
+                delete buffToGraphicalItemTop.at(removeBuffEffectMonster.buff);
+            buffToGraphicalItemTop.erase(removeBuffEffectMonster.buff);
         }
         fightEngine.removeTheFirstRemoveBuffEffectAttackReturn();
         if(!fightEngine.firstAttackReturnHaveMoreEffect())
@@ -592,11 +601,11 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             {
                 if(buffLifeEffectMonster.quantity>0)
                     attackOwner+=tr("heal of %2 the other %1")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(otherMonster->monster).name)
+                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(otherMonster->monster).name))
                         .arg(buffLifeEffectMonster.quantity);
                 else if(buffLifeEffectMonster.quantity<0)
                     attackOwner+=tr("hurt of %2 the other %1")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(otherMonster->monster).name)
+                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(otherMonster->monster).name))
                         .arg(-buffLifeEffectMonster.quantity);
             }
             if((buffLifeEffectMonster.on & ApplyOn_AllAlly) || (buffLifeEffectMonster.on & ApplyOn_Themself))
@@ -615,11 +624,11 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
             {
                 if(buffLifeEffectMonster.quantity>0)
                     attackOwner+=tr("heal of %2 your %1")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(currentMonster->monster).name)
+                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(currentMonster->monster).name))
                         .arg(buffLifeEffectMonster.quantity);
                 else if(buffLifeEffectMonster.quantity<0)
                     attackOwner+=tr("hurt of %2 your %1")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(currentMonster->monster).name)
+                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(currentMonster->monster).name))
                         .arg(-buffLifeEffectMonster.quantity);
             }
             if((buffLifeEffectMonster.on & ApplyOn_AllAlly) || (buffLifeEffectMonster.on & ApplyOn_Themself))
@@ -673,28 +682,28 @@ void BaseWindow::displayAttack()
     }
     if(currentMonster==NULL)
     {
-        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"displayAttack(): crash: unable to get the current monster");
+        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"displayAttack(): crash: unable to get the current monster");
         doNextAction();
         return;
     }
-    if(fightEngine.getAttackReturnList().isEmpty())
+    if(fightEngine.getAttackReturnList().empty())
     {
-        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"displayAttack(): crash: display an empty attack return");
+        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"displayAttack(): crash: display an empty attack return");
         doNextAction();
         return;
     }
     if(
-            fightEngine.getAttackReturnList().first().lifeEffectMonster.empty() &&
-            fightEngine.getAttackReturnList().first().buffLifeEffectMonster.empty() &&
-            fightEngine.getAttackReturnList().first().addBuffEffectMonster.empty() &&
-            fightEngine.getAttackReturnList().first().removeBuffEffectMonster.empty() &&
-            fightEngine.getAttackReturnList().first().success
+            fightEngine.getAttackReturnList().front().lifeEffectMonster.empty() &&
+            fightEngine.getAttackReturnList().front().buffLifeEffectMonster.empty() &&
+            fightEngine.getAttackReturnList().front().addBuffEffectMonster.empty() &&
+            fightEngine.getAttackReturnList().front().removeBuffEffectMonster.empty() &&
+            fightEngine.getAttackReturnList().front().success
             )
     {
         qDebug() << QStringLiteral("displayAttack(): strange: display an empty lifeEffect list into attack return, attack: %1, doByTheCurrentMonster: %2, success: %3")
-                    .arg(fightEngine.getAttackReturnList().first().attack)
-                    .arg(fightEngine.getAttackReturnList().first().doByTheCurrentMonster)
-                    .arg(fightEngine.getAttackReturnList().first().success);
+                    .arg(fightEngine.getAttackReturnList().front().attack)
+                    .arg(fightEngine.getAttackReturnList().front().doByTheCurrentMonster)
+                    .arg(fightEngine.getAttackReturnList().front().success);
         fightEngine.removeTheFirstAttackReturn();
         doNextAction();
         return;
@@ -717,12 +726,15 @@ void BaseWindow::displayAttack()
         lifeEffectReturn=attackReturn.buffLifeEffectMonster.front();
     else
     {
-        newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),QStringLiteral("displayAttack(): strange: nothing to display, lifeEffectMonster.size(): %1, buffLifeEffectMonster.size(): %2, addBuffEffectMonster.size(): %3, removeBuffEffectMonster.size(): %4, AttackReturnList: %5")
+        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
+                 QStringLiteral("displayAttack(): strange: nothing to display, lifeEffectMonster.size(): %1, buffLifeEffectMonster.size(): %2, addBuffEffectMonster.size(): %3, removeBuffEffectMonster.size(): %4, AttackReturnList: %5")
                     .arg(attackReturn.lifeEffectMonster.size())
                     .arg(attackReturn.buffLifeEffectMonster.size())
                     .arg(attackReturn.addBuffEffectMonster.size())
                     .arg(attackReturn.removeBuffEffectMonster.size())
-                    .arg(fightEngine.getAttackReturnList().size()));
+                    .arg(fightEngine.getAttackReturnList().size())
+                 .toStdString()
+                 );
         fightEngine.removeTheFirstAttackReturn();
         //doNextAction();
         return;
@@ -748,8 +760,8 @@ void BaseWindow::displayAttack()
     //attack animation
     {
         uint32_t attackId=attackReturn.attack;
-        QString skillAnimation=DatapackClientLoader::datapackLoader.getDatapackPath()+QStringLiteral(DATAPACK_BASE_PATH_SKILLANIMATION);
-        QString fileAnimation=skillAnimation+QStringLiteral("%1.mng").arg(attackId);
+        QString skillAnimation=QString::fromStdString(DatapackClientLoader::datapackLoader.getDatapackPath())+DATAPACK_BASE_PATH_SKILLANIMATION;
+        QString fileAnimation=skillAnimation+QStringLiteral("%1.gif").arg(attackId);
         if(QFile(fileAnimation).exists())
         {
             movie=new QMovie(fileAnimation,QByteArray(),attackMovie);
@@ -761,22 +773,6 @@ void BaseWindow::displayAttack()
             }
             else
                 qDebug() << QStringLiteral("movie loaded is not valid for: %1").arg(fileAnimation);
-        }
-        else
-        {
-            QString fileAnimation=skillAnimation+QStringLiteral("%1.gif").arg(attackId);
-            if(QFile(fileAnimation).exists())
-            {
-                movie=new QMovie(fileAnimation,QByteArray(),attackMovie);
-                movie->setScaledSize(QSize(attackMovie->width(),attackMovie->height()));
-                if(movie->isValid())
-                {
-                    attackMovie->setMovie(movie);
-                    movie->start();
-                }
-                else
-                    qDebug() << QStringLiteral("movie loaded is not valid for: %1").arg(fileAnimation);
-            }
         }
     }
 

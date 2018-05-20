@@ -93,7 +93,7 @@ void Chat::lineEdit_chat_text_returnPressed()
     }
     if(!text.startsWith('/'))
     {
-        if(text==lastMessageSend)
+        if(text.toStdString()==lastMessageSend)
         {
             ui->lineEdit_chat_text->clear();
             new_system_text(Chat_type_system,"Send message like as previous");
@@ -107,7 +107,7 @@ void Chat::lineEdit_chat_text_returnPressed()
         }
     }
     numberForFlood++;
-    lastMessageSend=text;
+    lastMessageSend=text.toStdString();
     ui->lineEdit_chat_text->setText(QString());
     if(!text.startsWith("/pm "))
     {
@@ -125,17 +125,18 @@ void Chat::lineEdit_chat_text_returnPressed()
             chat_type=Chat_type_clan;
         break;
         }
-        client->sendChatText(chat_type,text);
+        client->sendChatText(chat_type,text.toStdString());
         if(!text.startsWith('/'))
-            new_chat_text(chat_type,text,QString::fromStdString(client->player_informations.public_informations.pseudo),client->player_informations.public_informations.type);
+            new_chat_text(chat_type,text.toStdString(),client->player_informations.public_informations.pseudo,
+                    client->player_informations.public_informations.type);
     }
     else if(text.contains(QRegularExpression("^/pm [^ ]+ .+$")))
     {
         QString pseudo=text;
         pseudo.replace(QRegularExpression("^/pm ([^ ]+) .+$"), "\\1");
         text.replace(QRegularExpression("^/pm [^ ]+ (.+)$"), "\\1");
-        client->sendPM(text,pseudo);
-        new_chat_text(Chat_type_pm,text,tr("To: ")+pseudo,Player_type_normal);
+        client->sendPM(text.toStdString(),pseudo.toStdString());
+        new_chat_text(Chat_type_pm,text.toStdString(),tr("To: ").toStdString()+pseudo.toStdString(),Player_type_normal);
     }
 }
 
@@ -146,7 +147,7 @@ void Chat::removeNumberForFlood()
     numberForFlood--;
 }
 
-void Chat::new_system_text(CatchChallenger::Chat_type chat_type,QString text)
+void Chat::new_system_text(CatchChallenger::Chat_type chat_type,std::string text)
 {
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << QStringLiteral("new_system_text: %1").arg(text);
@@ -155,26 +156,26 @@ void Chat::new_system_text(CatchChallenger::Chat_type chat_type,QString text)
     newEntry.player_type=Player_type_normal;
     //newEntry.player_pseudo=QString();
     newEntry.chat_type=chat_type;
-    newEntry.text=text.toStdString();
-    chat_list << newEntry;
+    newEntry.text=text;
+    chat_list.push_back(newEntry);
     while(chat_list.size()>64)
-        chat_list.removeFirst();
+        chat_list.erase(chat_list.cbegin());
     update_chat();
 }
 
-void Chat::new_chat_text(CatchChallenger::Chat_type chat_type,QString text,QString pseudo,CatchChallenger::Player_type player_type)
+void Chat::new_chat_text(CatchChallenger::Chat_type chat_type,std::string text,std::string pseudo,CatchChallenger::Player_type player_type)
 {
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << QStringLiteral("new_chat_text: %1 by %2").arg(text).arg(pseudo);
     #endif
     ChatEntry newEntry;
     newEntry.player_type=player_type;
-    newEntry.player_pseudo=pseudo.toStdString();
+    newEntry.player_pseudo=pseudo;
     newEntry.chat_type=chat_type;
-    newEntry.text=text.toStdString();
-    chat_list << newEntry;
+    newEntry.text=text;
+    chat_list.push_back(newEntry);
     while(chat_list.size()>64)
-        chat_list.removeFirst();
+        chat_list.erase(chat_list.cbegin());
     update_chat();
 }
 
@@ -186,7 +187,7 @@ void Chat::setMultiPlayer(const bool & multiplayer)
 void Chat::update_chat()
 {
     QString nameHtml;
-    int index=0;
+    unsigned int index=0;
     while(index<chat_list.size())
     {
         const ChatEntry &entry=chat_list.at(index);

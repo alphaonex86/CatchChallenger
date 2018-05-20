@@ -75,13 +75,13 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
     {
         QTime time;
         time.restart();
-        tempMapObject->tiledMap = reader.readMap(resolvedFileName);
-        qDebug() << QStringLiteral("%1 loaded into %2ms").arg(resolvedFileName).arg(time.elapsed());
+        tempMapObject->tiledMap = reader.readMap(QString::fromStdString(resolvedFileName));
+        qDebug() << QStringLiteral("%1 loaded into %2ms").arg(QString::fromStdString(resolvedFileName)).arg(time.elapsed());
     }
     if (!tempMapObject->tiledMap)
     {
-        mLastError=reader.errorString();
-        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(reader.errorString());
+        mLastError=reader.errorString().toStdString();
+        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2").arg(QString::fromStdString(resolvedFileName)).arg(reader.errorString());
         delete tempMapObject;
         return NULL;
     }
@@ -92,10 +92,12 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
         return NULL;
     }
     CatchChallenger::Map_loader map_loader;
-    if(!map_loader.tryLoadMap(resolvedFileName.toStdString()))
+    if(!map_loader.tryLoadMap(resolvedFileName))
     {
-        mLastError=QString::fromStdString(map_loader.errorString());
-        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(QString::fromStdString(map_loader.errorString()));
+        mLastError=map_loader.errorString();
+        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2")
+                    .arg(QString::fromStdString(resolvedFileName))
+                    .arg(QString::fromStdString(map_loader.errorString()));
         int index=0;
         const int &listSize=tempMapObject->tiledMap->tilesets().size();
         while(index<listSize)
@@ -119,7 +121,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
     tempMapObject->logicalMap.width                                 = static_cast<uint8_t>(map_loader.map_to_send.width);
     tempMapObject->logicalMap.height                                = static_cast<uint8_t>(map_loader.map_to_send.height);
     tempMapObject->logicalMap.parsed_layer                          = map_loader.map_to_send.parsed_layer;
-    tempMapObject->logicalMap.map_file                              = resolvedFileName.toStdString();
+    tempMapObject->logicalMap.map_file                              = resolvedFileName;
     tempMapObject->logicalMap.border.bottom.map                     = NULL;
     tempMapObject->logicalMap.border.top.map                        = NULL;
     tempMapObject->logicalMap.border.right.map                      = NULL;
@@ -135,37 +137,51 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
             newItem.item=item.item;
             newItem.tileObject=NULL;
             newItem.indexOfItemOnMap=0;
-            if(DatapackClientLoader::datapackLoader.itemOnMap.contains(resolvedFileName))
+            if(DatapackClientLoader::datapackLoader.itemOnMap.find(resolvedFileName)!=
+                    DatapackClientLoader::datapackLoader.itemOnMap.cend())
             {
-                if(DatapackClientLoader::datapackLoader.itemOnMap.value(resolvedFileName).contains(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y)))
-                    newItem.indexOfItemOnMap=DatapackClientLoader::datapackLoader.itemOnMap.value(resolvedFileName)
-                            .value(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y));
+                if(DatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName).find(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y))!=
+                        DatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName).cend())
+                    newItem.indexOfItemOnMap=DatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName)
+                            .at(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y));
                 else
                     qDebug() << QStringLiteral("Map itemOnMap %1,%2 not found").arg(item.point.x).arg(item.point.y);
             }
             else
-                qDebug() << QStringLiteral("Map itemOnMap %1 not found into: %2").arg(resolvedFileName).arg(QStringList(DatapackClientLoader::datapackLoader.itemOnMap.keys()).join(";"));
+            {
+                QStringList keys;
+                for(auto kv : DatapackClientLoader::datapackLoader.itemOnMap)
+                    keys.push_back(QString::fromStdString(kv.first));
+                qDebug() << QStringLiteral("Map itemOnMap %1 not found into: %2")
+                            .arg(QString::fromStdString(resolvedFileName))
+                            .arg(keys.join(";"));
+            }
             tempMapObject->logicalMap.itemsOnMap[std::pair<uint8_t,uint8_t>(item.point.x,item.point.y)]=newItem;
             index++;
         }
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(!DatapackClientLoader::datapackLoader.fullMapPathToId.contains(resolvedFileName))
+    if(DatapackClientLoader::datapackLoader.fullMapPathToId.find(resolvedFileName)==
+            DatapackClientLoader::datapackLoader.fullMapPathToId.cend())
     {
-        mLastError=QStringLiteral("Map id unresolved %1").arg(resolvedFileName);
-        const QStringList &mapList=DatapackClientLoader::datapackLoader.fullMapPathToId.keys();
-        qDebug() << QStringLiteral("Map id unresolved %1 into %2").arg(resolvedFileName).arg(mapList.join(";"));
+        mLastError="Map id unresolved "+resolvedFileName;
+        QStringList keys;
+        for(auto kv : DatapackClientLoader::datapackLoader.fullMapPathToId)
+            keys.push_back(QString::fromStdString(kv.first));
+        qDebug() << "Map id unresolved "+QString::fromStdString(resolvedFileName)+" into "+keys.join(";");
         delete tempMapObject->tiledMap;
         delete tempMapObject;
         return NULL;
     }
     #endif
-    tempMapObject->logicalMap.id                                    = DatapackClientLoader::datapackLoader.fullMapPathToId.value(resolvedFileName);
+    tempMapObject->logicalMap.id                                    = DatapackClientLoader::datapackLoader.fullMapPathToId.at(resolvedFileName);
 
     if(tempMapObject->tiledMap->tileHeight()!=CLIENT_BASE_TILE_SIZE || tempMapObject->tiledMap->tileWidth()!=CLIENT_BASE_TILE_SIZE)
     {
-        mLastError=QStringLiteral("Map tile size not multiple of %1").arg(CLIENT_BASE_TILE_SIZE);
-        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(mLastError);
+        mLastError="Map tile size not multiple of "+std::to_string(CLIENT_BASE_TILE_SIZE);
+        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2")
+                    .arg(QString::fromStdString(resolvedFileName))
+                    .arg(QString::fromStdString(mLastError));
         delete tempMapObject->tiledMap;
         delete tempMapObject;
         return NULL;
@@ -174,13 +190,17 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
     //load the string
     tempMapObject->logicalMap.border_semi                = map_loader.map_to_send.border;
     if(!map_loader.map_to_send.border.bottom.fileName.empty())
-        tempMapObject->logicalMap.border_semi.bottom.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName)).absoluteFilePath().toStdString();
+        tempMapObject->logicalMap.border_semi.bottom.fileName=QFileInfo(QFileInfo(QString::fromStdString(resolvedFileName)).absolutePath()+"/"+
+              QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName)).absoluteFilePath().toStdString();
     if(!map_loader.map_to_send.border.top.fileName.empty())
-        tempMapObject->logicalMap.border_semi.top.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName)).absoluteFilePath().toStdString();
+        tempMapObject->logicalMap.border_semi.top.fileName=QFileInfo(QFileInfo(QString::fromStdString(resolvedFileName)).absolutePath()+"/"+
+              QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName)).absoluteFilePath().toStdString();
     if(!map_loader.map_to_send.border.right.fileName.empty())
-        tempMapObject->logicalMap.border_semi.right.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName)).absoluteFilePath().toStdString();
+        tempMapObject->logicalMap.border_semi.right.fileName=QFileInfo(QFileInfo(QString::fromStdString(resolvedFileName)).absolutePath()+"/"+
+              QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName)).absoluteFilePath().toStdString();
     if(!map_loader.map_to_send.border.left.fileName.empty())
-        tempMapObject->logicalMap.border_semi.left.fileName=QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName)).absoluteFilePath().toStdString();
+        tempMapObject->logicalMap.border_semi.left.fileName=QFileInfo(QFileInfo(QString::fromStdString(resolvedFileName)).absolutePath()+"/"+
+              QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName)).absoluteFilePath().toStdString();
 
     //load the string
     tempMapObject->logicalMap.teleport_semi.clear();
@@ -189,47 +209,49 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
         while(index<map_loader.map_to_send.teleport.size())
         {
             const CatchChallenger::Map_semi_teleport &teleport=map_loader.map_to_send.teleport.at(index);
-            tempMapObject->logicalMap.teleport_semi << teleport;
-            tempMapObject->logicalMap.teleport_semi[index].map                      = QFileInfo(QFileInfo(resolvedFileName).absolutePath()+"/"+QString::fromStdString(tempMapObject->logicalMap.teleport_semi.at(index).map)).absoluteFilePath().toStdString();
-            const TiXmlElement * item=teleport.conditionUnparsed;
+            tempMapObject->logicalMap.teleport_semi.push_back(teleport);
+            tempMapObject->logicalMap.teleport_semi[index].map     = QFileInfo(QFileInfo(QString::fromStdString(resolvedFileName)).absolutePath()+
+                "/"+QString::fromStdString(tempMapObject->logicalMap.teleport_semi.at(index).map))
+                    .absoluteFilePath().toStdString();
+            const tinyxml2::XMLElement * item=teleport.conditionUnparsed;
             std::string conditionText;
             {
                 if(item!=NULL)
                 {
                     bool text_found=false;
-                    const TiXmlElement * blockedtext = item->FirstChildElement(std::string("blockedtext"));
-                    if(!language.isEmpty() && language!=MapVisualiserThread::text_en)
+                    const tinyxml2::XMLElement * blockedtext = item->FirstChildElement("blockedtext");
+                    if(!language.empty() && language!="en")
                         while(blockedtext!=NULL)
                         {
-                            if(blockedtext->Attribute(std::string("lang"))!=NULL && *blockedtext->Attribute(std::string("lang"))==language.toStdString())
+                            if(blockedtext->Attribute("lang")!=NULL && blockedtext->Attribute("lang")==language)
                             {
                                 conditionText=blockedtext->GetText();
                                 text_found=true;
                                 break;
                             }
-                            blockedtext = blockedtext->NextSiblingElement(std::string("blockedtext"));
+                            blockedtext = blockedtext->NextSiblingElement("blockedtext");
                         }
                     if(!text_found)
                     {
-                        blockedtext = item->FirstChildElement(std::string("blockedtext"));
+                        blockedtext = item->FirstChildElement("blockedtext");
                         while(blockedtext!=NULL)
                         {
-                            if(blockedtext->Attribute(std::string("lang"))==NULL || *blockedtext->Attribute(std::string("lang"))=="en")
+                            if(blockedtext->Attribute("lang")==NULL || strcmp(blockedtext->Attribute("lang"),"en")==0)
                             {
                                 conditionText=blockedtext->GetText();
                                 break;
                             }
-                            blockedtext = blockedtext->NextSiblingElement(std::string("blockedtext"));
+                            blockedtext = blockedtext->NextSiblingElement("blockedtext");
                         }
                     }
                 }
             }
-            tempMapObject->logicalMap.teleport_condition_texts << conditionText;
+            tempMapObject->logicalMap.teleport_condition_texts.push_back(conditionText);
             index++;
         }
     }
 
-    tempMapObject->logicalMap.rescue_points            = CatchChallenger::stdvectorToQList(map_loader.map_to_send.rescue_points);
+    tempMapObject->logicalMap.rescue_points  = map_loader.map_to_send.rescue_points;
 
     //load the render
     switch (tempMapObject->tiledMap->orientation()) {
@@ -244,7 +266,8 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
     //tempMapObject->tiledRender->setObjectBorder(false);
 
     //do the object group to move the player on it
-    tempMapObject->objectGroup = new Tiled::ObjectGroup(MapVisualiserThread::text_Dyna_management,0,0,tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
+    tempMapObject->objectGroup = new Tiled::ObjectGroup("Dyna management",0,0,
+                                                        tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
     tempMapObject->objectGroup->setName("objectGroup for player layer");
 
     //add a tags
@@ -282,22 +305,22 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                         Tiled::Tile *tile=cell.tile;
                         if(tile!=NULL)
                         {
-                            const std::string &animation=tile->property(MapVisualiserThread::text_animation);
-                            if(!animation.isEmpty())
+                            const std::string &animation=tile->property("animation").toStdString();
+                            if(!animation.empty())
                             {
-                                const QStringList &animationList=animation.split(MapVisualiserThread::text_dotcomma);
+                                const std::vector<std::string> &animationList=stringsplit(animation,';');
                                 if(animationList.size()>=2)
                                 {
-                                    if(animationList.at(0).contains(regexMs) && animationList.at(1).contains(regexFrames))
+                                    if(QString::fromStdString(animationList.at(0)).contains(regexMs) && QString::fromStdString(animationList.at(1)).contains(regexFrames))
                                     {
                                         std::string msString=animationList.at(0);
                                         std::string framesString=animationList.at(1);
-                                        msString.remove(MapVisualiserThread::text_ms);
-                                        framesString.remove(MapVisualiserThread::text_frames);
-                                        const unsigned int temp_ms=msString.toUInt();
-                                        const unsigned int temp_frames=framesString.toUInt();
+                                        stringreplaceAll(msString,"ms","");
+                                        stringreplaceAll(framesString,"frames","");
+                                        const unsigned int temp_ms=stringtouint16(msString);
                                         if(temp_ms>=10 && temp_ms<=65535)
                                         {
+                                            const unsigned int temp_frames=stringtouint8(framesString);
                                             if(temp_frames>1 && temp_frames<=255)
                                             {
                                                 const uint16_t ms=static_cast<uint16_t>(temp_ms);
@@ -321,7 +344,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                                                 objectGroup->addObject(object);
                                                 object->setPosition(QPointF(x,y+1));
                                                 Tiled::Cell cell=object->cell();
-                                                if(!tempMapObject->animatedObject.contains(ms))
+                                                if(tempMapObject->animatedObject.find(ms)==tempMapObject->animatedObject.cend())
                                                 {
                                                     Map_animation tempAnimationDescriptor;
                                                     tempAnimationDescriptor.count=0;
@@ -330,7 +353,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                                                 }
                                                 Map_animation_object map_animation_object;
                                                 map_animation_object.randomOffset=0;
-                                                if(animationList.size()>=3 && animationList.at(2)==MapVisualiserThread::text_randomoffset)
+                                                if(animationList.size()>=3 && animationList.at(2)=="randomoffset")
                                                     map_animation_object.randomOffset=rand()%frames;
                                                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                                 map_animation_object.minId=tile->id();
@@ -340,7 +363,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                                                 object->setCell(cell);
                                                 map_animation_object.animatedObject=object;
                                                 /// \todo control the animation is not out of rame
-                                                tempMapObject->animatedObject[ms].animatedObjectList << map_animation_object;
+                                                tempMapObject->animatedObject[ms].animatedObjectList.push_back(map_animation_object);
                                             }
                                             else
                                                 qDebug() << "frames is not in good range";
@@ -403,10 +426,10 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                                 }
                                 else
                                 {
-                                    const std::string &trigger=tile->property(MapVisualiserThread::text_trigger);
-                                    if(!trigger.isEmpty())
+                                    const std::string &trigger=tile->property("trigger").toStdString();
+                                    if(!trigger.empty())
                                     {
-                                        if(trigger.contains(regexTrigger))
+                                        if(QString::fromStdString(trigger).contains(regexTrigger))
                                         {
                                             TriggerAnimationContent content;
                                             content.objectTile=tile;
@@ -419,31 +442,31 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                                             content.msAgain=0;
                                             content.over=false;
                                             std::string tempString=trigger;
-                                            tempString.replace(regexTrigger,"\\1");
-                                            content.msEnter=tempString.toUShort();
+                                            tempString=QString::fromStdString(tempString).replace(regexTrigger,"\\1").toStdString();
+                                            content.msEnter=stringtouint16(tempString);
                                             tempString=trigger;
-                                            tempString.replace(regexTrigger,"\\2");
-                                            content.framesCountEnter=static_cast<uint8_t>(tempString.toUShort());
+                                            tempString=QString::fromStdString(tempString).replace(regexTrigger,"\\2").toStdString();
+                                            content.framesCountEnter=stringtouint8(tempString);
                                             tempString=trigger;
-                                            tempString.replace(regexTrigger,"\\3");
-                                            content.msLeave=tempString.toUShort();
+                                            tempString=QString::fromStdString(tempString).replace(regexTrigger,"\\3").toStdString();
+                                            content.msLeave=stringtouint16(tempString);
                                             tempString=trigger;
-                                            tempString.replace(regexTrigger,"\\4");
-                                            content.framesCountLeave=static_cast<uint8_t>(tempString.toUShort());
+                                            tempString=QString::fromStdString(tempString).replace(regexTrigger,"\\4").toStdString();
+                                            content.framesCountLeave=stringtouint8(tempString);
                                             tempString=trigger;
-                                            tempString.replace(regexTrigger,"\\5");
+                                            tempString=QString::fromStdString(tempString).replace(regexTrigger,"\\5").toStdString();
                                             //again here
-                                            if(tempString.contains(regexTriggerAgain))
+                                            if(QString::fromStdString(tempString).contains(regexTriggerAgain))
                                             {
                                                 std::string againString=tempString;
-                                                againString.replace(regexTriggerAgain,"\\1");
-                                                content.msAgain=againString.toUShort();
+                                                tempString=QString::fromStdString(againString).replace(regexTriggerAgain,"\\1").toStdString();
+                                                content.msAgain=stringtouint16(againString);
                                                 againString=tempString;
-                                                againString.replace(regexTriggerAgain,"\\2");
-                                                content.framesCountAgain=static_cast<uint8_t>(againString.toUShort());
+                                                tempString=QString::fromStdString(againString).replace(regexTriggerAgain,"\\2").toStdString();
+                                                content.framesCountAgain=stringtouint8(againString);
                                             }
                                             //over here
-                                            if(tempString.contains(QStringLiteral("over")))
+                                            if(tempString.find("over")!=std::string::npos)
                                             {
                                                 content.over=true;
                                                 content.objectTileOver=tile->tileset()->tileAt(tile->id()+tile->tileset()->columnCount());
@@ -528,13 +551,21 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
 //drop and remplace by Map_loader info
 bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *parsedMap)
 {
-    QDomDocument domDocument;
+    tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
-    const std::string &fileName=QString::fromStdString(parsedMap->logicalMap.map_file);
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(fileName.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(fileName.toStdString());
+    const std::string &fileName=parsedMap->logicalMap.map_file;
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(fileName)!=
+            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(fileName);
     else
     {
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName];
+        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        {
+            std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+            return types;
+        }
         QFile mapFile(fileName);
         if(!mapFile.open(QIODevice::ReadOnly))
         {
@@ -552,7 +583,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
             qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
             return false;
         }
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[fileName.toStdString()]=domDocument;
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName.toStdString()]=domDocument;
     }
     const tinyxml2::XMLElement &root = domDocument.RootElement();
     if(root.tagName()!=MapVisualiserThread::text_map)
@@ -758,8 +789,8 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
     //open and quick check the file
     std::string fileName=QString::fromStdString(parsedMap->logicalMap.map_file);
     fileName.replace(MapVisualiserThread::text_dottmx,MapVisualiserThread::text_dotxml);
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.find(fileName.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.cend())
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt.at(fileName.toStdString());
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(fileName.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(fileName.toStdString());
     else
     {
         QFile mapFile(fileName);
@@ -781,7 +812,7 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
             qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
             return false;
         }
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFileQt[fileName.toStdString()]=domDocument;
+        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName.toStdString()]=domDocument;
     }
     const tinyxml2::XMLElement &root = domDocument.RootElement();
     if(root.tagName()!=MapVisualiserThread::text_map)
@@ -852,7 +883,7 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
         }
     }
 
-    const TiXmlElement * root = domDocument->RootElement();
+    const tinyxml2::XMLElement * root = domDocument->RootElement();
     if(root==NULL)
         return;
     if(root->ValueStr()!="bots")
@@ -862,7 +893,7 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
     }
     bool ok;
     //load the bots
-    const TiXmlElement * child = root->FirstChildElement("bot");
+    const tinyxml2::XMLElement * child = root->FirstChildElement("bot");
     while(child!=NULL)
     {
         if(child->Attribute("id")==NULL)
@@ -876,7 +907,7 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
                     qDebug() << (QStringLiteral("bot already found with this id: bot->Value(): %1 (at line: %2)").arg(child->Value()).arg("?"));
                 else
                 {
-                    const TiXmlElement * step = child->FirstChildElement("step");
+                    const tinyxml2::XMLElement * step = child->FirstChildElement("step");
                     while(step!=NULL)
                     {
                         if(step->Attribute(std::string("id"))==NULL)
@@ -894,7 +925,7 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
                     //load the name
                     {
                         bool name_found=false;
-                        const TiXmlElement * name = child->FirstChildElement("name");
+                        const tinyxml2::XMLElement * name = child->FirstChildElement("name");
                         if(!language.isEmpty() && language!="en")
                             while(name!=NULL)
                             {

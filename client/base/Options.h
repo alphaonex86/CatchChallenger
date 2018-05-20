@@ -45,7 +45,7 @@ private:
     uint8_t audioVolume;
     std::string language;
     int indexDevice;
-    std::vector<std::string> devices;
+    QStringList devices;
 };
 
 #endif // OPTIONS_H
