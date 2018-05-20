@@ -22,12 +22,12 @@ ClientFightEngine::~ClientFightEngine()
 
 void ClientFightEngine::setBattleMonster(const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
-    if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !botFightMonsters.empty())
+    if(!battleCurrentMonster.empty() || !battleStat.empty() || !botFightMonsters.empty())
     {
         emit error("have already monster to set battle monster");
         return;
     }
-    if(stat.isEmpty())
+    if(stat.empty())
     {
         emit error("monster list size can't be empty");
         return;
@@ -38,20 +38,20 @@ void ClientFightEngine::setBattleMonster(const std::vector<uint8_t> &stat,const 
         return;
     }
     startTheFight();
-    battleCurrentMonster << publicPlayerMonster;
+    battleCurrentMonster.push_back(publicPlayerMonster);
     battleStat=stat;
-    battleMonsterPlace << monsterPlace;
+    battleMonsterPlace.push_back(monsterPlace);
     mLastGivenXP=0;
 }
 
 void ClientFightEngine::setBotMonster(const std::vector<PlayerMonster> &botFightMonsters,const uint16_t &fightId)
 {
-    if(!battleCurrentMonster.isEmpty() || !battleStat.isEmpty() || !this->botFightMonsters.empty())
+    if(!battleCurrentMonster.empty() || !battleStat.empty() || !this->botFightMonsters.empty())
     {
         emit error("have already monster to set bot monster");
         return;
     }
-    if(botFightMonsters.isEmpty())
+    if(botFightMonsters.empty())
     {
         emit error("monster list size can't be empty");
         return;
@@ -63,11 +63,11 @@ void ClientFightEngine::setBotMonster(const std::vector<PlayerMonster> &botFight
     }
     startTheFight();
     this->fightId=fightId;
-    this->botFightMonsters=CatchChallenger::QListToStdVector(botFightMonsters);
-    int index=0;
+    this->botFightMonsters=botFightMonsters;
+    unsigned int index=0;
     while(index<botFightMonsters.size())
     {
-        botMonstersStat << 0x01;
+        botMonstersStat.push_back(0x01);
         index++;
     }
     mLastGivenXP=0;
@@ -75,7 +75,7 @@ void ClientFightEngine::setBotMonster(const std::vector<PlayerMonster> &botFight
 
 bool ClientFightEngine::addBattleMonster(const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
-    if(battleStat.isEmpty())
+    if(battleStat.empty())
     {
         emit error("not monster stat list loaded");
         return false;
@@ -85,8 +85,8 @@ bool ClientFightEngine::addBattleMonster(const uint8_t &monsterPlace,const Publi
         emit error("monsterPlace greater than monster list: "+std::to_string(monsterPlace));
         return false;
     }*/
-    battleCurrentMonster << publicPlayerMonster;
-    battleMonsterPlace << monsterPlace;
+    battleCurrentMonster.push_back(publicPlayerMonster);
+    battleMonsterPlace.push_back(monsterPlace);
     return true;
 }
 
@@ -109,7 +109,7 @@ bool ClientFightEngine::haveWin()
         }
         else
         {
-            emit message(QStringLiteral("remain %1 wild monsters").arg(wildMonsters.size()));
+            emit message(QStringLiteral("remain %1 wild monsters").arg(wildMonsters.size()).toStdString());
             return false;
         }
     }
@@ -130,7 +130,7 @@ bool ClientFightEngine::haveWin()
         }
         else
         {
-            emit message(QStringLiteral("remain %1 bot monsters").arg(botFightMonsters.size()));
+            emit message(QStringLiteral("remain %1 bot monsters").arg(botFightMonsters.size()).toStdString());
             return false;
         }
     }
@@ -138,7 +138,7 @@ bool ClientFightEngine::haveWin()
     {
         if(battleCurrentMonster.size()==1)
         {
-            if(battleCurrentMonster.first().hp==0)
+            if(battleCurrentMonster.front().hp==0)
             {
                 emit message("remain one KO battleCurrentMonster monsters");
                 return true;
@@ -151,7 +151,7 @@ bool ClientFightEngine::haveWin()
         }
         else
         {
-            emit message(QStringLiteral("remain %1 battle monsters").arg(battleCurrentMonster.size()));
+            emit message(QStringLiteral("remain %1 battle monsters").arg(battleCurrentMonster.size()).toStdString());
             return false;
         }
     }
@@ -164,18 +164,18 @@ bool ClientFightEngine::dropKOOtherMonster()
     bool commonReturn=CommonFightEngine::dropKOOtherMonster();
 
     bool battleReturn=false;
-    if(!battleCurrentMonster.isEmpty())
+    if(!battleCurrentMonster.empty())
     {
-        if(!battleStat.isEmpty() && battleMonsterPlace.first()<battleStat.size())
+        if(!battleStat.empty() && battleMonsterPlace.front()<battleStat.size())
         {
-            battleCurrentMonster.removeFirst();
-            battleStat[battleMonsterPlace.first()]=0x02;//not able to battle
-            battleMonsterPlace.removeFirst();
+            battleCurrentMonster.erase(battleCurrentMonster.cbegin());
+            battleStat[battleMonsterPlace.front()]=0x02;//not able to battle
+            battleMonsterPlace.erase(battleMonsterPlace.cbegin());
         }
         battleReturn=true;
     }
     bool haveValidMonster=false;
-    int index=0;
+    unsigned int index=0;
     while(index<battleStat.size())
     {
         if(battleStat.at(index)==0x01)
@@ -228,26 +228,12 @@ void ClientFightEngine::resetAll()
     CommonFightEngine::resetAll();
 }
 
-std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
+std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
 {
-    std::vector<uint8_t> positionList;
-    const uint8_t basePosition=static_cast<uint8_t>(public_and_private_informations.playerMonster.size());
-    Player_private_and_public_informations &informations=client->get_player_informations();
     std::vector<PlayerMonster> monsterList;
-    int index=0;
-    while(index<playerMonster.size())
-    {
-        const uint16_t &monsterId=playerMonster.at(index).monster;
-        if(informations.encyclopedia_monster!=NULL)
-            informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
-        else
-            std::cerr << "ClientFightEngine::addPlayerMonster(QList): encyclopedia_monster is null, unable to set" << std::endl;
-        monsterList.push_back(playerMonster.at(index));
-        positionList.push_back(basePosition+static_cast<uint8_t>(index));
-        index++;
-    }
-    CommonFightEngine::addPlayerMonster(monsterList);
-    return positionList;
+    monsterList.push_back(playerMonster);
+
+    return addPlayerMonster(monsterList);
 }
 
 std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
@@ -270,19 +256,6 @@ std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const std::vector<Playe
     return positionList;
 }
 
-std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
-{
-    std::vector<uint8_t> positionList;
-    Player_private_and_public_informations &informations=client->get_player_informations();
-    if(informations.encyclopedia_monster!=NULL)
-        informations.encyclopedia_monster[playerMonster.monster/8]|=(1<<(7-playerMonster.monster%8));
-    else
-        std::cerr << "ClientFightEngine::addPlayerMonster(PlayerMonster): encyclopedia_monster is null, unable to set" << std::endl;
-    positionList.push_back(static_cast<uint8_t>(public_and_private_informations.playerMonster.size()));
-    CommonFightEngine::addPlayerMonster(playerMonster);
-    return positionList;
-}
-
 bool ClientFightEngine::internalTryEscape()
 {
     emit message("BaseWindow::on_toolButtonFightQuit_clicked(): emit tryEscape()");
@@ -292,7 +265,7 @@ bool ClientFightEngine::internalTryEscape()
 
 bool ClientFightEngine::tryCatchClient(const uint16_t &item)
 {
-    if(!playerMonster_catchInProgress.isEmpty())
+    if(!playerMonster_catchInProgress.empty())
     {
         error("Añready try catch in progress");
         return false;
@@ -318,14 +291,14 @@ bool ClientFightEngine::tryCatchClient(const uint16_t &item)
     newMonster.remaining_xp=0;
     newMonster.skills=wildMonsters.front().skills;
     newMonster.sp=0;
-    playerMonster_catchInProgress << newMonster;
+    playerMonster_catchInProgress.push_back(newMonster);
     //need wait the server reply, monsterCatch(const bool &success)
     return true;
 }
 
 bool ClientFightEngine::catchInProgress() const
 {
-    return !playerMonster_catchInProgress.isEmpty();
+    return !playerMonster_catchInProgress.empty();
 }
 
 uint32_t ClientFightEngine::catchAWild(const bool &toStorage, const PlayerMonster &newMonster)
@@ -337,8 +310,8 @@ uint32_t ClientFightEngine::catchAWild(const bool &toStorage, const PlayerMonste
 
 Skill::AttackReturn ClientFightEngine::doTheCurrentMonsterAttack(const uint16_t &skill,const uint8_t &skillLevel)
 {
-    fightEffectList << CommonFightEngine::doTheCurrentMonsterAttack(skill,skillLevel);
-    return fightEffectList.last();
+    fightEffectList.push_back(CommonFightEngine::doTheCurrentMonsterAttack(skill,skillLevel));
+    return fightEffectList.back();
 }
 
 bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn)
@@ -365,11 +338,11 @@ bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectRetu
                 publicPlayerMonster=&wildMonsters.front();
             else if(!botFightMonsters.empty())
                 publicPlayerMonster=&botFightMonsters.front();
-            else if(!battleCurrentMonster.isEmpty())
-                publicPlayerMonster=&battleCurrentMonster.first();
+            else if(!battleCurrentMonster.empty())
+                publicPlayerMonster=&battleCurrentMonster.front();
             else
             {
-                emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"unknown other monster type");
+                emit newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"unknown other monster type");
                 return false;
             }
             quantity=effectReturn.quantity;
@@ -416,7 +389,7 @@ bool ClientFightEngine::applyCurrentLifeEffectReturn(const Skill::LifeEffectRetu
 void ClientFightEngine::addAndApplyAttackReturnList(const std::vector<Skill::AttackReturn> &attackReturnList)
 {
     qDebug() << "addAndApplyAttackReturnList()";
-    int index=0;
+    unsigned int index=0;
     unsigned int sub_index=0;
     while(index<attackReturnList.size())
     {
@@ -452,7 +425,8 @@ void ClientFightEngine::addAndApplyAttackReturnList(const std::vector<Skill::Att
                 qDebug() << "addAndApplyAttackReturnList() life effect on " << lifeEffect.on << ", quantity:" << lifeEffect.quantity;
                 if(!applyCurrentLifeEffectReturn(lifeEffect))
                 {
-                    emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Error applying the life effect");
+                    emit newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
+                                  "Error applying the life effect");
                     return;
                 }
                 sub_index++;
@@ -466,7 +440,8 @@ void ClientFightEngine::addAndApplyAttackReturnList(const std::vector<Skill::Att
                 qDebug() << "addAndApplyAttackReturnList() life effect on " << buffEffect.on << ", quantity:" << buffEffect.quantity;
                 if(!applyCurrentLifeEffectReturn(buffEffect))
                 {
-                    emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"Error applying the life effect");
+                    emit newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),
+                                  "Error applying the life effect");
                     return;
                 }
                 sub_index++;
@@ -474,13 +449,13 @@ void ClientFightEngine::addAndApplyAttackReturnList(const std::vector<Skill::Att
         }
         index++;
     }
-    this->fightEffectList << attackReturnList;
+    this->fightEffectList.insert(this->fightEffectList.cend(),attackReturnList.cbegin(),attackReturnList.cend());
 }
 
 PublicPlayerMonster * ClientFightEngine::getOtherMonster()
 {
-    if(!battleCurrentMonster.isEmpty())
-        return (PublicPlayerMonster *)&battleCurrentMonster.first();
+    if(!battleCurrentMonster.empty())
+        return (PublicPlayerMonster *)&battleCurrentMonster.front();
     return CommonFightEngine::getOtherMonster();
 }
 
@@ -496,81 +471,81 @@ std::vector<Skill::AttackReturn> ClientFightEngine::getAttackReturnList() const
 
 Skill::AttackReturn ClientFightEngine::getFirstAttackReturn() const
 {
-    return fightEffectList.first();
+    return fightEffectList.front();
 }
 
 Skill::AttackReturn ClientFightEngine::generateOtherAttack()
 {
-    fightEffectList << CommonFightEngine::generateOtherAttack();
-    return fightEffectList.last();
+    fightEffectList.push_back(CommonFightEngine::generateOtherAttack());
+    return fightEffectList.back();
 }
 
 void ClientFightEngine::removeTheFirstLifeEffectAttackReturn()
 {
-    if(fightEffectList.isEmpty())
+    if(fightEffectList.empty())
         return;
-    if(!fightEffectList.first().lifeEffectMonster.empty())
-        fightEffectList.first().lifeEffectMonster.erase(fightEffectList.first().lifeEffectMonster.begin());
+    if(!fightEffectList.front().lifeEffectMonster.empty())
+        fightEffectList.front().lifeEffectMonster.erase(fightEffectList.front().lifeEffectMonster.begin());
 }
 
 void ClientFightEngine::removeTheFirstBuffEffectAttackReturn()
 {
-    if(fightEffectList.isEmpty())
+    if(fightEffectList.empty())
         return;
-    if(!fightEffectList.first().buffLifeEffectMonster.empty())
-        fightEffectList.first().buffLifeEffectMonster.erase(fightEffectList.first().buffLifeEffectMonster.begin());
+    if(!fightEffectList.front().buffLifeEffectMonster.empty())
+        fightEffectList.front().buffLifeEffectMonster.erase(fightEffectList.front().buffLifeEffectMonster.begin());
 }
 
 void ClientFightEngine::removeTheFirstAddBuffEffectAttackReturn()
 {
-    if(fightEffectList.isEmpty())
+    if(fightEffectList.empty())
         return;
-    if(!fightEffectList.first().addBuffEffectMonster.empty())
-        fightEffectList.first().addBuffEffectMonster.erase(fightEffectList.first().addBuffEffectMonster.begin());
+    if(!fightEffectList.front().addBuffEffectMonster.empty())
+        fightEffectList.front().addBuffEffectMonster.erase(fightEffectList.front().addBuffEffectMonster.begin());
 }
 
 void ClientFightEngine::removeTheFirstRemoveBuffEffectAttackReturn()
 {
-    if(fightEffectList.isEmpty())
+    if(fightEffectList.empty())
         return;
-    if(!fightEffectList.first().removeBuffEffectMonster.empty())
-        fightEffectList.first().removeBuffEffectMonster.erase(fightEffectList.first().removeBuffEffectMonster.begin());
+    if(!fightEffectList.front().removeBuffEffectMonster.empty())
+        fightEffectList.front().removeBuffEffectMonster.erase(fightEffectList.front().removeBuffEffectMonster.begin());
 }
 
 void ClientFightEngine::removeTheFirstAttackReturn()
 {
-    if(!fightEffectList.isEmpty())
-        fightEffectList.removeFirst();
+    if(!fightEffectList.empty())
+        fightEffectList.erase(fightEffectList.cbegin());
 }
 
 bool ClientFightEngine::firstAttackReturnHaveMoreEffect()
 {
-    if(fightEffectList.isEmpty())
+    if(fightEffectList.empty())
         return false;
-    if(!fightEffectList.first().lifeEffectMonster.empty())
+    if(!fightEffectList.front().lifeEffectMonster.empty())
         return true;
-    if(!fightEffectList.first().addBuffEffectMonster.empty())
+    if(!fightEffectList.front().addBuffEffectMonster.empty())
         return true;
-    if(!fightEffectList.first().removeBuffEffectMonster.empty())
+    if(!fightEffectList.front().removeBuffEffectMonster.empty())
         return true;
-    if(!fightEffectList.first().buffLifeEffectMonster.empty())
+    if(!fightEffectList.front().buffLifeEffectMonster.empty())
         return true;
     return false;
 }
 
 bool ClientFightEngine::firstLifeEffectQuantityChange(int32_t quantity)
 {
-    if(fightEffectList.isEmpty())
+    if(fightEffectList.empty())
     {
-        emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"try add quantity to non existant life effect");
+        emit newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"try add quantity to non existant life effect");
         return false;
     }
-    if(fightEffectList.first().lifeEffectMonster.empty())
+    if(fightEffectList.front().lifeEffectMonster.empty())
     {
-        emit newError(tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),"try add quantity to life effect list empty");
+        emit newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"try add quantity to life effect list empty");
         return false;
     }
-    fightEffectList.first().lifeEffectMonster.front().quantity+=quantity;
+    fightEffectList.front().lifeEffectMonster.front().quantity+=quantity;
     return true;
 }
 
@@ -582,12 +557,12 @@ void ClientFightEngine::setVariableContent(Player_private_and_public_information
 
 bool ClientFightEngine::isInBattle() const
 {
-    return !battleStat.isEmpty();
+    return !battleStat.empty();
 }
 
 bool ClientFightEngine::haveBattleOtherMonster() const
 {
-    return !battleCurrentMonster.isEmpty();
+    return !battleCurrentMonster.empty();
 }
 
 bool ClientFightEngine::useSkill(const uint16_t &skill)
@@ -656,7 +631,7 @@ void ClientFightEngine::levelUp(const uint8_t &level, const uint8_t &monsterInde
         const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
         if(evolution.type==Monster::EvolutionType_Level && evolution.data.level==level)//the current monster is not updated
         {
-            mEvolutionByLevelUp << monsterIndex;
+            mEvolutionByLevelUp.push_back(monsterIndex);
             return;
         }
         index++;
@@ -665,10 +640,10 @@ void ClientFightEngine::levelUp(const uint8_t &level, const uint8_t &monsterInde
 
 PlayerMonster * ClientFightEngine::evolutionByLevelUp()
 {
-    if(mEvolutionByLevelUp.isEmpty())
+    if(mEvolutionByLevelUp.empty())
         return NULL;
-    uint8_t monsterIndex=mEvolutionByLevelUp.first();
-    mEvolutionByLevelUp.removeFirst();
+    uint8_t monsterIndex=mEvolutionByLevelUp.front();
+    mEvolutionByLevelUp.erase(mEvolutionByLevelUp.cbegin());
     return &public_and_private_informations.playerMonster[monsterIndex];
 }
 
@@ -735,7 +710,7 @@ uint32_t ClientFightEngine::lastGivenXP()
 void ClientFightEngine::errorFightEngine(const std::string &errorMessage)
 {
     std::cerr << errorMessage << std::endl;
-    error(QString::fromStdString(errorMessage));
+    error(errorMessage);
 }
 
 void ClientFightEngine::messageFightEngine(const std::string &message) const
@@ -754,7 +729,7 @@ uint8_t ClientFightEngine::getOneSeed(const uint8_t &max)
     std::cout << "Random seed remaining: " << randomSeeds.size() << std::endl;
     #endif
     const uint8_t &number=randomSeeds.at(0);
-    randomSeeds.remove(0,1);
+    randomSeeds.erase(randomSeeds.cbegin());
     return number%(max+1);
 }
 
