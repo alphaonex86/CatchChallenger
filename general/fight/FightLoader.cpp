@@ -27,7 +27,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
 {
     std::unordered_map<std::string,uint8_t> nameToId;
     std::vector<Type> types;
-    CATCHCHALLENGER_XMLDOCUMENT *domDocument;
+    tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -36,12 +36,12 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
-            std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+            std::cerr << file+", "+tinyxml2::XMLDocumentERROR(domDocument) << std::endl;
             return types;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -207,7 +207,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             }
         }
         #endif
-        CATCHCHALLENGER_XMLDOCUMENT *domDocument;
+        tinyxml2::XMLDocument *domDocument;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -216,12 +216,12 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
             #else
-            domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+            domDocument=new tinyxml2::XMLDocument();
             #endif
-            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            if(loadOkay!=0)
             {
-                std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+                std::cerr << file+", "+tinyxml2::XMLDocumentERROR(domDocument) << std::endl;
                 file_index++;
                 continue;
             }
@@ -949,7 +949,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
     while(index_file<fileList.size())
     {
         const std::string &file=fileList.at(index_file).absoluteFilePath;
-        CATCHCHALLENGER_XMLDOCUMENT *domDocument;
+        tinyxml2::XMLDocument *domDocument;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -958,12 +958,12 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
             #else
-            domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+            domDocument=new tinyxml2::XMLDocument();
             #endif
-            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            if(loadOkay!=0)
             {
-                std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+                std::cerr << file+", "+tinyxml2::XMLDocumentERROR(domDocument) << std::endl;
                 index_file++;
                 continue;
             }
@@ -1211,7 +1211,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             }
         }
         #endif // CATCHCHALLENGER_CLASS_MASTER
-        CATCHCHALLENGER_XMLDOCUMENT *domDocument;
+        tinyxml2::XMLDocument *domDocument;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -1220,12 +1220,12 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
             #else
-            domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+            domDocument=new tinyxml2::XMLDocument();
             #endif
-            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            if(loadOkay!=0)
             {
-                std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+                std::cerr << file+", "+tinyxml2::XMLDocumentERROR(domDocument) << std::endl;
                 file_index++;
                 continue;
             }
@@ -1576,7 +1576,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             file_index++;
             continue;
         }
-        CATCHCHALLENGER_XMLDOCUMENT *domDocument;
+        tinyxml2::XMLDocument *domDocument;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -1585,12 +1585,12 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
             #else
-            domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+            domDocument=new tinyxml2::XMLDocument();
             #endif
-            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            if(loadOkay!=0)
             {
-                std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+                std::cerr << file+", "+tinyxml2::XMLDocumentERROR(domDocument) << std::endl;
                 file_index++;
                 continue;
             }

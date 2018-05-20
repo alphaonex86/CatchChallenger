@@ -17,7 +17,7 @@ struct Map_semi_teleport
     COORD_TYPE source_x,source_y;
     COORD_TYPE destination_x,destination_y;
     std::string map;
-    const CATCHCHALLENGER_XMLELEMENT * conditionUnparsed;
+    const tinyxml2::XMLElement * conditionUnparsed;
     MapCondition condition;
 };
 
@@ -69,13 +69,13 @@ struct Map_to_send
     uint8_t *monstersCollisionMap;
     std::vector<MonstersCollisionValue> monstersCollisionList;
 
-    const CATCHCHALLENGER_XMLELEMENT * xmlRoot;
+    const tinyxml2::XMLElement * xmlRoot;
 };
 
 //permanent bot on client, temp to parse on the server
 struct Bot
 {
-    std::unordered_map<uint8_t,const CATCHCHALLENGER_XMLELEMENT *> step;
+    std::unordered_map<uint8_t,const tinyxml2::XMLElement *> step;
     std::unordered_map<std::string,std::string> properties;
     uint16_t botId;//id need be unique for the quests, then 32Bits
     std::string skin;

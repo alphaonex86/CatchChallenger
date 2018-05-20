@@ -39,7 +39,7 @@ Options::Options()
     else
         audioVolume=100;
     if(settings->contains("language"))
-        language=settings->value("language").toString();
+        language=settings->value("language").toString().toStdString();
 }
 
 Options::~Options()
@@ -91,18 +91,18 @@ void Options::setAudioVolume(const uint8_t &audioVolume)
     emit newAudioVolume(audioVolume);
 }
 
-void Options::setLanguage(const QString &language)//the main code
+void Options::setLanguage(const std::string &language)//the main code
 {
     if(this->language==language)
         return;
     this->language=language;
-    settings->setValue("language",language);
+    settings->setValue("language",QString::fromStdString(language));
     emit newLanguage(language);
 }
 
 void Options::setDeviceIndex(const int &indexDevice)
 {
-    if(indexDevice<devices.size() && indexDevice>=0)
+    if(indexDevice<(int)devices.size() && indexDevice>=0)
     {
         if(this->indexDevice==indexDevice)
             return;
@@ -157,7 +157,7 @@ uint8_t Options::getAudioVolume() const
     return audioVolume;
 }
 
-QString Options::getLanguage() const//the main code
+std::string Options::getLanguage() const//the main code
 {
     return language;
 }

@@ -4,8 +4,8 @@
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
 
-MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
+MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
+    MapVisualiserPlayer(centerOnPlayer,debugTags,useCache)
 {
     this->events=events;
     repel_step=0;
@@ -107,13 +107,14 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
     if(fightMonster!=NULL)
     {
         std::pair<uint8_t,uint8_t> pos(x,y);
-        const MapVisualiserThread::Map_full * current_map_pointer=all_map.value(current_map);
+        const MapVisualiserThread::Map_full * current_map_pointer=all_map.at(current_map);
         const std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>,pairhash> &botsFightTrigger=current_map_pointer->logicalMap.botsFightTrigger;
 
         if(botsFightTrigger.find(pos)!=botsFightTrigger.cend())
         {
             std::vector<uint16_t> botFightList=botsFightTrigger.at(pos);
-            QList<QPair<uint8_t,uint8_t> > botFightRemotePointList=current_map_pointer->logicalMap.botsFightTriggerExtra.values(QPair<uint8_t,uint8_t>(x,y));
+            std::vector<std::pair<uint8_t,uint8_t> > botFightRemotePointList=
+                    current_map_pointer->logicalMap.botsFightTriggerExtra.at(std::pair<uint8_t,uint8_t>(x,y));
             unsigned int index=0;
             while(index<botFightList.size())
             {
@@ -128,10 +129,12 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
                         keyPressed.clear();
                     }
                     parseStop();
-                    emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),botFightRemotePointList.at(index).first,botFightRemotePointList.at(index).second);
-                    if(current_map_pointer->logicalMap.botsDisplay.contains(botFightRemotePointList.at(index)))
+                    emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.at(current_map)->logicalMap),
+                                           botFightRemotePointList.at(index).first,botFightRemotePointList.at(index).second);
+                    if(current_map_pointer->logicalMap.botsDisplay.find(botFightRemotePointList.at(index))!=
+                            current_map_pointer->logicalMap.botsDisplay.cend())
                     {
-                        TemporaryTile *temporaryTile=current_map_pointer->logicalMap.botsDisplay.value(botFightRemotePointList.at(index)).temporaryTile;
+                        TemporaryTile *temporaryTile=current_map_pointer->logicalMap.botsDisplay.at(botFightRemotePointList.at(index)).temporaryTile;
                         //show a temporary flags
                         {
                             if(fightCollisionBot==NULL)
@@ -161,7 +164,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
                     emit send_player_direction(direction);
                     keyPressed.clear();
                     parseStop();
-                    emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.value(current_map)->logicalMap),x,y);
+                    emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.at(current_map)->logicalMap),x,y);
                     blocked=true;
                     return true;
                 }
@@ -194,9 +197,9 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         qDebug() << "Strange, can go but move failed";
         return false;
     }
-    if(!all_map.contains(QString::fromStdString(new_map->map_file)))
+    if(all_map.find(new_map->map_file)==all_map.cend())
         return false;
-    const CatchChallenger::Map_client &map_client=all_map.value(QString::fromStdString(new_map->map_file))->logicalMap;
+    const CatchChallenger::Map_client &map_client=all_map.at(new_map->map_file)->logicalMap;
 
     {
         int list_size=map_client.teleport_semi.size();
@@ -214,7 +217,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                     case CatchChallenger::MapConditionType_FightBot:
                         if(!haveBeatBot(teleporter.condition.data.fightBot))
                         {
-                            if(!map_client.teleport_condition_texts.at(index).isEmpty())
+                            if(!map_client.teleport_condition_texts.at(index).empty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
                             return false;
                         }
@@ -224,7 +227,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                             break;
                         if(items->find(teleporter.condition.data.item)==items->cend())
                         {
-                            if(!map_client.teleport_condition_texts.at(index).isEmpty())
+                            if(!map_client.teleport_condition_texts.at(index).empty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
                             return false;
                         }
@@ -234,13 +237,13 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                             break;
                         if(quests->find(teleporter.condition.data.quest)==quests->cend())
                         {
-                            if(!map_client.teleport_condition_texts.at(index).isEmpty())
+                            if(!map_client.teleport_condition_texts.at(index).empty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
                             return false;
                         }
                         if(!quests->at(teleporter.condition.data.quest).finish_one_time)
                         {
-                            if(!map_client.teleport_condition_texts.at(index).isEmpty())
+                            if(!map_client.teleport_condition_texts.at(index).empty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
                             return false;
                         }

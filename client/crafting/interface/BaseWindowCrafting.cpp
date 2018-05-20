@@ -15,6 +15,7 @@
 #include <QMessageBox>
 #include <QQmlContext>
 #include <QUrl>
+#include <iostream>
 
 /* show only the plant into the inventory */
 
@@ -42,16 +43,16 @@ void BaseWindow::remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8
     cancelAllPlantQuery(mapController->mapIdToString(mapId),x,y);
 }
 
-void BaseWindow::cancelAllPlantQuery(const QString map,const uint8_t x,const uint8_t y)
+void BaseWindow::cancelAllPlantQuery(const std::string map,const uint8_t x,const uint8_t y)
 {
-    int index;
+    unsigned int index;
     index=0;
     while(index<seed_in_waiting.size())
     {
         const SeedInWaiting &seedInWaiting=seed_in_waiting.at(index);
         if(seedInWaiting.map==map && seedInWaiting.x==x && seedInWaiting.y==y)
         {
-            seed_in_waiting[index].map=QString();
+            seed_in_waiting[index].map=std::string();
             seed_in_waiting[index].x=0;
             seed_in_waiting[index].y=0;
         }
@@ -63,7 +64,7 @@ void BaseWindow::cancelAllPlantQuery(const QString map,const uint8_t x,const uin
         const ClientPlantInCollecting &clientPlantInCollecting=plant_collect_in_waiting.at(index);
         if(clientPlantInCollecting.map==map && clientPlantInCollecting.x==x && clientPlantInCollecting.y==y)
         {
-            plant_collect_in_waiting[index].map=QString();
+            plant_collect_in_waiting[index].map=std::string();
             plant_collect_in_waiting[index].x=0;
             plant_collect_in_waiting[index].y=0;
         }
@@ -77,32 +78,33 @@ void BaseWindow::seed_planted(const bool &ok)
     if(ok)
     {
         /// \todo add to the map here, and don't send on the server
-        showTip(tr("Seed correctly planted"));
+        showTip(tr("Seed correctly planted").toStdString());
         //do the rewards
         {
-            const uint16_t &itemId=seed_in_waiting.first().seedItemId;
-            if(!DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
+            const uint16_t &itemId=seed_in_waiting.front().seedItemId;
+            if(DatapackClientLoader::datapackLoader.itemToPlants.find(itemId)==
+                    DatapackClientLoader::datapackLoader.itemToPlants.cend())
             {
                 qDebug() << "Item is not a plant";
                 QMessageBox::critical(this,tr("Error"),tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
                 return;
             }
-            const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
+            const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.at(itemId);
             appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.plants.at(plant).rewards.reputation);
         }
     }
     else
     {
-        if(!seed_in_waiting.first().map.isEmpty())
+        if(!seed_in_waiting.front().map.empty())
         {
-            mapController->remove_plant_full(seed_in_waiting.first().map,seed_in_waiting.first().x,seed_in_waiting.first().y);
-            cancelAllPlantQuery(seed_in_waiting.first().map,seed_in_waiting.first().x,seed_in_waiting.first().y);
+            mapController->remove_plant_full(seed_in_waiting.front().map,seed_in_waiting.front().x,seed_in_waiting.front().y);
+            cancelAllPlantQuery(seed_in_waiting.front().map,seed_in_waiting.front().x,seed_in_waiting.front().y);
         }
-        add_to_inventory(seed_in_waiting.first().seedItemId,1,false);
-        showTip(tr("Seed cannot be planted"));
+        add_to_inventory(seed_in_waiting.front().seedItemId,1,false);
+        showTip(tr("Seed cannot be planted").toStdString());
         load_inventory();
     }
-    seed_in_waiting.removeFirst();
+    seed_in_waiting.erase(seed_in_waiting.cbegin());
 }
 
 void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
@@ -112,27 +114,29 @@ void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
     {
         case Plant_collect_correctly_collected:
             //see to optimise CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true and use the internal random number list
-            showTip(tr("Plant collected"));//the item is send by another message with the protocol
+            showTip(tr("Plant collected").toStdString());//the item is send by another message with the protocol
         break;
         case Plant_collect_empty_dirt:
-            showTip(tr("Try collect an empty dirt"));
+            showTip(tr("Try collect an empty dirt").toStdString());
         break;
         case Plant_collect_owned_by_another_player:
-            showTip(tr("This plant had been planted recently by another player"));
-            mapController->insert_plant_full(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y,plant_collect_in_waiting.first().plant_id,plant_collect_in_waiting.first().seconds_to_mature);
-            cancelAllPlantQuery(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y);
+            showTip(tr("This plant had been planted recently by another player").toStdString());
+            mapController->insert_plant_full(plant_collect_in_waiting.front().map,plant_collect_in_waiting.front().x,plant_collect_in_waiting.front().y,
+                                             plant_collect_in_waiting.front().plant_id,plant_collect_in_waiting.front().seconds_to_mature);
+            cancelAllPlantQuery(plant_collect_in_waiting.front().map,plant_collect_in_waiting.front().x,plant_collect_in_waiting.front().y);
         break;
         case Plant_collect_impossible:
-            showTip(tr("This plant can't be collected"));
-            mapController->insert_plant_full(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y,plant_collect_in_waiting.first().plant_id,plant_collect_in_waiting.first().seconds_to_mature);
-            cancelAllPlantQuery(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y);
+            showTip(tr("This plant can't be collected").toStdString());
+            mapController->insert_plant_full(plant_collect_in_waiting.front().map,plant_collect_in_waiting.front().x,plant_collect_in_waiting.front().y,
+                                             plant_collect_in_waiting.front().plant_id,plant_collect_in_waiting.front().seconds_to_mature);
+            cancelAllPlantQuery(plant_collect_in_waiting.front().map,plant_collect_in_waiting.front().x,plant_collect_in_waiting.front().y);
         break;
         default:
             qDebug() << "BaseWindow::plant_collected(): unknown return";
         break;
     }
     if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-        plant_collect_in_waiting.removeFirst();
+        plant_collect_in_waiting.erase(plant_collect_in_waiting.cbegin());
 }
 
 void BaseWindow::load_plant_inventory()
@@ -149,17 +153,20 @@ void BaseWindow::load_plant_inventory()
     auto i=playerInformations.items.begin();
     while(i!=playerInformations.items.cend())
     {
-        if(DatapackClientLoader::datapackLoader.itemToPlants.contains(i->first))
+        if(DatapackClientLoader::datapackLoader.itemToPlants.find(i->first)!=
+                DatapackClientLoader::datapackLoader.itemToPlants.cend())
         {
-            const uint8_t &plantId=DatapackClientLoader::datapackLoader.itemToPlants.value(i->first);
+            const uint8_t &plantId=DatapackClientLoader::datapackLoader.itemToPlants.at(i->first);
             QListWidgetItem *item;
             item=new QListWidgetItem();
             plants_items_to_graphical[plantId]=item;
             plants_items_graphical[item]=plantId;
-            if(DatapackClientLoader::datapackLoader.itemsExtra.contains(i->first))
+            if(DatapackClientLoader::datapackLoader.itemsExtra.find(i->first)!=
+                    DatapackClientLoader::datapackLoader.itemsExtra.cend())
             {
                 item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[i->first].image);
-                item->setText(DatapackClientLoader::datapackLoader.itemsExtra[i->first].name+"\n"+tr("Quantity: %1").arg(i->second));
+                item->setText(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra[i->first].name)+
+                        "\n"+tr("Quantity: %1").arg(i->second));
             }
             else
             {
@@ -203,10 +210,13 @@ void BaseWindow::load_crafting_inventory()
                     !=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.cend())
             {
                 QListWidgetItem *item=new QListWidgetItem();
-                if(DatapackClientLoader::datapackLoader.itemsExtra.contains(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId))
+                if(DatapackClientLoader::datapackLoader.itemsExtra.find(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId)!=
+                        DatapackClientLoader::datapackLoader.itemsExtra.cend())
                 {
-                    item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId].image);
-                    item->setText(DatapackClientLoader::datapackLoader.itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId].name);
+                    item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe]
+                            .doItemId].image);
+                    item->setText(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe]
+                            .doItemId].name));
                 }
                 else
                 {
@@ -225,26 +235,32 @@ void BaseWindow::load_crafting_inventory()
     on_listCraftingList_itemSelectionChanged();
 }
 
-QString BaseWindow::reputationRequirementsToText(const ReputationRequirements &reputationRequirements)
+std::string BaseWindow::reputationRequirementsToText(const ReputationRequirements &reputationRequirements)
 {
     if(reputationRequirements.reputationId>=CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
     {
-        std::cerr << "reputationRequirements.reputationId" << reputationRequirements.reputationId << ">=CatchChallenger::CommonDatapack::commonDatapack.reputation.size()" << CatchChallenger::CommonDatapack::commonDatapack.reputation.size() << std::endl;
-        return tr("Unknown reputation id: %1").arg(reputationRequirements.reputationId);
+        std::cerr << "reputationRequirements.reputationId" << reputationRequirements.reputationId
+                  << ">=CatchChallenger::CommonDatapack::commonDatapack.reputation.size()"
+                  << CatchChallenger::CommonDatapack::commonDatapack.reputation.size() << std::endl;
+        return tr("Unknown reputation id: %1").arg(reputationRequirements.reputationId).toStdString();
     }
     const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRequirements.reputationId);
-    if(!DatapackClientLoader::datapackLoader.reputationExtra.contains(QString::fromStdString(reputation.name)))
+    if(DatapackClientLoader::datapackLoader.reputationExtra.find(reputation.name)==
+            DatapackClientLoader::datapackLoader.reputationExtra.cend())
     {
         std::cerr << "!DatapackClientLoader::datapackLoader.reputationExtra.contains("+reputation.name+")" << std::endl;
-        return tr("Unknown reputation name: %1").arg(QString::fromStdString(reputation.name));
+        return tr("Unknown reputation name: %1").arg(QString::fromStdString(reputation.name)).toStdString();
     }
-    const DatapackClientLoader::ReputationExtra &reputationExtra=DatapackClientLoader::datapackLoader.reputationExtra.value(QString::fromStdString(reputation.name));
+    const DatapackClientLoader::ReputationExtra &reputationExtra=DatapackClientLoader::datapackLoader.reputationExtra.at(reputation.name);
     if(reputationRequirements.positif)
     {
         if(reputationRequirements.level>=reputationExtra.reputation_positive.size())
         {
-            std::cerr << "No text for level "+std::to_string(reputationRequirements.level)+" for reputation "+reputationExtra.name.toStdString() << std::endl;
-            return QStringLiteral("No text for level %1 for reputation %2").arg(reputationRequirements.level).arg(reputationExtra.name);
+            std::cerr << "No text for level "+std::to_string(reputationRequirements.level)+" for reputation "+reputationExtra.name << std::endl;
+            return QStringLiteral("No text for level %1 for reputation %2")
+                    .arg(reputationRequirements.level)
+                    .arg(QString::fromStdString(reputationExtra.name))
+                    .toStdString();
         }
         else
             return reputationExtra.reputation_positive.at(reputationRequirements.level);
@@ -253,8 +269,11 @@ QString BaseWindow::reputationRequirementsToText(const ReputationRequirements &r
     {
         if(reputationRequirements.level>=reputationExtra.reputation_negative.size())
         {
-            std::cerr << "No text for level "+std::to_string(reputationRequirements.level)+" for reputation "+reputationExtra.name.toStdString() << std::endl;
-            return QStringLiteral("No text for level %1 for reputation %2").arg(reputationRequirements.level).arg(reputationExtra.name);
+            std::cerr << "No text for level "+std::to_string(reputationRequirements.level)+" for reputation "+reputationExtra.name << std::endl;
+            return QStringLiteral("No text for level %1 for reputation %2")
+                    .arg(reputationRequirements.level)
+                    .arg(QString::fromStdString(reputationExtra.name))
+                    .toStdString();
         }
         else
             return reputationExtra.reputation_negative.at(reputationRequirements.level);
@@ -295,13 +314,14 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
     const DatapackClientLoader::PlantExtra &contentExtra=DatapackClientLoader::datapackLoader.plantExtra[plants_items_graphical[item]];
     const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.plants[plants_items_graphical[item]];
 
-    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(plant.itemUsed))
+    if(DatapackClientLoader::datapackLoader.itemsExtra.find(plant.itemUsed)!=
+            DatapackClientLoader::datapackLoader.itemsExtra.cend())
     {
-        const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.value(plant.itemUsed);
+        const DatapackClientLoader::ItemExtra &itemExtra=DatapackClientLoader::datapackLoader.itemsExtra.at(plant.itemUsed);
         ui->labelPlantImage->setPixmap(itemExtra.image);
-        ui->labelPlantName->setText(itemExtra.name);
+        ui->labelPlantName->setText(QString::fromStdString(itemExtra.name));
         ui->labelPlantFruitImage->setPixmap(itemExtra.image);
-        ui->labelPlantDescription->setText(itemExtra.description);
+        ui->labelPlantDescription->setText(QString::fromStdString(itemExtra.description));
         //requirements and rewards
         {
             QStringList requirements;
@@ -309,11 +329,12 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
                 unsigned int index=0;
                 while(index<plant.requirements.reputation.size())
                 {
-                    requirements << reputationRequirementsToText(plant.requirements.reputation.at(index));
+                    requirements.push_back(QString::fromStdString(
+                          reputationRequirementsToText(plant.requirements.reputation.at(index))));
                     index++;
                 }
             }
-            if(requirements.isEmpty())
+            if(requirements.empty())
                 ui->labelPlantRequirementsAndRewards->setText(QString());
             else
                 ui->labelPlantRequirementsAndRewards->setText(tr("Requirements: ")+requirements.join(QStringLiteral(", ")));
@@ -328,24 +349,25 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
                     if(reputationRewards.reputationId<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
                     {
                         const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId);
-                        if(DatapackClientLoader::datapackLoader.reputationExtra.contains(QString::fromStdString(reputation.name)))
-                            name=DatapackClientLoader::datapackLoader.reputationExtra.value(QString::fromStdString(reputation.name)).name;
+                        if(DatapackClientLoader::datapackLoader.reputationExtra.find(reputation.name)!=
+                                DatapackClientLoader::datapackLoader.reputationExtra.cend())
+                            name=QString::fromStdString(DatapackClientLoader::datapackLoader.reputationExtra.at(reputation.name).name);
                     }
                     if(reputationRewards.point<0)
-                        rewards_less_reputation << name;
+                        rewards_less_reputation.push_back(name);
                     else if(reputationRewards.point>0)
-                        rewards_more_reputation << name;
+                        rewards_more_reputation.push_back(name);
                     index++;
                 }
             }
-            if(!rewards_less_reputation.isEmpty() || !rewards_more_reputation.isEmpty())
+            if(!rewards_less_reputation.empty() || !rewards_more_reputation.empty())
             {
                 ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+QStringLiteral("<br />"));
-                if(!rewards_less_reputation.isEmpty())
+                if(!rewards_less_reputation.empty())
                     ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+tr("Less reputation in: ")+rewards_less_reputation.join(QStringLiteral(", ")));
-                if(!rewards_less_reputation.isEmpty() && !rewards_more_reputation.isEmpty())
+                if(!rewards_less_reputation.empty() && !rewards_more_reputation.empty())
                     ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+QStringLiteral(", "));
-                if(!rewards_more_reputation.isEmpty())
+                if(!rewards_more_reputation.empty())
                     ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+tr("More reputation in: ")+rewards_more_reputation.join(QStringLiteral(", ")));
             }
             #endif
@@ -385,11 +407,11 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
     ui->labelFloweringImage->setPixmap(contentExtra.tileset->tileAt(3)->image().scaled(32,64));
     ui->labelFruitsImage->setPixmap(contentExtra.tileset->tileAt(4)->image().scaled(32,64));
 
-    ui->labelPlantedText->setText(FacilityLibClient::timeToString(0));
-    ui->labelSproutedText->setText(FacilityLibClient::timeToString(plant.sprouted_seconds));
-    ui->labelTallerText->setText(FacilityLibClient::timeToString(plant.taller_seconds));
-    ui->labelFloweringText->setText(FacilityLibClient::timeToString(plant.flowering_seconds));
-    ui->labelFruitsText->setText(FacilityLibClient::timeToString(plant.fruits_seconds));
+    ui->labelPlantedText->setText(QString::fromStdString(FacilityLibClient::timeToString(0)));
+    ui->labelSproutedText->setText(QString::fromStdString(FacilityLibClient::timeToString(plant.sprouted_seconds)));
+    ui->labelTallerText->setText(QString::fromStdString(FacilityLibClient::timeToString(plant.taller_seconds)));
+    ui->labelFloweringText->setText(QString::fromStdString(FacilityLibClient::timeToString(plant.flowering_seconds)));
+    ui->labelFruitsText->setText(QString::fromStdString(FacilityLibClient::timeToString(plant.fruits_seconds)));
     ui->labelPlantFruitText->setText(tr("Quantity: %1").arg((double)plant.fix_quantity+((double)plant.random_quantity)/RANDOM_FLOAT_PART_DIVIDER));
 
     ui->plantUse->setVisible(inSelection);
@@ -418,7 +440,7 @@ void BaseWindow::on_plantUse_clicked()
 
 void BaseWindow::on_listPlantList_itemActivated(QListWidgetItem *item)
 {
-    if(!plants_items_graphical.contains(item))
+    if(plants_items_graphical.find(item)==plants_items_graphical.cend())
     {
         qDebug() << "BaseWindow::on_inventory_itemActivated(): activated item not found";
         return;
@@ -461,9 +483,10 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
     qDebug() << "on_listCraftingList_itemSelectionChanged() load the name";
     //load the name
     QString name;
-    if(DatapackClientLoader::datapackLoader.itemsExtra.contains(content.doItemId))
+    if(DatapackClientLoader::datapackLoader.itemsExtra.find(content.doItemId)!=
+            DatapackClientLoader::datapackLoader.itemsExtra.cend())
     {
-        name=DatapackClientLoader::datapackLoader.itemsExtra[content.doItemId].name;
+        name=QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra[content.doItemId].name);
         ui->labelCraftingImage->setPixmap(DatapackClientLoader::datapackLoader.itemsExtra[content.doItemId].image);
     }
     else
@@ -483,9 +506,10 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
     {
         //load the material item
         item=new QListWidgetItem();
-        if(DatapackClientLoader::datapackLoader.itemsExtra.contains(content.materials.at(index).item))
+        if(DatapackClientLoader::datapackLoader.itemsExtra.find(content.materials.at(index).item)!=
+                DatapackClientLoader::datapackLoader.itemsExtra.cend())
         {
-            nameMaterials=DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].name;
+            nameMaterials=QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].name);
             item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].image);
         }
         else
@@ -540,37 +564,42 @@ void BaseWindow::on_craftingUse_clicked()
         uint32_t sub_index=0;
         while(sub_index<content.materials.at(index).quantity)
         {
-            mIngredients << QUrl::fromLocalFile(DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].imagePath).toEncoded();
+            mIngredients.push_back(QUrl::fromLocalFile(
+                                       QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].imagePath)
+                                   ).toEncoded());
             sub_index++;
         }
         index++;
     }
     index=0;
-    QList<QPair<uint16_t,uint32_t> > recipeUsage;
+    std::vector<std::pair<uint16_t,uint32_t> > recipeUsage;
     while(index<content.materials.size())
     {
-        QPair<uint16_t,uint32_t> pair;
+        std::pair<uint16_t,uint32_t> pair;
         pair.first=content.materials.at(index).item;
         pair.second=content.materials.at(index).quantity;
         remove_to_inventory(pair.first,pair.second);
-        recipeUsage << pair;
+        recipeUsage.push_back(pair);
         index++;
     }
-    materialOfRecipeInUsing << recipeUsage;
+    materialOfRecipeInUsing.push_back(recipeUsage);
     //the product do
-    QPair<uint16_t,uint32_t> pair;
+    std::pair<uint16_t,uint32_t> pair;
     pair.first=content.doItemId;
     pair.second=content.quantity;
-    productOfRecipeInUsing << pair;
-    mProduct=QUrl::fromLocalFile(DatapackClientLoader::datapackLoader.itemsExtra[content.doItemId].imagePath).toEncoded();
-    mRecipe=QUrl::fromLocalFile(DatapackClientLoader::datapackLoader.itemsExtra[content.itemToLearn].imagePath).toEncoded();
+    productOfRecipeInUsing.push_back(pair);
+    mProduct=QUrl::fromLocalFile(
+                QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra[content.doItemId].imagePath)).toEncoded();
+    mRecipe=QUrl::fromLocalFile(
+                QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra[content.itemToLearn].imagePath)).toEncoded();
     //update the UI
     load_inventory();
     load_plant_inventory();
     on_listCraftingList_itemSelectionChanged();
     //send to the network
-    client->useRecipe(crafting_recipes_items_graphical.value(selectedItem));
-    appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.at(crafting_recipes_items_graphical.value(selectedItem)).rewards.reputation);
+    client->useRecipe(crafting_recipes_items_graphical.at(selectedItem));
+    appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.at(
+                                crafting_recipes_items_graphical.at(selectedItem)).rewards.reputation);
     //create animation widget
     if(animationWidget!=NULL)
         delete animationWidget;
@@ -587,10 +616,13 @@ void BaseWindow::on_craftingUse_clicked()
     ui->stackedWidget->setCurrentWidget(ui->page_animation);
     if(craftingAnimationObject!=NULL)
         delete craftingAnimationObject;
-    craftingAnimationObject=new CraftingAnimation(mIngredients,mRecipe,mProduct,QUrl::fromLocalFile(playerBackImagePath).toEncoded());
+    craftingAnimationObject=new CraftingAnimation(mIngredients,
+                                                  mRecipe,mProduct,
+                                                  QUrl::fromLocalFile(QString::fromStdString(
+              playerBackImagePath)).toEncoded());
     animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
     animationWidget->rootContext()->setContextProperty("craftingAnimationObject",craftingAnimationObject);
-    const QString datapackQmlFile=client->datapackPathBase()+"qml/crafting-animation.qml";
+    const QString datapackQmlFile=QString::fromStdString(client->datapackPathBase())+"qml/crafting-animation.qml";
     if(QFile(datapackQmlFile).exists())
         animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
     else
@@ -608,9 +640,9 @@ void BaseWindow::recipeUsed(const RecipeUsage &recipeUsage)
     switch(recipeUsage)
     {
         case RecipeUsage_ok:
-            materialOfRecipeInUsing.removeFirst();
-            add_to_inventory(productOfRecipeInUsing.first().first,productOfRecipeInUsing.first().second);
-            productOfRecipeInUsing.removeFirst();
+            materialOfRecipeInUsing.erase(materialOfRecipeInUsing.cbegin());
+            add_to_inventory(productOfRecipeInUsing.front().first,productOfRecipeInUsing.front().second);
+            productOfRecipeInUsing.erase(productOfRecipeInUsing.cbegin());
             //update the UI
             load_inventory();
             load_plant_inventory();
@@ -618,14 +650,15 @@ void BaseWindow::recipeUsed(const RecipeUsage &recipeUsage)
         break;
         case RecipeUsage_impossible:
         {
-            int index=0;
-            while(index<materialOfRecipeInUsing.first().size())
+            unsigned int index=0;
+            while(index<materialOfRecipeInUsing.front().size())
             {
-                add_to_inventory(materialOfRecipeInUsing.first().at(index).first,materialOfRecipeInUsing.first().at(index).first,false);
+                add_to_inventory(materialOfRecipeInUsing.front().at(index).first,
+                                 materialOfRecipeInUsing.front().at(index).first,false);
                 index++;
             }
-            materialOfRecipeInUsing.removeFirst();
-            productOfRecipeInUsing.removeFirst();
+            materialOfRecipeInUsing.erase(materialOfRecipeInUsing.cbegin());
+            productOfRecipeInUsing.erase(productOfRecipeInUsing.cbegin());
             //update the UI
             load_inventory();
             load_plant_inventory();
@@ -633,8 +666,8 @@ void BaseWindow::recipeUsed(const RecipeUsage &recipeUsage)
         }
         break;
         case RecipeUsage_failed:
-            materialOfRecipeInUsing.removeFirst();
-            productOfRecipeInUsing.removeFirst();
+            materialOfRecipeInUsing.erase(materialOfRecipeInUsing.cbegin());
+            productOfRecipeInUsing.erase(productOfRecipeInUsing.cbegin());
         break;
         default:
         qDebug() << "recipeUsed() unknow code";
