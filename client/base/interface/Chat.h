@@ -46,7 +46,7 @@ private:
         CatchChallenger::Chat_type chat_type;
         std::string text;
     };
-    QList<ChatEntry> chat_list;
+    std::vector<ChatEntry> chat_list;
     CatchChallenger::Api_protocol *client;
 };
 }
