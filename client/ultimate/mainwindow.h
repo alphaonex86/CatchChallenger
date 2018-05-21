@@ -74,9 +74,9 @@ private slots:
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
     void haveNewError();
-    void newError(QString error,QString detailedError);
-    void message(QString message);
-    void disconnected(QString reason);
+    void newError(std::string error, std::string detailedError);
+    void message(std::string message);
+    void disconnected(std::string reason);
     void protocol_is_good();
     void needQuit();
     void sslErrors(const QList<QSslError> &errors);
@@ -87,7 +87,7 @@ private slots:
     void serverListEntryEnvoluedDoubleClicked();
     void serverListEntryEnvoluedUpdate();
     void on_manageDatapack_clicked();
-    QPair<QString,QString> getDatapackInformations(const QString &filePath);
+    std::pair<std::string,std::string> getDatapackInformations(const std::string &filePath);
     void on_backDatapack_clicked();
     void on_deleteDatapack_clicked();
     void displayServerList();
@@ -107,7 +107,7 @@ private slots:
     void httpFinished();
     void on_multiplayer_clicked();
     void on_server_back_clicked();
-    void gameSolo_play(const QString &savegamesPath);
+    void gameSolo_play(const std::string &savegamesPath);
     void gameSolo_back();
     void on_solo_clicked();
     bool sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath);
@@ -116,8 +116,8 @@ private slots:
     void serverError(const QString &error);
     void serverErrorStd(const std::string &error);
     void on_languages_clicked();
-    void newUpdate(const QString &version);
-    void feedEntryList(const QList<FeedNews::FeedEntry> &entryList, QString error);
+    void newUpdate(const std::string &version);
+    void feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList, std::string error);
     void on_lineEditLogin_textChanged(const QString &arg1);
     void logged();
     void gameIsLoaded();
