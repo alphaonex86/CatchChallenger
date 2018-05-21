@@ -19,9 +19,10 @@
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/MoveOnTheMap.h"
+#include "Api_protocol_Qt.h"
 
 namespace CatchChallenger {
-class Api_protocol : public ProtocolParsingInputOutput, public MoveOnTheMap, public QObject
+class Api_protocol : public ProtocolParsingInputOutput, public MoveOnTheMap, public Api_protocol_Qt
 {
 public:
     static bool internalVersionDisplayed;
@@ -231,7 +232,7 @@ protected:
     std::vector<LogicialGroup *> logicialGroupIndexList;
     std::vector<std::vector<CharacterEntry> > characterListForSelection;
     std::string tokenForGameServer;
-protected:
+/*public:
     virtual void newError(const std::string &error,const std::string &detailedError) = 0;
     virtual void message(const std::string &message) = 0;
     virtual void lastReplyTime(const uint32_t &time) = 0;
@@ -358,7 +359,7 @@ protected:
     virtual void marketGetCash(const uint64_t &cash) = 0;
     virtual void marketWithdrawCanceled() = 0;
     virtual void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity) = 0;
-    virtual void marketWithdrawMonster(const PlayerMonster &playerMonster) = 0;
+    virtual void marketWithdrawMonster(const PlayerMonster &playerMonster) = 0;*/
 public:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const uint8_t &moved_unit,const CatchChallenger::Direction &direction);

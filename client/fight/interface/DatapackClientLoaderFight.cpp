@@ -194,9 +194,12 @@ void DatapackClientLoader::parseMonstersExtra()
                                 {
                                     if(habitat->Attribute("lang")==NULL || strcmp(habitat->Attribute("lang"),"en")==0)
                                     {
-                                        monsterExtraEntry.habitat=habitat->GetText();
-                                        habitat_found=true;
-                                        break;
+                                        if(habitat->GetText()!=NULL)
+                                        {
+                                            monsterExtraEntry.habitat=habitat->GetText();
+                                            habitat_found=true;
+                                            break;
+                                        }
                                     }
                                     habitat = habitat->NextSiblingElement("habitat");
                                 }
