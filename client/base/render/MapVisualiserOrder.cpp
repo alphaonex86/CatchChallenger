@@ -1,52 +1,52 @@
 #include "MapVisualiserOrder.h"
 #include <QDebug>
 
-std::string MapVisualiserOrder::text_blockedtext=QStringLiteral("blockedtext");
-std::string MapVisualiserOrder::text_en=QStringLiteral("en");
-std::string MapVisualiserOrder::text_lang=QStringLiteral("lang");
-std::string MapVisualiserOrder::text_Dyna_management=QStringLiteral("Dyna management");
-std::string MapVisualiserOrder::text_Moving=QStringLiteral("Moving");
-std::string MapVisualiserOrder::text_door=QStringLiteral("door");
-std::string MapVisualiserOrder::text_Object=QStringLiteral("Object");
-std::string MapVisualiserOrder::text_bot=QStringLiteral("bot");
-std::string MapVisualiserOrder::text_bots=QStringLiteral("bots");
-std::string MapVisualiserOrder::text_WalkBehind=QStringLiteral("WalkBehind");
-std::string MapVisualiserOrder::text_Collisions=QStringLiteral("Collisions");
-std::string MapVisualiserOrder::text_Grass=QStringLiteral("Grass");
-std::string MapVisualiserOrder::text_animation=QStringLiteral("animation");
-std::string MapVisualiserOrder::text_dotcomma=QStringLiteral(";");
-std::string MapVisualiserOrder::text_ms=QStringLiteral("ms");
-std::string MapVisualiserOrder::text_frames=QStringLiteral("frames");
-std::string MapVisualiserOrder::text_map=QStringLiteral("map");
-std::string MapVisualiserOrder::text_objectgroup=QStringLiteral("objectgroup");
-std::string MapVisualiserOrder::text_name=QStringLiteral("name");
-std::string MapVisualiserOrder::text_object=QStringLiteral("object");
-std::string MapVisualiserOrder::text_type=QStringLiteral("type");
-std::string MapVisualiserOrder::text_x=QStringLiteral("x");
-std::string MapVisualiserOrder::text_y=QStringLiteral("y");
-std::string MapVisualiserOrder::text_botfight=QStringLiteral("botfight");
-std::string MapVisualiserOrder::text_property=QStringLiteral("property");
-std::string MapVisualiserOrder::text_value=QStringLiteral("value");
-std::string MapVisualiserOrder::text_file=QStringLiteral("file");
-std::string MapVisualiserOrder::text_id=QStringLiteral("id");
-std::string MapVisualiserOrder::text_slash=QStringLiteral("/");
-std::string MapVisualiserOrder::text_dotxml=QStringLiteral(".xml");
-std::string MapVisualiserOrder::text_dottmx=QStringLiteral(".tmx");
-std::string MapVisualiserOrder::text_step=QStringLiteral("step");
-std::string MapVisualiserOrder::text_properties=QStringLiteral("properties");
-std::string MapVisualiserOrder::text_shop=QStringLiteral("shop");
-std::string MapVisualiserOrder::text_learn=QStringLiteral("learn");
-std::string MapVisualiserOrder::text_heal=QStringLiteral("heal");
-std::string MapVisualiserOrder::text_market=QStringLiteral("market");
-std::string MapVisualiserOrder::text_zonecapture=QStringLiteral("zonecapture");
-std::string MapVisualiserOrder::text_fight=QStringLiteral("fight");
-std::string MapVisualiserOrder::text_zone=QStringLiteral("zone");
-std::string MapVisualiserOrder::text_fightid=QStringLiteral("fightid");
-std::string MapVisualiserOrder::text_randomoffset=QStringLiteral("random-offset");
-std::string MapVisualiserOrder::text_visible=QStringLiteral("visible");
-std::string MapVisualiserOrder::text_true=QStringLiteral("true");
-std::string MapVisualiserOrder::text_false=QStringLiteral("false");
-std::string MapVisualiserOrder::text_trigger=QStringLiteral("trigger");
+std::string MapVisualiserOrder::text_blockedtext="blockedtext";
+std::string MapVisualiserOrder::text_en="en";
+std::string MapVisualiserOrder::text_lang="lang";
+std::string MapVisualiserOrder::text_Dyna_management="Dyna management";
+std::string MapVisualiserOrder::text_Moving="Moving";
+std::string MapVisualiserOrder::text_door="door";
+std::string MapVisualiserOrder::text_Object="Object";
+std::string MapVisualiserOrder::text_bot="bot";
+std::string MapVisualiserOrder::text_bots="bots";
+std::string MapVisualiserOrder::text_WalkBehind="WalkBehind";
+std::string MapVisualiserOrder::text_Collisions="Collisions";
+std::string MapVisualiserOrder::text_Grass="Grass";
+std::string MapVisualiserOrder::text_animation="animation";
+std::string MapVisualiserOrder::text_dotcomma=";";
+std::string MapVisualiserOrder::text_ms="ms";
+std::string MapVisualiserOrder::text_frames="frames";
+std::string MapVisualiserOrder::text_map="map";
+std::string MapVisualiserOrder::text_objectgroup="objectgroup";
+std::string MapVisualiserOrder::text_name="name";
+std::string MapVisualiserOrder::text_object="object";
+std::string MapVisualiserOrder::text_type="type";
+std::string MapVisualiserOrder::text_x="x";
+std::string MapVisualiserOrder::text_y="y";
+std::string MapVisualiserOrder::text_botfight="botfight";
+std::string MapVisualiserOrder::text_property="property";
+std::string MapVisualiserOrder::text_value="value";
+std::string MapVisualiserOrder::text_file="file";
+std::string MapVisualiserOrder::text_id="id";
+std::string MapVisualiserOrder::text_slash="/";
+std::string MapVisualiserOrder::text_dotxml=".xml";
+std::string MapVisualiserOrder::text_dottmx=".tmx";
+std::string MapVisualiserOrder::text_step="step";
+std::string MapVisualiserOrder::text_properties="properties";
+std::string MapVisualiserOrder::text_shop="shop";
+std::string MapVisualiserOrder::text_learn="learn";
+std::string MapVisualiserOrder::text_heal="heal";
+std::string MapVisualiserOrder::text_market="market";
+std::string MapVisualiserOrder::text_zonecapture="zonecapture";
+std::string MapVisualiserOrder::text_fight="fight";
+std::string MapVisualiserOrder::text_zone="zone";
+std::string MapVisualiserOrder::text_fightid="fightid";
+std::string MapVisualiserOrder::text_randomoffset="random-offset";
+std::string MapVisualiserOrder::text_visible="visible";
+std::string MapVisualiserOrder::text_true="true";
+std::string MapVisualiserOrder::text_false="false";
+std::string MapVisualiserOrder::text_trigger="trigger";
 
 QRegularExpression MapVisualiserOrder::regexMs=QRegularExpression(QStringLiteral("^[0-9]{1,5}ms$"));
 QRegularExpression MapVisualiserOrder::regexFrames=QRegularExpression(QStringLiteral("^[0-9]{1,3}frames$"));
@@ -70,16 +70,16 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
         if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
         {
             //remove the unknow layer
-            if(objectGroup->name()==MapVisualiserOrder::text_Moving)
+            if(objectGroup->name()=="Moving")
             {
-                std::vector<Tiled::MapObject*> objects=objectGroup->objects();
+                QList<Tiled::MapObject*> objects=objectGroup->objects();
                 int index2=0;
                 while(index2<objects.size())
                 {
                     const uint32_t &x=objects.at(index2)->x();
                     const uint32_t &y=objects.at(index2)->y()-1;
                     //remove the unknow object
-                    if(objects.at(index2)->type()==MapVisualiserOrder::text_door)
+                    if(objects.at(index2)->type()=="door")
                     {
                         if(hideTheDoors)
                         {
@@ -92,23 +92,26 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                             if(tile!=NULL)
                             {
                                 //animation only for door
-                                const std::string &animation=tile->property(MapVisualiserOrder::text_animation);
+                                const QString &animation=tile->property("animation");
                                 if(!animation.isEmpty())
                                 {
-                                    const QStringList &animationList=animation.split(MapVisualiserOrder::text_dotcomma);
+                                    const QStringList &animationList=animation.split("dotcomma");
                                     if(animationList.size()==2)
                                     {
                                         if(animationList.at(0).contains(regexMs) && animationList.at(1).contains(regexFrames))
                                         {
-                                            std::string msString=animationList.at(0);
-                                            std::string framesString=animationList.at(1);
-                                            msString.remove(MapVisualiserOrder::text_ms);
-                                            framesString.remove(MapVisualiserOrder::text_frames);
+                                            QString msString=animationList.at(0);
+                                            QString framesString=animationList.at(1);
+                                            msString.remove("ms");
+                                            framesString.remove("frames");
                                             uint16_t ms=msString.toUShort();
                                             uint8_t frames=static_cast<uint8_t>(framesString.toUShort());
                                             if(ms>0 && frames>1)
                                             {
-                                                if(!tempMapObject->doors.contains(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))))
+                                                if(tempMapObject->doors.find(
+                                                            std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))
+                                                            )==
+                                                        tempMapObject->doors.cend())
                                                 {
                                                     MapDoor *door=new MapDoor(objects.at(index2),frames,ms);
                                                     tempMapObject->doors[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))]=door;
@@ -158,14 +161,14 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                 }
                 index++;
             }
-            else if(objectGroup->name()==MapVisualiserOrder::text_Object)
+            else if(objectGroup->name()=="Object")
             {
-                std::vector<Tiled::MapObject*> objects=objectGroup->objects();
+                QList<Tiled::MapObject*> objects=objectGroup->objects();
                 int index2=0;
                 while(index2<objects.size())
                 {
                     //remove the bot
-                    if(objects.at(index2)->type()==MapVisualiserOrder::text_bot)
+                    if(objects.at(index2)->type()=="bot")
                     {
                         /// \see MapController::loadBotOnTheMap()
                         #ifndef ONLYMAPRENDER
@@ -173,7 +176,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                         delete objects.at(index2);
                         #endif
                     }
-                    else if(objects.at(index2)->type()==MapVisualiserOrder::text_object)
+                    else if(objects.at(index2)->type()=="object")
                     {}
                     //remove the unknow object
                     else
@@ -204,7 +207,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
         while(index<listSize)
         {
             const Tiled::Layer * layer=tempMapObject->tiledMap->layerAt(index);
-            if(layer->name()==MapVisualiserOrder::text_WalkBehind)
+            if(layer->name()=="WalkBehind")
             {
                 tempMapObject->objectGroupIndex=index;
                 tempMapObject->tiledMap->insertLayer(index,tempMapObject->objectGroup);
@@ -218,7 +221,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
             index=listSize-1;
             while(index>=0)
             {
-                if(tempMapObject->tiledMap->layerAt(index)->name()==MapVisualiserOrder::text_Collisions)
+                if(tempMapObject->tiledMap->layerAt(index)->name()=="Collisions")
                 {
                     tempMapObject->objectGroupIndex=index+1;
                     tempMapObject->tiledMap->insertLayer(index+1,tempMapObject->objectGroup);
@@ -241,7 +244,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
         {
             if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
             {
-                if(objectGroup->name()==MapVisualiserOrder::text_Moving)
+                if(objectGroup->name()=="Moving")
                 {
                     Tiled::Layer *layer = tempMapObject->tiledMap->takeLayerAt(index);
                     if(tempMapObject->objectGroupIndex-1<=0)
