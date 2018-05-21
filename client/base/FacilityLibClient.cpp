@@ -9,28 +9,16 @@ std::string FacilityLibClient::timeToString(const uint32_t &sec)
     if(sec>3600*24*365*50)
         timeText="Time player: bug";
     else if(sec>=3600*24*10)
-        timeText=QObject::tr("%n day(s)","",sec/(3600*24));
+        timeText=QObject::tr("%n day(s)","",sec/(3600*24)).toStdString();
     else if(sec>=3600*24)
-        timeText=QObject::tr("%n day(s) and %1","",sec/(3600*24)).arg(QObject::tr("%n hour(s)","",(sec%(3600*24))/3600));
+        timeText=QObject::tr("%n day(s) and %1","",sec/(3600*24)).arg(QObject::tr("%n hour(s)","",(sec%(3600*24))/3600)).toStdString();
     else if(sec>=3600)
-        timeText=QObject::tr("%n hour(s) and %1","",sec/3600).arg(QObject::tr("%n minute(s)","",(sec%3600)/60));
+        timeText=QObject::tr("%n hour(s) and %1","",sec/3600).arg(QObject::tr("%n minute(s)","",(sec%3600)/60)).toStdString();
     else if(sec>=60)
-        timeText=QObject::tr("%n minute(s) and %1","",sec/60).arg(QObject::tr("%n second(s)","",sec%60));
+        timeText=QObject::tr("%n minute(s) and %1","",sec/60).arg(QObject::tr("%n second(s)","",sec%60)).toStdString();
     else
-        timeText=QObject::tr("%n second(s)","",sec);
+        timeText=QObject::tr("%n second(s)","",sec).toStdString();
     return timeText;
-}
-
-std::vector<std::string> FacilityLibClient::stdvectorstringToQStringList(const std::vector<std::string> &vector)
-{
-    QStringList list;
-    unsigned int index=0;
-    while(index<vector.size())
-    {
-        list << QString::fromStdString(vector.at(index));
-        ++index;
-    }
-    return list;
 }
 
 bool FacilityLibClient::rectTouch(QRect r1,QRect r2)

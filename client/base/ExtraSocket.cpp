@@ -12,7 +12,7 @@
 std::string ExtraSocket::pathSocket(const std::string &name)
 {
 #if defined(__unix__) || defined(Q_OS_UNIX) || !defined(Q_OS_WIN32)
-    return name+"-"+QString::number(getuid());
+    return name+"-"+std::to_string(getuid());
 #else
     std::string userName;
 
