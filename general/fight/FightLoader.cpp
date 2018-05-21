@@ -41,7 +41,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
         const auto loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
-            std::cerr << file+", "+tinyxml2::XMLDocumentERROR(domDocument) << std::endl;
+            std::cerr << file+", "+domDocument->ErrorName() << std::endl;
             return types;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -221,7 +221,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
             const auto loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
-                std::cerr << file+", "+tinyxml2::XMLDocumentERROR(domDocument) << std::endl;
+                std::cerr << file+", "+domDocument->ErrorName() << std::endl;
                 file_index++;
                 continue;
             }
@@ -963,7 +963,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
             const auto loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
-                std::cerr << file+", "+tinyxml2::XMLDocumentERROR(domDocument) << std::endl;
+                std::cerr << file+", "+domDocument->ErrorName() << std::endl;
                 index_file++;
                 continue;
             }
@@ -1225,7 +1225,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             const auto loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
-                std::cerr << file+", "+tinyxml2::XMLDocumentERROR(domDocument) << std::endl;
+                std::cerr << file+", "+domDocument->ErrorName() << std::endl;
                 file_index++;
                 continue;
             }
@@ -1590,7 +1590,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             const auto loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
-                std::cerr << file+", "+tinyxml2::XMLDocumentERROR(domDocument) << std::endl;
+                std::cerr << file+", "+domDocument->ErrorName() << std::endl;
                 file_index++;
                 continue;
             }

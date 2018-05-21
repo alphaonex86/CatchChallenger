@@ -24,13 +24,13 @@ NewGame::NewGame(const std::string &skinPath, const std::string &monsterPath, st
     currentMonsterGroup=0;
     if(!monstergroup.empty())
         currentMonsterGroup=static_cast<uint8_t>(rand()%monstergroup.size());
-    this->skinPath=skinPath.toStdString();
+    this->skinPath=skinPath;
     uint8_t index=0;
     while(index<CatchChallenger::CommonDatapack::commonDatapack.skins.size())
     {
         if(forcedSkin.empty() || vectorcontainsAtLeastOne(forcedSkin,(uint8_t)index))
         {
-            const std::string &currentPath=skinPath.toStdString()+CatchChallenger::CommonDatapack::commonDatapack.skins.at(index);
+            const std::string &currentPath=skinPath+CatchChallenger::CommonDatapack::commonDatapack.skins.at(index);
             if(QFile::exists(QString::fromStdString(currentPath+"/back.png")) && QFile::exists(QString::fromStdString(currentPath+"/front.png")) && QFile::exists(QString::fromStdString(currentPath+"/trainer.png")))
             {
                 skinList.push_back(CatchChallenger::CommonDatapack::commonDatapack.skins.at(index));
@@ -88,7 +88,7 @@ void NewGame::updateSkin()
         while(index<monsters.size())
         {
             const CatchChallenger::Profile::Monster &monster=monsters.at(index);
-            paths.push_back(monsterPath.toStdString()+std::to_string(monster.id)+"/front.png");
+            paths.push_back(monsterPath+std::to_string(monster.id)+"/front.png");
             index++;
         }
     }
@@ -147,12 +147,12 @@ bool NewGame::okCanBeEnabled()
 
 std::string NewGame::pseudo()
 {
-    return ui->pseudo->text();
+    return ui->pseudo->text().toStdString();
 }
 
 std::string NewGame::skin()
 {
-    return QString::fromStdString(skinList.at(currentSkin));
+    return skinList.at(currentSkin);
 }
 
 uint8_t NewGame::skinId()

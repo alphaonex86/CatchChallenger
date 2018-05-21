@@ -2,6 +2,7 @@
 #include "PlatformMacro.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/Version.h"
+#include "../../general/base/cpp11addition.h"
 #include "ClientVariable.h"
 
 #include <QNetworkRequest>
@@ -89,17 +90,17 @@ void InternetUpdater::httpFinished()
         reply->deleteLater();
         return;
     }
-    QString newVersion=QString::fromUtf8(reply->readAll());
-    if(newVersion.isEmpty())
+    std::string newVersion=QString::fromUtf8(reply->readAll()).toStdString();
+    if(newVersion.empty())
     {
         qDebug() << (QStringLiteral("version string is empty"));
         reply->deleteLater();
         return;
     }
-    newVersion.remove("\n");
-    if(!newVersion.contains(QRegularExpression(QStringLiteral("^[0-9]+(\\.[0-9]+)+$"))))
+    stringreplaceAll(newVersion,"\n","");
+    if(!QString::fromStdString(newVersion).contains(QRegularExpression(QStringLiteral("^[0-9]+(\\.[0-9]+)+$"))))
     {
-        qDebug() << (QStringLiteral("version string don't match: %1").arg(newVersion));
+        qDebug() << (QStringLiteral("version string don't match: %1").arg(QString::fromStdString(newVersion)));
         reply->deleteLater();
         return;
     }
@@ -118,16 +119,16 @@ void InternetUpdater::httpFinished()
     reply->deleteLater();
 }
 
-bool InternetUpdater::versionIsNewer(const QString &version)
+bool InternetUpdater::versionIsNewer(const std::string &version)
 {
-    QStringList versionANumber=version.split(QStringLiteral("."));
-    QStringList versionBNumber=QStringLiteral(CATCHCHALLENGER_VERSION).split(QStringLiteral("."));
-    int index=0;
+    std::vector<std::string> versionANumber=stringsplit(version,'.');
+    std::vector<std::string> versionBNumber=stringsplit(std::string(CATCHCHALLENGER_VERSION),'.');
+    unsigned int index=0;
     int defaultReturnValue=true;
     while(index<versionANumber.size() && index<versionBNumber.size())
     {
-        unsigned int reaNumberA=versionANumber.at(index).toUInt();
-        unsigned int reaNumberB=versionBNumber.at(index).toUInt();
+        unsigned int reaNumberA=stringtoint32(versionANumber.at(index));
+        unsigned int reaNumberB=stringtoint32(versionBNumber.at(index));
         if(reaNumberA>reaNumberB)
             return true;
         if(reaNumberA<reaNumberB)
@@ -137,21 +138,24 @@ bool InternetUpdater::versionIsNewer(const QString &version)
     return defaultReturnValue;
 }
 
-QString InternetUpdater::getText(const QString &version)
+std::string InternetUpdater::getText(const std::string &version)
 {
-    QString url;
+    std::string url;
     #if !defined(CATCHCHALLENGER_VERSION_ULTIMATE)
         url="http://catchchallenger.first-world.info/download.html";
     #else
         url="http://catchchallenger.first-world.info/shop/";
     #endif
-        return QStringLiteral("<a href=\"%1\" style=\"text-decoration:none;color:#100;\">%2</a>").arg(url).arg(tr("New version: %1").arg(QStringLiteral("<b>%1</b>").arg(version))+"<br />"+
+        return QStringLiteral("<a href=\"%1\" style=\"text-decoration:none;color:#100;\">%2</a>")
+                .arg(QString::fromStdString(url))
+                .arg(tr("New version: %1").arg("<b>"+QString::fromStdString(version)+"</b>"))
+                .toStdString()+"<br />"+
                            #if !defined(CATCHCHALLENGER_VERSION_ULTIMATE)
-                               tr("Click here to go on download page")
+                               tr("Click here to go on download page").toStdString()
                            #else
-                               tr("Click here to <b>go to the shop</b> and login. Download the new version <b>into the order details</b>.<br />The new version have been sended <b>by email too</b>, look into your spams if needed.")
+                               tr("Click here to <b>go to the shop</b> and login. Download the new version <b>into the order details</b>.<br />The new version have been sended <b>by email too</b>, look into your spams if needed.").toStdString()
                            #endif
-                                                         );
+                                                         ;
 }
 
 #if defined(_WIN32) || defined(Q_OS_WIN32)

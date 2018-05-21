@@ -16,7 +16,6 @@ class FacilityLibClient
 {
 public:
     static std::string timeToString(const uint32_t &sec);
-    static std::vector<std::string> stdvectorstringToQStringList(const std::vector<std::string> &vector);
     static bool rectTouch(QRect r1,QRect r2);
 };
 

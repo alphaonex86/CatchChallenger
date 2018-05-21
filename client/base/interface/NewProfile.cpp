@@ -3,8 +3,6 @@
 
 #include <QFile>
 #include <QByteArray>
-#include <QDomDocument>
-#include <tinyxml2::XMLElement>
 #include <QMessageBox>
 #include <QDebug>
 
@@ -15,7 +13,7 @@
 #include "../../base/interface/DatapackClientLoader.h"
 #include "../../base/LanguagesSelect.h"
 
-NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
+NewProfile::NewProfile(const std::string &datapackPath, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NewProfile)
 {
@@ -34,17 +32,17 @@ NewProfile::NewProfile(const QString &datapackPath, QWidget *parent) :
     }
     loadProfileText();
     ui->comboBox->clear();
-    int index=0;
+    unsigned int index=0;
     while(index<profileTextList.size())
     {
-        ui->comboBox->addItem(profileTextList.at(index).name);
+        ui->comboBox->addItem(QString::fromStdString(profileTextList.at(index).name));
         index++;
     }
     if(ui->comboBox->count()>0)
     {
         srand(static_cast<uint32_t>(time(NULL)));
         ui->comboBox->setCurrentIndex(rand()%ui->comboBox->count());
-        ui->description->setText(profileTextList.at(ui->comboBox->currentIndex()).description);
+        ui->description->setText(QString::fromStdString(profileTextList.at(ui->comboBox->currentIndex()).description));
         ui->ok->setEnabled(true);
     }
 }
@@ -56,9 +54,9 @@ NewProfile::~NewProfile()
 
 void NewProfile::loadProfileText()
 {
-    const QString &xmlFile=datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"start.xml";
-    std::vector<const TiXmlElement *> xmlList=CatchChallenger::DatapackGeneralLoader::loadProfileList(
-                datapackPath.toStdString(),xmlFile.toStdString(),
+    const std::string &xmlFile=datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"start.xml";
+    std::vector<const tinyxml2::XMLElement *> xmlList=CatchChallenger::DatapackGeneralLoader::loadProfileList(
+                datapackPath,xmlFile,
                 CatchChallenger::CommonDatapack::commonDatapack.items.item,
                 CatchChallenger::CommonDatapack::commonDatapack.monsters,
                 CatchChallenger::CommonDatapack::commonDatapack.reputation
@@ -67,11 +65,11 @@ void NewProfile::loadProfileText()
     while(index<xmlList.size())
     {
         ProfileText profile;
-        const TiXmlElement * startItem=xmlList.at(index);
-        const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+        const tinyxml2::XMLElement * startItem=xmlList.at(index);
+        const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
         bool found=false;
-        const TiXmlElement * name = startItem->FirstChildElement("name");
-        if(!language.isEmpty() && language!="en")
+        const tinyxml2::XMLElement * name = startItem->FirstChildElement("name");
+        if(!language.empty() && language!="en")
             while(name!=NULL)
             {
                 if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
@@ -87,7 +85,7 @@ void NewProfile::loadProfileText()
             name = startItem->FirstChildElement("name");
             while(name!=NULL)
             {
-                if(name->Attribute("lang")==NULL || *name->Attribute(std::string("lang"))=="en")
+                if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                 {
                     profile.name=name->GetText();
                     break;
@@ -95,18 +93,19 @@ void NewProfile::loadProfileText()
                 name = name->NextSiblingElement("name");
             }
         }
-        if(profile.name.isEmpty())
+        if(profile.name.empty())
         {
-            qDebug() << (QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem->GetText()).arg("?"));
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(): %2")
+                         .arg(QString::fromStdString(xmlFile)).arg(startItem->GetText()));
             startItem = startItem->NextSiblingElement("start");
             continue;
         }
         found=false;
-        const TiXmlElement * description = startItem->FirstChildElement("description");
-        if(!language.isEmpty() && language!="en")
+        const tinyxml2::XMLElement * description = startItem->FirstChildElement("description");
+        if(!language.empty() && language!="en")
             while(description!=NULL)
             {
-                if(description->Attribute("lang")!=NULL && *description->Attribute(std::string("lang"))==language.toStdString())
+                if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language)
                 {
                     profile.description=description->GetText();
                     found=true;
@@ -119,7 +118,7 @@ void NewProfile::loadProfileText()
             description = startItem->FirstChildElement("description");
             while(description!=NULL)
             {
-                if(description->Attribute("lang")==NULL || *description->Attribute(std::string("lang"))=="en")
+                if(description->Attribute("lang")==NULL || strcmp(description->Attribute("lang"),"en")==0)
                 {
                     profile.description=description->GetText();
                     break;
@@ -127,13 +126,14 @@ void NewProfile::loadProfileText()
                 description = description->NextSiblingElement("description");
             }
         }
-        if(profile.description.isEmpty())
+        if(profile.description.empty())
         {
-            qDebug() << (QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName(): %2 (at line: %3)").arg(xmlFile).arg(startItem->GetText()).arg("?"));
+            qDebug() << (QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName(): %2")
+                         .arg(QString::fromStdString(xmlFile)).arg(startItem->GetText()));
             startItem = startItem->NextSiblingElement("start");
             continue;
         }
-        profileTextList << profile;
+        profileTextList.push_back(profile);
         index++;
     }
 }
@@ -164,7 +164,7 @@ void NewProfile::on_pushButton_2_clicked()
 void NewProfile::on_comboBox_currentIndexChanged(int index)
 {
     if(ui->comboBox->count()>0)
-        ui->description->setText(profileTextList.at(index).description);
+        ui->description->setText(QString::fromStdString(profileTextList.at(index).description));
 }
 
 void NewProfile::datapackParsed()

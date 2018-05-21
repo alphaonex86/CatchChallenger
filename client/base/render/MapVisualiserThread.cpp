@@ -13,6 +13,7 @@
 #include "../FacilityLibClient.h"
 #include <QDebug>
 #include <QTime>
+#include <iostream>
 
 MapVisualiserThread::MapVisualiserThread()
 {
@@ -379,9 +380,9 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                             }
                             else
                             {
-                                if(tileToTriggerAnimationContent.contains(tile))
+                                if(tileToTriggerAnimationContent.find(tile)!=tileToTriggerAnimationContent.cend())
                                 {
-                                    const TriggerAnimationContent &content=tileToTriggerAnimationContent.value(tile);
+                                    const TriggerAnimationContent &content=tileToTriggerAnimationContent.at(tile);
                                     Tiled::ObjectGroup *objectGroup=NULL;
                                     if(index<(tempMapObject->tiledMap->layerCount()))
                                         if(Tiled::ObjectGroup *objectGroupTemp = tempMapObject->tiledMap->layerAt(index+1)->asObjectGroup())
@@ -560,303 +561,280 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
     else
     {
         domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName];
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(fileName.c_str());
+        if(loadOkay!=0)
         {
-            std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
-            return types;
-        }
-        QFile mapFile(fileName);
-        if(!mapFile.open(QIODevice::ReadOnly))
-        {
-            qDebug() << mapFile.fileName()+QStringLiteral(": ")+mapFile.errorString();
+            std::cerr << fileName+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return false;
         }
-        const QByteArray &xmlContent=mapFile.readAll();
-        mapFile.close();
-        if(stopIt)
-                return false;
-        std::string errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
-            return false;
-        }
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName.toStdString()]=domDocument;
     }
-    const tinyxml2::XMLElement &root = domDocument.RootElement();
-    if(root.tagName()!=MapVisualiserThread::text_map)
+    const tinyxml2::XMLElement *root = domDocument->RootElement();
+    if(strcmp(root->Name(),"map")!=0)
     {
-        qDebug() << fileName << QStringLiteral(", MapVisualiserThread::loadOtherMapClientPart(): \"map\" root balise not found for the xml file: ") << root.tagName();
+        qDebug() << QString::fromStdString(fileName)
+                 << QStringLiteral(", MapVisualiserThread::loadOtherMapClientPart(): \"map\" root balise not found for the xml file: ")
+                 << root->Name();
         return false;
     }
     bool ok,ok2;
     //load the bots (map->bots)
-    tinyxml2::XMLElement child = root.FirstChildElement(MapVisualiserThread::text_objectgroup);
-    while(!child.isNull())
+    const tinyxml2::XMLElement *child = root->FirstChildElement("objectgroup");
+    while(child!=NULL)
     {
-        if(!child.hasAttribute(MapVisualiserThread::text_name))
-            qDebug() << (QStringLiteral("Has not attribute \"name\": child.tagName(): %1 (at line: %2)").arg(child.tagName()).arg(child.lineNumber()));
-        else if(!child.isElement())
-            qDebug() << (QStringLiteral("Is not an element: child.tagName(): %1, name: %2 (at line: %3)").arg(child.tagName().arg(child.attribute(QStringLiteral("name"))).arg(child.lineNumber())));
+        if(child->Attribute("name")==NULL)
+            qDebug() << (QStringLiteral("Has not attribute \"name\": child->Name(): %1").arg(child->Name()));
         else
         {
-            if(child.attribute(MapVisualiserThread::text_name)==MapVisualiserThread::text_Object)
+            if(strcmp(child->Attribute("name"),"Object")==0)
             {
-                tinyxml2::XMLElement bot = child.FirstChildElement(MapVisualiserThread::text_object);
-                while(!bot.isNull())
+                const tinyxml2::XMLElement *bot = child->FirstChildElement("object");
+                while(bot!=NULL)
                 {
-                    if(!bot.hasAttribute(MapVisualiserThread::text_type))
-                        qDebug() << (QStringLiteral("Has not attribute \"type\": bot.tagName(): %1 (at line: %2)").arg(bot.tagName()).arg(bot.lineNumber()));
-                    else if(!bot.hasAttribute(MapVisualiserThread::text_x))
-                        qDebug() << (QStringLiteral("Has not attribute \"x\": bot.tagName(): %1 (at line: %2)").arg(bot.tagName()).arg(bot.lineNumber()));
-                    else if(!bot.hasAttribute(MapVisualiserThread::text_y))
-                        qDebug() << (QStringLiteral("Has not attribute \"y\": bot.tagName(): %1 (at line: %2)").arg(bot.tagName()).arg(bot.lineNumber()));
-                    else if(!bot.isElement())
-                        qDebug() << (QStringLiteral("Is not an element: bot.tagName(): %1, type: %2 (at line: %3)").arg(bot.tagName().arg(bot.attribute("type")).arg(bot.lineNumber())));
+                    if(bot->Attribute("type")==NULL)
+                        qDebug() << (QStringLiteral("Has not attribute \"type\": bot->Name(): %1").arg(bot->Name()));
+                    else if(bot->Attribute("x")==NULL)
+                        qDebug() << (QStringLiteral("Has not attribute \"x\": bot->Name(): %1").arg(bot->Name()));
+                    else if(bot->Attribute("y")==NULL)
+                        qDebug() << (QStringLiteral("Has not attribute \"y\": bot->Name(): %1").arg(bot->Name()));
                     else
                     {
-                        const uint32_t &x=bot.attribute(MapVisualiserThread::text_x).toUInt(&ok)/CLIENT_BASE_TILE_SIZE;
-                        const uint32_t &y=(bot.attribute(MapVisualiserThread::text_y).toUInt(&ok2)/CLIENT_BASE_TILE_SIZE)-1;
-                        if(ok && ok2 && (bot.attribute(MapVisualiserThread::text_type)==MapVisualiserThread::text_bot || bot.attribute(MapVisualiserThread::text_type)==MapVisualiserThread::text_botfight))
+                        const uint32_t &x=stringtouint32(bot->Attribute("x"),&ok)/CLIENT_BASE_TILE_SIZE;
+                        const uint32_t &y=stringtouint32(bot->Attribute("y"),&ok2)/CLIENT_BASE_TILE_SIZE-1;
+                        if(ok && ok2 &&
+                                (strcmp(bot->Attribute("type"),"bot")==0 ||
+                                 strcmp(bot->Attribute("type"),"botfight")==0))
                         {
-                            tinyxml2::XMLElement properties = bot.FirstChildElement(MapVisualiserThread::text_properties);
-                            while(!properties.isNull())
+                            const tinyxml2::XMLElement *properties = bot->FirstChildElement("properties");
+                            while(properties!=NULL)
                             {
-                                if(!properties.isElement())
-                                    qDebug() << (QStringLiteral("Is not an element: properties.tagName(): %1, (at line: %2)").arg(properties.tagName().arg(properties.lineNumber())));
-                                else
+                                std::unordered_map<std::string,std::string> property_parsed;
+                                const tinyxml2::XMLElement *property = properties->FirstChildElement("property");
+                                while(property!=NULL)
                                 {
-                                    std::unordered_map<std::string,std::string> property_parsed;
-                                    tinyxml2::XMLElement property = properties.FirstChildElement(MapVisualiserThread::text_property);
-                                    while(!property.isNull())
+                                    if(property->Attribute("name")==NULL)
+                                        qDebug() << (QStringLiteral("Has not attribute \"name\": property->Name(): %1").arg(property->Name())
+                                                     );
+                                    else if(property->Attribute("value")==NULL)
+                                        qDebug() << (QStringLiteral("Has not attribute \"value\": property->Name(): %1").arg(property->Name())
+                                                     );
+                                    else
+                                        property_parsed[property->Attribute("name")]=property->Attribute("value");
+                                    property = property->NextSiblingElement("property");
+                                }
+                                if(property_parsed.find("file")!=property_parsed.cend() && property_parsed.find("id")!=property_parsed.cend())
+                                {
+                                    const uint16_t &botId=stringtouint16(property_parsed.at("id"),&ok);
+                                    if(ok)
                                     {
-                                        if(!property.hasAttribute(MapVisualiserThread::text_name))
-                                            qDebug() << (QStringLiteral("Has not attribute \"name\": property.tagName(): %1 (at line: %2)").arg(property.tagName()).arg(property.lineNumber()));
-                                        else if(!property.hasAttribute(MapVisualiserThread::text_value))
-                                            qDebug() << (QStringLiteral("Has not attribute \"value\": property.tagName(): %1 (at line: %2)").arg(property.tagName()).arg(property.lineNumber()));
-                                        else if(!property.isElement())
-                                            qDebug() << (QStringLiteral("Is not an element: properties.tagName(): %1, name: %2 (at line: %3)").arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
-                                        else
-                                            property_parsed[property.attribute(MapVisualiserThread::text_name).toStdString()]=property.attribute(MapVisualiserThread::text_value).toStdString();
-                                        property = property.NextSiblingElement(MapVisualiserThread::text_property);
-                                    }
-                                    if(property_parsed.find("file")!=property_parsed.cend() && property_parsed.find("id")!=property_parsed.cend())
-                                    {
-                                        const uint16_t &botId=stringtouint16(property_parsed.at("id"),&ok);
-                                        if(ok)
+                                        std::string botFile=QFileInfo(QFileInfo(QString::fromStdString(fileName)).absolutePath()+"/"+
+                                                                      QString::fromStdString(property_parsed.at("file")))
+                                                .absoluteFilePath().toStdString();
+                                        if(!stringEndsWith(botFile,".xml"))
+                                            botFile+=".xml";
+                                        if(strcmp(bot->Attribute("type"),"bot")==0)
                                         {
-                                            std::string botFile(QFileInfo(QFileInfo(fileName).absolutePath()+MapVisualiserThread::text_slash+QString::fromStdString(property_parsed.at("file"))).absoluteFilePath());
-                                            if(!botFile.endsWith(MapVisualiserThread::text_dotxml))
-                                                botFile+=MapVisualiserThread::text_dotxml;
-                                            if(bot.attribute(MapVisualiserThread::text_type)==MapVisualiserThread::text_bot)
+                                            if(stopIt)
+                                                    return false;
+                                            loadBotFile(botFile);
+                                            if(stopIt)
+                                                    return false;
+                                            if(botFiles.find(botFile)!=botFiles.cend())
                                             {
-                                                if(stopIt)
-                                                        return false;
-                                                loadBotFile(botFile.toStdString());
-                                                if(stopIt)
-                                                        return false;
-                                                if(botFiles.contains(botFile))
+                                                if(botFiles.at(botFile).find(botId)!=botFiles.at(botFile).cend())
                                                 {
-                                                    if(botFiles.value(botFile).contains(botId))
-                                                    {
-                                                        #ifdef DEBUG_CLIENT_BOT
-                                                        qDebug() << (QStringLiteral("Put bot %1 (%2) at %3 (%4,%5)").arg(botFile).arg(botId).arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
-                                                        #endif
-                                                        CatchChallenger::Bot &bot=parsedMap->logicalMap.bots[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
-                                                        bot=botFiles.value(botFile).value(botId);
-                                                        property_parsed.erase("file");
-                                                        property_parsed.erase("id");
-                                                        bot.properties=property_parsed;
-                                                        bot.botId=botId;
+                                                    #ifdef DEBUG_CLIENT_BOT
+                                                    qDebug() << (QStringLiteral("Put bot %1 (%2) at %3 (%4,%5)").arg(botFile).arg(botId)
+                                                                 .arg(parsedMap->logicalMap.map_file).arg(x).arg(y));
+                                                    #endif
+                                                    CatchChallenger::Bot &bot=parsedMap->logicalMap.bots[std::pair<uint8_t,uint8_t>(
+                                                        static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
+                                                    bot=botFiles.at(botFile).at(botId);
+                                                    property_parsed.erase("file");
+                                                    property_parsed.erase("id");
+                                                    bot.properties=property_parsed;
+                                                    bot.botId=botId;
 
-                                                        auto i=bot.step.begin();
-                                                        while(i!=bot.step.cend())
+                                                    auto i=bot.step.begin();
+                                                    while(i!=bot.step.cend())
+                                                    {
+                                                        auto step = i->second;
+                                                        if(step->Attribute("type")==NULL)
+                                                        {}
+                                                        else if(strcmp(step->Attribute("type"),"shop")==0)
                                                         {
-                                                            auto step = i->second;
-                                                            if(*step->Attribute(std::string("type"))=="shop")
+                                                            if(step->Attribute("shop")==NULL)
+                                                                qDebug() << (QStringLiteral("Has not attribute \"shop\": for bot id: %1 (%2)")
+                                                                    .arg(botId).arg(QString::fromStdString(botFile)));
+                                                            else
                                                             {
-                                                                if(step->Attribute(std::string("shop"))==NULL)
-                                                                    qDebug() << (QStringLiteral("Has not attribute \"shop\": for bot id: %1 (%2)")
-                                                                        .arg(botId).arg(botFile));
+                                                                const uint16_t shop=stringtouint16(step->Attribute("shop"),&ok);
+                                                                if(!ok)
+                                                                    qDebug() << (QStringLiteral("shop is not a number: for bot id: %1 (%2)")
+                                                                        .arg(botId).arg(QString::fromStdString(botFile)));
                                                                 else
-                                                                {
-                                                                    const uint16_t shop=stringtouint16(*step->Attribute(std::string("shop")),&ok);
-                                                                    if(!ok)
-                                                                        qDebug() << (QStringLiteral("shop is not a number: for bot id: %1 (%2)")
-                                                                            .arg(botId).arg(botFile));
-                                                                    else
-                                                                        parsedMap->logicalMap.shops[std::pair<uint8_t,uint8_t>(x,y)].push_back(shop);
+                                                                    parsedMap->logicalMap.shops[std::pair<uint8_t,uint8_t>(x,y)].push_back(shop);
 
-                                                                }
                                                             }
-                                                            else if(*step->Attribute(std::string("type"))=="learn")
-                                                            {
-                                                                if(parsedMap->logicalMap.learn.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->logicalMap.learn.cend())
-                                                                    qDebug() << (QStringLiteral("learn point already on the map: for bot id: %1 (%2)")
-                                                                        .arg(botId).arg(botFile));
-                                                                else
-                                                                    parsedMap->logicalMap.learn.insert(std::pair<uint8_t,uint8_t>(x,y));
-                                                            }
-                                                            else if(*step->Attribute(std::string("type"))=="heal")
-                                                            {
-                                                                if(parsedMap->logicalMap.heal.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->logicalMap.heal.cend())
-                                                                    qDebug() << (QStringLiteral("heal point already on the map: for bot id: %1 (%2)")
-                                                                        .arg(botId).arg(botFile));
-                                                                else
-                                                                    parsedMap->logicalMap.heal.insert(std::pair<uint8_t,uint8_t>(x,y));
-                                                            }
-                                                            else if(*step->Attribute(std::string("type"))=="market")
-                                                            {
-                                                                if(parsedMap->logicalMap.market.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->logicalMap.market.cend())
-                                                                    qDebug() << (QStringLiteral("market point already on the map: for bot id: %1 (%2)")
-                                                                        .arg(botId).arg(botFile));
-                                                                else
-                                                                    parsedMap->logicalMap.market.insert(std::pair<uint8_t,uint8_t>(x,y));
-                                                            }
-                                                            else if(*step->Attribute(std::string("type"))=="zonecapture")
-                                                            {
-                                                                if(step->Attribute(std::string("zone"))==NULL)
-                                                                    qDebug() << (QStringLiteral("zonecapture point have not the zone attribute: for bot id: %1 (%2)")
-                                                                        .arg(botId).arg(botFile));
-                                                                else if(parsedMap->logicalMap.zonecapture.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->logicalMap.zonecapture.cend())
-                                                                    qDebug() << (QStringLiteral("zonecapture point already on the map: for bot id: %1 (%2)")
-                                                                        .arg(botId).arg(botFile));
-                                                                else
-                                                                    parsedMap->logicalMap.zonecapture[std::pair<uint8_t,uint8_t>(x,y)]=*step->Attribute(std::string("zone"));
-                                                            }
-                                                            else if(*step->Attribute(std::string("type"))=="fight")
-                                                            {
-                                                                if(parsedMap->logicalMap.botsFight.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->logicalMap.botsFight.cend())
-                                                                    qDebug() << (QStringLiteral("botsFight point already on the map: for bot id: %1 (%2)")
-                                                                        .arg(botId).arg(botFile));
-                                                                else
-                                                                {
-                                                                    const uint16_t &fightid=stringtouint16(*step->Attribute(std::string("fightid")),&ok);
-                                                                    if(ok)
-                                                                        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=
-                                                                                CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
-                                                                            parsedMap->logicalMap.botsFight[std::pair<uint8_t,uint8_t>(x,y)].push_back(fightid);
-                                                                }
-                                                            }
-                                                            ++i;
                                                         }
-                                                    }
-                                                    else
-                                                    {
-                                                        qDebug() << (
-                                                                    QStringLiteral("No botId %1 into %2: properties.tagName(): %3, file: %4 (at line: %5)")
-                                                                    .arg(botId)
-                                                                    .arg(botFile)
-                                                                    .arg(bot.tagName())
-                                                                    .arg(QString::fromStdString(parsedMap->logicalMap.map_file))
-                                                                    .arg(bot.lineNumber())
-                                                                    );
-                                                        /// \warn show something to continue to block the path
-                                                        CatchChallenger::Bot &bot=parsedMap->logicalMap.bots[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
-                                                        bot=botFiles.value(botFile).value(botId);
-                                                        property_parsed.erase("file");
-                                                        property_parsed.erase("id");
-                                                        bot.properties=property_parsed;
-                                                        bot.botId=botId;
+                                                        else if(strcmp(step->Attribute("type"),"learn")==0)
+                                                        {
+                                                            if(parsedMap->logicalMap.learn.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
+                                                                logicalMap.learn.cend())
+                                                                qDebug() << (QStringLiteral("learn point already on the map: for bot id: %1 (%2)")
+                                                                    .arg(botId).arg(QString::fromStdString(botFile)));
+                                                            else
+                                                                parsedMap->logicalMap.learn.insert(std::pair<uint8_t,uint8_t>(x,y));
+                                                        }
+                                                        else if(strcmp(step->Attribute("type"),"heal")==0)
+                                                        {
+                                                            if(parsedMap->logicalMap.heal.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
+                                                                logicalMap.heal.cend())
+                                                                qDebug() << (QStringLiteral("heal point already on the map: for bot id: %1 (%2)")
+                                                                    .arg(botId).arg(QString::fromStdString(botFile)));
+                                                            else
+                                                                parsedMap->logicalMap.heal.insert(std::pair<uint8_t,uint8_t>(x,y));
+                                                        }
+                                                        else if(strcmp(step->Attribute("type"),"market")==0)
+                                                        {
+                                                            if(parsedMap->logicalMap.market.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
+                                                                logicalMap.market.cend())
+                                                                qDebug() << (QStringLiteral("market point already on the map: for bot id: %1 (%2)")
+                                                                    .arg(botId).arg(QString::fromStdString(botFile)));
+                                                            else
+                                                                parsedMap->logicalMap.market.insert(std::pair<uint8_t,uint8_t>(x,y));
+                                                        }
+                                                        else if(strcmp(step->Attribute("type"),"zonecapture")==0)
+                                                        {
+                                                            if(step->Attribute("zone")==NULL)
+                                                                qDebug() << (QStringLiteral("zonecapture point have not the zone attribute: for bot id: %1 (%2)")
+                                                                    .arg(botId).arg(QString::fromStdString(botFile)));
+                                                            else if(parsedMap->logicalMap.zonecapture.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
+                                                                logicalMap.zonecapture.cend())
+                                                                qDebug() << (QStringLiteral("zonecapture point already on the map: for bot id: %1 (%2)")
+                                                                    .arg(botId).arg(QString::fromStdString(botFile)));
+                                                            else
+                                                                parsedMap->logicalMap.zonecapture[std::pair<uint8_t,uint8_t>(x,y)]=
+                                                                        step->Attribute("zone");
+                                                        }
+                                                        else if(strcmp(step->Attribute("type"),"fight")==0)
+                                                        {
+                                                            if(parsedMap->logicalMap.botsFight.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
+                                                                logicalMap.botsFight.cend())
+                                                                qDebug() << (QStringLiteral("botsFight point already on the map: for bot id: %1 (%2)")
+                                                                    .arg(botId).arg(QString::fromStdString(botFile)));
+                                                            else
+                                                            {
+                                                                const uint16_t &fightid=stringtouint16(step->Attribute("fightid"),&ok);
+                                                                if(ok)
+                                                                    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=
+                                                                            CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
+                                                                        parsedMap->logicalMap.botsFight[std::pair<uint8_t,uint8_t>(x,y)].push_back(fightid);
+                                                            }
+                                                        }
+                                                        ++i;
                                                     }
                                                 }
                                                 else
-                                                    qDebug() << (QStringLiteral("No file %1: properties.tagName(): %2, name: %3 (at line: %4)").arg(botFile).arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
+                                                {
+                                                    qDebug() << (
+                                                                QStringLiteral("No botId %1 into %2: properties->Name(): %3, file: %4")
+                                                                .arg(botId)
+                                                                .arg(QString::fromStdString(botFile))
+                                                                .arg(bot->Name())
+                                                                .arg(QString::fromStdString(parsedMap->logicalMap.map_file))
+                                                                );
+                                                    /// \warn show something to continue to block the path
+                                                    CatchChallenger::Bot &bot=parsedMap->logicalMap.bots[std::pair<uint8_t,uint8_t>(
+                                                        static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
+                                                    bot=botFiles.at(botFile).at(botId);
+                                                    property_parsed.erase("file");
+                                                    property_parsed.erase("id");
+                                                    bot.properties=property_parsed;
+                                                    bot.botId=botId;
+                                                }
                                             }
+                                            else
+                                                qDebug() << (QStringLiteral("No file %1: properties->Name(): %2, name: %3")
+                                                             .arg(QString::fromStdString(botFile))
+                                                             .arg(property->Name())
+                                                             .arg(property->Attribute("name")));
                                         }
-                                        else
-                                            qDebug() << (QStringLiteral("Is not a number: properties.tagName(): %1, name: %2 (at line: %3)").arg(property.tagName().arg(property.attribute("name")).arg(property.lineNumber())));
                                     }
+                                    else
+                                        qDebug() << (QStringLiteral("Is not a number: properties->Name(): %1, name: %2")
+                                                     .arg(property->Name())
+                                                     .arg(property->Attribute("name"))
+                                                        );
                                 }
-                                properties = properties.NextSiblingElement(MapVisualiserThread::text_properties);
+                                properties = properties->NextSiblingElement("properties");
                             }
                         }
                     }
-                    bot = bot.NextSiblingElement(MapVisualiserThread::text_object);
+                    bot = bot->NextSiblingElement("object");
                 }
             }
         }
-        child = child.NextSiblingElement(MapVisualiserThread::text_objectgroup);
+        child = child->NextSiblingElement("objectgroup");
     }
     return true;
 }
 
 bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *parsedMap)
 {
-    QDomDocument domDocument;
+    tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
-    std::string fileName=QString::fromStdString(parsedMap->logicalMap.map_file);
-    fileName.replace(MapVisualiserThread::text_dottmx,MapVisualiserThread::text_dotxml);
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(fileName.toStdString())!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(fileName.toStdString());
+    std::string fileName=parsedMap->logicalMap.map_file;
+    stringreplaceAll(fileName,".tmx",".xml");
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(fileName)!=
+            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(fileName);
     else
     {
-        QFile mapFile(fileName);
-        if(!mapFile.exists())
-            return false;
-        if(!mapFile.open(QIODevice::ReadOnly))
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName];
+        const auto loadOkay = domDocument->LoadFile(fileName.c_str());
+        if(loadOkay!=0)
         {
-            qDebug() << mapFile.fileName()+QStringLiteral(": ")+mapFile.errorString();
+            std::cerr << fileName+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return false;
         }
-        const QByteArray &xmlContent=mapFile.readAll();
-        mapFile.close();
-        if(stopIt)
-                return false;
-        std::string errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-        {
-            qDebug() << QStringLiteral("%1, Parse error at line %2, column %3: %4").arg(mapFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
-            return false;
-        }
-        CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName.toStdString()]=domDocument;
     }
-    const tinyxml2::XMLElement &root = domDocument.RootElement();
-    if(root.tagName()!=MapVisualiserThread::text_map)
+    const tinyxml2::XMLElement *root = domDocument->RootElement();
+    if(root->Name()!=MapVisualiserThread::text_map)
     {
-        qDebug() << fileName << QStringLiteral(", MapVisualiserThread::loadOtherMapMetaData(): \"map\" root balise not found for the xml file");
+        qDebug() << QString::fromStdString(fileName) << QStringLiteral(", MapVisualiserThread::loadOtherMapMetaData(): \"map\" root balise not found for the xml file");
         return false;
     }
-    if(root.hasAttribute(MapVisualiserThread::text_type))
-        parsedMap->visualType=root.attribute(MapVisualiserThread::text_type);
-    if(root.hasAttribute(MapVisualiserThread::text_zone))
-        parsedMap->zone=root.attribute(MapVisualiserThread::text_zone);
+    if(root->Attribute("type")!=NULL)
+        parsedMap->visualType=root->Attribute("type");
+    if(root->Attribute("zone")!=NULL)
+        parsedMap->zone=root->Attribute("zone");
     //load the name
     {
         bool name_found=false;
-        tinyxml2::XMLElement name = root.FirstChildElement(MapVisualiserThread::text_name);
-        if(!language.isEmpty() && language!=MapVisualiserThread::text_en)
-            while(!name.isNull())
+        const tinyxml2::XMLElement *name = root->FirstChildElement("name");
+        if(!language.empty() && language!="en")
+            while(name!=NULL)
             {
-                if(name.isElement())
+                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
                 {
-                    if(name.hasAttribute(MapVisualiserThread::text_lang) && name.attribute(MapVisualiserThread::text_lang)==language)
-                    {
-                        parsedMap->name=name.text();
-                        name_found=true;
-                        break;
-                    }
+                    parsedMap->name=name->GetText();
+                    name_found=true;
+                    break;
                 }
-                name = name.NextSiblingElement(MapVisualiserThread::text_name);
+                name = name->NextSiblingElement("name");
             }
         if(!name_found)
         {
-            name = root.FirstChildElement(MapVisualiserThread::text_name);
-            while(!name.isNull())
+            name = root->FirstChildElement("name");
+            while(name!=NULL)
             {
-                if(name.isElement())
+                if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                 {
-                    if(!name.hasAttribute(MapVisualiserThread::text_lang) || name.attribute(MapVisualiserThread::text_lang)==MapVisualiserThread::text_en)
-                    {
-                        parsedMap->name=name.text();
-                        name_found=true;
-                        break;
-                    }
+                    parsedMap->name=name->GetText();
+                    name_found=true;
+                    break;
                 }
-                name = name.NextSiblingElement(MapVisualiserThread::text_name);
+                name = name->NextSiblingElement("name");
             }
         }
     }
@@ -865,20 +843,20 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
 
 void MapVisualiserThread::loadBotFile(const std::string &file)
 {
-    if(botFiles.contains(QString::fromStdString(file)))
+    if(botFiles.find(file)!=botFiles.cend())
         return;
-    botFiles[QString::fromStdString(file)];//create the entry
+    botFiles[file];//create the entry
 
-    TiXmlDocument *domDocument;
+    tinyxml2::XMLDocument *domDocument;
     if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
         domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
     else
     {
         domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-        const bool loadOkay=domDocument->LoadFile(file);
-        if(!loadOkay)
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
-            std::cerr << "Unable to open the file: " << file << ", Parse error at line " << domDocument->ErrorRow() << ", column " << domDocument->ErrorCol() << ": " << domDocument->ErrorDesc() << std::endl;
+            std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
             return;
         }
     }
@@ -886,7 +864,7 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
     const tinyxml2::XMLElement * root = domDocument->RootElement();
     if(root==NULL)
         return;
-    if(root->ValueStr()!="bots")
+    if(strcmp(root->Name(),"bots")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"reputations\" root balise not found for reputation of the xml file" << std::endl;
         return;
@@ -897,28 +875,28 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
     while(child!=NULL)
     {
         if(child->Attribute("id")==NULL)
-            qDebug() << (QStringLiteral("Has not attribute \"id\": child->Value(): %1 (at line: %2)").arg(child->Value()).arg("?"));
+            qDebug() << (QStringLiteral("Has not attribute \"id\": child->Value(): %1").arg(child->Value()));
         else
         {
-            const uint32_t &botId=stringtouint32(*child->Attribute(std::string("id")),&ok);
+            const uint32_t &botId=stringtouint32(child->Attribute("id"),&ok);
             if(ok)
             {
-                if(botFiles.value(QString::fromStdString(file)).contains(botId))
-                    qDebug() << (QStringLiteral("bot already found with this id: bot->Value(): %1 (at line: %2)").arg(child->Value()).arg("?"));
+                if(botFiles.at(file).find(botId)!=botFiles.at(file).cend())
+                    qDebug() << (QStringLiteral("bot already found with this id: bot->Value(): %1").arg(child->Value()));
                 else
                 {
                     const tinyxml2::XMLElement * step = child->FirstChildElement("step");
                     while(step!=NULL)
                     {
-                        if(step->Attribute(std::string("id"))==NULL)
-                            qDebug() << (QStringLiteral("Has not attribute \"type\": bot->Value(): %1 (at line: %2)").arg(step->Value()).arg("?"));
-                        else if(step->Attribute(std::string("type"))==NULL)
-                            qDebug() << (QStringLiteral("Has not attribute \"type\": bot->Value(): %1 (at line: %2)").arg(step->Value()).arg("?"));
+                        if(step->Attribute("id")==NULL)
+                            qDebug() << (QStringLiteral("Has not attribute \"type\": bot->Value(): %1").arg(step->Value()));
+                        else if(step->Attribute("type")==NULL)
+                            qDebug() << (QStringLiteral("Has not attribute \"type\": bot->Value(): %1").arg(step->Value()));
                         else
                         {
-                            uint8_t stepId=stringtouint8(*step->Attribute(std::string("id")),&ok);
+                            const uint8_t &stepId=stringtouint8(step->Attribute("id"),&ok);
                             if(ok)
-                                botFiles[QString::fromStdString(file)][botId].step[stepId]=step;
+                                botFiles[file][botId].step[stepId]=step;
                         }
                         step = step->NextSiblingElement("step");
                     }
@@ -926,12 +904,12 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
                     {
                         bool name_found=false;
                         const tinyxml2::XMLElement * name = child->FirstChildElement("name");
-                        if(!language.isEmpty() && language!="en")
+                        if(!language.empty() && language!="en")
                             while(name!=NULL)
                             {
-                                if(name->Attribute(std::string("lang"))!=NULL && *name->Attribute(std::string("lang"))==language.toStdString())
+                                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
                                 {
-                                    botFiles[QString::fromStdString(file)][botId].name=name->GetText();
+                                    botFiles[file][botId].name=name->GetText();
                                     name_found=true;
                                     break;
                                 }
@@ -942,9 +920,9 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
                             name = child->FirstChildElement("name");
                             while(name!=NULL)
                             {
-                                if(name->Attribute(std::string("lang"))==NULL || *name->Attribute(std::string("lang"))=="en")
+                                if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                                 {
-                                    botFiles[QString::fromStdString(file)][botId].name=name->GetText();
+                                    botFiles[file][botId].name=name->GetText();
                                     name_found=true;
                                     break;
                                 }
@@ -952,13 +930,13 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
                             }
                         }
                     }
-                    const CatchChallenger::Bot &bot=botFiles[QString::fromStdString(file)][botId];
+                    const CatchChallenger::Bot &bot=botFiles[file][botId];
                     if(bot.step.find(1)==bot.step.cend())
-                        botFiles[QString::fromStdString(file)].remove(botId);
+                        botFiles[file].erase(botId);
                 }
             }
             else
-                qDebug() << (QStringLiteral("Attribute \"id\" is not a number: bot->Value(): %1 (at line: %2)").arg(child->Value()).arg("?"));
+                qDebug() << (QStringLiteral("Attribute \"id\" is not a number: bot->Value(): %1").arg(child->Value()));
         }
         child = child->NextSiblingElement("bot");
     }

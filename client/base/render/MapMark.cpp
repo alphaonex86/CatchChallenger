@@ -20,7 +20,7 @@ MapMark::~MapMark()
 {
     if(m_mapObject!=NULL)
     {
-        ObjectGroupItem::objectGroupLink.value(m_mapObject->objectGroup())->removeObject(m_mapObject);
+        ObjectGroupItem::objectGroupLink.at(m_mapObject->objectGroup())->removeObject(m_mapObject);
         m_mapObject=NULL;
     }
 }
@@ -47,14 +47,14 @@ void MapMark::updateTheFrame()
     if(cell.tile->tileset()==NULL)
     {
         qDebug() << "Tileset NULL at mark";
-        ObjectGroupItem::objectGroupLink.value(m_mapObject->objectGroup())->removeObject(m_mapObject);
+        ObjectGroupItem::objectGroupLink.at(m_mapObject->objectGroup())->removeObject(m_mapObject);
         m_mapObject=NULL;
         timer.stop();
         return;
     }
     if(cell.tile->id()>=cell.tile->tileset()->tileCount())
     {
-        ObjectGroupItem::objectGroupLink.value(m_mapObject->objectGroup())->removeObject(m_mapObject);
+        ObjectGroupItem::objectGroupLink.at(m_mapObject->objectGroup())->removeObject(m_mapObject);
         m_mapObject=NULL;
         timer.stop();
         return;
@@ -64,7 +64,7 @@ void MapMark::updateTheFrame()
         cell.tile=cell.tile->tileset()->tileAt(cell.tile->id()+1);
         if(cell.tile==NULL)
         {
-            ObjectGroupItem::objectGroupLink.value(m_mapObject->objectGroup())->removeObject(m_mapObject);
+            ObjectGroupItem::objectGroupLink.at(m_mapObject->objectGroup())->removeObject(m_mapObject);
             m_mapObject=NULL;
             timer.stop();
             return;
