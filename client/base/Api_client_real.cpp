@@ -41,9 +41,9 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     index_mirror_base=0;
     index_mirror_main=0;
     index_mirror_sub=0;
-    host=QStringLiteral("localhost");
+    host="localhost";
     port=42489;
-    connect(socket, &ConnectedSocket::disconnected,	this,&Api_client_real::disconnected);
+    connect(socket, &ConnectedSocket::disconnected,	this,&Api_client_real::disconnect);
     connect(this,   &Api_client_real::newFileBase,      this,&Api_client_real::writeNewFileBase);
     connect(this,   &Api_client_real::newFileMain,      this,&Api_client_real::writeNewFileMain);
     connect(this,   &Api_client_real::newFileSub,      this,&Api_client_real::writeNewFileSub);
@@ -59,7 +59,7 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     connect(&zstdDecodeThreadBase,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishBase);
     connect(&zstdDecodeThreadMain,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishMain);
     connect(&zstdDecodeThreadSub,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishSub);
-    disconnected();
+    disconnect();
     //dataClear();do into disconnected()
 }
 
@@ -86,17 +86,19 @@ Api_client_real::~Api_client_real()
 
 bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    return Api_client_real::parseReplyData(mainCodeType,queryNumber,QByteArray(data,size));
+    return Api_client_real::parseReplyData(mainCodeType,queryNumber,std::string(data,size));
 }
 
-bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const QByteArray &data)
+bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const std::string &data)
 {
-    if(querySendTime.contains(queryNumber))
+    if(querySendTime.find(queryNumber)!=querySendTime.cend())
     {
-        lastReplyTime(querySendTime.value(queryNumber).elapsed());
-        querySendTime.remove(queryNumber);
+        std::time_t result = std::time(nullptr);
+        if((uint64_t)result>=(uint64_t)querySendTime.at(queryNumber))
+            lastReplyTime(result-querySendTime.at(queryNumber));
+        querySendTime.erase(queryNumber);
     }
-    QDataStream in(data);
+    QDataStream in(QByteArray(data.data(),data.size()));
     in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
     switch(mainCodeType)
     {
@@ -130,7 +132,9 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     }
                     if((uint32_t)boolList.size()<datapackFilesListBase.size())
                     {
-                        newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too small with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg("X").arg(queryNumber));
+                        newError(tr("Procotol wrong or corrupted").toStdString(),
+                                 QStringLiteral("bool list too small with main ident: %1, and queryNumber: %2, type: query_type_protocol")
+                                 .arg(mainCodeType).arg(queryNumber).toStdString());
                         return false;
                     }
                     unsigned int index=0;
@@ -138,8 +142,10 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     {
                         if(boolList.first())
                         {
-                            qDebug() << (QStringLiteral("remove the file: %1").arg(mDatapackBase+text_slash+QString::fromStdString(datapackFilesListBase.at(index))));
-                            QFile file(mDatapackBase+text_slash+QString::fromStdString(datapackFilesListBase.at(index)));
+                            qDebug() << (QStringLiteral("remove the file: %1")
+                                         .arg(QString::fromStdString(mDatapackBase)+text_slash+
+                                              QString::fromStdString(datapackFilesListBase.at(index))));
+                            QFile file(QString::fromStdString(mDatapackBase)+text_slash+QString::fromStdString(datapackFilesListBase.at(index)));
                             if(!file.remove())
                                 qDebug() << (QStringLiteral("unable to remove the file: %1: %2").arg(QString::fromStdString(datapackFilesListBase.at(index))).arg(file.errorString()));
                             //removeFile(datapackFilesListBase.at(index));
@@ -151,7 +157,9 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     cleanDatapackBase();
                     if(boolList.size()>=8)
                     {
-                        newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg("X").arg(queryNumber));
+                        newError(tr("Procotol wrong or corrupted").toStdString(),
+                                 QStringLiteral("bool list too big with main ident: %1, and queryNumber: %2, type: query_type_protocol")
+                                 .arg(queryNumber).toStdString());
                         return false;
                     }
                     if(!httpModeBase)
@@ -184,7 +192,9 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     }
                     if((uint32_t)boolList.size()<datapackFilesListMain.size())
                     {
-                        newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too small with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg("X").arg(queryNumber));
+                        newError(tr("Procotol wrong or corrupted").toStdString(),
+                                 QStringLiteral("bool list too small with main ident: %1, and queryNumber: %2, type: query_type_protocol")
+                                 .arg(mainCodeType).arg(queryNumber).toStdString());
                         return false;
                     }
                     unsigned int index=0;
@@ -192,8 +202,9 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     {
                         if(boolList.first())
                         {
-                            qDebug() << (QStringLiteral("remove the file: %1").arg(mDatapackMain+text_slash+QString::fromStdString(datapackFilesListMain.at(index))));
-                            QFile file(mDatapackMain+text_slash+QString::fromStdString(datapackFilesListMain.at(index)));
+                            qDebug() << (QStringLiteral("remove the file: %1")
+                                         .arg(QString::fromStdString(mDatapackMain)+text_slash+QString::fromStdString(datapackFilesListMain.at(index))));
+                            QFile file(QString::fromStdString(mDatapackMain)+text_slash+QString::fromStdString(datapackFilesListMain.at(index)));
                             if(!file.remove())
                                 qDebug() << (QStringLiteral("unable to remove the file: %1: %2").arg(QString::fromStdString(datapackFilesListMain.at(index))).arg(file.errorString()));
                             //removeFile(datapackFilesListMain.at(index));
@@ -205,7 +216,9 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     cleanDatapackMain();
                     if(boolList.size()>=8)
                     {
-                        newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with main ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg("X").arg(queryNumber));
+                        newError(tr("Procotol wrong or corrupted").toStdString(),
+                                 QStringLiteral("bool list too big with main ident: %1, and queryNumber: %2, type: query_type_protocol")
+                                 .arg(mainCodeType).arg(queryNumber).toStdString());
                         return false;
                     }
                     if(!httpModeMain)
@@ -238,7 +251,9 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     }
                     if((uint32_t)boolList.size()<datapackFilesListSub.size())
                     {
-                        newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too small with sub ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg("X").arg(queryNumber));
+                        newError(tr("Procotol wrong or corrupted").toStdString(),
+                                 QStringLiteral("bool list too small with sub ident: %1, and queryNumber: %2, type: query_type_protocol")
+                                 .arg(mainCodeType).arg(queryNumber).toStdString());
                         return false;
                     }
                     unsigned int index=0;
@@ -246,8 +261,9 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     {
                         if(boolList.first())
                         {
-                            qDebug() << (QStringLiteral("remove the file: %1").arg(mDatapackSub+text_slash+QString::fromStdString(datapackFilesListSub.at(index))));
-                            QFile file(mDatapackSub+text_slash+QString::fromStdString(datapackFilesListSub.at(index)));
+                            qDebug() << (QStringLiteral("remove the file: %1")
+                                         .arg(QString::fromStdString(mDatapackSub)+text_slash+QString::fromStdString(datapackFilesListSub.at(index))));
+                            QFile file(QString::fromStdString(mDatapackSub)+text_slash+QString::fromStdString(datapackFilesListSub.at(index)));
                             if(!file.remove())
                                 qDebug() << (QStringLiteral("unable to remove the file: %1: %2").arg(QString::fromStdString(datapackFilesListSub.at(index))).arg(file.errorString()));
                             //removeFile(datapackFilesListSub.at(index));
@@ -259,7 +275,9 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     cleanDatapackSub();
                     if(boolList.size()>=8)
                     {
-                        newError(tr("Procotol wrong or corrupted"),QStringLiteral("bool list too big with sub ident: %1, subCodeType:%2, and queryNumber: %3, type: query_type_protocol").arg(mainCodeType).arg("X").arg(queryNumber));
+                        newError(tr("Procotol wrong or corrupted").toStdString(),
+                                 QStringLiteral("bool list too big with sub ident: %1, and queryNumber: %2, type: query_type_protocol")
+                                 .arg(mainCodeType).arg(queryNumber).toStdString());
                         return false;
                     }
                     if(!httpModeSub)
@@ -278,8 +296,11 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
     }
     if((in.device()->size()-in.device()->pos())!=0)
     {
-        QByteArray data_remaining=data.right(data.size()-in.device()->pos());
-        parseError(tr("Procotol wrong or corrupted"),QStringLiteral("error: remaining data: Api_client_real::parseReplyData(%1,%2,%3): %4").arg(mainCodeType).arg("X").arg(queryNumber).arg(QString(data_remaining.toHex())));
+        QByteArray data_remaining=QByteArray(data.data(),data.size()).right(data.size()-in.device()->pos());
+        parseError(tr("Procotol wrong or corrupted").toStdString(),
+                   QStringLiteral("error: remaining data: Api_client_real::parseReplyData(%1,%2,%3): %4")
+                   .arg(mainCodeType).arg(queryNumber).arg(QString(data_remaining.toHex()))
+                   .toStdString());
         return false;
     }
     return true;
@@ -312,17 +333,17 @@ void Api_client_real::resetAll()
     Api_protocol::resetAll();
 }
 
-void Api_client_real::tryConnect(QString host,uint16_t port)
+void Api_client_real::tryConnect(std::string host,uint16_t port)
 {
     if(socket==NULL)
         return;
-    qDebug() << (QStringLiteral("Try connect on: %1:%2").arg(host).arg(port));
+    qDebug() << (QStringLiteral("Try connect on: %1:%2").arg(QString::fromStdString(host)).arg(port));
     this->host=host;
     this->port=port;
-    socket->connectToHost(QHostAddress(host),port);
+    socket->connectToHost(QHostAddress(QString::fromStdString(host)),port);
 }
 
-void Api_client_real::disconnected(const std::string &reason)
+void Api_client_real::disconnect()
 {
     if(stage()==StageConnexion::Stage1 || stage()==StageConnexion::Stage4)
     {
@@ -339,7 +360,7 @@ void Api_client_real::tryDisconnect()
         socket->disconnectFromHost();
 }
 
-QString Api_client_real::getHost()
+std::string Api_client_real::getHost()
 {
     return host;
 }
@@ -352,18 +373,18 @@ uint16_t Api_client_real::getPort()
 void Api_client_real::sendDatapackContentMainSub(const std::string &hashMain, const std::string &hashSub)
 {
     bool mainNeedUpdate=true;
-    if(!hashMain.isEmpty())
+    if(!hashMain.empty())
         if((unsigned int)hashMain.size()==(unsigned int)CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size() &&
-                memcmp(hashMain.constData(),CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),hashMain.size())==0)
+                memcmp(hashMain.data(),CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),hashMain.size())==0)
         {
             mainNeedUpdate=false;
         }
     bool subNeedUpdate=true;
-    if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.empty() && hashSub.isEmpty())
+    if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.empty() && hashSub.empty())
         subNeedUpdate=false;
-    else if(!hashSub.isEmpty())
+    else if(!hashSub.empty())
         if((unsigned int)hashSub.size()==(unsigned int)CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size() &&
-                memcmp(hashSub.constData(),CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),hashSub.size())==0)
+                memcmp(hashSub.data(),CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),hashSub.size())==0)
         {
             subNeedUpdate=false;
         }

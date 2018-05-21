@@ -40,7 +40,7 @@ const QString SoloWindow::text_en=QStringLiteral("en");
 const QString SoloWindow::text_full_entry=QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3</span>");
 const QString SoloWindow::text_CATCHCHALLENGER_SAVEGAME_VERSION=QStringLiteral(CATCHCHALLENGER_SAVEGAME_VERSION);
 
-SoloWindow::SoloWindow(QWidget *parent,const QString &datapackPath,const QString &savegamePath,const bool &standAlone) :
+SoloWindow::SoloWindow(QWidget *parent, const std::string &datapackPath, const std::string &savegamePath, const bool &standAlone) :
     QMainWindow(parent),
     ui(new Ui::SoloWindow)
 {
@@ -53,7 +53,7 @@ SoloWindow::SoloWindow(QWidget *parent,const QString &datapackPath,const QString
     selectedSavegame=NULL;
     this->datapackPath=datapackPath;//QCoreApplication::applicationDirPath()+"/datapack/";
     this->savegamePath=savegamePath;//QCoreApplication::applicationDirPath()+"/savegames/";
-    datapackPathExists=QDir(datapackPath).exists();//QCoreApplication::applicationDirPath()+"/datapack/internal/";
+    datapackPathExists=QDir(QString::fromStdString(datapackPath)).exists();//QCoreApplication::applicationDirPath()+"/datapack/internal/";
 
     /*connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&SoloWindow::protocol_is_good,Qt::QueuedConnection);
     connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::disconnected,this,&SoloWindow::disconnected,Qt::QueuedConnection);
@@ -94,9 +94,9 @@ void SoloWindow::on_SaveGame_New_clicked()
     }
     //locate the new folder and create it
     int index=0;
-    while(QDir().exists(savegamePath+QString::number(index)))
+    while(QDir().exists(QString::fromStdString(savegamePath)+QString::number(index)))
         index++;
-    QString savegamesPath=savegamePath+QString::number(index)+SoloWindow::text_slash;
+    QString savegamesPath=QString::fromStdString(savegamePath)+QString::number(index)+"/";
     if(!QDir().mkpath(savegamesPath))
     {
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write savegame into: %1").arg(savegamesPath));
@@ -171,7 +171,7 @@ void SoloWindow::on_SaveGame_New_clicked()
         return;
     }
 
-    emit play(savegamesPath);
+    emit play(savegamesPath.toStdString());
 }
 
 void SoloWindow::closeDb(QSqlDatabase *db)
@@ -209,7 +209,7 @@ void SoloWindow::setOnlySolo()
 
 void SoloWindow::SoloWindowListEntryEnvoluedUpdate()
 {
-    int index=0;
+    unsigned int index=0;
     while(index<savegame.size())
     {
         if(savegame.at(index)==selectedSavegame)
@@ -218,9 +218,9 @@ void SoloWindow::SoloWindowListEntryEnvoluedUpdate()
             savegame.at(index)->setStyleSheet(QStringLiteral("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}"));
         index++;
     }
-    ui->SaveGame_Play->setEnabled(selectedSavegame!=NULL && savegameWithMetaData.value(selectedSavegame));
-    ui->SaveGame_Rename->setEnabled(selectedSavegame!=NULL && savegameWithMetaData.value(selectedSavegame));
-    ui->SaveGame_Copy->setEnabled(selectedSavegame!=NULL && savegameWithMetaData.value(selectedSavegame));
+    ui->SaveGame_Play->setEnabled(selectedSavegame!=NULL && savegameWithMetaData.at(selectedSavegame));
+    ui->SaveGame_Rename->setEnabled(selectedSavegame!=NULL && savegameWithMetaData.at(selectedSavegame));
+    ui->SaveGame_Copy->setEnabled(selectedSavegame!=NULL && savegameWithMetaData.at(selectedSavegame));
     ui->SaveGame_Delete->setEnabled(selectedSavegame!=NULL);
 }
 
@@ -265,20 +265,21 @@ void SoloWindow::updateSavegameList()
         ui->savegameEmpty->setText(QStringLiteral("<html><head/><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>").arg(tr("No datapack!")));
         return;
     }
-    QString lastSelectedPath;
+    std::string lastSelectedPath;
     if(selectedSavegame!=NULL)
-        lastSelectedPath=savegamePathList.value(selectedSavegame);
+        lastSelectedPath=savegamePathList.at(selectedSavegame);
     selectedSavegame=NULL;
     int index=0;
     while(savegame.size()>0)
     {
         delete savegame.at(0);
-        savegame.removeAt(0);
+        savegame.erase(savegame.cbegin()+0);
         index++;
     }
     savegamePathList.clear();
     savegameWithMetaData.clear();
-    QFileInfoList entryList=QDir(savegamePath).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
+    QFileInfoList entryList=QDir(QString::fromStdString(savegamePath)).entryInfoList(
+                QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     index=0;
     while(index<entryList.size())
     {
@@ -352,30 +353,30 @@ void SoloWindow::updateSavegameList()
                         else
                             time_played=tr("%1 played").arg(QString::fromStdString(CatchChallenger::FacilityLibClient::timeToString(time_played_number)));
                         //load the map name
-                        QString mapName;
-                        QString map=metaData.value(SoloWindow::text_location).toString();
-                        if(!map.isEmpty())
+                        std::string mapName;
+                        std::string map=metaData.value(SoloWindow::text_location).toString().toStdString();
+                        if(!map.empty())
                         {
-                            map.replace(SoloWindow::text_dottmx,SoloWindow::text_dotxml);
-                            if(QFileInfo(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN)+map).isFile())
-                                mapName=getMapName(datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN)+map);
-                            if(mapName.isEmpty())
+                            stringreplaceAll(map,".tmx",".xml");
+                            if(QFileInfo(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_MAPMAIN+QString::fromStdString(map)).isFile())
+                                mapName=getMapName(std::string(datapackPath)+DATAPACK_BASE_PATH_MAPMAIN+map);
+                            if(mapName.empty())
                             {
-                                const QString &tmxFile=datapackPath+QStringLiteral(DATAPACK_BASE_PATH_MAPMAIN)+metaData.value(SoloWindow::text_location).toString();
+                                const QString &tmxFile=QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_MAPMAIN+metaData.value(SoloWindow::text_location).toString();
                                 if(QFileInfo(tmxFile).isFile())
                                 {
-                                    QString zone=getMapZone(tmxFile);
+                                    std::string zone=getMapZone(tmxFile.toStdString());
                                     //try load the zone
-                                    if(!zone.isEmpty())
+                                    if(!zone.empty())
                                         mapName=getZoneName(zone);
                                 }
                             }
                         }
                         QString lastLine;
-                        if(mapName.isEmpty())
+                        if(mapName.empty())
                             lastLine=time_played;
                         else
-                            lastLine=QStringLiteral("%1 (%2)").arg(mapName).arg(time_played);
+                            lastLine=QStringLiteral("%1 (%2)").arg(QString::fromStdString(mapName)).arg(time_played);
 
                         if(version!=SoloWindow::text_CATCHCHALLENGER_SAVEGAME_VERSION)
                         {
@@ -406,10 +407,10 @@ void SoloWindow::updateSavegameList()
         }
         ui->scrollAreaWidgetContents->layout()->addWidget(newEntry);
 
-        if(lastSelectedPath==savegamesPath)
+        if(lastSelectedPath==savegamesPath.toStdString())
             selectedSavegame=newEntry;
-        savegame << newEntry;
-        savegamePathList[newEntry]=savegamesPath;
+        savegame.push_back(newEntry);
+        savegamePathList[newEntry]=savegamesPath.toStdString();
         savegameWithMetaData[newEntry]=ok;
         index++;
     }
@@ -424,146 +425,106 @@ void SoloWindow::updateSavegameList()
     SoloWindowListEntryEnvoluedUpdate();
 }
 
-QString SoloWindow::getMapName(const QString &file)
+std::string SoloWindow::getMapName(const std::string &file)
 {
     //open and quick check the file
-    QFile xmlFile(file);
-    QByteArray xmlContent;
-    if(!xmlFile.open(QIODevice::ReadOnly))
+    tinyxml2::XMLDocument domDocument;
+    if(domDocument.LoadFile(file.c_str())!=0)
+        return std::string();
+    const tinyxml2::XMLElement *root = domDocument.RootElement();
+    if(root==NULL)
+        return std::string();
+    if(strcmp(root->Name(),"map")!=0)
     {
-        qDebug() << (QStringLiteral("Unable to open the xml file to get map name: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
-        return QString();
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file")
+                     .arg(QString::fromStdString(file)));
+        return std::string();
     }
-    xmlContent=xmlFile.readAll();
-    xmlFile.close();
-    QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-    {
-        qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
-        return QString();
-    }
-    tinyxml2::XMLElement root = domDocument.RootElement();
-    if(root.tagName()!=SoloWindow::text_map)
-    {
-        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
-        return QString();
-    }
-    const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-    tinyxml2::XMLElement item = root.FirstChildElement(SoloWindow::text_name);
-    if(!language.isEmpty() && language!=SoloWindow::text_en)
-        while(!item.isNull())
+    const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+    const tinyxml2::XMLElement *item = root->FirstChildElement("name");
+    if(!language.empty() && language!="en")
+        while(item!=NULL)
         {
-            if(item.isElement())
-                if(item.hasAttribute(SoloWindow::text_lang) && item.attribute(SoloWindow::text_lang)==language)
-                    return item.text();
-            item = item.NextSiblingElement(SoloWindow::text_name);
+            if(item->Attribute("lang") && item->Attribute("lang")==language)
+                return item->GetText();
+            item = item->NextSiblingElement("name");
         }
-    item = root.FirstChildElement(SoloWindow::text_name);
-    while(!item.isNull())
+    item = root->FirstChildElement("name");
+    while(item!=NULL)
     {
-        if(item.isElement())
-            if(!item.hasAttribute(SoloWindow::text_lang) || item.attribute(SoloWindow::text_lang)==SoloWindow::text_en)
-                return item.text();
-        item = item.NextSiblingElement(SoloWindow::text_name);
+        if(item->Attribute("lang")==NULL || strcmp(item->Attribute("lang"),"en")==0)
+            return item->GetText();
+        item = item->NextSiblingElement("name");
     }
-    return QString();
+    return std::string();
 }
 
-QString SoloWindow::getMapZone(const QString &file)
+std::string SoloWindow::getMapZone(const std::string &file)
 {
     //open and quick check the file
-    QFile xmlFile(file);
-    QByteArray xmlContent;
-    if(!xmlFile.open(QIODevice::ReadOnly))
+    tinyxml2::XMLDocument domDocument;
+    if(domDocument.LoadFile(file.c_str())!=0)
+        return std::string();
+    const tinyxml2::XMLElement *root = domDocument.RootElement();
+    if(root==NULL)
+        return std::string();
+    if(strcmp(root->Name(),"map")!=0)
     {
-        qDebug() << (QStringLiteral("Unable to open the xml file to get map zone: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
-        return QString();
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(QString::fromStdString(file)));
+        return std::string();
     }
-    xmlContent=xmlFile.readAll();
-    xmlFile.close();
-    QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    const tinyxml2::XMLElement *properties = root->FirstChildElement("properties");
+    while(properties!=NULL)
     {
-        qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
-        return QString();
-    }
-    tinyxml2::XMLElement root = domDocument.RootElement();
-    if(root.tagName()!=SoloWindow::text_map)
-    {
-        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
-        return QString();
-    }
-    tinyxml2::XMLElement properties = root.FirstChildElement(SoloWindow::text_properties);
-    while(!properties.isNull())
-    {
-        if(properties.isElement())
+        const tinyxml2::XMLElement *property = properties->FirstChildElement("property");
+        while(property!=NULL)
         {
-            tinyxml2::XMLElement property = properties.FirstChildElement(SoloWindow::text_property);
-            while(!property.isNull())
-            {
-                if(property.isElement())
-                    if(property.hasAttribute(SoloWindow::text_name) && property.hasAttribute(SoloWindow::text_value))
-                        if(property.attribute(SoloWindow::text_name)==SoloWindow::text_zone)
-                            return property.attribute(SoloWindow::text_value);
-                property = property.NextSiblingElement(SoloWindow::text_property);
-            }
+            if(property->Attribute("name")!=NULL && property->Attribute("value")!=NULL)
+                if(strcmp(property->Attribute("name"),"zone")==0)
+                    return property->Attribute("value");
+            property = property->NextSiblingElement("property");
         }
-        properties = properties.NextSiblingElement(SoloWindow::text_properties);
+        properties = properties->NextSiblingElement("properties");
     }
-    return QString();
+    return std::string();
 }
 
-QString SoloWindow::getZoneName(const QString &zone)
+std::string SoloWindow::getZoneName(const std::string &zone)
 {
     //open and quick check the file
-    QFile xmlFile(DatapackClientLoader::datapackLoader.getDatapackPath()+DatapackClientLoader::datapackLoader.getMainDatapackPath()+DATAPACK_BASE_PATH_ZONE2+zone+".xml");
-    //QFile xmlFile(datapackPath+DATAPACK_BASE_PATH_ZONE1+CatchChallenger::Api_client_real::client->mainDatapackCode()+DATAPACK_BASE_PATH_ZONE2+zone+".xml");
-    QByteArray xmlContent;
-    if(!xmlFile.open(QIODevice::ReadOnly))
+    std::string file(DatapackClientLoader::datapackLoader.getDatapackPath()+
+                     DatapackClientLoader::datapackLoader.getMainDatapackPath()+
+                     DATAPACK_BASE_PATH_ZONE2+zone+".xml");
+    //open and quick check the file
+    tinyxml2::XMLDocument domDocument;
+    if(domDocument.LoadFile(file.c_str())!=0)
+        return std::string();
+    const tinyxml2::XMLElement *root = domDocument.RootElement();
+    if(root==NULL)
+        return std::string();
+    if(strcmp(root->Name(),"zone")!=0)
     {
-        qDebug() << (QStringLiteral("Unable to open the xml file to get zone name: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString()));
-        return QString();
-    }
-    xmlContent=xmlFile.readAll();
-    xmlFile.close();
-    QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
-    {
-        qDebug() << (QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr));
-        return QString();
-    }
-    tinyxml2::XMLElement root = domDocument.RootElement();
-    if(root.tagName()!=SoloWindow::text_zone)
-    {
-        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(xmlFile.fileName()));
-        return QString();
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(QString::fromStdString(file)));
+        return std::string();
     }
 
     //load the content
-    tinyxml2::XMLElement item = root.FirstChildElement(SoloWindow::text_name);
-    const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-    while(!item.isNull())
+    const tinyxml2::XMLElement *item = root->FirstChildElement("name");
+    const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+    while(item!=NULL)
     {
-        if(item.isElement())
-            if(item.hasAttribute(SoloWindow::text_lang) && item.attribute(SoloWindow::text_lang)==language)
-                return item.text();
-        item = item.NextSiblingElement(SoloWindow::text_name);
+        if(item->Attribute("lang")!=NULL && item->Attribute("lang")==language)
+            return item->GetText();
+        item = item->NextSiblingElement("name");
     }
-    item = root.FirstChildElement(SoloWindow::text_name);
-    while(!item.isNull())
+    item = root->FirstChildElement("name");
+    while(item!=NULL)
     {
-        if(item.isElement())
-            if(!item.hasAttribute(SoloWindow::text_lang) || item.attribute(SoloWindow::text_lang)==SoloWindow::text_en)
-                return item.text();
-        item = item.NextSiblingElement(SoloWindow::text_name);
+        if(item->Attribute("lang")==NULL || strcmp(item->Attribute("lang"),"en")==0)
+            return item->GetText();
+        item = item->NextSiblingElement("name");
     }
-    return QString();
+    return std::string();
 }
 
 void SoloWindow::on_SaveGame_Delete_clicked()
@@ -574,7 +535,7 @@ void SoloWindow::on_SaveGame_Delete_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    if(!CatchChallenger::FacilityLibGeneral::rmpath(savegamePathList.value(selectedSavegame).toStdString()))
+    if(!CatchChallenger::FacilityLibGeneral::rmpath(savegamePathList.at(selectedSavegame)))
     {
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to remove the savegame"));
         return;
@@ -588,11 +549,11 @@ void SoloWindow::on_SaveGame_Rename_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    QString savegamesPath=savegamePathList.value(selectedSavegame);
-    if(!savegameWithMetaData.value(selectedSavegame))
+    std::string savegamesPath=savegamePathList.at(selectedSavegame);
+    if(!savegameWithMetaData.at(selectedSavegame))
         return;
-    QSettings metaData(savegamesPath+SoloWindow::text_metadatadotconf,QSettings::IniFormat);
-    if(!QFileInfo(savegamesPath+SoloWindow::text_metadatadotconf).exists())
+    QSettings metaData(QString::fromStdString(savegamesPath)+SoloWindow::text_metadatadotconf,QSettings::IniFormat);
+    if(!QFileInfo(QString::fromStdString(savegamesPath)+SoloWindow::text_metadatadotconf).exists())
     {
         QMessageBox::critical(this,tr("Error"),QStringLiteral("No meta data file"));
         return;
@@ -610,13 +571,13 @@ void SoloWindow::on_SaveGame_Copy_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    QString savegamesPath=savegamePathList.value(selectedSavegame);
-    if(!savegameWithMetaData.value(selectedSavegame))
+    std::string savegamesPath=savegamePathList.at(selectedSavegame);
+    if(!savegameWithMetaData.at(selectedSavegame))
         return;
     int index=0;
-    while(QDir(savegamePath+QString::number(index)+SoloWindow::text_slash).exists())
+    while(QDir(QString::fromStdString(savegamePath)+QString::number(index)+SoloWindow::text_slash).exists())
         index++;
-    QString destinationPath=savegamePath+QString::number(index)+SoloWindow::text_slash;
+    QString destinationPath=QString::fromStdString(savegamePath)+QString::number(index)+SoloWindow::text_slash;
     if(!QDir().mkpath(destinationPath))
     {
         QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write another savegame"));
@@ -624,7 +585,7 @@ void SoloWindow::on_SaveGame_Copy_clicked()
     }
 
     {
-        QFile source(savegamesPath+SoloWindow::text_metadatadotconf);
+        QFile source(QString::fromStdString(savegamesPath)+SoloWindow::text_metadatadotconf);
         if(source.open(QIODevice::ReadOnly))
         {
             QByteArray data=source.readAll();
@@ -643,7 +604,7 @@ void SoloWindow::on_SaveGame_Copy_clicked()
             QMessageBox::critical(this,tr("Error"),tr("Unable to open source file"));
     }
     {
-        QFile source(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite);
+        QFile source(QString::fromStdString(savegamesPath)+SoloWindow::text_catchchallenger_db_sqlite);
         if(source.open(QIODevice::ReadOnly))
         {
             QByteArray data=source.readAll();
@@ -672,8 +633,8 @@ void SoloWindow::on_SaveGame_Play_clicked()
     if(selectedSavegame==NULL)
         return;
 
-    QString savegamesPath=savegamePathList.value(selectedSavegame);
-    if(!savegameWithMetaData.value(selectedSavegame))
+    std::string savegamesPath=savegamePathList.at(selectedSavegame);
+    if(!savegameWithMetaData.at(selectedSavegame))
         return;
 
     emit play(savegamesPath);
@@ -701,8 +662,8 @@ void SoloWindow::on_languages_clicked()
     LanguagesSelect::languagesSelect->exec();
 }
 
-void SoloWindow::newUpdate(const QString &version)
+void SoloWindow::newUpdate(const std::string &version)
 {
-    ui->update->setText(InternetUpdater::getText(version));
+    ui->update->setText(QString::fromStdString(InternetUpdater::getText(version)));
     ui->update->setVisible(true);
 }
