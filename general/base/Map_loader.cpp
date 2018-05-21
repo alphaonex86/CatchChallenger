@@ -696,8 +696,9 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             }
             else
             {
-                //std::string base64text=std::regex_replace(data->GetText(),e,"");->very slow, 1000x more slow than dropPrefixAndSuffixLowerThen33(
-                std::string base64text=FacilityLibGeneral::dropPrefixAndSuffixLowerThen33(data->GetText());
+                std::string base64text;
+                if(data->GetText()!=NULL)
+                base64text=FacilityLibGeneral::dropPrefixAndSuffixLowerThen33(data->GetText());
                 const std::vector<char> &compressedData=base64toBinary(base64text);
                 if(!compressedData.empty())
                 {
@@ -723,7 +724,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                     if((uint32_t)decompressedSize!=map_to_send_temp.height*map_to_send_temp.width*4)
                     {
                         error=std::string("map binary size (")+std::to_string(dataRaw.size())+") != "+std::to_string(map_to_send_temp.height)+"x"+std::to_string(map_to_send_temp.width)+"x4";
-                        std::cerr << "base64 dump: \"" << data->GetText() << "\"" << std::endl;
+                        if(data->GetText()!=NULL)
+                            std::cerr << "base64 dump: \"" << data->GetText() << "\"" << std::endl;
                         return false;
                     }
                     if(name=="Walkable")

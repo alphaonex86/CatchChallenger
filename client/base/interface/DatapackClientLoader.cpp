@@ -465,7 +465,7 @@ void DatapackClientLoader::parseReputationExtra()
                 if(!language.empty() && language!="en")
                     while(name!=NULL)
                     {
-                        if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
+                        if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
                         {
                             reputationExtra[item->Attribute("type")].name=name->GetText();
                             name_found=true;
@@ -479,11 +479,12 @@ void DatapackClientLoader::parseReputationExtra()
                     while(name!=NULL)
                     {
                         if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                        {
-                            reputationExtra[item->Attribute("type")].name=name->GetText();
-                            name_found=true;
-                            break;
-                        }
+                            if(name->GetText()!=NULL)
+                            {
+                                reputationExtra[item->Attribute("type")].name=name->GetText();
+                                name_found=true;
+                                break;
+                            }
                         name = name->NextSiblingElement("name");
                     }
                 }
@@ -517,7 +518,7 @@ void DatapackClientLoader::parseReputationExtra()
                             if(!language.empty() && language!="en")
                                 while(name!=NULL)
                                 {
-                                    if(name->Attribute("lang") && name->Attribute("lang")==language)
+                                    if(name->Attribute("lang") && name->Attribute("lang")==language && name->GetText()!=NULL)
                                     {
                                         text=name->GetText();
                                         name_found=true;
@@ -531,11 +532,12 @@ void DatapackClientLoader::parseReputationExtra()
                                 while(name!=NULL)
                                 {
                                     if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                                    {
-                                        text=name->GetText();
-                                        name_found=true;
-                                        break;
-                                    }
+                                        if(name->GetText()!=NULL)
+                                        {
+                                            text=name->GetText();
+                                            name_found=true;
+                                            break;
+                                        }
                                     name = name->NextSiblingElement("text");
                                 }
                             }
@@ -768,7 +770,7 @@ void DatapackClientLoader::parseItemsExtra()
                             if(!language.empty() && language!="en")
                                 while(name!=NULL)
                                 {
-                                    if(name->Attribute("lang") && name->Attribute("lang")==language)
+                                    if(name->Attribute("lang") && name->Attribute("lang")==language && name->GetText()!=NULL)
                                     {
                                         itemExtra.name=name->GetText();
                                         name_found=true;
@@ -782,11 +784,12 @@ void DatapackClientLoader::parseItemsExtra()
                                 while(name!=NULL)
                                 {
                                     if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                                    {
-                                        itemExtra.name=name->GetText();
-                                        name_found=true;
-                                        break;
-                                    }
+                                        if(name->GetText()!=NULL)
+                                        {
+                                            itemExtra.name=name->GetText();
+                                            name_found=true;
+                                            break;
+                                        }
                                     name = name->NextSiblingElement("name");
                                 }
                             }
@@ -804,7 +807,7 @@ void DatapackClientLoader::parseItemsExtra()
                             if(!language.empty() && language!="en")
                                 while(description!=NULL)
                                 {
-                                    if(description->Attribute("lang") && description->Attribute("lang")==language)
+                                    if(description->Attribute("lang") && description->Attribute("lang")==language && description->GetText()!=NULL)
                                     {
                                         itemExtra.description=description->GetText();
                                         description_found=true;
@@ -818,11 +821,12 @@ void DatapackClientLoader::parseItemsExtra()
                                 while(description!=NULL)
                                 {
                                     if(description->Attribute("lang")==NULL || strcmp(description->Attribute("lang"),"en")==0)
-                                    {
-                                        itemExtra.description=description->GetText();
-                                        description_found=true;
-                                        break;
-                                    }
+                                        if(description->GetText()!=NULL)
+                                        {
+                                            itemExtra.description=description->GetText();
+                                            description_found=true;
+                                            break;
+                                        }
                                     description = description->NextSiblingElement("description");
                                 }
                             }
@@ -1131,7 +1135,7 @@ void DatapackClientLoader::parseQuestsExtra()
             if(!language.empty() && language!="en")
                 while(name!=NULL)
                 {
-                    if(name->Attribute("lang") && name->Attribute("lang")==language)
+                    if(name->Attribute("lang") && name->Attribute("lang")==language && name->GetText()!=NULL)
                     {
                         quest.name=name->GetText();
                         found=true;
@@ -1149,8 +1153,11 @@ void DatapackClientLoader::parseQuestsExtra()
                 {
                     if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                     {
-                        quest.name=name->GetText();
-                        break;
+                        if(name->GetText()!=NULL)
+                        {
+                            quest.name=name->GetText();
+                            break;
+                        }
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.Name(): %2")
@@ -1212,10 +1219,11 @@ void DatapackClientLoader::parseQuestsExtra()
                             while(stepItem!=NULL)
                             {
                                 if(stepItem->Attribute("lang")!=NULL || stepItem->Attribute("lang")==language)
-                                {
-                                    found=true;
-                                    text=stepItem->GetText();
-                                }
+                                    if(stepItem->GetText()!=NULL)
+                                    {
+                                        found=true;
+                                        text=stepItem->GetText();
+                                    }
                                 stepItem = stepItem->NextSiblingElement("text");
                             }
                         }
@@ -1225,7 +1233,8 @@ void DatapackClientLoader::parseQuestsExtra()
                             while(stepItem!=NULL)
                             {
                                 if(stepItem->Attribute("lang")==NULL || strcmp(stepItem->Attribute("lang"),"en")==0)
-                                    text=stepItem->GetText();
+                                    if(stepItem->GetText()!=NULL)
+                                        text=stepItem->GetText();
                                 stepItem = stepItem->NextSiblingElement("text");
                             }
                             if(text.empty())
@@ -1344,7 +1353,7 @@ void DatapackClientLoader::parseQuestsText()
                     if(!language.empty() && language!="en")
                         while(text!=NULL)
                         {
-                            if(text->Attribute("lang") && text->Attribute("lang")==language)
+                            if(text->Attribute("lang") && text->Attribute("lang")==language && text->GetText()!=NULL)
                             {
                                 questStepWithConditionExtra.text=text->GetText();
                                 found=true;
@@ -1357,7 +1366,8 @@ void DatapackClientLoader::parseQuestsText()
                         while(text!=NULL)
                         {
                             if(text->Attribute("lang")==NULL || strcmp(text->Attribute("lang"),"en")==0)
-                                questStepWithConditionExtra.text=text->GetText();
+                                if(text->GetText()!=NULL)
+                                    questStepWithConditionExtra.text=text->GetText();
                             text = text->NextSiblingElement("text");
                         }
                     }
@@ -1410,7 +1420,7 @@ void DatapackClientLoader::parseAudioAmbiance()
         if(item->Attribute("type")!=NULL)
         {
             const std::string &type=item->Attribute("type");
-            if(DatapackClientLoader::datapackLoader.audioAmbiance.find(type)==DatapackClientLoader::datapackLoader.audioAmbiance.cend())
+            if(DatapackClientLoader::datapackLoader.audioAmbiance.find(type)==DatapackClientLoader::datapackLoader.audioAmbiance.cend() && item->GetText()!=NULL)
                 audioAmbiance[type]=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+item->GetText();
             else
                 qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.Name(): %2")
@@ -1500,9 +1510,12 @@ void DatapackClientLoader::parseZoneExtra()
             {
                 if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                 {
-                    haveName=true;
-                    zone.name=name->GetText();
-                    break;
+                    if(name->GetText()!=NULL)
+                    {
+                        haveName=true;
+                        zone.name=name->GetText();
+                        break;
+                    }
                 }
                 else
                     qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.Name(): %2").arg(QString::fromStdString(file)).arg(name->Name());
@@ -1515,9 +1528,12 @@ void DatapackClientLoader::parseZoneExtra()
             {
                 if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                 {
-                    haveName=true;
-                    zone.name=name->GetText();
-                    break;
+                    if(name->GetText()!=NULL)
+                    {
+                        haveName=true;
+                        zone.name=name->GetText();
+                        break;
+                    }
                 }
                 else
                     qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.Name(): %2").arg(QString::fromStdString(file)).arg(name->Name());

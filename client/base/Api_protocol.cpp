@@ -2030,7 +2030,7 @@ LogicialGroup * Api_protocol::addLogicalGroup(const std::string &path,const std:
             if(!language.empty() && language!="en")
                 while(name!=NULL)
                 {
-                    if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
+                    if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
                     {
                         nameString=name->GetText();
                         name_found=true;
@@ -2044,11 +2044,12 @@ LogicialGroup * Api_protocol::addLogicalGroup(const std::string &path,const std:
                 while(name!=NULL)
                 {
                     if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                    {
-                        nameString=name->GetText();
-                        name_found=true;
-                        break;
-                    }
+                        if(name->GetText()!=NULL)
+                        {
+                            nameString=name->GetText();
+                            name_found=true;
+                            break;
+                        }
                     name = name->NextSiblingElement("name");
                 }
             }
@@ -2096,7 +2097,7 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
             if(!language.empty() && language!="en")
                 while(name!=NULL)
                 {
-                    if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
+                    if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
                     {
                         nameString=name->GetText();
                         name_found=true;
@@ -2110,11 +2111,12 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
                 while(name!=NULL)
                 {
                     if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                    {
-                        nameString=name->GetText();
-                        name_found=true;
-                        break;
-                    }
+                        if(name->GetText()!=NULL)
+                        {
+                            nameString=name->GetText();
+                            name_found=true;
+                            break;
+                        }
                     name = name->NextSiblingElement("name");
                 }
             }
@@ -2131,7 +2133,7 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
             if(!language.empty() && language!="en")
                 while(description!=NULL)
                 {
-                    if(description->Attribute("lang")!=NULL || description->Attribute("lang")==language)
+                    if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language && description->GetText()!=NULL)
                     {
                         descriptionString=description->GetText();
                         description_found=true;
@@ -2145,11 +2147,12 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
                 while(description!=NULL)
                 {
                     if(description->Attribute("lang")!=NULL || strcmp(description->Attribute("lang"),"en")==0)
-                    {
-                        descriptionString=description->GetText();
-                        description_found=true;
-                        break;
-                    }
+                        if(description->GetText()!=NULL)
+                        {
+                            descriptionString=description->GetText();
+                            description_found=true;
+                            break;
+                        }
                     description = description->NextSiblingElement("description");
                 }
             }

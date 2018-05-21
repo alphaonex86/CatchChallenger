@@ -445,7 +445,7 @@ std::string SoloWindow::getMapName(const std::string &file)
     if(!language.empty() && language!="en")
         while(item!=NULL)
         {
-            if(item->Attribute("lang") && item->Attribute("lang")==language)
+            if(item->Attribute("lang") && item->Attribute("lang")==language && item->GetText()!=NULL)
                 return item->GetText();
             item = item->NextSiblingElement("name");
         }
@@ -453,7 +453,8 @@ std::string SoloWindow::getMapName(const std::string &file)
     while(item!=NULL)
     {
         if(item->Attribute("lang")==NULL || strcmp(item->Attribute("lang"),"en")==0)
-            return item->GetText();
+            if(item->GetText()!=NULL)
+                return item->GetText();
         item = item->NextSiblingElement("name");
     }
     return std::string();
@@ -513,7 +514,7 @@ std::string SoloWindow::getZoneName(const std::string &zone)
     const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     while(item!=NULL)
     {
-        if(item->Attribute("lang")!=NULL && item->Attribute("lang")==language)
+        if(item->Attribute("lang")!=NULL && item->Attribute("lang")==language && item->GetText()!=NULL)
             return item->GetText();
         item = item->NextSiblingElement("name");
     }
@@ -521,7 +522,8 @@ std::string SoloWindow::getZoneName(const std::string &zone)
     while(item!=NULL)
     {
         if(item->Attribute("lang")==NULL || strcmp(item->Attribute("lang"),"en")==0)
-            return item->GetText();
+            if(item->GetText()!=NULL)
+                return item->GetText();
         item = item->NextSiblingElement("name");
     }
     return std::string();

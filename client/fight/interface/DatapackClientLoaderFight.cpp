@@ -91,7 +91,7 @@ void DatapackClientLoader::parseMonstersExtra()
                             if(!language.empty() && language!="en")
                                 while(name!=NULL)
                                 {
-                                    if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
+                                    if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
                                     {
                                         monsterExtraEntry.name=name->GetText();
                                         found=true;
@@ -105,10 +105,11 @@ void DatapackClientLoader::parseMonstersExtra()
                                 while(name!=NULL)
                                 {
                                     if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                                    {
-                                        monsterExtraEntry.name=name->GetText();
-                                        break;
-                                    }
+                                        if(name->GetText()!=NULL)
+                                        {
+                                            monsterExtraEntry.name=name->GetText();
+                                            break;
+                                        }
                                     name = name->NextSiblingElement("name");
                                 }
                             }
@@ -119,7 +120,7 @@ void DatapackClientLoader::parseMonstersExtra()
                             if(!language.empty() && language!="en")
                                 while(description!=NULL)
                                 {
-                                    if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language)
+                                    if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language && description->GetText()!=NULL)
                                     {
                                             monsterExtraEntry.description=description->GetText();
                                             found=true;
@@ -133,10 +134,11 @@ void DatapackClientLoader::parseMonstersExtra()
                                 while(description!=NULL)
                                 {
                                     if(description->Attribute("lang")==NULL || strcmp(description->Attribute("lang"),"en")==0)
-                                    {
-                                            monsterExtraEntry.description=description->GetText();
-                                            break;
-                                    }
+                                        if(description->GetText()!=NULL)
+                                        {
+                                                monsterExtraEntry.description=description->GetText();
+                                                break;
+                                        }
                                     description = description->NextSiblingElement("description");
                                 }
                             }
@@ -148,7 +150,7 @@ void DatapackClientLoader::parseMonstersExtra()
                             if(!language.empty() && language!="en")
                                 while(kind!=NULL)
                                 {
-                                    if(kind->Attribute("lang")!=NULL && kind->Attribute("lang")==language)
+                                    if(kind->Attribute("lang")!=NULL && kind->Attribute("lang")==language && kind->GetText()!=NULL)
                                     {
                                         monsterExtraEntry.kind=kind->GetText();
                                         kind_found=true;
@@ -162,11 +164,12 @@ void DatapackClientLoader::parseMonstersExtra()
                                 while(kind!=NULL)
                                 {
                                     if(kind->Attribute("lang")==NULL || strcmp(kind->Attribute("lang"),"en")==0)
-                                    {
-                                        monsterExtraEntry.kind=kind->GetText();
-                                        kind_found=true;
-                                        break;
-                                    }
+                                        if(kind->GetText()!=NULL)
+                                        {
+                                            monsterExtraEntry.kind=kind->GetText();
+                                            kind_found=true;
+                                            break;
+                                        }
                                     kind = kind->NextSiblingElement("kind");
                                 }
                             }
@@ -179,7 +182,7 @@ void DatapackClientLoader::parseMonstersExtra()
                             if(!language.empty() && language!="en")
                                 while(habitat!=NULL)
                                 {
-                                    if(habitat->Attribute("lang") && habitat->Attribute("lang")==language)
+                                    if(habitat->Attribute("lang") && habitat->Attribute("lang")==language && habitat->GetText()!=NULL)
                                     {
                                         monsterExtraEntry.habitat=habitat->GetText();
                                         habitat_found=true;
@@ -193,14 +196,12 @@ void DatapackClientLoader::parseMonstersExtra()
                                 while(habitat!=NULL)
                                 {
                                     if(habitat->Attribute("lang")==NULL || strcmp(habitat->Attribute("lang"),"en")==0)
-                                    {
                                         if(habitat->GetText()!=NULL)
                                         {
                                             monsterExtraEntry.habitat=habitat->GetText();
                                             habitat_found=true;
                                             break;
                                         }
-                                    }
                                     habitat = habitat->NextSiblingElement("habitat");
                                 }
                             }
@@ -333,7 +334,7 @@ void DatapackClientLoader::parseTypesExtra()
                     if(!language.empty() && language!="en")
                         while(nameItem!=NULL)
                         {
-                            if(nameItem->Attribute("lang")!=NULL && nameItem->Attribute("lang")==language)
+                            if(nameItem->Attribute("lang")!=NULL && nameItem->Attribute("lang")==language && nameItem->GetText()!=NULL)
                             {
                                 type.name=nameItem->GetText();
                                 found=true;
@@ -347,10 +348,11 @@ void DatapackClientLoader::parseTypesExtra()
                         while(nameItem!=NULL)
                         {
                             if(nameItem->Attribute("lang")==NULL || strcmp(nameItem->Attribute("lang"),"en")==0)
-                            {
-                                type.name=nameItem->GetText();
-                                break;
-                            }
+                                if(nameItem->GetText()!=NULL)
+                                {
+                                    type.name=nameItem->GetText();
+                                    break;
+                                }
                             nameItem = nameItem->NextSiblingElement("name");
                         }
                     }
@@ -453,7 +455,7 @@ void DatapackClientLoader::parseBuffExtra()
                         if(!language.empty() && language!="en")
                             while(name!=NULL)
                             {
-                                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
+                                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
                                 {
                                     monsterBuffExtraEntry.name=name->GetText();
                                     found=true;
@@ -467,10 +469,11 @@ void DatapackClientLoader::parseBuffExtra()
                             while(name!=NULL)
                             {
                                 if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                                {
-                                    monsterBuffExtraEntry.name=name->GetText();
-                                    break;
-                                }
+                                    if(name->GetText()!=NULL)
+                                    {
+                                        monsterBuffExtraEntry.name=name->GetText();
+                                        break;
+                                    }
                                 name = name->NextSiblingElement("name");
                             }
                         }
@@ -479,7 +482,7 @@ void DatapackClientLoader::parseBuffExtra()
                         if(!language.empty() && language!="en")
                             while(description!=NULL)
                             {
-                                if(description->Attribute("lang") && description->Attribute("lang")==language)
+                                if(description->Attribute("lang") && description->Attribute("lang")==language && description->GetText()!=NULL)
                                 {
                                     monsterBuffExtraEntry.description=description->GetText();
                                     found=true;
@@ -493,10 +496,11 @@ void DatapackClientLoader::parseBuffExtra()
                             while(description!=NULL)
                             {
                                 if(description->Attribute("lang")==NULL || strcmp(description->Attribute("lang"),"en")==0)
-                                {
-                                    monsterBuffExtraEntry.description=description->GetText();
-                                    break;
-                                }
+                                    if(description->GetText()!=NULL)
+                                    {
+                                        monsterBuffExtraEntry.description=description->GetText();
+                                        break;
+                                    }
                                 description = description->NextSiblingElement("description");
                             }
                         }
@@ -618,7 +622,7 @@ void DatapackClientLoader::parseSkillsExtra()
                         if(!language.empty() && language!="en")
                             while(name!=NULL)
                             {
-                                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
+                                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
                                 {
                                     monsterSkillExtraEntry.name=name->GetText();
                                     found=true;
@@ -632,10 +636,11 @@ void DatapackClientLoader::parseSkillsExtra()
                             while(name!=NULL)
                             {
                                 if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                                {
-                                    monsterSkillExtraEntry.name=name->GetText();
-                                    break;
-                                }
+                                    if(name->GetText()!=NULL)
+                                    {
+                                        monsterSkillExtraEntry.name=name->GetText();
+                                        break;
+                                    }
                                 name = name->NextSiblingElement("name");
                             }
                         }
@@ -644,7 +649,7 @@ void DatapackClientLoader::parseSkillsExtra()
                         if(!language.empty() && language!="en")
                             while(description!=NULL)
                             {
-                                if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language)
+                                if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language && description->GetText()!=NULL)
                                 {
                                     monsterSkillExtraEntry.description=description->GetText();
                                     found=true;
@@ -658,10 +663,11 @@ void DatapackClientLoader::parseSkillsExtra()
                             while(description!=NULL)
                             {
                                 if(description->Attribute("lang")==NULL || strcmp(description->Attribute("lang"),"en")==0)
-                                {
-                                    monsterSkillExtraEntry.description=description->GetText();
-                                    break;
-                                }
+                                    if(description->GetText()!=NULL)
+                                    {
+                                        monsterSkillExtraEntry.description=description->GetText();
+                                        break;
+                                    }
                                 description = description->NextSiblingElement("description");
                             }
                         }
@@ -766,7 +772,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                                     if(!language.empty() && language!="en")
                                         while(start!=NULL)
                                         {
-                                            if(start->Attribute("lang")!=NULL && start->Attribute("lang")==language)
+                                            if(start->Attribute("lang")!=NULL && start->Attribute("lang")==language && start->GetText()!=NULL)
                                             {
                                                 botFightExtra.start=start->GetText();
                                                 found=true;
@@ -780,10 +786,11 @@ void DatapackClientLoader::parseBotFightsExtra()
                                         while(start!=NULL)
                                         {
                                             if(start->Attribute("lang")==NULL || strcmp(start->Attribute("lang"),"en")==0)
-                                            {
-                                                botFightExtra.start=start->GetText();
-                                                break;
-                                            }
+                                                if(start->GetText()!=NULL)
+                                                {
+                                                    botFightExtra.start=start->GetText();
+                                                    break;
+                                                }
                                             start = start->NextSiblingElement("start");
                                         }
                                     }
@@ -792,7 +799,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                                     if(!language.empty() && language!="en")
                                         while(win!=NULL)
                                         {
-                                            if(win->Attribute("lang") && win->Attribute("lang")==language)
+                                            if(win->Attribute("lang") && win->Attribute("lang")==language && win->GetText()!=NULL)
                                             {
                                                 botFightExtra.win=win->GetText();
                                                 found=true;
@@ -806,10 +813,11 @@ void DatapackClientLoader::parseBotFightsExtra()
                                         while(win!=NULL)
                                         {
                                             if(win->Attribute("lang")==NULL || strcmp(win->Attribute("lang"),"en")==0)
-                                            {
-                                                botFightExtra.win=win->GetText();
-                                                break;
-                                            }
+                                                if(win->GetText()!=NULL)
+                                                {
+                                                    botFightExtra.win=win->GetText();
+                                                    break;
+                                                }
                                             win = win->NextSiblingElement("win");
                                         }
                                     }
