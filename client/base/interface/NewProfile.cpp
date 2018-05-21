@@ -72,7 +72,7 @@ void NewProfile::loadProfileText()
         if(!language.empty() && language!="en")
             while(name!=NULL)
             {
-                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
+                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
                 {
                     profile.name=name->GetText();
                     found=true;
@@ -86,17 +86,22 @@ void NewProfile::loadProfileText()
             while(name!=NULL)
             {
                 if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                {
-                    profile.name=name->GetText();
-                    break;
-                }
+                    if(name->GetText()!=NULL)
+                    {
+                        profile.name=name->GetText();
+                        break;
+                    }
                 name = name->NextSiblingElement("name");
             }
         }
         if(profile.name.empty())
         {
-            qDebug() << (QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(): %2")
+            if(startItem->GetText()!=NULL)
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(): %2")
                          .arg(QString::fromStdString(xmlFile)).arg(startItem->GetText()));
+            else
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(")
+                         .arg(QString::fromStdString(xmlFile)));
             startItem = startItem->NextSiblingElement("start");
             continue;
         }
@@ -105,7 +110,7 @@ void NewProfile::loadProfileText()
         if(!language.empty() && language!="en")
             while(description!=NULL)
             {
-                if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language)
+                if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language && description->GetText()!=NULL)
                 {
                     profile.description=description->GetText();
                     found=true;
@@ -119,17 +124,22 @@ void NewProfile::loadProfileText()
             while(description!=NULL)
             {
                 if(description->Attribute("lang")==NULL || strcmp(description->Attribute("lang"),"en")==0)
-                {
-                    profile.description=description->GetText();
-                    break;
-                }
+                    if(description->GetText()!=NULL)
+                    {
+                        profile.description=description->GetText();
+                        break;
+                    }
                 description = description->NextSiblingElement("description");
             }
         }
         if(profile.description.empty())
         {
-            qDebug() << (QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName(): %2")
+            if(description->GetText()!=NULL)
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName(): %2")
                          .arg(QString::fromStdString(xmlFile)).arg(startItem->GetText()));
+            else
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName()")
+                         .arg(QString::fromStdString(xmlFile)));
             startItem = startItem->NextSiblingElement("start");
             continue;
         }

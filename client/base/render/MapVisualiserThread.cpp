@@ -224,7 +224,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                     if(!language.empty() && language!="en")
                         while(blockedtext!=NULL)
                         {
-                            if(blockedtext->Attribute("lang")!=NULL && blockedtext->Attribute("lang")==language)
+                            if(blockedtext->Attribute("lang")!=NULL && blockedtext->Attribute("lang")==language && blockedtext->GetText()!=NULL)
                             {
                                 conditionText=blockedtext->GetText();
                                 text_found=true;
@@ -238,10 +238,11 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                         while(blockedtext!=NULL)
                         {
                             if(blockedtext->Attribute("lang")==NULL || strcmp(blockedtext->Attribute("lang"),"en")==0)
-                            {
-                                conditionText=blockedtext->GetText();
-                                break;
-                            }
+                                if(blockedtext->GetText()!=NULL)
+                                {
+                                    conditionText=blockedtext->GetText();
+                                    break;
+                                }
                             blockedtext = blockedtext->NextSiblingElement("blockedtext");
                         }
                     }
@@ -815,7 +816,7 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
         if(!language.empty() && language!="en")
             while(name!=NULL)
             {
-                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
+                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
                 {
                     parsedMap->name=name->GetText();
                     name_found=true;
@@ -829,11 +830,12 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
             while(name!=NULL)
             {
                 if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                {
-                    parsedMap->name=name->GetText();
-                    name_found=true;
-                    break;
-                }
+                    if(name->GetText()!=NULL)
+                    {
+                        parsedMap->name=name->GetText();
+                        name_found=true;
+                        break;
+                    }
                 name = name->NextSiblingElement("name");
             }
         }
@@ -907,7 +909,7 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
                         if(!language.empty() && language!="en")
                             while(name!=NULL)
                             {
-                                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language)
+                                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
                                 {
                                     botFiles[file][botId].name=name->GetText();
                                     name_found=true;
@@ -921,11 +923,12 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
                             while(name!=NULL)
                             {
                                 if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                                {
-                                    botFiles[file][botId].name=name->GetText();
-                                    name_found=true;
-                                    break;
-                                }
+                                    if(name->GetText()!=NULL)
+                                    {
+                                        botFiles[file][botId].name=name->GetText();
+                                        name_found=true;
+                                        break;
+                                    }
                                 name = name->NextSiblingElement("name");
                             }
                         }
