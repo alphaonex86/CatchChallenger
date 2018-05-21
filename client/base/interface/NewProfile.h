@@ -18,7 +18,7 @@ public:
         std::string name;
         std::string description;
     };
-    QList<ProfileText> profileTextList;
+    std::vector<ProfileText> profileTextList;
     int getProfileIndex();
     explicit NewProfile(const std::string &datapackPath,QWidget *parent = 0);
     ~NewProfile();

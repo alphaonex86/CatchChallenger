@@ -1,15 +1,15 @@
 #include "LanguagesSelect.h"
 #include "ui_LanguagesSelect.h"
 #include "../base/Options.h"
+#include "../../general/base/tinyXML2/tinyxml2.h"
 
 #include <QStringList>
 #include <QDir>
 #include <QFile>
-#include <QDomDocument>
-#include <tinyxml2::XMLElement>
 #include <QByteArray>
 #include <QDebug>
 #include <QLibraryInfo>
+#include <iostream>
 
 LanguagesSelect *LanguagesSelect::languagesSelect=NULL;
 
@@ -42,72 +42,63 @@ LanguagesSelect::LanguagesSelect() :
     index=0;
     while(index<languageToParse.size())
     {
+        tinyxml2::XMLDocument domDocument;
         //open and quick check the file
-        QFile xmlFile(languageToParse.at(index)+QStringLiteral("informations.xml"));
-        QByteArray xmlContent;
-        if(!xmlFile.open(QIODevice::ReadOnly))
+        const std::string &fileName=languageToParse.at(index).toStdString()+"informations.xml";
+        const auto loadOkay = domDocument.LoadFile(fileName.c_str());
+        if(loadOkay!=0)
         {
-            qDebug() << QStringLiteral("Unable to open the xml monster file: %1, error: %2").arg(xmlFile.fileName()).arg(xmlFile.errorString());
+            std::cerr << fileName+", "+domDocument.ErrorName() << std::endl;
             index++;
             continue;
         }
-        xmlContent=xmlFile.readAll();
-        xmlFile.close();
-        QDomDocument domDocument;
-        QString errorStr;
-        int errorLine,errorColumn;
-        if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+
+        const tinyxml2::XMLElement *root = domDocument.RootElement();
+        if(strcmp(root->Name(),"language")!=0)
         {
-            qDebug() << QStringLiteral("Unable to open the xml file: %1, Parse error at line %2, column %3: %4").arg(xmlFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
-            index++;
-            continue;
-        }
-        tinyxml2::XMLElement root = domDocument.RootElement();
-        if(root.tagName()!=QStringLiteral("language"))
-        {
-            qDebug() << QStringLiteral("Unable to open the xml file: %1, \"language\" root balise not found for the xml file").arg(xmlFile.fileName());
+            qDebug() << QStringLiteral("Unable to open the xml file: %1, \"language\" root balise not found for the xml file")
+                        .arg(QString::fromStdString(fileName));
             index++;
             continue;
         }
 
         //load the content
-        tinyxml2::XMLElement fullName = root.FirstChildElement(QStringLiteral("fullName"));
-        if(fullName.isNull() || !fullName.isElement())
+        const tinyxml2::XMLElement *fullName = root->FirstChildElement("fullName");
+        if(fullName==NULL)
         {
-            qDebug() << QStringLiteral("Unable to open the xml file: %1, \"fullName\" balise not found for the xml file").arg(xmlFile.fileName());
+            qDebug() << QStringLiteral("Unable to open the xml file: %1, \"fullName\" balise not found for the xml file")
+                        .arg(QString::fromStdString(fileName));
             index++;
             continue;
         }
 
         QString shortNameMain;
         QStringList shortNameList;
-        tinyxml2::XMLElement shortName = root.FirstChildElement(QStringLiteral("shortName"));
-        while(!shortName.isNull())
+        const tinyxml2::XMLElement *shortName = root->FirstChildElement("shortName");
+        while(shortName!=NULL)
         {
-            if(shortName.isElement())
-            {
-                if(shortName.hasAttribute(QStringLiteral("mainCode")) && shortName.attribute(QStringLiteral("mainCode"))==QStringLiteral("true"))
-                    shortNameMain=shortName.text();
-                shortNameList << shortName.text();
-            }
-            shortName = shortName.NextSiblingElement(QStringLiteral("shortName"));
+            if(shortName->Attribute("mainCode")!=NULL && strcmp(shortName->Attribute("mainCode"),"true")==0)
+                shortNameMain=shortName->GetText();
+            shortNameList << shortName->GetText();
+            shortName = shortName->NextSiblingElement("shortName");
         }
 
         if(shortNameMain.isEmpty())
         {
-            qDebug() << QStringLiteral("Unable to open the xml file: %1, \"shortName\" balise with mainCode=\"true\" not found for the xml file").arg(xmlFile.fileName());
+            qDebug() << QStringLiteral("Unable to open the xml file: %1, \"shortName\" balise with mainCode=\"true\" not found for the xml file")
+                        .arg(QString::fromStdString(fileName));
             index++;
             continue;
         }
 
         Language language;
-        language.fullName=fullName.text();
-        language.path=languageToParse.at(index);
-        languagesByMainCode[shortNameMain]=language;
+        language.fullName=fullName->GetText();
+        language.path=languageToParse.at(index).toStdString();
+        languagesByMainCode[shortNameMain.toStdString()]=language;
         int sub_index=0;
         while(sub_index<shortNameList.size())
         {
-            languagesByShortName[shortNameList.at(sub_index)]=shortNameMain;
+            languagesByShortName[shortNameList.at(sub_index).toStdString()]=shortNameMain.toStdString();
             sub_index++;
         }
         index++;
@@ -120,7 +111,7 @@ LanguagesSelect::~LanguagesSelect()
     delete ui;
 }
 
-QString LanguagesSelect::getCurrentLanguages()
+std::string LanguagesSelect::getCurrentLanguages()
 {
     /*if(this==NULL)
         return "en";*/
@@ -136,17 +127,18 @@ void LanguagesSelect::show()
 void LanguagesSelect::updateContent()
 {
     ui->listWidget->clear();
-    const QString &language=Options::options.getLanguage();
-    ui->automatic->setChecked(language.isEmpty() || !languagesByMainCode.contains(language));
+    const std::string &language=Options::options.getLanguage();
+    ui->automatic->setChecked(language.empty() || languagesByMainCode.find(language)==languagesByMainCode.cend());
     on_automatic_clicked();
-    QHash<QString,Language>::const_iterator i = languagesByMainCode.constBegin();
-    while (i != languagesByMainCode.constEnd()) {
-        QListWidgetItem *item=new QListWidgetItem(QIcon(i.value().path+QStringLiteral("flag.png")),i.value().fullName);
-        item->setData(99,i.key());
+    for ( const auto &n : languagesByMainCode ) {
+        QListWidgetItem *item=new QListWidgetItem(QIcon(
+                                                      QString::fromStdString(n.second.path)+"flag.png"),
+                                                  QString::fromStdString(n.second.fullName)
+                                                  );
+        item->setData(99,QString::fromStdString(n.first));
         ui->listWidget->addItem(item);
-        if(language==i.key())
+        if(language==n.first)
             item->setSelected(true);
-        ++i;
     }
 }
 
@@ -161,36 +153,38 @@ void LanguagesSelect::on_automatic_clicked()
     ui->listWidget->setEnabled(!ui->automatic->isChecked());
 }
 
-QString LanguagesSelect::getTheRightLanguage() const
+std::string LanguagesSelect::getTheRightLanguage() const
 {
-    const QString &language=Options::options.getLanguage();
+    const std::string &language=Options::options.getLanguage();
     if(languagesByShortName.size()==0)
-        return QStringLiteral("en");
-    else if(language.isEmpty() || !languagesByMainCode.contains(language))
+        return "en";
+    else if(language.empty() || languagesByMainCode.find(language)==languagesByMainCode.cend())
     {
-        if(languagesByShortName.contains(QLocale::languageToString(QLocale::system().language())))
-            return languagesByShortName.value(QLocale::languageToString(QLocale::system().language()));
-        else if(languagesByShortName.contains(QLocale::system().name()))
-            return languagesByShortName.value(QLocale::system().name());
+        if(languagesByShortName.find(QLocale::languageToString(QLocale::system().language()).toStdString())!=
+                languagesByShortName.cend())
+            return languagesByShortName.at(QLocale::languageToString(QLocale::system().language()).toStdString());
+        else if(languagesByShortName.find(QLocale::system().name().toStdString())!=
+                languagesByShortName.cend())
+            return languagesByShortName.at(QLocale::system().name().toStdString());
         else
-            return QStringLiteral("en");
+            return "en";
     }
     else
         return language;
-    return QStringLiteral("en");
+    return "en";
 }
 
-void LanguagesSelect::setCurrentLanguage(const QString &newLanguage)
+void LanguagesSelect::setCurrentLanguage(const std::string &newLanguage)
 {
     //protection for re-set the same language
     if(currentLanguage==newLanguage)
         return;
     //unload the old language
-    int indexTranslator=0;
+    unsigned int indexTranslator=0;
     while(indexTranslator<installedTranslator.size())
     {
-        QCoreApplication::removeTranslator(installedTranslator.value(indexTranslator));
-        delete installedTranslator.value(indexTranslator);
+        QCoreApplication::removeTranslator(installedTranslator.at(indexTranslator));
+        delete installedTranslator.at(indexTranslator);
         indexTranslator++;
     }
     installedTranslator.clear();
@@ -198,10 +192,10 @@ void LanguagesSelect::setCurrentLanguage(const QString &newLanguage)
     QStringList fileToLoad;
     //load the language main
     QDir dir;
-    if(newLanguage==QStringLiteral("en"))
-        dir=QDir(QStringLiteral(":/Languages/en/"));
+    if(newLanguage=="en")
+        dir=QDir(":/Languages/en/");
     else
-        dir=QDir(languagesByMainCode.value(newLanguage).path);
+        dir=QDir(QString::fromStdString(languagesByMainCode.at(newLanguage).path));
     QFileInfoList fileInfoList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int index=0;
     while(index<fileInfoList.size())
@@ -221,15 +215,15 @@ void LanguagesSelect::setCurrentLanguage(const QString &newLanguage)
         else
         {
             QCoreApplication::installTranslator(temp);
-            installedTranslator<<temp;
+            installedTranslator.push_back(temp);
         }
         indexTranslationFile++;
     }
     temp=new QTranslator();
-    if(temp->load(QStringLiteral("qt_")+newLanguage, QLibraryInfo::location(QLibraryInfo::TranslationsPath)) && !temp->isEmpty())
+    if(temp->load(QStringLiteral("qt_")+QString::fromStdString(newLanguage), QLibraryInfo::location(QLibraryInfo::TranslationsPath)) && !temp->isEmpty())
     {
         QCoreApplication::installTranslator(temp);
-        installedTranslator<<temp;
+        installedTranslator.push_back(temp);
     }
     currentLanguage=newLanguage;
 }
@@ -247,13 +241,13 @@ void LanguagesSelect::on_ok_clicked()
         QList<QListWidgetItem *> selectedItems=ui->listWidget->selectedItems();
         if(selectedItems.size()!=1)
             return;
-        const QString &language=selectedItems.first()->data(99).toString();
+        const std::string &language=selectedItems.first()->data(99).toString().toStdString();
         Options::options.setLanguage(language);
         setCurrentLanguage(language);
     }
     else
     {
-        Options::options.setLanguage(QString());
+        Options::options.setLanguage(std::string());
         setCurrentLanguage(getTheRightLanguage());
     }
     updateContent();

@@ -8,7 +8,6 @@
 #include <QDateTime>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <tinyxml2::XMLElement>
 
 class FeedNews : public QThread
 {

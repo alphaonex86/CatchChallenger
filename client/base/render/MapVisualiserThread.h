@@ -31,7 +31,7 @@ class MapVisualiserThread : public QThread, public MapVisualiserOrder
 {
     Q_OBJECT
 public:
-    QHash<Tiled::Tile *,TriggerAnimationContent> tileToTriggerAnimationContent;
+    std::unordered_map<Tiled::Tile *,TriggerAnimationContent> tileToTriggerAnimationContent;
 
     explicit MapVisualiserThread();
     ~MapVisualiserThread();
@@ -54,9 +54,9 @@ public slots:
 public slots:
     virtual void resetAll();
 private:
-    QHash<QString,MapVisualiserThread::Map_full> mapCache;
+    std::unordered_map<std::string,MapVisualiserThread::Map_full> mapCache;
     Tiled::MapReader reader;
-    QHash<QString/*name*/,QHash<uint32_t/*bot id*/,CatchChallenger::Bot> > botFiles;
+    std::unordered_map<std::string/*name*/,std::unordered_map<uint32_t/*bot id*/,CatchChallenger::Bot> > botFiles;
     std::string language;
 };
 

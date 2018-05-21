@@ -1200,9 +1200,7 @@ void MapControllerMP::datapackParsedMainSub()
 {
     MapVisualiserPlayer::datapackParsedMainSub();
 
-    skinFolderList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(
-                CatchChallenger::FacilityLibGeneral::skinIdList((datapackPath+DATAPACK_BASE_PATH_SKIN)
-                                                                ));
+    skinFolderList=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
 
     if(player_informations_is_set)
         reinject_signals();

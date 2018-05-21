@@ -853,8 +853,8 @@ void DatapackClientLoader::parseItemsExtra()
 void DatapackClientLoader::parseMaps()
 {
     /// \todo do a sub overlay
-    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(
-                CatchChallenger::FacilityLibGeneral::listFolder((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN)));
+    const std::vector<std::string> &returnList=
+                CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN);
 
     //load the map
     uint16_t pointOnMapIndexItem=0;
@@ -1014,8 +1014,7 @@ void DatapackClientLoader::parseMaps()
 
 void DatapackClientLoader::parseSkins()
 {
-    skins=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(
-                CatchChallenger::FacilityLibGeneral::skinIdList((datapackPath+DATAPACK_BASE_PATH_SKIN)));
+    skins=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
 
     qDebug() << QStringLiteral("%1 skin(s) loaded").arg(skins.size());
 }
@@ -1554,8 +1553,8 @@ void DatapackClientLoader::parseZoneExtra()
 
 void DatapackClientLoader::parseTileset()
 {
-    const std::vector<std::string> &fileList=CatchChallenger::FacilityLibClient::stdvectorstringToQStringList(
-                CatchChallenger::FacilityLibGeneral::listFolder((datapackPath+DATAPACK_BASE_PATH_MAPBASE)));
+    const std::vector<std::string> &fileList=
+                CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DATAPACK_BASE_PATH_MAPBASE);
     unsigned int index=0;
     while(index<fileList.size())
     {

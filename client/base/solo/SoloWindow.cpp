@@ -348,9 +348,9 @@ void SoloWindow::updateSavegameList()
                         int time_played_number=metaData.value(SoloWindow::text_time_played).toUInt(&ok);
                         QString time_played;
                         if(!ok || time_played_number>3600*24*365*50)
-                            time_played=QStringLiteral("Time player: bug");
+                            time_played=tr("Time player: bug");
                         else
-                            time_played=QStringLiteral("%1 played").arg(CatchChallenger::FacilityLibClient::timeToString(time_played_number));
+                            time_played=tr("%1 played").arg(QString::fromStdString(CatchChallenger::FacilityLibClient::timeToString(time_played_number)));
                         //load the map name
                         QString mapName;
                         QString map=metaData.value(SoloWindow::text_location).toString();
