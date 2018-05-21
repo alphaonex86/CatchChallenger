@@ -27,7 +27,7 @@ class SoloWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit SoloWindow(QWidget *parent,const QString &datapackPath,const QString &savegamePath,const bool &standAlone);
+    explicit SoloWindow(QWidget *parent,const std::string &datapackPath,const std::string &savegamePath,const bool &standAlone);
     ~SoloWindow();
     void updateSavegameList();
     void setOnlySolo();
@@ -60,36 +60,25 @@ private slots:
     */
     void on_SaveGame_Back_clicked();
     void on_languages_clicked();
-    void newUpdate(const QString &version);
+    void newUpdate(const std::string &version);
 
 private:
     Ui::SoloWindow *ui;
     void resetAll();
     //bool rmpath(const QDir &dir);
-    QString getMapName(const QString &file);
-    QString getMapZone(const QString &file);
-    QString getZoneName(const QString &zone);
-    bool versionIsNewer(const QString &version);
-    QList<ListEntryEnvolued *> savegame;
-    QHash<ListEntryEnvolued *,QString> savegamePathList;
-    QHash<ListEntryEnvolued *,bool> savegameWithMetaData;
+    std::string getMapName(const std::string &file);
+    std::string getMapZone(const std::string &file);
+    std::string getZoneName(const std::string &zone);
+    bool versionIsNewer(const std::string &version);
+    std::vector<ListEntryEnvolued *> savegame;
+    std::unordered_map<ListEntryEnvolued *,std::string> savegamePathList;
+    std::unordered_map<ListEntryEnvolued *,bool> savegameWithMetaData;
     ListEntryEnvolued * selectedSavegame;
     bool datapackPathExists;
     bool standAlone;
     QSpacerItem *spacer;
-    QString datapackPath;
-    QString savegamePath;
-    /*
-    QSettings settings;
-    QString lastMessageSend;
-    QStringList server_list;
-
-    //loaded game
-    QString pass;
-    uint64_t timeLaunched;
-    QString launchedGamePath;
-    bool haveLaunchedGame;
-    */
+    std::string datapackPath;
+    std::string savegamePath;
 
     static const QString text_savegame_version;
     static const QString text_QSQLITE;
@@ -115,7 +104,7 @@ private:
     static const QString text_en;
     static const QString text_CATCHCHALLENGER_SAVEGAME_VERSION;
 signals:
-    void play(const QString &savegamesPath);
+    void play(const std::string &savegamesPath);
     void back();
 };
 
