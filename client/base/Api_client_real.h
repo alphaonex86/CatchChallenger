@@ -111,8 +111,8 @@ private:
     std::vector<uint32_t> partialHashListBase;
     std::vector<uint32_t> partialHashListMain;
     std::vector<uint32_t> partialHashListSub;
-    static std::string text_slash;
-    static std::string text_dotcoma;
+    static QString text_slash;
+    static QString text_dotcoma;
     bool httpError;
     bool httpModeBase;
     bool httpModeMain;
@@ -128,7 +128,6 @@ private:
     };
     std::unordered_map<QNetworkReply *,UrlInWaiting> urlInWaitingListBase,urlInWaitingListMain,urlInWaitingListSub;
 private slots:
-    void disconnect();
     void writeNewFileBase(const std::string &fileName, const std::string &data);
     void writeNewFileMain(const std::string &fileName, const std::string &data);
     void writeNewFileSub(const std::string &fileName, const std::string &data);
@@ -165,7 +164,7 @@ public:
     void lastReplyTime(const uint32_t &time);
 
     //protocol/connection info
-    void disconnect(const std::string &reason);
+    void disconnect();
     void notLogged(const std::string &reason);
     void logged(const std::vector<ServerFromPoolForDisplay *> &serverOrdenedList,const std::vector<std::vector<CharacterEntry> > &characterEntryList);
     void protocol_is_good();

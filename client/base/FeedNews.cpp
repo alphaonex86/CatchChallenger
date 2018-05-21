@@ -7,8 +7,6 @@
 
 #include <QNetworkRequest>
 #include <QUrl>
-#include <QDomDocument>
-#include <tinyxml2::XMLElement>
 #include <QRegularExpression>
 
 FeedNews *FeedNews::feedNews=NULL;
@@ -73,14 +71,14 @@ void FeedNews::httpFinished()
     }
     else if (reply->error())
     {
-        emit feedEntryList(QList<FeedEntry>(),reply->errorString());
+        emit feedEntryList(std::vector<FeedEntry>(),reply->errorString().toStdString());
         qDebug() << (QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
         reply->deleteLater();
         return;
     }
     else if (!redirectionTarget.isNull())
     {
-        emit feedEntryList(QList<FeedEntry>(),tr("Redirection denied to"));
+        emit feedEntryList(std::vector<FeedEntry>(),tr("Redirection denied to").toStdString());
         qDebug() << (QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
         reply->deleteLater();
         return;
@@ -90,134 +88,57 @@ void FeedNews::httpFinished()
 
 void FeedNews::loadFeeds(const QByteArray &data)
 {
-    QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(data, false, &errorStr,&errorLine,&errorColumn))
-    {
-        qDebug() << QStringLiteral("Unable to open the rss, Parse error at line %1, column %2: %3").arg(errorLine).arg(errorColumn).arg(errorStr);
+    //open and quick check the file
+    tinyxml2::XMLDocument domDocument;
+    if(domDocument.Parse(data.data(),data.size())!=0)
         return;
-    }
-    tinyxml2::XMLElement root = domDocument.RootElement();
-    if(root.tagName()==QStringLiteral("rss"))
+    const tinyxml2::XMLElement *root = domDocument.RootElement();
+    if(root==NULL)
+        return;
+
+    if(strcmp(root->Name(),"rss")==0)
         loadRss(root);
-    else if(root.tagName()==QStringLiteral("feed"))
+    else if(strcmp(root->Name(),"feed")==0)
         loadAtom(root);
     else
-        emit feedEntryList(QList<FeedEntry>(),tr("Not Rss or Atom feed"));
+        emit feedEntryList(std::vector<FeedEntry>(),tr("Not Rss or Atom feed").toStdString());
 }
 
-void FeedNews::loadRss(const tinyxml2::XMLElement &root)
+void FeedNews::loadRss(const tinyxml2::XMLElement *root)
 {
-    QList<FeedEntry> entryList;
+    std::vector<FeedEntry> entryList;
     //load the content
-    tinyxml2::XMLElement channelItem = root.FirstChildElement(QStringLiteral("channel"));
-    if(!channelItem.isNull())
+    const tinyxml2::XMLElement *channelItem = root->FirstChildElement("channel");
+    if(channelItem!=NULL)
     {
-        if(channelItem.isElement())
+        const tinyxml2::XMLElement *item = channelItem->FirstChildElement("item");
+        while(item!=NULL)
         {
-            tinyxml2::XMLElement item = channelItem.FirstChildElement(QStringLiteral("item"));
-            while(!item.isNull())
+            std::string description,title,link;
+            QString pubDate;
             {
-                if(item.isElement())
-                {
-                    QString description,title,link,pubDate;
-                    {
-                        tinyxml2::XMLElement descriptionItem = item.FirstChildElement(QStringLiteral("description"));
-                        if(!descriptionItem.isNull())
-                        {
-                            if(descriptionItem.isElement())
-                                description=descriptionItem.text();
-                        }
-                    }
-                    {
-                        tinyxml2::XMLElement titleItem = item.FirstChildElement(QStringLiteral("title"));
-                        if(!titleItem.isNull())
-                        {
-                            if(titleItem.isElement())
-                                title=titleItem.text();
-                        }
-                    }
-                    {
-                        tinyxml2::XMLElement linkItem = item.FirstChildElement(QStringLiteral("link"));
-                        if(!linkItem.isNull())
-                        {
-                            if(linkItem.isElement())
-                                link=linkItem.text();
-                        }
-                    }
-                    {
-                        tinyxml2::XMLElement pubDateItem = item.FirstChildElement(QStringLiteral("pubDate"));
-                        if(!pubDateItem.isNull())
-                        {
-                            if(pubDateItem.isElement())
-                                pubDate=pubDateItem.text();
-                        }
-                    }
-                    pubDate = pubDate.remove(QStringLiteral(" GMT"), Qt::CaseInsensitive);
-                    pubDate = pubDate.remove(QRegularExpression(QStringLiteral("\\+0[0-9]{4}$")));
-                    QDateTime date=QDateTime::fromString(pubDate,"ddd, dd MMM yyyy hh:mm:ss");
-                    if(!date.isValid())
-                        pubDate.clear();
-                    FeedEntry rssEntry;
-                    rssEntry.description=description;
-                    rssEntry.title=title;
-                    rssEntry.pubDate=date;
-                    rssEntry.link=link;
-                    entryList << rssEntry;
-                }
-                item = item.NextSiblingElement(QStringLiteral("item"));
-            }
-        }
-    }
-    emit feedEntryList(entryList);
-}
-
-void FeedNews::loadAtom(const tinyxml2::XMLElement &root)
-{
-    QList<FeedEntry> entryList;
-    //load the content
-    tinyxml2::XMLElement item = root.FirstChildElement(QStringLiteral("entry"));
-    while(!item.isNull())
-    {
-        if(item.isElement())
-        {
-            QString description,title,link,pubDate;
-            {
-                tinyxml2::XMLElement descriptionItem = item.FirstChildElement(QStringLiteral("content"));
-                if(!descriptionItem.isNull())
-                {
-                    if(descriptionItem.isElement())
-                        description=descriptionItem.text();
-                }
+                const tinyxml2::XMLElement *descriptionItem = item->FirstChildElement("description");
+                if(descriptionItem!=NULL)
+                    description=descriptionItem->GetText();
             }
             {
-                tinyxml2::XMLElement titleItem = item.FirstChildElement(QStringLiteral("title"));
-                if(!titleItem.isNull())
-                {
-                    if(titleItem.isElement())
-                        title=titleItem.text();
-                }
+                const tinyxml2::XMLElement *titleItem = item->FirstChildElement("title");
+                if(titleItem!=NULL)
+                    title=titleItem->GetText();
             }
             {
-                tinyxml2::XMLElement linkItem = item.FirstChildElement(QStringLiteral("link"));
-                if(!linkItem.isNull())
-                {
-                    if(linkItem.isElement())
-                        link=linkItem.attribute(QStringLiteral("href"));
-                }
+                const tinyxml2::XMLElement *linkItem = item->FirstChildElement("link");
+                if(linkItem!=NULL)
+                    link=linkItem->GetText();
             }
             {
-                tinyxml2::XMLElement pubDateItem = item.FirstChildElement(QStringLiteral("published"));
-                if(!pubDateItem.isNull())
-                {
-                    if(pubDateItem.isElement())
-                        pubDate=pubDateItem.text();
-                }
+                const tinyxml2::XMLElement *pubDateItem = item->FirstChildElement("pubDate");
+                if(pubDateItem!=NULL)
+                    pubDate=QString::fromStdString(pubDateItem->GetText());
             }
             pubDate = pubDate.remove(QStringLiteral(" GMT"), Qt::CaseInsensitive);
             pubDate = pubDate.remove(QRegularExpression(QStringLiteral("\\+0[0-9]{4}$")));
-            QDateTime date=QDateTime::fromString(pubDate,"yyyy-MMM-ddThh:mm:ss");
+            QDateTime date=QDateTime::fromString(pubDate,"ddd, dd MMM yyyy hh:mm:ss");
             if(!date.isValid())
                 pubDate.clear();
             FeedEntry rssEntry;
@@ -225,9 +146,54 @@ void FeedNews::loadAtom(const tinyxml2::XMLElement &root)
             rssEntry.title=title;
             rssEntry.pubDate=date;
             rssEntry.link=link;
-            entryList << rssEntry;
+            entryList.push_back(rssEntry);
+            item = item->NextSiblingElement("item");
         }
-        item = item.NextSiblingElement(QStringLiteral("entry"));
+    }
+    emit feedEntryList(entryList);
+}
+
+void FeedNews::loadAtom(const tinyxml2::XMLElement *root)
+{
+    std::vector<FeedEntry> entryList;
+    //load the content
+    const tinyxml2::XMLElement *item = root->FirstChildElement("entry");
+    while(item!=NULL)
+    {
+        std::string description,title,link;
+        QString pubDate;
+        {
+            const tinyxml2::XMLElement *descriptionItem = item->FirstChildElement("content");
+            if(descriptionItem!=NULL)
+                description=descriptionItem->GetText();
+        }
+        {
+            const tinyxml2::XMLElement *titleItem = item->FirstChildElement("title");
+            if(titleItem!=NULL)
+                title=titleItem->GetText();
+        }
+        {
+            const tinyxml2::XMLElement *linkItem = item->FirstChildElement("link");
+            if(linkItem!=NULL && linkItem->Attribute("href")!=NULL)
+                link=linkItem->Attribute("href");
+        }
+        {
+            const tinyxml2::XMLElement *pubDateItem = item->FirstChildElement("published");
+            if(pubDateItem!=NULL)
+                pubDate=QString::fromStdString(pubDateItem->GetText());
+        }
+        pubDate = pubDate.remove(QStringLiteral(" GMT"), Qt::CaseInsensitive);
+        pubDate = pubDate.remove(QRegularExpression(QStringLiteral("\\+0[0-9]{4}$")));
+        QDateTime date=QDateTime::fromString(pubDate,"yyyy-MMM-ddThh:mm:ss");
+        if(!date.isValid())
+            pubDate.clear();
+        FeedEntry rssEntry;
+        rssEntry.description=description;
+        rssEntry.title=title;
+        rssEntry.pubDate=date;
+        rssEntry.link=link;
+        entryList.push_back(rssEntry);
+        item = item->NextSiblingElement("entry");
     }
     emit feedEntryList(entryList);
 }
