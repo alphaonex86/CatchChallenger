@@ -108,7 +108,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         if(!language.empty() && language!=BaseWindow::text_en)
             while(text!=NULL)
             {
-                if(text->Attribute("lang")!=NULL && text->Attribute("lang")==language)
+                if(text->Attribute("lang")!=NULL && text->Attribute("lang")==language && text->GetText()!=NULL)
                 {
                     std::string textToShow=text->GetText();
                     textToShow=parseHtmlToDisplay(textToShow);
@@ -123,14 +123,15 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         while(text!=NULL)
         {
             if(text->Attribute("lang")==NULL || text->Attribute("lang")==language)
-            {
-                std::string textToShow=text->GetText();
-                textToShow=parseHtmlToDisplay(textToShow);
-                ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
-                ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
-                ui->IG_dialog->setVisible(true);
-                return;
-            }
+                if(text->GetText()!=NULL)
+                {
+                    std::string textToShow=text->GetText();
+                    textToShow=parseHtmlToDisplay(textToShow);
+                    ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
+                    ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
+                    ui->IG_dialog->setVisible(true);
+                    return;
+                }
             text = text->NextSiblingElement("text");
         }
         showTip(tr("Bot text not found, repport this error please").toStdString());
@@ -428,47 +429,6 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         updatePageZoneCatch();
         return;
     }
-    /*else if(strcmp(stepXml->Attribute("type"),"script")==0)
-    {
-        std::string contents = stepXml->GetText();
-        contents=QStringLiteral("function getTextEntryPoint()\n{\n")+contents+QStringLiteral("\n}");
-        QScriptValue result = engine.evaluate(contents);
-        if (result.isError()) {
-            qDebug() << "script error:" << QString::fromLatin1("%1: %2")
-                        .arg(result.property("lineNumber").toInt32())
-                        .arg(result.toString());
-            showTip(QString::fromLatin1("%1: %2")
-            .arg(result.property("lineNumber").toInt32())
-            .arg(result.toString()));
-            return;
-        }
-
-        QScriptValue getTextEntryPoint = engine.globalObject().property(QStringLiteral("getTextEntryPoint"));
-        if(getTextEntryPoint.isError())
-        {
-            qDebug() << "script error:" << QString::fromLatin1("%1: %2")
-                        .arg(getTextEntryPoint.property("lineNumber").toInt32())
-                        .arg(getTextEntryPoint.toString());
-            showTip(QString::fromLatin1("%1: %2")
-            .arg(getTextEntryPoint.property("lineNumber").toInt32())
-            .arg(getTextEntryPoint.toString()));
-            return;
-        }
-        QScriptValue returnValue=getTextEntryPoint.call();
-        uint32_t textEntryPoint=returnValue.toNumber();
-        if(returnValue.isError())
-        {
-            qDebug() << "script error:" << QString::fromLatin1("%1: %2")
-                        .arg(returnValue.property("lineNumber").toInt32())
-                        .arg(returnValue.toString());
-            showTip(QString::fromLatin1("%1: %2")
-            .arg(returnValue.property(QStringLiteral("lineNumber")).toInt32())
-            .arg(returnValue.toString()));
-            return;
-        }
-        qDebug() << QStringLiteral("textEntryPoint:") << textEntryPoint;
-        return;
-    }*/
     else if(strcmp(stepXml->Attribute("type"),"fight")==0)
     {
         if(stepXml->Attribute("fightid")==NULL)

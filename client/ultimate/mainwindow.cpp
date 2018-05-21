@@ -470,16 +470,16 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                         if(lang->Attribute("lang") && lang->Attribute("lang")==language)
                         {
                             const tinyxml2::XMLElement *name = lang->FirstChildElement("name");
-                            if(name!=NULL)
+                            if(name!=NULL && name->GetText()!=NULL)
                                 connexionInfo.name=name->GetText();
                             const tinyxml2::XMLElement *register_page = lang->FirstChildElement("register_page");
-                            if(register_page!=NULL)
+                            if(register_page!=NULL && register_page->GetText()!=NULL)
                                 connexionInfo.register_page=register_page->GetText();
                             const tinyxml2::XMLElement *lost_passwd_page = lang->FirstChildElement("lost_passwd_page");
-                            if(lost_passwd_page!=NULL)
+                            if(lost_passwd_page!=NULL && lost_passwd_page->GetText()!=NULL)
                                 connexionInfo.lost_passwd_page=lost_passwd_page->GetText();
                             const tinyxml2::XMLElement *site_page = lang->FirstChildElement("site_page");
-                            if(site_page!=NULL)
+                            if(site_page!=NULL && site_page->GetText()!=NULL)
                                 connexionInfo.site_page=site_page->GetText();
                             found=true;
                             break;
@@ -495,16 +495,16 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                         if(lang->Attribute("lang")==NULL || strcmp(lang->Attribute("lang"),"en")==0)
                         {
                             const tinyxml2::XMLElement *name = lang->FirstChildElement("name");
-                            if(name!=NULL)
+                            if(name!=NULL && name->GetText()!=NULL)
                                 connexionInfo.name=name->GetText();
                             const tinyxml2::XMLElement *register_page = lang->FirstChildElement("register_page");
-                            if(register_page!=NULL)
+                            if(register_page!=NULL && register_page->GetText()!=NULL)
                                 connexionInfo.register_page=register_page->GetText();
                             const tinyxml2::XMLElement *lost_passwd_page = lang->FirstChildElement("lost_passwd_page");
-                            if(lost_passwd_page!=NULL)
+                            if(lost_passwd_page!=NULL && lost_passwd_page->GetText()!=NULL)
                                 connexionInfo.lost_passwd_page=lost_passwd_page->GetText();
                             const tinyxml2::XMLElement *site_page = lang->FirstChildElement("site_page");
-                            if(site_page!=NULL)
+                            if(site_page!=NULL && site_page->GetText()!=NULL)
                                 connexionInfo.site_page=site_page->GetText();
                             break;
                         }
@@ -1424,7 +1424,7 @@ std::pair<std::string,std::string> MainWindow::getDatapackInformations(const std
     if(!language.empty() && language!="en")
         while(item!=NULL)
         {
-            if(item->Attribute("lang")!=NULL && item->Attribute("lang")==language)
+            if(item->Attribute("lang")!=NULL && item->Attribute("lang")==language && item->GetText()!=NULL)
             {
                 returnVar.second=item->GetText();
                 found=true;
@@ -1438,10 +1438,11 @@ std::pair<std::string,std::string> MainWindow::getDatapackInformations(const std
         while(item!=NULL)
         {
             if(item->Attribute("lang")==NULL || strcmp(item->Attribute("lang"),"en")==0)
-            {
-                returnVar.second=item->GetText();
-                break;
-            }
+                if(item->GetText()!=NULL)
+                {
+                    returnVar.second=item->GetText();
+                    break;
+                }
             item = item->NextSiblingElement("name");
         }
     }

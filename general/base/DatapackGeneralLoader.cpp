@@ -781,7 +781,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                         const CATCHCHALLENGER_XMLELEMENT * quantity = plantItem->FirstChildElement("quantity");
                         if(quantity!=NULL)
                         {
-                            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(quantity))
+                            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(quantity) && quantity->GetText()!=NULL)
                             {
                                 const float &float_quantity=stringtofloat(quantity->GetText(),&ok2);
                                 const int &integer_part=float_quantity;
@@ -801,7 +801,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                 const CATCHCHALLENGER_XMLELEMENT * fruits = grow->FirstChildElement("fruits");
                                 if(fruits!=NULL)
                                 {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(fruits))
+                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(fruits) && fruits->GetText()!=NULL)
                                     {
                                         plant.fruits_seconds=stringtouint32(fruits->GetText(),&ok2)*60;
                                         plant.sprouted_seconds=static_cast<uint16_t>(plant.fruits_seconds);
@@ -827,7 +827,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                 const CATCHCHALLENGER_XMLELEMENT * sprouted = grow->FirstChildElement("sprouted");
                                 if(sprouted!=NULL)
                                 {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(sprouted))
+                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(sprouted) && sprouted->GetText()!=NULL)
                                     {
                                         plant.sprouted_seconds=stringtouint16(sprouted->GetText(),&ok2)*60;
                                         if(!ok2)
@@ -844,7 +844,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                 const CATCHCHALLENGER_XMLELEMENT * taller = grow->FirstChildElement("taller");
                                 if(taller!=NULL)
                                 {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(taller))
+                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(taller) && taller->GetText()!=NULL)
                                     {
                                         plant.taller_seconds=stringtouint16(taller->GetText(),&ok2)*60;
                                         if(!ok2)
@@ -861,7 +861,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
                                 const CATCHCHALLENGER_XMLELEMENT * flowering = grow->FirstChildElement("flowering");
                                 if(flowering!=NULL)
                                 {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(flowering))
+                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(flowering) && flowering->GetText()!=NULL)
                                     {
                                         plant.flowering_seconds=stringtouint16(flowering->GetText(),&ok2)*60;
                                         if(!ok2)
@@ -2618,7 +2618,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
                     const CATCHCHALLENGER_XMLELEMENT * valueItem = eventItem->FirstChildElement("value");
                     while(valueItem!=NULL)
                     {
-                        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(valueItem))
+                        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(valueItem) && valueItem->GetText()!=NULL)
                             event.values.push_back(valueItem->GetText());
                         valueItem = valueItem->NextSiblingElement("value");
                     }

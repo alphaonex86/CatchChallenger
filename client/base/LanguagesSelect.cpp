@@ -77,9 +77,12 @@ LanguagesSelect::LanguagesSelect() :
         const tinyxml2::XMLElement *shortName = root->FirstChildElement("shortName");
         while(shortName!=NULL)
         {
-            if(shortName->Attribute("mainCode")!=NULL && strcmp(shortName->Attribute("mainCode"),"true")==0)
-                shortNameMain=shortName->GetText();
-            shortNameList << shortName->GetText();
+            if(shortName->GetText()!=NULL)
+            {
+                if(shortName->Attribute("mainCode")!=NULL && strcmp(shortName->Attribute("mainCode"),"true")==0)
+                    shortNameMain=shortName->GetText();
+                shortNameList << shortName->GetText();
+            }
             shortName = shortName->NextSiblingElement("shortName");
         }
 
@@ -92,7 +95,8 @@ LanguagesSelect::LanguagesSelect() :
         }
 
         Language language;
-        language.fullName=fullName->GetText();
+        if(fullName->GetText()!=NULL)
+            language.fullName=fullName->GetText();
         language.path=languageToParse.at(index).toStdString();
         languagesByMainCode[shortNameMain.toStdString()]=language;
         int sub_index=0;
