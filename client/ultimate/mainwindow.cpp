@@ -11,6 +11,7 @@
 #include <QSettings>
 #include <algorithm>
 #include <string>
+#include <iostream>
 
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/Version.h"
@@ -79,7 +80,10 @@ MainWindow::MainWindow(QWidget *parent) :
     FeedNews::feedNews=new FeedNews();
     if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList))
         qDebug() << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed";
-    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/"),QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/savegames/"),false);
+    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+
+                              "/datapack/internal/",
+                              QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+
+                              "/savegames/",false);
     connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back);
     connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play);
     ui->stackedWidget->addWidget(solowindow);
@@ -408,16 +412,21 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList()
 QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlContent)
 {
     QList<ConnexionInfo> returnedVar;
-    QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    tinyxml2::XMLDocument domDocument;
+    const auto loadOkay = domDocument.Parse(xmlContent.data(),xmlContent.size());
+    if(loadOkay!=0)
     {
-        qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg("server_list.xml").arg(errorLine).arg(errorColumn).arg(errorStr);
+        std::cerr << "MainWindow::loadXmlConnexionInfoList, " << domDocument.ErrorName() << std::endl;
         return returnedVar;
     }
-    tinyxml2::XMLElement root = domDocument.RootElement();
-    if(root.tagName()!=QStringLiteral("servers"))
+
+    const tinyxml2::XMLElement *root = domDocument.RootElement();
+    if(root==NULL)
+    {
+        std::cerr << "Unable to open the file: MainWindow::loadXmlConnexionInfoList, no root balise found for the xml file" << std::endl;
+        return returnedVar;
+    }
+    if(strcmp(root->Name(),"servers")!=0)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"servers\" root balise not found for the xml file").arg("server_list.xml");
         return returnedVar;
@@ -426,134 +435,124 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
     QRegularExpression regexHost("^[a-zA-Z0-9\\.\\-_]+$");
     bool ok;
     //load the content
-    tinyxml2::XMLElement server = root.FirstChildElement(QStringLiteral("server"));
-    while(!server.isNull())
+    const tinyxml2::XMLElement *server = root->FirstChildElement("server");
+    while(server!=NULL)
     {
-        if(server.isElement())
+        if(server->Attribute("host")!=NULL && server->Attribute("port")!=NULL && server->Attribute("unique_code")!=NULL)
         {
-            if(server.hasAttribute(QStringLiteral("host")) && server.hasAttribute(QStringLiteral("port")) && server.hasAttribute(QStringLiteral("unique_code")))
-            {
-                ConnexionInfo connexionInfo;
-                connexionInfo.host=server.attribute(QStringLiteral("host"));
-                connexionInfo.unique_code=server.attribute(QStringLiteral("unique_code"));
-                uint32_t temp_port=server.attribute(QStringLiteral("port")).toUInt(&ok);
-                if(!connexionInfo.host.contains(regexHost))
-                    qDebug() << QStringLiteral("Unable to open the file: %1, host is wrong: %4 child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber()).arg(connexionInfo.host);
-                else if(!ok)
-                    qDebug() << QStringLiteral("Unable to open the file: %1, port is not a number: %4 child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber()).arg(server.attribute("port"));
-                else if(temp_port<1 || temp_port>65535)
-                    qDebug() << QStringLiteral("Unable to open the file: %1, port is not in range: %4 child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber()).arg(server.attribute("port"));
-                else if(connexionInfo.unique_code.isEmpty())
-                    qDebug() << QStringLiteral("Unable to open the file: %1, unique_code can't be empty: %4 child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber()).arg(server.attribute("port"));
-                else
-                {
-                    connexionInfo.port=static_cast<uint16_t>(temp_port);
-                    tinyxml2::XMLElement lang;
-                    const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-                    bool found=false;
-                    if(!language.isEmpty() && language!=QStringLiteral("en"))
-                    {
-                        lang = server.FirstChildElement(QStringLiteral("lang"));
-                        while(!lang.isNull())
-                        {
-                            if(lang.isElement())
-                            {
-                                if(lang.hasAttribute(QStringLiteral("lang")) && lang.attribute(QStringLiteral("lang"))==language)
-                                {
-                                    tinyxml2::XMLElement name = lang.FirstChildElement(QStringLiteral("name"));
-                                    if(!name.isNull())
-                                        connexionInfo.name=name.text();
-                                    tinyxml2::XMLElement register_page = lang.FirstChildElement(QStringLiteral("register_page"));
-                                    if(!register_page.isNull())
-                                        connexionInfo.register_page=register_page.text();
-                                    tinyxml2::XMLElement lost_passwd_page = lang.FirstChildElement(QStringLiteral("lost_passwd_page"));
-                                    if(!lost_passwd_page.isNull())
-                                        connexionInfo.lost_passwd_page=lost_passwd_page.text();
-                                    tinyxml2::XMLElement site_page = lang.FirstChildElement(QStringLiteral("site_page"));
-                                    if(!site_page.isNull())
-                                        connexionInfo.site_page=site_page.text();
-                                    found=true;
-                                    break;
-                                }
-                            }
-                            else
-                                qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(lang.tagName()).arg(lang.lineNumber());
-                            lang = lang.NextSiblingElement(QStringLiteral("lang"));
-                        }
-                    }
-                    if(!found)
-                    {
-                        lang = server.FirstChildElement(QStringLiteral("lang"));
-                        while(!lang.isNull())
-                        {
-                            if(lang.isElement())
-                            {
-                                if(!lang.hasAttribute(QStringLiteral("lang")) || lang.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
-                                {
-                                    tinyxml2::XMLElement name = lang.FirstChildElement(QStringLiteral("name"));
-                                    if(!name.isNull())
-                                        connexionInfo.name=name.text();
-                                    tinyxml2::XMLElement register_page = lang.FirstChildElement(QStringLiteral("register_page"));
-                                    if(!register_page.isNull())
-                                        connexionInfo.register_page=register_page.text();
-                                    tinyxml2::XMLElement lost_passwd_page = lang.FirstChildElement(QStringLiteral("lost_passwd_page"));
-                                    if(!lost_passwd_page.isNull())
-                                        connexionInfo.lost_passwd_page=lost_passwd_page.text();
-                                    tinyxml2::XMLElement site_page = lang.FirstChildElement(QStringLiteral("site_page"));
-                                    if(!site_page.isNull())
-                                        connexionInfo.site_page=site_page.text();
-                                    break;
-                                }
-                            }
-                            else
-                                qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(lang.tagName()).arg(lang.lineNumber());
-                            lang = lang.NextSiblingElement(QStringLiteral("lang"));
-                        }
-                    }
-                    settings.beginGroup(QStringLiteral("Xml-%1").arg(server.attribute("unique_code")));
-                    if(settings.contains(QStringLiteral("connexionCounter")))
-                    {
-                        connexionInfo.connexionCounter=settings.value(QStringLiteral("connexionCounter")).toUInt(&ok);
-                        if(!ok)
-                            connexionInfo.connexionCounter=0;
-                    }
-                    else
-                        connexionInfo.connexionCounter=0;
-
-                    //proxy
-                    if(settings.contains(QStringLiteral("proxyPort")))
-                    {
-                        connexionInfo.proxyPort=static_cast<uint16_t>(settings.value(QStringLiteral("proxyPort")).toUInt(&ok));
-                        if(!ok)
-                            connexionInfo.proxyPort=9050;
-                    }
-                    else
-                        connexionInfo.proxyPort=9050;
-                    if(settings.contains(QStringLiteral("proxyHost")))
-                        connexionInfo.proxyHost=settings.value(QStringLiteral("proxyHost")).toString();
-                    else
-                        connexionInfo.proxyHost=QString();
-
-                    if(settings.contains(QStringLiteral("lastConnexion")))
-                    {
-                        connexionInfo.lastConnexion=settings.value(QStringLiteral("lastConnexion")).toUInt(&ok);
-                        if(!ok)
-                            connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-                    }
-                    else
-                        connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-                    settings.endGroup();
-                    if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
-                        connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-                    returnedVar << connexionInfo;
-                }
-            }
+            ConnexionInfo connexionInfo;
+            connexionInfo.host=server->Attribute("host");
+            connexionInfo.unique_code=server->Attribute("unique_code");
+            uint32_t temp_port=stringtouint32(server->Attribute("port"),&ok);
+            if(!connexionInfo.host.contains(regexHost))
+                qDebug() << QStringLiteral("Unable to open the file: %1, host is wrong: %3 child->Name(): %2")
+                            .arg("server_list.xml").arg(server->Name()).arg(connexionInfo.host);
+            else if(!ok)
+                qDebug() << QStringLiteral("Unable to open the file: %1, port is not a number: %3 child->Name(): %2")
+                            .arg("server_list.xml").arg(server->Name()).arg(server->Attribute("port"));
+            else if(temp_port<1 || temp_port>65535)
+                qDebug() << QStringLiteral("Unable to open the file: %1, port is not in range: %3 child->Name(): %2")
+                            .arg("server_list.xml").arg(server->Name()).arg(server->Attribute("port"));
+            else if(connexionInfo.unique_code.isEmpty())
+                qDebug() << QStringLiteral("Unable to open the file: %1, unique_code can't be empty: %3 child->Name(): %2")
+                            .arg("server_list.xml").arg(server->Name()).arg(server->Attribute("port"));
             else
-                qDebug() << QStringLiteral("Unable to open the file: %1, missing host or port: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber());
+            {
+                connexionInfo.port=static_cast<uint16_t>(temp_port);
+                const tinyxml2::XMLElement *lang;
+                const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+                bool found=false;
+                if(!language.empty() && language!="en")
+                {
+                    lang = server->FirstChildElement("lang");
+                    while(lang!=NULL)
+                    {
+                        if(lang->Attribute("lang") && lang->Attribute("lang")==language)
+                        {
+                            const tinyxml2::XMLElement *name = lang->FirstChildElement("name");
+                            if(name!=NULL)
+                                connexionInfo.name=name->GetText();
+                            const tinyxml2::XMLElement *register_page = lang->FirstChildElement("register_page");
+                            if(register_page!=NULL)
+                                connexionInfo.register_page=register_page->GetText();
+                            const tinyxml2::XMLElement *lost_passwd_page = lang->FirstChildElement("lost_passwd_page");
+                            if(lost_passwd_page!=NULL)
+                                connexionInfo.lost_passwd_page=lost_passwd_page->GetText();
+                            const tinyxml2::XMLElement *site_page = lang->FirstChildElement("site_page");
+                            if(site_page!=NULL)
+                                connexionInfo.site_page=site_page->GetText();
+                            found=true;
+                            break;
+                        }
+                        lang = lang->NextSiblingElement("lang");
+                    }
+                }
+                if(!found)
+                {
+                    lang = server->FirstChildElement("lang");
+                    while(lang!=NULL)
+                    {
+                        if(lang->Attribute("lang")==NULL || strcmp(lang->Attribute("lang"),"en")==0)
+                        {
+                            const tinyxml2::XMLElement *name = lang->FirstChildElement("name");
+                            if(name!=NULL)
+                                connexionInfo.name=name->GetText();
+                            const tinyxml2::XMLElement *register_page = lang->FirstChildElement("register_page");
+                            if(register_page!=NULL)
+                                connexionInfo.register_page=register_page->GetText();
+                            const tinyxml2::XMLElement *lost_passwd_page = lang->FirstChildElement("lost_passwd_page");
+                            if(lost_passwd_page!=NULL)
+                                connexionInfo.lost_passwd_page=lost_passwd_page->GetText();
+                            const tinyxml2::XMLElement *site_page = lang->FirstChildElement("site_page");
+                            if(site_page!=NULL)
+                                connexionInfo.site_page=site_page->GetText();
+                            break;
+                        }
+                        lang = lang->NextSiblingElement("lang");
+                    }
+                }
+                settings.beginGroup(QStringLiteral("Xml-%1").arg(server->Attribute("unique_code")));
+                if(settings.contains(QStringLiteral("connexionCounter")))
+                {
+                    connexionInfo.connexionCounter=settings.value("connexionCounter").toUInt(&ok);
+                    if(!ok)
+                        connexionInfo.connexionCounter=0;
+                }
+                else
+                    connexionInfo.connexionCounter=0;
+
+                //proxy
+                if(settings.contains(QStringLiteral("proxyPort")))
+                {
+                    connexionInfo.proxyPort=static_cast<uint16_t>(settings.value("proxyPort").toUInt(&ok));
+                    if(!ok)
+                        connexionInfo.proxyPort=9050;
+                }
+                else
+                    connexionInfo.proxyPort=9050;
+                if(settings.contains(QStringLiteral("proxyHost")))
+                    connexionInfo.proxyHost=settings.value(QStringLiteral("proxyHost")).toString();
+                else
+                    connexionInfo.proxyHost=QString();
+
+                if(settings.contains(QStringLiteral("lastConnexion")))
+                {
+                    connexionInfo.lastConnexion=settings.value(QStringLiteral("lastConnexion")).toUInt(&ok);
+                    if(!ok)
+                        connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
+                }
+                else
+                    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
+                settings.endGroup();
+                if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
+                    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
+                returnedVar << connexionInfo;
+            }
         }
         else
-            qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.tagName(): %2 (at line: %3)").arg("server_list.xml").arg(server.tagName()).arg(server.lineNumber());
-        server = server.NextSiblingElement(QStringLiteral("server"));
+            qDebug() << QStringLiteral("Unable to open the file: %1, missing host or port: child->Name(): %2")
+                        .arg("server_list.xml").arg(server->Name());
+        server = server->NextSiblingElement("server");
     }
     return returnedVar;
 }
@@ -1001,9 +1000,9 @@ void MainWindow::sslErrors(const QList<QSslError> &errors)
     realSocket->disconnectFromHost();*/
 }
 
-void MainWindow::disconnected(QString reason)
+void MainWindow::disconnected(std::string reason)
 {
-    QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(reason));
+    QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(QString::fromStdString(reason)));
     /*if(serverConnexion.contains(selectedServer))
         lastServerIsKick[serverConnexion.value(selectedServer)->host]=true;*/
     haveShowDisconnectionReason=true;
@@ -1119,7 +1118,14 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     }
     realSslSocket=new QSslSocket();
     socket=new CatchChallenger::ConnectedSocket(realSslSocket);
-    client=new CatchChallenger::Api_client_real(socket);
+    CatchChallenger::Api_client_real *client=new CatchChallenger::Api_client_real(socket);
+    this->client=client;
+
+    connect(client,               &CatchChallenger::Api_client_real::Qtprotocol_is_good,   this,&MainWindow::protocol_is_good,Qt::QueuedConnection);
+    connect(client,               &CatchChallenger::Api_client_real::Qtdisconnected,       this,&MainWindow::disconnected);
+    //connect(client,               &CatchChallenger::Api_protocol::Qtmessage,            this,&MainWindow::message,Qt::QueuedConnection);
+    connect(client,               &CatchChallenger::Api_client_real::Qtlogged,             this,&MainWindow::logged,Qt::QueuedConnection);
+
     if(!selectedServerConnexion->proxyHost.isEmpty())
     {
         QNetworkProxy proxy=realSslSocket->proxy();
@@ -1129,7 +1135,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         realSslSocket->setProxy(proxy);
     }
     ui->stackedWidget->setCurrentWidget(baseWindow);
-    baseWindow->setMultiPlayer(true,client);
+    baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
     baseWindow->stateChanged(QAbstractSocket::ConnectingState);
     connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection);
     connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection);
@@ -1164,20 +1170,17 @@ void MainWindow::connectTheExternalSocket()
         proxy.setPort(serverConnexion.value(selectedServer)->proxyPort);
         static_cast<CatchChallenger::Api_client_real *>(client)->setProxy(proxy);
     }
-    connect(client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good,Qt::QueuedConnection);
-    connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
-    //connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message,Qt::QueuedConnection);
-    connect(client,               &CatchChallenger::Api_protocol::logged,             this,&MainWindow::logged,Qt::QueuedConnection);
+
     baseWindow->connectAllSignals();
-    baseWindow->setMultiPlayer(true,client);
+    baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
     QDir datapack(serverToDatapachPath(selectedServer));
     if(!datapack.exists())
         if(!datapack.mkpath(datapack.absolutePath()))
         {
-            disconnected(tr("Not able to create the folder %1").arg(datapack.absolutePath()));
+            disconnected(tr("Not able to create the folder %1").arg(datapack.absolutePath()).toStdString());
             return;
         }
-    client->setDatapackPath(datapack.absolutePath());
+    client->setDatapackPath(datapack.absolutePath().toStdString());
     baseWindow->stateChanged(QAbstractSocket::ConnectedState);
 }
 
@@ -1214,9 +1217,9 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             if(client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2 || client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage3)
             {
                 std::cout << "MainWindow::stateChanged(" << std::to_string((int)socketState) << ") call socketDisconnectedForReconnect" << std::endl;
-                const QString &lastServer=client->socketDisconnectedForReconnect();
-                if(!lastServer.isEmpty())
-                    this->lastServer=lastServer;
+                const std::string &lastServer=client->socketDisconnectedForReconnect();
+                if(!lastServer.empty())
+                    this->lastServer=QString::fromStdString(lastServer);
                 return;
             }
         }
@@ -1304,13 +1307,13 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
     }
 }
 
-void MainWindow::newError(QString error,QString detailedError)
+void MainWindow::newError(std::string error,std::string detailedError)
 {
-    std::cout << "MainWindow::newError(): " << error.toStdString() << ": " << detailedError.toStdString() << std::endl;
+    std::cout << "MainWindow::newError(): " << error << ": " << detailedError << std::endl;
     if(client!=NULL)
     {
         client->tryDisconnect();
-        QMessageBox::critical(this,tr("Error"),error);
+        QMessageBox::critical(this,tr("Error"),QString::fromStdString(error));
     }
 }
 
@@ -1319,17 +1322,17 @@ void MainWindow::haveNewError()
 //	QMessageBox::critical(this,tr("Error"),client->errorString());
 }
 
-void MainWindow::message(QString message)
+void MainWindow::message(std::string message)
 {
-    qDebug() << message;
+    std::cout << message << std::endl;
 }
 
 void MainWindow::protocol_is_good()
 {
     if(serverMode==ServerMode_Internal)
-        client->tryLogin(QStringLiteral("admin"),pass);
+        client->tryLogin("admin",pass.toStdString());
     else
-        client->tryLogin(ui->lineEditLogin->text(),ui->lineEditPass->text());
+        client->tryLogin(ui->lineEditLogin->text().toStdString(),ui->lineEditPass->text().toStdString());
 }
 
 void MainWindow::needQuit()
@@ -1369,89 +1372,77 @@ void MainWindow::ListEntryEnvoluedDoubleClicked()
     on_deleteDatapack_clicked();
 }
 
-QPair<QString,QString> MainWindow::getDatapackInformations(const QString &filePath)
+std::pair<std::string,std::string> MainWindow::getDatapackInformations(const std::string &filePath)
 {
-    QPair<QString,QString> returnVar;
-    returnVar.first=tr("Unknown");
-    returnVar.second=tr("Unknown");
+    std::pair<std::string,std::string> returnVar;
+    returnVar.first=tr("Unknown").toStdString();
+    returnVar.second=tr("Unknown").toStdString();
     //open and quick check the file
-    QFile itemsFile(filePath);
-    QByteArray xmlContent;
-    if(!itemsFile.open(QIODevice::ReadOnly))
+    tinyxml2::XMLDocument domDocument;
+    const auto loadOkay = domDocument.LoadFile(filePath.c_str());
+    if(loadOkay!=0)
     {
-        qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
+        std::cerr << filePath+", "+domDocument.ErrorName() << std::endl;
         return returnVar;
     }
-    xmlContent=itemsFile.readAll();
-    itemsFile.close();
-    QDomDocument domDocument;
-    QString errorStr;
-    int errorLine,errorColumn;
-    if (!domDocument.setContent(xmlContent, false, &errorStr,&errorLine,&errorColumn))
+    const tinyxml2::XMLElement *root = domDocument.RootElement();
+    if(root==NULL)
     {
-        qDebug() << QStringLiteral("Unable to open the file: %1, Parse error at line %2, column %3: %4").arg(itemsFile.fileName()).arg(errorLine).arg(errorColumn).arg(errorStr);
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"informations\" root balise not found for the xml file")
+                    .arg(QString::fromStdString(filePath));
         return returnVar;
     }
-    tinyxml2::XMLElement root = domDocument.RootElement();
-    if(root.tagName()!=QStringLiteral("informations"))
+    if(strcmp(root->Name(),"informations")!=0)
     {
-        qDebug() << QStringLiteral("Unable to open the file: %1, \"informations\" root balise not found for the xml file").arg(itemsFile.fileName());
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"informations\" root balise not found for the xml file")
+                    .arg(QString::fromStdString(filePath));
         return returnVar;
     }
 
     QStringList authors;
     //load the content
-    tinyxml2::XMLElement item = root.FirstChildElement(QStringLiteral("author"));
-    while(!item.isNull())
+    const tinyxml2::XMLElement *item = root->FirstChildElement("author");
+    while(item!=NULL)
     {
-        if(item.isElement())
-        {
-            if(item.hasAttribute(QStringLiteral("pseudo")) && item.hasAttribute(QStringLiteral("name")))
-                authors << QStringLiteral("%1 (%2)").arg(item.attribute(QStringLiteral("pseudo"))).arg(item.attribute(QStringLiteral("name")));
-            else if(item.hasAttribute(QStringLiteral("name")))
-                authors << item.attribute(QStringLiteral("name"));
-            else if(item.hasAttribute(QStringLiteral("pseudo")))
-                authors << item.attribute(QStringLiteral("pseudo"));
-        }
-        item = item.NextSiblingElement(QStringLiteral("author"));
+        if(item->Attribute("pseudo")!=NULL && item->Attribute("name")!=NULL)
+            authors << QStringLiteral("%1 (%2)").arg(item->Attribute("pseudo")).arg(item->Attribute("name"));
+        else if(item->Attribute("name")!=NULL)
+            authors << item->Attribute("name");
+        else if(item->Attribute("pseudo")!=NULL)
+            authors << item->Attribute("pseudo");
+        item = item->NextSiblingElement("author");
     }
     if(authors.isEmpty())
-        returnVar.first=tr("Unknown");
+        returnVar.first=tr("Unknown").toStdString();
     else
-        returnVar.first=authors.join(QStringLiteral(", "));
+        returnVar.first=authors.join(QStringLiteral(", ")).toStdString();
 
-    returnVar.second=tr("Unknown");
-    item = root.FirstChildElement(QStringLiteral("name"));
+    returnVar.second=tr("Unknown").toStdString();
+    item = root->FirstChildElement("name");
     bool found=false;
-    const QString &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-    if(!language.isEmpty() && language!=QStringLiteral("en"))
-        while(!item.isNull())
+    const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+    if(!language.empty() && language!="en")
+        while(item!=NULL)
         {
-            if(item.isElement())
+            if(item->Attribute("lang")!=NULL && item->Attribute("lang")==language)
             {
-                if(item.hasAttribute(QStringLiteral("lang")) && item.attribute(QStringLiteral("lang"))==language)
-                {
-                    returnVar.second=item.text();
-                    found=true;
-                    break;
-                }
+                returnVar.second=item->GetText();
+                found=true;
+                break;
             }
-            item = item.NextSiblingElement(QStringLiteral("name"));
+            item = item->NextSiblingElement("name");
         }
     if(!found)
     {
-        item = root.FirstChildElement(QStringLiteral("name"));
-        while(!item.isNull())
+        item = root->FirstChildElement("name");
+        while(item!=NULL)
         {
-            if(item.isElement())
+            if(item->Attribute("lang")==NULL || strcmp(item->Attribute("lang"),"en")==0)
             {
-                if(!item.hasAttribute(QStringLiteral("lang")) || item.attribute(QStringLiteral("lang"))==QStringLiteral("en"))
-                {
-                    returnVar.second=item.text();
-                    break;
-                }
+                returnVar.second=item->GetText();
+                break;
             }
-            item = item.NextSiblingElement(QStringLiteral("name"));
+            item = item->NextSiblingElement("name");
         }
     }
     return returnVar;
@@ -1483,9 +1474,10 @@ void MainWindow::on_manageDatapack_clicked()
             index++;
             continue;
         }
-        QPair<QString,QString> tempVar=getDatapackInformations(fileInfo.absoluteFilePath()+QStringLiteral("/informations.xml"));
-        QString author=tempVar.first;
-        QString name=tempVar.second;
+        std::pair<std::string,std::string> tempVar=getDatapackInformations(fileInfo.absoluteFilePath().toStdString()+
+                                                                           "/informations.xml");
+        QString author=QString::fromStdString(tempVar.first);
+        QString name=QString::fromStdString(tempVar.second);
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
         connect(newEntry,&ListEntryEnvolued::clicked,this,&MainWindow::ListEntryEnvoluedClicked,Qt::QueuedConnection);
         connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&MainWindow::ListEntryEnvoluedDoubleClicked,Qt::QueuedConnection);
@@ -1659,7 +1651,7 @@ void MainWindow::on_server_back_clicked()
     ui->stackedWidget->setCurrentWidget(ui->mode);
 }
 
-void MainWindow::gameSolo_play(const QString &savegamesPath)
+void MainWindow::gameSolo_play(const std::string &savegamesPath)
 {
     resetAll();
     if(socket!=NULL)
@@ -1671,31 +1663,33 @@ void MainWindow::gameSolo_play(const QString &savegamesPath)
         realSslSocket=NULL;
     }
     socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
-    client=new CatchChallenger::Api_client_virtual(socket);//QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/")
+    CatchChallenger::Api_client_virtual *client=new CatchChallenger::Api_client_virtual(socket);//QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/")
+    this->client=client;
+
     connect(client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
     connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
     connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
     connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
-    baseWindow->setMultiPlayer(false,client);
+    baseWindow->setMultiPlayer(false,static_cast<CatchChallenger::Api_client_real *>(this->client));
     baseWindow->connectAllSignals();//need always be after setMultiPlayer()
-    client->setDatapackPath(QCoreApplication::applicationDirPath()+"/datapack/internal/");
+    client->setDatapackPath(QCoreApplication::applicationDirPath().toStdString()+"/datapack/internal/");
     baseWindow->mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
     serverMode=ServerMode_Internal;
     ui->stackedWidget->setCurrentWidget(baseWindow);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
-    QSettings metaData(savegamesPath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
+    QSettings metaData(QString::fromStdString(savegamesPath)+QStringLiteral("metadata.conf"),QSettings::IniFormat);
     if(!metaData.contains(QStringLiteral("pass")))
     {
         QMessageBox::critical(NULL,tr("Error"),tr("Unable to load internal value"));
         return;
     }
-    launchedGamePath=savegamesPath;
+    launchedGamePath=QString::fromStdString(savegamesPath);
     haveLaunchedGame=true;
     pass=metaData.value(QStringLiteral("pass")).toString();
     if(internalServer!=NULL)
         delete internalServer;
     internalServer=new CatchChallenger::InternalServer(metaData);
-    if(!sendSettings(internalServer,savegamesPath))
+    if(!sendSettings(internalServer,QString::fromStdString(savegamesPath)))
         return;
     connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
     connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverErrorStd,Qt::QueuedConnection);
@@ -1753,7 +1747,7 @@ void MainWindow::saveTime()
         {
             if(metaData.status()==QSettings::NoError)
             {
-                QString locaction=baseWindow->lastLocation();
+                QString locaction=QString::fromStdString(baseWindow->lastLocation());
                 const QString &mapPath=QString::fromStdString(internalServer->getSettings().datapack_basePath)+DATAPACK_BASE_PATH_MAPMAIN+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/";//internalServer->getSettings().mainDatapackCode
                 if(locaction.startsWith(mapPath))
                     locaction.remove(0,mapPath.size());
@@ -1801,7 +1795,7 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
     formatedServerSettings.database_server.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
-    formatedServerSettings.datapack_basePath=client->datapackPathBase().toStdString();
+    formatedServerSettings.datapack_basePath=client->datapackPathBase();
 
     {
         CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["day"];
@@ -1820,7 +1814,8 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
             CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings.value("mainDatapackCode","[main]").toString().toStdString();
         else
         {
-            const QFileInfoList &list=QDir(client->datapackPathBase()+"/map/main/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+            const QFileInfoList &list=QDir(QString::fromStdString(client->datapackPathBase())+"/map/main/")
+                    .entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
             if(list.isEmpty())
             {
                 QMessageBox::critical(this,tr("Error"),tr("No main code detected into the current datapack"));
@@ -1829,10 +1824,12 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
             settings.setValue("mainDatapackCode",list.at(0).fileName());
             CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).fileName().toStdString();
         }
-        QDir mainDir(client->datapackPathBase()+"map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/");
+        QDir mainDir(QString::fromStdString(client->datapackPathBase())+"map/main/"+
+                     QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/");
         if(!mainDir.exists())
         {
-            const QFileInfoList &list=QDir(client->datapackPathBase()+"/map/main/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+            const QFileInfoList &list=QDir(QString::fromStdString(client->datapackPathBase())+"/map/main/")
+                    .entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
             if(list.isEmpty())
             {
                 QMessageBox::critical(this,tr("Error"),tr("No main code detected into the current datapack"));
@@ -1846,7 +1843,9 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
             CommonSettingsServer::commonSettingsServer.subDatapackCode=settings.value("subDatapackCode","").toString().toStdString();
         else
         {
-            const QFileInfoList &list=QDir(client->datapackPathBase()+"/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+            const QFileInfoList &list=QDir(QString::fromStdString(client->datapackPathBase())+"/map/main/"+
+                                           QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/")
+                    .entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
             if(!list.isEmpty())
             {
                 settings.setValue("subDatapackCode",list.at(0).fileName());
@@ -1857,10 +1856,14 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
         }
         if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
         {
-            QDir subDir(client->datapackPathBase()+"/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)+"/");
+            QDir subDir(QString::fromStdString(client->datapackPathBase())+"/map/main/"+
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/"+
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)+"/");
             if(!subDir.exists())
             {
-                const QFileInfoList &list=QDir(client->datapackPathBase()+"/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+                const QFileInfoList &list=QDir(QString::fromStdString(client->datapackPathBase())+"/map/main/"+
+                                               QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/")
+                        .entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
                 if(!list.isEmpty())
                 {
                     settings.setValue("subDatapackCode",list.at(0).fileName());
@@ -1893,34 +1896,38 @@ void MainWindow::on_languages_clicked()
     LanguagesSelect::languagesSelect->exec();
 }
 
-void MainWindow::newUpdate(const QString &version)
+void MainWindow::newUpdate(const std::string &version)
 {
-    ui->update->setText(InternetUpdater::getText(version));
+    ui->update->setText(QString::fromStdString(InternetUpdater::getText(version)));
     ui->update->setVisible(true);
 }
 
-void MainWindow::feedEntryList(const QList<FeedNews::FeedEntry> &entryList,QString error)
+void MainWindow::feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList, std::string error=std::string())
 {
-    if(entryList.isEmpty())
+    if(entryList.empty())
     {
-        if(error.isEmpty())
+        if(error.empty())
             ui->news->setVisible(false);
         else
         {
-            ui->news->setToolTip(error);
+            ui->news->setToolTip(QString::fromStdString(error));
             ui->news->setStyleSheet("#news{background-color: rgb(220, 220, 240);\nborder: 1px solid rgb(100, 150, 240);\nborder-radius:5px;\ncolor: rgb(0, 0, 0);\nbackground-image: url(:/images/multi/warning.png);\nbackground-repeat: no-repeat;\nbackground-position: right;}");
         }
         return;
     }
     if(entryList.size()==1)
-        ui->news->setText(tr("Latest news:")+QStringLiteral(" ")+QStringLiteral("<a href=\"%1\">%2</a>").arg(entryList.at(0).link).arg(entryList.at(0).title));
+        ui->news->setText(tr("Latest news:")+" "+QStringLiteral("<a href=\"%1\">%2</a>")
+                          .arg(QString::fromStdString(entryList.at(0).link))
+                          .arg(QString::fromStdString(entryList.at(0).title)));
     else
     {
         QStringList entryHtmlList;
-        int index=0;
+        unsigned int index=0;
         while(index<entryList.size() && index<3)
         {
-            entryHtmlList << QStringLiteral(" - <a href=\"%1\">%2</a>").arg(entryList.at(index).link).arg(entryList.at(index).title);
+            entryHtmlList << QStringLiteral(" - <a href=\"%1\">%2</a>")
+                             .arg(QString::fromStdString(entryList.at(index).link))
+                             .arg(QString::fromStdString(entryList.at(index).title));
             index++;
         }
         ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join("<br />"));
@@ -1950,7 +1957,7 @@ void MainWindow::gameIsLoaded()
     if(vlcPlayer!=NULL)
         libvlc_media_player_stop(vlcPlayer);
     #endif
-    this->setWindowTitle(QStringLiteral("CatchChallenger Ultimate - %1").arg(client->getPseudo()));
+    this->setWindowTitle(QStringLiteral("CatchChallenger Ultimate - %1").arg(QString::fromStdString(client->getPseudo())));
 }
 
 void MainWindow::updateTheOkButton()
