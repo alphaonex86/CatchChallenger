@@ -2043,7 +2043,7 @@ LogicialGroup * Api_protocol::addLogicalGroup(const std::string &path,const std:
                 name = root->FirstChildElement("name");
                 while(name!=NULL)
                 {
-                    if(name->Attribute("lang")!=NULL || strcmp(name->Attribute("lang"),"en")==0)
+                    if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                     {
                         nameString=name->GetText();
                         name_found=true;
@@ -2109,7 +2109,7 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
                 name = root->FirstChildElement("name");
                 while(name!=NULL)
                 {
-                    if(name->Attribute("lang")!=NULL || strcmp(name->Attribute("lang"),"en")==0)
+                    if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                     {
                         nameString=name->GetText();
                         name_found=true;

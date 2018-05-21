@@ -343,7 +343,7 @@ void Api_client_real::tryConnect(std::string host,uint16_t port)
     socket->connectToHost(QHostAddress(QString::fromStdString(host)),port);
 }
 
-void Api_client_real::disconnect()
+/*void Api_client_real::disconnect()
 {
     if(stage()==StageConnexion::Stage1 || stage()==StageConnexion::Stage4)
     {
@@ -352,7 +352,7 @@ void Api_client_real::disconnect()
         wait_datapack_content_sub=false;
         resetAll();
     }
-}
+}*/
 
 void Api_client_real::tryDisconnect()
 {

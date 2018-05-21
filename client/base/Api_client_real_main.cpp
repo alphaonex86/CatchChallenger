@@ -43,7 +43,7 @@ void Api_client_real::writeNewFileMain(const std::string &fileName,const std::st
             qDebug() << (QStringLiteral("Can't open: %1: %2").arg(QString::fromStdString(fileName)).arg(file.errorString()));
             return;
         }
-        if(file.write(data)!=data.size())
+        if(file.write(data.data(),data.size())!=(int)data.size())
         {
             file.close();
             qDebug() << (QStringLiteral("Can't write: %1: %2").arg(QString::fromStdString(fileName)).arg(file.errorString()));
@@ -68,7 +68,7 @@ bool Api_client_real::getHttpFileMain(const std::string &url, const std::string 
         return false;
     if(!httpModeMain)
         httpModeMain=true;
-    QNetworkRequest networkRequest(url);
+    QNetworkRequest networkRequest(QString::fromStdString(url));
     QNetworkReply *reply;
     //choice the right queue
     {
@@ -105,7 +105,7 @@ void Api_client_real::httpFinishedMain()
     if(urlInWaitingListMain.empty())
     {
         httpError=true;
-        newError(tr("Datapack downloading error"),QStringLiteral("no more reply in waiting"));
+        newError(tr("Datapack downloading error").toStdString(),"no more reply in waiting");
         socket->disconnectFromHost();
         return;
     }
@@ -113,7 +113,7 @@ void Api_client_real::httpFinishedMain()
     if(reply==NULL)
     {
         httpError=true;
-        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
+        newError(tr("Datapack downloading error").toStdString(),"reply for http is NULL");
         socket->disconnectFromHost();
         return;
     }
@@ -133,7 +133,8 @@ void Api_client_real::httpFinishedMain()
     if(!reply->isFinished())
     {
         httpError=true;
-        newError(tr("Unable to download the datapack")+"<br />Details:<br />"+reply->url().toString()+"<br />get the new update failed: not finished",QStringLiteral("get the new update failed: not finished"));
+        newError(tr("Unable to download the datapack").toStdString()+"<br />Details:<br />"+reply->url().toString().toStdString()+
+                 "<br />get the new update failed: not finished","get the new update failed: not finished");
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
@@ -141,30 +142,37 @@ void Api_client_real::httpFinishedMain()
     else if(reply->error())
     {
         httpError=true;
-        newError(tr("Unable to download the datapack")+"<br />Details:<br />"+reply->url().toString()+"<br />"+QStringLiteral("get the new update failed: %1").arg(reply->errorString()),QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
+        newError(tr("Unable to download the datapack").toStdString()+"<br />Details:<br />"+reply->url().toString().toStdString()+
+                 "<br />get the new update failed: "+reply->errorString().toStdString(),
+                 QStringLiteral("get the new update failed: %1").arg(reply->errorString()).toStdString());
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
     } else if(!redirectionTarget.isNull()) {
         httpError=true;
-        newError(tr("Unable to download the datapack")+"<br />Details:<br />"+reply->url().toString()+"<br />"+QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()),QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
+        newError(tr("Unable to download the datapack").toStdString()+"<br />Details:<br />"+reply->url().toString().toStdString()+
+                 "<br />"+QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()).toStdString(),
+                 QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()).toStdString());
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
     }
-    if(!urlInWaitingListMain.contains(reply))
+    if(urlInWaitingListMain.find(reply)!=urlInWaitingListMain.cend())
     {
         httpError=true;
-        newError(tr("Datapack downloading error"),QStringLiteral("reply of unknown query"));
+        newError(tr("Datapack downloading error").toStdString(),"reply of unknown query");
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
     }
 
-    const UrlInWaiting &urlInWaiting=urlInWaitingListMain.value(reply);
-    writeNewFileMain(urlInWaiting.fileName,reply->readAll());
+    QByteArray QtData=reply->readAll();
+    const UrlInWaiting &urlInWaiting=urlInWaitingListMain.at(reply);
+    writeNewFileMain(urlInWaiting.fileName,std::string(QtData.data(),QtData.size()));
 
-    if(urlInWaitingListMain.remove(reply)!=1)
+    if(urlInWaitingListMain.find(reply)!=urlInWaitingListMain.cend())
+        urlInWaitingListMain.erase(reply);
+    else
         qDebug() << (QStringLiteral("[Bug] Remain %1 file to download").arg(urlInWaitingListMain.size()));
     reply->deleteLater();
     if(urlInWaitingListMain.empty())
@@ -176,8 +184,8 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
     if((uint32_t)datapackFilesListMain.size()!=partialHashList.size())
     {
         qDebug() << "datapackFilesListMain.size()!=partialHash.size():" << datapackFilesListMain.size() << "!=" << partialHashList.size();
-        qDebug() << "datapackFilesListMain:" << std::string::fromStdString(stringimplode(datapackFilesListMain,'\n'));
-        qDebug() << "datapackFilesList:" << std::string::fromStdString(stringimplode(datapackFilesList,'\n'));
+        qDebug() << "datapackFilesListMain:" << QString::fromStdString(stringimplode(datapackFilesListMain,'\n'));
+        qDebug() << "datapackFilesList:" << QString::fromStdString(stringimplode(datapackFilesList,'\n'));
         abort();
     }
     {
@@ -227,9 +235,9 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
             qDebug() << "Datapack checksum done but not send by the server";
             return;//need CommonSettings::commonSettings.datapackHash send by the server
         }
-        qDebug() << "Main: Datapack is empty or hash don't match, get from server, hash local: " << std::string::fromStdString(binarytoHexa(hash)) << ", hash on server: " << std::string::fromStdString(binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerMain));
+        qDebug() << "Main: Datapack is empty or hash don't match, get from server, hash local: " << QString::fromStdString(binarytoHexa(hash)) << ", hash on server: " << QString::fromStdString(binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerMain));
         uint8_t datapack_content_query_number=queryNumber();
-        std::string outputData;
+        QByteArray outputData;
         QDataStream out(&outputData, QIODevice::WriteOnly);
         out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
         out << (uint8_t)DatapackStatus::Main;
@@ -243,7 +251,7 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
                 return;
             }
             out << (uint8_t)datapackFilesListMain.at(index).size();
-            outputData+=std::string(datapackFilesListMain.at(index).c_str(),static_cast<uint32_t>(datapackFilesListMain.at(index).size()));
+            outputData+=QByteArray(datapackFilesListMain.at(index).data(),static_cast<uint32_t>(datapackFilesListMain.at(index).size()));
             out.device()->seek(out.device()->size());
 
             index++;
@@ -282,17 +290,17 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
             }
             index_mirror_main=0;
             test_mirror_main();
-            qDebug() << "Datapack is empty, get from mirror into" << mDatapackMain;
+            qDebug() << "Datapack is empty, get from mirror into" << QString::fromStdString(mDatapackMain);
         }
         else
         {
             qDebug() << "Datapack don't match with server hash, get from mirror";
             QNetworkRequest networkRequest(
-                        std::string::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer)
-                        .split(Api_client_real::text_dotcoma,std::string::SkipEmptyParts).at(index_mirror_main)+
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer)
+                        .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+
                         QStringLiteral("pack/diff/datapack-main-")+
-                        std::string::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
-                        QStringLiteral("-%1.tar.zst").arg(std::string::fromStdString(binarytoHexa(hash)))
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
+                        QStringLiteral("-%1.tar.zst").arg(QString::fromStdString(binarytoHexa(hash)))
                         );
             QNetworkReply *reply = qnam.get(networkRequest);
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);
@@ -304,11 +312,11 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
 void Api_client_real::test_mirror_main()
 {
     QNetworkReply *reply;
-    const std::stringList &httpDatapackMirrorList=std::string::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,std::string::SkipEmptyParts);
+    const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarMain)
     {
-        std::string fullDatapack=httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+
-                std::string::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".tar.zst");
+        QString fullDatapack=httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+
+                QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".tar.zst");
         QNetworkRequest networkRequest(fullDatapack);
         qDebug() << "Try download: " << fullDatapack;
         reply = qnam.get(networkRequest);
@@ -322,7 +330,7 @@ void Api_client_real::test_mirror_main()
             return;
 
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("datapack-list/main-")+
-                                       std::string::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".txt"));
+                                       QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".txt"));
         reply = qnam.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
             connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListMain);
@@ -335,7 +343,7 @@ void Api_client_real::test_mirror_main()
     else
     {
         qDebug() << reply->url().toString() << reply->errorString();
-        mirrorTryNextMain(reply->url().toString()+": "+reply->errorString());
+        mirrorTryNextMain(reply->url().toString().toStdString()+": "+reply->errorString().toStdString());
         return;
     }
 }
@@ -350,14 +358,14 @@ void Api_client_real::decodedIsFinishMain()
         QTarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
-            QSet<std::string> extensionAllowed=std::string(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma).toSet();
+            QSet<QString> extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma).toSet();
             QDir dir;
             const std::vector<std::string> &fileList=tarDecode.getFileList();
             const std::vector<std::vector<char> > &dataList=tarDecode.getDataList();
             unsigned int index=0;
             while(index<fileList.size())
             {
-                QFile file(mDatapackMain+std::string::fromStdString(fileList.at(index)));
+                QFile file(QString::fromStdString(mDatapackMain)+QString::fromStdString(fileList.at(index)));
                 QFileInfo fileInfo(file);
                 dir.mkpath(fileInfo.absolutePath());
                 if(extensionAllowed.contains(fileInfo.suffix()))
@@ -369,13 +377,15 @@ void Api_client_real::decodedIsFinishMain()
                     }
                     else
                     {
-                        newError(tr("Disk error"),QStringLiteral("unable to write file of datapack %1: %2").arg(file.fileName()).arg(file.errorString()));
+                        newError(tr("Disk error").toStdString(),
+                                 QStringLiteral("unable to write file of datapack %1: %2").arg(file.fileName()).arg(file.errorString()).toStdString());
                         return;
                     }
                 }
                 else
                 {
-                    newError(tr("Security error, file not allowed: %1").arg(file.fileName()),QStringLiteral("file not allowed: %1").arg(file.fileName()));
+                    newError(tr("Security error, file not allowed: %1").arg(file.fileName()).toStdString(),
+                             QStringLiteral("file not allowed: %1").arg(file.fileName()).toStdString());
                     return;
                 }
                 index++;
@@ -399,9 +409,9 @@ bool Api_client_real::mirrorTryNextMain(const std::string &error)
     {
         datapackTarMain=false;
         index_mirror_main++;
-        if(index_mirror_main>=std::string::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,std::string::SkipEmptyParts).size())
+        if(index_mirror_main>=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
         {
-            newError(tr("Unable to download the datapack")+"<br />Details:<br />"+error,QStringLiteral("Get the list failed: ")+error);
+            newError(tr("Unable to download the datapack").toStdString()+"<br />Details:<br />"+error,"Get the list failed: "+error);
             return false;
         }
         else
@@ -416,7 +426,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
     if(reply==NULL)
     {
         httpError=true;
-        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
+        newError(tr("Datapack downloading error").toStdString(),"reply for http is NULL");
         socket->disconnectFromHost();
         return;
     }
@@ -429,6 +439,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
             errorString=(QStringLiteral("Main Problem with the datapack list reply:%1 %2 (try next)")
                                                   .arg(reply->url().toString())
                                                   .arg(reply->errorString())
+                         .toStdString()
                                                   );
         else
             errorString=(QStringLiteral("Main Problem with the datapack list reply:%1 %2 with proxy: %3 %4 type %5 (try next)")
@@ -437,8 +448,9 @@ void Api_client_real::httpFinishedForDatapackListMain()
                                                   .arg(proxy.hostName())
                                                   .arg(proxy.port())
                                                   .arg(proxy.type())
+                         .toStdString()
                                                   );
-        qDebug() << errorString;
+        std::cerr << errorString << std::endl;
         reply->deleteLater();
         mirrorTryNextMain(errorString);
         return;
@@ -448,9 +460,10 @@ void Api_client_real::httpFinishedForDatapackListMain()
         if(!datapackTarMain)
         {
             qDebug() << QStringLiteral("pack/datapack-main-")+
-                        std::string::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+QStringLiteral(".tar.zst") << " size:" << std::string("%1KB").arg(reply->size()/1000);
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)
+                        +QStringLiteral(".tar.zst") << " size:" << QString("%1KB").arg(reply->size()/1000);
             datapackTarMain=true;
-            std::string olddata=reply->readAll();
+            QByteArray olddata=reply->readAll();
             std::vector<char> newdata;
             newdata.resize(olddata.size());
             memcpy(newdata.data(),olddata.constData(),olddata.size());
@@ -469,7 +482,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
                     CommonSettingsServer::commonSettingsServer.mainDatapackCode
                     +"/";
             std::vector<char> data;
-            std::string olddata=reply->readAll();
+            QByteArray olddata=reply->readAll();
             data.resize(olddata.size());
             memcpy(data.data(),olddata.constData(),olddata.size());
 
@@ -483,7 +496,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
             if(endOfText==std::string::npos)
             {
                 std::cerr << "no text delimitor into file list: " << reply->url().toString().toStdString() << std::endl;
-                newError(tr("Wrong datapack format"),"no text delimitor into file list: "+reply->url().toString());
+                newError(tr("Wrong datapack format").toStdString(),"no text delimitor into file list: "+reply->url().toString().toStdString());
                 return;
             }
             std::vector<std::string> content;
@@ -492,7 +505,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
                 if(partialHashListRaw.size()%4!=0)
                 {
                     std::cerr << "partialHashList not divisible by 4" << std::endl;
-                    newError(tr("Wrong datapack format"),"partialHashList not divisible by 4");
+                    newError(tr("Wrong datapack format").toStdString(),"partialHashList not divisible by 4");
                     return;
                 }
                 {
@@ -502,7 +515,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
                 if(partialHashListRaw.size()/4!=content.size())
                 {
                     std::cerr << "partialHashList/4!=content.size()" << std::endl;
-                    newError(tr("Wrong datapack format"),"partialHashList/4!=content.size()");
+                    newError(tr("Wrong datapack format").toStdString(),"partialHashList/4!=content.size()");
                     return;
                 }
             }
@@ -526,21 +539,21 @@ void Api_client_real::httpFinishedForDatapackListMain()
                         if(indexInDatapackList!=-1)
                         {
                             const uint32_t &hashFileOnDisk=partialHashListMain.at(indexInDatapackList);
-                            if(!FacilityLibGeneral::isFile(mDatapackMain.toStdString()+fileString))
+                            if(!FacilityLibGeneral::isFile(mDatapackMain+fileString))
                             {
                                 fileToGet++;
-                                if(!getHttpFileMain(std::string::fromStdString(selectedMirror+fileString),std::string::fromStdString(fileString)))
+                                if(!getHttpFileMain(selectedMirror+fileString,fileString))
                                 {
-                                    newError(tr("Unable to get datapack file"),"");
+                                    newError(tr("Unable to get datapack file").toStdString(),"");
                                     return;
                                 }
                             }
                             else if(hashFileOnDisk!=partialHashString)
                             {
                                 fileToGet++;
-                                if(!getHttpFileMain(std::string::fromStdString(selectedMirror+fileString),std::string::fromStdString(fileString)))
+                                if(!getHttpFileMain(selectedMirror+fileString,fileString))
                                 {
-                                    newError(tr("Unable to get datapack file"),"");
+                                    newError(tr("Unable to get datapack file").toStdString(),"");
                                     return;
                                 }
                             }
@@ -550,9 +563,9 @@ void Api_client_real::httpFinishedForDatapackListMain()
                         else
                         {
                             fileToGet++;
-                            if(!getHttpFileMain(std::string::fromStdString(selectedMirror+fileString),std::string::fromStdString(fileString)))
+                            if(!getHttpFileMain(selectedMirror+fileString,fileString))
                             {
-                                newError(tr("Unable to get datapack file"),"");
+                                newError(tr("Unable to get datapack file").toStdString(),"");
                                 return;
                             }
                         }
@@ -563,9 +576,9 @@ void Api_client_real::httpFinishedForDatapackListMain()
             index=0;
             while(index<datapackFilesListMain.size())
             {
-                if(!QFile(mDatapackMain+std::string::fromStdString(datapackFilesListMain.at(index))).remove())
+                if(!QFile(QString::fromStdString(mDatapackMain)+QString::fromStdString(datapackFilesListMain.at(index))).remove())
                 {
-                    qDebug() << "Unable to remove" << std::string::fromStdString(datapackFilesListMain.at(index));
+                    qDebug() << "Unable to remove" << QString::fromStdString(datapackFilesListMain.at(index));
                     abort();
                 }
                 index++;
@@ -573,7 +586,7 @@ void Api_client_real::httpFinishedForDatapackListMain()
             datapackFilesListMain.clear();
             if(correctContent==0)
             {
-                qDebug() << "Error, no valid content: correctContent==0\n" << std::string::fromStdString(stringimplode(content,"\n")) << "\nFor:" << reply->url().toString();
+                qDebug() << "Error, no valid content: correctContent==0\n" << QString::fromStdString(stringimplode(content,"\n")) << "\nFor:" << reply->url().toString();
                 abort();
                 return;
             }
@@ -591,7 +604,7 @@ const std::vector<std::string> Api_client_real::listDatapackMain(std::string suf
         return std::vector<std::string>();
 
     std::vector<std::string> returnFile;
-    QDir finalDatapackFolder(mDatapackMain+std::string::fromStdString(suffix));
+    QDir finalDatapackFolder(QString::fromStdString(mDatapackMain)+QString::fromStdString(suffix));
     QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for(int index=0;index<sizeEntryList;++index)
@@ -605,15 +618,16 @@ const std::vector<std::string> Api_client_real::listDatapackMain(std::string suf
         else
         {
             //if match with correct file name, considere as valid
-            if((std::string::fromStdString(suffix)+fileInfo.fileName()).contains(Api_client_real::regex_DATAPACK_FILE_REGEX) && extensionAllowed.contains(fileInfo.suffix()))
+            if((QString::fromStdString(suffix)+fileInfo.fileName()).contains(Api_client_real::regex_DATAPACK_FILE_REGEX) &&
+                    extensionAllowed.find(fileInfo.suffix().toStdString())!=extensionAllowed.cend())
                 returnFile.push_back(suffix+fileInfo.fileName().toStdString());
             //is invalid
             else
             {
-                qDebug() << (QStringLiteral("listDatapack(): remove invalid file: %1").arg(std::string::fromStdString(suffix)+fileInfo.fileName()));
-                QFile file(mDatapackMain+std::string::fromStdString(suffix)+fileInfo.fileName());
+                qDebug() << (QStringLiteral("listDatapack(): remove invalid file: %1").arg(QString::fromStdString(suffix)+fileInfo.fileName()));
+                QFile file(QString::fromStdString(mDatapackMain)+QString::fromStdString(suffix)+fileInfo.fileName());
                 if(!file.remove())
-                    qDebug() << (QStringLiteral("listDatapack(): unable remove invalid file: %1: %2").arg(std::string::fromStdString(suffix)+fileInfo.fileName()).arg(file.errorString()));
+                    qDebug() << (QStringLiteral("listDatapack(): unable remove invalid file: %1: %2").arg(QString::fromStdString(suffix)+fileInfo.fileName()).arg(file.errorString()));
             }
         }
     }
@@ -623,7 +637,7 @@ const std::vector<std::string> Api_client_real::listDatapackMain(std::string suf
 
 void Api_client_real::cleanDatapackMain(std::string suffix)
 {
-    QDir finalDatapackFolder(mDatapackMain+std::string::fromStdString(suffix));
+    QDir finalDatapackFolder(QString::fromStdString(mDatapackMain)+QString::fromStdString(suffix));
     QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     int sizeEntryList=entryList.size();
     for (int index=0;index<sizeEntryList;++index)
@@ -636,7 +650,7 @@ void Api_client_real::cleanDatapackMain(std::string suffix)
     }
     entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
     if(entryList.size()==0)
-        finalDatapackFolder.rmpath(mDatapackMain+std::string::fromStdString(suffix));
+        finalDatapackFolder.rmpath(QString::fromStdString(mDatapackMain)+QString::fromStdString(suffix));
 }
 
 void Api_client_real::datapackDownloadFinishedMain()
@@ -660,7 +674,7 @@ void Api_client_real::httpErrorEventMain()
     if(reply==NULL)
     {
         httpError=true;
-        newError(tr("Datapack downloading error"),QStringLiteral("reply for http is NULL"));
+        newError(tr("Datapack downloading error").toStdString(),"reply for http is NULL");
         socket->disconnectFromHost();
         return;
     }
@@ -696,9 +710,9 @@ void Api_client_real::sendDatapackContentMain()
 
     //compute the mirror
     {
-        std::stringList values=std::string::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,std::string::SkipEmptyParts);
+        QStringList values=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
         {
-            std::string slash(QStringLiteral("/"));
+            QString slash(QStringLiteral("/"));
             int index=0;
             while(index<values.size())
             {
@@ -714,7 +728,7 @@ void Api_client_real::sendDatapackContentMain()
     wait_datapack_content_main=true;
     datapackFilesListMain=listDatapackMain();
     std::sort(datapackFilesListMain.begin(),datapackFilesListMain.end());
-    emit doDifferedChecksumMain(mDatapackMain.toStdString());
+    emit doDifferedChecksumMain(mDatapackMain);
 }
 
 void Api_client_real::checkIfContinueOrFinished()
