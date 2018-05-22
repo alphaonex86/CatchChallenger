@@ -67,7 +67,8 @@ void MapItem::addMap(MapVisualiserThread::Map_full * tempMapObject,Tiled::Map *m
                     temp->show();
                     #endif
                     graphicsItem=new PreparedLayer(tempMapObject,tempPixmap,this);
-                    connect(static_cast<PreparedLayer *>(graphicsItem),&PreparedLayer::eventOnMap,this,&MapItem::eventOnMap);
+                    if(!connect(static_cast<PreparedLayer *>(graphicsItem),&PreparedLayer::eventOnMap,this,&MapItem::eventOnMap))
+                        abort();
                     graphicsItem->setZValue(index-1);
                     displayed_layer.insert(map,graphicsItem);
                     image=QImage();
@@ -99,7 +100,8 @@ void MapItem::addMap(MapVisualiserThread::Map_full * tempMapObject,Tiled::Map *m
             temp->show();
             #endif
             graphicsItem=new PreparedLayer(tempMapObject,tempPixmap,this);
-            connect(static_cast<PreparedLayer *>(graphicsItem),&PreparedLayer::eventOnMap,this,&MapItem::eventOnMap);
+            if(!connect(static_cast<PreparedLayer *>(graphicsItem),&PreparedLayer::eventOnMap,this,&MapItem::eventOnMap))
+                abort();
             graphicsItem->setZValue(index);
             displayed_layer.insert(map,graphicsItem);
         }

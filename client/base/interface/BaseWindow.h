@@ -370,6 +370,7 @@ private slots:
     void marketWithdrawCanceled();
     void marketWithdrawObject(const uint16_t &objectId, const uint32_t &quantity);
     void marketWithdrawMonster(const PlayerMonster &playerMonster);
+    void IG_dialog_text_linkActivated(const std::string &rawlink);
 
     //autoconnect
     void number_of_player(uint16_t number,uint16_t max);
@@ -391,7 +392,7 @@ private slots:
     void on_toolButtonOptions_clicked();
     void on_checkBoxLimitFPS_toggled(bool checked);
     void on_spinBoxMaxFPS_editingFinished();
-    void on_IG_dialog_text_linkActivated(const std::string &rawlink);
+    void on_IG_dialog_text_linkActivated(const QString &rawlink);
     void on_toolButton_quit_shop_clicked();
     void on_shopItemList_itemActivated(QListWidgetItem *item);
     void on_shopItemList_itemSelectionChanged();

@@ -82,7 +82,8 @@ bool Api_client_real::getHttpFileSub(const std::string &url, const std::string &
     UrlInWaiting urlInWaiting;
     urlInWaiting.fileName=fileName;
     urlInWaitingListSub[reply]=urlInWaiting;
-    connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedSub);
+    if(!connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedSub))
+        abort();
     return true;
 }
 
@@ -257,8 +258,10 @@ void Api_client_real::datapackChecksumDoneSub(const std::vector<std::string> &da
                         QStringLiteral("-%1.tar.zst").arg(QString::fromStdString(binarytoHexa(hash)))
                         );
             QNetworkReply *reply = qnam4.get(networkRequest);
-            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListSub);
-            connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackSub);
+            if(!connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListSub))
+                abort();
+            if(!connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackSub))
+                abort();
         }
     }
 }
@@ -283,7 +286,8 @@ void Api_client_real::test_mirror_sub()
         QNetworkRequest networkRequest(fullDatapack);
         reply = qnam4.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
-            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListSub);//fix it, put httpFinished* broke it
+            if(!connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListSub))//fix it, put httpFinished* broke it
+                abort();
     }
     else
     {
@@ -298,12 +302,15 @@ void Api_client_real::test_mirror_sub()
                                        QStringLiteral(".txt"));
         reply = qnam4.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
-            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListSub);
+            if(!connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListSub))
+                abort();
     }
     if(reply->error()==QNetworkReply::NoError)
     {
-        connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventSub);
-        connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackSub);
+        if(!connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventSub))
+            abort();
+        if(!connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackSub))
+            abort();
     }
     else
     {

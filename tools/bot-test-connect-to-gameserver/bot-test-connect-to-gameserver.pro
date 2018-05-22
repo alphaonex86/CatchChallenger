@@ -5,7 +5,7 @@ include(../bot/simple/Simple.pri)
 
 QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g"
 
-QT       += core xml network
+QT       += core network
 QT -= gui widgets script opengl qml quick sql
 DEFINES += BOTTESTCONNECT CATCHCHALLENGER_BOT
 
@@ -31,7 +31,8 @@ SOURCES += main.cpp\
     ../../client/base/qt-tar-compressed/QZstdDecodeThread.cpp \
     ../../client/base/DatapackChecksum.cpp \
     ../bot/BotInterface.cpp \
-    ../../client/base/FacilityLibClient.cpp
+    ../../client/base/FacilityLibClient.cpp \
+    ../../client/base/Api_protocol_Qt.cpp
 HEADERS  += \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \
@@ -45,7 +46,8 @@ HEADERS  += \
     ../../client/base/qt-tar-compressed/QTarDecode.h \
     ../../client/base/qt-tar-compressed/QZstdDecodeThread.h \
     ../../client/base/DatapackChecksum.h \
-    ../../client/base/FacilityLibClient.h
+    ../../client/base/FacilityLibClient.h \
+    ../../client/base/Api_protocol_Qt.h
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
 

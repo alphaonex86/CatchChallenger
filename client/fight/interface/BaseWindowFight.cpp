@@ -1346,7 +1346,8 @@ void BaseWindow::checkEvolution()
                 if(evolutionControl!=NULL)
                     delete evolutionControl;
                 evolutionControl=new EvolutionControl(monsterInformations,monsterInformationsExtra,monsterInformationsEvolution,monsterInformationsEvolutionExtra);
-                connect(evolutionControl,&EvolutionControl::cancel,this,&BaseWindow::evolutionCanceled,Qt::QueuedConnection);
+                if(!connect(evolutionControl,&EvolutionControl::cancel,this,&BaseWindow::evolutionCanceled,Qt::QueuedConnection))
+                    abort();
                 animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
                 animationWidget->rootContext()->setContextProperty("evolutionControl",evolutionControl);
                 animationWidget->rootContext()->setContextProperty("canBeCanceled",QVariant(true));
@@ -1407,7 +1408,8 @@ void BaseWindow::checkEvolution()
                 if(evolutionControl!=NULL)
                     delete evolutionControl;
                 evolutionControl=new EvolutionControl(monsterInformations,monsterInformationsExtra,monsterInformationsEvolution,monsterInformationsEvolutionExtra);
-                connect(evolutionControl,&EvolutionControl::cancel,this,&BaseWindow::evolutionCanceled,Qt::QueuedConnection);
+                if(!connect(evolutionControl,&EvolutionControl::cancel,this,&BaseWindow::evolutionCanceled,Qt::QueuedConnection))
+                    abort();
                 animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
                 animationWidget->rootContext()->setContextProperty("evolutionControl",evolutionControl);
                 animationWidget->rootContext()->setContextProperty("canBeCanceled",QVariant(true));

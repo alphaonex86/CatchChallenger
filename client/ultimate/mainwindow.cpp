@@ -76,7 +76,8 @@ MainWindow::MainWindow(QWidget *parent) :
     else
         ui->news->setVisible(false);
     InternetUpdater::internetUpdater=new InternetUpdater();
-    connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
+    if(!connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate))
+        abort();
     FeedNews::feedNews=new FeedNews();
     if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList))
         qDebug() << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed";
@@ -84,8 +85,10 @@ MainWindow::MainWindow(QWidget *parent) :
                               "/datapack/internal/",
                               QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+
                               "/savegames/",false);
-    connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back);
-    connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play);
+    if(!connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back))
+        abort();
+    if(!connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play))
+        abort();
     ui->stackedWidget->addWidget(solowindow);
     ui->stackedWidget->setCurrentWidget(ui->mode);
     ui->warning->setVisible(false);
@@ -98,10 +101,13 @@ MainWindow::MainWindow(QWidget *parent) :
     displayServerList();
     baseWindow=new CatchChallenger::BaseWindow();
     ui->stackedWidget->addWidget(baseWindow);
-    connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection);
-    connect(baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection);
+    /*socket==NULL here if(!connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&MainWindow::error,Qt::QueuedConnection))
+        abort();*/
+    if(!connect(baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection))
+        abort();
     //connect(baseWindow,                &CatchChallenger::BaseWindow::needQuit,             this,&MainWindow::needQuit);
-    connect(&updateTheOkButtonTimer,&QTimer::timeout,this,&MainWindow::updateTheOkButton);
+    if(!connect(&updateTheOkButtonTimer,&QTimer::timeout,this,&MainWindow::updateTheOkButton))
+        abort();
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
@@ -177,7 +183,8 @@ MainWindow::MainWindow(QWidget *parent) :
             qDebug() << string;
     }
     #endif
-    connect(baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded);
+    if(!connect(baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded))
+        abort();
     #ifdef CATCHCHALLENGER_GITCOMMIT
     ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION)+QStringLiteral(" - ")+QStringLiteral(CATCHCHALLENGER_GITCOMMIT));
     #else
@@ -625,8 +632,10 @@ void MainWindow::displayServerList()
     while(index<mergedConnexionInfoList.size())
     {
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
-        connect(newEntry,&ListEntryEnvolued::clicked,this,&MainWindow::serverListEntryEnvoluedClicked,Qt::QueuedConnection);
-        connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&MainWindow::serverListEntryEnvoluedDoubleClicked,Qt::QueuedConnection);
+        if(!connect(newEntry,&ListEntryEnvolued::clicked,this,&MainWindow::serverListEntryEnvoluedClicked,Qt::QueuedConnection))
+            abort();
+        if(!connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&MainWindow::serverListEntryEnvoluedDoubleClicked,Qt::QueuedConnection))
+            abort();
         const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(index);
         QString connexionInfoHost=connexionInfo.host;
         if(connexionInfoHost.size()>32)
@@ -1121,10 +1130,13 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     CatchChallenger::Api_client_real *client=new CatchChallenger::Api_client_real(socket);
     this->client=client;
 
-    connect(client,               &CatchChallenger::Api_client_real::Qtprotocol_is_good,   this,&MainWindow::protocol_is_good,Qt::QueuedConnection);
-    connect(client,               &CatchChallenger::Api_client_real::Qtdisconnected,       this,&MainWindow::disconnected);
+    if(!connect(client,               &CatchChallenger::Api_client_real::Qtprotocol_is_good,   this,&MainWindow::protocol_is_good,Qt::QueuedConnection))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::Qtdisconnected,       this,&MainWindow::disconnected))
+        abort();
     //connect(client,               &CatchChallenger::Api_protocol::Qtmessage,            this,&MainWindow::message,Qt::QueuedConnection);
-    connect(client,               &CatchChallenger::Api_client_real::Qtlogged,             this,&MainWindow::logged,Qt::QueuedConnection);
+    if(!connect(client,               &CatchChallenger::Api_client_real::Qtlogged,             this,&MainWindow::logged,Qt::QueuedConnection))
+        abort();
 
     if(!selectedServerConnexion->proxyHost.isEmpty())
     {
@@ -1137,9 +1149,12 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     ui->stackedWidget->setCurrentWidget(baseWindow);
     baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
     baseWindow->stateChanged(QAbstractSocket::ConnectingState);
-    connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection);
-    connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection);
-    connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&MainWindow::error,Qt::QueuedConnection);
+    if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection))
+        abort();
+    if(!connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection))
+        abort();
+    if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&MainWindow::error,Qt::QueuedConnection))
+        abort();
     lastServer=selectedServerConnexion->host+":"+QString::number(selectedServerConnexion->port);
     realSslSocket->connectToHost(selectedServerConnexion->host,selectedServerConnexion->port);
     selectedServerConnexion->connexionCounter++;
@@ -1480,8 +1495,10 @@ void MainWindow::on_manageDatapack_clicked()
         QString author=QString::fromStdString(tempVar.first);
         QString name=QString::fromStdString(tempVar.second);
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
-        connect(newEntry,&ListEntryEnvolued::clicked,this,&MainWindow::ListEntryEnvoluedClicked,Qt::QueuedConnection);
-        connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&MainWindow::ListEntryEnvoluedDoubleClicked,Qt::QueuedConnection);
+        if(!connect(newEntry,&ListEntryEnvolued::clicked,this,&MainWindow::ListEntryEnvoluedClicked,Qt::QueuedConnection))
+            abort();
+        if(!connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&MainWindow::ListEntryEnvoluedDoubleClicked,Qt::QueuedConnection))
+            abort();
         QString from;
         if(fileInfo.fileName()==QStringLiteral("Internal") || fileInfo.fileName()==QStringLiteral("internal"))
             from=tr("Internal datapack");
@@ -1553,8 +1570,10 @@ void MainWindow::downloadFile()
     QNetworkRequest networkRequest(QString(CATCHCHALLENGER_SERVER_LIST_URL));
     networkRequest.setHeader(QNetworkRequest::UserAgentHeader,catchChallengerVersion);
     reply = qnam.get(networkRequest);
-    connect(reply, &QNetworkReply::finished, this, &MainWindow::httpFinished);
-    connect(reply, &QNetworkReply::metaDataChanged, this, &MainWindow::metaDataChanged);
+    if(!connect(reply, &QNetworkReply::finished, this, &MainWindow::httpFinished))
+        abort();
+    if(!connect(reply, &QNetworkReply::metaDataChanged, this, &MainWindow::metaDataChanged))
+        abort();
     ui->warning->setVisible(true);
     ui->warning->setText(tr("Loading the server list..."));
     ui->server_refresh->setEnabled(false);
@@ -1667,10 +1686,14 @@ void MainWindow::gameSolo_play(const std::string &savegamesPath)
     CatchChallenger::Api_client_virtual *client=new CatchChallenger::Api_client_virtual(socket);//QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/")
     this->client=client;
 
-    connect(client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good);
-    connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
-    connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message);
-    connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged);
+    if(!connect(client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message))
+        abort();
+    if(!connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged))
+        abort();
     baseWindow->setMultiPlayer(false,static_cast<CatchChallenger::Api_client_real *>(this->client));
     baseWindow->connectAllSignals();//need always be after setMultiPlayer()
     client->setDatapackPath(QCoreApplication::applicationDirPath().toStdString()+"/datapack/internal/");
@@ -1692,8 +1715,10 @@ void MainWindow::gameSolo_play(const std::string &savegamesPath)
     internalServer=new CatchChallenger::InternalServer(metaData);
     if(!sendSettings(internalServer,QString::fromStdString(savegamesPath)))
         return;
-    connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection);
-    connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverErrorStd,Qt::QueuedConnection);
+    if(!connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection))
+        abort();
+    if(!connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverErrorStd,Qt::QueuedConnection))
+        abort();
     internalServer->start();
 
     baseWindow->serverIsLoading();

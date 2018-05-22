@@ -81,7 +81,8 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     stageConnexion=StageConnexion::Stage1;
     resetAll();
 
-    QObject::connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::QtsocketDestroyed);
+    if(!QObject::connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::QtsocketDestroyed))
+        abort();
     if(socket->sslSocket!=NULL)
     {
         if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader))
@@ -93,7 +94,8 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     {
         if(socket->fakeSocket!=NULL)
             haveFirstHeader=true;
-        QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
+        if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection))//put queued to don't have circular loop Client -> Server -> Client
+            abort();
         if(socket->bytesAvailable())
             parseIncommingData();
     }
@@ -2231,7 +2233,8 @@ void Api_protocol::readForFirstHeader()
                 socket->sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
                 socket->sslSocket->ignoreSslErrors();
                 socket->sslSocket->startClientEncryption();
-                QObject::connect(socket->sslSocket,&QSslSocket::encrypted,this,&Api_protocol::sslHandcheckIsFinished);
+                if(!QObject::connect(socket->sslSocket,&QSslSocket::encrypted,this,&Api_protocol::sslHandcheckIsFinished))
+                    abort();
             }
             else
                 connectTheExternalSocketInternal();
@@ -2338,7 +2341,8 @@ void Api_protocol::connectTheExternalSocketInternal()
     }
 
     if(stageConnexion==StageConnexion::Stage1)
-        QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection);//put queued to don't have circular loop Client -> Server -> Client
+        if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection))//put queued to don't have circular loop Client -> Server -> Client
+            abort();
     //need wait the sslHandcheck
     sendProtocol();
     if(socket->bytesAvailable())

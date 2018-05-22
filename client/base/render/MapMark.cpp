@@ -13,7 +13,8 @@ MapMark::MapMark(Tiled::MapObject *mapObject) :
         return;
     }
     timer.start(100);
-    connect(&timer,&QTimer::timeout,this,&MapMark::updateTheFrame);
+    if(!connect(&timer,&QTimer::timeout,this,&MapMark::updateTheFrame))
+        abort();
 }
 
 MapMark::~MapMark()

@@ -181,7 +181,8 @@ bool MapVisualiser::asyncMapLoaded(const std::string &fileName, MapVisualiserThr
                 newTimer->setInterval(interval);
                 animationTimer[interval]=newTimer;
                 animationFrame[interval];//creation
-                connect(newTimer,&QTimer::timeout,this,&MapVisualiser::applyTheAnimationTimer);
+                if(!connect(newTimer,&QTimer::timeout,this,&MapVisualiser::applyTheAnimationTimer))
+                    abort();
                 newTimer->start();
             }
             if(animationFrame.at(interval).find(n.second.count)==animationFrame.at(interval).cend())
