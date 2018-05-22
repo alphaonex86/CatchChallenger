@@ -18,7 +18,6 @@ LanguagesSelect::LanguagesSelect() :
 {
     ui->setupUi(this);
     QStringList folderToParse,languageToParse;
-    folderToParse << QStringLiteral(":/languages/");
     folderToParse << QCoreApplication::applicationDirPath()+QStringLiteral("/languages/");
     int index;
     index=0;
