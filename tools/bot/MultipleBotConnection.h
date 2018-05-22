@@ -29,7 +29,7 @@ public:
         bool haveShowDisconnectionReason;
         bool haveBeenDiscounted;
         //CatchChallenger::Direction direction;
-        QList<QList<CatchChallenger::CharacterEntry> > charactersList;
+        std::vector<std::vector<CatchChallenger::CharacterEntry> > charactersList;
         quint16 number;
         QString login;
         QString pass;
@@ -78,7 +78,7 @@ protected:
     void newSocketError_with_client(CatchChallengerClient *client, QAbstractSocket::SocketError error);
     virtual void disconnected();
     virtual void lastReplyTime(const quint32 &time);
-    virtual void notLogged(const QString &reason);
+    virtual void notLogged(const std::string &reason);
     virtual void tryLink(CatchChallengerClient *client);
     virtual void protocol_is_good_with_client(CatchChallengerClient *client);
     virtual void haveTheDatapack_with_client(CatchChallengerClient *client);
@@ -92,7 +92,7 @@ protected:
     virtual void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction) = 0;
     virtual void remove_player(const uint16_t &id) = 0;
     virtual void dropAllPlayerOnTheMap() = 0;
-    virtual void logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList) = 0;
+    virtual void logged(const std::vector<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList) = 0;
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId) = 0;
     virtual void haveTheDatapack() = 0;
     virtual void haveTheDatapackMainSub() = 0;
@@ -100,7 +100,7 @@ protected:
     virtual void sslErrors(const QList<QSslError> &errors) = 0;
     virtual void protocol_is_good() = 0;
     virtual void newSocketError(QAbstractSocket::SocketError error) = 0;
-    virtual void newError(QString error,QString detailedError) = 0;
+    virtual void newError(const std::string &error,const std::string &detailedError) = 0;
     virtual void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations) = 0;
 
     virtual QString login() = 0;

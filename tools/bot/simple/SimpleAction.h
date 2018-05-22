@@ -17,7 +17,8 @@ class SimpleAction : public SimpleBotInterface
 public:
     SimpleAction();
     ~SimpleAction();
-    void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,
+                       const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
 private:
     QTimer moveTimer;
     QTimer textTimer;
@@ -25,7 +26,7 @@ private:
     void purgeCpuCache();
     void doMove();
     void doText();
-    void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
+    void new_chat_text(const CatchChallenger::Chat_type &chat_type, const std::string &text, const std::string &pseudo, const CatchChallenger::Player_type &type);
 };
 
 #endif // SIMPLE_ACTION_BOT_INTERFACE_H

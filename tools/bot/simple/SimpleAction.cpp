@@ -14,7 +14,7 @@ SimpleAction::~SimpleAction()
 {
 }
 
-void SimpleAction::insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+void SimpleAction::insert_player(CatchChallenger::Api_protocol *api, const CatchChallenger::Player_public_informations &player, const uint32_t &mapId, const uint16_t &x, const uint16_t &y, const CatchChallenger::Direction &direction)
 {
     Q_UNUSED(player);
     Q_UNUSED(mapId);
@@ -141,7 +141,8 @@ void SimpleAction::doText()
     }
 }
 
-void SimpleAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type)
+void SimpleAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,const std::string &text,
+                                 const std::string &pseudo,const CatchChallenger::Player_type &type)
 {
     if(!globalChatRandomReply && chat_type!=CatchChallenger::Chat_type_pm)
         return;
@@ -180,10 +181,10 @@ void SimpleAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,con
         case CatchChallenger::Chat_type_pm:
         if(CommonSettingsServer::commonSettingsServer.chat_allow_private)
         {
-            if(text==QStringLiteral("version"))
-                api->sendPM(QStringLiteral("Version %1 %2").arg(name()).arg(version()),pseudo);
+            if(text=="version")
+                api->sendPM(QStringLiteral("Version %1 %2").arg(name()).arg(version()).toStdString(),pseudo);
             else
-                api->sendPM(QStringLiteral("Hello %1, I'm few bit busy for now").arg(pseudo),pseudo);
+                api->sendPM(QStringLiteral("Hello %1, I'm few bit busy for now").arg(QString::fromStdString(pseudo)).toStdString(),pseudo);
         }
         break;
         default:
