@@ -597,7 +597,8 @@ void BaseWindow::loadSoundSettings()
             ui->audiodevice->setCurrentIndex(indexDevice);
             {}//soundEngine.setOutputDeviceName(outputDeviceNames.at(indexDevice));
         }
-        connect(ui->audiodevice,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&BaseWindow::changeDeviceIndex);
+        if(!connect(ui->audiodevice,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&BaseWindow::changeDeviceIndex))
+            abort();
     }
 }
 

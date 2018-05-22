@@ -151,7 +151,7 @@ void SimpleAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,con
     Q_UNUSED(text);
     Q_UNUSED(pseudo);
     Q_UNUSED(type);
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_protocol *api = static_cast<CatchChallenger::Api_protocol *>(sender());
     if(api==NULL)
         return;
 

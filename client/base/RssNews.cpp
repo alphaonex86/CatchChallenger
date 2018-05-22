@@ -16,8 +16,10 @@ RssNews::RssNews()
     start();
     moveToThread(this);
     qnam=NULL;
-    connect(&newUpdateTimer,&QTimer::timeout,this,&RssNews::downloadFile);
-    connect(&firstUpdateTimer,&QTimer::timeout,this,&RssNews::downloadFile);
+    if(!connect(&newUpdateTimer,&QTimer::timeout,this,&RssNews::downloadFile))
+        abort();
+    if(!connect(&firstUpdateTimer,&QTimer::timeout,this,&RssNews::downloadFile))
+        abort();
     newUpdateTimer.start(60*60*1000);
     firstUpdateTimer.setSingleShot(true);
     firstUpdateTimer.start(5);
@@ -35,7 +37,8 @@ void RssNews::downloadFile()
         qnam=new QNetworkAccessManager(this);
     QNetworkRequest networkRequest(QStringLiteral(CATCHCHALLENGER_RSS_URL));
     reply = qnam->get(networkRequest);
-    connect(reply, &QNetworkReply::finished, this, &RssNews::httpFinished);
+    if(!connect(reply, &QNetworkReply::finished, this, &RssNews::httpFinished))
+        abort();
 }
 
 void RssNews::httpFinished()

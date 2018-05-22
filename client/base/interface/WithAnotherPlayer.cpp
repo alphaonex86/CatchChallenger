@@ -25,7 +25,8 @@ WithAnotherPlayer::WithAnotherPlayer(QWidget *parent,const WithAnotherPlayerType
         break;
     }
     time.restart();
-    connect(&timer,&QTimer::timeout,this,&WithAnotherPlayer::updateTiemout);
+    if(!connect(&timer,&QTimer::timeout,this,&WithAnotherPlayer::updateTiemout))
+        abort();
     timer.start(200);
 }
 
