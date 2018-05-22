@@ -43,22 +43,38 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
     index_mirror_sub=0;
     host="localhost";
     port=42489;
-    connect(socket, &ConnectedSocket::disconnected,	this,&Api_client_real::disconnect);
-    connect(this,   &Api_client_real::newFileBase,      this,&Api_client_real::writeNewFileBase);
-    connect(this,   &Api_client_real::newFileMain,      this,&Api_client_real::writeNewFileMain);
-    connect(this,   &Api_client_real::newFileSub,      this,&Api_client_real::writeNewFileSub);
-    connect(this,   &Api_client_real::newHttpFileBase,  this,&Api_client_real::getHttpFileBase);
-    connect(this,   &Api_client_real::newHttpFileMain,  this,&Api_client_real::getHttpFileMain);
-    connect(this,   &Api_client_real::newHttpFileSub,  this,&Api_client_real::getHttpFileSub);
-    connect(this,   &Api_client_real::doDifferedChecksumBase,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumBase);
-    connect(this,   &Api_client_real::doDifferedChecksumMain,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumMain);
-    connect(this,   &Api_client_real::doDifferedChecksumSub,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumSub);
-    connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneBase,this,&Api_client_real::datapackChecksumDoneBase);
-    connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneMain,this,&Api_client_real::datapackChecksumDoneMain);
-    connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneSub,this,&Api_client_real::datapackChecksumDoneSub);
-    connect(&zstdDecodeThreadBase,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishBase);
-    connect(&zstdDecodeThreadMain,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishMain);
-    connect(&zstdDecodeThreadSub,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishSub);
+    if(!connect(socket, &ConnectedSocket::disconnected,	this,&Api_client_real::disconnect))
+        abort();
+    if(!connect(this,   &Api_client_real::QtnewFileBase,      this,&Api_client_real::writeNewFileBase))
+        abort();
+    if(!connect(this,   &Api_client_real::QtnewFileMain,      this,&Api_client_real::writeNewFileMain))
+        abort();
+    if(!connect(this,   &Api_client_real::QtnewFileSub,      this,&Api_client_real::writeNewFileSub))
+        abort();
+    if(!connect(this,   &Api_client_real::QtnewHttpFileBase,  this,&Api_client_real::getHttpFileBase))
+        abort();
+    if(!connect(this,   &Api_client_real::QtnewHttpFileMain,  this,&Api_client_real::getHttpFileMain))
+        abort();
+    if(!connect(this,   &Api_client_real::QtnewHttpFileSub,  this,&Api_client_real::getHttpFileSub))
+        abort();
+    if(!connect(this,   &Api_client_real::doDifferedChecksumBase,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumBase))
+        abort();
+    if(!connect(this,   &Api_client_real::doDifferedChecksumMain,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumMain))
+        abort();
+    if(!connect(this,   &Api_client_real::doDifferedChecksumSub,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumSub))
+        abort();
+    if(!connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneBase,this,&Api_client_real::datapackChecksumDoneBase))
+        abort();
+    if(!connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneMain,this,&Api_client_real::datapackChecksumDoneMain))
+        abort();
+    if(!connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneSub,this,&Api_client_real::datapackChecksumDoneSub))
+        abort();
+    if(!connect(&zstdDecodeThreadBase,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishBase))
+        abort();
+    if(!connect(&zstdDecodeThreadMain,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishMain))
+        abort();
+    if(!connect(&zstdDecodeThreadSub,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishSub))
+        abort();
     disconnect();
     //dataClear();do into disconnected()
 }

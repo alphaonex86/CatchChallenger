@@ -50,16 +50,20 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
 
     lookToMove.setInterval(200);
     lookToMove.setSingleShot(true);
-    connect(&lookToMove,&QTimer::timeout,this,&MapVisualiserPlayer::transformLookToMove);
-    connect(this,&MapVisualiserPlayer::mapDisplayed,this,&MapVisualiserPlayer::mapDisplayedSlot);
+    if(!connect(&lookToMove,&QTimer::timeout,this,&MapVisualiserPlayer::transformLookToMove))
+        abort();
+    if(!connect(this,&MapVisualiserPlayer::mapDisplayed,this,&MapVisualiserPlayer::mapDisplayedSlot))
+        abort();
 
     currentPlayerSpeed=250;
     moveTimer.setInterval(currentPlayerSpeed/5);
     moveTimer.setSingleShot(true);
-    connect(&moveTimer,&QTimer::timeout,this,&MapVisualiserPlayer::moveStepSlot);
+    if(!connect(&moveTimer,&QTimer::timeout,this,&MapVisualiserPlayer::moveStepSlot))
+        abort();
     moveAnimationTimer.setInterval(currentPlayerSpeed/5);
     moveAnimationTimer.setSingleShot(true);
-    connect(&moveAnimationTimer,&QTimer::timeout,this,&MapVisualiserPlayer::doMoveAnimation);
+    if(!connect(&moveAnimationTimer,&QTimer::timeout,this,&MapVisualiserPlayer::doMoveAnimation))
+        abort();
 
     this->centerOnPlayer=centerOnPlayer;
 

@@ -88,9 +88,11 @@ MainWindow::MainWindow(QWidget *parent) :
         }
     }
     InternetUpdater::internetUpdater=new InternetUpdater();
-    connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate);
+    if(!connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate))
+        abort();
     FeedNews::feedNews=new FeedNews();
-    connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList);
+    if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList))
+        abort();
     baseWindow=new CatchChallenger::BaseWindow();
     ui->stackedWidget->addWidget(baseWindow);
     {
@@ -131,7 +133,8 @@ MainWindow::MainWindow(QWidget *parent) :
             ui->lineEditPass->setText(QString());
         ui->checkBoxRememberPassword->setChecked(!ui->lineEditPass->text().isEmpty());
     }
-    connect(&updateTheOkButtonTimer,&QTimer::timeout,this,&MainWindow::updateTheOkButton);
+    if(!connect(&updateTheOkButtonTimer,&QTimer::timeout,this,&MainWindow::updateTheOkButton))
+        abort();
 
     stopFlood.setSingleShot(false);
     stopFlood.start(1500);
@@ -141,7 +144,8 @@ MainWindow::MainWindow(QWidget *parent) :
     haveShowDisconnectionReason=false;
     completer=NULL;
     ui->stackedWidget->addWidget(baseWindow);
-    connect(baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection);
+    if(!connect(baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection))
+        abort();
 
     stateChanged(QAbstractSocket::UnconnectedState);
 
@@ -207,7 +211,8 @@ MainWindow::MainWindow(QWidget *parent) :
             qDebug() << string;
     }
     #endif
-    connect(baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded);
+    if(!connect(baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded))
+        abort();
     #ifdef CATCHCHALLENGER_GITCOMMIT
     ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION)+QStringLiteral(" - ")+QStringLiteral(CATCHCHALLENGER_GITCOMMIT));
     #else
@@ -405,9 +410,12 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     //connect(realSslSocket,&QSslSocket::readyRead,this,&MainWindow::readForFirstHeader,Qt::DirectConnection);
 
     baseWindow->stateChanged(QAbstractSocket::ConnectingState);
-    connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection);
-    connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection);
-    connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&MainWindow::error,Qt::QueuedConnection);
+    if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection))
+        abort();
+    if(!connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection))
+        abort();
+    if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&MainWindow::error,Qt::QueuedConnection))
+        abort();
     lastServer=host+":"+QString::number(port);
     realSslSocket->connectToHost(host,port);
     connectTheExternalSocket();
@@ -424,10 +432,14 @@ void MainWindow::connectTheExternalSocket()
         proxy.setPort(proxy_port);
         static_cast<CatchChallenger::Api_client_real *>(client)->setProxy(proxy);
     }
-    connect(client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good,Qt::QueuedConnection);
-    connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected);
-    connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message,Qt::QueuedConnection);
-    connect(client,               &CatchChallenger::Api_protocol::logged,             this,&MainWindow::logged,Qt::QueuedConnection);
+    if(!connect(client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good,Qt::QueuedConnection))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message,Qt::QueuedConnection))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_protocol::logged,             this,&MainWindow::logged,Qt::QueuedConnection))
+        abort();
     baseWindow->setMultiPlayer(true,client);
     baseWindow->connectAllSignals();
     QDir datapack(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/datapack/"));

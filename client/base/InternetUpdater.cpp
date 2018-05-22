@@ -35,8 +35,10 @@ InternetUpdater *InternetUpdater::internetUpdater=NULL;
 
 InternetUpdater::InternetUpdater()
 {
-    connect(&newUpdateTimer,&QTimer::timeout,this,&InternetUpdater::downloadFile);
-    connect(&firstUpdateTimer,&QTimer::timeout,this,&InternetUpdater::downloadFile);
+    if(!connect(&newUpdateTimer,&QTimer::timeout,this,&InternetUpdater::downloadFile))
+        abort();
+    if(!connect(&firstUpdateTimer,&QTimer::timeout,this,&InternetUpdater::downloadFile))
+        abort();
     newUpdateTimer.start(60*60*1000);
     firstUpdateTimer.setSingleShot(true);
     firstUpdateTimer.start(5);

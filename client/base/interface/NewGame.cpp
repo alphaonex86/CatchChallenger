@@ -56,7 +56,8 @@ NewGame::NewGame(const std::string &skinPath, const std::string &monsterPath, st
         return;
     }
 
-    connect(&timer,&QTimer::timeout,      this,&NewGame::timerSlot,    Qt::QueuedConnection);
+    if(!connect(&timer,&QTimer::timeout,      this,&NewGame::timerSlot,    Qt::QueuedConnection))
+        abort();
 }
 
 NewGame::~NewGame()

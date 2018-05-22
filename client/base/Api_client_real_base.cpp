@@ -100,7 +100,8 @@ bool Api_client_real::getHttpFileBase(const std::string &url, const std::string 
     UrlInWaiting urlInWaiting;
     urlInWaiting.fileName=fileName;
     urlInWaitingListBase[reply]=urlInWaiting;
-    connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedBase);
+    if(!connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedBase))
+        abort();
     return true;
 }
 
@@ -268,8 +269,10 @@ void Api_client_real::datapackChecksumDoneBase(const std::vector<std::string> &d
                         QStringLiteral("pack/diff/datapack-base-%1.tar.zst").arg(QString::fromStdString(binarytoHexa(hash)))
                         );
             QNetworkReply *reply = qnam.get(networkRequest);
-            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase);
-            connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackBase);
+            if(!connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase))
+                abort();
+            if(!connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackBase))
+                abort();
         }
     }
 }
@@ -294,7 +297,8 @@ void Api_client_real::test_mirror_base()
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.zst"));
         reply = qnam.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
-            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase);//fix it, put httpFinished* broke it
+            if(!connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase))//fix it, put httpFinished* broke it
+                abort();
     }
     else
     {
@@ -305,12 +309,15 @@ void Api_client_real::test_mirror_base()
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("datapack-list/base.txt"));
         reply = qnam.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
-            connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase);
+            if(!connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedForDatapackListBase))
+                abort();
     }
     if(reply->error()==QNetworkReply::NoError)
     {
-        connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventBase);
-        connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackBase);
+        if(!connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventBase))
+            abort();
+        if(!connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackBase))
+            abort();
     }
     else
     {

@@ -18,7 +18,8 @@ using namespace CatchChallenger;
 InternalServer::InternalServer(QSettings &settings) :
     QtServer()
 {
-    connect(this,&QtServer::need_be_started,this,&InternalServer::start_internal_server,Qt::QueuedConnection);
+    if(!connect(this,&QtServer::need_be_started,this,&InternalServer::start_internal_server,Qt::QueuedConnection))
+        abort();
     const QString &currentDate=QDateTime::currentDateTime().toString("ddMMyyyy");
     if(settings.contains("gift"))
     {
@@ -27,8 +28,10 @@ InternalServer::InternalServer(QSettings &settings) :
             settings.setValue("gift",currentDate);
             timerGift.setInterval(1000);
             timerGift.setSingleShot(true);
-            connect(this,&QtServer::is_started,this,&InternalServer::serverIsReady,Qt::QueuedConnection);
-            connect(&timerGift,&QTimer::timeout,this,&InternalServer::timerGiftSlot,Qt::QueuedConnection);
+            if(!connect(this,&QtServer::is_started,this,&InternalServer::serverIsReady,Qt::QueuedConnection))
+                abort();
+            if(!connect(&timerGift,&QTimer::timeout,this,&InternalServer::timerGiftSlot,Qt::QueuedConnection))
+                abort();
         }
     }
     else

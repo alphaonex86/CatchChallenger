@@ -20,7 +20,8 @@ void BaseWindow::on_character_add_clicked()
     if(newProfile!=NULL)
         delete newProfile;
     newProfile=new NewProfile(client->datapackPathBase(),this);
-    connect(newProfile,&NewProfile::finished,this,&BaseWindow::newProfileFinished);
+    if(!connect(newProfile,&NewProfile::finished,this,&BaseWindow::newProfileFinished))
+        abort();
     newProfile->show();
 }
 

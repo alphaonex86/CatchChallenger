@@ -13,7 +13,8 @@ TemporaryTile::TemporaryTile(Tiled::MapObject* object) :
     Tiled::Cell cell=object->cell();
     cell.tile=TemporaryTile::empty;
     object->setCell(cell);
-    connect(&timer,&QTimer::timeout,this,&TemporaryTile::updateTheTile);
+    if(!connect(&timer,&QTimer::timeout,this,&TemporaryTile::updateTheTile))
+        abort();
 }
 
 TemporaryTile::~TemporaryTile()
