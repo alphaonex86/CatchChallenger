@@ -139,7 +139,8 @@ BaseWindow::BaseWindow() :
     }
 
     checkQueryTime.start(200);
-    connect(&checkQueryTime,&QTimer::timeout,   this,&BaseWindow::detectSlowDown);
+    if(!connect(&checkQueryTime,&QTimer::timeout,   this,&BaseWindow::detectSlowDown))
+        abort();
     updateRXTXTimer.start(1000);
     updateRXTXTime.restart();
 

@@ -13,6 +13,7 @@ FeedNews *FeedNews::feedNews=NULL;
 
 FeedNews::FeedNews()
 {
+    qRegisterMetaType<std::vector<FeedNews::FeedEntry> >("std::vector<FeedNews::FeedEntry>");
     setObjectName("FeedNews");
     start();
     moveToThread(this);

@@ -21,8 +21,10 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache) :
 {
     qRegisterMetaType<MapVisualiserThread::Map_full *>("MapVisualiserThread::Map_full *");
 
-    connect(this,&MapVisualiser::loadOtherMapAsync,&mapVisualiserThread,&MapVisualiserThread::loadOtherMapAsync,Qt::QueuedConnection);
-    connect(&mapVisualiserThread,&MapVisualiserThread::asyncMapLoaded,this,&MapVisualiser::asyncMapLoaded,Qt::QueuedConnection);
+    if(!connect(this,&MapVisualiser::loadOtherMapAsync,&mapVisualiserThread,&MapVisualiserThread::loadOtherMapAsync,Qt::QueuedConnection))
+        abort();
+    if(!connect(&mapVisualiserThread,&MapVisualiserThread::asyncMapLoaded,this,&MapVisualiser::asyncMapLoaded,Qt::QueuedConnection))
+        abort();
 
     setRenderHint(QPainter::Antialiasing,false);
     setRenderHint(QPainter::TextAntialiasing,false);
@@ -38,14 +40,17 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache) :
     timeRender.restart();
     waitRenderTime=30;
     timerRender.setSingleShot(true);
-    connect(&timerRender,&QTimer::timeout,this,&MapVisualiser::render);
-    connect(&timerUpdateFPS,&QTimer::timeout,this,&MapVisualiser::updateFPS);
+    if(!connect(&timerRender,&QTimer::timeout,this,&MapVisualiser::render))
+        abort();
+    if(!connect(&timerUpdateFPS,&QTimer::timeout,this,&MapVisualiser::updateFPS))
+        abort();
     timerUpdateFPS.start();
     FPSText=NULL;
     mShowFPS=false;
 
     mapItem=new MapItem(NULL,useCache);
-    connect(mapItem,&MapItem::eventOnMap,this,&MapVisualiser::eventOnMap);
+    if(!connect(mapItem,&MapItem::eventOnMap,this,&MapVisualiser::eventOnMap))
+        abort();
 
     grass=NULL;
     grassOver=NULL;

@@ -9,8 +9,10 @@ PathFinding::PathFinding() :
     setObjectName("PathFinding");
     start();
     moveToThread(this);
-    connect(this,&PathFinding::internalCancel,this,&PathFinding::cancel,Qt::BlockingQueuedConnection);
-    connect(this,&PathFinding::emitSearchPath,this,&PathFinding::internalSearchPath,Qt::QueuedConnection);
+    if(!connect(this,&PathFinding::internalCancel,this,&PathFinding::cancel,Qt::BlockingQueuedConnection))
+        abort();
+    if(!connect(this,&PathFinding::emitSearchPath,this,&PathFinding::internalSearchPath,Qt::QueuedConnection))
+        abort();
 }
 
 PathFinding::~PathFinding()

@@ -254,7 +254,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
                 const std::pair<uint16_t,std::string> &quest=quests.at(0);
                 if(DatapackClientLoader::datapackLoader.questsExtra.at(quest.first).autostep)
                 {
-                    on_IG_dialog_text_linkActivated("quest_"+std::to_string(quest.first));
+                    IG_dialog_text_linkActivated("quest_"+std::to_string(quest.first));
                     return;
                 }
             }
@@ -830,7 +830,12 @@ bool BaseWindow::haveStartQuestRequirement(const CatchChallenger::Quest &quest) 
     return haveReputationRequirements(quest.requirements.reputation);
 }
 
-void BaseWindow::on_IG_dialog_text_linkActivated(const std::string &rawlink)
+void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
+{
+    IG_dialog_text_linkActivated(rawlink.toStdString());
+}
+
+void BaseWindow::IG_dialog_text_linkActivated(const std::string &rawlink)
 {
     ui->IG_dialog->setVisible(false);
     std::vector<std::string> stringList=stringsplit(rawlink,';');

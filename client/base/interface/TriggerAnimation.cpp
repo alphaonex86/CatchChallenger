@@ -119,7 +119,8 @@ void TriggerAnimation::startEnter()
         eventCall.timer=new QTimer(this);
         eventCall.timer->start(msEnter);
         eventCall.frame=0;
-        connect(eventCall.timer,&QTimer::timeout,this,&TriggerAnimation::timerFinishEnter,Qt::QueuedConnection);
+        if(!connect(eventCall.timer,&QTimer::timeout,this,&TriggerAnimation::timerFinishEnter,Qt::QueuedConnection))
+            abort();
         enterEvents << eventCall;
     }
     else
@@ -129,7 +130,8 @@ void TriggerAnimation::startEnter()
         eventCall.timer=new QTimer(this);
         eventCall.timer->start(msAgain);
         eventCall.frame=framesCountEnter+framesCountLeave-1;
-        connect(eventCall.timer,&QTimer::timeout,this,&TriggerAnimation::timerFinishEnter,Qt::QueuedConnection);
+        if(!connect(eventCall.timer,&QTimer::timeout,this,&TriggerAnimation::timerFinishEnter,Qt::QueuedConnection))
+            abort();
         enterEvents << eventCall;
     }
 }
@@ -141,7 +143,8 @@ void TriggerAnimation::startLeave()
     eventCall.timer=new QTimer(this);
     eventCall.timer->start(msLeave);
     eventCall.frame=framesCountEnter-1;
-    connect(eventCall.timer,&QTimer::timeout,this,&TriggerAnimation::timerFinishLeave,Qt::QueuedConnection);
+    if(!connect(eventCall.timer,&QTimer::timeout,this,&TriggerAnimation::timerFinishLeave,Qt::QueuedConnection))
+        abort();
     leaveEvents << eventCall;
 }
 

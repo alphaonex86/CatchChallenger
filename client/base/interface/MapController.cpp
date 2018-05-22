@@ -31,7 +31,8 @@ std::string MapController::text_DATAPACK_BASE_PATH_SKIN=DATAPACK_BASE_PATH_SKIN;
 MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
     MapControllerMP(centerOnPlayer,debugTags,useCache)
 {
-    connect(this,&MapController::mapDisplayed,this,&MapController::tryLoadPlantOnMapDisplayed,Qt::QueuedConnection);
+    if(!connect(this,&MapController::mapDisplayed,this,&MapController::tryLoadPlantOnMapDisplayed,Qt::QueuedConnection))
+        abort();
     botFlags=NULL;
 
     imageOverAdded=false;
@@ -47,10 +48,12 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
         imageOver->setPos(0,0);
     updateColorTimer.setSingleShot(true);
     updateColorTimer.setInterval(50);
-    connect(&updateColorTimer,&QTimer::timeout,this,&MapController::updateColor);
+    if(!connect(&updateColorTimer,&QTimer::timeout,this,&MapController::updateColor))
+        abort();
     updateBotTimer.setInterval(1000);
     updateBotTimer.start();
-    connect(&updateBotTimer,&QTimer::timeout,this,&MapController::updateBot);
+    if(!connect(&updateBotTimer,&QTimer::timeout,this,&MapController::updateBot))
+        abort();
 }
 
 MapController::~MapController()
@@ -188,10 +191,14 @@ void MapController::updateBot()
 void MapController::connectAllSignals(CatchChallenger::Api_client_real *client)
 {
     MapControllerMP::connectAllSignals(client);
-    connect(client,&CatchChallenger::Api_client_real::Qtinsert_plant,this,&MapController::insert_plant);
-    connect(client,&CatchChallenger::Api_client_real::Qtremove_plant,this,&MapController::remove_plant);
-    connect(client,&CatchChallenger::Api_client_real::Qtseed_planted,this,&MapController::seed_planted);
-    connect(client,&CatchChallenger::Api_client_real::Qtplant_collected,this,&MapController::plant_collected);
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtinsert_plant,this,&MapController::insert_plant))
+        abort();
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtremove_plant,this,&MapController::remove_plant))
+        abort();
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtseed_planted,this,&MapController::seed_planted))
+        abort();
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtplant_collected,this,&MapController::plant_collected))
+        abort();
 }
 
 void MapController::resetAll()

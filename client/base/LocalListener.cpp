@@ -54,7 +54,8 @@ void LocalListener::listenServer(const uint8_t &count)
     localServer.setSocketOptions(QLocalServer::UserAccessOption);
     #endif
     if(localServer.listen(QString::fromStdString(ExtraSocket::pathSocket("CatchChallenger-Client-"+std::to_string(count)))))
-        connect(&localServer, &QLocalServer::newConnection, this, &LocalListener::newConnexion);
+        if(!connect(&localServer, &QLocalServer::newConnection, this, &LocalListener::newConnexion))
+            abort();
 }
 
 void LocalListener::dataIncomming()
@@ -96,7 +97,9 @@ void LocalListener::newConnexion()
         QCoreApplication::quit();
     else
     {
-        connect(socket, &QLocalSocket::readyRead, this, &LocalListener::dataIncomming);
-        connect(socket, &QLocalSocket::disconnected, this, &LocalListener::deconnectClient);
+        if(!connect(socket, &QLocalSocket::readyRead, this, &LocalListener::dataIncomming))
+            abort();
+        if(!connect(socket, &QLocalSocket::disconnected, this, &LocalListener::deconnectClient))
+            abort();
     }
 }

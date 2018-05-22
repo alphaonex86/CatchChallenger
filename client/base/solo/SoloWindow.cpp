@@ -69,7 +69,8 @@ SoloWindow::SoloWindow(QWidget *parent, const std::string &datapackPath, const s
     {
         ui->horizontalLayout_main->removeItem(ui->horizontalSpacer_Back);
         InternetUpdater::internetUpdater=new InternetUpdater();
-        connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&SoloWindow::newUpdate);
+        if(!connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&SoloWindow::newUpdate))
+            abort();
     }
     ui->SaveGame_Back->setVisible(!standAlone);
     ui->languages->setVisible(standAlone);
@@ -293,8 +294,10 @@ void SoloWindow::updateSavegameList()
         QString savegamesPath=fileInfo.absoluteFilePath()+text_slash;
         QSettings metaData(savegamesPath+text_metadatadotconf,QSettings::IniFormat);
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
-        connect(newEntry,&ListEntryEnvolued::clicked,this,&SoloWindow::SoloWindowListEntryEnvoluedClicked,Qt::QueuedConnection);
-        connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&SoloWindow::SoloWindowListEntryEnvoluedDoubleClicked,Qt::QueuedConnection);
+        if(!connect(newEntry,&ListEntryEnvolued::clicked,this,&SoloWindow::SoloWindowListEntryEnvoluedClicked,Qt::QueuedConnection))
+            abort();
+        if(!connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&SoloWindow::SoloWindowListEntryEnvoluedDoubleClicked,Qt::QueuedConnection))
+            abort();
         newEntry->setStyleSheet(text_hover_entry);
         QString dateString;
         if(!QFileInfo(savegamesPath+text_metadatadotconf).exists())
