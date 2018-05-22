@@ -5,6 +5,7 @@
 #ifdef QT_GUI_LIB
 #include <QMessageBox>
 #endif
+#include <ctime>
 
 bool MultipleBotConnectionImplForGui::displayingError=false;
 
@@ -80,14 +81,17 @@ void MultipleBotConnectionImplForGui::detectSlowDown()
     QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
     while (i.hasNext()) {
         i.next();
-        const QMap<quint8,QTime> &values=i.key()->getQuerySendTimeList();
+        const std::map<uint8_t,uint64_t> &values=i.key()->getQuerySendTimeList();
         queryCount+=values.size();
-        QMapIterator<quint8,QTime> i(values);
-        while (i.hasNext()) {
-            i.next();
-            const quint32 &time=i.value().elapsed();
-            if(time>worseTime)
-                worseTime=time;
+        for ( const auto &n : values )
+        {
+            std::time_t result = std::time(nullptr);
+            if(result>=(std::time_t)n.second)
+            {
+                const uint32_t &time=result-n.second;
+                if(time>worseTime)
+                    worseTime=time;
+            }
         }
     }
     emit emit_detectSlowDown(queryCount,worseTime);
@@ -226,7 +230,8 @@ void MultipleBotConnectionImplForGui::dropAllPlayerOnTheMap()
     botInterface->dropAllPlayerOnTheMap(senderObject);
 }
 
-void MultipleBotConnectionImplForGui::logged(const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList)
+void MultipleBotConnectionImplForGui::logged(const std::vector<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,
+                                             const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
 {
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
@@ -488,7 +493,7 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
     #endif
 }
 
-void MultipleBotConnectionImplForGui::newError(QString error,QString detailedError)
+void MultipleBotConnectionImplForGui::newError(const std::string &error, const std::string &detailedError)
 {
     mHaveAnError=true;
     #ifndef BOTTESTCONNECT
@@ -498,14 +503,15 @@ void MultipleBotConnectionImplForGui::newError(QString error,QString detailedErr
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
     {
-        qDebug() << QString("MultipleBotConnectionImplFoprGui::newError() senderObject==NULL error: %1, detailedError: %2").arg(error).arg(detailedError);
+        qDebug() << QString("MultipleBotConnectionImplFoprGui::newError() senderObject==NULL error: %1, detailedError: %2")
+                    .arg(QString::fromStdString(error)).arg(QString::fromStdString(detailedError));
         return;
     }
 
     apiToCatchChallengerClient[senderObject]->haveShowDisconnectionReason=true;
-    statusError(QStringLiteral("Error: %1, detailedError: %2").arg(error).arg(detailedError));
-    qDebug() << QString("MultipleBotConnectionImplFoprGui::newError() error: %1, detailedError: %2").arg(error).arg(detailedError);
-    MultipleBotConnection::newError_with_client(apiToCatchChallengerClient[senderObject],error,detailedError);
+    statusError(QStringLiteral("Error: %1, detailedError: %2").arg(QString::fromStdString(error)).arg(QString::fromStdString(detailedError)));
+    qDebug() << QString("MultipleBotConnectionImplFoprGui::newError() error: %1, detailedError: %2").arg(QString::fromStdString(error)).arg(QString::fromStdString(detailedError));
+    MultipleBotConnection::newError_with_client(apiToCatchChallengerClient[senderObject],QString::fromStdString(error),QString::fromStdString(detailedError));
 }
 
 void MultipleBotConnectionImplForGui::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
@@ -524,7 +530,7 @@ void MultipleBotConnectionImplForGui::disconnected()
     CatchChallenger::ConnectedSocket *senderObject = qobject_cast<CatchChallenger::ConnectedSocket *>(sender());
     if(senderObject==NULL)
     {
-        newError(QStringLiteral("Internal problem"),QStringLiteral("MultipleBotConnectionImplForGui::disconnected() senderObject==NULL"));
+        newError("Internal problem","MultipleBotConnectionImplForGui::disconnected() senderObject==NULL");
         return;
     }
 

@@ -99,7 +99,8 @@ void MainWindow::detectSlowDown(uint32_t queryCount,uint32_t worseTime)
         ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));
 }
 
-void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
+void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,const std::vector<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,
+                        const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
 {
     Q_UNUSED(haveTheDatapack);
     if(senderObject==NULL)
@@ -124,7 +125,7 @@ void MainWindow::updateServerList(CatchChallenger::Api_client_real *senderObject
     //do the grouping for characterGroup count
     {
         serverByCharacterGroup.clear();
-        int index=0;
+        unsigned int index=0;
         int serverByCharacterGroupTempIndexToDisplay=1;
         while(index<serverOrdenedList.size())
         {
@@ -317,7 +318,7 @@ void MainWindow::on_serverListSelect_clicked()
         }
         else
         {
-            int index=0;
+            unsigned int index=0;
             while(index<characterEntryList.at(charactersGroupIndex).size())
             {
                 const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).at(index);
@@ -337,7 +338,7 @@ void MainWindow::on_serverListSelect_clicked()
                 qDebug() << "MainWindow::on_serverListSelect_clicked(): ui->characterList->count()==0";
                 return;
             }
-            const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).first();
+            const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).front();
             multipleBotConnexion.characterSelectForFirstCharacter(character.character_id);
         }
         else
@@ -350,24 +351,27 @@ void MainWindow::on_serverListSelect_clicked()
 
 void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView)
 {
-    item->setText(0,logicialGroup.name);
+    item->setText(0,QString::fromStdString(logicialGroup.name));
     {
         //to order the group
-        QStringList keys=logicialGroup.logicialGroupList.keys();
-        keys.sort();
+        std::vector<std::string> keys;
+        for (const auto &n : logicialGroup.logicialGroupList)
+            keys.push_back(n.first);
+        qSort(keys);
         //list the group
-        int index=0;
+        unsigned int index=0;
         while(index<keys.size())
         {
             QTreeWidgetItem * const itemGroup=new QTreeWidgetItem(item);
-            addToServerList(logicialGroup.logicialGroupList[keys.value(index)],itemGroup,currentDate,fullView);
+            addToServerList(*logicialGroup.logicialGroupList[keys.at(index)],
+                    itemGroup,currentDate,fullView);
             index++;
         }
     }
     {
         qSort(logicialGroup.servers);
         //list the server
-        int index=0;
+        unsigned int index=0;
         while(index<logicialGroup.servers.size())
         {
             const CatchChallenger::ServerFromPoolForDisplay &server=logicialGroup.servers.at(index);
@@ -376,7 +380,7 @@ void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, 
             QString groupText;
             if(serverByCharacterGroup.size()>1)
                 groupText=QStringLiteral(" (%1)").arg(serverByCharacterGroup.value(server.charactersGroupIndex).second);
-            QString name=server.name;
+            QString name=QString::fromStdString(server.name);
             if(name.isEmpty())
                 name=tr("Default server");
             if(fullView)
@@ -384,20 +388,20 @@ void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, 
                 text=name+groupText;
                 if(server.playedTime>0)
                 {
-                    if(!server.description.isEmpty())
-                        text+=" "+tr("%1 played").arg(CatchChallenger::FacilityLibClient::timeToString(server.playedTime));
+                    if(!server.description.empty())
+                        text+=" "+tr("%1 played").arg(QString::fromStdString(CatchChallenger::FacilityLibClient::timeToString(server.playedTime)));
                     else
-                        text+="\n"+tr("%1 played").arg(CatchChallenger::FacilityLibClient::timeToString(server.playedTime));
+                        text+="\n"+tr("%1 played").arg(QString::fromStdString(CatchChallenger::FacilityLibClient::timeToString(server.playedTime)));
                 }
-                if(!server.description.isEmpty())
-                    text+="\n"+server.description;
+                if(!server.description.empty())
+                    text+="\n"+QString::fromStdString(server.description);
             }
             else
             {
-                if(server.description.isEmpty())
+                if(server.description.empty())
                     text=name+groupText;
                 else
-                    text=name+groupText+" - "+server.description;
+                    text=name+groupText+" - "+QString::fromStdString(server.description);
             }
             itemServer->setText(0,text);
 
