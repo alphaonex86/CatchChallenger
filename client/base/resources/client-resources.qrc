@@ -42,9 +42,6 @@
         <file>images/inventory/market.png</file>
         <file>images/savegame-select.png</file>
         <file>images/interface/languages.png</file>
-        <file>languages/en/flag.png</file>
-        <file>languages/en/translation.qm</file>
-        <file>languages/en/informations.xml</file>
         <file>qml/star.png</file>
         <file>images/player-select.png</file>
         <file>images/flags.png</file>
