@@ -29,8 +29,8 @@ private:
 
     MultipleBotConnectionImplForGui multipleBotConnexion;
     QHash<uint8_t/*character group index*/,QPair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
-    QList<CatchChallenger::ServerFromPoolForDisplay *> serverOrdenedList;
-    QList<QList<CatchChallenger::CharacterEntry> > characterEntryList;
+    std::vector<CatchChallenger::ServerFromPoolForDisplay *> serverOrdenedList;
+    std::vector<std::vector<CatchChallenger::CharacterEntry> > characterEntryList;
 
     QString login,pass,host,proxy,character;
     uint32_t serverUniqueKey,charactersGroupIndex,port,proxyport,character_id,timeout,char_count;
@@ -40,7 +40,10 @@ private slots:
     void lastReplyTime(const quint32 &time);
     void on_connect_clicked();
     void timeoutSlot();
-    void logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack);
+    void logged(CatchChallenger::Api_client_real *senderObject,
+                const std::vector<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,
+                const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList,
+                bool haveTheDatapack);
     void updateServerList(CatchChallenger::Api_client_real *);
     void statusError(QString error);
     void datapackIsReady();

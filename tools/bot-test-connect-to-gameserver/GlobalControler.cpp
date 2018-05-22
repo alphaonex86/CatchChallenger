@@ -138,7 +138,10 @@ void GlobalControler::timeoutSlot()
     QCoreApplication::exit(30);
 }
 
-void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
+void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,
+                             const std::vector<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,
+                             const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList,
+                             bool haveTheDatapack)
 {
     Q_UNUSED(haveTheDatapack);
     if(senderObject==NULL)
@@ -182,12 +185,12 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
             }
         }
 
-        QList<CatchChallenger::CharacterEntry> characterEntryListNew=characterEntryList.at(charactersGroupIndex);
+        std::vector<CatchChallenger::CharacterEntry> characterEntryListNew=characterEntryList.at(charactersGroupIndex);
         //delete char to test
         if(rand()%100<20)
         {
             std::cout << "\e[1mdelete character triggered\e[0m" << std::endl;
-            int index=0;
+            unsigned int index=0;
             while(index<characterEntryListNew.size())
             {
                 const CatchChallenger::CharacterEntry &characterEntry=characterEntryListNew.at(index);
@@ -201,7 +204,7 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
             }
         }
         //select char
-        int index=0;
+        unsigned int index=0;
         while(index<characterEntryListNew.size())
         {
             const CatchChallenger::CharacterEntry &characterEntry=characterEntryListNew.at(index);
@@ -225,8 +228,8 @@ void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,cons
         //not found
         {
             std::cerr << "character not found: \"" << character.toStdString() << "\", charactersGroupIndex: " << std::to_string(charactersGroupIndex) << std::endl;
-            int index=0;
-            QList<CatchChallenger::CharacterEntry> characterEntryListNew=characterEntryList.at(charactersGroupIndex);
+            unsigned int index=0;
+            std::vector<CatchChallenger::CharacterEntry> characterEntryListNew=characterEntryList.at(charactersGroupIndex);
             while(index<characterEntryListNew.size())
             {
                 const CatchChallenger::CharacterEntry &characterEntry=characterEntryListNew.at(index);
@@ -245,7 +248,7 @@ void GlobalControler::updateServerList(CatchChallenger::Api_client_real *)
     //do the grouping for characterGroup count
     {
         serverByCharacterGroup.clear();
-        int index=0;
+        unsigned int index=0;
         int serverByCharacterGroupTempIndexToDisplay=1;
         while(index<serverOrdenedList.size())
         {
@@ -262,7 +265,7 @@ void GlobalControler::updateServerList(CatchChallenger::Api_client_real *)
         }
     }
     {
-        int index=0;
+        unsigned int index=0;
         while(index<serverOrdenedList.size())
         {
             const CatchChallenger::ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
@@ -283,11 +286,12 @@ void GlobalControler::updateServerList(CatchChallenger::Api_client_real *)
     }
     qDebug() << "server or charactersGroupIndex not found";
     {
-        int index=0;
+        unsigned int index=0;
         while(index<serverOrdenedList.size())
         {
             const CatchChallenger::ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
-            qDebug() << server.name << " (" << server.host << ":" << server.port << "), charactersGroupIndex: " << server.charactersGroupIndex << ", unique key: " << server.uniqueKey;
+            qDebug() << QString::fromStdString(server.name) << " (" << QString::fromStdString(server.host) << ":" << server.port
+                     << "), charactersGroupIndex: " << server.charactersGroupIndex << ", unique key: " << server.uniqueKey;
             index++;
         }
     }
@@ -399,7 +403,7 @@ void GlobalControler::datapackIsReady()
                 else
                     skinId=rand()%skinsList.size();
                 uint8_t monstergroupId=rand()%profile.monstergroup.size();
-                api->addCharacter(charactersGroupIndex,profileIndex,pseudo,monstergroupId,skinId);
+                api->addCharacter(charactersGroupIndex,profileIndex,pseudo.toStdString(),monstergroupId,skinId);
             }
         }
     }
