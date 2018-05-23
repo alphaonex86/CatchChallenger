@@ -20,6 +20,10 @@ MultipleBotConnection::MultipleBotConnection() :
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
     qRegisterMetaType<QList<quint32> >("QList<quint32>");
     qRegisterMetaType<QList<CatchChallenger::CharacterEntry> >("QList<CatchChallenger::CharacterEntry>");
+    qRegisterMetaType<std::vector<quint32> >("std::vector<quint32>");
+    qRegisterMetaType<std::vector<CatchChallenger::CharacterEntry> >("std::vector<CatchChallenger::CharacterEntry>");
+    qRegisterMetaType<std::vector<CatchChallenger::ServerFromPoolForDisplay*> >("std::vector<CatchChallenger::CharacterEntry>");
+
     CatchChallenger::ProtocolParsing::initialiseTheVariable();
     CatchChallenger::ProtocolParsing::setMaxPlayers(65535);
 
@@ -143,7 +147,7 @@ void MultipleBotConnection::tryLink(CatchChallengerClient * client)
         std::cerr << "tryLink client->api==NULL" << std::endl;
         abort();
     }
-    if(!connect(client->api,&CatchChallenger::Api_client_real::protocol_is_good,this,&MultipleBotConnection::protocol_is_good))
+    if(!connect(client->api,&CatchChallenger::Api_client_real::Qtprotocol_is_good,this,&MultipleBotConnection::protocol_is_good))
         abort();
     if(!multipleConnexion())
     {
