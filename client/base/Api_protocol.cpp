@@ -202,7 +202,7 @@ Player_private_and_public_informations &Api_protocol::get_player_informations()
 {
     if(!getCaracterSelected())
     {
-        std::cerr << "Api_protocol::get_player_informations(): !getCaracterSelected() (internal error)" << std::endl;
+        std::cerr << "Api_protocol::get_player_informations(): !getCharacterSelected() (internal error)" << std::endl;
         return player_informations;
     }
     return player_informations;
@@ -212,7 +212,7 @@ const Player_private_and_public_informations &Api_protocol::get_player_informati
 {
     if(!getCaracterSelected())
     {
-        std::cerr << "Api_protocol::get_player_informations_ro(): !getCaracterSelected() (internal error)" << std::endl;
+        std::cerr << "Api_protocol::get_player_informations_ro(): !getCharacterSelected() (internal error)" << std::endl;
         return player_informations;
     }
     return player_informations;
@@ -500,7 +500,7 @@ void Api_protocol::send_player_move_internal(const uint8_t &moved_unit,const Cat
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << moved_unit;
     out << directionInt;
-    is_logged=character_selected=packOutcommingData(0x02,outputData.constData(),outputData.size());
+    packOutcommingData(0x02,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::send_player_direction(const Direction &the_direction)
@@ -550,7 +550,7 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const std::string &te
         outputData+=QByteArray(tempText.data(),tempText.size());
         out.device()->seek(out.device()->pos()+tempText.size());
     }
-    is_logged=character_selected=packOutcommingData(0x03,outputData.constData(),outputData.size());
+    packOutcommingData(0x03,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::sendPM(const std::string &text,const std::string &pseudo)
@@ -593,7 +593,7 @@ void Api_protocol::sendPM(const std::string &text,const std::string &pseudo)
         outputData+=QByteArray(tempText.data(),tempText.size());
         out.device()->seek(out.device()->pos()+tempText.size());
     }
-    is_logged=character_selected=packOutcommingData(0x03,outputData.constData(),outputData.size());
+    packOutcommingData(0x03,outputData.constData(),outputData.size());
 }
 
 bool Api_protocol::teleportDone()
@@ -617,7 +617,7 @@ bool Api_protocol::teleportDone()
     }
     last_direction=teleportQueryInformation.direction;
     last_step=0;
-    is_logged=character_selected=postReplyData(teleportQueryInformation.queryId,NULL,0);
+    postReplyData(teleportQueryInformation.queryId,NULL,0);
     teleportList.erase(teleportList.cbegin());
     return true;
 }
@@ -752,9 +752,9 @@ void Api_protocol::useSeed(const uint8_t &plant_id)
     QByteArray outputData;
     outputData[0]=plant_id;
     if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-        is_logged=character_selected=packOutcommingQuery(0x83,queryNumber(),outputData.constData(),outputData.size());
+        packOutcommingQuery(0x83,queryNumber(),outputData.constData(),outputData.size());
     else
-        is_logged=character_selected=packOutcommingData(0x19,outputData.constData(),outputData.size());
+        packOutcommingData(0x19,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::monsterMoveUp(const uint8_t &number)
@@ -774,7 +774,7 @@ void Api_protocol::monsterMoveUp(const uint8_t &number)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
     out << number;
-    is_logged=character_selected=packOutcommingData(0x0D,outputData.constData(),outputData.size());
+    packOutcommingData(0x0D,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::confirmEvolutionByPosition(const uint8_t &monterPosition)
@@ -793,7 +793,7 @@ void Api_protocol::confirmEvolutionByPosition(const uint8_t &monterPosition)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)monterPosition;
-    is_logged=character_selected=packOutcommingData(0x0F,outputData.constData(),outputData.size());
+    packOutcommingData(0x0F,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::monsterMoveDown(const uint8_t &number)
@@ -814,7 +814,7 @@ void Api_protocol::monsterMoveDown(const uint8_t &number)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
     out << number;
-    is_logged=character_selected=packOutcommingData(0x0D,outputData.constData(),outputData.size());
+    packOutcommingData(0x0D,outputData.constData(),outputData.size());
 }
 
 //inventory
@@ -835,7 +835,7 @@ void Api_protocol::destroyObject(const uint16_t &object, const uint32_t &quantit
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << object;
     out << quantity;
-    is_logged=character_selected=packOutcommingData(0x13,outputData.constData(),outputData.size());
+    packOutcommingData(0x13,outputData.constData(),outputData.size());
 }
 
 bool Api_protocol::useObject(const uint16_t &object)
@@ -854,7 +854,7 @@ bool Api_protocol::useObject(const uint16_t &object)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << object;
-    is_logged=character_selected=packOutcommingQuery(0x86,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x86,queryNumber(),outputData.constData(),outputData.size());
     lastObjectUsed.push_back(object);
     return true;
 }
@@ -876,7 +876,7 @@ bool Api_protocol::useObjectOnMonsterByPosition(const uint16_t &object,const uin
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << object;
     out << monsterPosition;
-    is_logged=character_selected=packOutcommingData(0x10,outputData.constData(),outputData.size());
+    packOutcommingData(0x10,outputData.constData(),outputData.size());
     return true;
 }
 
@@ -923,7 +923,7 @@ void Api_protocol::wareHouseStore(const int64_t &cash, const std::vector<std::pa
         index++;
     }
 
-    is_logged=character_selected=packOutcommingData(0x17,outputData.constData(),outputData.size());
+    packOutcommingData(0x17,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::takeAnObjectOnMap()
@@ -948,7 +948,7 @@ void Api_protocol::getShopList(const uint16_t &shopId)/// \see CommonMap, std::u
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)shopId;
-    is_logged=character_selected=packOutcommingQuery(0x87,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x87,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::buyObject(const uint16_t &shopId, const uint16_t &objectId, const uint32_t &quantity, const uint32_t &price)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
@@ -970,7 +970,7 @@ void Api_protocol::buyObject(const uint16_t &shopId, const uint16_t &objectId, c
     out << (uint16_t)objectId;
     out << (uint32_t)quantity;
     out << (uint32_t)price;
-    is_logged=character_selected=packOutcommingQuery(0x88,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x88,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::sellObject(const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
@@ -992,7 +992,7 @@ void Api_protocol::sellObject(const uint16_t &shopId,const uint16_t &objectId,co
     out << (uint16_t)objectId;
     out << (uint32_t)quantity;
     out << (uint32_t)price;
-    is_logged=character_selected=packOutcommingQuery(0x89,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x89,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::getFactoryList(const uint16_t &factoryId)
@@ -1011,7 +1011,7 @@ void Api_protocol::getFactoryList(const uint16_t &factoryId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)factoryId;
-    is_logged=character_selected=packOutcommingQuery(0x8A,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x8A,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::buyFactoryProduct(const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
@@ -1033,7 +1033,7 @@ void Api_protocol::buyFactoryProduct(const uint16_t &factoryId,const uint16_t &o
     out << (uint16_t)objectId;
     out << (uint32_t)quantity;
     out << (uint32_t)price;
-    is_logged=character_selected=packOutcommingQuery(0x8B,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x8B,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::sellFactoryResource(const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
@@ -1055,7 +1055,7 @@ void Api_protocol::sellFactoryResource(const uint16_t &factoryId,const uint16_t 
     out << (uint16_t)objectId;
     out << (uint32_t)quantity;
     out << (uint32_t)price;
-    is_logged=character_selected=packOutcommingQuery(0x8C,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x8C,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::tryEscape()
@@ -1070,7 +1070,7 @@ void Api_protocol::tryEscape()
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    is_logged=character_selected=packOutcommingData(0x07,NULL,0);
+    packOutcommingData(0x07,NULL,0);
 }
 
 void Api_protocol::heal()
@@ -1085,7 +1085,7 @@ void Api_protocol::heal()
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    is_logged=character_selected=packOutcommingData(0x0B,NULL,0);
+    packOutcommingData(0x0B,NULL,0);
 }
 
 void Api_protocol::requestFight(const uint16_t &fightId)
@@ -1114,7 +1114,7 @@ void Api_protocol::requestFight(const uint16_t &fightId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)fightId;
-    is_logged=character_selected=packOutcommingData(0x0C,outputData.constData(),outputData.size());
+    packOutcommingData(0x0C,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::changeOfMonsterInFightByPosition(const uint8_t &monsterPosition)
@@ -1133,7 +1133,7 @@ void Api_protocol::changeOfMonsterInFightByPosition(const uint8_t &monsterPositi
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)monsterPosition;
-    is_logged=character_selected=packOutcommingData(0x0E,outputData.constData(),outputData.size());
+    packOutcommingData(0x0E,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::useSkill(const uint16_t &skill)
@@ -1152,7 +1152,7 @@ void Api_protocol::useSkill(const uint16_t &skill)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)skill;
-    is_logged=character_selected=packOutcommingData(0x11,outputData.constData(),outputData.size());
+    packOutcommingData(0x11,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::learnSkillByPosition(const uint8_t &monsterPosition,const uint16_t &skill)
@@ -1172,7 +1172,7 @@ void Api_protocol::learnSkillByPosition(const uint8_t &monsterPosition,const uin
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)monsterPosition;
     out << (uint16_t)skill;
-    is_logged=character_selected=packOutcommingData(0x09,outputData.constData(),outputData.size());
+    packOutcommingData(0x09,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::startQuest(const uint16_t &questId)
@@ -1191,7 +1191,7 @@ void Api_protocol::startQuest(const uint16_t &questId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)questId;
-    is_logged=character_selected=packOutcommingData(0x1B,outputData.constData(),outputData.size());
+    packOutcommingData(0x1B,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::finishQuest(const uint16_t &questId)
@@ -1210,7 +1210,7 @@ void Api_protocol::finishQuest(const uint16_t &questId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)questId;
-    is_logged=character_selected=packOutcommingData(0x1C,outputData.constData(),outputData.size());
+    packOutcommingData(0x1C,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::cancelQuest(const uint16_t &questId)
@@ -1229,7 +1229,7 @@ void Api_protocol::cancelQuest(const uint16_t &questId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)questId;
-    is_logged=character_selected=packOutcommingData(0x1D,outputData.constData(),outputData.size());
+    packOutcommingData(0x1D,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::nextQuestStep(const uint16_t &questId)
@@ -1248,7 +1248,7 @@ void Api_protocol::nextQuestStep(const uint16_t &questId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)questId;
-    is_logged=character_selected=packOutcommingData(0x1E,outputData.constData(),outputData.size());
+    packOutcommingData(0x1E,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::createClan(const std::string &name)
@@ -1277,7 +1277,7 @@ void Api_protocol::createClan(const std::string &name)
         outputData+=QByteArray(rawText.data(),rawText.size());
         out.device()->seek(out.device()->size());
     }
-    is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::leaveClan()
@@ -1296,7 +1296,7 @@ void Api_protocol::leaveClan()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::dissolveClan()
@@ -1315,7 +1315,7 @@ void Api_protocol::dissolveClan()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x03;
-    is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::inviteClan(const std::string &pseudo)
@@ -1344,7 +1344,7 @@ void Api_protocol::inviteClan(const std::string &pseudo)
         outputData+=QByteArray(rawText.data(),rawText.size());
         out.device()->seek(out.device()->size());
     }
-    is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::ejectClan(const std::string &pseudo)
@@ -1373,7 +1373,7 @@ void Api_protocol::ejectClan(const std::string &pseudo)
         outputData+=QByteArray(rawText.data(),rawText.size());
         out.device()->seek(out.device()->size());
     }
-    is_logged=character_selected=packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::inviteAccept(const bool &accept)
@@ -1395,7 +1395,7 @@ void Api_protocol::inviteAccept(const bool &accept)
         out << (uint8_t)0x01;
     else
         out << (uint8_t)0x02;
-    is_logged=character_selected=packOutcommingData(0x04,outputData.constData(),outputData.size());
+    packOutcommingData(0x04,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::waitingForCityCapture(const bool &cancel)
@@ -1417,7 +1417,7 @@ void Api_protocol::waitingForCityCapture(const bool &cancel)
         out << (uint8_t)0x00;
     else
         out << (uint8_t)0x01;
-    is_logged=character_selected=packOutcommingData(0x1F,outputData.constData(),outputData.size());
+    packOutcommingData(0x1F,outputData.constData(),outputData.size());
 }
 
 //market
@@ -1433,7 +1433,7 @@ void Api_protocol::getMarketList()
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    is_logged=character_selected=packOutcommingQuery(0x8D,queryNumber(),NULL,0);
+    packOutcommingQuery(0x8D,queryNumber(),NULL,0);
 }
 
 void Api_protocol::buyMarketObject(const uint32_t &marketObjectId, const uint32_t &quantity)
@@ -1454,7 +1454,7 @@ void Api_protocol::buyMarketObject(const uint32_t &marketObjectId, const uint32_
     out << (uint8_t)0x01;
     out << marketObjectId;
     out << quantity;
-    is_logged=character_selected=packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::buyMarketMonster(const uint32_t &monsterMarketId)
@@ -1474,7 +1474,7 @@ void Api_protocol::buyMarketMonster(const uint32_t &monsterMarketId)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
     out << monsterMarketId;
-    is_logged=character_selected=packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::putMarketObject(const uint16_t &objectId, const uint32_t &quantity, const uint64_t &price)
@@ -1496,7 +1496,7 @@ void Api_protocol::putMarketObject(const uint16_t &objectId, const uint32_t &qua
     out << (quint16)objectId;
     out << (quint32)quantity;
     out << (quint64)price;
-    is_logged=character_selected=packOutcommingQuery(0x8F,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x8F,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::putMarketMonsterByPosition(const uint8_t &monsterPosition,const uint64_t &price)
@@ -1517,7 +1517,7 @@ void Api_protocol::putMarketMonsterByPosition(const uint8_t &monsterPosition,con
     out << (uint8_t)0x02;
     out << (uint8_t)monsterPosition;
     out << (quint64)price;
-    is_logged=character_selected=packOutcommingQuery(0x8F,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x8F,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::recoverMarketCash()
@@ -1532,7 +1532,7 @@ void Api_protocol::recoverMarketCash()
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    is_logged=character_selected=packOutcommingQuery(0x90,queryNumber(),NULL,0);
+    packOutcommingQuery(0x90,queryNumber(),NULL,0);
 }
 
 void Api_protocol::withdrawMarketObject(const uint16_t &objectPosition,const uint32_t &quantity)
@@ -1553,7 +1553,7 @@ void Api_protocol::withdrawMarketObject(const uint16_t &objectPosition,const uin
     out << (uint8_t)0x01;
     out << objectPosition;
     out << quantity;
-    is_logged=character_selected=packOutcommingQuery(0x91,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x91,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::withdrawMarketMonster(const uint32_t &monsterMarketId)
@@ -1573,7 +1573,7 @@ void Api_protocol::withdrawMarketMonster(const uint32_t &monsterMarketId)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
     out << monsterMarketId;
-    is_logged=character_selected=packOutcommingQuery(0x91,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x91,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::collectMaturePlant()
@@ -1589,9 +1589,9 @@ void Api_protocol::collectMaturePlant()
         return;
     }
     if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-        is_logged=character_selected=packOutcommingQuery(0x84,queryNumber(),NULL,0);
+        packOutcommingQuery(0x84,queryNumber(),NULL,0);
     else
-        is_logged=character_selected=packOutcommingData(0x1A,NULL,0);
+        packOutcommingData(0x1A,NULL,0);
 }
 
 //crafting
@@ -1611,7 +1611,7 @@ void Api_protocol::useRecipe(const uint16_t &recipeId)
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint16_t)recipeId;
-    is_logged=character_selected=packOutcommingQuery(0x85,queryNumber(),outputData.constData(),outputData.size());
+    packOutcommingQuery(0x85,queryNumber(),outputData.constData(),outputData.size());
 }
 
 void Api_protocol::addRecipe(const uint16_t &recipeId)
@@ -1645,7 +1645,7 @@ void Api_protocol::battleRefused()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    is_logged=character_selected=postReplyData(battleRequestId.front(),outputData.data(),outputData.size());
+    postReplyData(battleRequestId.front(),outputData.data(),outputData.size());
     battleRequestId.erase(battleRequestId.cbegin());
 }
 
@@ -1670,7 +1670,7 @@ void Api_protocol::battleAccepted()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
-    is_logged=character_selected=postReplyData(battleRequestId.front(),outputData.data(),outputData.size());
+    postReplyData(battleRequestId.front(),outputData.data(),outputData.size());
     battleRequestId.erase(battleRequestId.cbegin());
 }
 
@@ -1696,7 +1696,7 @@ void Api_protocol::tradeRefused()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x02;
-    is_logged=character_selected=postReplyData(tradeRequestId.front(),outputData.data(),outputData.size());
+    postReplyData(tradeRequestId.front(),outputData.data(),outputData.size());
     tradeRequestId.erase(tradeRequestId.cbegin());
 }
 
@@ -1721,7 +1721,7 @@ void Api_protocol::tradeAccepted()
     QDataStream out(&outputData, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
-    is_logged=character_selected=postReplyData(tradeRequestId.front(),outputData.constData(),outputData.size());
+    postReplyData(tradeRequestId.front(),outputData.constData(),outputData.size());
     tradeRequestId.erase(tradeRequestId.cbegin());
     isInTrade=true;
 }
@@ -1744,7 +1744,7 @@ void Api_protocol::tradeCanceled()
         return;
     }
     isInTrade=false;
-    is_logged=character_selected=packOutcommingData(0x16,NULL,0);
+    packOutcommingData(0x16,NULL,0);
 }
 
 void Api_protocol::tradeFinish()
@@ -1764,7 +1764,7 @@ void Api_protocol::tradeFinish()
         newError(std::string("Internal problem"),std::string("in not in trade"));
         return;
     }
-    is_logged=character_selected=packOutcommingData(0x15,NULL,0);
+    packOutcommingData(0x15,NULL,0);
 }
 
 void Api_protocol::addTradeCash(const uint64_t &cash)
@@ -1794,7 +1794,7 @@ void Api_protocol::addTradeCash(const uint64_t &cash)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x01;
     out << (quint64)cash;
-    is_logged=character_selected=packOutcommingData(0x14,outputData.data(),outputData.size());
+    packOutcommingData(0x14,outputData.data(),outputData.size());
 }
 
 void Api_protocol::addObject(const uint16_t &item, const uint32_t &quantity)
@@ -1825,7 +1825,7 @@ void Api_protocol::addObject(const uint16_t &item, const uint32_t &quantity)
     out << (uint8_t)0x02;
     out << item;
     out << quantity;
-    is_logged=character_selected=packOutcommingData(0x14,outputData.constData(),outputData.size());
+    packOutcommingData(0x14,outputData.constData(),outputData.size());
 }
 
 void Api_protocol::addMonsterByPosition(const uint8_t &monsterPosition)
@@ -1850,7 +1850,7 @@ void Api_protocol::addMonsterByPosition(const uint8_t &monsterPosition)
     out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
     out << (uint8_t)0x03;
     out << monsterPosition;
-    is_logged=character_selected=packOutcommingData(0x14,outputData.constData(),outputData.size());
+    packOutcommingData(0x14,outputData.constData(),outputData.size());
 }
 
 Api_protocol::StageConnexion Api_protocol::stage() const
