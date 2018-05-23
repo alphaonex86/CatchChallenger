@@ -937,7 +937,7 @@ void DatapackDownloaderBase::sendDatapackContentBase()
 {
     if(wait_datapack_content_base)
     {
-        std::cerr << "already in wait of datapack content" << std::endl;
+        std::cerr << "already in wait of datapack content base" << std::endl;
         return;
     }
 

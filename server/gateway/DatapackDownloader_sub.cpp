@@ -802,7 +802,7 @@ void DatapackDownloaderMainSub::sendDatapackContentSub()
 {
     if(wait_datapack_content_sub)
     {
-        std::cerr << "already in wait of datapack content" << std::endl;
+        std::cerr << "already in wait of datapack content sub" << std::endl;
         return;
     }
 
