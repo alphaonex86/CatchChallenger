@@ -652,13 +652,14 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 {
                     if(stageConnexion==StageConnexion::Stage4)
                         qDebug() << "stageConnexion==StageConnexion::Stage4";
+                    qDebug() << "stageConnexion==StageConnexion::Stage: " << (int)stageConnexion;
+                    qDebug() << "serverFromPoolForDisplay.host: " << QString::fromStdString(serverFromPoolForDisplay.host);
                     if(serverFromPoolForDisplay.host.empty() && proxyMode==Api_protocol::ProxyMode::Reconnect)
-                        qDebug() << "serverFromPoolForDisplay.host.isEmpty()";
+                        qDebug() << "serverFromPoolForDisplay.host.isEmpty() and reconnect, seam be a bug";
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(
                                 static_cast<int>(in.device()->pos()),
                                 static_cast<int>(in.device()->size()-in.device()->pos())
                                 );
-                    delayedLogin.data=std::string(tdata.data(),tdata.size());
                     return parseCharacterBlockServer(
                                 packetCode,queryNumber,
                                 std::string(tdata.data(),tdata.size())
