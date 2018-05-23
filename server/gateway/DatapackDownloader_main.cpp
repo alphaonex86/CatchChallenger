@@ -789,7 +789,7 @@ void DatapackDownloaderMainSub::sendDatapackContentMain()
 {
     if(wait_datapack_content_main)
     {
-        std::cerr << "already in wait of datapack content" << std::endl;
+        std::cerr << "already in wait of datapack content main" << std::endl;
         return;
     }
 

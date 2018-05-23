@@ -673,7 +673,7 @@ void Api_client_real::sendDatapackContentSub()
     }
     if(wait_datapack_content_sub)
     {
-        qDebug() << (QStringLiteral("already in wait of datapack content"));
+        qDebug() << (QStringLiteral("already in wait of datapack content sub"));
         return;
     }
 
