@@ -272,23 +272,16 @@ std::string DatapackClientLoader::getSubDatapackPath()
 
 void DatapackClientLoader::parseVisualCategory()
 {
-    tinyxml2::XMLDocument *domDocument=NULL;
+    tinyxml2::XMLDocument domDocument;
     //open and quick check the file
     const std::string &file=datapackPath+DATAPACK_BASE_PATH_MAPBASE+"visualcategory.xml";
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
-            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-    else
+    const auto loadOkay = domDocument.LoadFile(file.c_str());
+    if(loadOkay!=0)
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
-        if(loadOkay!=0)
-        {
-            std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
-            return;
-        }
+        std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
+        return;
     }
-    const tinyxml2::XMLElement *root = domDocument->RootElement();
+    const tinyxml2::XMLElement *root = domDocument.RootElement();
     if(root==NULL || strcmp(root->Name(),"visual")!=0)
     {
         qDebug() << (QStringLiteral("Unable to open the file: %1, \"visual\" root balise not found for the xml file").arg(QString::fromStdString(file)));
@@ -427,22 +420,16 @@ void DatapackClientLoader::parseReputationExtra()
             index++;
         }
     }
-    tinyxml2::XMLDocument *domDocument=NULL;
+    tinyxml2::XMLDocument domDocument;
     //open and quick check the file
     const std::string &file=datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"reputation.xml";
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-    else
+    const auto loadOkay = domDocument.LoadFile(file.c_str());
+    if(loadOkay!=0)
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
-        if(loadOkay!=0)
-        {
-            std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
-            return;
-        }
+        std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
+        return;
     }
-    const tinyxml2::XMLElement *root = domDocument->RootElement();
+    const tinyxml2::XMLElement *root = domDocument.RootElement();
     if(root==NULL || strcmp(root->Name(),"reputations")!=0)
     {
         qDebug() << (QStringLiteral("Unable to open the file: %1, \"reputations\" root balise not found for the xml file").arg(QString::fromStdString(file)));
@@ -687,27 +674,21 @@ void DatapackClientLoader::parseItemsExtra()
             file_index++;
             continue;
         }
-        tinyxml2::XMLDocument *domDocument=NULL;
+        tinyxml2::XMLDocument domDocument;
         if(!stringEndsWith(file,".xml"))
         {
             file_index++;
             continue;
         }
         //open and quick check the file
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-        else
+        const auto loadOkay = domDocument.LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-            const auto loadOkay = domDocument->LoadFile(file.c_str());
-            if(loadOkay!=0)
-            {
-                std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
-                file_index++;
-                continue;
-            }
+            std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
+            file_index++;
+            continue;
         }
-        const tinyxml2::XMLElement *root = domDocument->RootElement();
+        const tinyxml2::XMLElement *root = domDocument.RootElement();
         if(root==NULL || strcmp(root->Name(),"items")!=0)
         {
             //qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(QString::fromStdString(file));
@@ -893,17 +874,16 @@ void DatapackClientLoader::parseMaps()
 
         const std::string &file=sortToFull.at(tempMapList.at(index));
         {
-            tinyxml2::XMLDocument *domDocument=NULL;
-
-            const auto loadOkay = domDocument->LoadFile((basePath+file).c_str());
+            tinyxml2::XMLDocument domDocument;
+            const auto loadOkay = domDocument.LoadFile((basePath+file).c_str());
             if(loadOkay!=0)
             {
-                std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
+                std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
                 index++;
                 continue;
             }
 
-            const tinyxml2::XMLElement *root = domDocument->RootElement();
+            const tinyxml2::XMLElement *root = domDocument.RootElement();
             if(root==NULL || strcmp(root->Name(),"map")!=0)
             {
                 qDebug() << QStringLiteral("Unable to open the file: %1, \"map\" root balise not found for the xml file").arg(QString::fromStdString(file));
@@ -1103,22 +1083,16 @@ void DatapackClientLoader::parseQuestsExtra()
         }
         const uint16_t &id=static_cast<uint16_t>(tempid);
 
-        tinyxml2::XMLDocument *domDocument=NULL;
+        tinyxml2::XMLDocument domDocument;
         const std::string &file=entryList.at(index).absoluteFilePath().toStdString()+DatapackClientLoader::text_slashdefinitiondotxml;
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-        else
+        const auto loadOkay = domDocument.LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-            const auto loadOkay = domDocument->LoadFile(file.c_str());
-            if(loadOkay!=0)
-            {
-                std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
-                index++;
-                continue;
-            }
+            std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
+            index++;
+            continue;
         }
-        const tinyxml2::XMLElement *root = domDocument->RootElement();
+        const tinyxml2::XMLElement *root = domDocument.RootElement();
         if(root==NULL || strcmp(root->Name(),"quest")!=0)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(QString::fromStdString(file));
@@ -1292,16 +1266,16 @@ void DatapackClientLoader::parseQuestsText()
         }
         const std::string &file=entryList.at(index).absoluteFilePath().toStdString()+"/text.xml";
 
-        tinyxml2::XMLDocument *domDocument=NULL;
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        tinyxml2::XMLDocument domDocument;
+        const auto loadOkay = domDocument.LoadFile(file.c_str());
         if(loadOkay!=0)
         {
-            std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
+            std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
             index++;
             continue;
         }
 
-        const tinyxml2::XMLElement *root = domDocument->RootElement();
+        const tinyxml2::XMLElement *root = domDocument.RootElement();
         if(root==NULL || strcmp(root->Name(),"text")!=0)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(QString::fromStdString(file));
@@ -1392,21 +1366,15 @@ void DatapackClientLoader::parseQuestsText()
 void DatapackClientLoader::parseAudioAmbiance()
 {
     const std::string &file=datapackPath+DATAPACK_BASE_PATH_MAPBASE+"music.xml";
-    tinyxml2::XMLDocument *domDocument=NULL;
+    tinyxml2::XMLDocument domDocument;
     //open and quick check the file
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
-    else
+    const auto loadOkay = domDocument.LoadFile(file.c_str());
+    if(loadOkay!=0)
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
-        if(loadOkay!=0)
-        {
-            std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
-            return;
-        }
+        std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
+        return;
     }
-    const tinyxml2::XMLElement *root = domDocument->RootElement();
+    const tinyxml2::XMLElement *root = domDocument.RootElement();
     if(root==NULL || strcmp(root->Name(),"musics")!=0)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"musics\" root balise not found for the xml file").arg(QString::fromStdString(file));
@@ -1481,16 +1449,16 @@ void DatapackClientLoader::parseZoneExtra()
         if(stringEndsWith(zoneCodeName,".xml"))
             zoneCodeName.resize(zoneCodeName.size()-4);
 
-        tinyxml2::XMLDocument *domDocument=NULL;
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        tinyxml2::XMLDocument domDocument;
+        const auto loadOkay = domDocument.LoadFile(file.c_str());
         if(loadOkay!=0)
         {
-            std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
+            std::cerr << file << ", " << tinyxml2errordoc(&domDocument) << std::endl;
             index++;
             continue;
         }
 
-        const tinyxml2::XMLElement *root = domDocument->RootElement();
+        const tinyxml2::XMLElement *root = domDocument.RootElement();
         if(root==NULL || strcmp(root->Name(),"zone")!=0)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(QString::fromStdString(file));
