@@ -175,7 +175,7 @@ void Api_client_real::httpFinishedBase()
     if(urlInWaitingListBase.find(reply)==urlInWaitingListBase.cend())
     {
         httpError=true;
-        newError(tr("Datapack downloading error").toStdString(),"reply of unknown query");
+        newError(tr("Datapack downloading error").toStdString(),"reply of unknown query (Base)");
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
