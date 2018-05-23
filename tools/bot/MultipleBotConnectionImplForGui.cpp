@@ -276,7 +276,7 @@ void MultipleBotConnectionImplForGui::haveCharacter()
 void MultipleBotConnectionImplForGui::connectTheExternalSocket(CatchChallengerClient * client)
 {
     MultipleBotConnection::connectTheExternalSocket(client);
-    if(!connect(client->api,&CatchChallenger::Api_client_real::new_chat_text,            this,&MultipleBotConnectionImplForGui::chat_text,Qt::QueuedConnection))
+    if(!connect(client->api,&CatchChallenger::Api_client_real::Qtnew_chat_text,            this,&MultipleBotConnectionImplForGui::chat_text,Qt::QueuedConnection))
         abort();
 }
 

@@ -17,6 +17,8 @@ GlobalControler::GlobalControler(QObject *parent) :
     qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
     qRegisterMetaType<QList<QList<CatchChallenger::CharacterEntry> > >("QList<QList<CatchChallenger::CharacterEntry> >");
     qRegisterMetaType<QList<CatchChallenger::ServerFromPoolForDisplay*> >("QList<CatchChallenger::ServerFromPoolForDisplay*>");
+    qRegisterMetaType<std::vector<std::vector<CatchChallenger::CharacterEntry> > >("std::vector<std::vector<CatchChallenger::CharacterEntry> >");
+    qRegisterMetaType<std::vector<CatchChallenger::ServerFromPoolForDisplay*> >("std::vector<CatchChallenger::ServerFromPoolForDisplay*>");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
     CatchChallenger::ProtocolParsing::initialiseTheVariable();
