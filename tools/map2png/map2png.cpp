@@ -296,7 +296,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
         tempMapObjectFull->tiledMap=tempMapObject->tiledMap;
 
         //do the object group to move the player on it
-        tempMapObjectFull->objectGroup = new Tiled::ObjectGroup(MapVisualiserThread::text_Dyna_management,0,0,tempMapObjectFull->tiledMap->width(),tempMapObjectFull->tiledMap->height());
+        tempMapObjectFull->objectGroup = new Tiled::ObjectGroup(QString::fromStdString(MapVisualiserThread::text_Dyna_management),0,0,tempMapObjectFull->tiledMap->width(),tempMapObjectFull->tiledMap->height());
         tempMapObjectFull->objectGroup->setName("objectGroup for player layer");
 
         MapVisualiserThread::layerChangeLevelAndTagsChange(tempMapObjectFull,hideTheDoors);
