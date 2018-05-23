@@ -253,6 +253,8 @@ void MapController::reinject_signals()
 
 void MapController::tryLoadPlantOnMapDisplayed(const std::string &fileName)
 {
+    if(delayedPlantInsertOnMap.find(fileName)==delayedPlantInsertOnMap.cend())
+        return;
     unsigned int index=0;
     std::vector<DelayedPlantInsert> values=delayedPlantInsertOnMap.at(fileName);
     while(index<values.size())
