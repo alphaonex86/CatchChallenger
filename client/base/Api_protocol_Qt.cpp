@@ -12,7 +12,7 @@ void Api_protocol_Qt::newError(const std::string &error,const std::string &detai
 }
 void Api_protocol_Qt::message(const std::string &message)
 {
-    emit QtnewError("Internal error",message);
+    emit Qtmessage(message);
 }
 void Api_protocol_Qt::lastReplyTime(const uint32_t &time)
 {
