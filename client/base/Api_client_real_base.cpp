@@ -648,7 +648,7 @@ void Api_client_real::sendDatapackContentBase(const std::string &hashBase)
 {
     if(wait_datapack_content_base)
     {
-        qDebug() << (QStringLiteral("already in wait of datapack content"));
+        qDebug() << (QStringLiteral("already in wait of datapack content base"));
         return;
     }
     if(!hashBase.empty())

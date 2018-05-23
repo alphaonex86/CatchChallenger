@@ -75,7 +75,7 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
         abort();
     if(!connect(&zstdDecodeThreadSub,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishSub))
         abort();
-    disconnect();
+    resetAll();
     //dataClear();do into disconnected()
 }
 

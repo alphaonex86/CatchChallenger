@@ -709,9 +709,14 @@ void Api_client_real::sendDatapackContentMain()
             abort();
         }
     }
-    if(wait_datapack_content_main || wait_datapack_content_sub)
+    if(wait_datapack_content_main)
     {
-        qDebug() << (QStringLiteral("already in wait of datapack content"));
+        qDebug() << (QStringLiteral("already in wait of datapack content main (main)"));
+        return;
+    }
+    if(wait_datapack_content_sub)
+    {
+        qDebug() << (QStringLiteral("already in wait of datapack content main (sub)"));
         return;
     }
 
