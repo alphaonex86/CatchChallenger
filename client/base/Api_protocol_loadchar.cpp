@@ -337,7 +337,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
             return false;
         }
     }
-    if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.isParsedContent())//for botid
+    if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.isParsedContent())
     {
         if(delayedLogin.data.empty())
         {

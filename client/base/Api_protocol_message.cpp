@@ -13,6 +13,7 @@ using namespace CatchChallenger;
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/GeneralType.h"
 #ifndef BOTTESTCONNECT
@@ -1626,6 +1627,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const std::string &da
         //Send the inventory
         case 0x54:
         {
+            if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.isParsedContent())
+            {
+                DelayedMessage delayedMessage;
+                delayedMessage.packetCode=packetCode;
+                delayedMessage.data=data;
+                delayedMessages.push_back(delayedMessage);
+                return true;
+            }
             if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
