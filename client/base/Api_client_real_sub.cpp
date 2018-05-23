@@ -144,10 +144,10 @@ void Api_client_real::httpFinishedSub()
         reply->deleteLater();
         return;
     }
-    if(urlInWaitingListSub.find(reply)!=urlInWaitingListSub.cend())
+    if(urlInWaitingListSub.find(reply)==urlInWaitingListSub.cend())
     {
         httpError=true;
-        newError(tr("Datapack downloading error").toStdString(),"reply of unknown query");
+        newError(tr("Datapack downloading error").toStdString(),"reply of unknown query (sub)");
         socket->disconnectFromHost();
         reply->deleteLater();
         return;
