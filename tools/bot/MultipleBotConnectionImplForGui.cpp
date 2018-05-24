@@ -230,8 +230,7 @@ void MultipleBotConnectionImplForGui::dropAllPlayerOnTheMap()
     botInterface->dropAllPlayerOnTheMap(senderObject);
 }
 
-void MultipleBotConnectionImplForGui::logged(const std::vector<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,
-                                             const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
+void MultipleBotConnectionImplForGui::logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
 {
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
@@ -245,13 +244,13 @@ void MultipleBotConnectionImplForGui::logged(const std::vector<CatchChallenger::
     {
         //get the datapack
         apiToCatchChallengerClient.value(senderObject)->api->sendDatapackContentBase();
-        emit loggedDone(senderObject,serverOrdenedList,characterEntryList,false);
+        emit loggedDone(senderObject,senderObject->getServerOrdenedList(),characterEntryList,false);
         return;
     }
     else
     {
         logged_with_client(apiToCatchChallengerClient.value(senderObject));
-        emit loggedDone(senderObject,serverOrdenedList,characterEntryList,true);
+        emit loggedDone(senderObject,senderObject->getServerOrdenedList(),characterEntryList,true);
         return;
     }
 }
