@@ -21,18 +21,18 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 public slots:
-    void play(const QString &savegamesPath);
+    void play(const std::string &savegamesPath);
     bool sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath);
     void protocol_is_good();
-    void disconnected(QString reason);
-    void message(QString message);
+    void disconnected(std::string reason);
+    void message(std::string message);
     void stateChanged(QAbstractSocket::SocketState socketState);
     void serverError(const QString &error);
     void serverErrorStd(const std::string &error);
     void is_started(bool started);
     void saveTime();
     void resetAll();
-    void newError(QString error,QString detailedError);
+    void newError(std::string error, std::string detailedError);
     void closeEvent(QCloseEvent *event);
     void gameIsLoaded();
     #ifndef CATCHCHALLENGER_NOAUDIO
