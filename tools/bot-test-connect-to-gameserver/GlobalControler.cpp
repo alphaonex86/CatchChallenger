@@ -141,7 +141,7 @@ void GlobalControler::timeoutSlot()
 }
 
 void GlobalControler::logged(CatchChallenger::Api_client_real *senderObject,
-                             const std::vector<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,
+                             const std::vector<CatchChallenger::ServerFromPoolForDisplay> &serverOrdenedList,
                              const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList,
                              bool haveTheDatapack)
 {
@@ -254,7 +254,7 @@ void GlobalControler::updateServerList(CatchChallenger::Api_client_real *)
         int serverByCharacterGroupTempIndexToDisplay=1;
         while(index<serverOrdenedList.size())
         {
-            const CatchChallenger::ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
+            const CatchChallenger::ServerFromPoolForDisplay &server=serverOrdenedList.at(index);
             if(serverByCharacterGroup.contains(server.charactersGroupIndex))
                 serverByCharacterGroup[server.charactersGroupIndex].first++;
             else
@@ -270,7 +270,7 @@ void GlobalControler::updateServerList(CatchChallenger::Api_client_real *)
         unsigned int index=0;
         while(index<serverOrdenedList.size())
         {
-            const CatchChallenger::ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
+            const CatchChallenger::ServerFromPoolForDisplay &server=serverOrdenedList.at(index);
             if(server.charactersGroupIndex==charactersGroupIndex && server.uniqueKey==serverUniqueKey)
             {
                 if(CatchChallenger::CommonDatapack::commonDatapack.isParsedContent())
@@ -291,7 +291,7 @@ void GlobalControler::updateServerList(CatchChallenger::Api_client_real *)
         unsigned int index=0;
         while(index<serverOrdenedList.size())
         {
-            const CatchChallenger::ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
+            const CatchChallenger::ServerFromPoolForDisplay &server=serverOrdenedList.at(index);
             qDebug() << QString::fromStdString(server.name) << " (" << QString::fromStdString(server.host) << ":" << server.port
                      << "), charactersGroupIndex: " << server.charactersGroupIndex << ", unique key: " << server.uniqueKey;
             index++;
