@@ -483,11 +483,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
 
                         if(serverIndex<serverOrdenedList.size())
                         {
-                            if(serverOrdenedList.at(serverIndex)!=NULL)
-                            {
-                                serverOrdenedList[serverIndex]->playedTime=playedTime;
-                                serverOrdenedList[serverIndex]->lastConnect=lastConnect;
-                            }
+                            serverOrdenedList[serverIndex].playedTime=playedTime;
+                            serverOrdenedList[serverIndex].lastConnect=lastConnect;
                         }
                         else
                         {
@@ -510,7 +507,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
 
                 is_logged=true;
                 logicialGroupIndexList.clear();
-                logged(serverOrdenedList,characterListForSelection);
+                logged(characterListForSelection);
             }
         }
         break;
@@ -622,7 +619,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                            );
                 return false;
             }
-            const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);
+            const ServerFromPoolForDisplay &serverFromPoolForDisplay=serverOrdenedList.at(selectedServerIndex);
 
             if(returnCode!=0x01 && (data.size()==1 || serverFromPoolForDisplay.host.empty()))
             {

@@ -50,7 +50,6 @@ void BaseWindow::resetAll()
     isLogged=false;
     datapackIsParsed=false;
     mainSubDatapackIsParsed=false;
-    serverOrdenedList.clear();
     characterListForSelection.clear();
     characterEntryListInWaiting.clear();
     ui->inventory->clear();
@@ -210,9 +209,8 @@ void BaseWindow::notLogged(std::string reason)
     resetAll();
 }
 
-void BaseWindow::logged(const std::vector<ServerFromPoolForDisplay *> &serverOrdenedList, const std::vector<std::vector<CharacterEntry> > &characterEntryList)
+void BaseWindow::logged(const std::vector<std::vector<CharacterEntry> > &characterEntryList)
 {
-    this->serverOrdenedList=serverOrdenedList;
     this->characterListForSelection=characterEntryList;
     #ifndef CATCHCHALLENGER_EXTRA_CHECK
     if(settings.contains("DatapackHashBase-"+client->datapackPathBase()))
@@ -655,6 +653,7 @@ void BaseWindow::updateConnectingStatus()
 {
     if(isLogged && datapackIsParsed)
     {
+        const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
         if(serverSelected==-1)
         {
             if(ui->stackedWidget->currentWidget()!=ui->page_serverList)
@@ -689,7 +688,7 @@ void BaseWindow::updateConnectingStatus()
             {
                 if(multiplayer)
                     ui->stackedWidget->setCurrentWidget(ui->page_character);
-                const uint8_t &charactersGroupIndex=serverOrdenedList.at(serverSelected)->charactersGroupIndex;
+                const uint8_t &charactersGroupIndex=serverOrdenedList.at(serverSelected).charactersGroupIndex;
                 const std::vector<CharacterEntry> &characterEntryList=characterListForSelection.at(charactersGroupIndex);
                 ui->character_add->setEnabled(characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character);
                 ui->character_remove->setEnabled(characterEntryList.size()>CommonSettingsCommon::commonSettingsCommon.min_character);

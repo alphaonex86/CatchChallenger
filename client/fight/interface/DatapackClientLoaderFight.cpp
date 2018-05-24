@@ -14,12 +14,6 @@
 
 void DatapackClientLoader::parseMonstersExtra()
 {
-    const std::string frontgif("/front.gif");
-    const std::string frontpng("/front.png");
-    const std::string backgif("/back.gif");
-    const std::string backpng("/back.png");
-    const std::string smallgif("/small.gif");
-    const std::string smallpng("/small.png");
     QDir dir(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_MONSTERS);
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
@@ -206,16 +200,16 @@ void DatapackClientLoader::parseMonstersExtra()
                                 }
                             }
                         }
-                        const std::string &basepath=datapackPath+DatapackClientLoader::text_slash+DATAPACK_BASE_PATH_MONSTERS+std::to_string(id);
+                        const std::string basepath=datapackPath+"/"+DATAPACK_BASE_PATH_MONSTERS+std::to_string(id);
                         if(monsterExtraEntry.name.empty())
                             monsterExtraEntry.name=tr("Unknown").toStdString();
                         if(monsterExtraEntry.description.empty())
                             monsterExtraEntry.description=tr("Unknown").toStdString();
-                        monsterExtraEntry.frontPath=basepath+frontpng;
+                        monsterExtraEntry.frontPath=basepath+"/front.png";
                         monsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
                         if(monsterExtraEntry.front.isNull())
                         {
-                            monsterExtraEntry.frontPath=basepath+frontgif;
+                            monsterExtraEntry.frontPath=basepath+"/front.gif";
                             monsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
                             if(monsterExtraEntry.front.isNull())
                             {
@@ -223,11 +217,11 @@ void DatapackClientLoader::parseMonstersExtra()
                                 monsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
                             }
                         }
-                        monsterExtraEntry.backPath=basepath+backpng;
+                        monsterExtraEntry.backPath=basepath+"/back.png";
                         monsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
                         if(monsterExtraEntry.back.isNull())
                         {
-                            monsterExtraEntry.backPath=basepath+backgif;
+                            monsterExtraEntry.backPath=basepath+"/back.gif";
                             monsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
                             if(monsterExtraEntry.back.isNull())
                             {
@@ -235,10 +229,10 @@ void DatapackClientLoader::parseMonstersExtra()
                                 monsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
                             }
                         }
-                        monsterExtraEntry.thumb=QString::fromStdString(basepath+smallpng);
+                        monsterExtraEntry.thumb=QString::fromStdString(basepath+"/small.png");
                         if(monsterExtraEntry.thumb.isNull())
                         {
-                            monsterExtraEntry.thumb=QString::fromStdString(basepath+smallgif);
+                            monsterExtraEntry.thumb=QString::fromStdString(basepath+"/small.gif");
                             if(monsterExtraEntry.thumb.isNull())
                                 monsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
                         }
