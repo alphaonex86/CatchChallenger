@@ -28,9 +28,9 @@ void Api_protocol_Qt::notLogged(const std::string &reason)
 {
     emit QtnotLogged(reason);
 }
-void Api_protocol_Qt::logged(const std::vector<ServerFromPoolForDisplay *> &serverOrdenedList,const std::vector<std::vector<CharacterEntry> > &characterEntryList)
+void Api_protocol_Qt::logged(const std::vector<std::vector<CharacterEntry> > &characterEntryList)
 {
-    emit Qtlogged(serverOrdenedList,characterEntryList);
+    emit Qtlogged(characterEntryList);
 }
 void Api_protocol_Qt::protocol_is_good()
 {

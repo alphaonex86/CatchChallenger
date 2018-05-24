@@ -30,7 +30,7 @@ public:
     ~Api_protocol();
     bool disconnectClient();
     void unloadSelection();
-    ServerFromPoolForDisplay getCurrentServer(const int &index);
+    const ServerFromPoolForDisplay &getCurrentServer(const unsigned int &index);
     bool dataToPlayerMonster(QDataStream &in, PlayerMonster &monster);
 
     //protocol command
@@ -39,6 +39,7 @@ public:
     bool sendProtocol();
     bool protocolWrong() const;
     virtual std::string socketDisconnectedForReconnect();
+    const std::vector<ServerFromPoolForDisplay> &getServerOrdenedList();
 
     //get the stored data
     Player_private_and_public_informations &get_player_informations();
@@ -181,7 +182,7 @@ protected:
 
     //servers list
     LogicialGroup * addLogicalGroup(const std::string &path, const std::string &xml, const std::string &language);
-    ServerFromPoolForDisplay * addLogicalServer(const ServerFromPoolForDisplayTemp &server, const std::string &language);
+    ServerFromPoolForDisplay *addLogicalServer(const ServerFromPoolForDisplayTemp &server, const std::string &language);
 
     //error
     void parseError(const std::string &userMessage, const std::string &errorString);
@@ -228,7 +229,7 @@ protected:
 
     //server list
     int32_t selectedServerIndex;
-    std::vector<ServerFromPoolForDisplay *> serverOrdenedList;
+    std::vector<ServerFromPoolForDisplay> serverOrdenedList;
     std::vector<LogicialGroup *> logicialGroupIndexList;
     std::vector<std::vector<CharacterEntry> > characterListForSelection;
     std::string tokenForGameServer;
