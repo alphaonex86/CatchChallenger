@@ -44,7 +44,7 @@ private:
                                const CatchChallenger::Direction &direction);
     virtual void remove_player(const uint16_t &id);
     virtual void dropAllPlayerOnTheMap();
-    virtual void logged(const std::vector<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
+    virtual void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId);
     virtual void haveTheDatapack();
     virtual void haveTheDatapackMainSub();
@@ -60,7 +60,7 @@ private:
     virtual void connectTheExternalSocket(CatchChallengerClient * client);
 signals:
     void loggedDone(CatchChallenger::Api_client_real *senderObject,
-                    const std::vector<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,
+                    const std::vector<CatchChallenger::ServerFromPoolForDisplay> &serverOrdenedList,
                     const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList,
                     bool haveTheDatapack);
     void statusError(QString error);

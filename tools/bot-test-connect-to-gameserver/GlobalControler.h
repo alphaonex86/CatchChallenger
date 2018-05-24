@@ -29,7 +29,7 @@ private:
 
     MultipleBotConnectionImplForGui multipleBotConnexion;
     QHash<uint8_t/*character group index*/,QPair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
-    std::vector<CatchChallenger::ServerFromPoolForDisplay *> serverOrdenedList;
+    std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList;
     std::vector<std::vector<CatchChallenger::CharacterEntry> > characterEntryList;
 
     QString login,pass,host,proxy,character;
@@ -41,7 +41,7 @@ private slots:
     void on_connect_clicked();
     void timeoutSlot();
     void logged(CatchChallenger::Api_client_real *senderObject,
-                const std::vector<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,
+                const std::vector<CatchChallenger::ServerFromPoolForDisplay> &serverOrdenedList,
                 const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList,
                 bool haveTheDatapack);
     void updateServerList(CatchChallenger::Api_client_real *);
