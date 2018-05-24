@@ -11,7 +11,8 @@ using namespace CatchChallenger;
 
 void BaseWindow::on_character_add_clicked()
 {
-    if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=
+    const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
+    if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).size())>=
             CommonSettingsCommon::commonSettingsCommon.max_character)
     {
         QMessageBox::warning(this,tr("Error"),tr("You have already the max characters count"));
@@ -27,11 +28,12 @@ void BaseWindow::on_character_add_clicked()
 
 void BaseWindow::newProfileFinished()
 {
+    const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
     const std::string &datapackPath=client->datapackPathBase();
     if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
         if(!newProfile->ok())
         {
-            if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).empty() &&
+            if(characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).empty() &&
                     CommonSettingsCommon::commonSettingsCommon.min_character>0)
                 client->tryDisconnect();
             return;
@@ -47,7 +49,7 @@ void BaseWindow::newProfileFinished()
     NewGame nameGame(datapackPath+DATAPACK_BASE_PATH_SKIN,datapackPath+DATAPACK_BASE_PATH_MONSTERS,profile.monstergroup,profile.forcedskin,this);
     if(!nameGame.haveSkin())
     {
-        if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).empty() &&
+        if(characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).empty() &&
                 CommonSettingsCommon::commonSettingsCommon.min_character>0)
             client->tryDisconnect();
         QMessageBox::critical(this,tr("Error"),
@@ -59,7 +61,7 @@ void BaseWindow::newProfileFinished()
     nameGame.exec();
     if(!nameGame.haveTheInformation())
     {
-        if(characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).empty() &&
+        if(characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).empty() &&
                 CommonSettingsCommon::commonSettingsCommon.min_character>0)
             client->tryDisconnect();
         return;
@@ -79,11 +81,12 @@ void BaseWindow::newProfileFinished()
     }
     characterEntry.charactersGroupIndex=nameGame.monsterGroupId();
     characterEntry.skinId=nameGame.skinId();
-    client->addCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,
+    client->addCharacter(serverOrdenedList.at(serverSelected).charactersGroupIndex,
                          static_cast<uint8_t>(profileIndex),characterEntry.pseudo,
                          characterEntry.charactersGroupIndex,characterEntry.skinId);
     characterEntryListInWaiting.push_back(characterEntry);
-    if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())>=CommonSettingsCommon::commonSettingsCommon.max_character)
+    if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).size())
+            >=CommonSettingsCommon::commonSettingsCommon.max_character)
         ui->character_add->setEnabled(false);
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     ui->label_connecting_status->setText(tr("Creating your new character"));
@@ -91,12 +94,13 @@ void BaseWindow::newProfileFinished()
 
 void BaseWindow::newCharacterId(const uint8_t &returnCode, const uint32_t &characterId)
 {
+    const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
     CharacterEntry characterEntry=characterEntryListInWaiting.front();
     characterEntryListInWaiting.erase(characterEntryListInWaiting.cbegin());
     if(returnCode==0x00)
     {
         characterEntry.character_id=characterId;
-        characterListForSelection[serverOrdenedList.at(serverSelected)->charactersGroupIndex].push_back(characterEntry);
+        characterListForSelection[serverOrdenedList.at(serverSelected).charactersGroupIndex].push_back(characterEntry);
         updateCharacterList();
         ui->characterEntryList->item(ui->characterEntryList->count()-1)->setSelected(true);
         //if(characterEntryList.size().size()>=CommonSettings::commonSettings.min_character && characterEntryList.size().size()<=CommonSettings::commonSettings.max_character)
@@ -118,11 +122,12 @@ void BaseWindow::newCharacterId(const uint8_t &returnCode, const uint32_t &chara
 
 void BaseWindow::updateCharacterList()
 {
+    const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
     ui->characterEntryList->clear();
     unsigned int index=0;
-    while(index<characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())
+    while(index<characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).size())
     {
-        const CharacterEntry &characterEntry=characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).at(index);
+        const CharacterEntry &characterEntry=characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).at(index);
         QListWidgetItem * item=new QListWidgetItem();
         item->setData(99,characterEntry.character_id);
         item->setData(98,characterEntry.delete_time_left);
@@ -173,6 +178,7 @@ void BaseWindow::on_character_select_clicked()
 
 void BaseWindow::on_character_remove_clicked()
 {
+    const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
     QList<QListWidgetItem *> selectedItems=ui->characterEntryList->selectedItems();
     if(selectedItems.size()!=1)
         return;
@@ -183,14 +189,15 @@ void BaseWindow::on_character_remove_clicked()
         QMessageBox::warning(this,tr("Error"),tr("Deleting already planned"));
         return;
     }
-    client->removeCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,character_id);
+    client->removeCharacter(serverOrdenedList.at(serverSelected).charactersGroupIndex,character_id);
     unsigned int index=0;
-    while(index<characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).size())
+    while(index<characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).size())
     {
-        const CharacterEntry &characterEntry=characterListForSelection.at(serverOrdenedList.at(serverSelected)->charactersGroupIndex).at(index);
+        const CharacterEntry &characterEntry=characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).at(index);
         if(characterEntry.character_id==character_id)
         {
-            characterListForSelection[serverOrdenedList.at(serverSelected)->charactersGroupIndex][index].delete_time_left=CommonSettingsCommon::commonSettingsCommon.character_delete_time;
+            characterListForSelection[serverOrdenedList.at(serverSelected).charactersGroupIndex][index].delete_time_left=
+                    CommonSettingsCommon::commonSettingsCommon.character_delete_time;
             break;
         }
         index++;
@@ -210,7 +217,9 @@ void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
         QMessageBox::warning(this,tr("Error"),tr("You can't play with this buggy charater"));
         return;
     }*/
-    client->selectCharacter(serverOrdenedList.at(serverSelected)->charactersGroupIndex,serverOrdenedList.at(serverSelected)->uniqueKey,item->data(99).toUInt(),serverSelected);
+    const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
+    client->selectCharacter(serverOrdenedList.at(serverSelected).charactersGroupIndex,
+                            serverOrdenedList.at(serverSelected).uniqueKey,item->data(99).toUInt(),serverSelected);
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     ui->label_connecting_status->setText(tr("Selecting your character"));
 
@@ -235,20 +244,23 @@ void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
 
 void BaseWindow::updateServerList()
 {
+    const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
     //do the grouping for characterGroup count
     {
         serverByCharacterGroup.clear();
         unsigned int index=0;
-        int serverByCharacterGroupTempIndexToDisplay=1;
+        uint8_t serverByCharacterGroupTempIndexToDisplay=1;
         while(index<serverOrdenedList.size())
         {
-            const ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
+            const ServerFromPoolForDisplay &server=serverOrdenedList.at(index);
+            if(server.charactersGroupIndex>serverOrdenedList.size())
+                abort();
             if(serverByCharacterGroup.find(server.charactersGroupIndex)!=serverByCharacterGroup.cend())
                 serverByCharacterGroup[server.charactersGroupIndex].first++;
             else
             {
                 serverByCharacterGroup[server.charactersGroupIndex].first=1;
-                serverByCharacterGroup[server.charactersGroupIndex].second=static_cast<uint8_t>(serverByCharacterGroupTempIndexToDisplay);
+                serverByCharacterGroup[server.charactersGroupIndex].second=serverByCharacterGroupTempIndexToDisplay;
                 serverByCharacterGroupTempIndexToDisplay++;
             }
             index++;
@@ -294,7 +306,7 @@ void BaseWindow::updateServerList()
         unsigned int index=0;
         while(index<serverOrdenedList.size())
         {
-            const ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
+            const ServerFromPoolForDisplay &server=serverOrdenedList.at(index);
             if(server.playedTime>0 && server.lastConnect<=current__date)
             {
                 averagePlayedTime+=server.playedTime;
@@ -352,8 +364,10 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
             if(characterListForSelection.size()>1 && serverByCharacterGroup.size()>1)
             {
                 const uint8_t groupInt=serverByCharacterGroup.at(server.charactersGroupIndex).second;
+                //comment the if to always show it
                 if(groupInt>=icon_server_list_color.size())
                     groupText=QStringLiteral(" (%1)").arg(groupInt).toStdString();
+                itemServer->setToolTip(0,tr("Server group: %1").arg(groupInt));
                 if(!icon_server_list_color.empty())
                     itemServer->setIcon(0,icon_server_list_color.at(groupInt%icon_server_list_color.size()));
             }

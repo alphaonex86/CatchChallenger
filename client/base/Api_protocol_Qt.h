@@ -19,7 +19,7 @@ public:
     //protocol/connection info
     void disconnected(const std::string &reason);
     void notLogged(const std::string &reason);
-    void logged(const std::vector<ServerFromPoolForDisplay *> &serverOrdenedList,const std::vector<std::vector<CharacterEntry> > &characterEntryList);
+    void logged(const std::vector<std::vector<CharacterEntry> > &characterEntryList);
     void protocol_is_good();
     void connectedOnLoginServer();
     void connectingOnGameServer();
@@ -148,7 +148,7 @@ signals:
     //protocol/connection info
     void Qtdisconnected(const std::string &reason);
     void QtnotLogged(const std::string &reason);
-    void Qtlogged(const std::vector<ServerFromPoolForDisplay *> &serverOrdenedList,const std::vector<std::vector<CharacterEntry> > &characterEntryList);
+    void Qtlogged(const std::vector<std::vector<CharacterEntry> > &characterEntryList);
     void Qtprotocol_is_good();
     void QtconnectedOnLoginServer();
     void QtconnectingOnGameServer();

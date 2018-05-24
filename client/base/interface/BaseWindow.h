@@ -168,7 +168,7 @@ private slots:
     void updateTheWareHouseContent();
     QListWidgetItem * itemToGraphic(const uint16_t &itemid, const uint32_t &quantity);
     //player
-    void logged(const std::vector<ServerFromPoolForDisplay *> &serverOrdenedList,const std::vector<std::vector<CharacterEntry> > &characterEntryList);
+    void logged(const std::vector<std::vector<CharacterEntry> > &characterEntryList);
     void updatePlayerImage();
     void have_character_position();
     void haveCharacter();
@@ -547,7 +547,6 @@ private:
     //for server/character selection
     bool isLogged;
     uint32_t averagePlayedTime,averageLastConnect;
-    std::vector<ServerFromPoolForDisplay *> serverOrdenedList;
     std::unordered_map<uint8_t/*character group index*/,std::pair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
     std::vector<std::vector<CharacterEntry> > characterListForSelection;
     std::vector<CharacterEntry> characterEntryListInWaiting;
