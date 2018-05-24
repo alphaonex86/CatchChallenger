@@ -298,7 +298,7 @@ std::string Api_protocol::socketDisconnectedForReconnect()
         parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("selectedServerIndex==-1 with Api_protocol::socketDisconnectedForReconnect()"));
         return std::string();
     }
-    const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);
+    const ServerFromPoolForDisplay &serverFromPoolForDisplay=serverOrdenedList.at(selectedServerIndex);
     if(serverFromPoolForDisplay.host.empty())
     {
         parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("serverFromPoolForDisplay.host.isEmpty() with Api_protocol::socketDisconnectedForReconnect()"));
@@ -315,6 +315,11 @@ std::string Api_protocol::socketDisconnectedForReconnect()
     std::cout << "Api_protocol::socketDisconnectedForReconnect(), Try connect to: " << serverFromPoolForDisplay.host << ":" << serverFromPoolForDisplay.port << std::endl;
     socket->connectToHost(QString::fromStdString(serverFromPoolForDisplay.host),serverFromPoolForDisplay.port);
     return serverFromPoolForDisplay.host+":"+std::to_string(serverFromPoolForDisplay.port);
+}
+
+const std::vector<ServerFromPoolForDisplay> &Api_protocol::getServerOrdenedList()
+{
+    return serverOrdenedList;
 }
 
 bool Api_protocol::protocolWrong() const
@@ -687,8 +692,8 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
     unsigned int index=0;
     while(index<serverOrdenedList.size())
     {
-        const ServerFromPoolForDisplay * const server=serverOrdenedList.at(index);
-        if(server->uniqueKey==serverUniqueKey && server->charactersGroupIndex==charactersGroupIndex)
+        const ServerFromPoolForDisplay &server=serverOrdenedList.at(index);
+        if(server.uniqueKey==serverUniqueKey && server.charactersGroupIndex==charactersGroupIndex)
             return selectCharacter(charactersGroupIndex,serverUniqueKey,characterId,index);
         index++;
     }
@@ -1956,12 +1961,11 @@ void Api_protocol::unloadSelection()
     logicialGroup.servers.clear();
 }
 
-ServerFromPoolForDisplay Api_protocol::getCurrentServer(const int &index)
+const ServerFromPoolForDisplay &Api_protocol::getCurrentServer(const unsigned int &index)
 {
-    ServerFromPoolForDisplay tempVar=*serverOrdenedList.at(index);
-    /*selectedServerIndex=-1;
-    serverOrdenedList.clear();*/
-    return tempVar;
+    if(index>=serverOrdenedList.size())
+        abort();
+    return serverOrdenedList.at(index);
 }
 
 std::string Api_protocol::datapackPathBase() const
@@ -2276,7 +2280,7 @@ void Api_protocol::connectTheExternalSocketInternal()
                 parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("Api_protocol::connectTheExternalSocket() selectedServerIndex==-1"));
                 return;
             }
-            const ServerFromPoolForDisplay &serverFromPoolForDisplay=*serverOrdenedList.at(selectedServerIndex);
+            const ServerFromPoolForDisplay &serverFromPoolForDisplay=serverOrdenedList.at(selectedServerIndex);
             certFile.setFileName(
                         datapackCert.absolutePath()+QString("/")+
                                  QString::fromStdString(serverFromPoolForDisplay.host)+QString("-")+
