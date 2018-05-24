@@ -10,7 +10,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::SimpleSoloServer)
 {
     ui->setupUi(this);
-    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"),QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/savegames/"),true);
+    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+"/datapack/",
+                              QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+"/savegames/",true);
     if(!connect(solowindow,&SoloWindow::play,this,&MainWindow::play))
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
@@ -126,9 +127,9 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::play(const QString &savegamesPath)
+void MainWindow::play(const std::string &savegamesPath)
 {
-    QSettings metaData(savegamesPath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
+    QSettings metaData(QString::fromStdString(savegamesPath)+"metadata.conf",QSettings::IniFormat);
     if(internalServer!=NULL)
     {
         internalServer->deleteLater();
@@ -186,7 +187,7 @@ void MainWindow::play(const QString &savegamesPath)
             abort();
         }
         baseWindow=new CatchChallenger::BaseWindow();
-        baseWindow->setMultiPlayer(false,client);
+        baseWindow->setMultiPlayer(false,static_cast<CatchChallenger::Api_client_real *>(client));
         baseWindow->connectAllSignals();
         baseWindow->setMinimumSize(800,600);
         if(!connect(baseWindow,&CatchChallenger::BaseWindow::newError,this,&MainWindow::newError,Qt::QueuedConnection))
@@ -203,7 +204,7 @@ void MainWindow::play(const QString &savegamesPath)
         }
     }
 
-    sendSettings(internalServer,savegamesPath);
+    sendSettings(internalServer,QString::fromStdString(savegamesPath));
 
     internalServer->start();
     ui->stackedWidget->setCurrentWidget(baseWindow);
@@ -213,7 +214,7 @@ void MainWindow::play(const QString &savegamesPath)
         QMessageBox::critical(NULL,tr("Error"),tr("Unable to load internal value"));
         return;
     }
-    launchedGamePath=savegamesPath;
+    launchedGamePath=QString::fromStdString(savegamesPath);
     haveLaunchedGame=true;
     pass=metaData.value(QStringLiteral("pass")).toString();
 
@@ -244,7 +245,7 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
     formatedServerSettings.database_server.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
     formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
-    formatedServerSettings.datapack_basePath=client->datapackPathBase().toStdString();
+    formatedServerSettings.datapack_basePath=client->datapackPathBase();
 
     {
         CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["day"];
@@ -263,7 +264,7 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
         CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings.value("mainDatapackCode","[main]").toString().toStdString();
     else
     {
-        const QFileInfoList &list=QDir(client->datapackPathBase()+"/map/main/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+        const QFileInfoList &list=QDir(QString::fromStdString(client->datapackPathBase())+"/map/main/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
         if(list.isEmpty())
         {
             QMessageBox::critical(this,tr("Error"),tr("No main code detected into the current datapack"));
@@ -272,10 +273,12 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
         settings.setValue("mainDatapackCode",list.at(0).fileName());
         CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).fileName().toStdString();
     }
-    QDir mainDir(client->datapackPathBase()+"map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/");
+    QDir mainDir(QString::fromStdString(client->datapackPathBase())+"map/main/"+
+                 QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/");
     if(!mainDir.exists())
     {
-        const QFileInfoList &list=QDir(client->datapackPathBase()+"/map/main/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+        const QFileInfoList &list=QDir(QString::fromStdString(client->datapackPathBase())+"/map/main/")
+                .entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
         if(list.isEmpty())
         {
             QMessageBox::critical(this,tr("Error"),tr("No main code detected into the current datapack"));
@@ -289,7 +292,9 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
         CommonSettingsServer::commonSettingsServer.subDatapackCode=settings.value("subDatapackCode","").toString().toStdString();
     else
     {
-        const QFileInfoList &list=QDir(client->datapackPathBase()+"/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+        const QFileInfoList &list=QDir(QString::fromStdString(client->datapackPathBase())+
+                                       "/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/")
+                .entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
         if(!list.isEmpty())
         {
             settings.setValue("subDatapackCode",list.at(0).fileName());
@@ -300,10 +305,14 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     }
     if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
     {
-        QDir subDir(client->datapackPathBase()+"/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)+"/");
+        QDir subDir(QString::fromStdString(client->datapackPathBase())+"/map/main/"+
+                    QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/"+
+                    QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)+"/");
         if(!subDir.exists())
         {
-            const QFileInfoList &list=QDir(client->datapackPathBase()+"/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+            const QFileInfoList &list=QDir(QString::fromStdString(client->datapackPathBase())+"/map/main/"+
+                                           QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/")
+                    .entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
             if(!list.isEmpty())
             {
                 settings.setValue("subDatapackCode",list.at(0).fileName());
@@ -321,20 +330,20 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
 
 void MainWindow::protocol_is_good()
 {
-    client->setDatapackPath(QCoreApplication::applicationDirPath()+"/datapack/");
-    client->tryLogin(QStringLiteral("admin"),pass);
+    client->setDatapackPath(QCoreApplication::applicationDirPath().toStdString()+"/datapack/");
+    client->tryLogin("admin",pass.toStdString());
 }
 
-void MainWindow::disconnected(QString reason)
+void MainWindow::disconnected(std::string reason)
 {
-    QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(reason));
+    QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(QString::fromStdString(reason)));
     haveShowDisconnectionReason=true;
     resetAll();
 }
 
-void MainWindow::message(QString message)
+void MainWindow::message(std::string message)
 {
-    qDebug() << message;
+    std::cout << message << std::endl;
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
@@ -408,7 +417,7 @@ void MainWindow::saveTime()
         {
             if(metaData.status()==QSettings::NoError)
             {
-                QString locaction=baseWindow->lastLocation();
+                QString locaction=QString::fromStdString(baseWindow->lastLocation());
                 const QString &mapPath=QString::fromStdString(internalServer->getSettings().datapack_basePath)+DATAPACK_BASE_PATH_MAPMAIN+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/";//internalServer->getSettings().mainDatapackCode
                 if(locaction.startsWith(mapPath))
                     locaction.remove(0,mapPath.size());
@@ -442,12 +451,12 @@ void MainWindow::resetAll()
     saveTime();
 }
 
-void MainWindow::newError(QString error,QString detailedError)
+void MainWindow::newError(std::string error,std::string detailedError)
 {
-    qDebug() << detailedError.toLocal8Bit();
+    std::cerr << detailedError << std::endl;
     if(client!=NULL)
         client->tryDisconnect();
-    QMessageBox::critical(this,tr("Error"),error);
+    QMessageBox::critical(this,tr("Error"),QString::fromStdString(error));
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -480,7 +489,7 @@ void MainWindow::gameIsLoaded()
     if(vlcPlayer!=NULL)
         libvlc_media_player_stop(vlcPlayer);
     #endif
-    this->setWindowTitle(QStringLiteral("CatchChallenger - %1").arg(client->getPseudo()));
+    this->setWindowTitle(QStringLiteral("CatchChallenger - %1").arg(QString::fromStdString(client->getPseudo())));
 }
 
 #ifndef CATCHCHALLENGER_NOAUDIO

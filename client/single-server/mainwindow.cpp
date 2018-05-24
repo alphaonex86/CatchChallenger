@@ -18,6 +18,7 @@
 #include <QSslKey>
 #include <algorithm>
 #include <string>
+#include <iostream>
 
 #ifdef __linux__
 #include <sys/types.h>
@@ -293,9 +294,9 @@ void MainWindow::sslErrors(const QList<QSslError> &errors)
     realSocket->disconnectFromHost();*/
 }
 
-void MainWindow::disconnected(QString reason)
+void MainWindow::disconnected(std::string reason)
 {
-    QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(reason));
+    QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(QString::fromStdString(reason)));
     lastServerIsKick[server_dns_or_ip]=true;
     haveShowDisconnectionReason=true;
     resetAll();
@@ -440,16 +441,16 @@ void MainWindow::connectTheExternalSocket()
         abort();
     if(!connect(client,               &CatchChallenger::Api_protocol::logged,             this,&MainWindow::logged,Qt::QueuedConnection))
         abort();
-    baseWindow->setMultiPlayer(true,client);
+    baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
     baseWindow->connectAllSignals();
     QDir datapack(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/datapack/"));
     if(!datapack.exists())
         if(!datapack.mkpath(datapack.absolutePath()))
         {
-            disconnected(tr("Not able to create the folder %1").arg(datapack.absolutePath()));
+            disconnected(tr("Not able to create the folder %1").arg(datapack.absolutePath()).toStdString());
             return;
         }
-    client->setDatapackPath(datapack.absolutePath());
+    client->setDatapackPath(datapack.absolutePath().toStdString());
     baseWindow->mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
     baseWindow->stateChanged(QAbstractSocket::ConnectedState);
 }
@@ -468,7 +469,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             if(client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2 || client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage3)
             {
                 std::cout << "MainWindow::stateChanged(" << std::to_string((int)socketState) << ") call socketDisconnectedForReconnect" << std::endl;
-                const QString &lastServer=client->socketDisconnectedForReconnect();
+                const QString &lastServer=QString::fromStdString(client->socketDisconnectedForReconnect());
                 if(!lastServer.isEmpty())
                     this->lastServer=lastServer;
                 return;
@@ -550,14 +551,14 @@ void MainWindow::haveNewError()
 //	QMessageBox::critical(this,tr("Error"),client->errorString());
 }
 
-void MainWindow::message(QString message)
+void MainWindow::message(std::string message)
 {
-    qDebug() << message;
+    std::cout << message << std::endl;
 }
 
 void MainWindow::protocol_is_good()
 {
-    client->tryLogin(ui->lineEditLogin->text(),ui->lineEditPass->text());
+    client->tryLogin(ui->lineEditLogin->text().toStdString(),ui->lineEditPass->text().toStdString());
 }
 
 void MainWindow::needQuit()
@@ -575,17 +576,17 @@ void MainWindow::on_languages_clicked()
     LanguagesSelect::languagesSelect->exec();
 }
 
-void MainWindow::newError(QString error,QString detailedError)
+void MainWindow::newError(std::string error,std::string detailedError)
 {
-    qDebug() << detailedError.toLocal8Bit();
+    std::cerr << detailedError << std::endl;
     if(client!=NULL)
         client->tryDisconnect();
-    QMessageBox::critical(this,tr("Error"),error);
+    QMessageBox::critical(this,tr("Error"),QString::fromStdString(error));
 }
 
-void MainWindow::newUpdate(const QString &version)
+void MainWindow::newUpdate(const std::string &version)
 {
-    ui->update->setText(InternetUpdater::getText(version));
+    ui->update->setText(QString::fromStdString(InternetUpdater::getText(version)));
     ui->update->setVisible(true);
 }
 
@@ -603,28 +604,30 @@ void MainWindow::closeEvent(QCloseEvent *event)
     QCoreApplication::quit();
 }
 
-void MainWindow::feedEntryList(const QList<FeedNews::FeedEntry> &entryList,QString error)
+void MainWindow::feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList, std::string error)
 {
-    if(entryList.isEmpty())
+    if(entryList.empty())
     {
-        if(error.isEmpty())
+        if(error.empty())
             ui->news->setVisible(false);
         else
         {
-            ui->news->setToolTip(error);
+            ui->news->setToolTip(QString::fromStdString(error));
             ui->news->setStyleSheet("#news{background-color: rgb(220, 220, 240);\nborder: 1px solid rgb(100, 150, 240);\nborder-radius:5px;\ncolor: rgb(0, 0, 0);\nbackground-image: url(:/images/multi/warning.png);\nbackground-repeat: no-repeat;\nbackground-position: right;}");
         }
         return;
     }
     if(entryList.size()==1)
-        ui->news->setText(tr("Latest news:")+QStringLiteral(" ")+QStringLiteral("<a href=\"%1\">%2</a>").arg(entryList.at(0).link).arg(entryList.at(0).title));
+        ui->news->setText(tr("Latest news:")+" "+QStringLiteral("<a href=\"%1\">%2</a>").arg(
+                              QString::fromStdString(entryList.at(0).link)).arg(QString::fromStdString(entryList.at(0).title)));
     else
     {
         QStringList entryHtmlList;
-        int index=0;
+        unsigned int index=0;
         while(index<entryList.size() && index<3)
         {
-            entryHtmlList << QStringLiteral(" - <a href=\"%1\">%2</a>").arg(entryList.at(index).link).arg(entryList.at(index).title);
+            entryHtmlList << QStringLiteral(" - <a href=\"%1\">%2</a>")
+                             .arg(QString::fromStdString(entryList.at(index).link)).arg(QString::fromStdString(entryList.at(index).title));
             index++;
         }
         ui->news->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join("<br />"));
@@ -686,7 +689,7 @@ void MainWindow::gameIsLoaded()
     if(vlcPlayer!=NULL)
         libvlc_media_player_stop(vlcPlayer);
     #endif
-    this->setWindowTitle(QStringLiteral("CatchChallenger - %1 - %2").arg(server_name).arg(client->getPseudo()));
+    this->setWindowTitle(QStringLiteral("CatchChallenger - %1 - %2").arg(server_name).arg(QString::fromStdString(client->getPseudo())));
 }
 
 #ifndef CATCHCHALLENGER_NOAUDIO
