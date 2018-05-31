@@ -1,4 +1,5 @@
 #include "TinyXMLSettings.h"
+#include "../../general/base/tinyXML2/customtinyxml2.h"
 #include <iostream>
 
 TinyXMLSettings::TinyXMLSettings() :
@@ -18,11 +19,11 @@ TinyXMLSettings::TinyXMLSettings(const std::string &file) :
     modified(false)
 {
     this->file=file;
-    const auto loadOkay = document.LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-    if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+    const auto loadOkay = document.LoadFile(file.c_str());
+    if(loadOkay!=0)
     {
         modified=true;
-        const auto &errorId=document.CATCHCHALLENGER_XMLERRORID();
+        const auto &errorId=document.ErrorID();
         #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
         if(errorId==2 /*NOT 12! Error document empty. but can be just corrupted!*/ && errno==2)
         #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
@@ -59,18 +60,12 @@ TinyXMLSettings::~TinyXMLSettings()
 
 void TinyXMLSettings::beginGroup(const std::string &group)
 {
-    tinyxml2::XMLElement * item = whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
+    tinyxml2::XMLElement * item = whereIs->FirstChildElement(group.c_str());
     if(item==NULL)
     {
-        #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-        tinyxml2::XMLElement item(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
-        whereIs->InsertEndChild(item);
-        whereIs=whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
-        #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
-        tinyxml2::XMLNode * item = document.NewElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
+        tinyxml2::XMLNode * item = document.NewElement(group.c_str());
         whereIs->InsertFirstChild(item);
-        whereIs=whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
-        #endif
+        whereIs=whereIs->FirstChildElement(group.c_str());
     }
     else
         whereIs=item;
@@ -87,7 +82,7 @@ void TinyXMLSettings::endGroup()
 
 std::string TinyXMLSettings::value(const std::string &var, const std::string &defaultValue)
 {
-    tinyxml2::XMLElement * item = whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
+    tinyxml2::XMLElement * item = whereIs->FirstChildElement(var.c_str());
     if(item==NULL)
         return defaultValue;
     else
@@ -101,32 +96,25 @@ std::string TinyXMLSettings::value(const std::string &var, const std::string &de
 
 bool TinyXMLSettings::contains(const std::string &var)
 {
-    return whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var))!=NULL;
+    return whereIs->FirstChildElement(var.c_str())!=NULL;
 }
 
 void TinyXMLSettings::setValue(const std::string &var,const std::string &value)
 {
-    tinyxml2::XMLElement * item = whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
+    tinyxml2::XMLElement * item = whereIs->FirstChildElement(var.c_str());
     if(item==NULL)
     {
         modified=true;
-        #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-        tinyxml2::XMLElement item(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
-        item.SetAttribute("value",CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(value));
-        whereIs->InsertEndChild(item);
-        #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
-        tinyxml2::XMLElement * item = document.NewElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
-        item->SetAttribute("value",CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(value));
+        tinyxml2::XMLElement * item = document.NewElement(var.c_str());
+        item->SetAttribute("value",value.c_str());
         whereIs->InsertFirstChild(item);
-        #endif
-
     }
     else
     {
         if(item->Attribute("value")==value)
             return;
         modified=true;
-        item->SetAttribute("value",CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(value));
+        item->SetAttribute("value",value.c_str());
     }
 }
 
@@ -157,19 +145,11 @@ void TinyXMLSettings::sync()
 {
     if(!modified)
         return;
-    const auto &returnVar=document.SaveFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-    #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-    if(!returnVar)
-    {
-        std::cerr << "Unable to save the file: " << file << ", errno: " << std::to_string(errno) << std::endl;
-        abort();
-    }
-    #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
+    const auto &returnVar=document.SaveFile(file.c_str());
     if(returnVar!=tinyxml2::XML_SUCCESS)
     {
         std::cerr << "Unable to save the file: " << file << ", returnVar: " << std::to_string(returnVar) << std::endl;
         abort();
     }
-    #endif
     modified=false;
 }
