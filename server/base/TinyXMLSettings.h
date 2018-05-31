@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "../../general/base/GeneralVariable.h"
+#include "../../general/base/tinyXML2/tinyxml2.h"
 
 class TinyXMLSettings
 {

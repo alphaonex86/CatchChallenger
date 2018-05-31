@@ -6,6 +6,7 @@
 
 #include "GeneralStructures.h"
 #include "GeneralVariable.h"
+#include "tinyXML2/tinyxml2.h"
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include "tinyXML2/tinyxml2.h"
