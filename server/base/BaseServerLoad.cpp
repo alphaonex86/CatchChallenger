@@ -142,7 +142,7 @@ bool BaseServer::preload_zone_init()
             continue;
         }
         #endif
-        const CATCHCHALLENGER_XMLELEMENT* root = domDocument->RootElement();
+        const tinyxml2::XMLElement *root = domDocument->RootElement();
         if(root==NULL)
         {
             index++;
