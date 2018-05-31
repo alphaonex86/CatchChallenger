@@ -18,7 +18,7 @@ TinyXMLSettings::TinyXMLSettings(const std::string &file) :
     modified(false)
 {
     this->file=file;
-    const auto loadOkay = document.CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+    const auto loadOkay = document.LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
     if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
     {
         modified=true;
@@ -30,7 +30,7 @@ TinyXMLSettings::TinyXMLSettings(const std::string &file) :
         #endif
         {
             #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-            CATCHCHALLENGER_XMLELEMENT * root = new CATCHCHALLENGER_XMLELEMENT("configuration");
+            tinyxml2::XMLElement * root = new CATCHCHALLENGER_XMLELEMENT("configuration");
             document.LinkEndChild(root);
             #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
             tinyxml2::XMLNode * pRoot = document.NewElement("configuration");
@@ -39,8 +39,8 @@ TinyXMLSettings::TinyXMLSettings(const std::string &file) :
         }
         else
         {
-            const CATCHCHALLENGER_XMLDOCUMENT * const documentBis=&document;
-            std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(documentBis) << std::endl;
+            const tinyxml2::XMLDocument * const documentBis=&document;
+            std::cerr << file+", "+tinyxml2errordoc(documentBis) << std::endl;
             abort();
         }
     }
@@ -59,11 +59,11 @@ TinyXMLSettings::~TinyXMLSettings()
 
 void TinyXMLSettings::beginGroup(const std::string &group)
 {
-    CATCHCHALLENGER_XMLELEMENT * item = whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
+    tinyxml2::XMLElement * item = whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
     if(item==NULL)
     {
         #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-        CATCHCHALLENGER_XMLELEMENT item(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
+        tinyxml2::XMLElement item(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
         whereIs->InsertEndChild(item);
         whereIs=whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(group));
         #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
@@ -80,14 +80,14 @@ void TinyXMLSettings::endGroup()
 {
     if(whereIs==document.RootElement())
         return;
-    CATCHCHALLENGER_XMLELEMENT * item = static_cast<CATCHCHALLENGER_XMLELEMENT *>(whereIs->Parent());
+    tinyxml2::XMLElement * item = static_cast<tinyxml2::XMLElement *>(whereIs->Parent());
     if(item!=NULL)
         whereIs=item;
 }
 
 std::string TinyXMLSettings::value(const std::string &var, const std::string &defaultValue)
 {
-    CATCHCHALLENGER_XMLELEMENT * item = whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
+    tinyxml2::XMLElement * item = whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
     if(item==NULL)
         return defaultValue;
     else
@@ -106,12 +106,12 @@ bool TinyXMLSettings::contains(const std::string &var)
 
 void TinyXMLSettings::setValue(const std::string &var,const std::string &value)
 {
-    CATCHCHALLENGER_XMLELEMENT * item = whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
+    tinyxml2::XMLElement * item = whereIs->FirstChildElement(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
     if(item==NULL)
     {
         modified=true;
         #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-        CATCHCHALLENGER_XMLELEMENT item(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
+        tinyxml2::XMLElement item(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(var));
         item.SetAttribute("value",CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(value));
         whereIs->InsertEndChild(item);
         #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
