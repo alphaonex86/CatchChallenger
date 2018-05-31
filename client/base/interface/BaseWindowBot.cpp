@@ -100,7 +100,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         showTip(tr("Error into the bot, repport this error please").toStdString());
         return;
     }
-    const CATCHCHALLENGER_XMLELEMENT * stepXml=actualBot.step.at(step);
+    const tinyxml2::XMLElement * stepXml=actualBot.step.at(step);
     if(strcmp(stepXml->Attribute("type"),"text")==0)
     {
         const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();

@@ -236,7 +236,7 @@ void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, 
         newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Bot trigged but no step found");
         return;
     }
-    const CATCHCHALLENGER_XMLELEMENT * stepXml=actualBot.step.at(step);
+    const tinyxml2::XMLElement * stepXml=actualBot.step.at(step);
     if(stepXml->Attribute("type")==NULL)
         return;
     if(strcmp(stepXml->Attribute("type"),"fight")==0)
