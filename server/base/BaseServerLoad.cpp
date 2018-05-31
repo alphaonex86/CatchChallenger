@@ -1,5 +1,7 @@
 #include "BaseServer.h"
 #include "GlobalServerData.h"
+#include "../../general/base/tinyXML2/tinyxml2.h"
+#include "../../general/base/tinyXML2/customtinyxml2.h"
 
 using namespace CatchChallenger;
 
@@ -123,8 +125,8 @@ bool BaseServer::preload_zone_init()
             #else
             domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
             #endif
-            const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            if(loadOkay!=0)
             {
                 std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
                 index++;
@@ -148,7 +150,7 @@ bool BaseServer::preload_zone_init()
             index++;
             continue;
         }
-        if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),XMLCACHEDSTRING_zone))
+        if(strcmp(root->Name(),XMLCACHEDSTRING_zone)!=0)
         {
             std::cerr << "Unable to open the file: " << file.c_str() << ", \"zone\" root balise not found for the xml file" << std::endl;
             index++;
@@ -160,10 +162,10 @@ bool BaseServer::preload_zone_init()
         const tinyxml2::XMLElement * capture=root->FirstChildElement(XMLCACHEDSTRING_capture);
         if(capture!=NULL)
         {
-            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(capture) && capture->Attribute(XMLCACHEDSTRING_fightId)!=NULL)
+            if(capture->Attribute(XMLCACHEDSTRING_fightId)!=NULL)
             {
                 bool ok;
-                const std::vector<std::string> &fightIdStringList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(capture->Attribute(XMLCACHEDSTRING_fightId)),';');
+                const std::vector<std::string> &fightIdStringList=stringsplit(capture->Attribute(XMLCACHEDSTRING_fightId),';');
                 unsigned int sub_index=0;
                 while(sub_index<fightIdStringList.size())
                 {
@@ -182,7 +184,7 @@ bool BaseServer::preload_zone_init()
                 break;
             }
             else
-                std::cerr << "Unable to open the file: " << file << ", is not an element: (at line: " << CATCHCHALLENGER_XMLELENTATLINE(capture) << ")" << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", is not found" << std::endl;
         }
         #ifdef EPOLLCATCHCHALLENGERSERVER
         delete domDocument;
