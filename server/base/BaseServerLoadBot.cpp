@@ -1,4 +1,6 @@
 #include "BaseServer.h"
+#include "../../general/base/tinyXML2/tinyxml2.h"
+#include "../../general/base/tinyXML2/customtinyxml2.h"
 
 using namespace CatchChallenger;
 
@@ -62,7 +64,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                             ++i;
                             continue;
                         }
-                        const std::string step_type=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(XMLCACHEDSTRING_type));
+                        const std::string &step_type=step->Attribute(XMLCACHEDSTRING_type);
                         if(step_type==CACHEDSTRING_shop)
                         {
                             if(step->Attribute(XMLCACHEDSTRING_shop)==NULL)
@@ -82,7 +84,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                             else
                             {
                                 /// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
-                                uint16_t shop=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(XMLCACHEDSTRING_shop)),&ok);
+                                uint16_t shop=stringtouint16(step->Attribute(XMLCACHEDSTRING_shop),&ok);
                                 if(!ok)
                                     std::cerr << "shop is not a number: for bot id: "
                                               << bot_Semi.id
@@ -291,7 +293,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                               << std::to_string(i->first)
                                               << std::endl;
                                 #endif
-                                mapServer->zonecapture[pairpoint]=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(XMLCACHEDSTRING_zone));
+                                mapServer->zonecapture[pairpoint]=step->Attribute(XMLCACHEDSTRING_zone);
                                 zonecapturepoint_number++;
                             }
                         }
@@ -317,7 +319,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 ok=false;
                                 if(step->Attribute(XMLCACHEDSTRING_fightid)!=NULL)
                                     //16Bit: \see CommonDatapackServerSpec, Map_to_send,struct Bot_Semi,uint16_t id
-                                    fightid=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(XMLCACHEDSTRING_fightid)),&ok);
+                                    fightid=stringtouint16(step->Attribute(XMLCACHEDSTRING_fightid),&ok);
                                 if(ok)
                                 {
                                     if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CommonDatapackServerSpec::commonDatapackServerSpec.botFights.end())
@@ -526,10 +528,10 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return;
@@ -541,7 +543,7 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     const tinyxml2::XMLElement * root = domDocument->RootElement();
     if(root==NULL)
         return;
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"bots"))
+    if(strcmp(root->Name(),"bots")!=0)
     {
         std::cerr << "\"bots\" root balise not found for the xml file" << std::endl;
         return;
@@ -551,30 +553,26 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     while(child!=NULL)
     {
         if(child->Attribute("id")==NULL)
-            std::cerr << "Has not attribute \"id\": child->Name(): " << child->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
-        else if(!CATCHCHALLENGER_XMLELENTISXMLELEMENT(child))
-            std::cerr << "Is not an element: child->Name(): " << child->Name() << ", name: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(child->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("name"))) << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
+            std::cerr << "Has not attribute \"id\": child->Name(): " << child->Name() << std::endl;
         else
         {
-            uint16_t id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(child->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+            const uint16_t &id=stringtouint16(child->Attribute("id"),&ok);
             if(ok)
             {
                 if(botIdLoaded.find(id)!=botIdLoaded.cend())
-                    std::cerr << "Bot " << id << " into file " << file << " have same id as another bot: bot->Name(): " << child->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
+                    std::cerr << "Bot " << id << " into file " << file << " have same id as another bot: bot->Name(): " << child->Name() << std::endl;
                 botIdLoaded.insert(id);
                 botFiles[file][id];
                 const tinyxml2::XMLElement * step = child->FirstChildElement("step");
                 while(step!=NULL)
                 {
                     if(step->Attribute("id")==NULL)
-                        std::cerr << "Has not attribute \"type\": bot->Name(): " << step->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
+                        std::cerr << "Has not attribute \"type\": bot->Name(): " << step->Name() << std::endl;
                     else if(step->Attribute("type")==NULL)
-                        std::cerr << "Has not attribute \"type\": bot->Name(): " << step->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
-                    else if(!CATCHCHALLENGER_XMLELENTISXMLELEMENT(step))
-                        std::cerr << "Is not an element: bot->Name(): " << step->Name() << ", type: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))) << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
+                        std::cerr << "Has not attribute \"type\": bot->Name(): " << step->Name() << std::endl;
                     else
                     {
-                        uint8_t stepId=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
+                        const uint8_t &stepId=stringtouint8(step->Attribute("id"),&ok);
                         if(ok)
                         {
                             botFiles[file][id].step[stepId]=step;
@@ -586,7 +584,7 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
                     botFiles[file].erase(id);
             }
             else
-                std::cerr << "Attribute \"id\" is not a number: bot->Name(): " << child->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
+                std::cerr << "Attribute \"id\" is not a number: bot->Name(): " << child->Name() << std::endl;
         }
         child = child->NextSiblingElement("bot");
     }

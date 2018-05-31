@@ -24,10 +24,10 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return reputation;
@@ -41,7 +41,7 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return reputation;
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"reputations"))
+    if(strcmp(root->Name(),"reputations")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"reputations\" root balise not found for reputation of the xml file" << std::endl;
         return reputation;
@@ -52,149 +52,142 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
     const tinyxml2::XMLElement * item = root->FirstChildElement("reputation");
     while(item!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(item))
+        if(item->Attribute("type")!=NULL)
         {
-            if(item->Attribute("type")!=NULL)
+            std::vector<int32_t> point_list_positive,point_list_negative;
+            std::vector<std::string> text_positive,text_negative;
+            const tinyxml2::XMLElement * level = item->FirstChildElement("level");
+            ok=true;
+            while(level!=NULL && ok)
             {
-                std::vector<int32_t> point_list_positive,point_list_negative;
-                std::vector<std::string> text_positive,text_negative;
-                const tinyxml2::XMLElement * level = item->FirstChildElement("level");
-                ok=true;
-                while(level!=NULL && ok)
+                if(level->Attribute("point")!=NULL)
                 {
-                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(level))
+                    const int32_t &point=stringtoint32(level->Attribute("point"),&ok);
+                    std::string text_val;
+                    if(ok)
                     {
-                        if(level->Attribute("point")!=NULL)
-                        {
-                            const int32_t &point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(level->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
-                            std::string text_val;
-                            if(ok)
-                            {
-                                ok=true;
-                                bool found=false;
-                                unsigned int index=0;
-                                if(point>=0)
-                                {
-                                    while(index<point_list_positive.size())
-                                    {
-                                        if(point_list_positive.at(index)==point)
-                                        {
-                                            std::cerr << "Unable to open the file: " << file << ", reputation level with same number of point found!: child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
-                                            found=true;
-                                            ok=false;
-                                            break;
-                                        }
-                                        if(point_list_positive.at(index)>point)
-                                        {
-                                            point_list_positive.insert(point_list_positive.begin()+index,point);
-                                            text_positive.insert(text_positive.begin()+index,text_val);
-                                            found=true;
-                                            break;
-                                        }
-                                        index++;
-                                    }
-                                    if(!found)
-                                    {
-                                        point_list_positive.push_back(point);
-                                        text_positive.push_back(text_val);
-                                    }
-                                }
-                                else
-                                {
-                                    while(index<point_list_negative.size())
-                                    {
-                                        if(point_list_negative.at(index)==point)
-                                        {
-                                            std::cerr << "Unable to open the file: " << file << ", reputation level with same number of point found!: child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
-                                            found=true;
-                                            ok=false;
-                                            break;
-                                        }
-                                        if(point_list_negative.at(index)<point)
-                                        {
-                                            point_list_negative.insert(point_list_negative.begin()+index,point);
-                                            text_negative.insert(text_negative.begin()+index,text_val);
-                                            found=true;
-                                            break;
-                                        }
-                                        index++;
-                                    }
-                                    if(!found)
-                                    {
-                                        point_list_negative.push_back(point);
-                                        text_negative.push_back(text_val);
-                                    }
-                                }
-                            }
-                            else
-                                std::cerr << "Unable to open the file: " << file << ", point is not number: child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
-                        }
-                    }
-                    else
-                        std::cerr << "Unable to open the file: " << file << ", point attribute not found: child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
-                    level = level->NextSiblingElement("level");
-                }
-                std::sort(point_list_positive.begin(),point_list_positive.end());
-                std::sort(point_list_negative.begin(),point_list_negative.end());
-                std::reverse(point_list_negative.begin(),point_list_negative.end());
-                if(ok)
-                    if(point_list_positive.size()<2)
-                    {
-                        std::cerr << "Unable to open the file: " << file << ", reputation have to few level: child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
-                        ok=false;
-                    }
-                if(ok)
-                    if(!vectorcontainsAtLeastOne(point_list_positive,0))
-                    {
-                        std::cerr << "Unable to open the file: " << file << ", no starting level for the positive: child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
-                        ok=false;
-                    }
-                if(ok)
-                    if(!point_list_negative.empty() && !vectorcontainsAtLeastOne(point_list_negative,-1))
-                    {
-                        //std::cerr << "Unable to open the file: " << file << ", no starting level for the negative, first level need start with -1, fix by change range: child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
-                        std::vector<int32_t> point_list_negative_new;
-                        int lastValue=-1;
+                        ok=true;
+                        bool found=false;
                         unsigned int index=0;
-                        while(index<point_list_negative.size())
+                        if(point>=0)
                         {
-                            point_list_negative_new.push_back(lastValue);
-                            lastValue=point_list_negative.at(index);//(1 less to negative value)
-                            index++;
+                            while(index<point_list_positive.size())
+                            {
+                                if(point_list_positive.at(index)==point)
+                                {
+                                    std::cerr << "Unable to open the file: " << file << ", reputation level with same number of point found!: child->Name(): "
+                                              << item->Name() << std::endl;
+                                    found=true;
+                                    ok=false;
+                                    break;
+                                }
+                                if(point_list_positive.at(index)>point)
+                                {
+                                    point_list_positive.insert(point_list_positive.begin()+index,point);
+                                    text_positive.insert(text_positive.begin()+index,text_val);
+                                    found=true;
+                                    break;
+                                }
+                                index++;
+                            }
+                            if(!found)
+                            {
+                                point_list_positive.push_back(point);
+                                text_positive.push_back(text_val);
+                            }
                         }
-                        point_list_negative=point_list_negative_new;
-                    }
-                if(ok)
-                {
-                    const std::string &type=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type")));
-                    if(!std::regex_match(type,typeRegex))
-                    {
-                        std::cerr << "Unable to open the file: " << file << ", the type " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))) << " don't match wiuth the regex: ^[a-z]{1,32}$: child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
-                        ok=false;
+                        else
+                        {
+                            while(index<point_list_negative.size())
+                            {
+                                if(point_list_negative.at(index)==point)
+                                {
+                                    std::cerr << "Unable to open the file: " << file << ", reputation level with same number of point found!: child->Name(): "
+                                              << item->Name() << std::endl;
+                                    found=true;
+                                    ok=false;
+                                    break;
+                                }
+                                if(point_list_negative.at(index)<point)
+                                {
+                                    point_list_negative.insert(point_list_negative.begin()+index,point);
+                                    text_negative.insert(text_negative.begin()+index,text_val);
+                                    found=true;
+                                    break;
+                                }
+                                index++;
+                            }
+                            if(!found)
+                            {
+                                point_list_negative.push_back(point);
+                                text_negative.push_back(text_val);
+                            }
+                        }
                     }
                     else
+                        std::cerr << "Unable to open the file: " << file << ", point is not number: child->Name(): " << item->Name() << std::endl;
+                }
+                level = level->NextSiblingElement("level");
+            }
+            std::sort(point_list_positive.begin(),point_list_positive.end());
+            std::sort(point_list_negative.begin(),point_list_negative.end());
+            std::reverse(point_list_negative.begin(),point_list_negative.end());
+            if(ok)
+                if(point_list_positive.size()<2)
+                {
+                    std::cerr << "Unable to open the file: " << file << ", reputation have to few level: child->Name(): " << item->Name() << std::endl;
+                    ok=false;
+                }
+            if(ok)
+                if(!vectorcontainsAtLeastOne(point_list_positive,0))
+                {
+                    std::cerr << "Unable to open the file: " << file << ", no starting level for the positive: child->Name(): " << item->Name() << std::endl;
+                    ok=false;
+                }
+            if(ok)
+                if(!point_list_negative.empty() && !vectorcontainsAtLeastOne(point_list_negative,-1))
+                {
+                    //std::cerr << "Unable to open the file: " << file << ", no starting level for the negative, first level need start with -1, fix by change range: child->Name(): " << item->Name() << std::endl;
+                    std::vector<int32_t> point_list_negative_new;
+                    int lastValue=-1;
+                    unsigned int index=0;
+                    while(index<point_list_negative.size())
                     {
-                        if(!std::regex_match(type,excludeFilterRegex))
+                        point_list_negative_new.push_back(lastValue);
+                        lastValue=point_list_negative.at(index);//(1 less to negative value)
+                        index++;
+                    }
+                    point_list_negative=point_list_negative_new;
+                }
+            if(ok)
+            {
+                const std::string &type=item->Attribute("type");
+                if(!std::regex_match(type,typeRegex))
+                {
+                    std::cerr << "Unable to open the file: " << file << ", the type " << item->Attribute("type")
+                              << " don't match wiuth the regex: ^[a-z]{1,32}$: child->Name(): " << item->Name() << std::endl;
+                    ok=false;
+                }
+                else
+                {
+                    if(!std::regex_match(type,excludeFilterRegex))
+                    {
+                        Reputation reputationTemp;
+                        reputationTemp.name=type;
+                        reputationTemp.reputation_positive=point_list_positive;
+                        reputationTemp.reputation_negative=point_list_negative;
+                        if(reputation.size()>=255)
                         {
-                            Reputation reputationTemp;
-                            reputationTemp.name=type;
-                            reputationTemp.reputation_positive=point_list_positive;
-                            reputationTemp.reputation_negative=point_list_negative;
-                            if(reputation.size()>=255)
-                            {
-                                std::cerr << "You can't have mopre than 255 reputation " << file << ": " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
-                                abort();
-                            }
-                            reputation.push_back(reputationTemp);
+                            std::cerr << "You can't have mopre than 255 reputation " << file << ": " << item->Name() << std::endl;
+                            abort();
                         }
+                        reputation.push_back(reputationTemp);
                     }
                 }
             }
-            else
-                std::cerr << "Unable to open the file: " << file << ", have not the item id: child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
         }
         else
-            std::cerr << "Unable to open the file: " << file << ", is not an element: child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+            std::cerr << "Unable to open the file: " << file << ", have not the item id: child->Name(): " << item->Name() << std::endl;
         item = item->NextSiblingElement("reputation");
     }
 
@@ -262,10 +255,10 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return std::pair<bool,Quest>(false,quest);
@@ -279,7 +272,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return std::pair<bool,Quest>(false,quest);
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"quest"))
+    if(strcmp(root->Name(),"quest")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"quest\" root balise not found for reputation of the xml file" << std::endl;
         return std::pair<bool,Quest>(false,quest);
@@ -291,13 +284,12 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     quest.id=0;
     quest.repeatable=false;
     if(root->Attribute("repeatable")!=NULL)
-        if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(root->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("repeatable"))),CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("yes"))
-            || CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(root->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("repeatable"))),CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("true"))
-           )
+        if(strcmp(root->Attribute("repeatable"),"yes")==0 ||
+           strcmp(root->Attribute("repeatable"),"true")==0)
             quest.repeatable=true;
     if(root->Attribute("bot")!=NULL)
     {
-        const std::vector<std::string> &tempStringList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(root->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("bot"))),';');
+        const std::vector<std::string> &tempStringList=stringsplit(root->Attribute("bot"),';');
         unsigned int index=0;
         while(index<tempStringList.size())
         {
@@ -312,82 +304,67 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     const tinyxml2::XMLElement * requirements = root->FirstChildElement("requirements");
     while(requirements!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(requirements))
+        //load requirements reputation
         {
-            //load requirements reputation
+            const tinyxml2::XMLElement * requirementsItem = requirements->FirstChildElement("reputation");
+            while(requirementsItem!=NULL)
             {
-                const tinyxml2::XMLElement * requirementsItem = requirements->FirstChildElement("reputation");
-                while(requirementsItem!=NULL)
+                if(requirementsItem->Attribute("type")!=NULL && requirementsItem->Attribute("level")!=NULL)
                 {
-                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(requirementsItem))
+                    if(reputationNameToId.find(requirementsItem->Attribute("type"))!=reputationNameToId.cend())
                     {
-                        if(requirementsItem->Attribute("type")!=NULL && requirementsItem->Attribute("level")!=NULL)
+                        std::string stringLevel=requirementsItem->Attribute("level");
+                        bool positif=!stringStartWith(stringLevel,"-");
+                        if(!positif)
+                            stringLevel.erase(0,1);
+                        uint8_t level=stringtouint8(stringLevel,&ok);
+                        if(ok)
                         {
-                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
-                            {
-                                std::string stringLevel=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level")));
-                                bool positif=!stringStartWith(stringLevel,"-");
-                                if(!positif)
-                                    stringLevel.erase(0,1);
-                                uint8_t level=stringtouint8(stringLevel,&ok);
-                                if(ok)
-                                {
-                                    CatchChallenger::ReputationRequirements reputation;
-                                    reputation.level=level;
-                                    reputation.positif=positif;
-                                    reputation.reputationId=reputationNameToId.at(
-                                                CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type")))
-                                                );
-                                    quest.requirements.reputation.push_back(reputation);
-                                }
-                                else
-                                    std::cerr << "Unable to open the file: " << file << ", reputation is not a number " << stringLevel << ": child->Name(): " << requirementsItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
-                            }
-                            else
-                                std::cerr << "Has not the attribute: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))) << ", reputation not found: child->Name(): " << requirementsItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
+                            CatchChallenger::ReputationRequirements reputation;
+                            reputation.level=level;
+                            reputation.positif=positif;
+                            reputation.reputationId=reputationNameToId.at(requirementsItem->Attribute("type"));
+                            quest.requirements.reputation.push_back(reputation);
                         }
                         else
-                            std::cerr << "Has not the attribute: type level, have not attribute type or level: child->Name(): " << requirementsItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
+                            std::cerr << "Unable to open the file: " << file << ", reputation is not a number " << stringLevel << ": child->Name(): " << requirementsItem->Name() << std::endl;
                     }
                     else
-                        std::cerr << "Unable to open the file: " << file << ", is not an element: child->Name(): " << requirementsItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
-                    requirementsItem = requirementsItem->NextSiblingElement("reputation");
+                        std::cerr << "Has not the attribute: " << requirementsItem->Attribute("type")
+                                  << ", reputation not found: child->Name(): " << requirementsItem->Name() << std::endl;
                 }
-            }
-            //load requirements quest
-            {
-                const tinyxml2::XMLElement * requirementsItem = requirements->FirstChildElement("quest");
-                while(requirementsItem!=NULL)
-                {
-                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(requirementsItem))
-                    {
-                        if(requirementsItem->Attribute("id")!=NULL)
-                        {
-                            const uint16_t &questId=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                            if(ok)
-                            {
-                                QuestRequirements questNewEntry;
-                                questNewEntry.quest=questId;
-                                questNewEntry.inverse=false;
-                                if(requirementsItem->Attribute("inverse")!=NULL)
-                                    if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("inverse"))),"true"))
-                                        questNewEntry.inverse=true;
-                                quest.requirements.quests.push_back(questNewEntry);
-                            }
-                            else
-                                std::cerr << "Unable to open the file: " << file << ", requirement quest item id is not a number " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(requirementsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->Name(): " << requirementsItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
-                        }
-                        else
-                            std::cerr << "Has attribute: %1, requirement quest item have not id attribute: child->Name(): " << requirementsItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
-                    }
-                    else
-                        std::cerr << "Unable to open the file: " << file << ", is not an element: child->Name(): " << requirementsItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirementsItem) << ")" << std::endl;
-                    requirementsItem = requirementsItem->NextSiblingElement("quest");
-                }
+                else
+                    std::cerr << "Has not the attribute: type level, have not attribute type or level: child->Name(): " << requirementsItem->Name() << std::endl;
+                requirementsItem = requirementsItem->NextSiblingElement("reputation");
             }
         }
-        else
-            std::cerr << "Unable to open the file: " << file << ", is not an element: child->Name(): " << requirements->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(requirements) << ")" << std::endl;
+        //load requirements quest
+        {
+            const tinyxml2::XMLElement * requirementsItem = requirements->FirstChildElement("quest");
+            while(requirementsItem!=NULL)
+            {
+                if(requirementsItem->Attribute("id")!=NULL)
+                {
+                    const uint16_t &questId=stringtouint16(requirementsItem->Attribute("id"),&ok);
+                    if(ok)
+                    {
+                        QuestRequirements questNewEntry;
+                        questNewEntry.quest=questId;
+                        questNewEntry.inverse=false;
+                        if(requirementsItem->Attribute("inverse")!=NULL)
+                            if(strcmp(requirementsItem->Attribute("inverse"),"true")==0)
+                                questNewEntry.inverse=true;
+                        quest.requirements.quests.push_back(questNewEntry);
+                    }
+                    else
+                        std::cerr << "Unable to open the file: " << file << ", requirement quest item id is not a number " <<
+                                     requirementsItem->Attribute("id") << ": child->Name(): " << requirementsItem->Name() << std::endl;
+                }
+                else
+                    std::cerr << "Has attribute: %1, requirement quest item have not id attribute: child->Name(): " << requirementsItem->Name() << std::endl;
+                requirementsItem = requirementsItem->NextSiblingElement("quest");
+            }
+        }
         requirements = requirements->NextSiblingElement("requirements");
     }
 
@@ -395,104 +372,87 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     const tinyxml2::XMLElement * rewards = root->FirstChildElement("rewards");
     while(rewards!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(rewards))
+        //load rewards reputation
         {
-            //load rewards reputation
+            const tinyxml2::XMLElement * reputationItem = rewards->FirstChildElement("reputation");
+            while(reputationItem!=NULL)
             {
-                const tinyxml2::XMLElement * reputationItem = rewards->FirstChildElement("reputation");
-                while(reputationItem!=NULL)
+                if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
                 {
-                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(reputationItem))
+                    if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                     {
-                        if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
+                        const int32_t &point=stringtoint32(reputationItem->Attribute("point"),&ok);
+                        if(ok)
                         {
-                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
-                            {
-                                const int32_t &point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
-                                if(ok)
-                                {
-                                    CatchChallenger::ReputationRewards reputation;
-                                    reputation.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
-                                    reputation.point=point;
-                                    quest.rewards.reputation.push_back(reputation);
-                                }
-                                else
-                                    std::cerr << "Unable to open the file: " << file << ", quest rewards point is not a number: child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
-                            }
-                            else
-                                std::cerr << "Unable to open the file: " << file << ", quest rewards point is not a number: child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
+                            CatchChallenger::ReputationRewards reputation;
+                            reputation.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                            reputation.point=point;
+                            quest.rewards.reputation.push_back(reputation);
                         }
                         else
-                            std::cerr << "Has not the attribute: type/point, quest rewards point have not type or point attribute: child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
+                            std::cerr << "Unable to open the file: " << file << ", quest rewards point is not a number: child->Name(): " << reputationItem->Name() << std::endl;
                     }
                     else
-                        std::cerr << "Unable to open the file: " << file << ", is not an element: child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
-                    reputationItem = reputationItem->NextSiblingElement("reputation");
+                        std::cerr << "Unable to open the file: " << file << ", quest rewards point is not a number: child->Name(): " << reputationItem->Name() << std::endl;
                 }
-            }
-            //load rewards item
-            {
-                const tinyxml2::XMLElement * rewardsItem = rewards->FirstChildElement("item");
-                while(rewardsItem!=NULL)
-                {
-                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(rewardsItem))
-                    {
-                        if(rewardsItem->Attribute("id")!=NULL)
-                        {
-                            CatchChallenger::Quest::Item item;
-                            item.item=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(rewardsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                            item.quantity=1;
-                            if(ok)
-                            {
-                                if(CommonDatapack::commonDatapack.items.item.find(item.item)==CommonDatapack::commonDatapack.items.item.cend())
-                                {
-                                    std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(rewardsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->Name(): " << rewardsItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(rewardsItem) << ")" << std::endl;
-                                    return std::pair<bool,Quest>(false,quest);
-                                }
-                                if(rewardsItem->Attribute("quantity")!=NULL)
-                                {
-                                    item.quantity=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(rewardsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok);
-                                    if(!ok)
-                                        item.quantity=1;
-                                }
-                                quest.rewards.items.push_back(item);
-                            }
-                            else
-                                std::cerr << "Unable to open the file: " << file << ", rewards item id is not a number: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(rewardsItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->Name(): " << rewardsItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(rewardsItem) << ")" << std::endl;
-                        }
-                        else
-                            std::cerr << "Has not the attribute: id, rewards item have not attribute id: child->Name(): " << rewardsItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(rewardsItem) << ")" << std::endl;
-                    }
-                    else
-                        std::cerr << "Unable to open the file: " << file << ", is not an element: child->Name(): " << rewardsItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(rewardsItem) << ")" << std::endl;
-                    rewardsItem = rewardsItem->NextSiblingElement("item");
-                }
-            }
-            //load rewards allow
-            {
-                const tinyxml2::XMLElement * allowItem = rewards->FirstChildElement("allow");
-                while(allowItem!=NULL)
-                {
-                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(allowItem))
-                    {
-                        if(allowItem->Attribute("type")!=NULL)
-                        {
-                            if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(allowItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))),"clan"))
-                                quest.rewards.allow.push_back(CatchChallenger::ActionAllow_Clan);
-                            else
-                                std::cerr << "Unable to open the file: " << file << ", allow type not understand " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(allowItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->Name(): " << allowItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(allowItem) << ")" << std::endl;
-                        }
-                        else
-                            std::cerr << "Has attribute: %1, rewards item have not attribute id: child->Name(): " << allowItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(allowItem) << ")" << std::endl;
-                    }
-                    else
-                        std::cerr << "Unable to open the file: " << file << ", is not an element: child->Name(): " << allowItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(allowItem) << ")" << std::endl;
-                    allowItem = allowItem->NextSiblingElement("allow");
-                }
+                else
+                    std::cerr << "Has not the attribute: type/point, quest rewards point have not type or point attribute: child->Name(): " << reputationItem->Name() << std::endl;
+                reputationItem = reputationItem->NextSiblingElement("reputation");
             }
         }
-        else
-            std::cerr << "Unable to open the file: " << file << ", is not an element: child->Name(): " << rewards->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(rewards) << ")" << std::endl;
+        //load rewards item
+        {
+            const tinyxml2::XMLElement * rewardsItem = rewards->FirstChildElement("item");
+            while(rewardsItem!=NULL)
+            {
+                if(rewardsItem->Attribute("id")!=NULL)
+                {
+                    CatchChallenger::Quest::Item item;
+                    item.item=stringtouint16(rewardsItem->Attribute("id"),&ok);
+                    item.quantity=1;
+                    if(ok)
+                    {
+                        if(CommonDatapack::commonDatapack.items.item.find(item.item)==CommonDatapack::commonDatapack.items.item.cend())
+                        {
+                            std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: "
+                                      << rewardsItem->Attribute("id") << ": child->Name(): " << rewardsItem->Name() << std::endl;
+                            return std::pair<bool,Quest>(false,quest);
+                        }
+                        if(rewardsItem->Attribute("quantity")!=NULL)
+                        {
+                            item.quantity=stringtouint32(rewardsItem->Attribute("quantity"),&ok);
+                            if(!ok)
+                                item.quantity=1;
+                        }
+                        quest.rewards.items.push_back(item);
+                    }
+                    else
+                        std::cerr << "Unable to open the file: " << file << ", rewards item id is not a number: "
+                                  << rewardsItem->Attribute("id") << ": child->Name(): " << rewardsItem->Name() << std::endl;
+                }
+                else
+                    std::cerr << "Has not the attribute: id, rewards item have not attribute id: child->Name(): " << rewardsItem->Name() << std::endl;
+                rewardsItem = rewardsItem->NextSiblingElement("item");
+            }
+        }
+        //load rewards allow
+        {
+            const tinyxml2::XMLElement * allowItem = rewards->FirstChildElement("allow");
+            while(allowItem!=NULL)
+            {
+                if(allowItem->Attribute("type")!=NULL)
+                {
+                    if(strcmp(allowItem->Attribute("type"),"clan")==0)
+                        quest.rewards.allow.push_back(CatchChallenger::ActionAllow_Clan);
+                    else
+                        std::cerr << "Unable to open the file: " << file << ", allow type not understand " <<
+                                     allowItem->Attribute("id") << ": child->Name(): " << allowItem->Name() << std::endl;
+                }
+                else
+                    std::cerr << "Has attribute: %1, rewards item have not attribute id: child->Name(): " << allowItem->Name() << std::endl;
+                allowItem = allowItem->NextSiblingElement("allow");
+            }
+        }
         rewards = rewards->NextSiblingElement("rewards");
     }
 
@@ -501,120 +461,107 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     const tinyxml2::XMLElement * step = root->FirstChildElement("step");
     while(step!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(step))
+        if(step->Attribute("id")!=NULL)
         {
-            if(step->Attribute("id")!=NULL)
+            const uint8_t &id=stringtouint8(step->Attribute("id"),&ok);
+            if(ok)
             {
-                const uint8_t &id=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                if(ok)
+                CatchChallenger::Quest::Step stepObject;
+                if(step->Attribute("bot")!=NULL)
                 {
-                    CatchChallenger::Quest::Step stepObject;
-                    if(step->Attribute("bot")!=NULL)
+                    const std::vector<std::string> &tempStringList=stringsplit(step->Attribute("bot"),';');
+                    unsigned int index=0;
+                    while(index<tempStringList.size())
                     {
-                        const std::vector<std::string> &tempStringList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(step->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("bot"))),';');
-                        unsigned int index=0;
-                        while(index<tempStringList.size())
-                        {
-                            const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
-                            if(ok)
-                                stepObject.bots.push_back(tempInt);
-                            index++;
-                        }
+                        const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
+                        if(ok)
+                            stepObject.bots.push_back(tempInt);
+                        index++;
                     }
-                    else
-                        stepObject.bots=defaultBots;
-                    //do the item
-                    {
-                        const tinyxml2::XMLElement * stepItem = step->FirstChildElement("item");
-                        while(stepItem!=NULL)
-                        {
-                            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(stepItem))
-                            {
-                                if(stepItem->Attribute("id")!=NULL)
-                                {
-                                    CatchChallenger::Quest::Item item;
-                                    item.item=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                                    item.quantity=1;
-                                    if(ok)
-                                    {
-                                        if(CommonDatapack::commonDatapack.items.item.find(item.item)==CommonDatapack::commonDatapack.items.item.cend())
-                                        {
-                                            std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->Name(): " << stepItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(stepItem) << ")" << std::endl;
-                                            return std::pair<bool,Quest>(false,quest);
-                                        }
-                                        if(stepItem->Attribute("quantity")!=NULL)
-                                        {
-                                            item.quantity=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok);
-                                            if(!ok)
-                                                item.quantity=1;
-                                        }
-                                        stepObject.requirements.items.push_back(item);
-                                        if(stepItem->Attribute("monster")!=NULL && stepItem->Attribute("rate")!=NULL)
-                                        {
-                                            CatchChallenger::Quest::ItemMonster itemMonster;
-                                            itemMonster.item=item.item;
-
-                                            const std::vector<std::string> &tempStringList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("monster"))),';');
-                                            unsigned int index=0;
-                                            while(index<tempStringList.size())
-                                            {
-                                                const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
-                                                if(ok)
-                                                    itemMonster.monsters.push_back(tempInt);
-                                                index++;
-                                            }
-
-                                            std::string rateString=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("rate")));
-                                            stringreplaceOne(rateString,"%","");
-                                            itemMonster.rate=stringtouint8(rateString,&ok);
-                                            if(ok)
-                                                stepObject.itemsMonster.push_back(itemMonster);
-                                        }
-                                    }
-                                    else
-                                        std::cerr << "Unable to open the file: " << file << ", step id is not a number " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(stepItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->Name(): " << step->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
-                                }
-                                else
-                                    std::cerr << "Has not the attribute: id, step have not id attribute: child->Name(): " << step->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
-                            }
-                            else
-                                std::cerr << "Unable to open the file: " << file << ", is not an element: child->Name(): " << step->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
-                            stepItem = stepItem->NextSiblingElement("item");
-                        }
-                    }
-                    //do the fight
-                    {
-                        const tinyxml2::XMLElement * fightItem = step->FirstChildElement("fight");
-                        while(fightItem!=NULL)
-                        {
-                            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(fightItem))
-                            {
-                                if(fightItem->Attribute("id")!=NULL)
-                                {
-                                    const uint16_t &fightId=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(fightItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                                    if(ok)
-                                        stepObject.requirements.fightId.push_back(fightId);
-                                    else
-                                        std::cerr << "Unable to open the file: " << file << ", step id is not a number " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(fightItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))) << ": child->Name(): " << fightItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(fightItem) << ")" << std::endl;
-                                }
-                                else
-                                    std::cerr << "Has attribute: %1, step have not id attribute: child->Name(): " << fightItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(fightItem) << ")" << std::endl;
-                            }
-                            else
-                                std::cerr << "Unable to open the file: " << file << ", is not an element: child->Name(): " << fightItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(fightItem) << ")" << std::endl;
-                            fightItem = fightItem->NextSiblingElement("fight");
-                        }
-                    }
-                    steps[id]=stepObject;
                 }
                 else
-                    std::cerr << "Unable to open the file: " << file << ", step id is not a number: child->Name(): " << step->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
+                    stepObject.bots=defaultBots;
+                //do the item
+                {
+                    const tinyxml2::XMLElement * stepItem = step->FirstChildElement("item");
+                    while(stepItem!=NULL)
+                    {
+                        if(stepItem->Attribute("id")!=NULL)
+                        {
+                            CatchChallenger::Quest::Item item;
+                            item.item=stringtouint16(stepItem->Attribute("id"),&ok);
+                            item.quantity=1;
+                            if(ok)
+                            {
+                                if(CommonDatapack::commonDatapack.items.item.find(item.item)==CommonDatapack::commonDatapack.items.item.cend())
+                                {
+                                    std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: "
+                                              << stepItem->Attribute("id") << ": child->Name(): " << stepItem->Name() << std::endl;
+                                    return std::pair<bool,Quest>(false,quest);
+                                }
+                                if(stepItem->Attribute("quantity")!=NULL)
+                                {
+                                    item.quantity=stringtouint32(stepItem->Attribute("quantity"),&ok);
+                                    if(!ok)
+                                        item.quantity=1;
+                                }
+                                stepObject.requirements.items.push_back(item);
+                                if(stepItem->Attribute("monster")!=NULL && stepItem->Attribute("rate")!=NULL)
+                                {
+                                    CatchChallenger::Quest::ItemMonster itemMonster;
+                                    itemMonster.item=item.item;
+
+                                    const std::vector<std::string> &tempStringList=stringsplit(stepItem->Attribute("monster"),';');
+                                    unsigned int index=0;
+                                    while(index<tempStringList.size())
+                                    {
+                                        const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
+                                        if(ok)
+                                            itemMonster.monsters.push_back(tempInt);
+                                        index++;
+                                    }
+
+                                    std::string rateString=stepItem->Attribute("rate");
+                                    stringreplaceOne(rateString,"%","");
+                                    itemMonster.rate=stringtouint8(rateString,&ok);
+                                    if(ok)
+                                        stepObject.itemsMonster.push_back(itemMonster);
+                                }
+                            }
+                            else
+                                std::cerr << "Unable to open the file: " << file << ", step id is not a number " << stepItem->Attribute("id") << ": child->Name(): " << step->Name() << std::endl;
+                        }
+                        else
+                            std::cerr << "Has not the attribute: id, step have not id attribute: child->Name(): " << step->Name() << std::endl;
+                        stepItem = stepItem->NextSiblingElement("item");
+                    }
+                }
+                //do the fight
+                {
+                    const tinyxml2::XMLElement * fightItem = step->FirstChildElement("fight");
+                    while(fightItem!=NULL)
+                    {
+                        if(fightItem->Attribute("id")!=NULL)
+                        {
+                            const uint16_t &fightId=stringtouint16(fightItem->Attribute("id"),&ok);
+                            if(ok)
+                                stepObject.requirements.fightId.push_back(fightId);
+                            else
+                                std::cerr << "Unable to open the file: " << file << ", step id is not a number "
+                                          << fightItem->Attribute("id") << ": child->Name(): " << fightItem->Name() << std::endl;
+                        }
+                        else
+                            std::cerr << "Has attribute: %1, step have not id attribute: child->Name(): " << fightItem->Name() << std::endl;
+                        fightItem = fightItem->NextSiblingElement("fight");
+                    }
+                }
+                steps[id]=stepObject;
             }
             else
-                std::cerr << "Has attribute: %1, step have not id attribute: child->Name(): " << step->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
+                std::cerr << "Unable to open the file: " << file << ", step id is not a number: child->Name(): " << step->Name() << std::endl;
         }
         else
-            std::cerr << "Unable to open the file: " << file << ", is not an element: child->Name(): " << step->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
+            std::cerr << "Has attribute: %1, step have not id attribute: child->Name(): " << step->Name() << std::endl;
         step = step->NextSiblingElement("step");
     }
 
@@ -657,10 +604,10 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return plants;
@@ -674,7 +621,7 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return plants;
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"plants"))
+    if(strcmp(root->Name(),"plants")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"plants\" root balise not found for reputation of the xml file" << std::endl;
         return plants;
@@ -685,249 +632,221 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
     const tinyxml2::XMLElement * plantItem = root->FirstChildElement("plant");
     while(plantItem!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(plantItem))
+        if(plantItem->Attribute("id")!=NULL && plantItem->Attribute("itemUsed")!=NULL)
         {
-            if(plantItem->Attribute("id")!=NULL && plantItem->Attribute("itemUsed")!=NULL)
+            const uint8_t &id=stringtouint8(plantItem->Attribute("id"),&ok);
+            const uint16_t &itemUsed=stringtouint16(plantItem->Attribute("itemUsed"),&ok2);
+            if(ok && ok2)
             {
-                const uint8_t &id=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(plantItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                const uint16_t &itemUsed=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(plantItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemUsed"))),&ok2);
-                if(ok && ok2)
+                if(plants.find(id)==plants.cend())
                 {
-                    if(plants.find(id)==plants.cend())
+                    Plant plant;
+                    plant.fruits_seconds=0;
+                    plant.sprouted_seconds=0;
+                    plant.taller_seconds=0;
+                    plant.flowering_seconds=0;
+                    plant.itemUsed=itemUsed;
                     {
-                        Plant plant;
-                        plant.fruits_seconds=0;
-                        plant.sprouted_seconds=0;
-                        plant.taller_seconds=0;
-                        plant.flowering_seconds=0;
-                        plant.itemUsed=itemUsed;
+                        const tinyxml2::XMLElement * requirementsItem = plantItem->FirstChildElement("requirements");
+                        if(requirementsItem!=NULL)
                         {
-                            const tinyxml2::XMLElement * requirementsItem = plantItem->FirstChildElement("requirements");
-                            if(requirementsItem!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(requirementsItem))
+                            const tinyxml2::XMLElement * reputationItem = requirementsItem->FirstChildElement("reputation");
+                            while(reputationItem!=NULL)
                             {
-                                const tinyxml2::XMLElement * reputationItem = requirementsItem->FirstChildElement("reputation");
-                                while(reputationItem!=NULL)
+                                if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("level")!=NULL)
                                 {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(reputationItem))
+                                    if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                                     {
-                                        if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("level")!=NULL)
+                                        ReputationRequirements reputationRequirements;
+                                        std::string stringLevel=reputationItem->Attribute("level");
+                                        reputationRequirements.positif=!stringStartWith(stringLevel,"-");
+                                        if(!reputationRequirements.positif)
+                                            stringLevel.erase(0,1);
+                                        reputationRequirements.level=stringtouint8(stringLevel,&ok);
+                                        if(ok)
                                         {
-                                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
-                                            {
-                                                ReputationRequirements reputationRequirements;
-                                                std::string stringLevel=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level")));
-                                                reputationRequirements.positif=!stringStartWith(stringLevel,"-");
-                                                if(!reputationRequirements.positif)
-                                                    stringLevel.erase(0,1);
-                                                reputationRequirements.level=stringtouint8(stringLevel,&ok);
-                                                if(ok)
-                                                {
-                                                    reputationRequirements.reputationId=reputationNameToId.at(
-                                                                CATCHCHALLENGER_XMLATTRIBUTETOSTRING(
-                                                                    reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))
-                                                                    )
-                                                                );
-                                                    plant.requirements.reputation.push_back(reputationRequirements);
-                                                }
-                                            }
-                                            else
-                                                std::cerr << "Reputation type not found: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))) << ", have not the id, child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
+                                            reputationRequirements.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                            plant.requirements.reputation.push_back(reputationRequirements);
                                         }
-                                        else
-                                            std::cerr << "Unable to open the industries link file: " << file << ", have not the id, child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
                                     }
                                     else
-                                        std::cerr << "Unable to open the industries link file: " << file << ", is not a element, child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
-                                    reputationItem = reputationItem->NextSiblingElement("reputation");
+                                        std::cerr << "Reputation type not found: " << reputationItem->Attribute("type") << ", have not the id, child->Name(): " << reputationItem->Name() << std::endl;
                                 }
+                                else
+                                    std::cerr << "Unable to open the industries link file: " << file << ", have not the id, child->Name(): " << reputationItem->Name() << std::endl;
+                                reputationItem = reputationItem->NextSiblingElement("reputation");
                             }
                         }
+                    }
+                    {
+                        const tinyxml2::XMLElement * rewardsItem = plantItem->FirstChildElement("rewards");
+                        if(rewardsItem!=NULL)
                         {
-                            const tinyxml2::XMLElement * rewardsItem = plantItem->FirstChildElement("rewards");
-                            if(rewardsItem!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(rewardsItem))
+                            const tinyxml2::XMLElement * reputationItem = rewardsItem->FirstChildElement("reputation");
+                            while(reputationItem!=NULL)
                             {
-                                const tinyxml2::XMLElement * reputationItem = rewardsItem->FirstChildElement("reputation");
-                                while(reputationItem!=NULL)
+                                if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
                                 {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(reputationItem))
+                                    if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                                     {
-                                        if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
+                                        ReputationRewards reputationRewards;
+                                        reputationRewards.point=stringtoint32(reputationItem->Attribute("point"),&ok);
+                                        if(ok)
                                         {
-                                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
-                                            {
-                                                ReputationRewards reputationRewards;
-                                                reputationRewards.point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
-                                                if(ok)
-                                                {
-                                                    reputationRewards.reputationId=reputationNameToId.at(
-                                                                CATCHCHALLENGER_XMLATTRIBUTETOSTRING(
-                                                                    reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))
-                                                                    )
-                                                                );
-                                                    plant.rewards.reputation.push_back(reputationRewards);
-                                                }
-                                            }
+                                            reputationRewards.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                            plant.rewards.reputation.push_back(reputationRewards);
                                         }
-                                        else
-                                            std::cerr << "Unable to open the industries link file: " << file << ", have not the id, child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
-                                    }
-                                    else
-                                        std::cerr << "Unable to open the industries link file: " << file << ", is not a element, child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
-                                    reputationItem = reputationItem->NextSiblingElement("reputation");
-                                }
-                            }
-                        }
-                        ok=false;
-                        const tinyxml2::XMLElement * quantity = plantItem->FirstChildElement("quantity");
-                        if(quantity!=NULL)
-                        {
-                            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(quantity) && quantity->GetText()!=NULL)
-                            {
-                                const float &float_quantity=stringtofloat(quantity->GetText(),&ok2);
-                                const int &integer_part=float_quantity;
-                                float random_part=float_quantity-integer_part;
-                                random_part*=RANDOM_FLOAT_PART_DIVIDER;
-                                plant.fix_quantity=static_cast<uint16_t>(integer_part);
-                                plant.random_quantity=random_part;
-                                ok=ok2;
-                            }
-                        }
-                        int intermediateTimeCount=0;
-                        const tinyxml2::XMLElement * grow = plantItem->FirstChildElement("grow");
-                        if(grow!=NULL)
-                        {
-                            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(grow))
-                            {
-                                const tinyxml2::XMLElement * fruits = grow->FirstChildElement("fruits");
-                                if(fruits!=NULL)
-                                {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(fruits) && fruits->GetText()!=NULL)
-                                    {
-                                        plant.fruits_seconds=stringtouint32(fruits->GetText(),&ok2)*60;
-                                        plant.sprouted_seconds=static_cast<uint16_t>(plant.fruits_seconds);
-                                        plant.taller_seconds=static_cast<uint16_t>(plant.fruits_seconds);
-                                        plant.flowering_seconds=static_cast<uint16_t>(plant.fruits_seconds);
-                                        if(!ok2)
-                                        {
-                                            std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not a number: " << fruits->GetText() << " child->Name(): " << fruits->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(fruits) << ")" << std::endl;
-                                            ok=false;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        ok=false;
-                                        std::cerr << "Unable to parse the plants file: " << file << ", fruits is not an element: child->Name(): " << fruits->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(fruits) << ")" << std::endl;
                                     }
                                 }
                                 else
+                                    std::cerr << "Unable to open the industries link file: " << file << ", have not the id, child->Name(): " << reputationItem->Name() << std::endl;
+                                reputationItem = reputationItem->NextSiblingElement("reputation");
+                            }
+                        }
+                    }
+                    ok=false;
+                    const tinyxml2::XMLElement * quantity = plantItem->FirstChildElement("quantity");
+                    if(quantity!=NULL)
+                    {
+                        if(quantity->GetText()!=NULL)
+                        {
+                            const float &float_quantity=stringtofloat(quantity->GetText(),&ok2);
+                            const int &integer_part=float_quantity;
+                            float random_part=float_quantity-integer_part;
+                            random_part*=RANDOM_FLOAT_PART_DIVIDER;
+                            plant.fix_quantity=static_cast<uint16_t>(integer_part);
+                            plant.random_quantity=random_part;
+                            ok=ok2;
+                        }
+                    }
+                    int intermediateTimeCount=0;
+                    const tinyxml2::XMLElement * grow = plantItem->FirstChildElement("grow");
+                    if(grow!=NULL)
+                    {
+                        const tinyxml2::XMLElement * fruits = grow->FirstChildElement("fruits");
+                        if(fruits!=NULL)
+                        {
+                            if(fruits->GetText()!=NULL)
+                            {
+                                plant.fruits_seconds=stringtouint32(fruits->GetText(),&ok2)*60;
+                                plant.sprouted_seconds=static_cast<uint16_t>(plant.fruits_seconds);
+                                plant.taller_seconds=static_cast<uint16_t>(plant.fruits_seconds);
+                                plant.flowering_seconds=static_cast<uint16_t>(plant.fruits_seconds);
+                                if(!ok2)
                                 {
+                                    std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not a number: " << fruits->GetText() << " child->Name(): " << fruits->Name() << std::endl;
                                     ok=false;
-                                    std::cerr << "Unable to parse the plants file: " << file << ", fruits is null: child->Name(): " << grow->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(grow) << ")" << std::endl;
-                                }
-                                const tinyxml2::XMLElement * sprouted = grow->FirstChildElement("sprouted");
-                                if(sprouted!=NULL)
-                                {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(sprouted) && sprouted->GetText()!=NULL)
-                                    {
-                                        plant.sprouted_seconds=stringtouint16(sprouted->GetText(),&ok2)*60;
-                                        if(!ok2)
-                                        {
-                                            std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not a number: " << sprouted->GetText() << " child->Name(): " << sprouted->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(sprouted) << ")" << std::endl;
-                                            ok=false;
-                                        }
-                                        else
-                                            intermediateTimeCount++;
-                                    }
-                                    else
-                                        std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not an element: child->Name(): " << sprouted->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(sprouted) << ")" << std::endl;
-                                }
-                                const tinyxml2::XMLElement * taller = grow->FirstChildElement("taller");
-                                if(taller!=NULL)
-                                {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(taller) && taller->GetText()!=NULL)
-                                    {
-                                        plant.taller_seconds=stringtouint16(taller->GetText(),&ok2)*60;
-                                        if(!ok2)
-                                        {
-                                            std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not a number: " << taller->GetText() << " child->Name(): " << taller->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(taller) << ")" << std::endl;
-                                            ok=false;
-                                        }
-                                        else
-                                            intermediateTimeCount++;
-                                    }
-                                    else
-                                        std::cerr << "Unable to parse the plants file: " << file << ", taller is not an element: child->Name(): " << taller->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(taller) << ")" << std::endl;
-                                }
-                                const tinyxml2::XMLElement * flowering = grow->FirstChildElement("flowering");
-                                if(flowering!=NULL)
-                                {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(flowering) && flowering->GetText()!=NULL)
-                                    {
-                                        plant.flowering_seconds=stringtouint16(flowering->GetText(),&ok2)*60;
-                                        if(!ok2)
-                                        {
-                                            ok=false;
-                                            std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not a number: " << flowering->GetText() << " child->Name(): " << flowering->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(flowering) << ")" << std::endl;
-                                        }
-                                        else
-                                            intermediateTimeCount++;
-                                    }
-                                    else
-                                        std::cerr << "Unable to parse the plants file: " << file << ", flowering is not an element: child->Name(): " << flowering->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(flowering) << ")" << std::endl;
                                 }
                             }
                             else
-                                std::cerr << "Unable to parse the plants file: " << file << ", grow is not an element: child->Name(): child->Name(): " << grow->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(grow) << ")" << std::endl;
+                            {
+                                ok=false;
+                                std::cerr << "Unable to parse the plants file: " << file << ", fruits is not an element: child->Name(): " << fruits->Name() << std::endl;
+                            }
                         }
                         else
-                            std::cerr << "Unable to parse the plants file: " << file << ", grow is null: child->Name(): child->Name(): " << plantItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(plantItem) << ")" << std::endl;
-                        if(ok)
                         {
-                            bool needIntermediateTimeFix=false;
-                            if(plant.flowering_seconds>=plant.fruits_seconds)
+                            ok=false;
+                            std::cerr << "Unable to parse the plants file: " << file << ", fruits is null: child->Name(): " << grow->Name() << std::endl;
+                        }
+                        const tinyxml2::XMLElement * sprouted = grow->FirstChildElement("sprouted");
+                        if(sprouted!=NULL)
+                        {
+                            if(sprouted->GetText()!=NULL)
                             {
-                                needIntermediateTimeFix=true;
-                                if(intermediateTimeCount>=3)
-                                    std::cerr << "Warning when parse the plants file: " << file << ", flowering_seconds>=fruits_seconds: child->Name(): child->Name(): " << grow->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(grow) << ")" << std::endl;
+                                plant.sprouted_seconds=stringtouint16(sprouted->GetText(),&ok2)*60;
+                                if(!ok2)
+                                {
+                                    std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not a number: " << sprouted->GetText() << " child->Name(): " << sprouted->Name() << std::endl;
+                                    ok=false;
+                                }
+                                else
+                                    intermediateTimeCount++;
                             }
-                            if(plant.taller_seconds>=plant.flowering_seconds)
+                            else
+                                std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not an element: child->Name(): " << sprouted->Name() << std::endl;
+                        }
+                        const tinyxml2::XMLElement * taller = grow->FirstChildElement("taller");
+                        if(taller!=NULL)
+                        {
+                            if(taller->GetText()!=NULL)
                             {
-                                needIntermediateTimeFix=true;
-                                if(intermediateTimeCount>=3)
-                                    std::cerr << "Warning when parse the plants file: " << file << ", taller_seconds>=flowering_seconds: child->Name(): " << grow->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(grow) << ")" << std::endl;
+                                plant.taller_seconds=stringtouint16(taller->GetText(),&ok2)*60;
+                                if(!ok2)
+                                {
+                                    std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not a number: " << taller->GetText() << " child->Name(): " << taller->Name() << std::endl;
+                                    ok=false;
+                                }
+                                else
+                                    intermediateTimeCount++;
                             }
-                            if(plant.sprouted_seconds>=plant.taller_seconds)
+                            else
+                                std::cerr << "Unable to parse the plants file: " << file << ", taller is not an element: child->Name(): " << taller->Name() << std::endl;
+                        }
+                        const tinyxml2::XMLElement * flowering = grow->FirstChildElement("flowering");
+                        if(flowering!=NULL)
+                        {
+                            if(flowering->GetText()!=NULL)
                             {
-                                needIntermediateTimeFix=true;
-                                if(intermediateTimeCount>=3)
-                                    std::cerr << "Warning when parse the plants file: " << file << ", sprouted_seconds>=taller_seconds: child->Name(): " << grow->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(grow) << ")" << std::endl;
+                                plant.flowering_seconds=stringtouint16(flowering->GetText(),&ok2)*60;
+                                if(!ok2)
+                                {
+                                    ok=false;
+                                    std::cerr << "Unable to parse the plants file: " << file << ", sprouted is not a number: " << flowering->GetText() << " child->Name(): " << flowering->Name() << std::endl;
+                                }
+                                else
+                                    intermediateTimeCount++;
                             }
-                            if(plant.sprouted_seconds<=0)
-                            {
-                                needIntermediateTimeFix=true;
-                                if(intermediateTimeCount>=3)
-                                    std::cerr << "Warning when parse the plants file: " << file << ", sprouted_seconds<=0: child->Name(): " << grow->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(grow) << ")" << std::endl;
-                            }
-                            if(needIntermediateTimeFix)
-                            {
-                                plant.flowering_seconds=static_cast<uint16_t>(plant.fruits_seconds*3/4);
-                                plant.taller_seconds=static_cast<uint16_t>(plant.fruits_seconds*2/4);
-                                plant.sprouted_seconds=static_cast<uint16_t>(plant.fruits_seconds*1/4);
-                            }
-                            plants[id]=plant;
+                            else
+                                std::cerr << "Unable to parse the plants file: " << file << ", flowering is not an element: child->Name(): " << flowering->Name() << std::endl;
                         }
                     }
                     else
-                        std::cerr << "Unable to open the plants file: " << file << ", id number already set: child->Name(): " << plantItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(plantItem) << ")" << std::endl;
+                        std::cerr << "Unable to parse the plants file: " << file << ", grow is null: child->Name(): child->Name(): " << plantItem->Name() << std::endl;
+                    if(ok)
+                    {
+                        bool needIntermediateTimeFix=false;
+                        if(plant.flowering_seconds>=plant.fruits_seconds)
+                        {
+                            needIntermediateTimeFix=true;
+                            if(intermediateTimeCount>=3)
+                                std::cerr << "Warning when parse the plants file: " << file << ", flowering_seconds>=fruits_seconds: child->Name(): child->Name(): " << grow->Name() << std::endl;
+                        }
+                        if(plant.taller_seconds>=plant.flowering_seconds)
+                        {
+                            needIntermediateTimeFix=true;
+                            if(intermediateTimeCount>=3)
+                                std::cerr << "Warning when parse the plants file: " << file << ", taller_seconds>=flowering_seconds: child->Name(): " << grow->Name() << std::endl;
+                        }
+                        if(plant.sprouted_seconds>=plant.taller_seconds)
+                        {
+                            needIntermediateTimeFix=true;
+                            if(intermediateTimeCount>=3)
+                                std::cerr << "Warning when parse the plants file: " << file << ", sprouted_seconds>=taller_seconds: child->Name(): " << grow->Name() << std::endl;
+                        }
+                        if(plant.sprouted_seconds<=0)
+                        {
+                            needIntermediateTimeFix=true;
+                            if(intermediateTimeCount>=3)
+                                std::cerr << "Warning when parse the plants file: " << file << ", sprouted_seconds<=0: child->Name(): " << grow->Name() << std::endl;
+                        }
+                        if(needIntermediateTimeFix)
+                        {
+                            plant.flowering_seconds=static_cast<uint16_t>(plant.fruits_seconds*3/4);
+                            plant.taller_seconds=static_cast<uint16_t>(plant.fruits_seconds*2/4);
+                            plant.sprouted_seconds=static_cast<uint16_t>(plant.fruits_seconds*1/4);
+                        }
+                        plants[id]=plant;
+                    }
                 }
                 else
-                    std::cerr << "Unable to open the plants file: " << file << ", id is not a number: child->Name(): " << plantItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(plantItem) << ")" << std::endl;
+                    std::cerr << "Unable to open the plants file: " << file << ", id number already set: child->Name(): " << plantItem->Name() << std::endl;
             }
             else
-                std::cerr << "Unable to open the plants file: " << file << ", have not the plant id: child->Name(): " << plantItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(plantItem) << ")" << std::endl;
+                std::cerr << "Unable to open the plants file: " << file << ", id is not a number: child->Name(): " << plantItem->Name() << std::endl;
         }
         else
-            std::cerr << "Unable to open the plants file: " << file << ", is not an element: child->Name(): " << plantItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(plantItem) << ")" << std::endl;
+            std::cerr << "Unable to open the plants file: " << file << ", have not the plant id: child->Name(): " << plantItem->Name() << std::endl;
         plantItem = plantItem->NextSiblingElement("plant");
     }
     #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -958,10 +877,10 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
@@ -975,7 +894,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"recipes"))
+    if(strcmp(root->Name(),"recipes")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"recipes\" root balise not found for reputation of the xml file" << std::endl;
         return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
@@ -986,262 +905,234 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
     const tinyxml2::XMLElement * recipeItem = root->FirstChildElement("recipe");
     while(recipeItem!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(recipeItem))
+        if(recipeItem->Attribute("id")!=NULL && recipeItem->Attribute("itemToLearn")!=NULL && recipeItem->Attribute("doItemId")!=NULL)
         {
-            if(recipeItem->Attribute("id")!=NULL && recipeItem->Attribute("itemToLearn")!=NULL && recipeItem->Attribute("doItemId")!=NULL)
+            uint8_t success=100;
+            if(recipeItem->Attribute("success")!=NULL)
             {
-                uint8_t success=100;
-                if(recipeItem->Attribute("success")!=NULL)
+                const uint8_t &tempShort=stringtouint8(recipeItem->Attribute("success"),&ok);
+                if(ok)
                 {
-                    const uint8_t &tempShort=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("success"))),&ok);
-                    if(ok)
-                    {
-                        if(tempShort>100)
-                            std::cerr << "preload_crafting_recipes() success can't be greater than 100 for crafting recipe file: " << file << ", child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
-                        else
-                            success=tempShort;
-                    }
+                    if(tempShort>100)
+                        std::cerr << "preload_crafting_recipes() success can't be greater than 100 for crafting recipe file: " << file << ", child->Name(): " << recipeItem->Name() << std::endl;
                     else
-                        std::cerr << "preload_crafting_recipes() success in not an number for crafting recipe file: " << file << ", child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
+                        success=tempShort;
                 }
-                uint16_t quantity=1;
-                if(recipeItem->Attribute("quantity")!=NULL)
+                else
+                    std::cerr << "preload_crafting_recipes() success in not an number for crafting recipe file: " << file << ", child->Name(): " << recipeItem->Name() << std::endl;
+            }
+            uint16_t quantity=1;
+            if(recipeItem->Attribute("quantity")!=NULL)
+            {
+                const uint32_t &tempShort=stringtouint32(recipeItem->Attribute("quantity"),&ok);
+                if(ok)
                 {
-                    const uint32_t &tempShort=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok);
-                    if(ok)
-                    {
-                        if(tempShort>65535)
-                            std::cerr << "preload_crafting_recipes() quantity can't be greater than 65535 for crafting recipe file: " << file << ", child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
-                        else
-                            quantity=static_cast<uint16_t>(tempShort);
-                    }
+                    if(tempShort>65535)
+                        std::cerr << "preload_crafting_recipes() quantity can't be greater than 65535 for crafting recipe file: " << file << ", child->Name(): " << recipeItem->Name() << std::endl;
                     else
-                        std::cerr << "preload_crafting_recipes() quantity in not an number for crafting recipe file: " << file << ", child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
+                        quantity=static_cast<uint16_t>(tempShort);
                 }
+                else
+                    std::cerr << "preload_crafting_recipes() quantity in not an number for crafting recipe file: " << file << ", child->Name(): " << recipeItem->Name() << std::endl;
+            }
 
-                const uint16_t &id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                const uint16_t &itemToLearn=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemToLearn"))),&ok2);
-                const uint16_t &doItemId=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(recipeItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("doItemId"))),&ok3);
-                if(ok && ok2 && ok3)
+            const uint16_t &id=stringtouint16(recipeItem->Attribute("id"),&ok);
+            const uint16_t &itemToLearn=stringtouint16(recipeItem->Attribute("itemToLearn"),&ok2);
+            const uint16_t &doItemId=stringtouint16(recipeItem->Attribute("doItemId"),&ok3);
+            if(ok && ok2 && ok3)
+            {
+                if(crafingRecipes.find(id)==crafingRecipes.cend())
                 {
-                    if(crafingRecipes.find(id)==crafingRecipes.cend())
+                    ok=true;
+                    CatchChallenger::CrafingRecipe recipe;
+                    recipe.doItemId=doItemId;
+                    recipe.itemToLearn=itemToLearn;
+                    recipe.quantity=quantity;
+                    recipe.success=success;
                     {
-                        ok=true;
-                        CatchChallenger::CrafingRecipe recipe;
-                        recipe.doItemId=doItemId;
-                        recipe.itemToLearn=itemToLearn;
-                        recipe.quantity=quantity;
-                        recipe.success=success;
+                        const tinyxml2::XMLElement * requirementsItem = recipeItem->FirstChildElement("requirements");
+                        if(requirementsItem!=NULL)
                         {
-                            const tinyxml2::XMLElement * requirementsItem = recipeItem->FirstChildElement("requirements");
-                            if(requirementsItem!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(requirementsItem))
+                            const tinyxml2::XMLElement * reputationItem = requirementsItem->FirstChildElement("reputation");
+                            while(reputationItem!=NULL)
                             {
-                                const tinyxml2::XMLElement * reputationItem = requirementsItem->FirstChildElement("reputation");
-                                while(reputationItem!=NULL)
+                                if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("level")!=NULL)
                                 {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(reputationItem))
+                                    if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                                     {
-                                        if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("level")!=NULL)
+                                        ReputationRequirements reputationRequirements;
+                                        std::string stringLevel=reputationItem->Attribute("level");
+                                        reputationRequirements.positif=!stringStartWith(stringLevel,"-");
+                                        if(!reputationRequirements.positif)
+                                            stringLevel.erase(0,1);
+                                        reputationRequirements.level=stringtouint8(stringLevel,&ok);
+                                        if(ok)
                                         {
-                                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
-                                            {
-                                                ReputationRequirements reputationRequirements;
-                                                std::string stringLevel=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level")));
-                                                reputationRequirements.positif=!stringStartWith(stringLevel,"-");
-                                                if(!reputationRequirements.positif)
-                                                    stringLevel.erase(0,1);
-                                                reputationRequirements.level=stringtouint8(stringLevel,&ok);
-                                                if(ok)
-                                                {
-                                                    reputationRequirements.reputationId=reputationNameToId.at(
-                                                                CATCHCHALLENGER_XMLATTRIBUTETOSTRING(
-                                                                    reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))
-                                                                    )
-                                                                );
-                                                    recipe.requirements.reputation.push_back(reputationRequirements);
-                                                }
-                                            }
-                                            else
-                                                std::cerr << "Reputation type not found: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))) << ", have not the id, child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
+                                            reputationRequirements.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                            recipe.requirements.reputation.push_back(reputationRequirements);
                                         }
-                                        else
-                                            std::cerr << "Unable to open the industries link file: " << file << ", have not the id, child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
                                     }
                                     else
-                                        std::cerr << "Unable to open the industries link file: " << file << ", is not a element, child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
-                                    reputationItem = reputationItem->NextSiblingElement("reputation");
+                                        std::cerr << "Reputation type not found: " << reputationItem->Attribute("type") << ", have not the id, child->Name(): " << reputationItem->Name() << std::endl;
                                 }
+                                else
+                                    std::cerr << "Unable to open the industries link file: " << file << ", have not the id, child->Name(): " << reputationItem->Name() << std::endl;
+                                reputationItem = reputationItem->NextSiblingElement("reputation");
                             }
                         }
+                    }
+                    {
+                        const tinyxml2::XMLElement * rewardsItem = recipeItem->FirstChildElement("rewards");
+                        if(rewardsItem!=NULL)
                         {
-                            const tinyxml2::XMLElement * rewardsItem = recipeItem->FirstChildElement("rewards");
-                            if(rewardsItem!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(rewardsItem))
+                            const tinyxml2::XMLElement * reputationItem = rewardsItem->FirstChildElement("reputation");
+                            while(reputationItem!=NULL)
                             {
-                                const tinyxml2::XMLElement * reputationItem = rewardsItem->FirstChildElement("reputation");
-                                while(reputationItem!=NULL)
+                                if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
                                 {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(reputationItem))
+                                    if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                                     {
-                                        if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
+                                        ReputationRewards reputationRewards;
+                                        reputationRewards.point=stringtoint32(reputationItem->Attribute("point"),&ok);
+                                        if(ok)
                                         {
-                                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
-                                            {
-                                                ReputationRewards reputationRewards;
-                                                reputationRewards.point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
-                                                if(ok)
-                                                {
-                                                    reputationRewards.reputationId=reputationNameToId.at(
-                                                                CATCHCHALLENGER_XMLATTRIBUTETOSTRING(
-                                                                    reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))
-                                                                    )
-                                                                );
-                                                    recipe.rewards.reputation.push_back(reputationRewards);
-                                                }
-                                            }
+                                            reputationRewards.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                            recipe.rewards.reputation.push_back(reputationRewards);
                                         }
-                                        else
-                                            std::cerr << "Unable to open the industries link file: " << file << ", have not the id, child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
-                                    }
-                                    else
-                                        std::cerr << "Unable to open the industries link file: " << file << ", is not a element, child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
-                                    reputationItem = reputationItem->NextSiblingElement("reputation");
-                                }
-                            }
-                        }
-                        const tinyxml2::XMLElement * material = recipeItem->FirstChildElement("material");
-                        while(material!=NULL && ok)
-                        {
-                            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(material))
-                            {
-                                if(material->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemId"))!=NULL)
-                                {
-                                    const uint16_t &itemId=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(material->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemId"))),&ok2);
-                                    if(!ok2)
-                                    {
-                                        ok=false;
-                                        std::cerr << "preload_crafting_recipes() material attribute itemId is not a number for crafting recipe file: " << file << ": child->Name(): " << material->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(material) << ")" << std::endl;
-                                        break;
-                                    }
-                                    uint16_t quantity=1;
-                                    if(material->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))!=NULL)
-                                    {
-                                        const uint32_t &tempShort=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(material->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok2);
-                                        if(ok2)
-                                        {
-                                            if(tempShort>65535)
-                                            {
-                                                ok=false;
-                                                std::cerr << "preload_crafting_recipes() material quantity can't be greater than 65535 for crafting recipe file: " << file << ": child->Name(): " << material->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(material) << ")" << std::endl;
-                                                break;
-                                            }
-                                            else
-                                                quantity=static_cast<uint16_t>(tempShort);
-                                        }
-                                        else
-                                        {
-                                            ok=false;
-                                            std::cerr << "preload_crafting_recipes() material quantity in not an number for crafting recipe file: " << file << ": child->Name(): " << material->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(material) << ")" << std::endl;
-                                            break;
-                                        }
-                                    }
-                                    if(items.find(itemId)==items.cend())
-                                    {
-                                        ok=false;
-                                        std::cerr << "preload_crafting_recipes() material itemId in not into items list for crafting recipe file: " << file << ": child->Name(): " << material->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(material) << ")" << std::endl;
-                                        break;
-                                    }
-                                    CatchChallenger::CrafingRecipe::Material newMaterial;
-                                    newMaterial.item=itemId;
-                                    newMaterial.quantity=quantity;
-                                    unsigned int index=0;
-                                    while(index<recipe.materials.size())
-                                    {
-                                        if(recipe.materials.at(index).item==newMaterial.item)
-                                            break;
-                                        index++;
-                                    }
-                                    if(index<recipe.materials.size())
-                                    {
-                                        ok=false;
-                                        std::cerr << "id of item already into resource or product list: %1: child->Name(): " << material->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(material) << ")" << std::endl;
-                                    }
-                                    else
-                                    {
-                                        if(recipe.doItemId==newMaterial.item)
-                                        {
-                                            std::cerr << "id of item already into resource or product list: %1: child->Name(): " << material->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(material) << ")" << std::endl;
-                                            ok=false;
-                                        }
-                                        else
-                                            recipe.materials.push_back(newMaterial);
                                     }
                                 }
                                 else
-                                    std::cerr << "preload_crafting_recipes() material have not attribute itemId for crafting recipe file: " << file << ": child->Name(): " << material->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(material) << ")" << std::endl;
+                                    std::cerr << "Unable to open the industries link file: " << file << ", have not the id, child->Name(): " << reputationItem->Name() << std::endl;
+                                reputationItem = reputationItem->NextSiblingElement("reputation");
                             }
-                            else
-                                std::cerr << "preload_crafting_recipes() material is not an element for crafting recipe file: " << file << ": child->Name(): " << material->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(material) << ")" << std::endl;
-                            material = material->NextSiblingElement("material");
-                        }
-                        if(ok)
-                        {
-                            if(items.find(recipe.itemToLearn)==items.cend())
-                            {
-                                ok=false;
-                                std::cerr << "preload_crafting_recipes() itemToLearn is not into items list for crafting recipe file: " << file << ": child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
-                            }
-                        }
-                        if(ok)
-                        {
-                            if(items.find(recipe.doItemId)==items.cend())
-                            {
-                                ok=false;
-                                std::cerr << "preload_crafting_recipes() doItemId is not into items list for crafting recipe file: " << file << ": child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
-                            }
-                        }
-                        if(ok)
-                        {
-                            if(itemToCrafingRecipes.find(recipe.itemToLearn)!=itemToCrafingRecipes.cend())
-                            {
-                                ok=false;
-                                std::cerr << "preload_crafting_recipes() itemToLearn already used to learn another recipe: " << itemToCrafingRecipes.at(recipe.doItemId) << ": file: " << file << " child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
-                            }
-                        }
-                        if(ok)
-                        {
-                            if(recipe.itemToLearn==recipe.doItemId)
-                            {
-                                ok=false;
-                                std::cerr << "preload_crafting_recipes() the product of the recipe can't be them self: " << id << ": file: " << file << ": child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
-                            }
-                        }
-                        if(ok)
-                        {
-                            if(itemToCrafingRecipes.find(recipe.doItemId)!=itemToCrafingRecipes.cend())
-                            {
-                                ok=false;
-                                std::cerr << "preload_crafting_recipes() the product of the recipe can't be a recipe: " << itemToCrafingRecipes.at(recipe.doItemId) << ": file: " << file << ": child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
-                            }
-                        }
-                        if(ok)
-                        {
-                            if(crafingRecipesMaxId<id)
-                                crafingRecipesMaxId=id;
-                            crafingRecipes[id]=recipe;
-                            itemToCrafingRecipes[recipe.itemToLearn]=id;
                         }
                     }
-                    else
-                        std::cerr << "Unable to open the crafting recipe file: " << file << ", id number already set: child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
+                    const tinyxml2::XMLElement * material = recipeItem->FirstChildElement("material");
+                    while(material!=NULL && ok)
+                    {
+                        if(material->Attribute("itemId")!=NULL)
+                        {
+                            const uint16_t &itemId=stringtouint16(material->Attribute("itemId"),&ok2);
+                            if(!ok2)
+                            {
+                                ok=false;
+                                std::cerr << "preload_crafting_recipes() material attribute itemId is not a number for crafting recipe file: " << file << ": child->Name(): " << material->Name() << std::endl;
+                                break;
+                            }
+                            uint16_t quantity=1;
+                            if(material->Attribute("quantity")!=NULL)
+                            {
+                                const uint32_t &tempShort=stringtouint32(material->Attribute("quantity"),&ok2);
+                                if(ok2)
+                                {
+                                    if(tempShort>65535)
+                                    {
+                                        ok=false;
+                                        std::cerr << "preload_crafting_recipes() material quantity can't be greater than 65535 for crafting recipe file: " << file << ": child->Name(): " << material->Name() << std::endl;
+                                        break;
+                                    }
+                                    else
+                                        quantity=static_cast<uint16_t>(tempShort);
+                                }
+                                else
+                                {
+                                    ok=false;
+                                    std::cerr << "preload_crafting_recipes() material quantity in not an number for crafting recipe file: " << file << ": child->Name(): " << material->Name() << std::endl;
+                                    break;
+                                }
+                            }
+                            if(items.find(itemId)==items.cend())
+                            {
+                                ok=false;
+                                std::cerr << "preload_crafting_recipes() material itemId in not into items list for crafting recipe file: " << file << ": child->Name(): " << material->Name() << std::endl;
+                                break;
+                            }
+                            CatchChallenger::CrafingRecipe::Material newMaterial;
+                            newMaterial.item=itemId;
+                            newMaterial.quantity=quantity;
+                            unsigned int index=0;
+                            while(index<recipe.materials.size())
+                            {
+                                if(recipe.materials.at(index).item==newMaterial.item)
+                                    break;
+                                index++;
+                            }
+                            if(index<recipe.materials.size())
+                            {
+                                ok=false;
+                                std::cerr << "id of item already into resource or product list: %1: child->Name(): " << material->Name() << std::endl;
+                            }
+                            else
+                            {
+                                if(recipe.doItemId==newMaterial.item)
+                                {
+                                    std::cerr << "id of item already into resource or product list: %1: child->Name(): " << material->Name() << std::endl;
+                                    ok=false;
+                                }
+                                else
+                                    recipe.materials.push_back(newMaterial);
+                            }
+                        }
+                        else
+                            std::cerr << "preload_crafting_recipes() material have not attribute itemId for crafting recipe file: " << file << ": child->Name(): " << material->Name() << std::endl;
+                        material = material->NextSiblingElement("material");
+                    }
+                    if(ok)
+                    {
+                        if(items.find(recipe.itemToLearn)==items.cend())
+                        {
+                            ok=false;
+                            std::cerr << "preload_crafting_recipes() itemToLearn is not into items list for crafting recipe file: " << file << ": child->Name(): " << recipeItem->Name() << std::endl;
+                        }
+                    }
+                    if(ok)
+                    {
+                        if(items.find(recipe.doItemId)==items.cend())
+                        {
+                            ok=false;
+                            std::cerr << "preload_crafting_recipes() doItemId is not into items list for crafting recipe file: " << file << ": child->Name(): " << recipeItem->Name() << std::endl;
+                        }
+                    }
+                    if(ok)
+                    {
+                        if(itemToCrafingRecipes.find(recipe.itemToLearn)!=itemToCrafingRecipes.cend())
+                        {
+                            ok=false;
+                            std::cerr << "preload_crafting_recipes() itemToLearn already used to learn another recipe: " << itemToCrafingRecipes.at(recipe.doItemId) << ": file: " << file << " child->Name(): " << recipeItem->Name() << std::endl;
+                        }
+                    }
+                    if(ok)
+                    {
+                        if(recipe.itemToLearn==recipe.doItemId)
+                        {
+                            ok=false;
+                            std::cerr << "preload_crafting_recipes() the product of the recipe can't be them self: " << id << ": file: " << file << ": child->Name(): " << recipeItem->Name() << std::endl;
+                        }
+                    }
+                    if(ok)
+                    {
+                        if(itemToCrafingRecipes.find(recipe.doItemId)!=itemToCrafingRecipes.cend())
+                        {
+                            ok=false;
+                            std::cerr << "preload_crafting_recipes() the product of the recipe can't be a recipe: " << itemToCrafingRecipes.at(recipe.doItemId) << ": file: " << file << ": child->Name(): " << recipeItem->Name() << std::endl;
+                        }
+                    }
+                    if(ok)
+                    {
+                        if(crafingRecipesMaxId<id)
+                            crafingRecipesMaxId=id;
+                        crafingRecipes[id]=recipe;
+                        itemToCrafingRecipes[recipe.itemToLearn]=id;
+                    }
                 }
                 else
-                    std::cerr << "Unable to open the crafting recipe file: " << file << ", id is not a number: child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
+                    std::cerr << "Unable to open the crafting recipe file: " << file << ", id number already set: child->Name(): " << recipeItem->Name() << std::endl;
             }
             else
-                std::cerr << "Unable to open the crafting recipe file: " << file << ", have not the crafting recipe id: child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
+                std::cerr << "Unable to open the crafting recipe file: " << file << ", id is not a number: child->Name(): " << recipeItem->Name() << std::endl;
         }
         else
-            std::cerr << "Unable to open the crafting recipe file: " << file << ", is not an element: child->Name(): " << recipeItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(recipeItem) << ")" << std::endl;
+            std::cerr << "Unable to open the crafting recipe file: " << file << ", have not the crafting recipe id: child->Name(): " << recipeItem->Name() << std::endl;
         recipeItem = recipeItem->NextSiblingElement("recipe");
     }
     #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -1267,10 +1158,10 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
             #else
-            domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+            domDocument=new tinyxml2::XMLDocument();
             #endif
-            const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            if(loadOkay!=0)
             {
                 std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
                 file_index++;
@@ -1286,7 +1177,7 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
             file_index++;
             continue;
         }
-        if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"industries"))
+        if(strcmp(root->Name(),"industries")!=0)
         {
             std::cerr << "Unable to open the file: " << file << ", \"industries\" root balise not found for reputation of the xml file" << std::endl;
             file_index++;
@@ -1298,208 +1189,187 @@ std::unordered_map<uint16_t,Industry> DatapackGeneralLoader::loadIndustries(cons
         const tinyxml2::XMLElement * industryItem = root->FirstChildElement("industrialrecipe");
         while(industryItem!=NULL)
         {
-            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(industryItem))
+            if(industryItem->Attribute("id")!=NULL && industryItem->Attribute("time")!=NULL && industryItem->Attribute("cycletobefull")!=NULL)
             {
-                if(industryItem->Attribute("id")!=NULL && industryItem->Attribute("time")!=NULL && industryItem->Attribute("cycletobefull")!=NULL)
+                Industry industry;
+                const uint16_t &id=stringtouint16(industryItem->Attribute("id"),&ok);
+                industry.time=stringtouint32(industryItem->Attribute("time"),&ok2);
+                industry.cycletobefull=stringtouint32(industryItem->Attribute("cycletobefull"),&ok3);
+                if(ok && ok2 && ok3)
                 {
-                    Industry industry;
-                    const uint16_t &id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(industryItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                    industry.time=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(industryItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("time"))),&ok2);
-                    industry.cycletobefull=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(industryItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("cycletobefull"))),&ok3);
-                    if(ok && ok2 && ok3)
+                    if(industries.find(id)==industries.cend())
                     {
-                        if(industries.find(id)==industries.cend())
+                        if(industry.time<60*5)
                         {
-                            if(industry.time<60*5)
+                            std::cerr << "the time need be greater than 5*60 seconds to not slow down the server: " << industry.time << ", " << file << ": child->Name(): " << industryItem->Name() << std::endl;
+                            industry.time=60*5;
+                        }
+                        if(industry.cycletobefull<1)
+                        {
+                            std::cerr << "cycletobefull need be greater than 0: child->Name(): " << industryItem->Name() << std::endl;
+                            industry.cycletobefull=1;
+                        }
+                        else if(industry.cycletobefull>65535)
+                        {
+                            std::cerr << "cycletobefull need be lower to 10 to not slow down the server, use the quantity: child->Name(): " << industryItem->Name() << std::endl;
+                            industry.cycletobefull=10;
+                        }
+                        //resource
+                        {
+                            const tinyxml2::XMLElement * resourceItem = industryItem->FirstChildElement("resource");
+                            ok=true;
+                            while(resourceItem!=NULL && ok)
                             {
-                                std::cerr << "the time need be greater than 5*60 seconds to not slow down the server: " << industry.time << ", " << file << ": child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                industry.time=60*5;
-                            }
-                            if(industry.cycletobefull<1)
-                            {
-                                std::cerr << "cycletobefull need be greater than 0: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                industry.cycletobefull=1;
-                            }
-                            else if(industry.cycletobefull>65535)
-                            {
-                                std::cerr << "cycletobefull need be lower to 10 to not slow down the server, use the quantity: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                industry.cycletobefull=10;
-                            }
-                            //resource
-                            {
-                                const tinyxml2::XMLElement * resourceItem = industryItem->FirstChildElement("resource");
-                                ok=true;
-                                while(resourceItem!=NULL && ok)
+                                Industry::Resource resource;
+                                resource.quantity=1;
+                                if(resourceItem->Attribute("quantity")!=NULL)
                                 {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(resourceItem))
+                                    resource.quantity=stringtouint32(resourceItem->Attribute("quantity"),&ok);
+                                    if(!ok)
+                                        std::cerr << "quantity is not a number: child->Name(): " << industryItem->Name() << std::endl;
+                                }
+                                if(ok)
+                                {
+                                    if(resourceItem->Attribute("id")!=NULL)
                                     {
-                                        Industry::Resource resource;
-                                        resource.quantity=1;
-                                        if(resourceItem->Attribute("quantity")!=NULL)
+                                        resource.item=stringtouint16(resourceItem->Attribute("id"),&ok);
+                                        if(!ok)
+                                            std::cerr << "id is not a number: child->Name(): " << industryItem->Name() << std::endl;
+                                        else if(items.find(resource.item)==items.cend())
                                         {
-                                            resource.quantity=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(resourceItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok);
-                                            if(!ok)
-                                                std::cerr << "quantity is not a number: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
+                                            ok=false;
+                                            std::cerr << "id is not into the item list: child->Name(): " << industryItem->Name() << std::endl;
                                         }
-                                        if(ok)
+                                        else
                                         {
-                                            if(resourceItem->Attribute("id")!=NULL)
+                                            unsigned int index=0;
+                                            while(index<industry.resources.size())
                                             {
-                                                resource.item=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(resourceItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                                                if(!ok)
-                                                    std::cerr << "id is not a number: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                                else if(items.find(resource.item)==items.cend())
-                                                {
-                                                    ok=false;
-                                                    std::cerr << "id is not into the item list: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                                }
-                                                else
-                                                {
-                                                    unsigned int index=0;
-                                                    while(index<industry.resources.size())
-                                                    {
-                                                        if(industry.resources.at(index).item==resource.item)
-                                                            break;
-                                                        index++;
-                                                    }
-                                                    if(index<industry.resources.size())
-                                                    {
-                                                        ok=false;
-                                                        std::cerr << "id of item already into resource or product list: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                                    }
-                                                    else
-                                                    {
-                                                        index=0;
-                                                        while(index<industry.products.size())
-                                                        {
-                                                            if(industry.products.at(index).item==resource.item)
-                                                                break;
-                                                            index++;
-                                                        }
-                                                        if(index<industry.products.size())
-                                                        {
-                                                            ok=false;
-                                                            std::cerr << "id of item already into resource or product list: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                                        }
-                                                        else
-                                                            industry.resources.push_back(resource);
-                                                    }
-                                                }
+                                                if(industry.resources.at(index).item==resource.item)
+                                                    break;
+                                                index++;
+                                            }
+                                            if(index<industry.resources.size())
+                                            {
+                                                ok=false;
+                                                std::cerr << "id of item already into resource or product list: child->Name(): " << industryItem->Name() << std::endl;
                                             }
                                             else
                                             {
-                                                ok=false;
-                                                std::cerr << "have not the id attribute: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
+                                                index=0;
+                                                while(index<industry.products.size())
+                                                {
+                                                    if(industry.products.at(index).item==resource.item)
+                                                        break;
+                                                    index++;
+                                                }
+                                                if(index<industry.products.size())
+                                                {
+                                                    ok=false;
+                                                    std::cerr << "id of item already into resource or product list: child->Name(): " << industryItem->Name() << std::endl;
+                                                }
+                                                else
+                                                    industry.resources.push_back(resource);
                                             }
                                         }
                                     }
                                     else
                                     {
                                         ok=false;
-                                        std::cerr << "is not a elements: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
+                                        std::cerr << "have not the id attribute: child->Name(): " << industryItem->Name() << std::endl;
                                     }
-                                    resourceItem = resourceItem->NextSiblingElement("resource");
                                 }
-                            }
-
-                            //product
-                            if(ok)
-                            {
-                                const tinyxml2::XMLElement * productItem = industryItem->FirstChildElement("product");
-                                ok=true;
-                                while(productItem!=NULL && ok)
-                                {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(productItem))
-                                    {
-                                        Industry::Product product;
-                                        product.quantity=1;
-                                        if(productItem->Attribute("quantity")!=NULL)
-                                        {
-                                            product.quantity=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(productItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok);
-                                            if(!ok)
-                                                std::cerr << "quantity is not a number: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                        }
-                                        if(ok)
-                                        {
-                                            if(productItem->Attribute("id")!=NULL)
-                                            {
-                                                product.item=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(productItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                                                if(!ok)
-                                                    std::cerr << "id is not a number: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                                else if(items.find(product.item)==items.cend())
-                                                {
-                                                    ok=false;
-                                                    std::cerr << "id is not into the item list: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                                }
-                                                else
-                                                {
-                                                    unsigned int index=0;
-                                                    while(index<industry.resources.size())
-                                                    {
-                                                        if(industry.resources.at(index).item==product.item)
-                                                            break;
-                                                        index++;
-                                                    }
-                                                    if(index<industry.resources.size())
-                                                    {
-                                                        ok=false;
-                                                        std::cerr << "id of item already into resource or product list: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                                    }
-                                                    else
-                                                    {
-                                                        index=0;
-                                                        while(index<industry.products.size())
-                                                        {
-                                                            if(industry.products.at(index).item==product.item)
-                                                                break;
-                                                            index++;
-                                                        }
-                                                        if(index<industry.products.size())
-                                                        {
-                                                            ok=false;
-                                                            std::cerr << "id of item already into resource or product list: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                                        }
-                                                        else
-                                                            industry.products.push_back(product);
-                                                    }
-                                                }
-                                            }
-                                            else
-                                            {
-                                                ok=false;
-                                                std::cerr << "have not the id attribute: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        ok=false;
-                                        std::cerr << "is not a elements: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                    }
-                                    productItem = productItem->NextSiblingElement("product");
-                                }
-                            }
-
-                            //add
-                            if(ok)
-                            {
-                                if(industry.products.empty() || industry.resources.empty())
-                                    std::cerr << "product or resources is empty: child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
-                                else
-                                    industries[id]=industry;
+                                resourceItem = resourceItem->NextSiblingElement("resource");
                             }
                         }
-                        else
-                            std::cerr << "Unable to open the industries id number already set: file: " << file << ", child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
+
+                        //product
+                        if(ok)
+                        {
+                            const tinyxml2::XMLElement * productItem = industryItem->FirstChildElement("product");
+                            ok=true;
+                            while(productItem!=NULL && ok)
+                            {
+                                Industry::Product product;
+                                product.quantity=1;
+                                if(productItem->Attribute("quantity")!=NULL)
+                                {
+                                    product.quantity=stringtouint32(productItem->Attribute("quantity"),&ok);
+                                    if(!ok)
+                                        std::cerr << "quantity is not a number: child->Name(): " << industryItem->Name() << std::endl;
+                                }
+                                if(ok)
+                                {
+                                    if(productItem->Attribute("id")!=NULL)
+                                    {
+                                        product.item=stringtouint16(productItem->Attribute("id"),&ok);
+                                        if(!ok)
+                                            std::cerr << "id is not a number: child->Name(): " << industryItem->Name() << std::endl;
+                                        else if(items.find(product.item)==items.cend())
+                                        {
+                                            ok=false;
+                                            std::cerr << "id is not into the item list: child->Name(): " << industryItem->Name() << std::endl;
+                                        }
+                                        else
+                                        {
+                                            unsigned int index=0;
+                                            while(index<industry.resources.size())
+                                            {
+                                                if(industry.resources.at(index).item==product.item)
+                                                    break;
+                                                index++;
+                                            }
+                                            if(index<industry.resources.size())
+                                            {
+                                                ok=false;
+                                                std::cerr << "id of item already into resource or product list: child->Name(): " << industryItem->Name() << std::endl;
+                                            }
+                                            else
+                                            {
+                                                index=0;
+                                                while(index<industry.products.size())
+                                                {
+                                                    if(industry.products.at(index).item==product.item)
+                                                        break;
+                                                    index++;
+                                                }
+                                                if(index<industry.products.size())
+                                                {
+                                                    ok=false;
+                                                    std::cerr << "id of item already into resource or product list: child->Name(): " << industryItem->Name() << std::endl;
+                                                }
+                                                else
+                                                    industry.products.push_back(product);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        ok=false;
+                                        std::cerr << "have not the id attribute: child->Name(): " << industryItem->Name() << std::endl;
+                                    }
+                                }
+                                productItem = productItem->NextSiblingElement("product");
+                            }
+                        }
+
+                        //add
+                        if(ok)
+                        {
+                            if(industry.products.empty() || industry.resources.empty())
+                                std::cerr << "product or resources is empty: child->Name(): " << industryItem->Name() << std::endl;
+                            else
+                                industries[id]=industry;
+                        }
                     }
                     else
-                        std::cerr << "Unable to open the industries id is not a number: file: " << file << ", child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
+                        std::cerr << "Unable to open the industries id number already set: file: " << file << ", child->Name(): " << industryItem->Name() << std::endl;
                 }
                 else
-                    std::cerr << "Unable to open the industries have not the id: file: " << file << ", child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
+                    std::cerr << "Unable to open the industries id is not a number: file: " << file << ", child->Name(): " << industryItem->Name() << std::endl;
             }
             else
-                std::cerr << "Unable to open the industries is not an element: file: " << file << ", child->Name(): " << industryItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(industryItem) << ")" << std::endl;
+                std::cerr << "Unable to open the industries have not the id: file: " << file << ", child->Name(): " << industryItem->Name() << std::endl;
             industryItem = industryItem->NextSiblingElement("industrialrecipe");
         }
         #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -1531,10 +1401,10 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return industriesLink;
@@ -1548,7 +1418,7 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return industriesLink;
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"industries"))
+    if(strcmp(root->Name(),"industries")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"industries\" root balise not found for reputation of the xml file" << std::endl;
         return industriesLink;
@@ -1559,105 +1429,90 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
     const tinyxml2::XMLElement * linkItem = root->FirstChildElement("link");
     while(linkItem!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(linkItem))
+        if(linkItem->Attribute("industrialrecipe")!=NULL && linkItem->Attribute("industry")!=NULL)
         {
-            if(linkItem->Attribute("industrialrecipe")!=NULL && linkItem->Attribute("industry")!=NULL)
+            const uint16_t &industry_id=stringtouint16(linkItem->Attribute("industrialrecipe"),&ok);
+            const uint16_t &factory_id=stringtouint16(linkItem->Attribute("industry"),&ok2);
+            if(ok && ok2)
             {
-                const uint16_t &industry_id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(linkItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("industrialrecipe"))),&ok);
-                const uint16_t &factory_id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(linkItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("industry"))),&ok2);
-                if(ok && ok2)
+                if(industriesLink.find(factory_id)==industriesLink.cend())
                 {
-                    if(industriesLink.find(factory_id)==industriesLink.cend())
+                    if(industries.find(industry_id)!=industries.cend())
                     {
-                        if(industries.find(industry_id)!=industries.cend())
+                        industriesLink[factory_id].industry=industry_id;
+                        IndustryLink *industryLink=&industriesLink[factory_id];
                         {
-                            industriesLink[factory_id].industry=industry_id;
-                            IndustryLink *industryLink=&industriesLink[factory_id];
                             {
+                                const tinyxml2::XMLElement * requirementsItem = linkItem->FirstChildElement("requirements");
+                                if(requirementsItem!=NULL)
                                 {
-                                    const tinyxml2::XMLElement * requirementsItem = linkItem->FirstChildElement("requirements");
-                                    if(requirementsItem!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(requirementsItem))
+                                    const tinyxml2::XMLElement * reputationItem = requirementsItem->FirstChildElement("reputation");
+                                    while(reputationItem!=NULL)
                                     {
-                                        const tinyxml2::XMLElement * reputationItem = requirementsItem->FirstChildElement("reputation");
-                                        while(reputationItem!=NULL)
+                                        if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("level")!=NULL)
                                         {
-                                            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(reputationItem))
+                                            if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                                             {
-                                                if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("level")!=NULL)
+                                                ReputationRequirements reputationRequirements;
+                                                std::string stringLevel=reputationItem->Attribute("level");
+                                                reputationRequirements.positif=!stringStartWith(stringLevel,"-");
+                                                if(!reputationRequirements.positif)
+                                                    stringLevel.erase(0,1);
+                                                reputationRequirements.level=stringtouint8(stringLevel,&ok);
+                                                if(ok)
                                                 {
-                                                    if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
-                                                    {
-                                                        ReputationRequirements reputationRequirements;
-                                                        std::string stringLevel=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level")));
-                                                        reputationRequirements.positif=!stringStartWith(stringLevel,"-");
-                                                        if(!reputationRequirements.positif)
-                                                            stringLevel.erase(0,1);
-                                                        reputationRequirements.level=stringtouint8(stringLevel,&ok);
-                                                        if(ok)
-                                                        {
-                                                            reputationRequirements.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
-                                                            industryLink->requirements.reputation.push_back(reputationRequirements);
-                                                        }
-                                                    }
-                                                    else
-                                                        std::cerr << "Reputation type not found: have not the id, child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
+                                                    reputationRequirements.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                                    industryLink->requirements.reputation.push_back(reputationRequirements);
                                                 }
-                                                else
-                                                    std::cerr << "Unable to open the industries link have not the id, file: " << file << ", child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
                                             }
                                             else
-                                                std::cerr << "Unable to open the industries link is not a element, file: " << file << ", child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
-                                            reputationItem = reputationItem->NextSiblingElement("reputation");
+                                                std::cerr << "Reputation type not found: have not the id, child->Name(): " << reputationItem->Name() << std::endl;
                                         }
+                                        else
+                                            std::cerr << "Unable to open the industries link have not the id, file: " << file << ", child->Name(): " << reputationItem->Name() << std::endl;
+                                        reputationItem = reputationItem->NextSiblingElement("reputation");
                                     }
                                 }
+                            }
+                            {
+                                const tinyxml2::XMLElement * rewardsItem = linkItem->FirstChildElement("rewards");
+                                if(rewardsItem!=NULL)
                                 {
-                                    const tinyxml2::XMLElement * rewardsItem = linkItem->FirstChildElement("rewards");
-                                    if(rewardsItem!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(rewardsItem))
+                                    const tinyxml2::XMLElement * reputationItem = rewardsItem->FirstChildElement("reputation");
+                                    while(reputationItem!=NULL)
                                     {
-                                        const tinyxml2::XMLElement * reputationItem = rewardsItem->FirstChildElement("reputation");
-                                        while(reputationItem!=NULL)
+                                        if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
                                         {
-                                            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(reputationItem))
+                                            if(reputationNameToId.find(reputationItem->Attribute("type"))!=reputationNameToId.cend())
                                             {
-                                                if(reputationItem->Attribute("type")!=NULL && reputationItem->Attribute("point")!=NULL)
+                                                ReputationRewards reputationRewards;
+                                                reputationRewards.point=stringtoint32(reputationItem->Attribute("point"),&ok);
+                                                if(ok)
                                                 {
-                                                    if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))!=reputationNameToId.cend())
-                                                    {
-                                                        ReputationRewards reputationRewards;
-                                                        reputationRewards.point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
-                                                        if(ok)
-                                                        {
-                                                            reputationRewards.reputationId=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
-                                                            industryLink->rewards.reputation.push_back(reputationRewards);
-                                                        }
-                                                    }
+                                                    reputationRewards.reputationId=reputationNameToId.at(reputationItem->Attribute("type"));
+                                                    industryLink->rewards.reputation.push_back(reputationRewards);
                                                 }
-                                                else
-                                                    std::cerr << "Unable to open the industries link have not the id, file: " << file << ", child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
                                             }
-                                            else
-                                                std::cerr << "Unable to open the industries link is not a element, file: " << file << ", child->Name(): " << reputationItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(reputationItem) << ")" << std::endl;
-                                            reputationItem = reputationItem->NextSiblingElement("reputation");
                                         }
+                                        else
+                                            std::cerr << "Unable to open the industries link have not the id, file: " << file << ", child->Name(): " << reputationItem->Name() << std::endl;
+                                        reputationItem = reputationItem->NextSiblingElement("reputation");
                                     }
                                 }
                             }
                         }
-                        else
-                            std::cerr << "Industry id for factory is not found: " << industry_id << ", file: " << file << ", child->Name(): " << linkItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(linkItem) << ")" << std::endl;
                     }
                     else
-                        std::cerr << "Factory already found: " << factory_id << ", file: " << file << ", child->Name(): " << linkItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(linkItem) << ")" << std::endl;
+                        std::cerr << "Industry id for factory is not found: " << industry_id << ", file: " << file << ", child->Name(): " << linkItem->Name() << std::endl;
                 }
                 else
-                    std::cerr << "Unable to open the industries link the attribute is not a number, file: " << file << ", child->Name(): " << linkItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(linkItem) << ")" << std::endl;
+                    std::cerr << "Factory already found: " << factory_id << ", file: " << file << ", child->Name(): " << linkItem->Name() << std::endl;
             }
             else
-                std::cerr << "Unable to open the industries link have not the id, file: " << file << ", child->Name(): " << linkItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(linkItem) << ")" << std::endl;
+                std::cerr << "Unable to open the industries link the attribute is not a number, file: " << file << ", child->Name(): " << linkItem->Name() << std::endl;
         }
         else
-            std::cerr << "Unable to open the industries link is not a element, file: " << file << ", child->Name(): " << linkItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(linkItem) << ")" << std::endl;
+            std::cerr << "Unable to open the industries link have not the id, file: " << file << ", child->Name(): " << linkItem->Name() << std::endl;
         linkItem = linkItem->NextSiblingElement("link");
     }
     #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -1697,10 +1552,10 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
             #else
-            domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+            domDocument=new tinyxml2::XMLDocument();
             #endif
-            const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            if(loadOkay!=0)
             {
                 std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
                 file_index++;
@@ -1715,7 +1570,7 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
             file_index++;
             continue;
         }
-        if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"items"))
+        if(strcmp(root->Name(),"items")!=0)
         {
             file_index++;
             continue;
@@ -1726,242 +1581,218 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
         const tinyxml2::XMLElement * item = root->FirstChildElement("item");
         while(item!=NULL)
         {
-            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(item))
+            if(item->Attribute("id")!=NULL)
             {
-                if(item->Attribute("id")!=NULL)
+                const uint16_t &id=stringtouint16(item->Attribute("id"),&ok);
+                if(ok)
                 {
-                    const uint16_t &id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                    if(ok)
+                    if(items.item.find(id)==items.item.cend())
                     {
-                        if(items.item.find(id)==items.item.cend())
+                        if(items.itemMaxId<id)
+                            items.itemMaxId=id;
+                        //load the price
                         {
-                            if(items.itemMaxId<id)
-                                items.itemMaxId=id;
-                            //load the price
+                            if(item->Attribute("price")!=NULL)
                             {
-                                if(item->Attribute("price")!=NULL)
+                                bool ok;
+                                items.item[id].price=stringtouint32(item->Attribute("price"),&ok);
+                                if(!ok)
                                 {
-                                    bool ok;
-                                    items.item[id].price=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("price"))),&ok);
-                                    if(!ok)
-                                    {
-                                        std::cerr << "price is not a number, file: " << file << ", child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
-                                        items.item[id].price=0;
-                                    }
-                                }
-                                else
-                                {
-                                    /*if(!item->Attribute("quest")!=NULL || item->Attribute("quest")!="yes")
-                                        std::cerr << "For parse item: Price not found, default to 0 (not sellable): child->Name(): %1 (%2 at line: %3)").arg(item->Name()).arg(file).arg(CATCHCHALLENGER_XMLELENTATLINE(item));*/
+                                    std::cerr << "price is not a number, file: " << file << ", child->Name(): " << item->Name() << std::endl;
                                     items.item[id].price=0;
                                 }
                             }
-                            //load the consumeAtUse
+                            else
+                                items.item[id].price=0;
+                        }
+                        //load the consumeAtUse
+                        {
+                            if(item->Attribute("consumeAtUse")!=NULL)
                             {
-                                if(item->Attribute("consumeAtUse")!=NULL)
-                                {
-                                    if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(item->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("consumeAtUse"))),"false"))
-                                        items.item[id].consumeAtUse=false;
-                                    else
-                                        items.item[id].consumeAtUse=true;
-                                }
+                                if(strcmp(item->Attribute("consumeAtUse"),"false")==0)
+                                    items.item[id].consumeAtUse=false;
                                 else
                                     items.item[id].consumeAtUse=true;
                             }
-                            bool haveAnEffect=false;
-                            //load the trap
-                            if(!haveAnEffect)
+                            else
+                                items.item[id].consumeAtUse=true;
+                        }
+                        bool haveAnEffect=false;
+                        //load the trap
+                        if(!haveAnEffect)
+                        {
+                            const tinyxml2::XMLElement * trapItem = item->FirstChildElement("trap");
+                            if(trapItem!=NULL)
                             {
-                                const tinyxml2::XMLElement * trapItem = item->FirstChildElement("trap");
-                                if(trapItem!=NULL)
+                                Trap trap;
+                                trap.bonus_rate=1.0;
+                                if(trapItem->Attribute("bonus_rate")!=NULL)
                                 {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(trapItem))
-                                    {
-                                        Trap trap;
-                                        trap.bonus_rate=1.0;
-                                        if(trapItem->Attribute("bonus_rate")!=NULL)
-                                        {
-                                            float bonus_rate=stringtofloat(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(trapItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("bonus_rate"))),&ok);
-                                            if(ok)
-                                                trap.bonus_rate=bonus_rate;
-                                            else
-                                                std::cerr << "Unable to open the file: bonus_rate is not a number, file: " << file << ", child->Name(): " << trapItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(trapItem) << ")" << std::endl;
-                                        }
-                                        else
-                                            std::cerr << "Unable to open the file: trap have not the attribute bonus_rate, file: " << file << ", child->Name(): " << trapItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(trapItem) << ")" << std::endl;
-                                        items.trap[id]=trap;
-                                        haveAnEffect=true;
-                                    }
+                                    float bonus_rate=stringtofloat(trapItem->Attribute("bonus_rate"),&ok);
+                                    if(ok)
+                                        trap.bonus_rate=bonus_rate;
+                                    else
+                                        std::cerr << "Unable to open the file: bonus_rate is not a number, file: " << file << ", child->Name(): " << trapItem->Name() << std::endl;
                                 }
-                            }
-                            //load the repel
-                            if(!haveAnEffect)
-                            {
-                                const tinyxml2::XMLElement * repelItem = item->FirstChildElement("repel");
-                                if(repelItem!=NULL)
-                                {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(repelItem))
-                                    {
-                                        if(repelItem->Attribute("step")!=NULL)
-                                        {
-                                            const uint32_t &step=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(repelItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("step"))),&ok);
-                                            if(ok)
-                                            {
-                                                if(step>0)
-                                                {
-                                                    items.repel[id]=step;
-                                                    haveAnEffect=true;
-                                                }
-                                                else
-                                                    std::cerr << "Unable to open the file: step is not greater than 0, file: " << file << ", child->Name(): " << repelItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(repelItem) << ")" << std::endl;
-                                            }
-                                            else
-                                                std::cerr << "Unable to open the file: step is not a number, file: " << file << ", child->Name(): " << repelItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(repelItem) << ")" << std::endl;
-                                        }
-                                        else
-                                            std::cerr << "Unable to open the file: repel have not the attribute step, file: " << file << ", child->Name(): " << repelItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(repelItem) << ")" << std::endl;
-                                    }
-                                }
-                            }
-                            //load the monster effect
-                            if(!haveAnEffect)
-                            {
-                                {
-                                    const tinyxml2::XMLElement * hpItem = item->FirstChildElement("hp");
-                                    while(hpItem!=NULL)
-                                    {
-                                        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(hpItem))
-                                        {
-                                            if(hpItem->Attribute("add")!=NULL)
-                                            {
-                                                if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(hpItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("add"))),"all"))
-                                                {
-                                                    MonsterItemEffect monsterItemEffect;
-                                                    monsterItemEffect.type=MonsterItemEffectType_AddHp;
-                                                    monsterItemEffect.data.hp=-1;
-                                                    items.monsterItemEffect[id].push_back(monsterItemEffect);
-                                                }
-                                                else
-                                                {
-                                                    std::string addString=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(hpItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("add")));
-                                                    if(addString.find("%")==std::string::npos)//todo this part
-                                                    {
-                                                        const int32_t &add=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(hpItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("add"))),&ok);
-                                                        if(ok)
-                                                        {
-                                                            if(add>0)
-                                                            {
-                                                                MonsterItemEffect monsterItemEffect;
-                                                                monsterItemEffect.type=MonsterItemEffectType_AddHp;
-                                                                monsterItemEffect.data.hp=add;
-                                                                items.monsterItemEffect[id].push_back(monsterItemEffect);
-                                                            }
-                                                            else
-                                                                std::cerr << "Unable to open the file, add is not greater than 0, file: " << file << ", child->Name(): " << hpItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(hpItem) << ")" << std::endl;
-                                                        }
-                                                        else
-                                                            std::cerr << "Unable to open the file, add is not a number, file: " << file << ", child->Name(): " << hpItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(hpItem) << ")" << std::endl;
-                                                    }
-                                                }
-                                            }
-                                            else
-                                                std::cerr << "Unable to open the file, hp have not the attribute add, file: " << file << ", child->Name(): " << hpItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(hpItem) << ")" << std::endl;
-                                        }
-                                        hpItem = hpItem->NextSiblingElement("hp");
-                                    }
-                                }
-                                #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-                                {
-                                    const tinyxml2::XMLElement * buffItem = item->FirstChildElement("buff");
-                                    while(buffItem!=NULL)
-                                    {
-                                        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(buffItem))
-                                        {
-                                            if(buffItem->Attribute("remove")!=NULL)
-                                            {
-                                                if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(buffItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("remove"))),"all"))
-                                                {
-                                                    MonsterItemEffect monsterItemEffect;
-                                                    monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
-                                                    monsterItemEffect.data.buff=-1;
-                                                    items.monsterItemEffect[id].push_back(monsterItemEffect);
-                                                }
-                                                else
-                                                {
-                                                    const int8_t &removebuffid=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(buffItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("remove"))),&ok);
-                                                    if(ok)
-                                                    {
-                                                        if(removebuffid>0)
-                                                        {
-                                                            if(monsterBuffs.find(removebuffid)!=monsterBuffs.cend())
-                                                            {
-                                                                MonsterItemEffect monsterItemEffect;
-                                                                monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
-                                                                monsterItemEffect.data.buff=removebuffid;
-                                                                items.monsterItemEffect[id].push_back(monsterItemEffect);
-                                                            }
-                                                            else
-                                                                std::cerr << "Unable to open the file, buff item to remove is not found, file: " << file << ", child->Name(): " << buffItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(buffItem) << ")" << std::endl;
-                                                        }
-                                                        else
-                                                            std::cerr << "Unable to open the file, step is not greater than 0, file: " << file << ", child->Name(): " << buffItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(buffItem) << ")" << std::endl;
-                                                    }
-                                                    else
-                                                        std::cerr << "Unable to open the file, step is not a number, file: " << file << ", child->Name(): " << buffItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(buffItem) << ")" << std::endl;
-                                                }
-                                            }
-                                            /// \todo
-                                             /* else
-                                                std::cerr << "Unable to open the file: " << file << ", buff have not the attribute know attribute like remove: child->Name(): %2 (at line: %3)").arg(file).arg(buffItem->Name()).arg(CATCHCHALLENGER_XMLELENTATLINE(buffItem));*/
-                                        }
-                                        buffItem = buffItem->NextSiblingElement("buff");
-                                    }
-                                }
-                                #endif
-                                if(items.monsterItemEffect.find(id)!=items.monsterItemEffect.cend())
-                                    haveAnEffect=true;
-                            }
-                            //load the monster offline effect
-                            if(!haveAnEffect)
-                            {
-                                const tinyxml2::XMLElement * levelItem = item->FirstChildElement("level");
-                                while(levelItem!=NULL)
-                                {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(levelItem))
-                                    {
-                                        if(levelItem->Attribute("up")!=NULL)
-                                        {
-                                            const uint8_t &levelUp=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(levelItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("up"))),&ok);
-                                            if(!ok)
-                                                std::cerr << "Unable to open the file, level up is not possitive number, file: " << file << ", child->Name(): " << levelItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(levelItem) << ")" << std::endl;
-                                            else if(levelUp<=0)
-                                                std::cerr << "Unable to open the file, level up is greater than 0, file: " << file << ", child->Name(): " << levelItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(levelItem) << ")" << std::endl;
-                                            else
-                                            {
-                                                MonsterItemEffectOutOfFight monsterItemEffectOutOfFight;
-                                                monsterItemEffectOutOfFight.type=MonsterItemEffectTypeOutOfFight_AddLevel;
-                                                monsterItemEffectOutOfFight.data.level=levelUp;
-                                                items.monsterItemEffectOutOfFight[id].push_back(monsterItemEffectOutOfFight);
-                                            }
-                                        }
-                                        else
-                                            std::cerr << "Unable to open the file, level have not the attribute up, file: " << file << ", child->Name(): " << levelItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(levelItem) << ")" << std::endl;
-                                    }
-                                    levelItem = levelItem->NextSiblingElement("level");
-                                }
+                                else
+                                    std::cerr << "Unable to open the file: trap have not the attribute bonus_rate, file: " << file << ", child->Name(): " << trapItem->Name() << std::endl;
+                                items.trap[id]=trap;
+                                haveAnEffect=true;
                             }
                         }
-                        else
-                            std::cerr << "Unable to open the file, id number already set, file: " << file << ", child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                        //load the repel
+                        if(!haveAnEffect)
+                        {
+                            const tinyxml2::XMLElement * repelItem = item->FirstChildElement("repel");
+                            if(repelItem!=NULL)
+                            {
+                                if(repelItem->Attribute("step")!=NULL)
+                                {
+                                    const uint32_t &step=stringtouint32(repelItem->Attribute("step"),&ok);
+                                    if(ok)
+                                    {
+                                        if(step>0)
+                                        {
+                                            items.repel[id]=step;
+                                            haveAnEffect=true;
+                                        }
+                                        else
+                                            std::cerr << "Unable to open the file: step is not greater than 0, file: " << file << ", child->Name(): " << repelItem->Name() << std::endl;
+                                    }
+                                    else
+                                        std::cerr << "Unable to open the file: step is not a number, file: " << file << ", child->Name(): " << repelItem->Name() << std::endl;
+                                }
+                                else
+                                    std::cerr << "Unable to open the file: repel have not the attribute step, file: " << file << ", child->Name(): " << repelItem->Name() << std::endl;
+                            }
+                        }
+                        //load the monster effect
+                        if(!haveAnEffect)
+                        {
+                            {
+                                const tinyxml2::XMLElement * hpItem = item->FirstChildElement("hp");
+                                while(hpItem!=NULL)
+                                {
+                                    if(hpItem->Attribute("add")!=NULL)
+                                    {
+                                        if(strcmp(hpItem->Attribute("add"),"all")==0)
+                                        {
+                                            MonsterItemEffect monsterItemEffect;
+                                            monsterItemEffect.type=MonsterItemEffectType_AddHp;
+                                            monsterItemEffect.data.hp=-1;
+                                            items.monsterItemEffect[id].push_back(monsterItemEffect);
+                                        }
+                                        else
+                                        {
+                                            std::string addString=hpItem->Attribute("add");
+                                            if(addString.find("%")==std::string::npos)//todo this part
+                                            {
+                                                const int32_t &add=stringtouint32(hpItem->Attribute("add"),&ok);
+                                                if(ok)
+                                                {
+                                                    if(add>0)
+                                                    {
+                                                        MonsterItemEffect monsterItemEffect;
+                                                        monsterItemEffect.type=MonsterItemEffectType_AddHp;
+                                                        monsterItemEffect.data.hp=add;
+                                                        items.monsterItemEffect[id].push_back(monsterItemEffect);
+                                                    }
+                                                    else
+                                                        std::cerr << "Unable to open the file, add is not greater than 0, file: " << file << ", child->Name(): " << hpItem->Name() << std::endl;
+                                                }
+                                                else
+                                                    std::cerr << "Unable to open the file, add is not a number, file: " << file << ", child->Name(): " << hpItem->Name() << std::endl;
+                                            }
+                                        }
+                                    }
+                                    else
+                                        std::cerr << "Unable to open the file, hp have not the attribute add, file: " << file << ", child->Name(): " << hpItem->Name() << std::endl;
+                                    hpItem = hpItem->NextSiblingElement("hp");
+                                }
+                            }
+                            #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
+                            {
+                                const tinyxml2::XMLElement * buffItem = item->FirstChildElement("buff");
+                                while(buffItem!=NULL)
+                                {
+                                    if(buffItem->Attribute("remove")!=NULL)
+                                    {
+                                        if(strcmp(buffItem->Attribute("remove"),"all")==0)
+                                        {
+                                            MonsterItemEffect monsterItemEffect;
+                                            monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
+                                            monsterItemEffect.data.buff=-1;
+                                            items.monsterItemEffect[id].push_back(monsterItemEffect);
+                                        }
+                                        else
+                                        {
+                                            const int8_t &removebuffid=stringtouint8(buffItem->Attribute("remove"),&ok);
+                                            if(ok)
+                                            {
+                                                if(removebuffid>0)
+                                                {
+                                                    if(monsterBuffs.find(removebuffid)!=monsterBuffs.cend())
+                                                    {
+                                                        MonsterItemEffect monsterItemEffect;
+                                                        monsterItemEffect.type=MonsterItemEffectType_RemoveBuff;
+                                                        monsterItemEffect.data.buff=removebuffid;
+                                                        items.monsterItemEffect[id].push_back(monsterItemEffect);
+                                                    }
+                                                    else
+                                                        std::cerr << "Unable to open the file, buff item to remove is not found, file: " << file << ", child->Name(): " << buffItem->Name() << std::endl;
+                                                }
+                                                else
+                                                    std::cerr << "Unable to open the file, step is not greater than 0, file: " << file << ", child->Name(): " << buffItem->Name() << std::endl;
+                                            }
+                                            else
+                                                std::cerr << "Unable to open the file, step is not a number, file: " << file << ", child->Name(): " << buffItem->Name() << std::endl;
+                                        }
+                                    }
+                                    /// \todo
+                                     /* else
+                                        std::cerr << "Unable to open the file: " << file << ", buff have not the attribute know attribute like remove: child->Name(): %2 (at line: %3)").arg(file).arg(buffItem->Name()).arg(CATCHCHALLENGER_XMLELENTATLINE(buffItem));*/
+                                    buffItem = buffItem->NextSiblingElement("buff");
+                                }
+                            }
+                            #endif
+                            if(items.monsterItemEffect.find(id)!=items.monsterItemEffect.cend())
+                                haveAnEffect=true;
+                        }
+                        //load the monster offline effect
+                        if(!haveAnEffect)
+                        {
+                            const tinyxml2::XMLElement * levelItem = item->FirstChildElement("level");
+                            while(levelItem!=NULL)
+                            {
+                                if(levelItem->Attribute("up")!=NULL)
+                                {
+                                    const uint8_t &levelUp=stringtouint8(levelItem->Attribute("up"),&ok);
+                                    if(!ok)
+                                        std::cerr << "Unable to open the file, level up is not possitive number, file: " << file << ", child->Name(): " << levelItem->Name() << std::endl;
+                                    else if(levelUp<=0)
+                                        std::cerr << "Unable to open the file, level up is greater than 0, file: " << file << ", child->Name(): " << levelItem->Name() << std::endl;
+                                    else
+                                    {
+                                        MonsterItemEffectOutOfFight monsterItemEffectOutOfFight;
+                                        monsterItemEffectOutOfFight.type=MonsterItemEffectTypeOutOfFight_AddLevel;
+                                        monsterItemEffectOutOfFight.data.level=levelUp;
+                                        items.monsterItemEffectOutOfFight[id].push_back(monsterItemEffectOutOfFight);
+                                    }
+                                }
+                                else
+                                    std::cerr << "Unable to open the file, level have not the attribute up, file: " << file << ", child->Name(): " << levelItem->Name() << std::endl;
+                                levelItem = levelItem->NextSiblingElement("level");
+                            }
+                        }
                     }
                     else
-                        std::cerr << "Unable to open the file, id is not a number, file: " << file << ", child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                        std::cerr << "Unable to open the file, id number already set, file: " << file << ", child->Name(): " << item->Name() << std::endl;
                 }
                 else
-                    std::cerr << "Unable to open the file, have not the item id, file: " << file << ", child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                    std::cerr << "Unable to open the file, id is not a number, file: " << file << ", child->Name(): " << item->Name() << std::endl;
             }
             else
-                std::cerr << "Unable to open the file, is not an element, file: " << file << ", child->Name(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                std::cerr << "Unable to open the file, have not the item id, file: " << file << ", child->Name(): " << item->Name() << std::endl;
             item = item->NextSiblingElement("item");
         }
         #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -2015,10 +1846,10 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return returnVar;
@@ -2032,7 +1863,7 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return returnVar;
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"profile"))
+    if(strcmp(root->Name(),"profile")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"profile\" root balise not found for reputation of the xml file" << std::endl;
         return returnVar;
@@ -2043,244 +1874,242 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
     const tinyxml2::XMLElement * startItem = root->FirstChildElement("start");
     while(startItem!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(startItem))
+        Profile profile;
+        profile.cash=0;
+
+        if(startItem->Attribute("id")!=NULL)
+            profile.databaseId=startItem->Attribute("id");
+
+        if(idDuplicate.find(profile.databaseId)!=idDuplicate.cend())
         {
-            Profile profile;
-            profile.cash=0;
+            std::cerr << "Unable to open the xml file: " << file << ", child->Name(): " << startItem->Name() << std::endl;
+            startItem = startItem->NextSiblingElement("start");
+            continue;
+        }
 
-            if(startItem->Attribute("id")!=NULL)
-                profile.databaseId=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(startItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id")));
+        if(!profile.databaseId.empty() && idDuplicate.find(profile.databaseId)==idDuplicate.cend())
+        {
+            const tinyxml2::XMLElement * forcedskin = startItem->FirstChildElement("forcedskin");
 
-            if(idDuplicate.find(profile.databaseId)!=idDuplicate.cend())
+            std::vector<std::string> forcedskinList;
+            if(forcedskin!=NULL && forcedskin->Attribute("value")!=NULL)
+                forcedskinList=stringsplit(forcedskin->Attribute("value"),';');
+            else
+                forcedskinList=defaultforcedskinList;
             {
-                std::cerr << "Unable to open the xml file: " << file << ", child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
+                unsigned int index=0;
+                while(index<forcedskinList.size())
+                {
+                    if(skinNameToId.find(forcedskinList.at(index))!=skinNameToId.cend())
+                        profile.forcedskin.push_back(skinNameToId.at(forcedskinList.at(index)));
+                    else
+                        std::cerr << "Unable to open the xml file: " << file << ", skin " << forcedskinList.at(index) << " don't exists: child->Name(): " << startItem->Name() << std::endl;
+                    index++;
+                }
+            }
+            unsigned int index=0;
+            while(index<profile.forcedskin.size())
+            {
+                if(!CatchChallenger::FacilityLibGeneral::isDir(datapackPath+DATAPACK_BASE_PATH_SKIN+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))))
+                {
+                    std::cerr << "Unable to open the xml file: " << file << ", skin value: " << forcedskinList.at(index) << " don't exists into: into " << datapackPath << DATAPACK_BASE_PATH_SKIN << CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index)) << ": child->Name(): " << startItem->Name() << std::endl;
+                    profile.forcedskin.erase(profile.forcedskin.begin()+index);
+                }
+                else
+                    index++;
+            }
+
+            profile.cash=0;
+            const tinyxml2::XMLElement * cash = startItem->FirstChildElement("cash");
+            if(cash!=NULL && cash->Attribute("value")!=NULL)
+            {
+                profile.cash=stringtodouble(cash->Attribute("value"),&ok);
+                if(!ok)
+                {
+                    std::cerr << "Unable to open the xml file: " << file << ", cash is not a number: child->Name(): " << startItem->Name() << std::endl;
+                    profile.cash=0;
+                }
+            }
+            const tinyxml2::XMLElement * monstersElementGroup = startItem->FirstChildElement("monstergroup");
+            while(monstersElementGroup!=NULL)
+            {
+                std::vector<Profile::Monster> monsters_list;
+                const tinyxml2::XMLElement * monstersElement = monstersElementGroup->FirstChildElement("monster");
+                while(monstersElement!=NULL)
+                {
+                    Profile::Monster monster;
+                    if(monstersElement->Attribute("id")!=NULL && monstersElement->Attribute("level")!=NULL &&
+                            monstersElement->Attribute("captured_with")!=NULL)
+                    {
+                        monster.id=stringtouint16(monstersElement->Attribute("id"),&ok);
+                        if(!ok)
+                            std::cerr << "Unable to open the xml file: " << file << ", monster id is not a number: child->Name(): " << startItem->Name() << std::endl;
+                        if(ok)
+                        {
+                            monster.level=stringtouint8(monstersElement->Attribute("level"),&ok);
+                            if(!ok)
+                                std::cerr << "Unable to open the xml file: " << file << ", monster level is not a number: child->Name(): " << startItem->Name() << std::endl;
+                        }
+                        if(ok)
+                        {
+                            if(monster.level==0 || monster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+                                std::cerr << "Unable to open the xml file: " << file << ", monster level is not into the range: child->Name(): " << startItem->Name() << std::endl;
+                        }
+                        if(ok)
+                        {
+                            monster.captured_with=stringtouint16(monstersElement->Attribute("captured_with"),&ok);
+                            if(!ok)
+                                std::cerr << "Unable to open the xml file: " << file << ", captured_with is not a number: child->Name(): " << startItem->Name() << std::endl;
+                        }
+                        if(ok)
+                        {
+                            if(monsters.find(monster.id)==monsters.cend())
+                            {
+                                std::cerr << "Unable to open the xml file: " << file << ", starter don't found the monster " << monster.id << ": child->Name(): " << startItem->Name() << std::endl;
+                                ok=false;
+                            }
+                        }
+                        #ifndef CATCHCHALLENGER_CLASS_MASTER
+                        if(ok)
+                        {
+                            if(items.find(monster.captured_with)==items.cend())
+                                std::cerr << "Unable to open the xml file: " << file << ", starter don't found the monster capture item " << monster.id << ": child->Name(): " << startItem->Name() << std::endl;
+                        }
+                        #endif // CATCHCHALLENGER_CLASS_MASTER
+                        if(ok)
+                            monsters_list.push_back(monster);
+                    }
+                    else
+                        std::cerr << "Unable to open the xml file: " << file << ", no monster attribute to load: child->Name(): " << monstersElement->Name() << std::endl;
+                    monstersElement = monstersElement->NextSiblingElement("monster");
+                }
+                if(monsters_list.empty())
+                {
+                    std::cerr << "Unable to open the xml file: " << file << ", no monster to load: child->Name(): " << monstersElement->Name() << std::endl;
+                    startItem = startItem->NextSiblingElement("start");
+                    continue;
+                }
+                profile.monstergroup.push_back(monsters_list);
+                monstersElementGroup = monstersElementGroup->NextSiblingElement("monstergroup");
+            }
+            if(profile.monstergroup.empty())
+            {
+                std::cerr << "Unable to open the xml file: " << file << ", no monstergroup to load: child->Name(): " << startItem->Name() << std::endl;
                 startItem = startItem->NextSiblingElement("start");
                 continue;
             }
-
-            if(!profile.databaseId.empty() && idDuplicate.find(profile.databaseId)==idDuplicate.cend())
+            const tinyxml2::XMLElement * reputationElement = startItem->FirstChildElement("reputation");
+            while(reputationElement!=NULL)
             {
-                const tinyxml2::XMLElement * forcedskin = startItem->FirstChildElement("forcedskin");
-
-                std::vector<std::string> forcedskinList;
-                if(forcedskin!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(forcedskin) && forcedskin->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("value"))!=NULL)
-                    forcedskinList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(forcedskin->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("value"))),';');
-                else
-                    forcedskinList=defaultforcedskinList;
+                Profile::Reputation reputationTemp;
+                reputationTemp.internalIndex=255;
+                reputationTemp.level=-1;
+                reputationTemp.point=0xFFFFFFFF;
+                if(reputationElement->Attribute("type")!=NULL && reputationElement->Attribute("level")!=NULL)
                 {
-                    unsigned int index=0;
-                    while(index<forcedskinList.size())
-                    {
-                        if(skinNameToId.find(forcedskinList.at(index))!=skinNameToId.cend())
-                            profile.forcedskin.push_back(skinNameToId.at(forcedskinList.at(index)));
-                        else
-                            std::cerr << "Unable to open the xml file: " << file << ", skin " << forcedskinList.at(index) << " don't exists: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                        index++;
-                    }
-                }
-                unsigned int index=0;
-                while(index<profile.forcedskin.size())
-                {
-                    if(!CatchChallenger::FacilityLibGeneral::isDir(datapackPath+DATAPACK_BASE_PATH_SKIN+CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index))))
-                    {
-                        std::cerr << "Unable to open the xml file: " << file << ", skin value: " << forcedskinList.at(index) << " don't exists into: into " << datapackPath << DATAPACK_BASE_PATH_SKIN << CommonDatapack::commonDatapack.skins.at(profile.forcedskin.at(index)) << ": child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                        profile.forcedskin.erase(profile.forcedskin.begin()+index);
-                    }
-                    else
-                        index++;
-                }
-
-                profile.cash=0;
-                const tinyxml2::XMLElement * cash = startItem->FirstChildElement("cash");
-                if(cash!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(cash) && cash->Attribute("value")!=NULL)
-                {
-                    profile.cash=stringtodouble(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(cash->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("value"))),&ok);
+                    reputationTemp.level=stringtoint8(reputationElement->Attribute("level"),&ok);
                     if(!ok)
+                        std::cerr << "Unable to open the xml file: " << file << ", reputation level is not a number: child->Name(): " << startItem->Name() << std::endl;
+                    if(ok)
                     {
-                        std::cerr << "Unable to open the xml file: " << file << ", cash is not a number: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                        profile.cash=0;
-                    }
-                }
-                const tinyxml2::XMLElement * monstersElementGroup = startItem->FirstChildElement("monstergroup");
-                while(monstersElementGroup!=NULL)
-                {
-                    std::vector<Profile::Monster> monsters_list;
-                    const tinyxml2::XMLElement * monstersElement = monstersElementGroup->FirstChildElement("monster");
-                    while(monstersElement!=NULL)
-                    {
-                        Profile::Monster monster;
-                        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(monstersElement) && monstersElement->Attribute("id")!=NULL && monstersElement->Attribute("level")!=NULL && monstersElement->Attribute("captured_with")!=NULL)
+                        if(reputationNameToId.find(reputationElement->Attribute("type"))==reputationNameToId.cend())
                         {
-                            monster.id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                            if(!ok)
-                                std::cerr << "Unable to open the xml file: " << file << ", monster id is not a number: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                            if(ok)
+                            std::cerr << "Unable to open the xml file: " << file << ", reputation type not found " << reputationElement->Attribute("type") << ": child->Name(): " << startItem->Name() << std::endl;
+                            ok=false;
+                        }
+                        if(ok)
+                        {
+                            reputationTemp.internalIndex=reputationNameToId.at(reputationElement->Attribute("type"));
+                            if(reputationTemp.level==0)
                             {
-                                monster.level=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level"))),&ok);
-                                if(!ok)
-                                    std::cerr << "Unable to open the xml file: " << file << ", monster level is not a number: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", reputation level is useless if level 0: child->Name(): " << startItem->Name() << std::endl;
+                                ok=false;
                             }
-                            if(ok)
+                            else if(reputationTemp.level<0)
                             {
-                                if(monster.level==0 || monster.level>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
-                                    std::cerr << "Unable to open the xml file: " << file << ", monster level is not into the range: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                            }
-                            if(ok)
-                            {
-                                monster.captured_with=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("captured_with"))),&ok);
-                                if(!ok)
-                                    std::cerr << "Unable to open the xml file: " << file << ", captured_with is not a number: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                            }
-                            if(ok)
-                            {
-                                if(monsters.find(monster.id)==monsters.cend())
+                                if((-reputationTemp.level)>(int32_t)reputations.at(reputationTemp.internalIndex).reputation_negative.size())
                                 {
-                                    std::cerr << "Unable to open the xml file: " << file << ", starter don't found the monster " << monster.id << ": child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", reputation level is lower than minimal level for "
+                                              << reputationElement->Attribute("type") << ": child->Name(): " << startItem->Name() << std::endl;
+                                    ok=false;
+                                }
+                            }
+                            else// if(reputationTemp.level>0)
+                            {
+                                if((reputationTemp.level)>=(int32_t)reputations.at(reputationTemp.internalIndex).reputation_positive.size())
+                                {
+                                    std::cerr << "Unable to open the xml file: " << file << ", reputation level is higther than maximal level for "
+                                              << reputationElement->Attribute("type") << ": child->Name(): " << startItem->Name() << std::endl;
+                                    ok=false;
+                                }
+                            }
+                        }
+                        if(ok)
+                        {
+                            reputationTemp.point=0;
+                            if(reputationElement->Attribute("point")!=NULL)
+                            {
+                                reputationTemp.point=stringtoint32(reputationElement->Attribute("point"),&ok);
+                                std::cerr << "Unable to open the xml file: " << file << ", reputation point is not a number: child->Name(): " << startItem->Name() << std::endl;
+                                if(ok)
+                                {
+                                    if((reputationTemp.point>0 && reputationTemp.level<0) || (reputationTemp.point<0 && reputationTemp.level>=0))
+                                        std::cerr << "Unable to open the xml file: " << file << ", reputation point is not negative/positive like the level: child->Name(): " << startItem->Name() << std::endl;
+                                }
+                            }
+                        }
+                    }
+                    if(ok)
+                        profile.reputations.push_back(reputationTemp);
+                }
+                reputationElement = reputationElement->NextSiblingElement("reputation");
+            }
+            const tinyxml2::XMLElement * itemElement = startItem->FirstChildElement("item");
+            while(itemElement!=NULL)
+            {
+                Profile::Item itemTemp;
+                if(itemElement->Attribute("id")!=NULL)
+                {
+                    itemTemp.id=stringtouint16(itemElement->Attribute("id"),&ok);
+                    if(!ok)
+                        std::cerr << "Unable to open the xml file: " << file << ", item id is not a number: child->Name(): " << startItem->Name() << std::endl;
+                    if(ok)
+                    {
+                        itemTemp.quantity=0;
+                        if(itemElement->Attribute("quantity")!=NULL)
+                        {
+                            itemTemp.quantity=stringtouint32(itemElement->Attribute("quantity"),&ok);
+                            if(!ok)
+                                std::cerr << "Unable to open the xml file: " << file << ", item quantity is not a number: child->Name(): " << startItem->Name() << std::endl;
+                            if(ok)
+                            {
+                                if(itemTemp.quantity==0)
+                                {
+                                    std::cerr << "Unable to open the xml file: " << file << ", item quantity is null: child->Name(): " << startItem->Name() << std::endl;
                                     ok=false;
                                 }
                             }
                             #ifndef CATCHCHALLENGER_CLASS_MASTER
                             if(ok)
                             {
-                                if(items.find(monster.captured_with)==items.cend())
-                                    std::cerr << "Unable to open the xml file: " << file << ", starter don't found the monster capture item " << monster.id << ": child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                            }
-                            #endif // CATCHCHALLENGER_CLASS_MASTER
-                            if(ok)
-                                monsters_list.push_back(monster);
-                        }
-                        else
-                            std::cerr << "Unable to open the xml file: " << file << ", no monster attribute to load: child->Name(): " << monstersElement->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monstersElement) << ")" << std::endl;
-                        monstersElement = monstersElement->NextSiblingElement("monster");
-                    }
-                    if(monsters_list.empty())
-                    {
-                        std::cerr << "Unable to open the xml file: " << file << ", no monster to load: child->Name(): " << monstersElement->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monstersElement) << ")" << std::endl;
-                        startItem = startItem->NextSiblingElement("start");
-                        continue;
-                    }
-                    profile.monstergroup.push_back(monsters_list);
-                    monstersElementGroup = monstersElementGroup->NextSiblingElement("monstergroup");
-                }
-                if(profile.monstergroup.empty())
-                {
-                    std::cerr << "Unable to open the xml file: " << file << ", no monstergroup to load: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                    startItem = startItem->NextSiblingElement("start");
-                    continue;
-                }
-                const tinyxml2::XMLElement * reputationElement = startItem->FirstChildElement("reputation");
-                while(reputationElement!=NULL)
-                {
-                    Profile::Reputation reputationTemp;
-                    reputationTemp.internalIndex=255;
-                    reputationTemp.level=-1;
-                    reputationTemp.point=0xFFFFFFFF;
-                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(reputationElement) && reputationElement->Attribute("type")!=NULL && reputationElement->Attribute("level")!=NULL)
-                    {
-                        reputationTemp.level=stringtoint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("level"))),&ok);
-                        if(!ok)
-                            std::cerr << "Unable to open the xml file: " << file << ", reputation level is not a number: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                        if(ok)
-                        {
-                            if(reputationNameToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))))==reputationNameToId.cend())
-                            {
-                                std::cerr << "Unable to open the xml file: " << file << ", reputation type not found " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))) << ": child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                                ok=false;
-                            }
-                            if(ok)
-                            {
-                                reputationTemp.internalIndex=reputationNameToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))));
-                                if(reputationTemp.level==0)
+                                if(items.find(itemTemp.id)==items.cend())
                                 {
-                                    std::cerr << "Unable to open the xml file: " << file << ", reputation level is useless if level 0: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
+                                    std::cerr << "Unable to open the xml file: " << file << ", item not found as know item " << itemTemp.id << ": child->Name(): " << startItem->Name() << std::endl;
                                     ok=false;
                                 }
-                                else if(reputationTemp.level<0)
-                                {
-                                    if((-reputationTemp.level)>(int32_t)reputations.at(reputationTemp.internalIndex).reputation_negative.size())
-                                    {
-                                        std::cerr << "Unable to open the xml file: " << file << ", reputation level is lower than minimal level for " << reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type")) << ": child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                                        ok=false;
-                                    }
-                                }
-                                else// if(reputationTemp.level>0)
-                                {
-                                    if((reputationTemp.level)>=(int32_t)reputations.at(reputationTemp.internalIndex).reputation_positive.size())
-                                    {
-                                        std::cerr << "Unable to open the xml file: " << file << ", reputation level is higther than maximal level for " << reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type")) << ": child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                                        ok=false;
-                                    }
-                                }
                             }
-                            if(ok)
-                            {
-                                reputationTemp.point=0;
-                                if(reputationElement->Attribute("point")!=NULL)
-                                {
-                                    reputationTemp.point=stringtoint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(reputationElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("point"))),&ok);
-                                    std::cerr << "Unable to open the xml file: " << file << ", reputation point is not a number: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                                    if(ok)
-                                    {
-                                        if((reputationTemp.point>0 && reputationTemp.level<0) || (reputationTemp.point<0 && reputationTemp.level>=0))
-                                            std::cerr << "Unable to open the xml file: " << file << ", reputation point is not negative/positive like the level: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                                    }
-                                }
-                            }
+                            #endif // CATCHCHALLENGER_CLASS_MASTER
                         }
-                        if(ok)
-                            profile.reputations.push_back(reputationTemp);
                     }
-                    reputationElement = reputationElement->NextSiblingElement("reputation");
+                    if(ok)
+                        profile.items.push_back(itemTemp);
                 }
-                const tinyxml2::XMLElement * itemElement = startItem->FirstChildElement("item");
-                while(itemElement!=NULL)
-                {
-                    Profile::Item itemTemp;
-                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(itemElement) && itemElement->Attribute("id")!=NULL)
-                    {
-                        itemTemp.id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(itemElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                        if(!ok)
-                            std::cerr << "Unable to open the xml file: " << file << ", item id is not a number: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                        if(ok)
-                        {
-                            itemTemp.quantity=0;
-                            if(itemElement->Attribute("quantity")!=NULL)
-                            {
-                                itemTemp.quantity=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(itemElement->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("quantity"))),&ok);
-                                if(!ok)
-                                    std::cerr << "Unable to open the xml file: " << file << ", item quantity is not a number: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                                if(ok)
-                                {
-                                    if(itemTemp.quantity==0)
-                                    {
-                                        std::cerr << "Unable to open the xml file: " << file << ", item quantity is null: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                                        ok=false;
-                                    }
-                                }
-                                #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                if(ok)
-                                {
-                                    if(items.find(itemTemp.id)==items.cend())
-                                    {
-                                        std::cerr << "Unable to open the xml file: " << file << ", item not found as know item " << itemTemp.id << ": child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                                        ok=false;
-                                    }
-                                }
-                                #endif // CATCHCHALLENGER_CLASS_MASTER
-                            }
-                        }
-                        if(ok)
-                            profile.items.push_back(itemTemp);
-                    }
-                    itemElement = itemElement->NextSiblingElement("item");
-                }
-                idDuplicate.insert(profile.databaseId);
-                returnVar.second.push_back(profile);
-                returnVar.first.push_back(startItem);
+                itemElement = itemElement->NextSiblingElement("item");
             }
+            idDuplicate.insert(profile.databaseId);
+            returnVar.second.push_back(profile);
+            returnVar.first.push_back(startItem);
         }
-        else
-            std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
         startItem = startItem->NextSiblingElement("start");
     }
     #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -2320,10 +2149,10 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return returnVar;
@@ -2337,7 +2166,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return returnVar;
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"layers"))
+    if(strcmp(root->Name(),"layers")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"layers\" root balise not found for reputation of the xml file" << std::endl;
         return returnVar;
@@ -2348,150 +2177,144 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
     const tinyxml2::XMLElement * monstersCollisionItem = root->FirstChildElement("monstersCollision");
     while(monstersCollisionItem!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(monstersCollisionItem))
+        if(monstersCollisionItem->Attribute("type")==NULL)
+            std::cerr << "Have not the attribute type, into file: " << file << std::endl;
+        else if(monstersCollisionItem->Attribute("monsterType")==NULL)
+            std::cerr << "Have not the attribute monsterType, into: file: " << file << std::endl;
+        else
         {
-            if(monstersCollisionItem->Attribute("type")==NULL)
-                std::cerr << "Have not the attribute type, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(monstersCollisionItem) << std::endl;
-            else if(monstersCollisionItem->Attribute("monsterType")==NULL)
-                std::cerr << "Have not the attribute monsterType, into: file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(monstersCollisionItem) << std::endl;
+            ok=true;
+            MonstersCollision monstersCollision;
+            if(strcmp(monstersCollisionItem->Attribute("type"),"walkOn")==0)
+                monstersCollision.type=MonstersCollisionType_WalkOn;
+            else if(strcmp(monstersCollisionItem->Attribute("type"),"actionOn")==0)
+                monstersCollision.type=MonstersCollisionType_ActionOn;
             else
             {
-                ok=true;
-                MonstersCollision monstersCollision;
-                if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))),"walkOn"))
-                    monstersCollision.type=MonstersCollisionType_WalkOn;
-                else if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("type"))),"actionOn"))
-                    monstersCollision.type=MonstersCollisionType_ActionOn;
-                else
+                ok=false;
+                std::cerr << "type is not walkOn or actionOn, into file: " << file << std::endl;
+            }
+            if(ok)
+            {
+                if(monstersCollisionItem->Attribute("layer")!=NULL)
+                    monstersCollision.layer=monstersCollisionItem->Attribute("layer");
+            }
+            if(ok)
+            {
+                if(monstersCollision.layer.empty() && monstersCollision.type!=MonstersCollisionType_WalkOn)//need specific layer name to do that's
                 {
                     ok=false;
-                    std::cerr << "type is not walkOn or actionOn, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(monstersCollisionItem) << std::endl;
+                    std::cerr << "To have blocking layer by item, have specific layer name, into file: " << file << std::endl;
                 }
-                if(ok)
+                else
                 {
-                    if(monstersCollisionItem->Attribute("layer")!=NULL)
-                        monstersCollision.layer=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("layer")));
-                }
-                if(ok)
-                {
-                    if(monstersCollision.layer.empty() && monstersCollision.type!=MonstersCollisionType_WalkOn)//need specific layer name to do that's
+                    monstersCollision.item=0;
+                    if(monstersCollisionItem->Attribute("item")!=NULL)
                     {
-                        ok=false;
-                        std::cerr << "To have blocking layer by item, have specific layer name, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(monstersCollisionItem) << std::endl;
-                    }
-                    else
-                    {
-                        monstersCollision.item=0;
-                        if(monstersCollisionItem->Attribute("item")!=NULL)
+                        monstersCollision.item=stringtouint16(monstersCollisionItem->Attribute("item"),&ok);
+                        if(!ok)
+                            std::cerr << "item attribute is not a number, into file: " << file << std::endl;
+                        else if(items.find(monstersCollision.item)==items.cend())
                         {
-                            monstersCollision.item=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("item"))),&ok);
-                            if(!ok)
-                                std::cerr << "item attribute is not a number, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(monstersCollisionItem) << std::endl;
-                            else if(items.find(monstersCollision.item)==items.cend())
-                            {
-                                ok=false;
-                                std::cerr << "item is not into item list, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(monstersCollisionItem) << std::endl;
-                            }
+                            ok=false;
+                            std::cerr << "item is not into item list, into file: " << file << std::endl;
                         }
                     }
                 }
-                if(ok)
+            }
+            if(ok)
+            {
+                if(monstersCollisionItem->Attribute("tile")!=NULL)
+                    monstersCollision.tile=monstersCollisionItem->Attribute("tile");
+            }
+            if(ok)
+            {
+                if(monstersCollisionItem->Attribute("background")!=NULL)
+                    monstersCollision.background=monstersCollisionItem->Attribute("background");
+            }
+            if(ok)
+            {
+                if(monstersCollisionItem->Attribute("monsterType")!=NULL)
                 {
-                    if(monstersCollisionItem->Attribute("tile")!=NULL)
-                        monstersCollision.tile=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("tile")));
-                }
-                if(ok)
-                {
-                    if(monstersCollisionItem->Attribute("background")!=NULL)
-                        monstersCollision.background=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("background")));
-                }
-                if(ok)
-                {
-                    if(monstersCollisionItem->Attribute("monsterType")!=NULL)
+                    monstersCollision.defautMonsterTypeList=stringsplit(monstersCollisionItem->Attribute("monsterType"),';');
+                    vectorRemoveEmpty(monstersCollision.defautMonsterTypeList);
+                    vectorRemoveDuplicatesForSmallList(monstersCollision.defautMonsterTypeList);
+                    monstersCollision.monsterTypeList=monstersCollision.defautMonsterTypeList;
+                    //load the condition
+                    const tinyxml2::XMLElement * eventItem = monstersCollisionItem->FirstChildElement("event");
+                    while(eventItem!=NULL)
                     {
-                        monstersCollision.defautMonsterTypeList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monstersCollisionItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("monsterType"))),';');
-                        vectorRemoveEmpty(monstersCollision.defautMonsterTypeList);
-                        vectorRemoveDuplicatesForSmallList(monstersCollision.defautMonsterTypeList);
-                        monstersCollision.monsterTypeList=monstersCollision.defautMonsterTypeList;
-                        //load the condition
-                        const tinyxml2::XMLElement * eventItem = monstersCollisionItem->FirstChildElement("event");
-                        while(eventItem!=NULL)
+                        if(eventItem->Attribute("id")!=NULL && eventItem->Attribute("value")!=NULL && eventItem->Attribute("monsterType")!=NULL)
                         {
-                            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(eventItem))
+                            if(eventStringToId.find(eventItem->Attribute("id"))!=eventStringToId.cend())
                             {
-                                if(eventItem->Attribute("id")!=NULL && eventItem->Attribute("value")!=NULL && eventItem->Attribute("monsterType")!=NULL)
+                                const auto & list=eventListingToId.at(eventItem->Attribute("id"));
+                                if(list.find(eventItem->Attribute("value"))!=list.cend())
                                 {
-                                    if(eventStringToId.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))))!=eventStringToId.cend())
+                                    MonstersCollision::MonstersCollisionEvent event;
+                                    event.event=eventStringToId.at(eventItem->Attribute("id"));
+                                    event.event_value=eventListingToId.at(eventItem->Attribute("id")).at(eventItem->Attribute("value"));
+                                    event.monsterTypeList=stringsplit(eventItem->Attribute("monsterType"),';');
+                                    if(!event.monsterTypeList.empty())
                                     {
-                                        const auto & list=eventListingToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))));
-                                        if(list.find(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("value"))))!=list.cend())
+                                        monstersCollision.events.push_back(event);
+                                        unsigned int index=0;
+                                        while(index<event.monsterTypeList.size())
                                         {
-                                            MonstersCollision::MonstersCollisionEvent event;
-                                            event.event=eventStringToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))));
-                                            event.event_value=eventListingToId.at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id")))).at(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("value"))));
-                                            event.monsterTypeList=stringsplit(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("monsterType"))),';');
-                                            if(!event.monsterTypeList.empty())
-                                            {
-                                                monstersCollision.events.push_back(event);
-                                                unsigned int index=0;
-                                                while(index<event.monsterTypeList.size())
-                                                {
-                                                    if(!vectorcontainsAtLeastOne(monstersCollision.monsterTypeList,event.monsterTypeList.at(index)))
-                                                        monstersCollision.monsterTypeList.push_back(event.monsterTypeList.at(index));
-                                                    index++;
-                                                }
-                                            }
-                                            else
-                                                std::cerr << "monsterType is empty, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(eventItem) << std::endl;
+                                            if(!vectorcontainsAtLeastOne(monstersCollision.monsterTypeList,event.monsterTypeList.at(index)))
+                                                monstersCollision.monsterTypeList.push_back(event.monsterTypeList.at(index));
+                                            index++;
                                         }
-                                        else
-                                            std::cerr << "event value not found, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(eventItem) << std::endl;
                                     }
                                     else
-                                        std::cerr << "event not found, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(eventItem) << std::endl;
+                                        std::cerr << "monsterType is empty, into file: " << file << std::endl;
                                 }
                                 else
-                                    std::cerr << "event have missing attribute, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(eventItem) << std::endl;
+                                    std::cerr << "event value not found, into file: " << file << std::endl;
                             }
-                            eventItem = eventItem->NextSiblingElement("event");
+                            else
+                                std::cerr << "event not found, into file: " << file << std::endl;
                         }
-                    }
-                }
-                if(ok)
-                {
-                    unsigned int index=0;
-                    while(index<returnVar.size())
-                    {
-                        if(returnVar.at(index).type==monstersCollision.type && returnVar.at(index).layer==monstersCollision.layer && returnVar.at(index).item==monstersCollision.item)
-                        {
-                            std::cerr << "similar monstersCollision previously found, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(monstersCollisionItem) << std::endl;
-                            ok=false;
-                            break;
-                        }
-                        if(monstersCollision.type==MonstersCollisionType_WalkOn && returnVar.at(index).layer==monstersCollision.layer)
-                        {
-                            std::cerr << "You can't have different item for same layer in walkOn mode, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(monstersCollisionItem) << std::endl;
-                            ok=false;
-                            break;
-                        }
-                        index++;
-                    }
-                }
-                if(ok && !monstersCollision.monsterTypeList.empty())
-                {
-                    if(monstersCollision.type==MonstersCollisionType_WalkOn && monstersCollision.layer.empty() && monstersCollision.item==0)
-                    {
-                        if(returnVar.empty())
-                            returnVar.push_back(monstersCollision);
                         else
-                        {
-                            returnVar.push_back(returnVar.back());
-                            returnVar.front()=monstersCollision;
-                        }
+                            std::cerr << "event have missing attribute, into file: " << file << std::endl;
+                        eventItem = eventItem->NextSiblingElement("event");
                     }
-                    else
-                        returnVar.push_back(monstersCollision);
                 }
+            }
+            if(ok)
+            {
+                unsigned int index=0;
+                while(index<returnVar.size())
+                {
+                    if(returnVar.at(index).type==monstersCollision.type && returnVar.at(index).layer==monstersCollision.layer && returnVar.at(index).item==monstersCollision.item)
+                    {
+                        std::cerr << "similar monstersCollision previously found, into file: " << file << std::endl;
+                        ok=false;
+                        break;
+                    }
+                    if(monstersCollision.type==MonstersCollisionType_WalkOn && returnVar.at(index).layer==monstersCollision.layer)
+                    {
+                        std::cerr << "You can't have different item for same layer in walkOn mode, into file: " << file << std::endl;
+                        ok=false;
+                        break;
+                    }
+                    index++;
+                }
+            }
+            if(ok && !monstersCollision.monsterTypeList.empty())
+            {
+                if(monstersCollision.type==MonstersCollisionType_WalkOn && monstersCollision.layer.empty() && monstersCollision.item==0)
+                {
+                    if(returnVar.empty())
+                        returnVar.push_back(monstersCollision);
+                    else
+                    {
+                        returnVar.push_back(returnVar.back());
+                        returnVar.front()=monstersCollision;
+                    }
+                }
+                else
+                    returnVar.push_back(monstersCollision);
             }
         }
         monstersCollisionItem = monstersCollisionItem->NextSiblingElement("monstersCollision");
@@ -2515,10 +2338,10 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return returnVar;
@@ -2532,7 +2355,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return returnVar;
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"layers"))
+    if(strcmp(root->Name(),"layers")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"layers\" root balise not found for reputation of the xml file" << std::endl;
         std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;
@@ -2541,7 +2364,7 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
     if(root->Attribute("zoom")!=NULL)
     {
         bool ok;
-        returnVar.zoom=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(root->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("zoom"))),&ok);
+        returnVar.zoom=stringtouint8(root->Attribute("zoom"),&ok);
         if(!ok)
         {
             returnVar.zoom=2;
@@ -2575,10 +2398,10 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return returnVar;
@@ -2592,7 +2415,7 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return returnVar;
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"events"))
+    if(strcmp(root->Name(),"events")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"events\" root balise not found for reputation of the xml file" << std::endl;
         return returnVar;
@@ -2602,29 +2425,26 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     const tinyxml2::XMLElement * eventItem = root->FirstChildElement("event");
     while(eventItem!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(eventItem))
+        if(eventItem->Attribute("id")==NULL)
+            std::cerr << "Have not the attribute id, into file: " << file << std::endl;
+        else
         {
-            if(eventItem->Attribute("id")==NULL)
-                std::cerr << "Have not the attribute id, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(eventItem) << std::endl;
+            std::string idString=eventItem->Attribute("id");
+            if(idString.empty())
+                std::cerr << "Have id empty, into file: " << file << std::endl;
             else
             {
-                std::string idString=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(eventItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id")));
-                if(idString.empty())
-                    std::cerr << "Have id empty, into file: " << file << " at line " << CATCHCHALLENGER_XMLELENTATLINE(eventItem) << std::endl;
-                else
+                Event event;
+                event.name=idString;
+                const tinyxml2::XMLElement * valueItem = eventItem->FirstChildElement("value");
+                while(valueItem!=NULL)
                 {
-                    Event event;
-                    event.name=idString;
-                    const tinyxml2::XMLElement * valueItem = eventItem->FirstChildElement("value");
-                    while(valueItem!=NULL)
-                    {
-                        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(valueItem) && valueItem->GetText()!=NULL)
-                            event.values.push_back(valueItem->GetText());
-                        valueItem = valueItem->NextSiblingElement("value");
-                    }
-                    if(!event.values.empty())
-                        returnVar.push_back(event);
+                    if(valueItem->GetText()!=NULL)
+                        event.values.push_back(valueItem->GetText());
+                    valueItem = valueItem->NextSiblingElement("value");
                 }
+                if(!event.values.empty())
+                    returnVar.push_back(event);
             }
         }
         eventItem = eventItem->NextSiblingElement("event");
@@ -2649,10 +2469,10 @@ std::unordered_map<uint16_t, Shop> DatapackGeneralLoader::preload_shop(const std
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return shops;
@@ -2666,7 +2486,7 @@ std::unordered_map<uint16_t, Shop> DatapackGeneralLoader::preload_shop(const std
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return shops;
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"shops"))
+    if(strcmp(root->Name(),"shops")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"shops\" root balise not found for reputation of the xml file" << std::endl;
         return shops;
@@ -2677,69 +2497,59 @@ std::unordered_map<uint16_t, Shop> DatapackGeneralLoader::preload_shop(const std
     const tinyxml2::XMLElement * shopItem = root->FirstChildElement("shop");
     while(shopItem!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(shopItem))
+        if(shopItem->Attribute("id")!=NULL)
         {
-            if(shopItem->Attribute("id")!=NULL)
+            const uint16_t id=stringtouint16(shopItem->Attribute("id"),&ok);
+            if(ok)
             {
-                const uint16_t id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(shopItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id"))),&ok);
-                if(ok)
+                if(shops.find(id)==shops.cend())
                 {
-                    if(shops.find(id)==shops.cend())
+                    Shop shop;
+                    const tinyxml2::XMLElement * product = shopItem->FirstChildElement("product");
+                    while(product!=NULL)
                     {
-                        Shop shop;
-                        const tinyxml2::XMLElement * product = shopItem->FirstChildElement("product");
-                        while(product!=NULL)
+                        if(product->Attribute("itemId")!=NULL)
                         {
-                            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(product))
+                            uint16_t itemId=stringtouint16(product->Attribute("itemId"),&ok);
+                            if(!ok)
+                                std::cerr << "preload_shop() product attribute itemId is not a number for shops file: " << file << ", child->Name(): " << shopItem->Name() << std::endl;
+                            else
                             {
-                                if(product->Attribute("itemId")!=NULL)
+                                if(items.find(itemId)==items.cend())
+                                    std::cerr << "preload_shop() product itemId in not into items list for shops file: " << file << ", child->Name(): " << shopItem->Name() << std::endl;
+                                else
                                 {
-                                    uint16_t itemId=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(product->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("itemId"))),&ok);
-                                    if(!ok)
-                                        std::cerr << "preload_shop() product attribute itemId is not a number for shops file: " << file << ", child->Name(): " << shopItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(shopItem) << ")" << std::endl;
+                                    uint32_t price=items.at(itemId).price;
+                                    if(product->Attribute("overridePrice")!=NULL)
+                                    {
+                                        price=stringtouint32(product->Attribute("overridePrice"),&ok);
+                                        if(!ok)
+                                            price=items.at(itemId).price;
+                                    }
+                                    if(price==0)
+                                        std::cerr << "preload_shop() item can't be into the shop with price == 0' for shops file: " << file << ", child->Name(): " << shopItem->Name() << std::endl;
                                     else
                                     {
-                                        if(items.find(itemId)==items.cend())
-                                            std::cerr << "preload_shop() product itemId in not into items list for shops file: " << file << ", child->Name(): " << shopItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(shopItem) << ")" << std::endl;
-                                        else
-                                        {
-                                            uint32_t price=items.at(itemId).price;
-                                            if(product->Attribute("overridePrice")!=NULL)
-                                            {
-                                                price=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(product->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("overridePrice"))),&ok);
-                                                if(!ok)
-                                                    price=items.at(itemId).price;
-                                            }
-                                            if(price==0)
-                                                std::cerr << "preload_shop() item can't be into the shop with price == 0' for shops file: " << file << ", child->Name(): " << shopItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(shopItem) << ")" << std::endl;
-                                            else
-                                            {
-                                                shop.prices.push_back(price);
-                                                shop.items.push_back(itemId);
-                                            }
-                                        }
+                                        shop.prices.push_back(price);
+                                        shop.items.push_back(itemId);
                                     }
                                 }
-                                else
-                                    std::cerr << "preload_shop() material have not attribute itemId for shops file: " << file << ", child->Name(): " << shopItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(shopItem) << ")" << std::endl;
                             }
-                            else
-                                std::cerr << "preload_shop() material is not an element for shops file: " << file << ", child->Name(): " << shopItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(shopItem) << ")" << std::endl;
-                            product = product->NextSiblingElement("product");
                         }
-                        shops[id]=shop;
+                        else
+                            std::cerr << "preload_shop() material have not attribute itemId for shops file: " << file << ", child->Name(): " << shopItem->Name() << std::endl;
+                        product = product->NextSiblingElement("product");
                     }
-                    else
-                        std::cerr << "Unable to open the shops file: " << file << ", child->Name(): " << shopItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(shopItem) << ")" << std::endl;
+                    shops[id]=shop;
                 }
                 else
-                    std::cerr << "Unable to open the shops file: " << file << ", id is not a number: child->Name(): " << shopItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(shopItem) << ")" << std::endl;
+                    std::cerr << "Unable to open the shops file: " << file << ", child->Name(): " << shopItem->Name() << std::endl;
             }
             else
-                std::cerr << "Unable to open the shops file: " << file << ", have not the shops id: child->Name(): " << shopItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(shopItem) << ")" << std::endl;
+                std::cerr << "Unable to open the shops file: " << file << ", id is not a number: child->Name(): " << shopItem->Name() << std::endl;
         }
         else
-            std::cerr << "Unable to open the shops file: " << file << ", is not an element: child->Name(): " << shopItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(shopItem) << ")" << std::endl;
+            std::cerr << "Unable to open the shops file: " << file << ", have not the shops id: child->Name(): " << shopItem->Name() << std::endl;
         shopItem = shopItem->NextSiblingElement("shop");
     }
     #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -2820,10 +2630,10 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
         #else
-        domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+        domDocument=new tinyxml2::XMLDocument();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return serverProfileList;
@@ -2837,7 +2647,7 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return serverProfileList;
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"profile"))
+    if(strcmp(root->Name(),"profile")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"profile\" root balise not found for reputation of the xml file" << std::endl;
         return serverProfileList;
@@ -2848,67 +2658,62 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
     const tinyxml2::XMLElement * startItem = root->FirstChildElement("start");
     while(startItem!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(startItem))
+        ServerSpecProfile serverProfile;
+        serverProfile.orientation=Orientation_bottom;
+
+        const tinyxml2::XMLElement * map = startItem->FirstChildElement("map");
+        if(map!=NULL && map->Attribute("file")!=NULL && map->Attribute("x")!=NULL && map->Attribute("y")!=NULL)
         {
-            ServerSpecProfile serverProfile;
-            serverProfile.orientation=Orientation_bottom;
-
-            const tinyxml2::XMLElement * map = startItem->FirstChildElement("map");
-            if(map!=NULL && CATCHCHALLENGER_XMLELENTISXMLELEMENT(map) && map->Attribute("file")!=NULL && map->Attribute("x")!=NULL && map->Attribute("y")!=NULL)
+            serverProfile.mapString=map->Attribute("file");
+            if(!stringEndsWith(serverProfile.mapString,".tmx"))
+                serverProfile.mapString+=".tmx";
+            if(!CatchChallenger::FacilityLibGeneral::isFile(datapackPath+DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+'/'+serverProfile.mapString))
             {
-                serverProfile.mapString=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(map->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("file")));
-                if(!stringEndsWith(serverProfile.mapString,".tmx"))
-                    serverProfile.mapString+=".tmx";
-                if(!CatchChallenger::FacilityLibGeneral::isFile(datapackPath+DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+'/'+serverProfile.mapString))
+                std::cerr << "Unable to open the xml file: " << file << ", map don't exists " << serverProfile.mapString << ": child->Name(): " << startItem->Name() << std::endl;
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", map don't exists " << serverProfile.mapString << ": child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                    {
-                        std::cerr << "Into the starter the map \"" << serverProfile.mapString << "\" is not found, fix it (abort)" << std::endl;
-                        abort();
-                    }
-                    startItem = startItem->NextSiblingElement("start");
-                    continue;
+                    std::cerr << "Into the starter the map \"" << serverProfile.mapString << "\" is not found, fix it (abort)" << std::endl;
+                    abort();
                 }
-                serverProfile.x=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(map->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("x"))),&ok);
-                if(!ok)
-                {
-                    std::cerr << "Unable to open the xml file: " << file << ", map x is not a number: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                    startItem = startItem->NextSiblingElement("start");
-                    continue;
-                }
-                serverProfile.y=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(map->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("y"))),&ok);
-                if(!ok)
-                {
-                    std::cerr << "Unable to open the xml file: " << file << ", map y is not a number: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
-                    startItem = startItem->NextSiblingElement("start");
-                    continue;
-                }
-            }
-            else
-            {
-                std::cerr << "Unable to open the xml file: " << file << ", no correct map configuration: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
                 startItem = startItem->NextSiblingElement("start");
                 continue;
             }
-
-            if(startItem->Attribute("id")!=NULL)
-                serverProfile.databaseId=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(startItem->Attribute(CATCHCHALLENGER_XMLCHARPOINTERTONATIVESTRING("id")));
-
-            if(idDuplicate.find(serverProfile.databaseId)!=idDuplicate.cend())
+            serverProfile.x=stringtouint8(map->Attribute("x"),&ok);
+            if(!ok)
             {
-                std::cerr << "Unable to open the xml file: " << file << ", id duplicate: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
+                std::cerr << "Unable to open the xml file: " << file << ", map x is not a number: child->Name(): " << startItem->Name() << std::endl;
                 startItem = startItem->NextSiblingElement("start");
                 continue;
             }
-
-            if(!serverProfile.databaseId.empty() && idDuplicate.find(serverProfile.databaseId)==idDuplicate.cend())
+            serverProfile.y=stringtouint8(map->Attribute("y"),&ok);
+            if(!ok)
             {
-                idDuplicate.insert(serverProfile.databaseId);
-                serverProfileList.push_back(serverProfile);
+                std::cerr << "Unable to open the xml file: " << file << ", map y is not a number: child->Name(): " << startItem->Name() << std::endl;
+                startItem = startItem->NextSiblingElement("start");
+                continue;
             }
         }
         else
-            std::cerr << "Unable to open the xml file: " << file << ", is not an element: child->Name(): " << startItem->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(startItem) << ")" << std::endl;
+        {
+            std::cerr << "Unable to open the xml file: " << file << ", no correct map configuration: child->Name(): " << startItem->Name() << std::endl;
+            startItem = startItem->NextSiblingElement("start");
+            continue;
+        }
+
+        if(startItem->Attribute("id")!=NULL)
+            serverProfile.databaseId=startItem->Attribute("id");
+
+        if(idDuplicate.find(serverProfile.databaseId)!=idDuplicate.cend())
+        {
+            std::cerr << "Unable to open the xml file: " << file << ", id duplicate: child->Name(): " << startItem->Name() << std::endl;
+            startItem = startItem->NextSiblingElement("start");
+            continue;
+        }
+
+        if(!serverProfile.databaseId.empty() && idDuplicate.find(serverProfile.databaseId)==idDuplicate.cend())
+        {
+            idDuplicate.insert(serverProfile.databaseId);
+            serverProfileList.push_back(serverProfile);
+        }
         startItem = startItem->NextSiblingElement("start");
     }
     #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -2945,10 +2750,10 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
         {
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
             #else
-            domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
+            domDocument=new tinyxml2::XMLDocument();
             #endif
-            const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-            if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            if(loadOkay!=0)
             {
                 std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
                 file_index++;
@@ -2963,7 +2768,7 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
             file_index++;
             continue;
         }
-        if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"monsters"))
+        if(strcmp(root->Name(),"monsters")!=0)
         {
             file_index++;
             continue;
@@ -2974,166 +2779,151 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
         const tinyxml2::XMLElement * item = root->FirstChildElement("monster");
         while(item!=NULL)
         {
-            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(item))
+            if(item->Attribute("id")!=NULL)
             {
-                if(item->Attribute("id")!=NULL)
+                const uint16_t &id=stringtouint16(item->Attribute("id"),&ok);
+                if(!ok)
+                    std::cerr << "Unable to open the xml file: " << file << ", id not a number: child.tagName(): " << item->Name() << std::endl;
+                else if(monsters.find(id)==monsters.cend())
+                    std::cerr << "Unable to open the xml file: " << file << ", id into the monster list, skip: child.tagName(): " << item->Name() << std::endl;
+                else
                 {
-                    const uint16_t &id=stringtouint16(item->Attribute("id"),&ok);
-                    if(!ok)
-                        std::cerr << "Unable to open the xml file: " << file << ", id not a number: child.tagName(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
-                    else if(monsters.find(id)==monsters.cend())
-                        std::cerr << "Unable to open the xml file: " << file << ", id into the monster list, skip: child.tagName(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
-                    else
+                    const tinyxml2::XMLElement * drops = item->FirstChildElement("drops");
+                    if(drops!=NULL)
                     {
-                        const tinyxml2::XMLElement * drops = item->FirstChildElement("drops");
-                        if(drops!=NULL)
+                        const tinyxml2::XMLElement * drop = drops->FirstChildElement("drop");
+                        while(drop!=NULL)
                         {
-                            if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(drops))
+                            if(drop->Attribute("item")!=NULL)
                             {
-                                const tinyxml2::XMLElement * drop = drops->FirstChildElement("drop");
-                                while(drop!=NULL)
+                                MonsterDrops dropVar;
+                                dropVar.item=0;
+                                if(drop->Attribute("quantity_min")!=NULL)
                                 {
-                                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(drop))
+                                    dropVar.quantity_min=stringtouint32(drop->Attribute("quantity_min"),&ok);
+                                    if(!ok)
+                                        std::cerr << "Unable to open the xml file: " << file << ", quantity_min is not a number: child.tagName(): " << drop->Name() << std::endl;
+                                }
+                                else
+                                    dropVar.quantity_min=1;
+                                if(ok)
+                                {
+                                    if(drop->Attribute("quantity_max")!=NULL)
                                     {
-                                        if(drop->Attribute("item")!=NULL)
-                                        {
-                                            MonsterDrops dropVar;
-                                            dropVar.item=0;
-                                            if(drop->Attribute("quantity_min")!=NULL)
-                                            {
-                                                dropVar.quantity_min=stringtouint32(drop->Attribute("quantity_min"),&ok);
-                                                if(!ok)
-                                                    std::cerr << "Unable to open the xml file: " << file << ", quantity_min is not a number: child.tagName(): " << drop->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
-                                            }
-                                            else
-                                                dropVar.quantity_min=1;
-                                            if(ok)
-                                            {
-                                                if(drop->Attribute("quantity_max")!=NULL)
-                                                {
-                                                    dropVar.quantity_max=stringtouint32(drop->Attribute("quantity_max"),&ok);
-                                                    if(!ok)
-                                                        std::cerr << "Unable to open the xml file: " << file << ", quantity_max is not a number: child.tagName(): " << drop->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
-                                                }
-                                                else
-                                                    dropVar.quantity_max=1;
-                                            }
-                                            if(ok)
-                                            {
-                                                if(dropVar.quantity_min<=0)
-                                                {
-                                                    ok=false;
-                                                    std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_min is 0: child.tagName(): " << drop->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
-                                                }
-                                            }
-                                            if(ok)
-                                            {
-                                                if(dropVar.quantity_max<=0)
-                                                {
-                                                    ok=false;
-                                                    std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_max is 0: child.tagName(): " << drop->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
-                                                }
-                                            }
-                                            if(ok)
-                                            {
-                                                if(dropVar.quantity_max<dropVar.quantity_min)
-                                                {
-                                                    ok=false;
-                                                    std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_max<dropVar.quantity_min: child.tagName(): " << drop->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
-                                                }
-                                            }
-                                            if(ok)
-                                            {
-                                                if(drop->Attribute("luck")!=NULL)
-                                                {
-                                                    std::string luck=drop->Attribute("luck");
-                                                    if(!luck.empty())
-                                                        if(luck.back()=='%')
-                                                            luck.resize(luck.size()-1);
-                                                    dropVar.luck=stringtouint8(luck,&ok);
-                                                    if(!ok)
-                                                        std::cerr << "Unable to open the xml file: " << file << ", luck is not a number: child.tagName(): " << drop->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
-                                                    else if(dropVar.luck==0)
-                                                    {
-                                                        std::cerr << "Unable to open the xml file: " << file << ", luck can't be 0: child.tagName(): " << drop->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
-                                                        ok=false;
-                                                    }
-                                                }
-                                                else
-                                                    dropVar.luck=100;
-                                            }
-                                            if(ok)
-                                            {
-                                                if(dropVar.luck<=0)
-                                                {
-                                                    ok=false;
-                                                    std::cerr << "Unable to open the xml file: " << file << ", luck is 0!: child.tagName(): " << drop->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
-                                                }
-                                                if(dropVar.luck>100)
-                                                {
-                                                    ok=false;
-                                                    std::cerr << "Unable to open the xml file: " << file << ", luck is greater than 100: child.tagName(): " << drop->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
-                                                }
-                                            }
-                                            if(ok)
-                                            {
-                                                if(drop->Attribute("item")!=NULL)
-                                                {
-                                                    dropVar.item=stringtouint16(drop->Attribute("item"),&ok);
-                                                    if(!ok)
-                                                        std::cerr << "Unable to open the xml file: " << file << ", item is not a number: child.tagName(): " << drop->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
-                                                }
-                                                else
-                                                    dropVar.luck=100;
-                                            }
-                                            if(ok)
-                                            {
-                                                if(items.find(dropVar.item)==items.cend())
-                                                {
-                                                    ok=false;
-                                                    std::cerr << "Unable to open the xml file: " << file << ", the item " << dropVar.item << " is not into the item list: child.tagName(): %2 (at line: %3)" << std::endl;
-                                                }
-                                            }
-                                            if(ok)
-                                            {
-                                                if(static_cast<double>(CommonSettingsServer::commonSettingsServer.rates_drop)!=1.0)
-                                                {
-                                                    if(CommonSettingsServer::commonSettingsServer.rates_drop==0)
-                                                    {
-                                                        std::cerr << "CommonSettingsServer::commonSettingsServer.rates_drop==0 durring loading the drop, reset to 1" << std::endl;
-                                                        CommonSettingsServer::commonSettingsServer.rates_drop=1;
-                                                    }
-                                                    dropVar.luck=dropVar.luck*CommonSettingsServer::commonSettingsServer.rates_drop;
-                                                    double targetAverage=static_cast<double>(((double)dropVar.quantity_min+(double)dropVar.quantity_max)/2.0);
-                                                    targetAverage=static_cast<double>((targetAverage*dropVar.luck)/100.0);
-                                                    while(dropVar.luck>100)
-                                                    {
-                                                        dropVar.quantity_max++;
-                                                        double currentAverage=static_cast<double>(((double)dropVar.quantity_min+(double)dropVar.quantity_max)/2.0);
-                                                        dropVar.luck=static_cast<double>((100.0*targetAverage)/currentAverage);
-                                                    }
-                                                }
-                                                monsterDrops[id].push_back(dropVar);
-                                            }
-                                        }
-                                        else
-                                            std::cerr << "Unable to open the xml file: " << file << ", as not item attribute: child.tagName(): " << drop->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
+                                        dropVar.quantity_max=stringtouint32(drop->Attribute("quantity_max"),&ok);
+                                        if(!ok)
+                                            std::cerr << "Unable to open the xml file: " << file << ", quantity_max is not a number: child.tagName(): " << drop->Name() << std::endl;
                                     }
                                     else
-                                        std::cerr << "Unable to open the xml file: " << file << ", effect balise is not an element: child.tagName(): " << drop->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(drop) << ")" << std::endl;
-                                    drop = drop->NextSiblingElement("drop");
+                                        dropVar.quantity_max=1;
+                                }
+                                if(ok)
+                                {
+                                    if(dropVar.quantity_min<=0)
+                                    {
+                                        ok=false;
+                                        std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_min is 0: child.tagName(): " << drop->Name() << std::endl;
+                                    }
+                                }
+                                if(ok)
+                                {
+                                    if(dropVar.quantity_max<=0)
+                                    {
+                                        ok=false;
+                                        std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_max is 0: child.tagName(): " << drop->Name() << std::endl;
+                                    }
+                                }
+                                if(ok)
+                                {
+                                    if(dropVar.quantity_max<dropVar.quantity_min)
+                                    {
+                                        ok=false;
+                                        std::cerr << "Unable to open the xml file: " << file << ", dropVar.quantity_max<dropVar.quantity_min: child.tagName(): " << drop->Name() << std::endl;
+                                    }
+                                }
+                                if(ok)
+                                {
+                                    if(drop->Attribute("luck")!=NULL)
+                                    {
+                                        std::string luck=drop->Attribute("luck");
+                                        if(!luck.empty())
+                                            if(luck.back()=='%')
+                                                luck.resize(luck.size()-1);
+                                        dropVar.luck=stringtouint8(luck,&ok);
+                                        if(!ok)
+                                            std::cerr << "Unable to open the xml file: " << file << ", luck is not a number: child.tagName(): " << drop->Name() << std::endl;
+                                        else if(dropVar.luck==0)
+                                        {
+                                            std::cerr << "Unable to open the xml file: " << file << ", luck can't be 0: child.tagName(): " << drop->Name() << std::endl;
+                                            ok=false;
+                                        }
+                                    }
+                                    else
+                                        dropVar.luck=100;
+                                }
+                                if(ok)
+                                {
+                                    if(dropVar.luck<=0)
+                                    {
+                                        ok=false;
+                                        std::cerr << "Unable to open the xml file: " << file << ", luck is 0!: child.tagName(): " << drop->Name() << std::endl;
+                                    }
+                                    if(dropVar.luck>100)
+                                    {
+                                        ok=false;
+                                        std::cerr << "Unable to open the xml file: " << file << ", luck is greater than 100: child.tagName(): " << drop->Name() << std::endl;
+                                    }
+                                }
+                                if(ok)
+                                {
+                                    if(drop->Attribute("item")!=NULL)
+                                    {
+                                        dropVar.item=stringtouint16(drop->Attribute("item"),&ok);
+                                        if(!ok)
+                                            std::cerr << "Unable to open the xml file: " << file << ", item is not a number: child.tagName(): " << drop->Name() << std::endl;
+                                    }
+                                    else
+                                        dropVar.luck=100;
+                                }
+                                if(ok)
+                                {
+                                    if(items.find(dropVar.item)==items.cend())
+                                    {
+                                        ok=false;
+                                        std::cerr << "Unable to open the xml file: " << file << ", the item " << dropVar.item << " is not into the item list: child.tagName(): %2" << std::endl;
+                                    }
+                                }
+                                if(ok)
+                                {
+                                    if(static_cast<double>(CommonSettingsServer::commonSettingsServer.rates_drop)!=1.0)
+                                    {
+                                        if(CommonSettingsServer::commonSettingsServer.rates_drop==0)
+                                        {
+                                            std::cerr << "CommonSettingsServer::commonSettingsServer.rates_drop==0 durring loading the drop, reset to 1" << std::endl;
+                                            CommonSettingsServer::commonSettingsServer.rates_drop=1;
+                                        }
+                                        dropVar.luck=dropVar.luck*CommonSettingsServer::commonSettingsServer.rates_drop;
+                                        double targetAverage=static_cast<double>(((double)dropVar.quantity_min+(double)dropVar.quantity_max)/2.0);
+                                        targetAverage=static_cast<double>((targetAverage*dropVar.luck)/100.0);
+                                        while(dropVar.luck>100)
+                                        {
+                                            dropVar.quantity_max++;
+                                            double currentAverage=static_cast<double>(((double)dropVar.quantity_min+(double)dropVar.quantity_max)/2.0);
+                                            dropVar.luck=static_cast<double>((100.0*targetAverage)/currentAverage);
+                                        }
+                                    }
+                                    monsterDrops[id].push_back(dropVar);
                                 }
                             }
                             else
-                                std::cerr << "Unable to open the xml file: " << file << ", drops balise is not an element: child.tagName(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                                std::cerr << "Unable to open the xml file: " << file << ", as not item attribute: child.tagName(): " << drop->Name() << std::endl;
+                            drop = drop->NextSiblingElement("drop");
                         }
                     }
                 }
-                else
-                    std::cerr << "Unable to open the xml file: " << file << ", have not the monster id: child.tagName(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
             }
             else
-                std::cerr << "Unable to open the xml file: " << file << ", is not an element: child.tagName(): " << item->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
+                std::cerr << "Unable to open the xml file: " << file << ", have not the monster id: child.tagName(): " << item->Name() << std::endl;
             item = item->NextSiblingElement("monster");
         }
         #ifdef EPOLLCATCHCHALLENGERSERVER
