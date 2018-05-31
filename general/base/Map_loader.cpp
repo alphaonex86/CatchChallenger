@@ -4,6 +4,7 @@
 #include "ProtocolParsing.h"
 #include "FacilityLibGeneral.h"
 #include "cpp11addition.h"
+#include "tinyXML2/customtinyxml2.h"
 
 #include "CommonDatapack.h"
 #include "CachedString.h"
@@ -18,7 +19,7 @@
 
 using namespace CatchChallenger;
 
-std::unordered_map<std::string/*file*/, std::unordered_map<uint16_t/*id*/,CATCHCHALLENGER_XMLELEMENT *> > Map_loader::teleportConditionsUnparsed;
+std::unordered_map<std::string/*file*/, std::unordered_map<uint16_t/*id*/,tinyxml2::XMLElement *> > Map_loader::teleportConditionsUnparsed;
 //std::regex e("[^A-Za-z0-9+/=]+",std::regex::ECMAScript|std::regex::optimize);->very slow, 1000x more slow than dropPrefixAndSuffixLowerThen33(
 
 /// \todo put at walkable the tp on push
@@ -156,7 +157,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     std::vector<std::vector<char> > monsterList;
     std::map<std::string/*layer*/,std::vector<char> > mapLayerContentForMonsterCollision;
     bool ok;
-    CATCHCHALLENGER_XMLDOCUMENT *domDocument;
+    tinyxml2::XMLDocument *domDocument;
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -168,22 +169,22 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
-            error=file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument);
+            error=file+", "+tinyxml2errordoc(domDocument);
             return false;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
     }
     #endif
-    const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    const tinyxml2::XMLElement * root = domDocument->RootElement();
     if(root==NULL)
     {
         error=file+", tryLoadMap(): no root balise found for the xml file";
         return false;
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"map"))
+    if(strcmp(root->Name(),"map")!=0)
     {
         error=file+", tryLoadMap(): \"map\" root balise not found for the xml file";
         return false;
@@ -195,7 +196,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
         error="the root node has not the attribute \"width\"";
         return false;
     }
-    map_to_send_temp.width=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(root->Attribute(XMLCACHEDSTRING_width)),&ok);
+    map_to_send_temp.width=stringtouint32(root->Attribute("width"),&ok);
     if(!ok)
     {
         error="the root node has wrong attribute \"width\"";
@@ -203,12 +204,12 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     }
 
     //get the height
-    if(root->Attribute(XMLCACHEDSTRING_height)==NULL)
+    if(root->Attribute("height")==NULL)
     {
         error="the root node has not the attribute \"height\"";
         return false;
     }
-    map_to_send_temp.height=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(root->Attribute(XMLCACHEDSTRING_height)),&ok);
+    map_to_send_temp.height=stringtouint32(root->Attribute("height"),&ok);
     if(!ok)
     {
         error="the root node has wrong attribute \"height\"";
@@ -228,37 +229,21 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     }
 
     //properties
-    const CATCHCHALLENGER_XMLELEMENT * child = root->FirstChildElement(XMLCACHEDSTRING_properties);
+    const tinyxml2::XMLElement * child = root->FirstChildElement(XMLCACHEDSTRING_properties);
     if(child!=NULL)
     {
-        if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(child))
+        const tinyxml2::XMLElement * SubChild=child->FirstChildElement(XMLCACHEDSTRING_property);
+        while(SubChild!=NULL)
         {
-            const CATCHCHALLENGER_XMLELEMENT * SubChild=child->FirstChildElement(XMLCACHEDSTRING_property);
-            while(SubChild!=NULL)
+            if(SubChild->Attribute(XMLCACHEDSTRING_name)!=NULL && SubChild->Attribute(XMLCACHEDSTRING_value)!=NULL)
+                map_to_send_temp.property[std::string(SubChild->Attribute(XMLCACHEDSTRING_name))]=
+                        std::string(SubChild->Attribute(XMLCACHEDSTRING_value));
+            else
             {
-                if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(SubChild))
-                {
-                    if(SubChild->Attribute(XMLCACHEDSTRING_name)!=NULL && SubChild->Attribute(XMLCACHEDSTRING_value)!=NULL)
-                        map_to_send_temp.property[std::string(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(SubChild->Attribute(XMLCACHEDSTRING_name)))]=
-                                std::string(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(SubChild->Attribute(XMLCACHEDSTRING_value)));
-                    else
-                    {
-                        error=std::string("Missing attribute name or value: child->CATCHCHALLENGER_XMLELENTVALUE(): ")+std::string(SubChild->CATCHCHALLENGER_XMLELENTVALUE())+" (at line: "+CATCHCHALLENGER_XMLELENTATLINE(SubChild)+")";
-                        return false;
-                    }
-                }
-                else
-                {
-                    error=std::string("Is not an element: child->CATCHCHALLENGER_XMLELENTVALUE(): ")+std::string(SubChild->CATCHCHALLENGER_XMLELENTVALUE())+" (at line: "+CATCHCHALLENGER_XMLELENTATLINE(SubChild)+")";
-                    return false;
-                }
-                SubChild = SubChild->NextSiblingElement(XMLCACHEDSTRING_property);
+                error=std::string("Missing attribute name or value: child->Name(): ")+std::string(SubChild->Name())+")";
+                return false;
             }
-        }
-        else
-        {
-            error=std::string("Is not an element: child->CATCHCHALLENGER_XMLELENTVALUE(): ")+std::string(child->CATCHCHALLENGER_XMLELENTVALUE())+" (at line: "+CATCHCHALLENGER_XMLELENTATLINE(child)+")";
-            return false;
+            SubChild = SubChild->NextSiblingElement(XMLCACHEDSTRING_property);
         }
     }
 
@@ -266,7 +251,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     int8_t tileheight=16;
     if(root->Attribute(XMLCACHEDSTRING_tilewidth)!=NULL)
     {
-        tilewidth=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(root->Attribute(XMLCACHEDSTRING_tilewidth)),&ok);
+        tilewidth=stringtouint8(root->Attribute(XMLCACHEDSTRING_tilewidth),&ok);
         if(!ok)
         {
             std::cerr << "Unable to open the file: " << file << ", tilewidth is not a number" << std::endl;
@@ -275,7 +260,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     }
     if(root->Attribute(XMLCACHEDSTRING_tileheight)!=NULL)
     {
-        tileheight=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(root->Attribute(XMLCACHEDSTRING_tileheight)),&ok);
+        tileheight=stringtouint8(root->Attribute(XMLCACHEDSTRING_tileheight),&ok);
         if(!ok)
         {
             std::cerr << "Unable to open the file: " << file << ", tilewidth is not a number" << std::endl;
@@ -288,58 +273,53 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     while(child!=NULL)
     {
         if(child->Attribute(XMLCACHEDSTRING_name)==NULL)
-            std::cerr << "Has not attribute \"name\": child->CATCHCHALLENGER_XMLELENTVALUE(): " << child->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")";
-        else if(!CATCHCHALLENGER_XMLELENTISXMLELEMENT(child))
-            std::cerr << "Is not an element: name: " << CATCHCHALLENGER_XMLATTRIBUTETOSTRING(child->Attribute(XMLCACHEDSTRING_name))
-                      << " child->CATCHCHALLENGER_XMLELENTVALUE(): " << child->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")";
+            std::cerr << "Has not attribute \"name\": child->Name(): " << child->Name() << ")";
         else
         {
-            if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(child->Attribute(XMLCACHEDSTRING_name)),"Moving"))
+            if(strcmp(child->Attribute(XMLCACHEDSTRING_name),"Moving")==0)
             {
-                const CATCHCHALLENGER_XMLELEMENT *SubChild=child->FirstChildElement(XMLCACHEDSTRING_object);
+                const tinyxml2::XMLElement *SubChild=child->FirstChildElement(XMLCACHEDSTRING_object);
                 while(SubChild!=NULL)
                 {
-                    if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(SubChild) && SubChild->Attribute(XMLCACHEDSTRING_x)!=NULL && SubChild->Attribute(XMLCACHEDSTRING_y)!=NULL)
+                    if(SubChild->Attribute(XMLCACHEDSTRING_x)!=NULL && SubChild->Attribute(XMLCACHEDSTRING_y)!=NULL)
                     {
-                        const uint32_t &object_x=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(SubChild->Attribute(XMLCACHEDSTRING_x)),&ok)/tilewidth;
+                        const uint32_t &object_x=stringtouint32(SubChild->Attribute(XMLCACHEDSTRING_x),&ok)/tilewidth;
                         if(!ok)
-                            std::cerr << "Wrong conversion with x: child->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
-                                        << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild)
-                                        << "), file: " << file << std::endl;
+                            std::cerr << "Wrong conversion with x: child->Name(): " << SubChild->Name()
+                                        << ", file: " << file << std::endl;
                         else
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            const uint32_t &object_y=(stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(SubChild->Attribute(XMLCACHEDSTRING_y)),&ok)/tileheight)-1;
+                            const uint32_t &object_y=(stringtouint32(SubChild->Attribute(XMLCACHEDSTRING_y),&ok)/tileheight)-1;
 
                             if(!ok)
-                                std::cerr << "Wrong conversion with y: child->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
-                                            << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild)
-                                            << "), file: " << file << std::endl;
+                                std::cerr << "Wrong conversion with y: child->Name(): " << SubChild->Name()
+                                            << ", file: " << file << std::endl;
                             else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
-                                std::cerr << "Object out of the map: child->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
-                                            << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild)
-                                            << "), file: " << file << std::endl;
+                                std::cerr << "Object out of the map: child->Name(): " << SubChild->Name()
+                                            << ", file: " << file << std::endl;
                             else if(SubChild->Attribute(XMLCACHEDSTRING_type)==NULL)
-                                std::cerr << "Missing attribute type missing: SubChild->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                                std::cerr << "Missing attribute type missing: SubChild->Name(): " << SubChild->Name() << ", file: " << file << std::endl;
                             else
                             {
-                                const std::string &type=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(SubChild->Attribute(XMLCACHEDSTRING_type));
+                                const std::string type(SubChild->Attribute(XMLCACHEDSTRING_type));
 
                                 std::unordered_map<std::string,std::string> property_text;
-                                const CATCHCHALLENGER_XMLELEMENT *prop=SubChild->FirstChildElement(XMLCACHEDSTRING_properties);
+                                const tinyxml2::XMLElement *prop=SubChild->FirstChildElement(XMLCACHEDSTRING_properties);
                                 if(prop!=NULL)
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
-                                    std::cerr << "Wrong conversion with y: child->CATCHCHALLENGER_XMLELENTVALUE(): " << prop->CATCHCHALLENGER_XMLELENTVALUE()
+                                    std::cerr << "Wrong conversion with y: child->Name(): " << prop->Name()
                                                 << " (at line: " << std::to_string(prop->Row())
                                                 << "), file: " << fileName << std::endl;
                                     #endif
-                                    const CATCHCHALLENGER_XMLELEMENT *property=prop->FirstChildElement(XMLCACHEDSTRING_property);
+                                    const tinyxml2::XMLElement *property=prop->FirstChildElement(XMLCACHEDSTRING_property);
                                     while(property!=NULL)
                                     {
                                         if(property->Attribute(XMLCACHEDSTRING_name)!=NULL && property->Attribute(XMLCACHEDSTRING_value)!=NULL)
-                                            property_text[std::string(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(property->Attribute(XMLCACHEDSTRING_name)))]=std::string(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(property->Attribute(XMLCACHEDSTRING_value)));
+                                            property_text[std::string(property->Attribute(XMLCACHEDSTRING_name))]=
+                                                    std::string(property->Attribute(XMLCACHEDSTRING_value));
                                         property = property->NextSiblingElement(XMLCACHEDSTRING_property);
                                     }
                                 }
@@ -367,10 +347,10 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                     map_to_send_temp.border.left.y_offset=static_cast<uint16_t>(object_y);
                                                 }
                                                 else
-                                                    std::cerr << "The border " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " " << type << " is already set (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                                                    std::cerr << "The border " << SubChild->Name() << " " << type << " is already set, file: " << file << std::endl;
                                             }
                                             else
-                                                std::cerr << "The border " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " " << type << " can't be empty (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                                                std::cerr << "The border " << SubChild->Name() << " " << type << " can't be empty, file: " << file << std::endl;
                                         }
                                         else if(type=="border-right")//border right
                                         {
@@ -385,10 +365,10 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                     map_to_send_temp.border.right.y_offset=static_cast<uint16_t>(object_y);
                                                 }
                                                 else
-                                                    std::cerr << "The border " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " " << type << " is already set (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                                                    std::cerr << "The border " << SubChild->Name() << " " << type << " is already set, file: " << file << std::endl;
                                             }
                                             else
-                                                std::cerr << "The border " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " " << type << " can't be empty (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                                                std::cerr << "The border " << SubChild->Name() << " " << type << " can't be empty, file: " << file << std::endl;
                                         }
                                         else if(type=="border-top")//border top
                                         {
@@ -403,10 +383,10 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                     map_to_send_temp.border.top.x_offset=static_cast<uint16_t>(object_x);
                                                 }
                                                 else
-                                                    std::cerr << "The border " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " " << type << " is already set (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                                                    std::cerr << "The border " << SubChild->Name() << " " << type << " is already set, file: " << file << std::endl;
                                             }
                                             else
-                                                std::cerr << "The border " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " " << type << " can't be empty (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                                                std::cerr << "The border " << SubChild->Name() << " " << type << " can't be empty, file: " << file << std::endl;
                                         }
                                         else if(type=="border-bottom")//border bottom
                                         {
@@ -421,16 +401,16 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                     map_to_send_temp.border.bottom.x_offset=static_cast<uint16_t>(object_x);
                                                 }
                                                 else
-                                                    std::cerr << "The border " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " " << type << " is already set (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                                                    std::cerr << "The border " << SubChild->Name() << " " << type << " is already set, file: " << file << std::endl;
                                             }
                                             else
-                                                std::cerr << "The border " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " " << type << " can't be empty (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                                                std::cerr << "The border " << SubChild->Name() << " " << type << " can't be empty, file: " << file << std::endl;
                                         }
                                         else
-                                            std::cerr << "Not at middle of border: child->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << ", object_x: " << object_x << ", object_y: " << object_y << ", file: " << file << std::endl;
+                                            std::cerr << "Not at middle of border: child->Name(): " << SubChild->Name() << ", object_x: " << object_x << ", object_y: " << object_y << ", file: " << file << std::endl;
                                     }
                                     else
-                                        std::cerr << "Missing \"map\" properties for the border: " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << ")" << std::endl;
+                                        std::cerr << "Missing \"map\" properties for the border: " << SubChild->Name() << "" << std::endl;
                                 }
                                 else if(type=="teleport on push" || type=="teleport on it" || type=="door")
                                 {
@@ -456,7 +436,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                 {
                                                     uint32_t conditionId=stringtouint32(property_text.at(CACHEDSTRING_condition_id),&ok);
                                                     if(!ok)
-                                                        std::cerr << "condition id is not a number, id: " << property_text.at(CACHEDSTRING_condition_id) << " (" << file << " at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << ")" << std::endl;
+                                                        std::cerr << "condition id is not a number, id: " << property_text.at(CACHEDSTRING_condition_id) << " (" << file << ")" << std::endl;
                                                     else
                                                     {
                                                         std::string conditionFile=FSabsoluteFilePath(
@@ -476,13 +456,13 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                 map_to_send_temp.teleport.push_back(new_tp);
                                             }
                                             else
-                                                std::cerr << "Bad convertion to int for y, type: " << type << ", value: " << property_text.at(CACHEDSTRING_y) << " (" << file << " at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << ")" << std::endl;
+                                                std::cerr << "Bad convertion to int for y, type: " << type << ", value: " << property_text.at(CACHEDSTRING_y) << " (" << file << ")" << std::endl;
                                         }
                                         else
-                                            std::cerr << "Bad convertion to int for x, type: " << type << ", value: " << property_text.at(CACHEDSTRING_x) << " (" << file << " at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << ")" << std::endl;
+                                            std::cerr << "Bad convertion to int for x, type: " << type << ", value: " << property_text.at(CACHEDSTRING_x) << " (" << file << ")" << std::endl;
                                     }
                                     else
-                                        std::cerr << "Missing map,x or y, type: " << type << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                                        std::cerr << "Missing map,x or y, type: " << type << ", file: " << file << std::endl;
                                 }
                                 else if(type=="rescue")
                                 {
@@ -497,28 +477,27 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                     std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
-                                              << " (moving), " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
-                                              << " (line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild)
-                                              << "), file: " << file << std::endl;
+                                              << " (moving), " << SubChild->Name()
+                                              << "file: " << file << std::endl;
                                 }
                             }
                         }
                     }
                     else
-                        std::cerr << "Is not Element: SubChild->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                        std::cerr << "Is not Element: SubChild->Name(): " << SubChild->Name() << ", file: " << file << std::endl;
                     SubChild = SubChild->NextSiblingElement(XMLCACHEDSTRING_object);
                 }
             }
             if(CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(child->Attribute(XMLCACHEDSTRING_name)),"Object"))
             {
-                const CATCHCHALLENGER_XMLELEMENT * SubChild=child->FirstChildElement(XMLCACHEDSTRING_object);
+                const tinyxml2::XMLElement * SubChild=child->FirstChildElement(XMLCACHEDSTRING_object);
                 while(SubChild!=NULL)
                 {
                     if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(SubChild) && SubChild->Attribute(XMLCACHEDSTRING_x)!=NULL && SubChild->Attribute(XMLCACHEDSTRING_y)!=NULL)
                     {
                         const uint32_t &object_x=stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(SubChild->Attribute(XMLCACHEDSTRING_x)),&ok)/tilewidth;
                         if(!ok)
-                            std::cerr << "Wrong conversion with x: child->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
+                            std::cerr << "Wrong conversion with x: child->Name(): " << SubChild->Name()
                                         << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild)
                                         << "), file: " << file << std::endl;
                         else
@@ -528,11 +507,11 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             const uint32_t &object_y=(stringtouint32(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(SubChild->Attribute(XMLCACHEDSTRING_y)),&ok)/tileheight)-1;
 
                             if(!ok)
-                                std::cerr << "Wrong conversion with y: child->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
+                                std::cerr << "Wrong conversion with y: child->Name(): " << SubChild->Name()
                                             << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild)
                                             << "), file: " << file << std::endl;
                             else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
-                                std::cerr << "Object out of the map: child->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
+                                std::cerr << "Object out of the map: child->Name(): " << SubChild->Name()
                                             << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild)
                                             << "), file: " << file << std::endl;
                             else if(SubChild->Attribute(XMLCACHEDSTRING_type)!=NULL)
@@ -540,10 +519,10 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                 const std::string &type=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(SubChild->Attribute(XMLCACHEDSTRING_type));
 
                                 std::unordered_map<std::string,std::string> property_text;
-                                const CATCHCHALLENGER_XMLELEMENT * prop=SubChild->FirstChildElement(XMLCACHEDSTRING_properties);
+                                const tinyxml2::XMLElement * prop=SubChild->FirstChildElement(XMLCACHEDSTRING_properties);
                                 if(prop!=NULL)
                                 {
-                                    const CATCHCHALLENGER_XMLELEMENT * property=prop->FirstChildElement(XMLCACHEDSTRING_property);
+                                    const tinyxml2::XMLElement * property=prop->FirstChildElement(XMLCACHEDSTRING_property);
                                     while(property!=NULL)
                                     {
                                         if(property->Attribute(XMLCACHEDSTRING_name)!=NULL && property->Attribute(XMLCACHEDSTRING_value)!=NULL)
@@ -557,7 +536,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                     if(property_text.find(CACHEDSTRING_skin)!=property_text.cend() && !property_text.at(CACHEDSTRING_skin).empty() && property_text.find(CACHEDSTRING_lookAt)==property_text.cend())
                                     {
                                         property_text[CACHEDSTRING_lookAt]="bottom";
-                                        std::cerr << "skin but not lookAt, fixed by bottom: " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " (" << file << " at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << ")" << std::endl;
+                                        std::cerr << "skin but not lookAt, fixed by bottom: " << SubChild->Name() << " (" << file << ")" << std::endl;
                                     }
                                     if(property_text.find(CACHEDSTRING_file)!=property_text.cend() && property_text.find(CACHEDSTRING_id)!=property_text.cend())
                                     {
@@ -579,7 +558,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         }
                                     }
                                     else
-                                        std::cerr << "Missing \"bot\" properties for the bot: " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
+                                        std::cerr << "Missing \"bot\" properties for the bot: " << SubChild->Name()
                                                   << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild)
                                                   << "), file: " << file << std::endl;
                                 }
@@ -603,7 +582,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         }
                                     }
                                     else
-                                        std::cerr << "Missing \"bot\" properties for the bot: " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
+                                        std::cerr << "Missing \"bot\" properties for the bot: " << SubChild->Name()
                                                   << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild)
                                                   << "), file: " << file
                                                   << std::endl;
@@ -615,18 +594,18 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                     std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
-                                              << " (object), " << SubChild->CATCHCHALLENGER_XMLELENTVALUE()
+                                              << " (object), " << SubChild->Name()
                                               << " (line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild)
                                               << "), file: " << file
                                               << std::endl;
                                 }
                             }
                             else
-                                std::cerr << "Missing attribute type missing: SubChild->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                                std::cerr << "Missing attribute type missing: SubChild->Name(): " << SubChild->Name() << ", file: " << file << std::endl;
                         }
                     }
                     else
-                        std::cerr << "Is not Element: SubChild->CATCHCHALLENGER_XMLELENTVALUE(): " << SubChild->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(SubChild) << "), file: " << file << std::endl;
+                        std::cerr << "Is not Element: SubChild->Name(): " << SubChild->Name() << ", file: " << file << std::endl;
                     SubChild = SubChild->NextSiblingElement(XMLCACHEDSTRING_object);
                 }
             }
@@ -642,36 +621,36 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     {
         if(!CATCHCHALLENGER_XMLELENTISXMLELEMENT(child))
         {
-            error=std::string("Is Element: child->CATCHCHALLENGER_XMLELENTVALUE(): ")+child->CATCHCHALLENGER_XMLELENTVALUE()+", file: "+file;
+            error=std::string("Is Element: child->Name(): ")+child->Name()+", file: "+file;
             return false;
         }
         else if(child->Attribute(XMLCACHEDSTRING_name)==NULL)
         {
-            error=std::string("Has not attribute \"name\": child->CATCHCHALLENGER_XMLELENTVALUE(): ")+child->CATCHCHALLENGER_XMLELENTVALUE()+", file: "+file;
+            error=std::string("Has not attribute \"name\": child->Name(): ")+child->Name()+", file: "+file;
             return false;
         }
         else
         {
-            const CATCHCHALLENGER_XMLELEMENT *data=child->FirstChildElement(XMLCACHEDSTRING_data);
+            const tinyxml2::XMLElement *data=child->FirstChildElement(XMLCACHEDSTRING_data);
             const std::string name=CATCHCHALLENGER_XMLATTRIBUTETOSTRING(child->Attribute(XMLCACHEDSTRING_name));
             if(data==NULL)
             {
-                error=std::string("Is Element for layer is null: ")+data->CATCHCHALLENGER_XMLELENTVALUE()+" and name: "+name+", file: "+file;
+                error=std::string("Is Element for layer is null: ")+data->Name()+" and name: "+name+", file: "+file;
                 return false;
             }
             else if(!CATCHCHALLENGER_XMLELENTISXMLELEMENT(data))
             {
-                error=std::string("Is Element for layer child->CATCHCHALLENGER_XMLELENTVALUE(): ")+data->CATCHCHALLENGER_XMLELENTVALUE()+", file: "+file;
+                error=std::string("Is Element for layer child->Name(): ")+data->Name()+", file: "+file;
                 return false;
             }
             else if(data->Attribute(XMLCACHEDSTRING_encoding)==NULL)
             {
-                error=std::string("Has not attribute \"base64\": child->CATCHCHALLENGER_XMLELENTVALUE(): ")+data->CATCHCHALLENGER_XMLELENTVALUE()+", file: "+file;
+                error=std::string("Has not attribute \"base64\": child->Name(): ")+data->Name()+", file: "+file;
                 return false;
             }
             else if(data->Attribute(XMLCACHEDSTRING_compression)==NULL)
             {
-                error=std::string("Has not attribute \"zlib\": child->CATCHCHALLENGER_XMLELENTVALUE(): ")+data->CATCHCHALLENGER_XMLELENTVALUE()+", file: "+file;
+                error=std::string("Has not attribute \"zlib\": child->Name(): ")+data->Name()+", file: "+file;
                 return false;
             }
             else if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(data->Attribute(XMLCACHEDSTRING_encoding)),XMLCACHEDSTRING_base64))
@@ -857,7 +836,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 }
                 else
                 {
-                    error=std::string("base64 encoding layer corrupted \"")+name+"\": child->CATCHCHALLENGER_XMLELENTVALUE(): "+child->CATCHCHALLENGER_XMLELENTVALUE()+", file: "+file;
+                    error=std::string("base64 encoding layer corrupted \"")+name+"\": child->Name(): "+child->Name()+", file: "+file;
                     return false;
                 }
             }
@@ -1246,7 +1225,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
 
 bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer)
 {
-    CATCHCHALLENGER_XMLDOCUMENT *domDocument;
+    tinyxml2::XMLDocument *domDocument;
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -1258,10 +1237,10 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(loadOkay!=0)
         {
-            std::cerr << file << ", " << CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+            std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
             return false;
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -1273,7 +1252,7 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
         std::cerr << file+", loadMonsterMap(): no root balise found for the xml file" << std::endl;
         return false;
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(this->map_to_send.xmlRoot->CATCHCHALLENGER_XMLELENTVALUE(),"map"))
+    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(this->map_to_send.xmlRoot->Name(),"map"))
     {
         std::cerr << file+", loadMonsterMap(): \"map\" root balise not found for the xml file" << std::endl;
         return false;
@@ -1416,12 +1395,12 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
     std::vector<MapMonster> monsterTypeList;
     bool ok;
     uint32_t tempLuckTotal=0;
-    const CATCHCHALLENGER_XMLELEMENT *layer = map_to_send.xmlRoot->FirstChildElement(monsterType.c_str());
+    const tinyxml2::XMLElement *layer = map_to_send.xmlRoot->FirstChildElement(monsterType.c_str());
     if(layer!=NULL)
     {
         if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(layer))
         {
-            const CATCHCHALLENGER_XMLELEMENT *monsters=layer->FirstChildElement(XMLCACHEDSTRING_monster);
+            const tinyxml2::XMLElement *monsters=layer->FirstChildElement(XMLCACHEDSTRING_monster);
             while(monsters!=NULL)
             {
                 if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(monsters))
@@ -1431,11 +1410,11 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                         MapMonster mapMonster;
                         mapMonster.id=stringtouint16(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monsters->Attribute(XMLCACHEDSTRING_id)),&ok);
                         if(!ok)
-                            std::cerr << "id is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                            std::cerr << "id is not a number: child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                         if(ok)
                             if(CommonDatapack::commonDatapack.monsters.find(mapMonster.id)==CommonDatapack::commonDatapack.monsters.cend())
                             {
-                                std::cerr << "monster " << mapMonster.id << " not found into the monster list: " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                                std::cerr << "monster " << mapMonster.id << " not found into the monster list: " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(monsters->Attribute(XMLCACHEDSTRING_minLevel)!=NULL && monsters->Attribute(XMLCACHEDSTRING_maxLevel)!=NULL)
@@ -1444,13 +1423,13 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                             {
                                 mapMonster.minLevel=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monsters->Attribute(XMLCACHEDSTRING_minLevel)),&ok);
                                 if(!ok)
-                                    std::cerr << "minLevel is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                                    std::cerr << "minLevel is not a number: child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                             }
                             if(ok)
                             {
                                 mapMonster.maxLevel=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monsters->Attribute(XMLCACHEDSTRING_maxLevel)),&ok);
                                 if(!ok)
-                                    std::cerr << "maxLevel is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                                    std::cerr << "maxLevel is not a number: child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                             }
                         }
                         else
@@ -1460,7 +1439,7 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                                 mapMonster.maxLevel=stringtouint8(CATCHCHALLENGER_XMLATTRIBUTETOSTRING(monsters->Attribute(XMLCACHEDSTRING_level)),&ok);
                                 mapMonster.minLevel=mapMonster.maxLevel;
                                 if(!ok)
-                                    std::cerr << "level is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                                    std::cerr << "level is not a number: child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                             }
                         }
                         if(ok)
@@ -1469,48 +1448,48 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                             stringreplaceAll(textLuck,"percent","");
                             mapMonster.luck=stringtouint8(textLuck,&ok);
                             if(!ok)
-                                std::cerr << "luck is not a number: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                                std::cerr << "luck is not a number: child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                         }
                         if(ok)
                             if(mapMonster.minLevel>mapMonster.maxLevel)
                             {
-                                std::cerr << "min > max for the level: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                                std::cerr << "min > max for the level: child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.luck<=0)
                             {
-                                std::cerr << "luck is too low: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                                std::cerr << "luck is too low: child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.minLevel<=0)
                             {
-                                std::cerr << "min level is too low: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                                std::cerr << "min level is too low: child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.maxLevel<=0)
                             {
-                                std::cerr << "max level is too low: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                                std::cerr << "max level is too low: child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.luck>100)
                             {
-                                std::cerr << "luck is greater than 100: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                                std::cerr << "luck is greater than 100: child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.minLevel>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                             {
-                                std::cerr << "min level is greater than " << CATCHCHALLENGER_MONSTER_LEVEL_MAX << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                                std::cerr << "min level is greater than " << CATCHCHALLENGER_MONSTER_LEVEL_MAX << ": child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
                             if(mapMonster.maxLevel>CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                             {
-                                std::cerr << "max level is greater than " << CATCHCHALLENGER_MONSTER_LEVEL_MAX << ": child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                                std::cerr << "max level is greater than " << CATCHCHALLENGER_MONSTER_LEVEL_MAX << ": child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                                 ok=false;
                             }
                         if(ok)
@@ -1520,27 +1499,27 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                         }
                     }
                     else
-                        std::cerr << "Missing attribute: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                        std::cerr << "Missing attribute: child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                 }
                 else
-                    std::cerr << "Is not an element: child->CATCHCHALLENGER_XMLELENTVALUE(): " << monsters->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
+                    std::cerr << "Is not an element: child->Name(): " << monsters->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(monsters) << "), file: " << fileName << std::endl;
                 monsters = monsters->NextSiblingElement(XMLCACHEDSTRING_monster);
             }
             if(monsterTypeList.empty())
                 std::cerr << "map have empty monster layer:" << fileName << "type:" << monsterType;
         }
         else
-            std::cerr << "Is not an element: child->CATCHCHALLENGER_XMLELENTVALUE(): " << layer->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(layer) << "), file: " << fileName << std::endl;
+            std::cerr << "Is not an element: child->Name(): " << layer->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(layer) << "), file: " << fileName << std::endl;
         if(tempLuckTotal!=100)
         {
-            std::cerr << "total luck is not egal to 100 (" << tempLuckTotal << ") for grass, monsters dropped: child->CATCHCHALLENGER_XMLELENTVALUE(): " << layer->CATCHCHALLENGER_XMLELENTVALUE() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(layer) << "), file: " << fileName << std::endl;
+            std::cerr << "total luck is not egal to 100 (" << tempLuckTotal << ") for grass, monsters dropped: child->Name(): " << layer->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(layer) << "), file: " << fileName << std::endl;
             monsterTypeList.clear();
         }
         else
             return monsterTypeList;
     }
     /*else//do ignore for cave
-    qDebug() << std::stringLiteral("A layer on map is found, but no matching monster list into the meta (%3), monsters dropped: child->CATCHCHALLENGER_XMLELENTVALUE(): %1 (at line: %2)").arg(layer->CATCHCHALLENGER_XMLELENTVALUE()).arg(CATCHCHALLENGER_XMLELENTATLINE(layer)).arg(fileName);*/
+    qDebug() << std::stringLiteral("A layer on map is found, but no matching monster list into the meta (%3), monsters dropped: child->Name(): %1 (at line: %2)").arg(layer->Name()).arg(CATCHCHALLENGER_XMLELENTATLINE(layer)).arg(fileName);*/
     return monsterTypeList;
 }
 
@@ -1566,7 +1545,7 @@ std::string Map_loader::resolvRelativeMap(const std::string &file,const std::str
     return link;
 }
 
-CATCHCHALLENGER_XMLELEMENT *Map_loader::getXmlCondition(const std::string &fileName,const std::string &file,const uint16_t &conditionId)
+tinyxml2::XMLElement *Map_loader::getXmlCondition(const std::string &fileName,const std::string &file,const uint16_t &conditionId)
 {
     (void)fileName;
     #ifdef ONLYMAPRENDER
@@ -1581,7 +1560,7 @@ CATCHCHALLENGER_XMLELEMENT *Map_loader::getXmlCondition(const std::string &fileN
     }
     teleportConditionsUnparsed[file][conditionId];
     bool ok;
-    CATCHCHALLENGER_XMLDOCUMENT *domDocument;
+    tinyxml2::XMLDocument *domDocument;
 
     //open and quick check the file
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -1589,26 +1568,26 @@ CATCHCHALLENGER_XMLELEMENT *Map_loader::getXmlCondition(const std::string &fileN
     else
     {
         domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
-        const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+        if(loadOkay!=0)
         {
-            std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+            std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return NULL;
         }
     }
-    const CATCHCHALLENGER_XMLELEMENT * root = domDocument->RootElement();
+    const tinyxml2::XMLElement * root = domDocument->RootElement();
     if(root==NULL)
     {
         std::cerr << "no root balise found for the xml file " << file << std::endl;
         return NULL;
     }
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),"conditions"))
+    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"conditions"))
     {
         std::cerr << "\"conditions\" root balise not found for the xml file " << file << std::endl;
         return NULL;
     }
 
-    const CATCHCHALLENGER_XMLELEMENT *item = root->FirstChildElement(XMLCACHEDSTRING_condition);
+    const tinyxml2::XMLElement *item = root->FirstChildElement(XMLCACHEDSTRING_condition);
     while(item!=NULL)
     {
         if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(item))
@@ -1623,7 +1602,7 @@ CATCHCHALLENGER_XMLELEMENT *Map_loader::getXmlCondition(const std::string &fileN
                 if(!ok)
                     std::cerr << "\"condition\" balise have id is not a number (" << file << " at " << CATCHCHALLENGER_XMLELENTATLINE(item) << ")" << std::endl;
                 else
-                    teleportConditionsUnparsed[file][id]=const_cast<CATCHCHALLENGER_XMLELEMENT *>(item);
+                    teleportConditionsUnparsed[file][id]=const_cast<tinyxml2::XMLElement *>(item);
             }
         }
         item = item->NextSiblingElement(XMLCACHEDSTRING_condition);
@@ -1637,7 +1616,7 @@ CATCHCHALLENGER_XMLELEMENT *Map_loader::getXmlCondition(const std::string &fileN
 
 MapCondition Map_loader::xmlConditionToMapCondition(const std::string &conditionFile,
                                                     #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-                                                    const CATCHCHALLENGER_XMLELEMENT *
+                                                    const tinyxml2::XMLElement *
                                                     #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
                                                     const tinyxml2::XMLElement *
                                                     #endif

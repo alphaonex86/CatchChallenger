@@ -50,7 +50,7 @@ public:
     std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<std::pair<uint8_t,uint8_t> >,pairhash> botsFightTriggerExtra;//trigger line in front of bot fight, tigger x,y, bot x,y
     std::unordered_map<std::pair<uint8_t,uint8_t>,ItemOnMapForClient,pairhash> itemsOnMap;
 
-    const CATCHCHALLENGER_XMLELEMENT * xmlRoot;
+    const tinyxml2::XMLElement * xmlRoot;
 };
 }
 

@@ -210,7 +210,7 @@ protected:
     unsigned int plant_on_the_map;
     std::vector<Map_semi> semi_loaded_map;
     #ifdef EPOLLCATCHCHALLENGERSERVER
-    std::vector<CATCHCHALLENGER_XMLDOCUMENT *> toDeleteAfterBotLoad;
+    std::vector<tinyxml2::XMLDocument *> toDeleteAfterBotLoad;
     #endif
     bool preload_market_monsters_prices_call;
     bool preload_industries_call;

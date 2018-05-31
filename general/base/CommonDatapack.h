@@ -54,7 +54,7 @@ public:
     std::vector<Type> types;
     #endif
 
-    std::unordered_map<std::string/*file*/,CATCHCHALLENGER_XMLDOCUMENT> xmlLoadedFile;//keep for Map_loader::getXmlCondition(), need to be deleted later
+    std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> xmlLoadedFile;//keep for Map_loader::getXmlCondition(), need to be deleted later
 
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     LayersOptions layersOptions;

@@ -22,8 +22,8 @@ public:
     void setValue(const std::string &var,const char * const value);
     void sync();
 private:
-    CATCHCHALLENGER_XMLDOCUMENT document;
-    CATCHCHALLENGER_XMLELEMENT * whereIs;
+    tinyxml2::XMLDocument document;
+    tinyxml2::XMLElement * whereIs;
     std::string file;
     bool modified;
 };

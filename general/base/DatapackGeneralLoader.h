@@ -8,6 +8,8 @@
 
 #include "GeneralStructures.h"
 #include "GeneralVariable.h"
+#include "tinyXML2/tinyxml2.h"
+#include "tinyXML2/customtinyxml2.h"
 
 namespace CatchChallenger {
 class DatapackGeneralLoader
@@ -24,7 +26,7 @@ public:
     static std::unordered_map<uint16_t,Industry> loadIndustries(const std::string &folder,const std::unordered_map<uint16_t, Item> &items);
     static std::unordered_map<uint16_t,IndustryLink> loadIndustriesLink(const std::string &file,const std::unordered_map<uint16_t,Industry> &industries);
     #endif
-    static std::pair<std::vector<const CATCHCHALLENGER_XMLELEMENT *>, std::vector<Profile> > loadProfileList(const std::string &datapackPath, const std::string &file,
+    static std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > loadProfileList(const std::string &datapackPath, const std::string &file,
                                                                       #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                                       const std::unordered_map<uint16_t, Item> &items,
                                                                       #endif // CATCHCHALLENGER_CLASS_MASTER
