@@ -41,10 +41,10 @@ public:
     static void removeMapLayer(const ParsedLayer &parsed_layer);
     bool loadMonsterMap(const std::string &file, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer);
     static std::string resolvRelativeMap(const std::string &file, const std::string &link, const std::string &datapackPath=std::string());
-    static CATCHCHALLENGER_XMLELEMENT * getXmlCondition(const std::string &fileName, const std::string &file, const uint16_t &conditionId);
-    static MapCondition xmlConditionToMapCondition(const std::string &conditionFile,const CATCHCHALLENGER_XMLELEMENT * const item);
+    static tinyxml2::XMLElement * getXmlCondition(const std::string &fileName, const std::string &file, const uint16_t &conditionId);
+    static MapCondition xmlConditionToMapCondition(const std::string &conditionFile,const tinyxml2::XMLElement * const item);
     std::vector<MapMonster> loadSpecificMonster(const std::string &fileName,const std::string &monsterType);
-    static std::unordered_map<std::string/*file*/, std::unordered_map<uint16_t/*id*/,CATCHCHALLENGER_XMLELEMENT *> > teleportConditionsUnparsed;
+    static std::unordered_map<std::string/*file*/, std::unordered_map<uint16_t/*id*/,tinyxml2::XMLElement *> > teleportConditionsUnparsed;
 
     //for tiled
     #ifdef TILED_ZLIB

@@ -113,7 +113,7 @@ bool BaseServer::preload_zone_init()
         std::string zoneCodeName=entryListZone.at(index).name;
         stringreplaceOne(zoneCodeName,CACHEDSTRING_dotxml,"");
         const std::string &file=entryListZone.at(index).absoluteFilePath;
-        CATCHCHALLENGER_XMLDOCUMENT *domDocument;
+        tinyxml2::XMLDocument *domDocument;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
             domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
@@ -123,10 +123,10 @@ bool BaseServer::preload_zone_init()
             #else
             domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
             #endif
-            const auto loadOkay = domDocument->CATCHCHALLENGER_XMLDOCUMENTLOAD(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
+            const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
             if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
             {
-                std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+                std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
                 index++;
                 continue;
             }
@@ -148,7 +148,7 @@ bool BaseServer::preload_zone_init()
             index++;
             continue;
         }
-        if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->CATCHCHALLENGER_XMLELENTVALUE(),XMLCACHEDSTRING_zone))
+        if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),XMLCACHEDSTRING_zone))
         {
             std::cerr << "Unable to open the file: " << file.c_str() << ", \"zone\" root balise not found for the xml file" << std::endl;
             index++;
@@ -157,7 +157,7 @@ bool BaseServer::preload_zone_init()
 
         //load capture
         std::vector<uint16_t> fightIdList;
-        const CATCHCHALLENGER_XMLELEMENT * capture=root->FirstChildElement(XMLCACHEDSTRING_capture);
+        const tinyxml2::XMLElement * capture=root->FirstChildElement(XMLCACHEDSTRING_capture);
         if(capture!=NULL)
         {
             if(CATCHCHALLENGER_XMLELENTISXMLELEMENT(capture) && capture->Attribute(XMLCACHEDSTRING_fightId)!=NULL)

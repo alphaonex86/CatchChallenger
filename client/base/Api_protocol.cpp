@@ -1,5 +1,7 @@
 #include "Api_protocol.h"
 #include "../../general/base/ProtocolVersion.h"
+#include "../../general/base/tinyXML2/tinyxml2.h"
+#include "../../general/base/tinyXML2/customtinyxml2.h"
 
 using namespace CatchChallenger;
 
@@ -2021,9 +2023,9 @@ LogicialGroup * Api_protocol::addLogicalGroup(const std::string &path,const std:
 
     tinyxml2::XMLDocument domDocument;
     const auto loadOkay = domDocument.Parse((Api_protocol::text_balise_root_start+xml+Api_protocol::text_balise_root_stop).c_str());
-    if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+    if(loadOkay!=0)
     {
-        std::cerr << "Api_protocol::addLogicalGroup(): "+CATCHCHALLENGER_XMLDOCUMENTERROR(&domDocument) << std::endl;
+        std::cerr << "Api_protocol::addLogicalGroup(): "+tinyxml2errordoc(&domDocument) << std::endl;
         return NULL;
     }
     else
@@ -2087,9 +2089,9 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
 
     tinyxml2::XMLDocument domDocument;
     const auto loadOkay = domDocument.Parse((Api_protocol::text_balise_root_start+server.xml+Api_protocol::text_balise_root_stop).c_str());
-    if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+    if(loadOkay!=0)
     {
-        std::cerr << "Api_protocol::addLogicalServer(): "+CATCHCHALLENGER_XMLDOCUMENTERROR(&domDocument) << std::endl;
+        std::cerr << "Api_protocol::addLogicalServer(): "+tinyxml2errordoc(&domDocument) << std::endl;
         return NULL;
     }
     else

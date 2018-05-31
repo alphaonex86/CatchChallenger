@@ -4,6 +4,7 @@
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/tinyXML2/tinyxml2.h"
+#include "../../../general/base/tinyXML2/customtinyxml2.h"
 #include "../../tiled/tiled_mapobject.h"
 #include <QFileInfo>
 #include <QRegularExpression>
@@ -565,7 +566,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
         const auto loadOkay = domDocument->LoadFile(fileName.c_str());
         if(loadOkay!=0)
         {
-            std::cerr << fileName+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+            std::cerr << fileName+", "+tinyxml2errordoc(domDocument) << std::endl;
             return false;
         }
     }
@@ -795,7 +796,7 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
         const auto loadOkay = domDocument->LoadFile(fileName.c_str());
         if(loadOkay!=0)
         {
-            std::cerr << fileName+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+            std::cerr << fileName+", "+tinyxml2errordoc(domDocument) << std::endl;
             return false;
         }
     }
@@ -858,7 +859,7 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
         const auto loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
-            std::cerr << file+", "+CATCHCHALLENGER_XMLDOCUMENTERROR(domDocument) << std::endl;
+            std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return;
         }
     }
