@@ -25,14 +25,22 @@ void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
     //logicalMap.plantList, delete plants useless, destroyed into removeMap()
     //logicalMap.botsDisplay, delete bot useless, destroyed into removeMap()
     //remove from the list
-    for( const auto& n : map->doors ) {
+    for( const auto/*& crash with ref*/ n : map->doors ) {
         n.second->deleteLater();
     }
     map->doors.clear();
     if(map->tiledMap!=NULL)
         mapItem->removeMap(map->tiledMap);
-    all_map.erase(map->logicalMap.map_file);
-    old_all_map.erase(map->logicalMap.map_file);
+    if(all_map.find(map->logicalMap.map_file)!=all_map.cend())
+    {
+        all_map[map->logicalMap.map_file]=NULL;
+        all_map.erase(map->logicalMap.map_file);
+    }
+    if(old_all_map.find(map->logicalMap.map_file)!=old_all_map.cend())
+    {
+        old_all_map[map->logicalMap.map_file];
+        old_all_map.erase(map->logicalMap.map_file);
+    }
     //delete common variables
     CatchChallenger::CommonMap::removeParsedLayer(map->logicalMap.parsed_layer);
     map->logicalMap.parsed_layer.dirt=NULL;
@@ -52,10 +60,17 @@ void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
 void MapVisualiser::resetAll()
 {
     ///remove the not used map, then where no player is susceptible to switch (by border or teleporter)
-    for(const auto& n : old_all_map)
-        destroyMap(n.second);
-    for(const auto& n : all_map)
-        destroyMap(n.second);
+    std::vector<MapVisualiserThread::Map_full *> mapListToDelete;
+    for(auto /*& crash with ref*/n : old_all_map)
+        mapListToDelete.push_back(n.second);
+    for(auto /*& crash with ref*/n : all_map)
+        mapListToDelete.push_back(n.second);
+    unsigned int index=0;
+    while(index<mapListToDelete.size())
+    {
+        destroyMap(mapListToDelete.at(index));
+        index++;
+    }
     old_all_map.clear();
     old_all_map_time.clear();
     all_map.clear();
