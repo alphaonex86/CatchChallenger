@@ -631,12 +631,36 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             delete player_informations.encyclopedia_item;
             player_informations.encyclopedia_item=NULL;
         }
-        player_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
-        player_informations.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.monstersMaxId/8+1);
-        player_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.items.itemMaxId/8+1);
-        memset(player_informations.recipes,0x00,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
-        memset(player_informations.encyclopedia_monster,0x00,CommonDatapack::commonDatapack.monstersMaxId/8+1);
-        memset(player_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+        if(CommonDatapack::commonDatapack.crafingRecipesMaxId>1)
+        {
+            player_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+            memset(player_informations.recipes,0x00,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+        }
+        else
+        {
+            player_informations.recipes=NULL;
+            std::cerr << "player_informations.recipes=NULL;" << std::endl;
+        }
+        if(CommonDatapack::commonDatapack.monstersMaxId>1)
+        {
+            player_informations.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.monstersMaxId/8+1);
+            memset(player_informations.encyclopedia_monster,0x00,CommonDatapack::commonDatapack.monstersMaxId/8+1);
+        }
+        else
+        {
+            player_informations.encyclopedia_monster=NULL;
+            std::cerr << "CommonDatapack::commonDatapack.monstersMaxId=NULL;" << std::endl;
+        }
+        if(CommonDatapack::commonDatapack.items.itemMaxId>1)
+        {
+            player_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+            memset(player_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+        }
+        else
+        {
+            player_informations.encyclopedia_item=NULL;
+            std::cerr << "CommonDatapack::commonDatapack.items.itemMaxId=NULL;" << std::endl;
+        }
 
         //recipes
         {
@@ -654,10 +678,13 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                if(sub_size16>CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1)
-                    memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
-                else
-                    memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                if(CommonDatapack::commonDatapack.crafingRecipesMaxId>0)
+                {
+                    if(sub_size16>CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1)
+                        memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+                    else
+                        memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                }
                 in2.device()->seek(in2.device()->pos()+sub_size16);
             }
         }
@@ -678,10 +705,13 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                if(sub_size16>CommonDatapack::commonDatapack.monstersMaxId/8+1)
-                    memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapack::commonDatapack.monstersMaxId/8+1);
-                else
-                    memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                if(CommonDatapack::commonDatapack.monstersMaxId>0)
+                {
+                    if(sub_size16>CommonDatapack::commonDatapack.monstersMaxId/8+1)
+                        memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapack::commonDatapack.monstersMaxId/8+1);
+                    else
+                        memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                }
                 in2.device()->seek(in2.device()->pos()+sub_size16);
             }
         }
@@ -702,10 +732,13 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                if(sub_size16>CommonDatapack::commonDatapack.items.itemMaxId/8+1)
-                    memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapack::commonDatapack.items.itemMaxId/8+1);
-                else
-                    memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                if(CommonDatapack::commonDatapack.items.itemMaxId>0)
+                {
+                    if(sub_size16>CommonDatapack::commonDatapack.items.itemMaxId/8+1)
+                        memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+                    else
+                        memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                }
                 in2.device()->seek(in2.device()->pos()+sub_size16);
             }
         }

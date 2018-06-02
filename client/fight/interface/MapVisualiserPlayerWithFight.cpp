@@ -4,6 +4,8 @@
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
 
+#include <iostream>
+
 MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
     MapVisualiserPlayer(centerOnPlayer,debugTags,useCache)
 {
@@ -36,8 +38,16 @@ void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const char * const botAl
         delete this->botAlreadyBeaten;
         this->botAlreadyBeaten=NULL;
     }
-    this->botAlreadyBeaten=(char *)malloc(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
-    memset(this->botAlreadyBeaten,0,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId)
+    {
+        this->botAlreadyBeaten=(char *)malloc(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+        memset(this->botAlreadyBeaten,0,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+    }
+    else
+    {
+        std::cerr << "MapVisualiserPlayerWithFight::setBotsAlreadyBeaten() < CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId" << std::endl;
+        this->botAlreadyBeaten=NULL;
+    }
     if(botAlreadyBeaten!=NULL)
         memcpy(this->botAlreadyBeaten,botAlreadyBeaten,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
 }
