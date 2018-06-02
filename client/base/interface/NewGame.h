@@ -25,7 +25,7 @@ public:
     void updateSkin();
 private slots:
     void on_ok_clicked();
-    void on_pseudo_textChanged(const std::string &arg1);
+    void on_pseudo_textChanged(const QString &arg1);
     void on_pseudo_returnPressed();
     void on_nextSkin_clicked();
     void on_previousSkin_clicked();

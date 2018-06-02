@@ -12,6 +12,7 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QDebug>
+#include <iostream>
 
 std::string MapVisualiserPlayer::text_slashtrainerpng="/trainer.png";
 std::string MapVisualiserPlayer::text_slash="/";
@@ -518,8 +519,13 @@ bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,MapVisualis
                                     if(object->property("visible")=="false")
                                     {
                                         //The tiled object not exist on this layer
-                                        ObjectGroupItem::objectGroupLink.at(objectGroup)->removeObject(object);
-                                        tempMapObject->logicalMap.itemsOnMap[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))].tileObject=NULL;
+                                        if(ObjectGroupItem::objectGroupLink.find(objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
+                                        {
+                                            ObjectGroupItem::objectGroupLink.at(objectGroup)->removeObject(object);
+                                            tempMapObject->logicalMap.itemsOnMap[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))].tileObject=NULL;
+                                        }
+                                        else
+                                            std::cerr << "Try removeObject(object) on not existant ObjectGroupItem::objectGroupLink.at(objectGroup)" << std::endl;
                                         objects.removeAt(index2);
                                     }
                                     else

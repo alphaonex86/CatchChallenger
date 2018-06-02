@@ -199,7 +199,7 @@ void NewGame::on_ok_clicked()
         return;
 }
 
-void NewGame::on_pseudo_textChanged(const std::string &)
+void NewGame::on_pseudo_textChanged(const QString &)
 {
     ui->ok->setEnabled(okCanBeEnabled());
 }
