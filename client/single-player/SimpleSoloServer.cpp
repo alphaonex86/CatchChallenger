@@ -166,17 +166,17 @@ void MainWindow::play(const std::string &savegamesPath)
 
         socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
         client=new CatchChallenger::Api_client_virtual(socket);
-        if(!connect(client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good))
+        if(!connect(client,               &CatchChallenger::Api_protocol::Qtprotocol_is_good,   this,&MainWindow::protocol_is_good))
         {
             std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             abort();
         }
-        if(!connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected))
+        if(!connect(client,               &CatchChallenger::Api_protocol::Qtdisconnected,       this,&MainWindow::disconnected))
         {
             std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             abort();
         }
-        if(!connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message))
+        if(!connect(client,               &CatchChallenger::Api_protocol::Qtmessage,            this,&MainWindow::message))
         {
             std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             abort();
