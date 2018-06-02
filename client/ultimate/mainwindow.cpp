@@ -1686,11 +1686,11 @@ void MainWindow::gameSolo_play(const std::string &savegamesPath)
     CatchChallenger::Api_client_virtual *client=new CatchChallenger::Api_client_virtual(socket);//QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/")
     this->client=client;
 
-    if(!connect(client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good))
+    if(!connect(client,               &CatchChallenger::Api_protocol::Qtprotocol_is_good,   this,&MainWindow::protocol_is_good))
         abort();
-    if(!connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected))
+    if(!connect(client,               &CatchChallenger::Api_protocol::Qtdisconnected,       this,&MainWindow::disconnected))
         abort();
-    if(!connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message))
+    if(!connect(client,               &CatchChallenger::Api_protocol::Qtmessage,            this,&MainWindow::message))
         abort();
     if(!connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged))
         abort();
