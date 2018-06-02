@@ -19,24 +19,35 @@ GlobalControler::GlobalControler(QObject *parent) :
     qRegisterMetaType<QList<CatchChallenger::ServerFromPoolForDisplay*> >("QList<CatchChallenger::ServerFromPoolForDisplay*>");
     qRegisterMetaType<std::vector<std::vector<CatchChallenger::CharacterEntry> > >("std::vector<std::vector<CatchChallenger::CharacterEntry> >");
     qRegisterMetaType<std::vector<CatchChallenger::ServerFromPoolForDisplay*> >("std::vector<CatchChallenger::ServerFromPoolForDisplay*>");
+    qRegisterMetaType<std::vector<CatchChallenger::ServerFromPoolForDisplay> >("std::vector<CatchChallenger::ServerFromPoolForDisplay>");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
     CatchChallenger::ProtocolParsing::initialiseTheVariable();
     CatchChallenger::ProtocolParsing::setMaxPlayers(65535);
 
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::loggedDone,this,&GlobalControler::logged,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackIsReady,this,&GlobalControler::datapackIsReady,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackMainSubIsReady,this,&GlobalControler::datapackMainSubIsReady,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::statusError,this,&GlobalControler::statusError,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_detectSlowDown,this,&GlobalControler::detectSlowDown,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_all_player_on_map,this,&GlobalControler::all_player_on_map,Qt::QueuedConnection);
-    connect(&multipleBotConnexion,&MultipleBotConnection::emit_lastReplyTime,this,&GlobalControler::lastReplyTime,Qt::QueuedConnection);
-    connect(&slowDownTimer,&QTimer::timeout,&multipleBotConnexion,&MultipleBotConnectionImplForGui::detectSlowDown,Qt::QueuedConnection);
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::loggedDone,this,&GlobalControler::logged,Qt::QueuedConnection))
+        abort();
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackIsReady,this,&GlobalControler::datapackIsReady,Qt::QueuedConnection))
+        abort();
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackMainSubIsReady,this,&GlobalControler::datapackMainSubIsReady,Qt::QueuedConnection))
+        abort();
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::statusError,this,&GlobalControler::statusError,Qt::QueuedConnection))
+        abort();
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_detectSlowDown,this,&GlobalControler::detectSlowDown,Qt::QueuedConnection))
+        abort();
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_all_player_on_map,this,&GlobalControler::all_player_on_map,Qt::QueuedConnection))
+        abort();
+    if(!connect(&multipleBotConnexion,&MultipleBotConnection::emit_lastReplyTime,this,&GlobalControler::lastReplyTime,Qt::QueuedConnection))
+        abort();
+    if(!connect(&slowDownTimer,&QTimer::timeout,&multipleBotConnexion,&MultipleBotConnectionImplForGui::detectSlowDown,Qt::QueuedConnection))
+        abort();
     slowDownTimer.start(200);
-    connect(&autoConnect,&QTimer::timeout,this,&GlobalControler::on_connect_clicked,Qt::QueuedConnection);
+    if(!connect(&autoConnect,&QTimer::timeout,this,&GlobalControler::on_connect_clicked,Qt::QueuedConnection))
+        abort();
     autoConnect.setSingleShot(true);
     autoConnect.start(0);
-    connect(&timeoutTimer,&QTimer::timeout,this,&GlobalControler::timeoutSlot,Qt::QueuedConnection);
+    if(!connect(&timeoutTimer,&QTimer::timeout,this,&GlobalControler::timeoutSlot,Qt::QueuedConnection))
+        abort();
     timeoutTimer.setSingleShot(true);
 
     character_id=0;
