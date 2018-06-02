@@ -219,11 +219,6 @@ MainWindow::~MainWindow()
         delete completer;
         completer=NULL;
     }
-    if(baseWindow!=NULL)
-    {
-        delete baseWindow;
-        baseWindow=NULL;
-    }
     if(client!=NULL)
     {
         delete client;
