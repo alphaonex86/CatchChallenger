@@ -433,13 +433,13 @@ void MainWindow::connectTheExternalSocket()
         proxy.setPort(proxy_port);
         static_cast<CatchChallenger::Api_client_real *>(client)->setProxy(proxy);
     }
-    if(!connect(client,               &CatchChallenger::Api_protocol::protocol_is_good,   this,&MainWindow::protocol_is_good,Qt::QueuedConnection))
+    if(!connect(client,               &CatchChallenger::Api_protocol::Qtprotocol_is_good,   this,&MainWindow::protocol_is_good,Qt::QueuedConnection))
         abort();
-    if(!connect(client,               &CatchChallenger::Api_protocol::disconnected,       this,&MainWindow::disconnected))
+    if(!connect(client,               &CatchChallenger::Api_protocol::Qtdisconnected,       this,&MainWindow::disconnected))
         abort();
-    if(!connect(client,               &CatchChallenger::Api_protocol::message,            this,&MainWindow::message,Qt::QueuedConnection))
+    if(!connect(client,               &CatchChallenger::Api_protocol::Qtmessage,            this,&MainWindow::message,Qt::QueuedConnection))
         abort();
-    if(!connect(client,               &CatchChallenger::Api_protocol::logged,             this,&MainWindow::logged,Qt::QueuedConnection))
+    if(!connect(client,               &CatchChallenger::Api_protocol::Qtlogged,             this,&MainWindow::logged,Qt::QueuedConnection))
         abort();
     baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
     baseWindow->connectAllSignals();
