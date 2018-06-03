@@ -668,8 +668,8 @@ void BaseWindow::updateConnectingStatus()
                 }
                 else
                 {
-                    updateServerList();
-/*                    bool ok;
+                    /*updateServerList();
+                    bool ok;
 
                     const QTreeWidgetItem * const selectedItem=ui->serverList->itemAt(0,0);
                     if(selectedItem==NULL)
