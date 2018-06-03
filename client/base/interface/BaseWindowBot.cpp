@@ -7,6 +7,7 @@
 #include <QDesktopServices>
 #include <QInputDialog>
 #include <QString>
+#include <iostream>
 
 using namespace CatchChallenger;
 
@@ -17,6 +18,12 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
     qDebug() << "check bot quest for: " << botId;
     #endif
     //do the not started quest here
+    if(DatapackClientLoader::datapackLoader.botToQuestStart.find(botId)==
+            DatapackClientLoader::datapackLoader.botToQuestStart.cend())
+    {
+        std::cerr << "BaseWindow::botHaveQuest(), botId not found: " << std::to_string(botId) << std::endl;
+        return false;
+    }
     const std::vector<uint16_t> &botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.at(botId);
     unsigned int index=0;
     while(index<botQuests.size())
