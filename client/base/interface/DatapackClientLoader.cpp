@@ -1284,76 +1284,82 @@ void DatapackClientLoader::parseQuestsText()
         }
 
         //load the content
-        const uint16_t questId=questsPathToId.at(entryList.at(index).absoluteFilePath().toStdString());
-        bool ok;
-        //load text
-        const tinyxml2::XMLElement *client_logic = root->FirstChildElement("client_logic");
-        while(client_logic!=NULL)
+        const std::string &path=entryList.at(index).absoluteFilePath().toStdString();
+        if(questsPathToId.find(path)!=questsPathToId.cend())
         {
-            if(client_logic->Attribute("id"))
+            const uint16_t questId=questsPathToId.at(path);
+            bool ok;
+            //load text
+            const tinyxml2::XMLElement *client_logic = root->FirstChildElement("client_logic");
+            while(client_logic!=NULL)
             {
-                const uint16_t &tempid=stringtouint16(client_logic->Attribute("id"),&ok);
-                if(ok)
+                if(client_logic->Attribute("id"))
                 {
-                    //load the condition
-                    QuestStepWithConditionExtra questStepWithConditionExtra;
-                    questStepWithConditionExtra.text=tr("No text").toStdString();
-                    const tinyxml2::XMLElement *condition = client_logic->FirstChildElement("contion");
-                    while(condition!=NULL)
+                    const uint16_t &tempid=stringtouint16(client_logic->Attribute("id"),&ok);
+                    if(ok)
                     {
-                        if(condition->Attribute("queststep")!=NULL)
+                        //load the condition
+                        QuestStepWithConditionExtra questStepWithConditionExtra;
+                        questStepWithConditionExtra.text=tr("No text").toStdString();
+                        const tinyxml2::XMLElement *condition = client_logic->FirstChildElement("contion");
+                        while(condition!=NULL)
                         {
-                            const uint8_t queststep=stringtouint8(condition->Attribute("queststep"),&ok);
-                            if(ok)
+                            if(condition->Attribute("queststep")!=NULL)
+                            {
+                                const uint8_t queststep=stringtouint8(condition->Attribute("queststep"),&ok);
+                                if(ok)
+                                {
+                                    QuestConditionExtra questConditionExtra;
+                                    questConditionExtra.type=QuestCondition_queststep;
+                                    questConditionExtra.value=queststep;
+                                    questStepWithConditionExtra.conditions.push_back(questConditionExtra);
+                                }
+                            }
+                            if(condition->Attribute("haverequirements")!=NULL)
                             {
                                 QuestConditionExtra questConditionExtra;
-                                questConditionExtra.type=QuestCondition_queststep;
-                                questConditionExtra.value=queststep;
+                                questConditionExtra.type=QuestCondition_haverequirements;
+                                questConditionExtra.value=strcmp(condition->Attribute("haverequirements"),"true")==0;
                                 questStepWithConditionExtra.conditions.push_back(questConditionExtra);
                             }
+                            condition = condition->NextSiblingElement("condition");
                         }
-                        if(condition->Attribute("haverequirements")!=NULL)
-                        {
-                            QuestConditionExtra questConditionExtra;
-                            questConditionExtra.type=QuestCondition_haverequirements;
-                            questConditionExtra.value=strcmp(condition->Attribute("haverequirements"),"true")==0;
-                            questStepWithConditionExtra.conditions.push_back(questConditionExtra);
-                        }
-                        condition = condition->NextSiblingElement("condition");
-                    }
 
-                    const tinyxml2::XMLElement *text = client_logic->FirstChildElement("text");
-                    bool found=false;
-                    if(!language.empty() && language!="en")
-                        while(text!=NULL)
-                        {
-                            if(text->Attribute("lang") && text->Attribute("lang")==language && text->GetText()!=NULL)
+                        const tinyxml2::XMLElement *text = client_logic->FirstChildElement("text");
+                        bool found=false;
+                        if(!language.empty() && language!="en")
+                            while(text!=NULL)
                             {
-                                questStepWithConditionExtra.text=text->GetText();
-                                found=true;
-                            }
-                            text = text->NextSiblingElement("text");
-                        }
-                    if(!found)
-                    {
-                        text = client_logic->FirstChildElement("text");
-                        while(text!=NULL)
-                        {
-                            if(text->Attribute("lang")==NULL || strcmp(text->Attribute("lang"),"en")==0)
-                                if(text->GetText()!=NULL)
+                                if(text->Attribute("lang") && text->Attribute("lang")==language && text->GetText()!=NULL)
+                                {
                                     questStepWithConditionExtra.text=text->GetText();
-                            text = text->NextSiblingElement("text");
+                                    found=true;
+                                }
+                                text = text->NextSiblingElement("text");
+                            }
+                        if(!found)
+                        {
+                            text = client_logic->FirstChildElement("text");
+                            while(text!=NULL)
+                            {
+                                if(text->Attribute("lang")==NULL || strcmp(text->Attribute("lang"),"en")==0)
+                                    if(text->GetText()!=NULL)
+                                        questStepWithConditionExtra.text=text->GetText();
+                                text = text->NextSiblingElement("text");
+                            }
                         }
+                        questsExtra[questId].text[tempid].texts.push_back(questStepWithConditionExtra);
                     }
-                    questsExtra[questId].text[tempid].texts.push_back(questStepWithConditionExtra);
+                    else
+                        qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.Name(): %2").arg(QString::fromStdString(file)).arg(client_logic->Name());
                 }
                 else
-                    qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.Name(): %2").arg(QString::fromStdString(file)).arg(client_logic->Name());
+                    qDebug() << QStringLiteral("Has attribute: %1, have not id attribute: child.Name(): %2").arg(QString::fromStdString(file)).arg(client_logic->Name());
+                client_logic = client_logic->NextSiblingElement("client_logic");
             }
-            else
-                qDebug() << QStringLiteral("Has attribute: %1, have not id attribute: child.Name(): %2").arg(QString::fromStdString(file)).arg(client_logic->Name());
-            client_logic = client_logic->NextSiblingElement("client_logic");
         }
+        else
+            qDebug() << QStringLiteral("!questsPathToId find(): %1, have not id attribute: child.Name(): %2").arg(QString::fromStdString(file)).arg(QString::fromStdString(path));
         #ifdef DEBUG_CLIENT_QUEST
         qDebug() << QStringLiteral("%1 quest(s) text loaded for quest %2").arg(client_logic_texts.size()).arg(questsPathToId.value(entryList.at(index).absoluteFilePath()));
         #endif
