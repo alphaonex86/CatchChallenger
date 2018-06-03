@@ -32,8 +32,8 @@ Ubuntu 16.04 add to the .pro:
 QMAKE_CFLAGS="-std=c++0x"
 QMAKE_CXXFLAGS="-std=c++0x"
 In general:
-Ubuntu: apt-get install qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev libvlc-dev
-Debian stretch: apt-get install build-essential gcc automake qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default libqt5sql5-psql libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev libvlc-dev
+Ubuntu: apt-get install build-essential gcc automake qt5-qmake qt5-default libzstd-dev zlib1g-dev libssl-dev libpq-dev libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
+Debian stretch: apt-get install build-essential gcc automake qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default libqt5sql5-psql libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
 
 For the Gui server:
 cd server/
@@ -50,7 +50,7 @@ git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 mv CatchChallenger-datapack/datapack/ datapack/
 
 For the Epoll server (linux only):
-Ubuntu: apt-get install qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev
+Ubuntu: apt-get install libzstd-dev zlib1g-dev libssl-dev libpq-dev
 Debian stretch: apt-get install build-essential gcc automake qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default
 cd server/
 qmake catchchallenger-server-cli-epoll.pro
@@ -59,7 +59,7 @@ git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 mv CatchChallenger-datapack/datapack/ datapack/
 
 For the game solo:
-Debian stretch: apt-get install build-essential gcc automake qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default qtdeclarative5-dev qtscript5-dev libvlc-dev
+Debian stretch: apt-get install build-essential gcc automake qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default qtdeclarative5-dev qtscript5-dev
 cd client/single-player/
 qmake *.pro
 make
@@ -67,7 +67,7 @@ git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 mv CatchChallenger-datapack/datapack/ datapack/
 
 For the game version ultimate:
-Debian stretch: apt-get install build-essential gcc automake qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default qtdeclarative5-dev qtscript5-dev libvlc-dev
+Debian stretch: apt-get install build-essential gcc automake qt5-qmake liblzma-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default qtdeclarative5-dev qtscript5-dev
 cd client/ultimate/
 qmake *.pro
 make
