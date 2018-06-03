@@ -720,7 +720,7 @@ private:
     uint32_t worseQueryTime;
     bool multiplayer;
 
-    CatchChallenger::Api_client_real * client;
+    CatchChallenger::Api_protocol * client;
     ClientFightEngine fightEngine;
     Chat *chat;
 
