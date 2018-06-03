@@ -669,6 +669,7 @@ void BaseWindow::updateConnectingStatus()
                 else
                 {
                     updateServerList();
+                    bool ok;
 
                     const QTreeWidgetItem * const selectedItem=ui->serverList->itemAt(0,0);
                     if(selectedItem==NULL)
@@ -677,13 +678,24 @@ void BaseWindow::updateConnectingStatus()
                         return;
                     }
 
-                    serverSelected=selectedItem->data(99,99).toUInt();
+                    serverSelected=selectedItem->data(99,99).toInt(&ok);
+                    if(!ok)
+                    {
+                        error("BaseWindow::updateConnectingStatus(): serverSelected=selectedItem->data(99,99).toUInt() convert to int wrong: "+selectedItem->data(99,99).toString().toStdString());
+                        return;
+                    }
+                    if(serverSelected<0 || serverSelected>=(int)serverOrdenedList.size())
+                    {
+                        error("BaseWindow::updateConnectingStatus(): serverSelected=selectedItem->data(99,99).toUInt() corrupted value");
+                        return;
+                    }
                     updateConnectingStatus();
                 }
                 return;
             }
         }
-        else if(!haveCharacterPosition && !haveCharacterInformation && !client->character_select_is_send() && (unsigned int)serverSelected<serverOrdenedList.size())
+        else if(!haveCharacterPosition && !haveCharacterInformation && !client->character_select_is_send() &&
+                (unsigned int)serverSelected<serverOrdenedList.size())
         {
             if(ui->stackedWidget->currentWidget()!=ui->page_character)
             {
@@ -712,7 +724,8 @@ void BaseWindow::updateConnectingStatus()
                     on_character_add_clicked();
                     return;
                 }
-                if(characterListForSelection.size()==1 && CommonSettingsCommon::commonSettingsCommon.min_character>=characterListForSelection.size() && CommonSettingsCommon::commonSettingsCommon.max_character<=characterListForSelection.size())
+                if(characterListForSelection.size()==1 && CommonSettingsCommon::commonSettingsCommon.min_character>=characterListForSelection.size() &&
+                        CommonSettingsCommon::commonSettingsCommon.max_character<=characterListForSelection.size())
                 {
                     if(characterListForSelection.at(charactersGroupIndex).size()==1)
                     {
