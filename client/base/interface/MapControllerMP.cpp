@@ -47,7 +47,7 @@ MapControllerMP::~MapControllerMP()
     pathFinding.cancel();
 }
 
-void MapControllerMP::connectAllSignals(CatchChallenger::Api_client_real *client)
+void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol *client)
 {
     this->client=client;
     //connect the map controler

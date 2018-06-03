@@ -17,7 +17,7 @@ public:
     ~MapControllerMP();
 
     virtual void resetAll();
-    virtual void connectAllSignals(CatchChallenger::Api_client_real * client);
+    virtual void connectAllSignals(CatchChallenger::Api_protocol *client);
     void setScale(const float &scaleSize);
 public slots:
     //map move Qt
@@ -156,7 +156,7 @@ private:
     };
     std::vector<PathResolved> pathList;
 
-    CatchChallenger::Api_client_real * client;
+    CatchChallenger::Api_protocol * client;
 protected:
     //current player
     CatchChallenger::Player_private_and_public_informations player_informations;

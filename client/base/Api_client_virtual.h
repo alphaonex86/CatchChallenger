@@ -33,7 +33,7 @@ public:
 protected:
     //general data
     void defineMaxPlayers(const uint16_t &);
-signals:
+/*signals:
     void newError(const std::string &error,const std::string &detailedError);
     void message(const std::string &message);
     void lastReplyTime(const uint32_t &time);
@@ -160,7 +160,7 @@ signals:
     void marketGetCash(const uint64_t &cash);
     void marketWithdrawCanceled();
     void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity);
-    void marketWithdrawMonster(const PlayerMonster &playerMonster);
+    void marketWithdrawMonster(const PlayerMonster &playerMonster);*/
 };
 }
 
