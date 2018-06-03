@@ -226,6 +226,7 @@ void BaseWindow::logged(const std::vector<std::vector<CharacterEntry> > &charact
     isLogged=true;
     datapackGatewayProgression.clear();
     updateConnectingStatus();
+    std::cout << "wait: haveTheDatapack()" << std::endl;
 }
 
 void BaseWindow::protocol_is_good()

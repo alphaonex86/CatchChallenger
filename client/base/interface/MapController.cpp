@@ -188,7 +188,7 @@ void MapController::updateBot()
     }
 }
 
-void MapController::connectAllSignals(CatchChallenger::Api_client_real *client)
+void MapController::connectAllSignals(CatchChallenger::Api_protocol *client)
 {
     MapControllerMP::connectAllSignals(client);
     if(!connect(client,&CatchChallenger::Api_client_real::Qtinsert_plant,this,&MapController::insert_plant))
