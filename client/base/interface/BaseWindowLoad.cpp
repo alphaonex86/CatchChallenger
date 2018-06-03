@@ -669,7 +669,7 @@ void BaseWindow::updateConnectingStatus()
                 else
                 {
                     updateServerList();
-                    bool ok;
+/*                    bool ok;
 
                     const QTreeWidgetItem * const selectedItem=ui->serverList->itemAt(0,0);
                     if(selectedItem==NULL)
@@ -683,7 +683,8 @@ void BaseWindow::updateConnectingStatus()
                     {
                         error("BaseWindow::updateConnectingStatus(): serverSelected=selectedItem->data(99,99).toUInt() convert to int wrong: "+selectedItem->data(99,99).toString().toStdString());
                         return;
-                    }
+                    }*/
+                    serverSelected=0;
                     if(serverSelected<0 || serverSelected>=(int)serverOrdenedList.size())
                     {
                         error("BaseWindow::updateConnectingStatus(): serverSelected=selectedItem->data(99,99).toUInt() corrupted value");
