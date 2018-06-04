@@ -1758,7 +1758,11 @@ void BaseWindow::on_serverListSelect_clicked()
 
     const QTreeWidgetItem * const selectedItem=selectedItems.at(0);
     serverSelected=selectedItem->data(99,99).toUInt();
-    updateConnectingStatus();
+    const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
+    if(serverSelected<(int)serverOrdenedList.size())
+        updateConnectingStatus();
+    else
+        error("BaseWindow::on_serverListSelect_clicked(), wrong serverSelected internal data");
 }
 
 void CatchChallenger::BaseWindow::on_toolButton_quit_encyclopedia_clicked()
