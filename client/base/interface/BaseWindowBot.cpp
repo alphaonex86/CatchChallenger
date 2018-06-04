@@ -571,7 +571,7 @@ void BaseWindow::showQuestText(const uint32_t &textId)
     }
 
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    uint8_t stepQuest=1;
+    uint8_t stepQuest=0;
     if(playerInformations.quests.find(questId)!=playerInformations.quests.cend())
         stepQuest=playerInformations.quests.at(questId).step-1;
     std::string text=tr("No text found").toStdString();
