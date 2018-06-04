@@ -484,7 +484,14 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
                 }
                 itemServer->setText(1,QStringLiteral("%1/%2").arg(server.currentPlayer).arg(server.maxPlayer));
             }
-            itemServer->setData(99,99,server.serverOrdenedListIndex);
+            const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
+            if(server.serverOrdenedListIndex<serverOrdenedList.size())
+                itemServer->setData(99,99,server.serverOrdenedListIndex);
+            else
+            {
+                error("BaseWindow::addToServerList(): server.serverOrdenedListIndex>=serverOrdenedList.size()), error");
+                return;
+            }
             index++;
         }
     }
