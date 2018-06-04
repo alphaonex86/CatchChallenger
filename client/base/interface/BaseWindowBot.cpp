@@ -553,121 +553,6 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint16_t &b
     return true;
 }
 
-void BaseWindow::getTextEntryPoint()
-{
-/* todo    if(!isInQuest)
-    {
-        showTip(QStringLiteral("Internal error: Is not in quest").toStdString());
-        return;
-    }
-
-    Player_private_and_public_informations &playerInformations=client->get_player_informations();
-    const std::string &client_logic=client->datapackPathMain()+DATAPACK_BASE_PATH_QUESTS2+"/"+std::to_string(questId)+"/client_logic.js";
-    if(!QFile(QString::fromStdString(client_logic)).exists())
-    {
-        showTip(tr("Client file missing").toStdString());
-        qDebug() << "client_logic file is missing:" << QString::fromStdString(client_logic);
-        return;
-    }
-
-    QFile scriptFile(client_logic);
-    scriptFile.open(QIODevice::ReadOnly);
-    QTextStream stream(&scriptFile);
-    std::string contents = stream.readAll().toStdString();
-    contents="function getTextEntryPoint()\n{\n"+contents+"\n}";
-    uint8_t currentQuestStepVar;
-    bool haveNextStepQuestRequirementsVar;
-    bool finishOneTimeVar;
-    scriptFile.close();
-    if(playerInformations.quests.find(questId)==playerInformations.quests.cend())
-    {
-        contents.replace("currentQuestStep()","0");
-        contents.replace("currentBot()","0");
-        contents.replace("finishOneTime()","false");
-        contents.replace("haveQuestStepRequirements()","false");//bug if use that's
-        currentQuestStepVar=0;
-        haveNextStepQuestRequirementsVar=false;
-        finishOneTimeVar=false;
-    }
-    else
-    {
-        PlayerQuest quest=playerInformations.quests.at(questId);
-        contents.replace("currentQuestStep()",QString::number(quest.step));
-        contents.replace("currentBot()",QString::number(actualBot.botId));
-        if(quest.finish_one_time)
-            contents.replace("finishOneTime()","true");
-        else
-            contents.replace("finishOneTime()","false");
-        if(quest.step<=0)
-        {
-            contents.replace("haveQuestStepRequirements()","false");
-            haveNextStepQuestRequirementsVar=false;
-        }
-        else if(haveNextStepQuestRequirements(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId)))
-        {
-            contents.replace("haveQuestStepRequirements()","true");
-            haveNextStepQuestRequirementsVar=true;
-        }
-        else
-        {
-            contents.replace("haveQuestStepRequirements()","false");
-            haveNextStepQuestRequirementsVar=false;
-        }
-        currentQuestStepVar=quest.step;
-        finishOneTimeVar=quest.finish_one_time;
-    }
-    #ifdef DEBUG_CLIENT_QUEST
-    qDebug() << "currentQuestStep:" << currentQuestStepVar << ", haveNextStepQuestRequirements:" << haveNextStepQuestRequirementsVar << ", finishOneTime:" << finishOneTimeVar << ", contents:" << contents;
-    #endif
-
-    QScriptValue result = engine.evaluate(contents, client_logic);
-    if (result.isError()) {
-        qDebug() << "script error:" << QString::fromLatin1("%0:%1: %2")
-                    .arg(client_logic)
-                    .arg(result.property("lineNumber").toInt32())
-                    .arg(result.toString());
-        showTip(QString::fromLatin1("%0:%1: %2")
-        .arg(client_logic)
-        .arg(result.property("lineNumber").toInt32())
-        .arg(result.toString()));
-        return;
-    }
-
-    QScriptValue getTextEntryPoint = engine.globalObject().property("getTextEntryPoint");
-    if(getTextEntryPoint.isError())
-    {
-        qDebug() << "script error:" << QString::fromLatin1("%0:%1: %2")
-                    .arg(client_logic)
-                    .arg(getTextEntryPoint.property("lineNumber").toInt32())
-                    .arg(getTextEntryPoint.toString());
-        showTip(QString::fromLatin1("%0:%1: %2")
-        .arg(client_logic)
-        .arg(getTextEntryPoint.property("lineNumber").toInt32())
-        .arg(getTextEntryPoint.toString()));
-        return;
-    }
-    QScriptValue returnValue=getTextEntryPoint.call();
-    uint32_t textEntryPoint=(uint32_t)returnValue.toInt32();
-    if(returnValue.isError())
-    {
-        qDebug() << "script error:" << QString::fromLatin1("%0:%1: %2")
-                    .arg(client_logic)
-                    .arg(returnValue.property("lineNumber").toInt32())
-                    .arg(returnValue.toString());
-        showTip(QString::fromLatin1("%0:%1: %2")
-        .arg(client_logic)
-        .arg(returnValue.property("lineNumber").toInt32())
-        .arg(returnValue.toString()));
-        return;
-    }
-    qDebug() << "textEntryPoint:" << textEntryPoint;
-    showQuestText(textEntryPoint);
-
-    Q_UNUSED(currentQuestStepVar);
-    Q_UNUSED(haveNextStepQuestRequirementsVar);
-    Q_UNUSED(finishOneTimeVar);*/
-}
-
 void BaseWindow::showQuestText(const uint32_t &textId)
 {
     if(DatapackClientLoader::datapackLoader.questsExtra.find(questId)==
@@ -686,7 +571,9 @@ void BaseWindow::showQuestText(const uint32_t &textId)
     }
 
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    const uint8_t stepQuest=playerInformations.quests.at(questId).step-1;
+    uint8_t stepQuest=1;
+    if(playerInformations.quests.find(questId)!=playerInformations.quests.cend())
+        stepQuest=playerInformations.quests.at(questId).step-1;
     std::string text=tr("No text found").toStdString();
     const DatapackClientLoader::QuestTextExtra &questTextExtra=questExtra.text.at(textId);
     unsigned int index=0;
@@ -870,7 +757,8 @@ void BaseWindow::IG_dialog_text_linkActivated(const std::string &rawlink)
                 index++;
                 continue;
             }
-            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
+            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==
+                    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
             {
                 showTip(tr("Quest not found").toStdString());
                 index++;
@@ -880,6 +768,7 @@ void BaseWindow::IG_dialog_text_linkActivated(const std::string &rawlink)
             this->questId=questId;
             if(DatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
                     DatapackClientLoader::datapackLoader.questsExtra.cend())
+            {
                 if(DatapackClientLoader::datapackLoader.questsExtra.at(questId).autostep)
                 {
                     int index=0;
@@ -895,9 +784,16 @@ void BaseWindow::IG_dialog_text_linkActivated(const std::string &rawlink)
                         return;
                     }
                 }
-            getTextEntryPoint();
-            index++;
-            continue;
+                showQuestText(1);
+                index++;
+                continue;
+            }
+            else
+            {
+                showTip(tr("Quest extra not found").toStdString());
+                index++;
+                continue;
+            }
         }
         else if(link=="clan_create")
         {
