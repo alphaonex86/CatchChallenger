@@ -333,7 +333,6 @@ private slots:
     //quest
     bool haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const;
     void appendReputationRewards(const std::vector<ReputationRewards> &reputationList);
-    void getTextEntryPoint();
     void showQuestText(const uint32_t &textId);
     bool tryValidateQuestStep(const uint16_t &questId, const uint16_t &botId, bool silent=false);
     bool nextStepQuest(const Quest &quest);
