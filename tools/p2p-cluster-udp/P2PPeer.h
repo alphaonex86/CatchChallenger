@@ -12,9 +12,10 @@
 class P2PPeer : public HostConnected
 {
 public:
-    P2PPeer(const uint8_t * const publickey, const uint64_t &local_sequence_number_validated,const uint64_t &remote_sequence_number,const sockaddr_in &si_other);
+    P2PPeer(const uint8_t * const publickey, const uint64_t &local_sequence_number_validated,
+            const uint64_t &remote_sequence_number,const sockaddr_in &si_other);
 public:
-    P2PPeer();
+    //P2PPeer();
     void emitAck();
     bool sendData(const uint8_t * const data, const uint16_t &size);
     static void sign(uint8_t *msg, const size_t &length);
