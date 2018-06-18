@@ -144,7 +144,7 @@ void P2PServerUDP::read()
     if(recv_len>=(8+8+1+ED25519_SIGNATURE_SIZE))
     {
         uint8_t messageType=0;
-        memcpy(messageType,P2PServerUDP::readBuffer+8+8,1);
+        memcpy(&messageType,P2PServerUDP::readBuffer+8+8,1);
         switch(messageType)
         {
             case 0x01:
@@ -179,20 +179,28 @@ void P2PServerUDP::read()
                         const int readSize=fread(handShake2,1,8,P2PServerUDP::p2pserver->ptr_random);
                         if(readSize != 8)
                             abort();
-                        P2PServerUDP::p2pserver->sign(sizeof(handShake2)-ED25519_SIGNATURE_SIZE,reinterpret_cast<uint8_t *>(handShake2));
+
+                        P2PPeer::sign(reinterpret_cast<uint8_t *>(handShake2),sizeof(handShake2)-ED25519_SIGNATURE_SIZE);
 
                         HostToFirstReply hostToFirstReplyEntry;
+
+                        uint8_t publickey[ED25519_KEY_SIZE];
+                        memcpy(&publickey,P2PServerUDP::readBuffer+8+8+1,ED25519_KEY_SIZE);
+                        uint64_t local_sequence_number_validated=0;
+                        memcpy(&local_sequence_number_validated,handShake2,8);
+                        uint64_t remote_sequence_number=0;
+                        memcpy(&remote_sequence_number,P2PServerUDP::readBuffer,8);
+                        hostToFirstReplyEntry.hostConnected=new P2PPeer(publickey,local_sequence_number_validated,
+                            remote_sequence_number,si_other);
                         memcpy(hostToFirstReplyEntry.random,P2PServerUDP::readBuffer+8,8);
                         hostToFirstReplyEntry.round=0;
-                        memcpy(hostToFirstReplyEntry.hostConnected.local_sequence_number,handShake2,8);
-                        memcpy(hostToFirstReplyEntry.hostConnected.remote_sequence_number,P2PServerUDP::readBuffer,8);
-                        memcpy(hostToFirstReplyEntry.hostConnected.publickey,P2PServerUDP::readBuffer+8+8+1,ED25519_KEY_SIZE);
+
                         memcpy(hostToFirstReplyEntry.reply,handShake2,sizeof(handShake2));
                         auto it=hostToFirstReply.find(remoteClient);
                         if(it!=hostToFirstReply.cend())
-                            hostToFirstReplyEntry[it]=hostToFirstReplyEntry;
+                            hostToFirstReply[remoteClient]=hostToFirstReplyEntry;
                         else
-                            P2PServerUDP::p2pserver->write(handShake2,sizeof(handShake2),hostToFirstReplyEntry.hostConnected.serv_addr);
+                            P2PServerUDP::p2pserver->write(handShake2,sizeof(handShake2),si_other);
                     }
                     break;
                     default:
@@ -225,6 +233,14 @@ void P2PServerUDP::read()
                         if(rc2 != 1)
                             return;
 
+                        uint64_t local_sequence_number_validated=0;
+                        uint64_t remote_sequence_number=0;
+                        uint8_t publickey[ED25519_KEY_SIZE];
+                        memcpy(&local_sequence_number_validated,P2PServerUDP::readBuffer+8,8);
+                        local_sequence_number_validated++;
+                        memcpy(&remote_sequence_number,P2PServerUDP::readBuffer,8);
+                        memcpy(publickey,P2PServerUDP::readBuffer+8+8+1,ED25519_KEY_SIZE);
+
                         //search into the connect and check the random
                         unsigned int indexSearch=0;
                         while(indexSearch<P2PServerUDP::p2pserver->hostToConnect.size())
@@ -234,14 +250,11 @@ void P2PServerUDP::read()
                                     memcmp(hostToConnect.random,P2PServerUDP::readBuffer+8,8)==0)
                             {
                                 //new peer
-                                P2PPeer newHostConnected;
-                                memcpy(newHostConnected.local_sequence_number_validated,P2PServerUDP::readBuffer+8,8);
-                                newHostConnected.local_sequence_number_validated++;
-                                memcpy(newHostConnected.remote_sequence_number,P2PServerUDP::readBuffer,8);
-                                memcpy(newHostConnected.publickey,P2PServerUDP::readBuffer+8+8+1,ED25519_KEY_SIZE);
+                                P2PPeer * const newHostConnected=new P2PPeer(publickey,local_sequence_number_validated,
+                                                                     remote_sequence_number,si_other);
                                 if(indexSearch<P2PServerUDP::p2pserver->hostToSecondReplyIndex)
                                     P2PServerUDP::p2pserver->hostToConnectIndex--;
-                                P2PServerUDP::p2pserver->hostToConnect.erase(indexSearch);
+                                P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+indexSearch);
                                 P2PServerUDP::hostConnectionEstablished[remoteClient]=newHostConnected;
                                 break;
                             }
@@ -255,19 +268,19 @@ void P2PServerUDP::read()
                             else
                             {
                                 P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
-                                P2PPeer &currentHostConnected=P2PServerUDP::hostConnectionEstablished[remoteClient];
-                                memcpy(currentHostConnected.local_sequence_number_validated,P2PServerUDP::readBuffer+8,8);
-                                newHostConnected.local_sequence_number++;
-                                memcpy(currentHostConnected.remote_sequence_number,P2PServerUDP::readBuffer,8);
-                                memcpy(currentHostConnected.publickey,P2PServerUDP::readBuffer+8+8+1,ED25519_KEY_SIZE);
+
+                                //new peer
+                                P2PPeer * const newHostConnected=new P2PPeer(publickey,local_sequence_number_validated,
+                                                                     remote_sequence_number,si_other);
+                                if(indexSearch<P2PServerUDP::p2pserver->hostToSecondReplyIndex)
+                                    P2PServerUDP::p2pserver->hostToConnectIndex--;
+                                P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+indexSearch);
+                                P2PServerUDP::hostConnectionEstablished[remoteClient]=newHostConnected;
                             }
                         }
-                        //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_SIGNATURE_SIZE(node)]
-                        memcpy(handShake3+8,P2PServerUDP::readBuffer,8);
-                        P2PServerUDP::p2pserver->sign(sizeof(handShake3)-ED25519_SIGNATURE_SIZE,reinterpret_cast<uint8_t *>(handShake3));
 
-                        P2PPeer &currentHostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
-                        currentHostConnected.addAndEmitbuffer(handShake3,sizeof(handShake3));//and emit
+                        P2PPeer *currentHostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
+                        currentHostConnected->sendData(reinterpret_cast<uint8_t *>(handShake3),sizeof(handShake3));//and emit
                     }
                     break;
                     default:
