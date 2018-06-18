@@ -27,12 +27,12 @@ public:
 
     static char readBuffer[4096];
 
-    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,P2PPeer> hostConnectionEstablished;
+    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,P2PPeer *> hostConnectionEstablished;
 
     struct HostToSecondReply {
         uint8_t round;
         char reply[8+2+1+8+ED25519_SIGNATURE_SIZE];
-        HostConnected hostConnected;
+        P2PPeer *hostConnected;
     };
     std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostToSecondReply> hostToSecondReply;
     size_t hostToSecondReplyIndex;
@@ -41,7 +41,7 @@ public:
         uint8_t round;//if timeout, remove from connect
         char random[8];
         char reply[8+2+1+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
-        HostConnected hostConnected;
+        P2PPeer *hostConnected;
     };
     std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostToFirstReply> hostToFirstReply;
     size_t hostToFirstReplyIndex;
@@ -66,7 +66,7 @@ private:
     //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
     static char handShake2[8+8+1+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
     //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_SIGNATURE_SIZE(node)]
-    static char handShake3[8+8+1+ED25519_SIGNATURE_SIZE];
+    static char handShake3[8+8+1/*+ED25519_SIGNATURE_SIZE, passed to derived function*/];
 };
 }
 
