@@ -296,12 +296,12 @@ void P2PServerUDP::read()
                     case 8+8+1+ED25519_SIGNATURE_SIZE:
                     {
                         //get valid public key from in: handShake1, out: handShake2
-                        if(P2PServerUDP::hostToFirstReply.find(remoteClient)==P2PServerUDP::hostConnectionEstablished.cend())
+                        if(P2PServerUDP::hostToFirstReply.find(remoteClient)==P2PServerUDP::hostToFirstReply.cend())
                             return;
                         HostToFirstReply &hostToFirstReply=P2PServerUDP::hostToFirstReply.at(remoteClient);
                         //check the message content
                         const int rc2 = ed25519_sha512_verify(
-                            reinterpret_cast<const uint8_t *>(hostToFirstReply.hostConnected.publickey),//pub
+                            reinterpret_cast<const uint8_t *>(hostToFirstReply.hostConnected->getPublickey()),//pub
                             recv_len-ED25519_SIGNATURE_SIZE,//length
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
@@ -313,14 +313,23 @@ void P2PServerUDP::read()
                         P2PServerUDP::hostToFirstReply.erase(remoteClient);
 
                         //search into the connect and check the random
-                        if(memcmp(hostToFirstReply.random,P2PServerUDP::readBuffer,8)==0)
+                        unsigned int index=0;
+                        while(index<P2PServerUDP::p2pserver->hostToConnect.size())
                         {
-                            P2PServerUDP::p2pserver->hostToConnect.erase(hostToConnect);
-                            P2PServerUDP::hostConnectionEstablished[remoteClient]=hostToFirstReply.hostConnected;
-                            P2PServerUDP::hostConnectionEstablished.at(remoteClient).emitAck();
+                            const HostToConnect &hostToConnect=P2PServerUDP::p2pserver->hostToConnect.at(index);
+                            if(memcmp(hostToConnect.random,P2PServerUDP::readBuffer,8)==0)
+                            {
+                                P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+index);
+                                P2PServerUDP::hostConnectionEstablished[remoteClient]=hostToFirstReply.hostConnected;
+                                P2PServerUDP::hostConnectionEstablished.at(remoteClient)->emitAck();
+                                break;
+                            }
+                            index++;
                         }
-                        else
-                            return;
+                        if(index>=P2PServerUDP::p2pserver->hostToConnect.size())
+                        {
+                            std::cerr << "not found from step 1" << std::endl;
+                        }
                     }
                     break;
                     default:
@@ -339,10 +348,10 @@ void P2PServerUDP::read()
                         //get valid public key from in: handShake1, out: handShake2
                         if(P2PServerUDP::hostConnectionEstablished.find(remoteClient)==P2PServerUDP::hostConnectionEstablished.cend())
                             return;
-                        P2PPeer &hostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
+                        P2PPeer *hostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
                         //check the message content
                         const int rc2 = ed25519_sha512_verify(
-                            reinterpret_cast<const uint8_t *>(hostToFirstReply.hostConnected.publickey),//pub
+                            reinterpret_cast<const uint8_t *>(hostConnected->getPublickey()),//pub
                             recv_len-ED25519_SIGNATURE_SIZE,//length
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
@@ -354,8 +363,8 @@ void P2PServerUDP::read()
                         const uint16_t &size=recv_len-8-8-1-ED25519_SIGNATURE_SIZE;
                         //the data
                         uint64_t sequenceNumber=0;
-                        memcpy(sequenceNumber,P2PServerUDP::readBuffer,8);
-                        if(P2PServerUDP::readBuffer==hostConnected.remoteNumber)
+                        memcpy(&sequenceNumber,P2PServerUDP::readBuffer,8);
+                        if(memcpy(P2PServerUDP::readBuffer+8,&hostConnected->get_remote_sequence_number(),8)==0)
                         {
                             //flush buffer, if have more buffer send else ACK
                             uint64_t ackNumber=0;
@@ -399,8 +408,6 @@ void P2PServerUDP::read()
             default:
             return;
         }
-        default:
-        return;
     }
 }
 
