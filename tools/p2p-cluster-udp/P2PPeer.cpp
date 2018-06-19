@@ -59,6 +59,16 @@ bool P2PPeer::discardBuffer(const uint64_t &ackNumber)
     }
 }
 
+const uint8_t *P2PPeer::getPublickey() const
+{
+    return publickey;
+}
+
+const uint64_t &get_remote_sequence_number() const
+{
+    return remote_sequence_number;
+}
+
 bool P2PPeer::sendData(const uint8_t * const data, const uint16_t &size)
 {
     if(size>=(sizeof(P2PPeer::buffer)-8-8-1-ED25519_SIGNATURE_SIZE))
