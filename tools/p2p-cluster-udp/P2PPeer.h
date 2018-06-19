@@ -20,6 +20,8 @@ public:
     bool sendData(const uint8_t * const data, const uint16_t &size);
     static void sign(uint8_t *msg, const size_t &length);
     bool discardBuffer(const uint64_t &ackNumber);
+    const uint8_t *getPublickey() const;
+    const uint64_t &get_remote_sequence_number() const;
 private:
     uint8_t publickey[ED25519_KEY_SIZE];
     uint64_t local_sequence_number_validated;
