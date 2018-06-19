@@ -25,39 +25,34 @@ void P2PTimerHandshake2::exec()
         const std::chrono::time_point<std::chrono::steady_clock> end=std::chrono::steady_clock::now();
         if(end<startTime)
             startTime=end;
-        else if(std::chrono::duration_cast<std::chrono::milliseconds>(end - startTime).count()<5000 &&
-                P2PServerUDP::p2pserver->hostToFirstReplyIndex>=P2PServerUDP::p2pserver->hostToFirstReply.size())
-            return;
     }
-    if(P2PServerUDP::p2pserver->hostToFirstReplyIndex>=P2PServerUDP::p2pserver->hostToFirstReply.size())
+    unsigned int sendedClient=0;
+    for( auto& n : P2PServerUDP::p2pserver->hostToFirstReply ) {
+        if(clientSend.find(n.first)==clientSend.cend())
+        {
+            P2PServerUDP::HostToFirstReply peerToConnect=n.second;
+            peerToConnect.round++;
+            if(peerToConnect.round>=1 && peerToConnect.round<=5)
+            {
+                peerToConnect.hostConnected->sendData(reinterpret_cast<uint8_t *>(peerToConnect.reply),8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE);
+
+                std::cout << "P2PTimerHandshake2::exec() try co" << std::endl;
+                return;
+            }
+            else if(peerToConnect.round > 5)//after try at 100ms and at 500ms, drop the reply
+                P2PServerUDP::p2pserver->hostToFirstReply.erase(n.first);
+            clientSend.insert(n.first);
+            sendedClient++;
+            break;
+        }
+    }
+
+    //if no more data to send, reset and recall
+    if(sendedClient==0)
     {
-        P2PServerUDP::p2pserver->hostToFirstReplyIndex=0;
+        clientSend.clear();
         startTime=std::chrono::steady_clock::now();
     }
-    size_t lastScannedIndex=P2PServerUDP::p2pserver->hostToFirstReplyIndex;
-    do
-    {
-        P2PServerUDP::HostToFirstReply *peerToConnect=P2PServerUDP::p2pserver->hostToFirstReply.at(lastScannedIndex);
-        lastScannedIndex++;
-        if(lastScannedIndex>=P2PServerUDP::p2pserver->hostToFirstReply.size())
-            lastScannedIndex=0;
-
-        peerToConnect.round++;
-        if(peerToConnect.round==1 || peerToConnect.round==5)
-        {
-            P2PServerUDP::p2pserver->write(peerToConnect.reply,8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE,peerToConnect.hostConnected.serv_addr);
-
-            P2PServerUDP::p2pserver->hostToFirstReplyIndex=lastScannedIndex;
-            std::cout << "P2PTimerHandshake2::exec() try co" << std::endl;
-            return;
-        }
-        else if(peerToConnect.round > 5)//after try at 100ms and at 500ms, drop the reply
-        {
-            lastScannedIndex--;
-            P2PServerUDP::p2pserver->hostToFirstReply.erase(P2PServerUDP::p2pserver->hostToFirstReply.cbegin()+lastScannedIndex);
-        }
-    } while(lastScannedIndex!=P2PServerUDP::p2pserver->hostToFirstReplyIndex);
-    P2PServerUDP::p2pserver->hostToFirstReplyIndex=lastScannedIndex;
 
     std::cout << "P2PTimerHandshake2::exec()" << std::endl;
 }
