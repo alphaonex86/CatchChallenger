@@ -37,7 +37,7 @@ void P2PTimerHandshake2::exec()
     size_t lastScannedIndex=P2PServerUDP::p2pserver->hostToFirstReplyIndex;
     do
     {
-        P2PServerUDP::HostToFirstReply &peerToConnect=P2PServerUDP::p2pserver->hostToFirstReply.at(lastScannedIndex);
+        P2PServerUDP::HostToFirstReply *peerToConnect=P2PServerUDP::p2pserver->hostToFirstReply.at(lastScannedIndex);
         lastScannedIndex++;
         if(lastScannedIndex>=P2PServerUDP::p2pserver->hostToFirstReply.size())
             lastScannedIndex=0;
