@@ -252,8 +252,6 @@ void P2PServerUDP::read()
                                 //new peer
                                 P2PPeer * const newHostConnected=new P2PPeer(publickey,local_sequence_number_validated,
                                                                      remote_sequence_number,si_other);
-                                if(indexSearch<P2PServerUDP::p2pserver->hostToSecondReplyIndex)
-                                    P2PServerUDP::p2pserver->hostToConnectIndex--;
                                 P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+indexSearch);
                                 P2PServerUDP::hostConnectionEstablished[remoteClient]=newHostConnected;
                                 break;
@@ -272,8 +270,6 @@ void P2PServerUDP::read()
                                 //new peer
                                 P2PPeer * const newHostConnected=new P2PPeer(publickey,local_sequence_number_validated,
                                                                      remote_sequence_number,si_other);
-                                if(indexSearch<P2PServerUDP::p2pserver->hostToSecondReplyIndex)
-                                    P2PServerUDP::p2pserver->hostToConnectIndex--;
                                 P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+indexSearch);
                                 P2PServerUDP::hostConnectionEstablished[remoteClient]=newHostConnected;
                             }
@@ -436,4 +432,14 @@ char * P2PServerUDP::getPublicKey()
 char * P2PServerUDP::getCaSignature()
 {
     return reinterpret_cast<char *>(ca_signature);
+}
+
+const uint8_t *P2PServerUDP::get_privatekey() const
+{
+    return privatekey;
+}
+
+const uint8_t *P2PServerUDP::get_ca_publickey() const
+{
+    return ca_publickey;
 }

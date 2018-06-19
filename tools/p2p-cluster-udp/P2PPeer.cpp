@@ -1,22 +1,27 @@
 #include "P2PPeer.h"
+#include "P2PServerUDP.h"
+#include <cstring>
 
 //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_SIGNATURE_SIZE(node)]
 char P2PPeer::buffer[];
 
-P2PPeer::P2PPeer(const uint8_t * const publickey, const uint64_t &local_sequence_number, const uint64_t &remote_sequence_number, const sockaddr_in &si_other) :
+P2PPeer::P2PPeer(const uint8_t * const publickey, const uint64_t &local_sequence_number,
+                 const uint64_t &remote_sequence_number, const sockaddr_in &si_other) :
     local_sequence_number_validated(local_sequence_number),
     remote_sequence_number(remote_sequence_number),
     si_other(si_other)
 {
-    memcpy(this->publickey,publickey,sizeof(publickey));
-    memset(P2PPeer::ack,0,sizeof(P2PPeer::ack));
+    memcpy(this->publickey,publickey,sizeof(this->publickey));
+    /*memset(P2PPeer::ack,0,sizeof(P2PPeer::ack));
 
-    memcpy(P2PPeer::ack+8+8,ackNumber,sizeof(ackNumber));
+    memcpy(P2PPeer::ack+8+8,ackNumber,sizeof(ackNumber));*/
 }
 
 void P2PPeer::sign(uint8_t *msg,const size_t &length)
 {
-    ::ed25519_sha512_sign(ca_publickey,privatekey,length,msg,msg+length);
+    ::ed25519_sha512_sign(CatchChallenger::P2PServerUDP::p2pserver->get_ca_publickey(),
+                          CatchChallenger::P2PServerUDP::p2pserver->get_privatekey(),
+                          length,msg,msg+length);
 }
 
 void P2PPeer::emitAck()

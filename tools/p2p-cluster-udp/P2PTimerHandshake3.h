@@ -6,6 +6,7 @@
 #include "../../server/epoll/EpollTimer.h"
 #include <nettle/eddsa.h>
 #include <chrono>
+#include <unordered_set>
 
 namespace CatchChallenger {
 class P2PTimerHandshake3
@@ -16,6 +17,7 @@ public:
     void exec();
 private:
     std::chrono::time_point<std::chrono::steady_clock> startTime;
+    std::unordered_set<std::string> clientSend;
 };
 }
 
