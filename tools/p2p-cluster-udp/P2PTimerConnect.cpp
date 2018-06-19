@@ -64,8 +64,8 @@ void P2PTimerConnect::exec()
                 const int readSize=fread(handShake1,1,8,P2PServerUDP::p2pserver->ptr_random);
                 if(readSize != 8)
                     abort();
-            } while(*static_cast<uint64_t *>(handShake1)==0);
-            P2PServerUDP::p2pserver->sign(8+8+1+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE+,reinterpret_cast<uint8_t *>(handShake1));
+            } while(*reinterpret_cast<uint64_t *>(handShake1)==0);
+            P2PPeer::sign(reinterpret_cast<uint8_t *>(handShake1),8+8+1+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE);
             P2PServerUDP::p2pserver->write(handShake1,sizeof(handShake1),peerToConnect.serv_addr);
 
             P2PServerUDP::p2pserver->hostToConnectIndex=lastScannedIndex;

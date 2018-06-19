@@ -64,9 +64,14 @@ const uint8_t *P2PPeer::getPublickey() const
     return publickey;
 }
 
-const uint64_t &get_remote_sequence_number() const
+const uint64_t &P2PPeer::get_remote_sequence_number() const
 {
     return remote_sequence_number;
+}
+
+void P2PPeer::incremente_remote_sequence_number()
+{
+    remote_sequence_number++;
 }
 
 bool P2PPeer::sendData(const uint8_t * const data, const uint16_t &size)

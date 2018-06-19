@@ -368,15 +368,15 @@ void P2PServerUDP::read()
                         {
                             //flush buffer, if have more buffer send else ACK
                             uint64_t ackNumber=0;
-                            memcpy(ackNumber,P2PServerUDP::readBuffer+8,8);
-                            if(!hostConnected.discardBuffer(ackNumber))
+                            memcpy(&ackNumber,P2PServerUDP::readBuffer+8,8);
+                            if(!hostConnected->discardBuffer(ackNumber))
                                 return;
 
-                            hostConnected.remoteNumber++;
+                            hostConnected->incremente_remote_sequence_number();
                             switch(messageType)
                             {
                                 case 0x04:
-                                if(!hostConnected.parseData(P2PServerUDP::readBuffer+8+8+1,size))
+                                if(!hostConnected->parseData(reinterpret_cast<uint8_t *>(P2PServerUDP::readBuffer+8+8+1),size))
                                 {
                                     std::cerr << "P2P peer bug !hostConnected.parseData()" << std::endl;
                                     P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
