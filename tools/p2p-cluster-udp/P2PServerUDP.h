@@ -35,7 +35,6 @@ public:
         P2PPeer *hostConnected;
     };
     std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostToSecondReply> hostToSecondReply;
-    size_t hostToSecondReplyIndex;
 
     struct HostToFirstReply {
         uint8_t round;//if timeout, remove from connect
@@ -44,7 +43,6 @@ public:
         P2PPeer *hostConnected;
     };
     std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostToFirstReply> hostToFirstReply;
-    size_t hostToFirstReplyIndex;
 
     struct HostToConnect {
         uint8_t round;
@@ -55,6 +53,9 @@ public:
     size_t hostToConnectIndex;
     static P2PServerUDP *p2pserver;
     FILE *ptr_random;
+
+    const uint8_t *get_privatekey() const;
+    const uint8_t *get_ca_publickey() const;
 private:
     int sfd;
 
