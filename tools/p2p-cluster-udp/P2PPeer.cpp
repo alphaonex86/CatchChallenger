@@ -1,6 +1,7 @@
 #include "P2PPeer.h"
 #include "P2PServerUDP.h"
 #include <cstring>
+#include <iostream>
 
 //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_SIGNATURE_SIZE(node)]
 char P2PPeer::buffer[];
@@ -39,13 +40,13 @@ bool P2PPeer::discardBuffer(const uint64_t &ackNumber)
 
         //reemit the last packet
         const std::string &data=dataToSend.front();
-        const int returnVal=::sendto(sfd, data.data(), data.size(), 0, (struct sockaddr*) &si_other, sizeof(si_other));
+        const int returnVal=CatchChallenger::P2PServerUDP::p2pserver->write(data.data(), data.size(), si_other);
         if (returnVal < 0)
         {
             std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem" << std::endl;
             return false;
         }
-        else if ((uint32_t)returnVal != dataSize)
+        else if ((uint32_t)returnVal != data.size())
         {
             std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize" << std::endl;
             return false;
@@ -85,14 +86,16 @@ bool P2PPeer::sendData(const uint8_t * const data, const uint16_t &size)
         return false;
     if(size==0)
         return false;
-    memcpy(P2PPeer::buffer,local_sequence_number_validated+dataToSend.size(),sizeof(local_sequence_number_validated));
-    memcpy(P2PPeer::buffer+8,remote_sequence_number,sizeof(remote_sequence_number));
+    memcpy(P2PPeer::buffer,&local_sequence_number_validated,sizeof(local_sequence_number_validated));
+    local_sequence_number_validated++;
+    memcpy(P2PPeer::buffer+8,&remote_sequence_number,sizeof(remote_sequence_number));
     memcpy(P2PPeer::buffer+8+8,data,size);
-    P2PPeer::sign(P2PPeer::buffer,8+8+size);
+    P2PPeer::sign(reinterpret_cast<uint8_t *>(P2PPeer::buffer),8+8+size);
+    const unsigned int dataSize=8+8+size;
 
     dataToSend.push_back(std::string(P2PPeer::buffer+8+8+size+ED25519_SIGNATURE_SIZE));
 
-    const int returnVal=::sendto(sfd, data, dataSize, 0, (struct sockaddr*) &si_other, sizeof(si_other));
+    const int returnVal=CatchChallenger::P2PServerUDP::p2pserver->write(P2PPeer::buffer, dataSize, si_other);
     if (returnVal < 0)
     {
         std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem" << std::endl;
