@@ -138,7 +138,7 @@ void P2PServerUDP::read()
 
     //print details of the client/peer and the data received
     std::cout << "Received packet from " << inet_ntoa(si_other.sin_addr) << ":" << ntohs(si_other.sin_port) << std::endl;
-    std::cout << "Data: " << data << std::endl;
+    std::cout << "Data: " << binarytoHexa(data.data(),data.size()) << std::endl;
 
     //now reply the client with the same data
     if(recv_len>=(8+8+1+ED25519_SIGNATURE_SIZE))
