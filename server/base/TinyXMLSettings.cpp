@@ -24,19 +24,10 @@ TinyXMLSettings::TinyXMLSettings(const std::string &file) :
     {
         modified=true;
         const auto &errorId=document.ErrorID();
-        #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-        if(errorId==2 /*NOT 12! Error document empty. but can be just corrupted!*/ && errno==2)
-        #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
         if(errorId==tinyxml2::XML_ERROR_FILE_NOT_FOUND)
-        #endif
         {
-            #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-            tinyxml2::XMLElement * root = new CATCHCHALLENGER_XMLELEMENT("configuration");
-            document.LinkEndChild(root);
-            #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
             tinyxml2::XMLNode * pRoot = document.NewElement("configuration");
             document.InsertFirstChild(pRoot);
-            #endif
         }
         else
         {
