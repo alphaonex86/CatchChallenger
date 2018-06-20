@@ -80,7 +80,16 @@ int main(int argc, char *argv[])
     uint8_t privatekey[ED25519_KEY_SIZE];
     uint8_t ca_publickey[ED25519_KEY_SIZE];
     uint8_t ca_signature[ED25519_SIGNATURE_SIZE];
-    uint16_t port;
+    char buf[4096];
+    memset(buf,0,4096);
+    /* Buffer where events are returned */
+    epoll_event events[MAXEVENTS];
+    memset(events,0,sizeof(events));
+    memset(privatekey,0,ED25519_KEY_SIZE);
+    memset(ca_publickey,0,ED25519_KEY_SIZE);
+    memset(ca_signature,0,ED25519_SIGNATURE_SIZE);
+    uint16_t port=0;
+    std::vector<P2PServerUDP::HostToConnect> hostToConnectTemp;
     {
         TinyXMLSettings settings("p2p.xml");
 
@@ -115,7 +124,8 @@ int main(int argc, char *argv[])
                 memcpy(ca_signature,tempData.data(),ED25519_SIGNATURE_SIZE);
             else
             {
-                std::cerr << "You need define CA signature of your public key" << std::endl;
+                std::cerr << "You need define CA signature of your public key " <<
+                             std::to_string(tempData.size()) << "!=" << std::to_string(ED25519_SIGNATURE_SIZE) << std::endl;
                 abort();
             }
         }
@@ -133,7 +143,8 @@ int main(int argc, char *argv[])
                 memcpy(ca_publickey,tempData.data(),ED25519_KEY_SIZE);
             else
             {
-                std::cerr << "You need define CA public key" << std::endl;
+                std::cerr << "You need define CA public key " <<
+                             std::to_string(tempData.size()) << "!=" << std::to_string(ED25519_KEY_SIZE) << std::endl;
                 abort();
             }
         }
@@ -167,18 +178,20 @@ int main(int argc, char *argv[])
                 serv_addr.sin_family = AF_INET;
                 serv_addr.sin_port = htobe16(port);
                 const char * const hostC=host.c_str();
-                const int convertResult=inet_pton(AF_INET6,hostC,&serv_addr.sin_addr);
+                int convertResult=inet_pton(AF_INET6,hostC,&serv_addr.sin_addr);
                 if(convertResult!=1)
                 {
-                    const int convertResult=inet_pton(AF_INET,hostC,&serv_addr.sin_addr);
+                    convertResult=inet_pton(AF_INET,hostC,&serv_addr.sin_addr);
                     if(convertResult!=1)
-                        std::cerr << "not IPv4 and IPv6 address, errno: " << std::to_string(errno) << std::endl;
+                        std::cerr << "not IPv4 and IPv6 address, host: \"" << host << "\", portstring: \"" << portstring
+                                  << "\", errno: " << std::to_string(errno) << std::endl;
                 }
                 if(convertResult==1)
                 {
                     hostToConnect.round=0;
                     hostToConnect.serv_addr=serv_addr;
-                    P2PServerUDP::p2pserver->hostToConnect.push_back(hostToConnect);
+                    //pass to temp list because P2PServerUDP::p2pserver not init for now
+                    hostToConnectTemp.push_back(hostToConnect);
                 }
             }
 
@@ -191,14 +204,8 @@ int main(int argc, char *argv[])
             return EPOLLERR;
     }
 
-    char buf[4096];
-    memset(buf,0,4096);
-    /* Buffer where events are returned */
-    epoll_event events[MAXEVENTS];
     P2PServerUDP::p2pserver=new P2PServerUDP(privatekey,ca_publickey,ca_signature);
-    memset(privatekey,0,ED25519_KEY_SIZE);
-    memset(ca_publickey,0,ED25519_KEY_SIZE);
-    memset(ca_signature,0,ED25519_SIGNATURE_SIZE);
+    P2PServerUDP::p2pserver->hostToConnect=hostToConnectTemp;
     if(!P2PServerUDP::p2pserver->tryListen(port))
     {
         std::cerr << "can't listen, abort" << std::endl;
