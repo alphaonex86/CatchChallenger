@@ -30,14 +30,20 @@ P2PTimerConnect::P2PTimerConnect()
 void P2PTimerConnect::exec()
 {
     if(P2PServerUDP::p2pserver->hostToConnect.empty())
+    {
+        //std::cout << "P2PTimerConnect::exec() P2PServerUDP::p2pserver->hostToConnect.empty()" << std::endl;
         return;
+    }
     {
         const std::chrono::time_point<std::chrono::steady_clock> end=std::chrono::steady_clock::now();
         if(end<startTime)
             startTime=end;
         else if(std::chrono::duration_cast<std::chrono::milliseconds>(end - startTime).count()<5000 &&
                 P2PServerUDP::p2pserver->hostToConnectIndex>=P2PServerUDP::p2pserver->hostToConnect.size())
+        {
+            //std::cout << "P2PTimerConnect::exec() std::chrono<5000 && hostToConnectIndex>=hostToConnect.size()" << std::endl;
             return;
+        }
     }
     if(P2PServerUDP::p2pserver->hostToConnectIndex>=P2PServerUDP::p2pserver->hostToConnect.size())
     {
@@ -69,11 +75,11 @@ void P2PTimerConnect::exec()
             P2PServerUDP::p2pserver->write(handShake1,sizeof(handShake1),peerToConnect.serv_addr);
 
             P2PServerUDP::p2pserver->hostToConnectIndex=lastScannedIndex;
-            std::cout << "P2PTimerConnect::exec() try co" << std::endl;
+            //std::cout << "P2PTimerConnect::exec() try co" << std::endl;
             return;
         }
     } while(lastScannedIndex!=P2PServerUDP::p2pserver->hostToConnectIndex);
     P2PServerUDP::p2pserver->hostToConnectIndex=lastScannedIndex;
 
-    std::cout << "P2PTimerConnect::exec()" << std::endl;
+    //std::cout << "P2PTimerConnect::exec()" << std::endl;
 }
