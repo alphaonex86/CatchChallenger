@@ -137,15 +137,26 @@ void P2PServerUDP::read()
     const std::string remoteClient(sockSerialised(si_other));
     const std::string data(P2PServerUDP::readBuffer,recv_len);
 
-    //print details of the client/peer and the data received
-    std::cout << "Received packet from " << inet_ntoa(si_other.sin_addr) << ":" << ntohs(si_other.sin_port) << std::endl;
-    std::cout << "Data: " << binarytoHexa(data.data(),data.size()) << std::endl;
-
     //now reply the client with the same data
     if(recv_len>=(8+8+1+ED25519_SIGNATURE_SIZE))
     {
         uint8_t messageType=0;
         memcpy(&messageType,P2PServerUDP::readBuffer+8+8,1);
+
+        //print details of the client/peer and the data received
+        std::string data1,data2,data3,data4;
+        data1=data.substr(0,8+8);
+        data2=data.substr(8+8,1);
+        data3=data.substr(8+8+1,recv_len-8-8-1-ED25519_SIGNATURE_SIZE);
+        data4=data.substr(recv_len-ED25519_SIGNATURE_SIZE,ED25519_SIGNATURE_SIZE);
+        std::cout << "(" << std::to_string(messageType) << ") "
+                  << inet_ntoa(si_other.sin_addr) << ":" << ntohs(si_other.sin_port) << ": "
+                  << binarytoHexa(data1.data(),data1.size()) << " "
+                  << binarytoHexa(data2.data(),data2.size()) << " "
+                  << binarytoHexa(data3.data(),data3.size()) << " "
+                  << binarytoHexa(data4.data(),data4.size()) << " "
+                  << std::endl;
+
         switch(messageType)
         {
             case 0x01:
@@ -163,7 +174,7 @@ void P2PServerUDP::read()
                             ED25519_KEY_SIZE,//length
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1),//msg
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1+ED25519_KEY_SIZE)//signature
-                                                             );
+                        );
                         if(rc != 1)
                             return;
                         //check the message content
@@ -172,11 +183,11 @@ void P2PServerUDP::read()
                             recv_len-ED25519_SIGNATURE_SIZE,//length
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
-                                                             );
+                        );
                         if(rc2 != 1)
                         {
-                            std::cerr << "ed25519_sha512_verify failed at " << __FILE__ << ":" << std::to_string(__LINE__)
-                                      << ", data: " << binarytoHexa(P2PServerUDP::readBuffer,recv_len) << std::endl;
+                            /*std::cerr << "ed25519_sha512_verify failed at " << __FILE__ << ":" << std::to_string(__LINE__)
+                                      << ", data: " << binarytoHexa(P2PServerUDP::readBuffer,recv_len) << std::endl;*/
                             return;
                         }
 
@@ -210,6 +221,9 @@ void P2PServerUDP::read()
                     }
                     break;
                     default:
+                    {
+                        std::cerr << "messageType, 0x01, some problem" << std::endl;
+                    }
                     return;
                 }
             }
@@ -222,22 +236,30 @@ void P2PServerUDP::read()
                     case 8+8+1+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE+ED25519_SIGNATURE_SIZE:
                     {
                         //check if the public key of node is signed by ca
+                        if(P2PServerUDP::p2pserver->hostToSecondReply.size()>64)
+                            return;
+                        //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
+                        //check if the public key of node is signed by ca
                         const int rc = ed25519_sha512_verify(ca_publickey,//pub
                             ED25519_KEY_SIZE,//length
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1+8+8+ED25519_SIGNATURE_SIZE),//msg
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE)//signature
-                                                             );
+                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1),//msg
+                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1+ED25519_KEY_SIZE)//signature
+                        );
                         if(rc != 1)
                             return;
                         //check the message content
                         const int rc2 = ed25519_sha512_verify(
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1+8),//pub
+                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1),//pub
                             recv_len-ED25519_SIGNATURE_SIZE,//length
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
-                                                             );
+                        );
                         if(rc2 != 1)
+                        {
+                            /*std::cerr << "ed25519_sha512_verify failed at " << __FILE__ << ":" << std::to_string(__LINE__)
+                                      << ", data: " << binarytoHexa(P2PServerUDP::readBuffer,recv_len) << std::endl;*/
                             return;
+                        }
 
                         uint64_t local_sequence_number_validated=0;
                         uint64_t remote_sequence_number=0;
@@ -268,7 +290,10 @@ void P2PServerUDP::read()
                         if(indexSearch>=P2PServerUDP::p2pserver->hostToConnect.size())
                         {
                             if(P2PServerUDP::hostConnectionEstablished.find(remoteClient)==P2PServerUDP::hostConnectionEstablished.cend())
+                            {
+                                std::cerr << "messageType, 0x02, some problem: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 return;
+                            }
                             else
                             {
                                 P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
@@ -286,6 +311,9 @@ void P2PServerUDP::read()
                     }
                     break;
                     default:
+                    {
+                        std::cerr << "messageType, 0x02, some problem" << std::endl;
+                    }
                     return;
                 }
             }
@@ -335,6 +363,9 @@ void P2PServerUDP::read()
                     }
                     break;
                     default:
+                    {
+                        std::cerr << "messageType, 0x03, some problem" << std::endl;
+                    }
                     return;
                 }
             }
@@ -403,13 +434,22 @@ void P2PServerUDP::read()
                     }
                     break;
                     default:
+                    {
+                        std::cerr << "messageType, 0x04 0xFF, some problem" << std::endl;
+                    }
                     return;
                 }
             }
             break;
             default:
+            {
+                std::cerr << "messageType, not known: " << messageType << std::endl;
+            }
             return;
         }
+    }
+    else {
+        std::cerr << "messageType, size to little" << std::endl;
     }
 }
 

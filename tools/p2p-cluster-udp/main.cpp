@@ -14,6 +14,8 @@
 #include "../../server/VariableServer.h"
 #include "P2PServerUDP.h"
 #include "P2PTimerConnect.h"
+#include "P2PTimerHandshake2.h"
+#include "P2PTimerHandshake3.h"
 
 #define MAXEVENTS 512
 
@@ -213,6 +215,10 @@ int main(int argc, char *argv[])
     }
     P2PTimerConnect p2pTimerConnect;
     p2pTimerConnect.start();
+    P2PTimerHandshake2 p2pTimerHandshake2;
+    p2pTimerHandshake2.start();
+    P2PTimerHandshake3 p2pTimerHandshake3;
+    p2pTimerHandshake3.start();
 
     /* The event loop */
     std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > elementsToDelete;
