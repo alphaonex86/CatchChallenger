@@ -25,6 +25,7 @@ P2PServerUDP::P2PServerUDP(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_
     memcpy(this->ca_publickey,ca_publickey,ED25519_KEY_SIZE);
     memcpy(this->ca_signature,ca_signature,ED25519_SIGNATURE_SIZE);
     ed25519_sha512_public_key(publickey,privatekey);
+    std::cout << "public key: " << binarytoHexa(publickey,sizeof(publickey)) << std::endl;
 
     ptr_random = fopen("/dev/urandom","rb");  // r for read, b for binary
     if(ptr_random == NULL)
@@ -156,23 +157,28 @@ void P2PServerUDP::read()
                     {
                         if(P2PServerUDP::p2pserver->hostToFirstReply.size()>64)
                             return;
+                        //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
                         //check if the public key of node is signed by ca
                         const int rc = ed25519_sha512_verify(ca_publickey,//pub
                             ED25519_KEY_SIZE,//length
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1+8),//msg
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1+8+ED25519_KEY_SIZE)//signature
+                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1),//msg
+                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1+ED25519_KEY_SIZE)//signature
                                                              );
                         if(rc != 1)
                             return;
                         //check the message content
                         const int rc2 = ed25519_sha512_verify(
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1+8),//pub
+                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1),//pub
                             recv_len-ED25519_SIGNATURE_SIZE,//length
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
                                                              );
                         if(rc2 != 1)
+                        {
+                            std::cerr << "ed25519_sha512_verify failed at " << __FILE__ << ":" << std::to_string(__LINE__)
+                                      << ", data: " << binarytoHexa(P2PServerUDP::readBuffer,recv_len) << std::endl;
                             return;
+                        }
 
                         //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
                         memcpy(handShake2+8,P2PServerUDP::readBuffer,8);//copy the ACK
@@ -409,6 +415,22 @@ void P2PServerUDP::read()
 
 int P2PServerUDP::write(const char * const data,const uint32_t dataSize,const sockaddr_in &si_other)
 {
+    #ifdef CATCHCHALLENGER_EXTRACHECK
+    {
+        const int returnFirm = ed25519_sha512_verify(
+            P2PServerUDP::p2pserver->publickey,//pub
+            dataSize-ED25519_SIGNATURE_SIZE,//length
+            reinterpret_cast<const uint8_t *>(data),//msg
+            reinterpret_cast<const uint8_t *>(data+dataSize-ED25519_SIGNATURE_SIZE)//signature
+        );
+        if(returnFirm != 1)
+        {
+            std::cerr << "out packet with wrong signature, blocked" << std::endl;
+            abort();
+            return -1;
+        }
+    }
+    #endif
     const int returnVal=sendto(sfd, data, dataSize, 0, (struct sockaddr*) &si_other, sizeof(si_other));
     if (returnVal < 0)
         std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem" << std::endl;
@@ -424,14 +446,14 @@ P2PServerUDP::EpollObjectType P2PServerUDP::getType() const
     return P2PServerUDP::EpollObjectType::ServerP2P;
 }
 
-char * P2PServerUDP::getPublicKey()
+const char * P2PServerUDP::getPublicKey() const
 {
-    return reinterpret_cast<char *>(publickey);
+    return reinterpret_cast<const char *>(publickey);
 }
 
-char * P2PServerUDP::getCaSignature()
+const char *P2PServerUDP::getCaSignature() const
 {
-    return reinterpret_cast<char *>(ca_signature);
+    return reinterpret_cast<const char *>(ca_signature);
 }
 
 const uint8_t *P2PServerUDP::get_privatekey() const

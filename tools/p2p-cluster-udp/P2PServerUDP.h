@@ -22,8 +22,8 @@ public:
     static std::string sockSerialised(const sockaddr_in &si_other);
     int write(const char * const data, const uint32_t dataSize, const sockaddr_in &si_other);
     EpollObjectType getType() const;
-    char * getPublicKey();
-    char * getCaSignature();
+    const char *getPublicKey() const;
+    const char * getCaSignature() const;
 
     static char readBuffer[4096];
 
@@ -65,7 +65,7 @@ private:
     uint8_t ca_signature[ED25519_SIGNATURE_SIZE];
 
     //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
-    static char handShake2[8+8+1+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE];
+    static char handShake2[8+8+1+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE+ED25519_SIGNATURE_SIZE];
     //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_SIGNATURE_SIZE(node)]
     static char handShake3[8+8+1/*+ED25519_SIGNATURE_SIZE, passed to derived function*/];
 };

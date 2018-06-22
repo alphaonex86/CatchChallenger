@@ -20,9 +20,26 @@ P2PPeer::P2PPeer(const uint8_t * const publickey, const uint64_t &local_sequence
 
 void P2PPeer::sign(uint8_t *msg,const size_t &length)
 {
-    ::ed25519_sha512_sign(CatchChallenger::P2PServerUDP::p2pserver->get_ca_publickey(),
+    ed25519_sha512_sign(reinterpret_cast<const uint8_t *>(CatchChallenger::P2PServerUDP::p2pserver->getPublicKey()),
                           CatchChallenger::P2PServerUDP::p2pserver->get_privatekey(),
                           length,msg,msg+length);
+
+    #ifdef CATCHCHALLENGER_EXTRACHECK
+    {
+        const int returnFirm = ed25519_sha512_verify(
+            reinterpret_cast<const uint8_t *>(CatchChallenger::P2PServerUDP::p2pserver->getPublicKey()),//pub
+            length,//length
+            reinterpret_cast<const uint8_t *>(msg),//msg
+            reinterpret_cast<const uint8_t *>(msg+length)//signature
+        );
+        if(returnFirm != 1)
+        {
+            std::cerr << "firm packet error, abort" << std::endl;
+            abort();
+            return;
+        }
+    }
+    #endif
 }
 
 void P2PPeer::emitAck()
