@@ -25,6 +25,20 @@ P2PTimerConnect::P2PTimerConnect()
     memcpy(handShake1+8+8,&requestType,sizeof(requestType));
     memcpy(handShake1+8+8+1,P2PServerUDP::p2pserver->getPublicKey(),ED25519_KEY_SIZE);
     memcpy(handShake1+8+8+1+ED25519_KEY_SIZE,P2PServerUDP::p2pserver->getCaSignature(),ED25519_SIGNATURE_SIZE);
+
+    //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
+    //check if the public key of node is signed by ca
+    const int rc = ed25519_sha512_verify(P2PServerUDP::p2pserver->get_ca_publickey(),//pub
+        ED25519_KEY_SIZE,//length
+        reinterpret_cast<const uint8_t *>(handShake1+8+8+1),//msg
+        reinterpret_cast<const uint8_t *>(handShake1+8+8+1+ED25519_KEY_SIZE)//signature
+    );
+    if(rc != 1)
+    {
+        std::cerr << "ed25519_sha512_verify failed at " << __FILE__ << ":" << std::to_string(__LINE__)
+                  << ", handShake1 corrupted" << std::endl;
+        abort();
+    }
 }
 
 void P2PTimerConnect::exec()
