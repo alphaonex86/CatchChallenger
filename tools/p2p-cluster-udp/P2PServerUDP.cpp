@@ -25,6 +25,22 @@ P2PServerUDP::P2PServerUDP(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_
     memcpy(this->ca_publickey,ca_publickey,ED25519_KEY_SIZE);
     memcpy(this->ca_signature,ca_signature,ED25519_SIGNATURE_SIZE);
     ed25519_sha512_public_key(publickey,privatekey);
+
+    /*const uint8_t *pub,
+               size_t length, const uint8_t *msg,
+               const uint8_t *signature*/
+    const int rc = ed25519_sha512_verify(this->ca_publickey,//pub
+        ED25519_KEY_SIZE,//length
+        reinterpret_cast<const uint8_t *>(publickey),//msg
+        reinterpret_cast<const uint8_t *>(this->ca_signature)//signature
+    );
+    if(rc != 1)
+    {
+        std::cerr << "ed25519_sha512_verify failed at " << __FILE__ << ":" << std::to_string(__LINE__)
+                  << ", your public key seam not firmed by ca" << std::endl;
+        abort();
+    }
+
     std::cout << "public key: " << binarytoHexa(publickey,sizeof(publickey)) << std::endl;
 
     ptr_random = fopen("/dev/urandom","rb");  // r for read, b for binary
@@ -39,6 +55,20 @@ P2PServerUDP::P2PServerUDP(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_
     memcpy(handShake2+8+8,&requestType2,sizeof(requestType2));
     memcpy(handShake2+8+8+1,publickey,ED25519_KEY_SIZE);
     memcpy(handShake2+8+8+1+ED25519_KEY_SIZE,ca_signature,ED25519_SIGNATURE_SIZE);
+
+    //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
+    //check if the public key of node is signed by ca
+    const int rc2 = ed25519_sha512_verify(ca_publickey,//pub
+        ED25519_KEY_SIZE,//length
+        reinterpret_cast<const uint8_t *>(handShake2+8+8+1),//msg
+        reinterpret_cast<const uint8_t *>(handShake2+8+8+1+ED25519_KEY_SIZE)//signature
+    );
+    if(rc2 != 1)
+    {
+        std::cerr << "ed25519_sha512_verify failed at " << __FILE__ << ":" << std::to_string(__LINE__)
+                  << ", handShake2 is corrupted" << std::endl;
+        abort();
+    }
 
     //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_SIGNATURE_SIZE]
     memset(handShake3,0,sizeof(handShake3));
@@ -246,7 +276,11 @@ void P2PServerUDP::read()
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1+ED25519_KEY_SIZE)//signature
                         );
                         if(rc != 1)
+                        {
+                            std::cerr << "ed25519_sha512_verify failed at " << __FILE__ << ":" << std::to_string(__LINE__)
+                                      << ", data: " << binarytoHexa(P2PServerUDP::readBuffer,recv_len) << std::endl;
                             return;
+                        }
                         //check the message content
                         const int rc2 = ed25519_sha512_verify(
                             reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1),//pub
