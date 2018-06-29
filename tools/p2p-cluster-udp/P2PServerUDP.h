@@ -11,7 +11,6 @@
 #include <nettle/eddsa.h>
 #include "P2PPeer.h"
 
-namespace CatchChallenger {
 class P2PServerUDP : public BaseClassSwitch
 {
 public:
@@ -69,6 +68,5 @@ private:
     //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_SIGNATURE_SIZE(node)]
     static char handShake3[8+8+1/*+ED25519_SIGNATURE_SIZE, passed to derived function*/];
 };
-}
 
 #endif // EPOLLSERVERSTATS_H

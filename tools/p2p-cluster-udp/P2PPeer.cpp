@@ -20,14 +20,14 @@ P2PPeer::P2PPeer(const uint8_t * const publickey, const uint64_t &local_sequence
 
 void P2PPeer::sign(uint8_t *msg,const size_t &length)
 {
-    ed25519_sha512_sign(reinterpret_cast<const uint8_t *>(CatchChallenger::P2PServerUDP::p2pserver->getPublicKey()),
-                          CatchChallenger::P2PServerUDP::p2pserver->get_privatekey(),
+    ed25519_sha512_sign(reinterpret_cast<const uint8_t *>(P2PServerUDP::p2pserver->getPublicKey()),
+                          P2PServerUDP::p2pserver->get_privatekey(),
                           length,msg,msg+length);
 
     #ifdef CATCHCHALLENGER_EXTRACHECK
     {
         const int returnFirm = ed25519_sha512_verify(
-            reinterpret_cast<const uint8_t *>(CatchChallenger::P2PServerUDP::p2pserver->getPublicKey()),//pub
+            reinterpret_cast<const uint8_t *>(P2PServerUDP::p2pserver->getPublicKey()),//pub
             length,//length
             reinterpret_cast<const uint8_t *>(msg),//msg
             reinterpret_cast<const uint8_t *>(msg+length)//signature
@@ -57,7 +57,7 @@ bool P2PPeer::discardBuffer(const uint64_t &ackNumber)
 
         //reemit the last packet
         const std::string &data=dataToSend.front();
-        const int returnVal=CatchChallenger::P2PServerUDP::p2pserver->write(data.data(), data.size(), si_other);
+        const int returnVal=P2PServerUDP::p2pserver->write(data.data(), data.size(), si_other);
         if (returnVal < 0)
         {
             std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem" << std::endl;
@@ -103,16 +103,32 @@ bool P2PPeer::sendData(const uint8_t * const data, const uint16_t &size)
         return false;
     if(size==0)
         return false;
+    const unsigned int dataSize=8+8+size+ED25519_SIGNATURE_SIZE;
     memcpy(P2PPeer::buffer,&local_sequence_number_validated,sizeof(local_sequence_number_validated));
     local_sequence_number_validated++;
     memcpy(P2PPeer::buffer+8,&remote_sequence_number,sizeof(remote_sequence_number));
     memcpy(P2PPeer::buffer+8+8,data,size);
     P2PPeer::sign(reinterpret_cast<uint8_t *>(P2PPeer::buffer),8+8+size);
-    const unsigned int dataSize=8+8+size;
+    #ifdef CATCHCHALLENGER_EXTRACHECK
+    {
+        const int returnFirm = ed25519_sha512_verify(
+            reinterpret_cast<const uint8_t *>(P2PServerUDP::p2pserver->getPublicKey()),//pub
+            dataSize-ED25519_SIGNATURE_SIZE,//length
+            reinterpret_cast<const uint8_t *>(P2PPeer::buffer),//msg
+            reinterpret_cast<const uint8_t *>(P2PPeer::buffer+dataSize-ED25519_SIGNATURE_SIZE)//signature
+        );
+        if(returnFirm != 1)
+        {
+            std::cerr << "out packet with wrong signature, blocked" << std::endl;
+            abort();
+            return -1;
+        }
+    }
+    #endif
 
     dataToSend.push_back(std::string(P2PPeer::buffer+8+8+size+ED25519_SIGNATURE_SIZE));
 
-    const int returnVal=CatchChallenger::P2PServerUDP::p2pserver->write(P2PPeer::buffer, dataSize, si_other);
+    const int returnVal=P2PServerUDP::p2pserver->write(P2PPeer::buffer, dataSize, si_other);
     if (returnVal < 0)
     {
         std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem" << std::endl;

@@ -10,8 +10,6 @@
 #include <cstring>
 #include <arpa/inet.h> // for inet_ntoa, drop after debug
 
-using namespace CatchChallenger;
-
 char P2PServerUDP::readBuffer[];
 P2PServerUDP *P2PServerUDP::p2pserver=NULL;
 char P2PServerUDP::handShake2[];
@@ -70,9 +68,9 @@ P2PServerUDP::P2PServerUDP(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_
         abort();
     }
 
-    //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_SIGNATURE_SIZE]
+    //8+8 -> managed by class, [1(request type)+ED25519_SIGNATURE_SIZE]
     memset(handShake3,0,sizeof(handShake3));
-    memcpy(handShake3+8+8,&requestType3,sizeof(requestType3));
+    memcpy(handShake3,&requestType3,sizeof(requestType3));
 }
 
 P2PServerUDP::~P2PServerUDP()
@@ -236,7 +234,7 @@ void P2PServerUDP::read()
                         uint64_t local_sequence_number_validated=0;
                         memcpy(&local_sequence_number_validated,handShake2,8);
                         uint64_t remote_sequence_number=0;
-                        memcpy(&remote_sequence_number,P2PServerUDP::readBuffer,8);
+                        memcpy(&remote_sequence_number,P2PServerUDP::readBuffer/*==handShake2+8, see above*/,8);
                         hostToFirstReplyEntry.hostConnected=new P2PPeer(publickey,local_sequence_number_validated,
                             remote_sequence_number,si_other);
                         memcpy(hostToFirstReplyEntry.random,P2PServerUDP::readBuffer+8,8);
@@ -312,6 +310,7 @@ void P2PServerUDP::read()
                                     memcmp(hostToConnect.random,P2PServerUDP::readBuffer+8,8)==0)
                             {
                                 //new peer
+                                std::cerr << "new peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 P2PPeer * const newHostConnected=new P2PPeer(publickey,local_sequence_number_validated,
                                                                      remote_sequence_number,si_other);
                                 P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+indexSearch);
@@ -333,9 +332,9 @@ void P2PServerUDP::read()
                                 P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
 
                                 //new peer
+                                std::cerr << "new peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 P2PPeer * const newHostConnected=new P2PPeer(publickey,local_sequence_number_validated,
                                                                      remote_sequence_number,si_other);
-                                P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+indexSearch);
                                 P2PServerUDP::hostConnectionEstablished[remoteClient]=newHostConnected;
                             }
                         }
