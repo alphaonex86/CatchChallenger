@@ -250,7 +250,7 @@ void P2PServerUDP::read()
                     break;
                     default:
                     {
-                        std::cerr << "messageType, 0x01, some problem" << std::endl;
+                        std::cerr << "messageType, 0x01, some problem: " << std::to_string(recv_len) << std::endl;
                     }
                     return;
                 }
@@ -345,7 +345,7 @@ void P2PServerUDP::read()
                     break;
                     default:
                     {
-                        std::cerr << "messageType, 0x02, some problem" << std::endl;
+                        std::cerr << "messageType, 0x02, some problem: " << std::to_string(recv_len) << std::endl;
                     }
                     return;
                 }
@@ -397,7 +397,7 @@ void P2PServerUDP::read()
                     break;
                     default:
                     {
-                        std::cerr << "messageType, 0x03, some problem" << std::endl;
+                        std::cerr << "messageType, 0x03, some problem: " << std::to_string(recv_len) << std::endl;
                     }
                     return;
                 }
