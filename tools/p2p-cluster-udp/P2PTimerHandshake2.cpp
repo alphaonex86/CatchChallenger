@@ -30,13 +30,13 @@ void P2PTimerHandshake2::exec()
     for( auto& n : P2PServerUDP::p2pserver->hostToFirstReply ) {
         if(clientSend.find(n.first)==clientSend.cend())
         {
-            P2PServerUDP::HostToFirstReply peerToConnect=n.second;
+            P2PServerUDP::HostToFirstReply &peerToConnect=n.second;
             peerToConnect.round++;
             if(peerToConnect.round>=1 && peerToConnect.round<=5)
             {
-                peerToConnect.hostConnected->sendData(reinterpret_cast<uint8_t *>(peerToConnect.reply),8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE);
-
-                std::cout << "P2PTimerHandshake2::exec() try co" << std::endl;
+                peerToConnect.hostConnected->sendRawDataWithoutPutInQueue(reinterpret_cast<uint8_t *>(peerToConnect.reply),
+                                                sizeof(peerToConnect.reply)
+                                                );
                 return;
             }
             else if(peerToConnect.round > 5)//after try at 100ms and at 500ms, drop the reply
