@@ -18,6 +18,8 @@ public:
     //P2PPeer();
     void emitAck();
     bool sendData(const uint8_t * const data, const uint16_t &size);
+    bool sendDataWithMessageType(const uint8_t * const data, const uint16_t &size);
+    bool sendRawDataWithoutPutInQueue(const uint8_t * const data, const uint16_t &size);
     static void sign(uint8_t *msg, const size_t &length);
     bool discardBuffer(const uint64_t &ackNumber);
     const uint8_t *getPublickey() const;
