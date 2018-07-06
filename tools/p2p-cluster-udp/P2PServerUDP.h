@@ -24,8 +24,6 @@ public:
     const char *getPublicKey() const;
     const char * getCaSignature() const;
 
-    static char readBuffer[4096];
-
     std::unordered_map<std::string/*sockaddr_in serv_addr;*/,P2PPeer *> hostConnectionEstablished;
 
     struct HostToSecondReply {
@@ -57,6 +55,7 @@ public:
     const uint8_t *get_ca_publickey() const;
 private:
     int sfd;
+    static char readBuffer[4096];
 
     uint8_t privatekey[ED25519_KEY_SIZE];
     uint8_t publickey[ED25519_KEY_SIZE];
