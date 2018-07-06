@@ -26,22 +26,19 @@ void P2PTimerHandshake3::exec()
             startTime=end;
     }
     unsigned int sendedClient=0;
-    for( auto& n : P2PServerUDP::p2pserver->hostToFirstReply ) {
+    for( auto& n : P2PServerUDP::p2pserver->hostConnectionEstablished ) {
         if(clientSend.find(n.first)==clientSend.cend())
         {
-            P2PServerUDP::HostToFirstReply peerToConnect=n.second;
-            peerToConnect.round++;
-            if(peerToConnect.round>=1 && peerToConnect.round<=5)
-            {
-                peerToConnect.hostConnected->sendData(reinterpret_cast<uint8_t *>(peerToConnect.reply),8+4+1+8+8+ED25519_SIGNATURE_SIZE+ED25519_KEY_SIZE);
-
-                std::cout << "P2PTimerHandshake3::exec() try co" << std::endl;
+            //have data to send..., or just 3 ACK
+            /*P2PPeer *peerToConnect=n.second;
+            peerToConnect->sendRawDataWithoutPutInQueue(reinterpret_cast<uint8_t *>(peerToConnect->reply),
+                                           sizeof(peerToConnect->reply)
+                                           );
                 return;
-            }
-            else if(peerToConnect.round > 5)//after try at 100ms and at 500ms, drop the reply
-                P2PServerUDP::p2pserver->hostToFirstReply.erase(n.first);
+                //P2PServerUDP::p2pserver->hostToFirstReply.erase(n.first);
             clientSend.insert(n.first);
-            sendedClient++;
+            sendedClient++;*/
+            return;
             break;
         }
     }

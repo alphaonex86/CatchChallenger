@@ -45,7 +45,7 @@ void P2PPeer::sign(uint8_t *msg,const size_t &length)
 void P2PPeer::emitAck()
 {
     const uint8_t ackNumber=0xFF;
-    sendData(&ackNumber,sizeof(ackNumber));
+    sendDataWithMessageType(&ackNumber,sizeof(ackNumber));
 }
 
 bool P2PPeer::discardBuffer(const uint64_t &ackNumber)
@@ -97,7 +97,7 @@ void P2PPeer::incremente_remote_sequence_number()
     remote_sequence_number++;
 }
 
-bool P2PPeer::sendData(const uint8_t * const data, const uint16_t &size)
+bool P2PPeer::sendDataWithMessageType(const uint8_t * const data, const uint16_t &size)
 {
     if(size>=(sizeof(P2PPeer::buffer)-8-8-1-ED25519_SIGNATURE_SIZE))
         return false;
@@ -123,6 +123,14 @@ bool P2PPeer::sendData(const uint8_t * const data, const uint16_t &size)
             abort();
             return -1;
         }
+        uint8_t messageType=0;
+        memcpy(&messageType,data,1);
+        if(messageType!=0xFF && (messageType<0x01 || messageType>0x04))
+        {
+            std::cerr << "messageType wrong (" << std::to_string(messageType) << "), blocked" << std::endl;
+            abort();
+            return -1;
+        }
     }
     #endif
 
@@ -140,6 +148,116 @@ bool P2PPeer::sendData(const uint8_t * const data, const uint16_t &size)
         return false;
     }
     if (dataSize > 1200)
+    {
+        return false;
+        std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize (2)" << std::endl;
+    }
+    return true;
+}
+
+bool P2PPeer::sendData(const uint8_t * const data, const uint16_t &size)
+{
+    if(size>=(sizeof(P2PPeer::buffer)-8-8-1-ED25519_SIGNATURE_SIZE))
+        return false;
+    if(size==0)
+        return false;
+    const unsigned int dataSize=8+8+size+ED25519_SIGNATURE_SIZE;
+    memcpy(P2PPeer::buffer,&local_sequence_number_validated,sizeof(local_sequence_number_validated));
+    local_sequence_number_validated++;
+    memcpy(P2PPeer::buffer+8,&remote_sequence_number,sizeof(remote_sequence_number));
+    const uint8_t messageType=0xFF;
+    memcpy(P2PPeer::buffer+8+8,&messageType,size);
+    memcpy(P2PPeer::buffer+8+8+1,data,size);
+    P2PPeer::sign(reinterpret_cast<uint8_t *>(P2PPeer::buffer),8+8+1+size);
+    #ifdef CATCHCHALLENGER_EXTRACHECK
+    {
+        const int returnFirm = ed25519_sha512_verify(
+            reinterpret_cast<const uint8_t *>(P2PServerUDP::p2pserver->getPublicKey()),//pub
+            dataSize-ED25519_SIGNATURE_SIZE,//length
+            reinterpret_cast<const uint8_t *>(P2PPeer::buffer),//msg
+            reinterpret_cast<const uint8_t *>(P2PPeer::buffer+dataSize-ED25519_SIGNATURE_SIZE)//signature
+        );
+        if(returnFirm != 1)
+        {
+            std::cerr << "out packet with wrong signature, blocked" << std::endl;
+            abort();
+            return -1;
+        }
+        uint8_t messageType=0;
+        memcpy(&messageType,P2PPeer::buffer+8+8,1);
+        if(messageType!=0xFF && (messageType<0x01 || messageType>0x04))
+        {
+            std::cerr << "messageType wrong (" << std::to_string(messageType) << "), blocked" << std::endl;
+            abort();
+            return -1;
+        }
+    }
+    #endif
+
+    dataToSend.push_back(std::string(P2PPeer::buffer+8+8+size+ED25519_SIGNATURE_SIZE));
+
+    const int returnVal=P2PServerUDP::p2pserver->write(P2PPeer::buffer, dataSize, si_other);
+    if (returnVal < 0)
+    {
+        std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem" << std::endl;
+        return false;
+    }
+    else if ((uint32_t)returnVal != dataSize)
+    {
+        std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize" << std::endl;
+        return false;
+    }
+    if (dataSize > 1200)
+    {
+        return false;
+        std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize (2)" << std::endl;
+    }
+    return true;
+}
+
+bool P2PPeer::sendRawDataWithoutPutInQueue(const uint8_t * const data, const uint16_t &size)
+{
+    if(size>=(sizeof(P2PPeer::buffer)-8-8-1-ED25519_SIGNATURE_SIZE))
+        return false;
+    if(size==0)
+        return false;
+    #ifdef CATCHCHALLENGER_EXTRACHECK
+    {
+        const int returnFirm = ed25519_sha512_verify(
+            reinterpret_cast<const uint8_t *>(P2PServerUDP::p2pserver->getPublicKey()),//pub
+            size-ED25519_SIGNATURE_SIZE,//length
+            reinterpret_cast<const uint8_t *>(data),//msg
+            reinterpret_cast<const uint8_t *>(data+size-ED25519_SIGNATURE_SIZE)//signature
+        );
+        if(returnFirm != 1)
+        {
+            std::cerr << "out packet with wrong signature, blocked" << std::endl;
+            abort();
+            return -1;
+        }
+        uint8_t messageType=0;
+        memcpy(&messageType,data+8+8,1);
+        if(messageType!=0xFF && (messageType<0x01 || messageType>0x04))
+        {
+            std::cerr << "messageType wrong (" << std::to_string(messageType) << "), blocked" << std::endl;
+            abort();
+            return -1;
+        }
+    }
+    #endif
+
+    const int returnVal=P2PServerUDP::p2pserver->write(reinterpret_cast<const char * const>(data), size, si_other);
+    if (returnVal < 0)
+    {
+        std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem" << std::endl;
+        return false;
+    }
+    else if ((uint32_t)returnVal != size)
+    {
+        std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize" << std::endl;
+        return false;
+    }
+    if (size > 1200)
     {
         return false;
         std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize (2)" << std::endl;

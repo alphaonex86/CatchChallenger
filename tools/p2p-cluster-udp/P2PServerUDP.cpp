@@ -241,11 +241,42 @@ void P2PServerUDP::read()
                         hostToFirstReplyEntry.round=0;
 
                         memcpy(hostToFirstReplyEntry.reply,handShake2,sizeof(handShake2));
+
+                        #ifdef CATCHCHALLENGER_EXTRACHECK
+                        {
+                            const int returnFirm = ed25519_sha512_verify(
+                                P2PServerUDP::p2pserver->publickey,//pub
+                                sizeof(handShake2)-ED25519_SIGNATURE_SIZE,//length
+                                reinterpret_cast<const uint8_t *>(handShake2),//msg
+                                reinterpret_cast<const uint8_t *>(handShake2+sizeof(handShake2)-ED25519_SIGNATURE_SIZE)//signature
+                            );
+                            if(returnFirm != 1)
+                            {
+                                std::cerr << "out packet with wrong signature, blocked" << std::endl;
+                                abort();
+                                return;
+                            }
+                            if(sizeof(handShake2)<(8+8+1+ED25519_SIGNATURE_SIZE))
+                            {
+                                std::cerr << "too small data to be valid, blocked" << std::endl;
+                                abort();
+                                return;
+                            }
+                            uint8_t messageType=0;
+                            memcpy(&messageType,handShake2+8+8,1);
+                            if(messageType!=0xFF && (messageType<0x01 || messageType>0x04))
+                            {
+                                std::cerr << "messageType wrong (" << std::to_string(messageType) << "), blocked" << std::endl;
+                                abort();
+                                return;
+                            }
+                        }
+                        #endif
+
                         auto it=hostToFirstReply.find(remoteClient);
                         if(it!=hostToFirstReply.cend())
-                            hostToFirstReply[remoteClient]=hostToFirstReplyEntry;
-                        else
-                            P2PServerUDP::p2pserver->write(handShake2,sizeof(handShake2),si_other);
+                            P2PServerUDP::p2pserver->write(hostToFirstReplyEntry.reply,sizeof(hostToFirstReplyEntry.reply),si_other);
+                        hostToFirstReply[remoteClient]=hostToFirstReplyEntry;
                     }
                     break;
                     default:
@@ -340,7 +371,7 @@ void P2PServerUDP::read()
                         }
 
                         P2PPeer *currentHostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
-                        currentHostConnected->sendData(reinterpret_cast<uint8_t *>(handShake3),sizeof(handShake3));//and emit
+                        currentHostConnected->sendDataWithMessageType(reinterpret_cast<uint8_t *>(handShake3),sizeof(handShake3));//and emit
                     }
                     break;
                     default:
@@ -360,7 +391,10 @@ void P2PServerUDP::read()
                     {
                         //get valid public key from in: handShake1, out: handShake2
                         if(P2PServerUDP::hostToFirstReply.find(remoteClient)==P2PServerUDP::hostToFirstReply.cend())
+                        {
+                            std::cerr << "client not found into P2PServerUDP::hostToFirstReply" << std::endl;
                             return;
+                        }
                         HostToFirstReply &hostToFirstReply=P2PServerUDP::hostToFirstReply.at(remoteClient);
                         //check the message content
                         const int rc2 = ed25519_sha512_verify(
@@ -499,6 +533,20 @@ int P2PServerUDP::write(const char * const data,const uint32_t dataSize,const so
         if(returnFirm != 1)
         {
             std::cerr << "out packet with wrong signature, blocked" << std::endl;
+            abort();
+            return -1;
+        }
+        if(dataSize<(8+8+1+ED25519_SIGNATURE_SIZE))
+        {
+            std::cerr << "too small data to be valid, blocked" << std::endl;
+            abort();
+            return -1;
+        }
+        uint8_t messageType=0;
+        memcpy(&messageType,data+8+8,1);
+        if(messageType!=0xFF && (messageType<0x01 || messageType>0x04))
+        {
+            std::cerr << "messageType wrong (" << std::to_string(messageType) << "), blocked" << std::endl;
             abort();
             return -1;
         }
