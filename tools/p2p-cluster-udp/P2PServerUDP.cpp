@@ -162,14 +162,15 @@ void P2PServerUDP::read()
         std::cerr << "P2PServerUDP::parseIncommingData(): recvfrom() problem" << std::endl;
         abort();
     }
+    const char * const readOnlyReadBuffer=readBuffer;
     const std::string remoteClient(sockSerialised(si_other));
-    const std::string data(P2PServerUDP::readBuffer,recv_len);
+    const std::string data(readOnlyReadBuffer,recv_len);
 
     //now reply the client with the same data
     if(recv_len>=(8+8+1+ED25519_SIGNATURE_SIZE))
     {
         uint8_t messageType=0;
-        memcpy(&messageType,P2PServerUDP::readBuffer+8+8,1);
+        memcpy(&messageType,readOnlyReadBuffer+8+8,1);
 
         //print details of the client/peer and the data received
         std::string data1,data2,data3,data4;
@@ -200,27 +201,27 @@ void P2PServerUDP::read()
                         //check if the public key of node is signed by ca
                         const int rc = ed25519_sha512_verify(ca_publickey,//pub
                             ED25519_KEY_SIZE,//length
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1),//msg
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1+ED25519_KEY_SIZE)//signature
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+8+8+1),//msg
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+8+8+1+ED25519_KEY_SIZE)//signature
                         );
                         if(rc != 1)
                             return;
                         //check the message content
                         const int rc2 = ed25519_sha512_verify(
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1),//pub
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+8+8+1),//pub
                             recv_len-ED25519_SIGNATURE_SIZE,//length
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer),//msg
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
                         );
                         if(rc2 != 1)
                         {
                             /*std::cerr << "ed25519_sha512_verify failed at " << __FILE__ << ":" << std::to_string(__LINE__)
-                                      << ", data: " << binarytoHexa(P2PServerUDP::readBuffer,recv_len) << std::endl;*/
+                                      << ", data: " << binarytoHexa(readOnlyReadBuffer,recv_len) << std::endl;*/
                             return;
                         }
 
                         //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
-                        memcpy(handShake2+8,P2PServerUDP::readBuffer,8);//copy the ACK
+                        memcpy(handShake2+8,readOnlyReadBuffer,8);//copy the ACK
                         const int readSize=fread(handShake2,1,8,P2PServerUDP::p2pserver->ptr_random);
                         if(readSize != 8)
                             abort();
@@ -230,14 +231,14 @@ void P2PServerUDP::read()
                         HostToFirstReply hostToFirstReplyEntry;
 
                         uint8_t publickey[ED25519_KEY_SIZE];
-                        memcpy(&publickey,P2PServerUDP::readBuffer+8+8+1,ED25519_KEY_SIZE);
+                        memcpy(&publickey,readOnlyReadBuffer+8+8+1,ED25519_KEY_SIZE);
                         uint64_t local_sequence_number_validated=0;
                         memcpy(&local_sequence_number_validated,handShake2,8);
                         uint64_t remote_sequence_number=0;
-                        memcpy(&remote_sequence_number,P2PServerUDP::readBuffer/*==handShake2+8, see above*/,8);
+                        memcpy(&remote_sequence_number,readOnlyReadBuffer/*==handShake2+8, see above*/,8);
                         hostToFirstReplyEntry.hostConnected=new P2PPeer(publickey,local_sequence_number_validated,
                             remote_sequence_number,si_other);
-                        memcpy(hostToFirstReplyEntry.random,P2PServerUDP::readBuffer+8,8);
+                        memcpy(hostToFirstReplyEntry.random,handShake2,8);
                         hostToFirstReplyEntry.round=0;
 
                         memcpy(hostToFirstReplyEntry.reply,handShake2,sizeof(handShake2));
@@ -301,36 +302,36 @@ void P2PServerUDP::read()
                         //check if the public key of node is signed by ca
                         const int rc = ed25519_sha512_verify(ca_publickey,//pub
                             ED25519_KEY_SIZE,//length
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1),//msg
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1+ED25519_KEY_SIZE)//signature
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+8+8+1),//msg
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+8+8+1+ED25519_KEY_SIZE)//signature
                         );
                         if(rc != 1)
                         {
                             std::cerr << "ed25519_sha512_verify failed at " << __FILE__ << ":" << std::to_string(__LINE__)
-                                      << ", data: " << binarytoHexa(P2PServerUDP::readBuffer,recv_len) << std::endl;
+                                      << ", data: " << binarytoHexa(readOnlyReadBuffer,recv_len) << std::endl;
                             return;
                         }
                         //check the message content
                         const int rc2 = ed25519_sha512_verify(
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+8+8+1),//pub
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+8+8+1),//pub
                             recv_len-ED25519_SIGNATURE_SIZE,//length
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer),//msg
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
                         );
                         if(rc2 != 1)
                         {
                             /*std::cerr << "ed25519_sha512_verify failed at " << __FILE__ << ":" << std::to_string(__LINE__)
-                                      << ", data: " << binarytoHexa(P2PServerUDP::readBuffer,recv_len) << std::endl;*/
+                                      << ", data: " << binarytoHexa(readOnlyReadBuffer,recv_len) << std::endl;*/
                             return;
                         }
 
                         uint64_t local_sequence_number_validated=0;
                         uint64_t remote_sequence_number=0;
                         uint8_t publickey[ED25519_KEY_SIZE];
-                        memcpy(&local_sequence_number_validated,P2PServerUDP::readBuffer+8,8);
+                        memcpy(&local_sequence_number_validated,readOnlyReadBuffer+8,8);
                         local_sequence_number_validated++;
-                        memcpy(&remote_sequence_number,P2PServerUDP::readBuffer,8);
-                        memcpy(publickey,P2PServerUDP::readBuffer+8+8+1,ED25519_KEY_SIZE);
+                        memcpy(&remote_sequence_number,readOnlyReadBuffer,8);
+                        memcpy(publickey,readOnlyReadBuffer+8+8+1,ED25519_KEY_SIZE);
 
                         //search into the connect and check the random
                         unsigned int indexSearch=0;
@@ -338,7 +339,7 @@ void P2PServerUDP::read()
                         {
                             HostToConnect &hostToConnect=P2PServerUDP::p2pserver->hostToConnect.at(indexSearch);
                             if(memcmp(&hostToConnect.serv_addr,&si_other,sizeof(sockaddr_in))==0 &&
-                                    memcmp(hostToConnect.random,P2PServerUDP::readBuffer+8,8)==0)
+                                    memcmp(hostToConnect.random,readOnlyReadBuffer+8,8)==0)
                             {
                                 //new peer
                                 std::cerr << "new peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -400,30 +401,51 @@ void P2PServerUDP::read()
                         const int rc2 = ed25519_sha512_verify(
                             reinterpret_cast<const uint8_t *>(hostToFirstReply.hostConnected->getPublickey()),//pub
                             recv_len-ED25519_SIGNATURE_SIZE,//length
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer),//msg
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
                                                              );
                         if(rc2 != 1)
                             return;
 
-                        //remove the first step
-                        P2PServerUDP::hostToFirstReply.erase(remoteClient);
-
-                        //search into the connect and check the random
-                        unsigned int index=0;
-                        while(index<P2PServerUDP::p2pserver->hostToConnect.size())
+                        if(P2PServerUDP::hostToFirstReply.find(remoteClient)!=P2PServerUDP::hostToFirstReply.cend())
                         {
-                            const HostToConnect &hostToConnect=P2PServerUDP::p2pserver->hostToConnect.at(index);
-                            if(memcmp(hostToConnect.random,P2PServerUDP::readBuffer,8)==0)
+                            //hostToFirstReply -> P2PServerUDP::hostConnectionEstablished, first receive
+                            HostToFirstReply &hostToFirstReply=P2PServerUDP::hostToFirstReply.at(remoteClient);
+
+                            if(memcmp(hostToFirstReply.random,readOnlyReadBuffer,sizeof(hostToFirstReply.random))==0)
                             {
-                                P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+index);
+                                std::cerr << "new peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                //search into the connect and remove if address is same
+                                unsigned int indexSearch=0;
+                                while(indexSearch<P2PServerUDP::p2pserver->hostToConnect.size())
+                                {
+                                    HostToConnect &hostToConnect=P2PServerUDP::p2pserver->hostToConnect.at(indexSearch);
+                                    if(memcmp(&hostToConnect.serv_addr,&si_other,sizeof(sockaddr_in))==0)
+                                    {
+                                        //new peer
+                                        std::cerr << "remove peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                        P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+indexSearch);
+                                        break;
+                                    }
+                                    indexSearch++;
+                                }
                                 P2PServerUDP::hostConnectionEstablished[remoteClient]=hostToFirstReply.hostConnected;
-                                P2PServerUDP::hostConnectionEstablished.at(remoteClient)->emitAck();
-                                break;
+
+                                P2PServerUDP::hostToFirstReply.erase(remoteClient);
                             }
-                            index++;
+                            else
+                                    std::cerr << "wrong random key at handcheck3 at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                            return;
                         }
-                        if(index>=P2PServerUDP::p2pserver->hostToConnect.size())
+
+                        //hostToFirstReply -> P2PServerUDP::hostConnectionEstablished, check if not first receive
+                        if(P2PServerUDP::hostConnectionEstablished.find(remoteClient)!=P2PServerUDP::hostConnectionEstablished.cend())
+                        {
+                            //then remit the first packet not ack
+                            P2PPeer * peer=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
+                            peer->emitAck();
+                        }
+                        else
                         {
                             std::cerr << "not found from step 1" << std::endl;
                         }
@@ -453,8 +475,8 @@ void P2PServerUDP::read()
                         const int rc2 = ed25519_sha512_verify(
                             reinterpret_cast<const uint8_t *>(hostConnected->getPublickey()),//pub
                             recv_len-ED25519_SIGNATURE_SIZE,//length
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer),//msg
-                            reinterpret_cast<const uint8_t *>(P2PServerUDP::readBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer),//msg
+                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
                                                              );
                         if(rc2 != 1)
                             return;
@@ -463,12 +485,12 @@ void P2PServerUDP::read()
                         const uint16_t &size=recv_len-8-8-1-ED25519_SIGNATURE_SIZE;
                         //the data
                         uint64_t sequenceNumber=0;
-                        memcpy(&sequenceNumber,P2PServerUDP::readBuffer,8);
-                        if(memcpy(P2PServerUDP::readBuffer+8,&hostConnected->get_remote_sequence_number(),8)==0)
+                        memcpy(&sequenceNumber,readOnlyReadBuffer,8);
+                        if(memcmp(readOnlyReadBuffer+8,&hostConnected->get_remote_sequence_number(),8)==0)
                         {
                             //flush buffer, if have more buffer send else ACK
                             uint64_t ackNumber=0;
-                            memcpy(&ackNumber,P2PServerUDP::readBuffer+8,8);
+                            memcpy(&ackNumber,readOnlyReadBuffer+8,8);
                             if(!hostConnected->discardBuffer(ackNumber))
                                 return;
 
@@ -476,7 +498,7 @@ void P2PServerUDP::read()
                             switch(messageType)
                             {
                                 case 0x04:
-                                if(!hostConnected->parseData(reinterpret_cast<uint8_t *>(P2PServerUDP::readBuffer+8+8+1),size))
+                                if(!hostConnected->parseData(reinterpret_cast<const uint8_t * const>(readOnlyReadBuffer+8+8+1),size))
                                 {
                                     std::cerr << "P2P peer bug !hostConnected.parseData()" << std::endl;
                                     P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
