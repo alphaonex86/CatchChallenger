@@ -271,6 +271,14 @@ void P2PServerUDP::read()
                                 abort();
                                 return;
                             }
+                            char randomzero[sizeof(hostToFirstReplyEntry.random)];
+                            memset(randomzero,0,sizeof(randomzero));
+                            if(memcmp(randomzero,hostToFirstReplyEntry.random,sizeof(randomzero))==0)
+                            {
+                                std::cerr << "random empty (abort)" << std::endl;
+                                abort();
+                                return;
+                            }
                         }
                         #endif
 
@@ -412,7 +420,7 @@ void P2PServerUDP::read()
                             //hostToFirstReply -> P2PServerUDP::hostConnectionEstablished, first receive
                             HostToFirstReply &hostToFirstReply=P2PServerUDP::hostToFirstReply.at(remoteClient);
 
-                            if(memcmp(hostToFirstReply.random,readOnlyReadBuffer,sizeof(hostToFirstReply.random))==0)
+                            if(memcmp(hostToFirstReply.random,readOnlyReadBuffer+8,sizeof(hostToFirstReply.random))==0)
                             {
                                 std::cerr << "new peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 //search into the connect and remove if address is same
@@ -434,7 +442,7 @@ void P2PServerUDP::read()
                                 P2PServerUDP::hostToFirstReply.erase(remoteClient);
                             }
                             else
-                                    std::cerr << "wrong random key at handcheck3 at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cerr << "wrong random key at handcheck3 at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                             return;
                         }
 
