@@ -1,5 +1,7 @@
 #include "DatapackGeneralLoader.h"
-
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include "../../general/base/CommonDatapack.h"
+#endif
 #include <iostream>
 
 using namespace CatchChallenger;

@@ -1,6 +1,8 @@
 #include "FightLoader.h"
 #include "../../general/base/FacilityLibGeneral.h"
-
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include "../../general/base/CommonDatapack.h"
+#endif
 #include <iostream>
 
 using namespace CatchChallenger;

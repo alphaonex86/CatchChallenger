@@ -1,34 +1,8 @@
 #include "Client.h"
 #include "GlobalServerData.h"
-
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/CommonDatapackServerSpec.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/CommonMap.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/cpp11addition.h"
-#include "../../general/base/ProtocolParsing.h"
-#include "../../general/base/ProtocolParsingCheck.h"
-#include "DatabaseFunction.h"
-#include "SqlFunction.h"
 #include "StaticText.h"
-#include "PreparedDBQuery.h"
-#include "DictionaryLogin.h"
-#include "DictionaryServer.h"
-#include "BaseServerMasterSendDatapack.h"
-#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "BaseServerLogin.h"
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <chrono>
-#include <openssl/sha.h>
-#include <sys/types.h>
+#include "../../general/base/FacilityLibGeneral.h"
 #include <sys/stat.h>
-#include <unistd.h>
 
 /// \todo solve disconnecting/destroy during the SQL loading
 

@@ -1,7 +1,9 @@
 #include "FightLoader.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/CommonSettingsServer.h"
-
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include "../../general/base/CommonDatapack.h"
+#endif
 #include <iostream>
 #include <cmath>
 
