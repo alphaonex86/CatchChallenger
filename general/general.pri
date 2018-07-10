@@ -22,6 +22,7 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/base/ProtocolParsingCheck.cpp \
     $$PWD/base/MoveOnTheMap.cpp \
     $$PWD/base/Map_loader.cpp \
+    $$PWD/base/Map_loaderMain.cpp \
     $$PWD/base/FacilityLib.cpp \
     $$PWD/base/FacilityLibGeneral.cpp \
     $$PWD/base/ConnectedSocket.cpp \
