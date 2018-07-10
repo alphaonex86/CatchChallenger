@@ -26,22 +26,26 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/base/FacilityLib.cpp \
     $$PWD/base/FacilityLibGeneral.cpp \
     $$PWD/base/ConnectedSocket.cpp \
-    $$PWD/fight/FightLoader.cpp \
     $$PWD/base/DatapackGeneralLoader.cpp \
     $$PWD/base/CommonDatapack.cpp \
     $$PWD/base/CommonDatapackServerSpec.cpp \
-    $$PWD/fight/CommonFightEngine.cpp \
-    $$PWD/fight/CommonFightEngineTurn.cpp \
-    $$PWD/fight/CommonFightEngineBuff.cpp \
-    $$PWD/fight/CommonFightEngineSkill.cpp \
-    $$PWD/fight/CommonFightEngineWild.cpp \
-    $$PWD/fight/CommonFightEngineBase.cpp \
     $$PWD/base/CommonSettingsCommon.cpp \
     $$PWD/base/CommonSettingsServer.cpp \
     $$PWD/base/cpp11addition.cpp \
     $$PWD/base/cpp11additionstringtointcpp.cpp \
     $$PWD/base/cpp11additionstringtointc.cpp \
-    $$PWD/base/CachedString.cpp
+    $$PWD/fight/FightLoader.cpp \
+    $$PWD/fight/FightLoaderBuff.cpp \
+    $$PWD/fight/FightLoaderFight.cpp \
+    $$PWD/fight/FightLoaderMonster.cpp \
+    $$PWD/fight/FightLoaderSkill.cpp \
+    $$PWD/fight/CommonFightEngine.cpp \
+    $$PWD/fight/CommonFightEngineEnd.cpp \
+    $$PWD/fight/CommonFightEngineTurn.cpp \
+    $$PWD/fight/CommonFightEngineBuff.cpp \
+    $$PWD/fight/CommonFightEngineSkill.cpp \
+    $$PWD/fight/CommonFightEngineWild.cpp \
+    $$PWD/fight/CommonFightEngineBase.cpp
 
 HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/ClientBase.h \
@@ -57,19 +61,18 @@ HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/FacilityLib.h \
     $$PWD/base/FacilityLibGeneral.h \
     $$PWD/base/ConnectedSocket.h \
-    $$PWD/fight/FightLoader.h \
     $$PWD/base/DatapackGeneralLoader.h \
     $$PWD/base/CommonDatapack.h \
     $$PWD/base/CommonDatapackServerSpec.h \
-    $$PWD/fight/CommonFightEngine.h \
-    $$PWD/fight/CommonFightEngineBase.h \
     $$PWD/base/CommonSettingsCommon.h \
     $$PWD/base/CommonSettingsServer.h \
     $$PWD/base/GeneralType.h \
     $$PWD/base/cpp11addition.h \
     $$PWD/base/GeneralStructuresXml.h \
     $$PWD/base/PortableEndian.h \
-    $$PWD/base/CachedString.h
+    $$PWD/fight/FightLoader.h \
+    $$PWD/fight/CommonFightEngine.h \
+    $$PWD/fight/CommonFightEngineBase.h
 
 #only linux is C only, mac, windows, other is in Qt for compatibility
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc

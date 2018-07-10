@@ -947,10 +947,10 @@ void BaseServer::loadAndFixSettings()
             {}//std::cerr << "Mirror wrong: " << mirror.toLocal8Bit() << std::endl; -> single player
             else
             {
-                if(stringEndsWith(mirror,CACHEDSTRING_slash))
+                if(stringEndsWith(mirror,"/"))
                     newMirrorList.push_back(mirror);
                 else
-                    newMirrorList.push_back(mirror+CACHEDSTRING_slash);
+                    newMirrorList.push_back(mirror+"/");
             }
             index++;
         }

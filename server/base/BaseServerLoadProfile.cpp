@@ -28,7 +28,7 @@ void BaseServer::preload_profile()
         while(index<CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
         {
             ServerSpecProfile &serverSpecProfile=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList[index];
-            stringreplaceOne(serverSpecProfile.mapString,CACHEDSTRING_dottmx,"");
+            stringreplaceOne(serverSpecProfile.mapString,".tmx","");
             if(serverSpecProfile.mapString.empty())
                 emptyMap++;
             index++;

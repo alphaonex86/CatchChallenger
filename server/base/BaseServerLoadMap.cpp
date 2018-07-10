@@ -48,7 +48,7 @@ bool BaseServer::preload_the_map()
     while(index<returnList.size())
     {
         std::string fileName=returnList.at(index);
-        stringreplaceAll(fileName,CACHEDSTRING_antislash,CACHEDSTRING_slash);
+        stringreplaceAll(fileName,"\\","/");
         if(regex_search(fileName,mapFilter) && !regex_search(fileName,mapExclude))
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
@@ -90,25 +90,25 @@ bool BaseServer::preload_the_map()
                 if(map_temp.map_to_send.border.top.fileName.size()>0)
                 {
                     map_semi.border.top.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.top.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    stringreplaceOne(map_semi.border.top.fileName,CACHEDSTRING_dottmx,"");
+                    stringreplaceOne(map_semi.border.top.fileName,".tmx","");
                     map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
                 }
                 if(map_temp.map_to_send.border.bottom.fileName.size()>0)
                 {
                     map_semi.border.bottom.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.bottom.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    stringreplaceOne(map_semi.border.bottom.fileName,CACHEDSTRING_dottmx,"");
+                    stringreplaceOne(map_semi.border.bottom.fileName,".tmx","");
                     map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
                 }
                 if(map_temp.map_to_send.border.left.fileName.size()>0)
                 {
                     map_semi.border.left.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.left.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    stringreplaceOne(map_semi.border.left.fileName,CACHEDSTRING_dottmx,"");
+                    stringreplaceOne(map_semi.border.left.fileName,".tmx","");
                     map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
                 }
                 if(map_temp.map_to_send.border.right.fileName.size()>0)
                 {
                     map_semi.border.right.fileName		= Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.border.right.fileName,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    stringreplaceOne(map_semi.border.right.fileName,CACHEDSTRING_dottmx,"");
+                    stringreplaceOne(map_semi.border.right.fileName,".tmx","");
                     map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
                 }
 
@@ -116,7 +116,7 @@ bool BaseServer::preload_the_map()
                 while(sub_index<map_temp.map_to_send.teleport.size())
                 {
                     map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName,map_temp.map_to_send.teleport.at(sub_index).map,GlobalServerData::serverPrivateVariables.datapack_mapPath);
-                    stringreplaceOne(map_temp.map_to_send.teleport[sub_index].map,CACHEDSTRING_dottmx,"");
+                    stringreplaceOne(map_temp.map_to_send.teleport[sub_index].map,".tmx","");
                     sub_index++;
                 }
 
@@ -231,7 +231,7 @@ bool BaseServer::preload_the_map()
         {
             const auto &teleport=map_semi.old_map.teleport.at(sub_index);
             std::string teleportString=teleport.map;
-            stringreplaceOne(teleportString,CACHEDSTRING_dottmx,"");
+            stringreplaceOne(teleportString,".tmx","");
             if(GlobalServerData::serverPrivateVariables.map_list.find(teleportString)!=GlobalServerData::serverPrivateVariables.map_list.end())
             {
                 if(teleport.destination_x<GlobalServerData::serverPrivateVariables.map_list.at(teleportString)->width
