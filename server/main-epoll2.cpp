@@ -4,6 +4,9 @@
 #include "base/GlobalServerData.h"
 #include "../general/base/CommonSettingsCommon.h"
 #include "epoll/EpollServer.h"
+#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+#include "game-server-alone/LinkToMaster.h"
+#endif
 
 using namespace CatchChallenger;
 
@@ -17,7 +20,12 @@ void send_settings(
     #else
     EpollServer *server
     #endif
-, TinyXMLSettings *settings)
+, TinyXMLSettings *settings,
+        std::string &master_host,
+        uint16_t &master_port,
+        uint8_t &master_tryInterval,
+        uint8_t &master_considerDownAfterNumberOfTry
+        )
 {
     bool ok;
     GameServerSettings formatedServerSettings=server->getSettings();
