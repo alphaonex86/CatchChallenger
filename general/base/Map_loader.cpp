@@ -7,7 +7,6 @@
 #include "tinyXML2/customtinyxml2.h"
 
 #include "CommonDatapack.h"
-#include "CachedString.h"
 
 #include <iostream>
 #include <unordered_map>
@@ -191,7 +190,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     }
 
     //get the width
-    if(root->Attribute(XMLCACHEDSTRING_width)==NULL)
+    if(root->Attribute("width")==NULL)
     {
         error="the root node has not the attribute \"width\"";
         return false;
@@ -229,38 +228,38 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     }
 
     //properties
-    const tinyxml2::XMLElement * child = root->FirstChildElement(XMLCACHEDSTRING_properties);
+    const tinyxml2::XMLElement * child = root->FirstChildElement("properties");
     if(child!=NULL)
     {
-        const tinyxml2::XMLElement * SubChild=child->FirstChildElement(XMLCACHEDSTRING_property);
+        const tinyxml2::XMLElement * SubChild=child->FirstChildElement("property");
         while(SubChild!=NULL)
         {
-            if(SubChild->Attribute(XMLCACHEDSTRING_name)!=NULL && SubChild->Attribute(XMLCACHEDSTRING_value)!=NULL)
-                map_to_send_temp.property[std::string(SubChild->Attribute(XMLCACHEDSTRING_name))]=
-                        std::string(SubChild->Attribute(XMLCACHEDSTRING_value));
+            if(SubChild->Attribute("name")!=NULL && SubChild->Attribute("value")!=NULL)
+                map_to_send_temp.property[std::string(SubChild->Attribute("name"))]=
+                        std::string(SubChild->Attribute("value"));
             else
             {
                 error=std::string("Missing attribute name or value: child->Name(): ")+std::string(SubChild->Name())+")";
                 return false;
             }
-            SubChild = SubChild->NextSiblingElement(XMLCACHEDSTRING_property);
+            SubChild = SubChild->NextSiblingElement("property");
         }
     }
 
     int8_t tilewidth=16;
     int8_t tileheight=16;
-    if(root->Attribute(XMLCACHEDSTRING_tilewidth)!=NULL)
+    if(root->Attribute("tilewidth")!=NULL)
     {
-        tilewidth=stringtouint8(root->Attribute(XMLCACHEDSTRING_tilewidth),&ok);
+        tilewidth=stringtouint8(root->Attribute("tilewidth"),&ok);
         if(!ok)
         {
             std::cerr << "Unable to open the file: " << file << ", tilewidth is not a number" << std::endl;
             tilewidth=16;
         }
     }
-    if(root->Attribute(XMLCACHEDSTRING_tileheight)!=NULL)
+    if(root->Attribute("tileheight")!=NULL)
     {
-        tileheight=stringtouint8(root->Attribute(XMLCACHEDSTRING_tileheight),&ok);
+        tileheight=stringtouint8(root->Attribute("tileheight"),&ok);
         if(!ok)
         {
             std::cerr << "Unable to open the file: " << file << ", tilewidth is not a number" << std::endl;
@@ -269,21 +268,21 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     }
 
     // objectgroup
-    child = root->FirstChildElement(XMLCACHEDSTRING_objectgroup);
+    child = root->FirstChildElement("objectgroup");
     while(child!=NULL)
     {
-        if(child->Attribute(XMLCACHEDSTRING_name)==NULL)
+        if(child->Attribute("name")==NULL)
             std::cerr << "Has not attribute \"name\": child->Name(): " << child->Name() << ")";
         else
         {
-            if(strcmp(child->Attribute(XMLCACHEDSTRING_name),"Moving")==0)
+            if(strcmp(child->Attribute("name"),"Moving")==0)
             {
-                const tinyxml2::XMLElement *SubChild=child->FirstChildElement(XMLCACHEDSTRING_object);
+                const tinyxml2::XMLElement *SubChild=child->FirstChildElement("object");
                 while(SubChild!=NULL)
                 {
-                    if(SubChild->Attribute(XMLCACHEDSTRING_x)!=NULL && SubChild->Attribute(XMLCACHEDSTRING_y)!=NULL)
+                    if(SubChild->Attribute("x")!=NULL && SubChild->Attribute("y")!=NULL)
                     {
-                        const uint32_t &object_x=stringtouint32(SubChild->Attribute(XMLCACHEDSTRING_x),&ok)/tilewidth;
+                        const uint32_t &object_x=stringtouint32(SubChild->Attribute("x"),&ok)/tilewidth;
                         if(!ok)
                             std::cerr << "Wrong conversion with x: child->Name(): " << SubChild->Name()
                                         << ", file: " << file << std::endl;
@@ -291,7 +290,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            const uint32_t &object_y=(stringtouint32(SubChild->Attribute(XMLCACHEDSTRING_y),&ok)/tileheight)-1;
+                            const uint32_t &object_y=(stringtouint32(SubChild->Attribute("y"),&ok)/tileheight)-1;
 
                             if(!ok)
                                 std::cerr << "Wrong conversion with y: child->Name(): " << SubChild->Name()
@@ -299,14 +298,14 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
                                 std::cerr << "Object out of the map: child->Name(): " << SubChild->Name()
                                             << ", file: " << file << std::endl;
-                            else if(SubChild->Attribute(XMLCACHEDSTRING_type)==NULL)
+                            else if(SubChild->Attribute("type")==NULL)
                                 std::cerr << "Missing attribute type missing: SubChild->Name(): " << SubChild->Name() << ", file: " << file << std::endl;
                             else
                             {
-                                const std::string type(SubChild->Attribute(XMLCACHEDSTRING_type));
+                                const std::string type(SubChild->Attribute("type"));
 
                                 std::unordered_map<std::string,std::string> property_text;
-                                const tinyxml2::XMLElement *prop=SubChild->FirstChildElement(XMLCACHEDSTRING_properties);
+                                const tinyxml2::XMLElement *prop=SubChild->FirstChildElement("properties");
                                 if(prop!=NULL)
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
@@ -314,16 +313,16 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                 << " (at line: " << std::to_string(prop->Row())
                                                 << "), file: " << fileName << std::endl;
                                     #endif
-                                    const tinyxml2::XMLElement *property=prop->FirstChildElement(XMLCACHEDSTRING_property);
+                                    const tinyxml2::XMLElement *property=prop->FirstChildElement("property");
                                     while(property!=NULL)
                                     {
-                                        if(property->Attribute(XMLCACHEDSTRING_name)!=NULL && property->Attribute(XMLCACHEDSTRING_value)!=NULL)
-                                            property_text[std::string(property->Attribute(XMLCACHEDSTRING_name))]=
-                                                    std::string(property->Attribute(XMLCACHEDSTRING_value));
-                                        property = property->NextSiblingElement(XMLCACHEDSTRING_property);
+                                        if(property->Attribute("name")!=NULL && property->Attribute("value")!=NULL)
+                                            property_text[std::string(property->Attribute("name"))]=
+                                                    std::string(property->Attribute("value"));
+                                        property = property->NextSiblingElement("property");
                                     }
                                 }
-                                if(type==CACHEDSTRING_borderleft || type==CACHEDSTRING_borderright || type==CACHEDSTRING_bordertop || type==CACHEDSTRING_borderbottom)
+                                if(type=="borderleft" || type=="borderright" || type=="bordertop" || type=="borderbottom")
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
                                     DebugClass::debugConsole(std::stringLiteral("type: %1, object_x: %2, object_y: %3, border")
@@ -332,11 +331,11 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                          .arg(object_y)
                                          );
                                     #endif
-                                    if(property_text.find(CACHEDSTRING_map)!=property_text.cend())
+                                    if(property_text.find("map")!=property_text.cend())
                                     {
                                         if(type=="border-left")//border left
                                         {
-                                            const std::string &borderMap=property_text.at(CACHEDSTRING_map);
+                                            const std::string &borderMap=property_text.at("map");
                                             if(!borderMap.empty())
                                             {
                                                 if(map_to_send_temp.border.left.fileName.empty())
@@ -354,7 +353,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         }
                                         else if(type=="border-right")//border right
                                         {
-                                            const std::string &borderMap=property_text.at(CACHEDSTRING_map);
+                                            const std::string &borderMap=property_text.at("map");
                                             if(!borderMap.empty())
                                             {
                                                 if(map_to_send_temp.border.right.fileName.empty())
@@ -372,7 +371,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         }
                                         else if(type=="border-top")//border top
                                         {
-                                            const std::string &borderMap=property_text.at(CACHEDSTRING_map);
+                                            const std::string &borderMap=property_text.at("map");
                                             if(!borderMap.empty())
                                             {
                                                 if(map_to_send_temp.border.top.fileName.empty())
@@ -390,7 +389,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         }
                                         else if(type=="border-bottom")//border bottom
                                         {
-                                            const std::string &borderMap=property_text.at(CACHEDSTRING_map);
+                                            const std::string &borderMap=property_text.at("map");
                                             if(!borderMap.empty())
                                             {
                                                 if(map_to_send_temp.border.bottom.fileName.empty())
@@ -414,7 +413,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                 }
                                 else if(type=="teleport on push" || type=="teleport on it" || type=="door")
                                 {
-                                    if(property_text.find(CACHEDSTRING_map)!=property_text.cend() && property_text.find(CACHEDSTRING_x)!=property_text.cend() && property_text.find(CACHEDSTRING_y)!=property_text.cend())
+                                    if(property_text.find("map")!=property_text.cend() && property_text.find("x")!=property_text.cend() &&
+                                            property_text.find("y")!=property_text.cend())
                                     {
                                         Map_semi_teleport new_tp;
                                         new_tp.source_x=static_cast<uint8_t>(object_x);
@@ -424,25 +424,27 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         new_tp.condition.data.item=0;
                                         new_tp.condition.data.quest=0;
                                         new_tp.conditionUnparsed=NULL;
-                                        new_tp.destination_x = stringtouint8(property_text.at(CACHEDSTRING_x),&ok);
+                                        new_tp.destination_x = stringtouint8(property_text.at("x"),&ok);
                                         if(ok)
                                         {
-                                            new_tp.destination_y = stringtouint8(property_text.at(CACHEDSTRING_y),&ok);
+                                            new_tp.destination_y = stringtouint8(property_text.at("y"),&ok);
                                             if(ok)
                                             {
                                                 //std::cerr << "CACHEDSTRING_condition_file: " << CACHEDSTRING_condition_file << std::endl;
                                                 //std::cerr << "CACHEDSTRING_condition_id: " << CACHEDSTRING_condition_id << std::endl;
-                                                if(property_text.find(CACHEDSTRING_condition_file)!=property_text.cend() && property_text.find(CACHEDSTRING_condition_id)!=property_text.cend())
+                                                if(property_text.find("condition_file")!=property_text.cend() &&
+                                                        property_text.find("condition_id")!=property_text.cend())
                                                 {
-                                                    uint32_t conditionId=stringtouint32(property_text.at(CACHEDSTRING_condition_id),&ok);
+                                                    uint32_t conditionId=stringtouint32(property_text.at("condition_id"),&ok);
                                                     if(!ok)
-                                                        std::cerr << "condition id is not a number, id: " << property_text.at(CACHEDSTRING_condition_id) << " (" << file << ")" << std::endl;
+                                                        std::cerr << "condition id is not a number, id: " << property_text.at("condition_id")
+                                                                  << " (" << file << ")" << std::endl;
                                                     else
                                                     {
                                                         std::string conditionFile=FSabsoluteFilePath(
                                                                     FSabsolutePath(file)+
                                                                     "/"+
-                                                                    property_text.at(CACHEDSTRING_condition_file)
+                                                                    property_text.at("condition_file")
                                                                     );
                                                         if(!stringEndsWith(conditionFile,".xml"))
                                                             conditionFile+=".xml";
@@ -450,16 +452,16 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                         new_tp.condition=xmlConditionToMapCondition(conditionFile,new_tp.conditionUnparsed);
                                                     }
                                                 }
-                                                new_tp.map=property_text.at(CACHEDSTRING_map);
+                                                new_tp.map=property_text.at("map");
                                                 if(!stringEndsWith(new_tp.map,".tmx") && !new_tp.map.empty())
                                                     new_tp.map+=".tmx";
                                                 map_to_send_temp.teleport.push_back(new_tp);
                                             }
                                             else
-                                                std::cerr << "Bad convertion to int for y, type: " << type << ", value: " << property_text.at(CACHEDSTRING_y) << " (" << file << ")" << std::endl;
+                                                std::cerr << "Bad convertion to int for y, type: " << type << ", value: " << property_text.at("y") << " (" << file << ")" << std::endl;
                                         }
                                         else
-                                            std::cerr << "Bad convertion to int for x, type: " << type << ", value: " << property_text.at(CACHEDSTRING_x) << " (" << file << ")" << std::endl;
+                                            std::cerr << "Bad convertion to int for x, type: " << type << ", value: " << property_text.at("x") << " (" << file << ")" << std::endl;
                                     }
                                     else
                                         std::cerr << "Missing map,x or y, type: " << type << ", file: " << file << std::endl;
@@ -485,17 +487,17 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                     }
                     else
                         std::cerr << "Is not Element: SubChild->Name(): " << SubChild->Name() << ", file: " << file << std::endl;
-                    SubChild = SubChild->NextSiblingElement(XMLCACHEDSTRING_object);
+                    SubChild = SubChild->NextSiblingElement("object");
                 }
             }
-            if(strcmp(child->Attribute(XMLCACHEDSTRING_name),"Object")==0)
+            if(strcmp(child->Attribute("name"),"Object")==0)
             {
-                const tinyxml2::XMLElement * SubChild=child->FirstChildElement(XMLCACHEDSTRING_object);
+                const tinyxml2::XMLElement * SubChild=child->FirstChildElement("object");
                 while(SubChild!=NULL)
                 {
-                    if(SubChild->Attribute(XMLCACHEDSTRING_x)!=NULL && SubChild->Attribute(XMLCACHEDSTRING_y)!=NULL)
+                    if(SubChild->Attribute("x")!=NULL && SubChild->Attribute("y")!=NULL)
                     {
-                        const uint32_t &object_x=stringtouint32(SubChild->Attribute(XMLCACHEDSTRING_x),&ok)/tilewidth;
+                        const uint32_t &object_x=stringtouint32(SubChild->Attribute("x"),&ok)/tilewidth;
                         if(!ok)
                             std::cerr << "Wrong conversion with x: child->Name(): " << SubChild->Name()
                                         << ", file: " << file << std::endl;
@@ -503,7 +505,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                         {
                             /** the -1 is important to fix object layer bug into tiled!!!
                              * Don't remove! */
-                            const uint32_t &object_y=(stringtouint32(SubChild->Attribute(XMLCACHEDSTRING_y),&ok)/tileheight)-1;
+                            const uint32_t &object_y=(stringtouint32(SubChild->Attribute("y"),&ok)/tileheight)-1;
 
                             if(!ok)
                                 std::cerr << "Wrong conversion with y: child->Name(): " << SubChild->Name()
@@ -511,31 +513,32 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
                                 std::cerr << "Object out of the map: child->Name(): " << SubChild->Name()
                                             << ", file: " << file << std::endl;
-                            else if(SubChild->Attribute(XMLCACHEDSTRING_type)!=NULL)
+                            else if(SubChild->Attribute("type")!=NULL)
                             {
-                                const std::string &type=SubChild->Attribute(XMLCACHEDSTRING_type);
+                                const std::string &type=SubChild->Attribute("type");
 
                                 std::unordered_map<std::string,std::string> property_text;
-                                const tinyxml2::XMLElement * prop=SubChild->FirstChildElement(XMLCACHEDSTRING_properties);
+                                const tinyxml2::XMLElement * prop=SubChild->FirstChildElement("properties");
                                 if(prop!=NULL)
                                 {
-                                    const tinyxml2::XMLElement * property=prop->FirstChildElement(XMLCACHEDSTRING_property);
+                                    const tinyxml2::XMLElement * property=prop->FirstChildElement("property");
                                     while(property!=NULL)
                                     {
-                                        if(property->Attribute(XMLCACHEDSTRING_name)!=NULL && property->Attribute(XMLCACHEDSTRING_value)!=NULL)
-                                            property_text[std::string(property->Attribute(XMLCACHEDSTRING_name))]=
-                                                    std::string(property->Attribute(XMLCACHEDSTRING_value));
-                                        property = property->NextSiblingElement(XMLCACHEDSTRING_property);
+                                        if(property->Attribute("name")!=NULL && property->Attribute("value")!=NULL)
+                                            property_text[std::string(property->Attribute("name"))]=
+                                                    std::string(property->Attribute("value"));
+                                        property = property->NextSiblingElement("property");
                                     }
                                 }
-                                if(type==CACHEDSTRING_bot)
+                                if(type=="bot")
                                 {
-                                    if(property_text.find(CACHEDSTRING_skin)!=property_text.cend() && !property_text.at(CACHEDSTRING_skin).empty() && property_text.find(CACHEDSTRING_lookAt)==property_text.cend())
+                                    if(property_text.find("skin")!=property_text.cend() && !property_text.at("skin").empty() &&
+                                            property_text.find("lookAt")==property_text.cend())
                                     {
-                                        property_text[CACHEDSTRING_lookAt]="bottom";
+                                        property_text["lookAt"]="bottom";
                                         std::cerr << "skin but not lookAt, fixed by bottom: " << SubChild->Name() << " (" << file << ")" << std::endl;
                                     }
-                                    if(property_text.find(CACHEDSTRING_file)!=property_text.cend() && property_text.find(CACHEDSTRING_id)!=property_text.cend())
+                                    if(property_text.find("file")!=property_text.cend() && property_text.find("id")!=property_text.cend())
                                     {
                                         if(!stringEndsWith(property_text["file"],".xml"))
                                             property_text["file"]+=".xml";
@@ -543,9 +546,9 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         bot_semi.file=FSabsoluteFilePath(
                                                             FSabsolutePath(file)+
                                                             "/"+
-                                                            property_text.at(CACHEDSTRING_file)
+                                                            property_text.at("file")
                                                     );
-                                        bot_semi.id=stringtouint16(property_text.at(CACHEDSTRING_id),&ok);
+                                        bot_semi.id=stringtouint16(property_text.at("id"),&ok);
                                         bot_semi.property_text=property_text;
                                         if(ok)
                                         {
@@ -560,16 +563,18 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                 }
                                 else if(type=="object")
                                 {
-                                    if(property_text.find(CACHEDSTRING_item)!=property_text.cend())
+                                    if(property_text.find("item")!=property_text.cend())
                                     {
                                         Map_to_send::ItemOnMap_Semi item_semi;
                                         item_semi.infinite=false;
-                                        if(property_text.find(CACHEDSTRING_infinite)!=property_text.cend() && property_text.at(CACHEDSTRING_infinite)==CACHEDSTRING_true)
+                                        if(property_text.find("infinite")!=property_text.cend() &&
+                                                property_text.at("infinite")=="true")
                                             item_semi.infinite=true;
                                         item_semi.visible=true;
-                                        if(property_text.find(CACHEDSTRING_visible)!=property_text.cend() && property_text.at(CACHEDSTRING_visible)==CACHEDSTRING_false)
+                                        if(property_text.find("visible")!=property_text.cend() &&
+                                                property_text.at("visible")=="false")
                                             item_semi.visible=false;
-                                        item_semi.item=stringtouint16(property_text.at(CACHEDSTRING_item),&ok);
+                                        item_semi.item=stringtouint16(property_text.at("item"),&ok);
                                         if(ok)
                                         {
                                             item_semi.point.x=static_cast<uint8_t>(object_x);
@@ -600,54 +605,54 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                     }
                     else
                         std::cerr << "Is not Element: SubChild->Name(): " << SubChild->Name() << ", file: " << file << std::endl;
-                    SubChild = SubChild->NextSiblingElement(XMLCACHEDSTRING_object);
+                    SubChild = SubChild->NextSiblingElement("object");
                 }
             }
         }
-        child = child->NextSiblingElement(XMLCACHEDSTRING_objectgroup);
+        child = child->NextSiblingElement("objectgroup");
     }
 
     const uint32_t &rawSize=map_to_send_temp.width*map_to_send_temp.height*4;
 
     // layer
-    child = root->FirstChildElement(XMLCACHEDSTRING_layer);
+    child = root->FirstChildElement("layer");
     while(child!=NULL)
     {
-        if(child->Attribute(XMLCACHEDSTRING_name)==NULL)
+        if(child->Attribute("name")==NULL)
         {
             error=std::string("Has not attribute \"name\": child->Name(): ")+child->Name()+", file: "+file;
             return false;
         }
         else
         {
-            const tinyxml2::XMLElement *data=child->FirstChildElement(XMLCACHEDSTRING_data);
-            const std::string name=child->Attribute(XMLCACHEDSTRING_name);
+            const tinyxml2::XMLElement *data=child->FirstChildElement("data");
+            const std::string name=child->Attribute("name");
             if(data==NULL)
             {
                 error=std::string("Is Element for layer is null: ")+data->Name()+" and name: "+name+", file: "+file;
                 return false;
             }
-            else if(data->Attribute(XMLCACHEDSTRING_encoding)==NULL)
+            else if(data->Attribute("encoding")==NULL)
             {
                 error=std::string("Has not attribute \"base64\": child->Name(): ")+data->Name()+", file: "+file;
                 return false;
             }
-            else if(data->Attribute(XMLCACHEDSTRING_compression)==NULL)
+            else if(data->Attribute("compression")==NULL)
             {
                 error=std::string("Has not attribute \"zlib\": child->Name(): ")+data->Name()+", file: "+file;
                 return false;
             }
-            else if(strcmp(data->Attribute(XMLCACHEDSTRING_encoding),XMLCACHEDSTRING_base64)!=0)
+            else if(strcmp(data->Attribute("encoding"),"base64")!=0)
             {
                 error=std::string("only encoding base64 is supported, file: ")+file;
                 return false;
             }
             else if(
                     #ifdef TILED_ZLIB
-                    strcmp(data->Attribute(XMLCACHEDSTRING_compression),XMLCACHEDSTRING_zlib)!=0
+                    strcmp(data->Attribute("compression"),"zlib")!=0
                     &&
                     #endif
-                    strcmp(data->Attribute(XMLCACHEDSTRING_compression),"zstd")!=0
+                    strcmp(data->Attribute("compression"),"zstd")!=0
                     )
             {
                 #ifdef TILED_ZLIB
@@ -669,7 +674,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                     dataRaw.resize(map_to_send_temp.height*map_to_send_temp.width*4);
                     int32_t decompressedSize=0;
                     #ifdef TILED_ZLIB
-                    if(strcmp(data->Attribute(XMLCACHEDSTRING_compression),XMLCACHEDSTRING_zlib)==0)
+                    if(strcmp(data->Attribute("compression"),"zlib")==0)
                         decompressedSize=decompressZlib(
                                 compressedData.data(),static_cast<uint32_t>(compressedData.size()),
                                 dataRaw.data(),static_cast<uint32_t>(dataRaw.size())
@@ -825,7 +830,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 }
             }
         }
-        child = child->NextSiblingElement(XMLCACHEDSTRING_layer);
+        child = child->NextSiblingElement("layer");
     }
 
     /*std::vector<char> null_data;
@@ -1014,7 +1019,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 const Map_to_send::Bot_Semi &bot=map_to_send_temp.bots.at(index);
                 if(bot.point.x<map_to_send_temp.width && bot.point.y<map_to_send_temp.height)
                 {
-                    if(bot.property_text.find(CACHEDSTRING_skin)!=bot.property_text.cend() && (bot.property_text.find(CACHEDSTRING_lookAt)==bot.property_text.cend() || bot.property_text.at(CACHEDSTRING_lookAt)!=CACHEDSTRING_move))
+                    if(bot.property_text.find("skin")!=bot.property_text.cend() &&
+                            (bot.property_text.find("lookAt")==bot.property_text.cend() || bot.property_text.at("lookAt")!="move"))
                         map_to_send_temp.parsed_layer.walkable[bot.point.x+bot.point.y*map_to_send_temp.width]=false;
                 }
                 else
@@ -1256,7 +1262,7 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
             index++;
         }
         if(caveName.empty())
-            caveName.push_back(CACHEDSTRING_cave);
+            caveName.push_back("cave");
     }
     {
         unsigned int index=0;
@@ -1382,13 +1388,14 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
     const tinyxml2::XMLElement *layer = map_to_send.xmlRoot->FirstChildElement(monsterType.c_str());
     if(layer!=NULL)
     {
-        const tinyxml2::XMLElement *monsters=layer->FirstChildElement(XMLCACHEDSTRING_monster);
+        const tinyxml2::XMLElement *monsters=layer->FirstChildElement("monster");
         while(monsters!=NULL)
         {
-            if(monsters->Attribute(XMLCACHEDSTRING_id)!=NULL && ((monsters->Attribute(XMLCACHEDSTRING_minLevel)!=NULL && monsters->Attribute(XMLCACHEDSTRING_maxLevel)!=NULL) || monsters->Attribute(XMLCACHEDSTRING_level)!=NULL) && monsters->Attribute(XMLCACHEDSTRING_luck)!=NULL)
+            if(monsters->Attribute("id")!=NULL && ((monsters->Attribute("minLevel")!=NULL &&
+               monsters->Attribute("maxLevel")!=NULL) || monsters->Attribute("level")!=NULL) && monsters->Attribute("luck")!=NULL)
             {
                 MapMonster mapMonster;
-                mapMonster.id=stringtouint16(monsters->Attribute(XMLCACHEDSTRING_id),&ok);
+                mapMonster.id=stringtouint16(monsters->Attribute("id"),&ok);
                 if(!ok)
                     std::cerr << "id is not a number: child->Name(): " << monsters->Name() << ", file: " << fileName << std::endl;
                 if(ok)
@@ -1397,17 +1404,17 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                         std::cerr << "monster " << mapMonster.id << " not found into the monster list: " << monsters->Name() << ", file: " << fileName << std::endl;
                         ok=false;
                     }
-                if(monsters->Attribute(XMLCACHEDSTRING_minLevel)!=NULL && monsters->Attribute(XMLCACHEDSTRING_maxLevel)!=NULL)
+                if(monsters->Attribute("minLevel")!=NULL && monsters->Attribute("maxLevel")!=NULL)
                 {
                     if(ok)
                     {
-                        mapMonster.minLevel=stringtouint8(monsters->Attribute(XMLCACHEDSTRING_minLevel),&ok);
+                        mapMonster.minLevel=stringtouint8(monsters->Attribute("minLevel"),&ok);
                         if(!ok)
                             std::cerr << "minLevel is not a number: child->Name(): " << monsters->Name() << ", file: " << fileName << std::endl;
                     }
                     if(ok)
                     {
-                        mapMonster.maxLevel=stringtouint8(monsters->Attribute(XMLCACHEDSTRING_maxLevel),&ok);
+                        mapMonster.maxLevel=stringtouint8(monsters->Attribute("maxLevel"),&ok);
                         if(!ok)
                             std::cerr << "maxLevel is not a number: child->Name(): " << monsters->Name() << ", file: " << fileName << std::endl;
                     }
@@ -1416,7 +1423,7 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                 {
                     if(ok)
                     {
-                        mapMonster.maxLevel=stringtouint8(monsters->Attribute(XMLCACHEDSTRING_level),&ok);
+                        mapMonster.maxLevel=stringtouint8(monsters->Attribute("level"),&ok);
                         mapMonster.minLevel=mapMonster.maxLevel;
                         if(!ok)
                             std::cerr << "level is not a number: child->Name(): " << monsters->Name() << ", file: " << fileName << std::endl;
@@ -1424,7 +1431,7 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                 }
                 if(ok)
                 {
-                    std::string textLuck=std::string(monsters->Attribute(XMLCACHEDSTRING_luck));
+                    std::string textLuck=std::string(monsters->Attribute("luck"));
                     stringreplaceAll(textLuck,"percent","");
                     mapMonster.luck=stringtouint8(textLuck,&ok);
                     if(!ok)
@@ -1480,7 +1487,7 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
             }
             else
                 std::cerr << "Missing attribute: child->Name(): " << monsters->Name() << ", file: " << fileName << std::endl;
-            monsters = monsters->NextSiblingElement(XMLCACHEDSTRING_monster);
+            monsters = monsters->NextSiblingElement("monster");
         }
         if(monsterTypeList.empty())
             std::cerr << "map have empty monster layer:" << fileName << "type:" << monsterType;
@@ -1562,22 +1569,22 @@ tinyxml2::XMLElement *Map_loader::getXmlCondition(const std::string &fileName,co
         return NULL;
     }
 
-    const tinyxml2::XMLElement *item = root->FirstChildElement(XMLCACHEDSTRING_condition);
+    const tinyxml2::XMLElement *item = root->FirstChildElement("condition");
     while(item!=NULL)
     {
-        if(item->Attribute(XMLCACHEDSTRING_id)==NULL)
+        if(item->Attribute("id")==NULL)
             std::cerr << "\"condition\" balise have not id attribute (" << file << ")" << std::endl;
-        else if(item->Attribute(XMLCACHEDSTRING_type)==NULL)
+        else if(item->Attribute("type")==NULL)
             std::cerr << "\"condition\" balise have not type attribute (" << file << ")" << std::endl;
         else
         {
-            const uint16_t &id=stringtouint16(item->Attribute(XMLCACHEDSTRING_id),&ok);
+            const uint16_t &id=stringtouint16(item->Attribute("id"),&ok);
             if(!ok)
                 std::cerr << "\"condition\" balise have id is not a number (" << file << ")" << std::endl;
             else
                 teleportConditionsUnparsed[file][id]=const_cast<tinyxml2::XMLElement *>(item);
         }
-        item = item->NextSiblingElement(XMLCACHEDSTRING_condition);
+        item = item->NextSiblingElement("condition");
     }
 
     if(teleportConditionsUnparsed.find(file)!=teleportConditionsUnparsed.cend())
@@ -1587,12 +1594,7 @@ tinyxml2::XMLElement *Map_loader::getXmlCondition(const std::string &fileName,co
 }
 
 MapCondition Map_loader::xmlConditionToMapCondition(const std::string &conditionFile,
-                                                    #ifdef CATCHCHALLENGER_XLMPARSER_TINYXML1
-                                                    const tinyxml2::XMLElement *
-                                                    #elif defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
-                                                    const tinyxml2::XMLElement *
-                                                    #endif
-                                                    const conditionContent)
+                                                      const tinyxml2::XMLElement * const conditionContent)
 {
     #ifdef ONLYMAPRENDER
     return MapCondition();
@@ -1605,18 +1607,18 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
     condition.data.quest=0;
     if(conditionContent==NULL)
         return condition;
-    const auto * const conditionContentTypeChar=conditionContent->Attribute(XMLCACHEDSTRING_type);
+    const auto * const conditionContentTypeChar=conditionContent->Attribute("type");
     if(conditionContentTypeChar==NULL)
         return condition;
     const std::string conditionContentType=std::string(conditionContentTypeChar);
-    if(conditionContentType==CACHEDSTRING_quest)
+    if(conditionContentType=="quest")
     {
-        if(conditionContent->Attribute(XMLCACHEDSTRING_quest)==NULL)
+        if(conditionContent->Attribute("quest")==NULL)
             std::cerr << "\"condition\" balise have type=quest but quest attribute not found, item, clan or fightBot ("
                       << conditionFile << ")" << std::endl;
         else
         {
-            const uint16_t &quest=stringtouint16(conditionContent->Attribute(XMLCACHEDSTRING_quest),&ok);
+            const uint16_t &quest=stringtouint16(conditionContent->Attribute("quest"),&ok);
             if(!ok)
                 std::cerr << "\"condition\" balise have type=quest but quest attribute is not a number, item, clan or fightBot ("
                           << conditionFile << ")" << std::endl;
@@ -1630,13 +1632,13 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             }
         }
     }
-    else if(conditionContentType==CACHEDSTRING_item)
+    else if(conditionContentType=="item")
     {
-        if(conditionContent->Attribute(XMLCACHEDSTRING_item)==NULL)
+        if(conditionContent->Attribute("item")==NULL)
             std::cerr << "\"condition\" balise have type=item but item attribute not found, item, clan or fightBot (" << conditionFile <<  ")" << std::endl;
         else
         {
-            const uint16_t &item=stringtouint16(conditionContent->Attribute(XMLCACHEDSTRING_item),&ok);
+            const uint16_t &item=stringtouint16(conditionContent->Attribute("item"),&ok);
             if(!ok)
                 std::cerr << "\"condition\" balise have type=item but item attribute is not a number, item, clan or fightBot (" << conditionFile <<  ")" << std::endl;
             else if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
@@ -1648,13 +1650,13 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             }
         }
     }
-    else if(conditionContentType==CACHEDSTRING_fightBot)
+    else if(conditionContentType=="fightBot")
     {
-        if(conditionContent->Attribute(XMLCACHEDSTRING_fightBot)==NULL)
+        if(conditionContent->Attribute("fightBot")==NULL)
             std::cerr << "\"condition\" balise have type=fightBot but fightBot attribute not found, item, clan or fightBot (" << conditionFile <<  ")" << std::endl;
         else
         {
-            const uint16_t &fightBot=stringtouint16(conditionContent->Attribute(XMLCACHEDSTRING_fightBot),&ok);
+            const uint16_t &fightBot=stringtouint16(conditionContent->Attribute("fightBot"),&ok);
             if(!ok)
                 std::cerr << "\"condition\" balise have type=fightBot but fightBot attribute is not a number, item, clan or fightBot (" << conditionFile <<  ")" << std::endl;
             else if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightBot)==CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
@@ -1666,7 +1668,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             }
         }
     }
-    else if(conditionContentType==CACHEDSTRING_clan)
+    else if(conditionContentType=="clan")
         condition.type=MapConditionType_Clan;
     else
         std::cerr << "\"condition\" balise have type but value is not quest, item, clan or fightBot (" << conditionFile <<  ")" << std::endl;

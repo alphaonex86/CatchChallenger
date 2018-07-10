@@ -64,6 +64,15 @@ SOURCES += \
     $$PWD/base/ClientMapManagement/MapBasicMove.cpp \
     $$PWD/base/DictionaryLogin.cpp \
     $$PWD/base/DictionaryServer.cpp \
+    $$PWD/base/PreparedDBQuery.cpp \
+    $$PWD/base/DatabaseBase.cpp \
+    $$PWD/base/BaseServerLogin.cpp \
+    $$PWD/base/TinyXMLSettings.cpp \
+    $$PWD/base/DatabaseFunction.cpp \
+    $$PWD/base/StringWithReplacement.cpp \
+    $$PWD/base/StaticText.cpp \
+    $$PWD/base/PreparedStatementUnit.cpp \
+    $$PWD/base/TimeRangeEventScan.cpp \
     $$PWD/crafting/BaseServerCrafting.cpp \
     $$PWD/crafting/ClientLocalBroadcastCrafting.cpp \
     $$PWD/crafting/LocalClientHandlerCrafting.cpp \
@@ -75,25 +84,16 @@ SOURCES += \
     $$PWD/fight/LocalClientHandlerFightDatabase.cpp \
     $$PWD/fight/LocalClientHandlerFightBattle.cpp \
     $$PWD/fight/BaseServerFight.cpp \
-    $$PWD/fight/ClientHeavyLoadFight.cpp \
-    $$PWD/base/PreparedDBQuery.cpp \
-    $$PWD/base/DatabaseBase.cpp \
-    $$PWD/base/BaseServerLogin.cpp \
-    $$PWD/base/TinyXMLSettings.cpp \
-    $$PWD/base/DatabaseFunction.cpp \
-    $$PWD/base/StringWithReplacement.cpp \
-    $$PWD/base/StaticText.cpp \
-    $$PWD/base/PreparedStatementUnit.cpp \
-    $$PWD/base/TimeRangeEventScan.cpp
+    $$PWD/fight/ClientHeavyLoadFight.cpp
 
 HEADERS += \
+    $$PWD/VariableServer.h \
     $$PWD/base/GlobalServerData.h \
     $$PWD/base/SqlFunction.h \
     $$PWD/base/BaseServer.h \
     $$PWD/base/BaseServerMasterLoadDictionary.h \
     $$PWD/base/BaseServerMasterSendDatapack.h \
     $$PWD/base/LocalClientHandlerWithoutSender.h \
-    $$PWD/VariableServer.h \
     $$PWD/base/ServerStructures.h \
     $$PWD/base/EventThreader.h \
     $$PWD/base/Client.h \
@@ -111,7 +111,6 @@ HEADERS += \
     $$PWD/base/ClientMapManagement/MapBasicMove.h \
     $$PWD/base/DictionaryLogin.h \
     $$PWD/base/DictionaryServer.h \
-    $$PWD/crafting/MapServerCrafting.h \
     $$PWD/base/PreparedDBQuery.h \
     $$PWD/base/DatabaseBase.h \
     $$PWD/base/BaseServerLogin.h \
@@ -121,4 +120,5 @@ HEADERS += \
     $$PWD/base/StaticText.h \
     $$PWD/base/GameServerVariables.h \
     $$PWD/base/PreparedStatementUnit.h \
-    $$PWD/base/TimeRangeEventScan.h
+    $$PWD/base/TimeRangeEventScan.h \
+    $$PWD/crafting/MapServerCrafting.h

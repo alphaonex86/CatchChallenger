@@ -25,8 +25,8 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
         {
             bots_number++;
             Map_to_send::Bot_Semi bot_Semi=current_map.old_map.bots.at(sub_index);
-            if(!stringEndsWith(bot_Semi.file,CACHEDSTRING_dotxml))
-                bot_Semi.file+=CACHEDSTRING_dotxml;
+            if(!stringEndsWith(bot_Semi.file,".xml"))
+                bot_Semi.file+=".xml";
             loadBotFile(current_map.map->map_file,bot_Semi.file);
             if(botFiles.find(bot_Semi.file)!=botFiles.end())
             {
@@ -59,15 +59,15 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                         }
                         std::pair<uint8_t,uint8_t> pairpoint(bot_Semi.point.x,bot_Semi.point.y);
                         MapServer * const mapServer=static_cast<MapServer *>(current_map.map);
-                        if(step->Attribute(XMLCACHEDSTRING_type)==NULL)
+                        if(step->Attribute("type")==NULL)
                         {
                             ++i;
                             continue;
                         }
-                        const std::string &step_type=step->Attribute(XMLCACHEDSTRING_type);
-                        if(step_type==CACHEDSTRING_shop)
+                        const std::string &step_type=step->Attribute("type");
+                        if(step_type=="shop")
                         {
-                            if(step->Attribute(XMLCACHEDSTRING_shop)==NULL)
+                            if(step->Attribute("shop")==NULL)
                                 std::cerr << "Has not attribute \"shop\": for bot id: "
                                           << bot_Semi.id
                                           << " ("
@@ -84,7 +84,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                             else
                             {
                                 /// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
-                                uint16_t shop=stringtouint16(step->Attribute(XMLCACHEDSTRING_shop),&ok);
+                                uint16_t shop=stringtouint16(step->Attribute("shop"),&ok);
                                 if(!ok)
                                     std::cerr << "shop is not a number: for bot id: "
                                               << bot_Semi.id
@@ -135,7 +135,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 }
                             }
                         }
-                        else if(step_type==CACHEDSTRING_learn)
+                        else if(step_type=="learn")
                         {
                             if(mapServer->learn.find(pairpoint)!=mapServer->learn.end())
                                 std::cerr << "learn point already on the map: for bot id: "
@@ -172,7 +172,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 learnpoint_number++;
                             }
                         }
-                        else if(step_type==CACHEDSTRING_heal)
+                        else if(step_type=="heal")
                         {
                             if(mapServer->heal.find(pairpoint)!=mapServer->heal.end())
                                 std::cerr << "heal point already on the map: for bot id: "
@@ -209,7 +209,7 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 healpoint_number++;
                             }
                         }
-                        else if(step_type==CACHEDSTRING_market)
+                        else if(step_type=="market")
                         {
                             if(mapServer->market.find(pairpoint)!=mapServer->market.end())
                                 std::cerr << "market point already on the map: for bot id: "
@@ -246,9 +246,9 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                 marketpoint_number++;
                             }
                         }
-                        else if(step_type==CACHEDSTRING_zonecapture)
+                        else if(step_type=="zonecapture")
                         {
-                            if(step->Attribute(XMLCACHEDSTRING_zone)==NULL)
+                            if(step->Attribute("zone")==NULL)
                                 std::cerr << "zonecapture point have not the zone attribute: for bot id: "
                                           << bot_Semi.id
                                           << " ("
@@ -293,11 +293,11 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                               << std::to_string(i->first)
                                               << std::endl;
                                 #endif
-                                mapServer->zonecapture[pairpoint]=step->Attribute(XMLCACHEDSTRING_zone);
+                                mapServer->zonecapture[pairpoint]=step->Attribute("zone");
                                 zonecapturepoint_number++;
                             }
                         }
-                        else if(step_type==CACHEDSTRING_fight)
+                        else if(step_type=="fight")
                         {
                             if(mapServer->botsFight.find(pairpoint)!=mapServer->botsFight.end())
                                 std::cerr << "botsFight point already on the map: for bot id: "
@@ -317,26 +317,26 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                             {
                                 uint16_t fightid=0;
                                 ok=false;
-                                if(step->Attribute(XMLCACHEDSTRING_fightid)!=NULL)
+                                if(step->Attribute("fightid")!=NULL)
                                     //16Bit: \see CommonDatapackServerSpec, Map_to_send,struct Bot_Semi,uint16_t id
-                                    fightid=stringtouint16(step->Attribute(XMLCACHEDSTRING_fightid),&ok);
+                                    fightid=stringtouint16(step->Attribute("fightid"),&ok);
                                 if(ok)
                                 {
                                     if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CommonDatapackServerSpec::commonDatapackServerSpec.botFights.end())
                                     {
-                                        if(bot_Semi.property_text.find(CACHEDSTRING_lookAt)!=bot_Semi.property_text.end())
+                                        if(bot_Semi.property_text.find("lookAt")!=bot_Semi.property_text.end())
                                         {
                                             Direction direction;
-                                            const std::string &lookAt=bot_Semi.property_text.at(CACHEDSTRING_lookAt);
-                                            if(lookAt==CACHEDSTRING_left)
+                                            const std::string &lookAt=bot_Semi.property_text.at("lookAt");
+                                            if(lookAt=="left")
                                                 direction=CatchChallenger::Direction_move_at_left;
-                                            else if(lookAt==CACHEDSTRING_right)
+                                            else if(lookAt=="right")
                                                 direction=CatchChallenger::Direction_move_at_right;
-                                            else if(lookAt==CACHEDSTRING_top)
+                                            else if(lookAt=="top")
                                                 direction=CatchChallenger::Direction_move_at_top;
                                             else
                                             {
-                                                if(lookAt!=CACHEDSTRING_bottom)
+                                                if(lookAt!="bottom")
                                                     std::cerr << "Wrong direction for the botp: for bot id: "
                                                               << bot_Semi.id
                                                               << " ("
@@ -371,9 +371,9 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                             botfights_number++;
 
                                             uint8_t fightRange=5;
-                                            if(bot_Semi.property_text.find(CACHEDSTRING_fightRange)!=bot_Semi.property_text.end())
+                                            if(bot_Semi.property_text.find("fightRange")!=bot_Semi.property_text.end())
                                             {
-                                                fightRange=stringtouint8(bot_Semi.property_text.at(CACHEDSTRING_fightRange),&ok);
+                                                fightRange=stringtouint8(bot_Semi.property_text.at("fightRange"),&ok);
                                                 if(!ok)
                                                 {
                                                     std::cerr << "fightRange is not a number: for bot id: "
