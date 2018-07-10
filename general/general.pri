@@ -22,15 +22,18 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/base/ProtocolParsingCheck.cpp \
     $$PWD/base/MoveOnTheMap.cpp \
     $$PWD/base/Map_loader.cpp \
-    $$PWD/base/CommonMap.cpp \
     $$PWD/base/FacilityLib.cpp \
     $$PWD/base/FacilityLibGeneral.cpp \
     $$PWD/base/ConnectedSocket.cpp \
     $$PWD/base/DatapackGeneralLoader.cpp \
-    $$PWD/base/CommonDatapack.cpp \
-    $$PWD/base/CommonDatapackServerSpec.cpp \
-    $$PWD/base/CommonSettingsCommon.cpp \
-    $$PWD/base/CommonSettingsServer.cpp \
+    $$PWD/base/DatapackGeneralLoaderCrafting.cpp \
+    $$PWD/base/DatapackGeneralLoaderIndustry.cpp \
+    $$PWD/base/DatapackGeneralLoaderItem.cpp \
+    $$PWD/base/DatapackGeneralLoaderMap.cpp \
+    $$PWD/base/DatapackGeneralLoaderMonsterDrop.cpp \
+    $$PWD/base/DatapackGeneralLoaderPlant.cpp \
+    $$PWD/base/DatapackGeneralLoaderQuest.cpp \
+    $$PWD/base/DatapackGeneralLoaderReputation.cpp \
     $$PWD/base/cpp11addition.cpp \
     $$PWD/base/cpp11additionstringtointcpp.cpp \
     $$PWD/base/cpp11additionstringtointc.cpp \
@@ -39,6 +42,11 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/fight/FightLoaderFight.cpp \
     $$PWD/fight/FightLoaderMonster.cpp \
     $$PWD/fight/FightLoaderSkill.cpp \
+    $$PWD/base/CommonMap.cpp \
+    $$PWD/base/CommonDatapack.cpp \
+    $$PWD/base/CommonDatapackServerSpec.cpp \
+    $$PWD/base/CommonSettingsCommon.cpp \
+    $$PWD/base/CommonSettingsServer.cpp \
     $$PWD/fight/CommonFightEngine.cpp \
     $$PWD/fight/CommonFightEngineEnd.cpp \
     $$PWD/fight/CommonFightEngineTurn.cpp \
