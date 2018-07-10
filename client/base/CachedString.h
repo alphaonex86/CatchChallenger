@@ -1,4 +1,4 @@
-#include "GeneralVariable.h"
+#include "../../general/base/GeneralVariable.h"
 
 #if defined(CATCHCHALLENGER_CLIENT)
 #ifndef CACHEDSTRING_H

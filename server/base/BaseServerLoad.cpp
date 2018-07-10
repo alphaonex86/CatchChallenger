@@ -113,7 +113,7 @@ bool BaseServer::preload_zone_init()
             continue;
         }
         std::string zoneCodeName=entryListZone.at(index).name;
-        stringreplaceOne(zoneCodeName,CACHEDSTRING_dotxml,"");
+        stringreplaceOne(zoneCodeName,".xml","");
         const std::string &file=entryListZone.at(index).absoluteFilePath;
         tinyxml2::XMLDocument *domDocument;
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -150,7 +150,7 @@ bool BaseServer::preload_zone_init()
             index++;
             continue;
         }
-        if(strcmp(root->Name(),XMLCACHEDSTRING_zone)!=0)
+        if(strcmp(root->Name(),"zone")!=0)
         {
             std::cerr << "Unable to open the file: " << file.c_str() << ", \"zone\" root balise not found for the xml file" << std::endl;
             index++;
@@ -159,13 +159,13 @@ bool BaseServer::preload_zone_init()
 
         //load capture
         std::vector<uint16_t> fightIdList;
-        const tinyxml2::XMLElement * capture=root->FirstChildElement(XMLCACHEDSTRING_capture);
+        const tinyxml2::XMLElement * capture=root->FirstChildElement("capture");
         if(capture!=NULL)
         {
-            if(capture->Attribute(XMLCACHEDSTRING_fightId)!=NULL)
+            if(capture->Attribute("fightId")!=NULL)
             {
                 bool ok;
-                const std::vector<std::string> &fightIdStringList=stringsplit(capture->Attribute(XMLCACHEDSTRING_fightId),';');
+                const std::vector<std::string> &fightIdStringList=stringsplit(capture->Attribute("fightId"),';');
                 unsigned int sub_index=0;
                 while(sub_index<fightIdStringList.size())
                 {

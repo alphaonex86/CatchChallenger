@@ -52,10 +52,22 @@ SOURCES += \
     ../../general/base/FacilityLibGeneral.cpp \
     ../../general/base/CommonDatapack.cpp \
     ../../general/base/DatapackGeneralLoader.cpp \
+    ../../general/base/DatapackGeneralLoaderCrafting.cpp \
+    ../../general/base/DatapackGeneralLoaderIndustry.cpp \
+    ../../general/base/DatapackGeneralLoaderItem.cpp \
+    ../../general/base/DatapackGeneralLoaderMap.cpp \
+    ../../general/base/DatapackGeneralLoaderMonsterDrop.cpp \
+    ../../general/base/DatapackGeneralLoaderPlant.cpp \
+    ../../general/base/DatapackGeneralLoaderQuest.cpp \
+    ../../general/base/DatapackGeneralLoaderReputation.cpp \
     ../../general/fight/CommonFightEngineBase.cpp \
     ../base/BaseServerMasterLoadDictionary.cpp \
     ../base/BaseServerMasterSendDatapack.cpp \
     ../../general/fight/FightLoader.cpp \
+    ../../general/fight/FightLoaderBuff.cpp \
+    ../../general/fight/FightLoaderFight.cpp \
+    ../../general/fight/FightLoaderMonster.cpp \
+    ../../general/fight/FightLoaderSkill.cpp \
     ../../general/base/CommonSettingsCommon.cpp \
     PlayerUpdaterToLogin.cpp \
     ../epoll/EpollTimer.cpp \
@@ -110,4 +122,6 @@ HEADERS += \
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 
 HEADERS += $$PWD/../../general/base/tinyXML2/tinyxml2.h
-SOURCES += $$PWD/../../general/base/tinyXML2/tinyxml2.cpp
+SOURCES += $$PWD/../../general/base/tinyXML2/tinyxml2.cpp \
+    $$PWD/../../general/base/tinyXML2/tinyxml2b.cpp \
+    $$PWD/../../general/base/tinyXML2/tinyxml2c.cpp

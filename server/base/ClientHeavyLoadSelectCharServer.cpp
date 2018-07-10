@@ -1,24 +1,8 @@
 #include "Client.h"
 #include "GlobalServerData.h"
-
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/CommonDatapackServerSpec.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/CommonMap.h"
-#include "../../general/base/ProtocolParsing.h"
-#include "../../general/base/ProtocolParsingCheck.h"
-#include "../../general/base/cpp11addition.h"
-#include "DatabaseFunction.h"
-#include "SqlFunction.h"
-#include "PreparedDBQuery.h"
-#include "DictionaryLogin.h"
+#include "MapServer.h"
 #include "DictionaryServer.h"
-#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "../game-server-alone/LinkToMaster.h"
-#endif
-
-#include <chrono>
+#include <iostream>
 
 using namespace CatchChallenger;
 
