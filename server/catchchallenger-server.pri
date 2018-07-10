@@ -7,6 +7,7 @@ SOURCES += \
     $$PWD/base/GlobalServerData.cpp \
     $$PWD/base/SqlFunction.cpp \
     $$PWD/base/BaseServer.cpp \
+    $$PWD/base/BaseServerSettings.cpp \
     $$PWD/base/BaseServerLoad.cpp \
     $$PWD/base/BaseServerLoadProfile.cpp \
     $$PWD/base/BaseServerLoadDatapack.cpp \
@@ -15,6 +16,8 @@ SOURCES += \
     $$PWD/base/BaseServerLoadMapAfterDB.cpp \
     $$PWD/base/BaseServerLoadBot.cpp \
     $$PWD/base/BaseServerLoadSQL.cpp \
+    $$PWD/base/BaseServerLoadSQLNotEpoll.cpp \
+    $$PWD/base/BaseServerLoadSQLPointAndMarket.cpp \
     $$PWD/base/BaseServerUnload.cpp \
     $$PWD/base/BaseServerMasterLoadDictionary.cpp \
     $$PWD/base/BaseServerMasterSendDatapack.cpp \
@@ -64,7 +67,9 @@ SOURCES += \
     $$PWD/base/ClientMapManagement/MapBasicMove.cpp \
     $$PWD/base/DictionaryLogin.cpp \
     $$PWD/base/DictionaryServer.cpp \
-    $$PWD/base/PreparedDBQuery.cpp \
+    $$PWD/base/PreparedDBQueryLogin.cpp \
+    $$PWD/base/PreparedDBQueryCommon.cpp \
+    $$PWD/base/PreparedDBQueryServer.cpp \
     $$PWD/base/DatabaseBase.cpp \
     $$PWD/base/BaseServerLogin.cpp \
     $$PWD/base/TinyXMLSettings.cpp \

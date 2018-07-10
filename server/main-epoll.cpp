@@ -14,6 +14,11 @@
 #include "epoll/EpollServer.h"
 #include "epoll/Epoll.h"
 #include "NormalServerGlobal.h"
+#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+#include "game-server-alone/LinkToMaster.h"
+#include "epoll/EpollSocket.h"
+#include "epoll/timer/TimerPurgeTokenAuthList.h"
+#endif
 
 #define MAXEVENTS 512
 
@@ -91,7 +96,11 @@ void send_settings(
         #else
         EpollServer *server
         #endif
-        ,TinyXMLSettings *settings
+        ,TinyXMLSettings *settings,
+        std::string &master_host,
+        uint16_t &master_port,
+        uint8_t &master_tryInterval,
+        uint8_t &master_considerDownAfterNumberOfTry
         );
 
 int main(int argc, char *argv[])
@@ -128,7 +137,7 @@ int main(int argc, char *argv[])
 
     //before linkToMaster->registerGameServer() to have the correct settings loaded
     //after server to have the settings
-    send_settings(server,settings);
+    send_settings(server,settings,master_host,master_port,master_tryInterval,master_considerDownAfterNumberOfTry);
 
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     {

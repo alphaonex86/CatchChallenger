@@ -152,8 +152,7 @@ TRANSLATIONS    = $$PWD/resources/languages/en/translation.ts \
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 
-defined(CATCHCHALLENGER_XLMPARSER_TINYXML2)
-{
-    HEADERS += $$PWD/../../general/base/tinyXML2/tinyxml2.h
-    SOURCES += $$PWD/../../general/base/tinyXML2/tinyxml2.cpp
-}
+HEADERS += $$PWD/../../general/base/tinyXML2/tinyxml2.h
+SOURCES += $$PWD/../../general/base/tinyXML2/tinyxml2.cpp \
+    $$PWD/../../general/base/tinyXML2/tinyxml2b.cpp \
+    $$PWD/../../general/base/tinyXML2/tinyxml2c.cpp

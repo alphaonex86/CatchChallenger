@@ -1,34 +1,15 @@
 #include "Client.h"
 #include "GlobalServerData.h"
-
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/CommonDatapackServerSpec.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/CommonMap.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/cpp11addition.h"
-#include "../../general/base/ProtocolParsing.h"
-#include "../../general/base/ProtocolParsingCheck.h"
-#include "DatabaseFunction.h"
-#include "StaticText.h"
-#include "SqlFunction.h"
-#include "PreparedDBQuery.h"
 #include "DictionaryLogin.h"
-#include "DictionaryServer.h"
-#include "BaseServerMasterSendDatapack.h"
+#include "StaticText.h"
+#include <openssl/sha.h>
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "BaseServerLogin.h"
 #endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <chrono>
-#include <openssl/sha.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
+#include "SqlFunction.h"
+#endif
+#include "../../general/base/CommonSettingsCommon.h"
 
 /// \todo solve disconnecting/destroy during the SQL loading
 
@@ -709,132 +690,6 @@ void Client::deleteCharacterNow(const uint32_t &characterId)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_delete_character.asyncWrite({characterIdString});
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_delete_monster_by_character.asyncWrite({characterIdString});
 }
-
-/*void Client::deleteCharacterNow(const uint32_t &characterId)
-{
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_delete_character.empty())
-    {
-        std::cerr << "deleteCharacterNow() Query db_query_delete_character is empty, bug" << std::endl;
-        return;
-    }
-    if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_by_id.empty())
-    {
-        std::cerr << "deleteCharacterNow() Query db_query_delete_monster_by_id is empty, bug" << std::endl;
-        return;
-    }
-    #endif
-    DeleteCharacterNow *deleteCharacterNow=new DeleteCharacterNow;
-    deleteCharacterNow->characterId=characterId;
-
-    const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_characters_with_monsters.compose(
-                std::to_string(characterId)
-                );
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&Client::deleteCharacterNow_static);
-    if(callback==NULL)
-    {
-        std::cerr << "Sql error for: "+queryText+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-        delete deleteCharacterNow;
-        return;
-    }
-    else
-    {
-        paramToPassToCallBack.push(deleteCharacterNow);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        paramToPassToCallBackType.push("DeleteCharacterNow");
-        #endif
-        callbackRegistred.push(callback);
-    }
-}
-
-void Client::deleteCharacterNow_static(void *object)
-{
-    if(object!=NULL)
-        static_cast<Client *>(object)->deleteCharacterNow_object();
-    GlobalServerData::serverPrivateVariables.db_common->clear();
-}
-
-void Client::deleteCharacterNow_object()
-{
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBack.empty())
-    {
-        std::cerr << "paramToPassToCallBack.empty()" << __FILE__ << __LINE__ << std::endl;
-        abort();
-    }
-    #endif
-    DeleteCharacterNow *deleteCharacterNow=static_cast<DeleteCharacterNow *>(paramToPassToCallBack.front());
-    paramToPassToCallBack.pop();
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(deleteCharacterNow==NULL)
-        abort();
-    #endif
-    deleteCharacterNow_return(deleteCharacterNow->characterId);
-    delete deleteCharacterNow;
-}
-
-void Client::deleteCharacterNow_return(const uint32_t &characterId)
-{
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(paramToPassToCallBackType.front()!="DeleteCharacterNow")
-    {
-        std::cerr << "is not DeleteCharacterNow" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
-        abort();
-    }
-    paramToPassToCallBackType.pop();
-    #endif
-    callbackRegistred.pop();
-    bool ok;
-    std::string queryText;
-    while(GlobalServerData::serverPrivateVariables.db_common->next())
-    {
-        const uint32_t &monsterId=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
-        if(ok)
-        {
-            queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_buff;
-            stringreplaceOne(queryText,"%1",std::to_string(monsterId));
-            dbQueryWriteCommon(queryText);
-            queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_skill;
-            stringreplaceOne(queryText,"%1",std::to_string(monsterId));
-            dbQueryWriteCommon(queryText);
-        }
-    }
-
-    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_character;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_all_item;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_all_item_warehouse;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_by_character;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_recipes;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_reputation;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-    queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_allow;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteCommon(queryText);
-
-    queryText=PreparedDBQueryServer::db_query_delete_plant;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteServer(queryText);
-    queryText=PreparedDBQueryServer::db_query_delete_quest;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteServer(queryText);
-    queryText=PreparedDBQueryServer::db_query_delete_all_item_market;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteServer(queryText);
-    queryText=PreparedDBQueryServer::db_query_delete_bot_already_beaten;
-    stringreplaceOne(queryText,"%1",std::to_string(characterId));
-    dbQueryWriteServer(queryText);
-}*/
 
 void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
