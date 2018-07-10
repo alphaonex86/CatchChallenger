@@ -35,7 +35,7 @@ CONFIG   += console
 
 TEMPLATE = app
 
-SOURCES += $$PWD/main-epoll.cpp \
+SOURCES += \
     $$PWD/epoll/EpollSocket.cpp \
     $$PWD/epoll/EpollClient.cpp \
     $$PWD/epoll/EpollServer.cpp \
@@ -50,10 +50,12 @@ SOURCES += $$PWD/main-epoll.cpp \
     $$PWD/epoll/timer/TimerPositionSync.cpp \
     $$PWD/epoll/timer/TimerDdos.cpp \
     $$PWD/epoll/timer/TimerEvents.cpp \
-    $$PWD/NormalServerGlobal.cpp \
     $$PWD/epoll/EpollGenericServer.cpp \
     $$PWD/epoll/EpollGenericSslServer.cpp \
-    $$PWD/all-in-one/TimeRangeEvent.cpp
+    $$PWD/all-in-one/TimeRangeEvent.cpp \
+    $$PWD/NormalServerGlobal.cpp \
+    $$PWD/main-epoll.cpp \
+    $$PWD/main-epoll2.cpp
 
 HEADERS += $$PWD/epoll/EpollSocket.h \
     $$PWD/epoll/EpollClient.h \
@@ -70,9 +72,9 @@ HEADERS += $$PWD/epoll/EpollSocket.h \
     $$PWD/epoll/timer/TimerSendInsertMoveRemove.h \
     $$PWD/epoll/timer/TimerDdos.h \
     $$PWD/epoll/timer/TimerEvents.h \
-    $$PWD/NormalServerGlobal.h \
     $$PWD/epoll/EpollGenericServer.h \
     $$PWD/epoll/EpollGenericSslServer.h \
+    $$PWD/NormalServerGlobal.h \
     $$PWD/base/DdosBuffer.h \
     $$PWD/all-in-one/TimeRangeEvent.h
 
@@ -80,4 +82,6 @@ HEADERS += $$PWD/epoll/EpollSocket.h \
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 
 HEADERS += $$PWD/../general/base/tinyXML2/tinyxml2.h
-SOURCES += $$PWD/../general/base/tinyXML2/tinyxml2.cpp
+SOURCES += $$PWD/../general/base/tinyXML2/tinyxml2.cpp \
+$$PWD/../general/base/tinyXML2/tinyxml2b.cpp \
+$$PWD/../general/base/tinyXML2/tinyxml2c.cpp

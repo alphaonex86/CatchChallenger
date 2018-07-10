@@ -16,7 +16,6 @@
 #include "../../general/base/QFakeSocket.h"
 #endif
 
-#include "../../general/base/CachedString.h"
 #include "../../general/base/Map_loader.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/FacilityLibGeneral.h"
