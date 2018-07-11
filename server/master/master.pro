@@ -34,21 +34,26 @@ SOURCES += \
     main-epoll-login-master.cpp \
     EpollClientLoginMaster.cpp \
     EpollServerLoginMaster.cpp \
+    EpollClientLoginMasterStaticVar.cpp \
+    EpollClientLoginMasterProtocolParsing.cpp \
+    CharactersGroup.cpp \
+    PlayerUpdaterToLogin.cpp \
+    PurgeTheLockedAccount.cpp \
+    CheckTimeoutGameServer.cpp \
+    AutomaticPingSend.cpp \
+    TimeRangeEvent.cpp \
+    ../epoll/EpollTimer.cpp \
     ../epoll/Epoll.cpp \
     ../epoll/EpollGenericSslServer.cpp \
     ../epoll/EpollGenericServer.cpp \
     ../epoll/EpollClient.cpp \
     ../epoll/EpollSocket.cpp \
+    ../epoll/EpollSslClient.cpp \
+    ../epoll/db/EpollPostgresql.cpp \
     ../../general/base/ProtocolParsingCheck.cpp \
     ../../general/base/ProtocolParsingGeneral.cpp \
     ../../general/base/ProtocolParsingInput.cpp \
     ../../general/base/ProtocolParsingOutput.cpp \
-    EpollClientLoginMasterStaticVar.cpp \
-    ../epoll/EpollSslClient.cpp \
-    ../base/DatabaseBase.cpp \
-    ../epoll/db/EpollPostgresql.cpp \
-    EpollClientLoginMasterProtocolParsing.cpp \
-    CharactersGroup.cpp \
     ../../general/base/FacilityLibGeneral.cpp \
     ../../general/base/CommonDatapack.cpp \
     ../../general/base/DatapackGeneralLoader.cpp \
@@ -61,62 +66,57 @@ SOURCES += \
     ../../general/base/DatapackGeneralLoaderQuest.cpp \
     ../../general/base/DatapackGeneralLoaderReputation.cpp \
     ../../general/fight/CommonFightEngineBase.cpp \
-    ../base/BaseServerMasterLoadDictionary.cpp \
-    ../base/BaseServerMasterSendDatapack.cpp \
     ../../general/fight/FightLoader.cpp \
     ../../general/fight/FightLoaderBuff.cpp \
     ../../general/fight/FightLoaderFight.cpp \
     ../../general/fight/FightLoaderMonster.cpp \
     ../../general/fight/FightLoaderSkill.cpp \
     ../../general/base/CommonSettingsCommon.cpp \
-    PlayerUpdaterToLogin.cpp \
-    ../epoll/EpollTimer.cpp \
-    PurgeTheLockedAccount.cpp \
     ../../general/base/cpp11addition.cpp \
     ../../general/base/cpp11additionstringtointc.cpp \
     ../../general/base/cpp11additionstringtointcpp.cpp \
-    ../base/TinyXMLSettings.cpp \
-    CheckTimeoutGameServer.cpp \
-    AutomaticPingSend.cpp \
+    ../base/BaseServerMasterLoadDictionary.cpp \
+    ../base/DatabaseBase.cpp \
+    ../base/BaseServerMasterSendDatapack.cpp \
     ../base/DatabaseFunction.cpp \
-    TimeRangeEvent.cpp
+    ../base/TinyXMLSettings.cpp
 
 HEADERS += \
     EpollClientLoginMaster.h \
     EpollServerLoginMaster.h \
+    CharactersGroup.h \
+    PlayerUpdaterToLogin.h \
+    PurgeTheLockedAccount.h \
+    CheckTimeoutGameServer.h \
+    AutomaticPingSend.h \
+    TimeRangeEvent.h \
     ../epoll/Epoll.h \
     ../epoll/EpollGenericSslServer.h \
     ../epoll/EpollGenericServer.h \
     ../epoll/EpollClient.h \
+    ../epoll/EpollSslClient.h \
+    ../epoll/EpollTimer.h \
+    ../epoll/db/EpollPostgresql.h \
+    ../epoll/BaseClassSwitch.h \
     ../epoll/EpollSocket.h \
     ../../general/base/ProtocolParsing.h \
     ../../general/base/ProtocolParsingCheck.h \
-    ../epoll/EpollSslClient.h \
-    ../base/DatabaseBase.h \
-    ../epoll/db/EpollPostgresql.h \
-    CharactersGroup.h \
     ../../general/base/FacilityLibGeneral.h \
     ../../general/base/CommonDatapack.h \
-    ../VariableServer.h \
     ../../general/base/DatapackGeneralLoader.h \
     ../../general/fight/CommonFightEngineBase.h \
     ../../general/base/GeneralStructures.h \
     ../../general/base/GeneralType.h \
-    ../base/BaseServerMasterLoadDictionary.h \
-    ../base/BaseServerMasterSendDatapack.h \
     ../../general/fight/FightLoader.h \
     ../../general/base/CommonSettingsCommon.h \
-    PlayerUpdaterToLogin.h \
-    ../epoll/EpollTimer.h \
-    PurgeTheLockedAccount.h \
     ../../general/base/cpp11addition.h \
-    ../base/TinyXMLSettings.h \
     ../../general/base/GeneralVariable.h \
-    CheckTimeoutGameServer.h \
-    AutomaticPingSend.h \
+    ../base/BaseServerMasterLoadDictionary.h \
+    ../base/DatabaseBase.h \
+    ../base/TinyXMLSettings.h \
     ../base/DatabaseFunction.h \
-    TimeRangeEvent.h \
-    ../epoll/BaseClassSwitch.h
+    ../base/BaseServerMasterSendDatapack.h \
+    ../VariableServer.h
 
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2

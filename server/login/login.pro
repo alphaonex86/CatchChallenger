@@ -35,46 +35,48 @@ SOURCES += \
     main-epoll-login-slave.cpp \
     EpollClientLoginSlave.cpp \
     EpollServerLoginSlave.cpp \
+    EpollClientLoginSlaveStaticVar.cpp \
+    EpollClientLoginSlaveHeavyLoad.cpp \
+    LinkToMaster.cpp \
+    LinkToMasterStaticVar.cpp \
+    LinkToMasterProtocolParsing.cpp \
+    LinkToMasterProtocolParsingMessage.cpp \
+    LinkToMasterProtocolParsingReply.cpp \
+    EpollClientLoginSlaveProtocolParsing.cpp \
+    EpollClientLoginSlaveWrite.cpp \
+    CharactersGroupForLogin.cpp \
+    CharactersGroupClient.cpp \
+    LinkToGameServerStaticVar.cpp \
+    LinkToGameServerProtocolParsing.cpp \
+    LinkToGameServer.cpp \
+    TimerDdos.cpp \
     ../epoll/Epoll.cpp \
     ../epoll/EpollGenericSslServer.cpp \
     ../epoll/EpollGenericServer.cpp \
     ../epoll/EpollClient.cpp \
     ../epoll/EpollSocket.cpp \
+    ../epoll/EpollSslClient.cpp \
+    ../epoll/db/EpollPostgresql.cpp \
+    ../epoll/EpollClientToServer.cpp \
+    ../epoll/EpollSslClientToServer.cpp \
+    ../epoll/EpollTimer.cpp \
     ../../general/base/ProtocolParsingCheck.cpp \
     ../../general/base/ProtocolParsingGeneral.cpp \
     ../../general/base/ProtocolParsingInput.cpp \
     ../../general/base/ProtocolParsingOutput.cpp \
-    EpollClientLoginSlaveStaticVar.cpp \
-    ../epoll/EpollSslClient.cpp \
-    EpollClientLoginSlaveHeavyLoad.cpp \
-    ../epoll/db/EpollPostgresql.cpp \
+    ../../general/base/FacilityLibGeneral.cpp \
+    ../../general/base/CommonSettingsCommon.cpp \
+    ../../general/base/cpp11addition.cpp \
+    ../../general/base/cpp11additionstringtointc.cpp \
+    ../../general/base/cpp11additionstringtointcpp.cpp \
     ../base/DatabaseBase.cpp \
     ../base/PreparedDBQueryLogin.cpp \
     ../base/PreparedDBQueryCommon.cpp \
     ../base/PreparedDBQueryServer.cpp \
     ../base/PreparedStatementUnit.cpp \
-    LinkToMaster.cpp \
-    LinkToMasterStaticVar.cpp \
-    LinkToMasterProtocolParsing.cpp \
-    EpollClientLoginSlaveProtocolParsing.cpp \
-    ../epoll/EpollClientToServer.cpp \
-    ../epoll/EpollSslClientToServer.cpp \
-    EpollClientLoginSlaveWrite.cpp \
-    CharactersGroupForLogin.cpp \
-    CharactersGroupClient.cpp \
     ../base/BaseServerLogin.cpp \
-    ../../general/base/FacilityLibGeneral.cpp \
     ../base/SqlFunction.cpp \
     ../base/DictionaryLogin.cpp \
-    ../../general/base/CommonSettingsCommon.cpp \
-    LinkToGameServerStaticVar.cpp \
-    LinkToGameServerProtocolParsing.cpp \
-    LinkToGameServer.cpp \
-    TimerDdos.cpp \
-    ../epoll/EpollTimer.cpp \
-    ../../general/base/cpp11addition.cpp \
-    ../../general/base/cpp11additionstringtointc.cpp \
-    ../../general/base/cpp11additionstringtointcpp.cpp \
     ../base/TinyXMLSettings.cpp \
     ../base/DatabaseFunction.cpp \
     ../base/StringWithReplacement.cpp
@@ -82,39 +84,39 @@ SOURCES += \
 HEADERS += \
     EpollClientLoginSlave.h \
     EpollServerLoginSlave.h \
+    LinkToMaster.h \
+    CharactersGroupForLogin.h \
+    LinkToGameServer.h \
+    TimerDdos.h \
+    VariableLoginServer.h \
     ../epoll/Epoll.h \
     ../epoll/EpollGenericSslServer.h \
     ../epoll/EpollGenericServer.h \
     ../epoll/EpollClient.h \
     ../epoll/EpollSocket.h \
-    ../../general/base/ProtocolParsing.h \
-    ../../general/base/ProtocolParsingCheck.h \
     ../epoll/EpollSslClient.h \
     ../epoll/db/EpollPostgresql.h \
+    ../epoll/EpollClientToServer.h \
+    ../epoll/EpollTimer.h \
+    ../epoll/EpollSslClientToServer.h \
+    ../epoll/BaseClassSwitch.h \
+    ../../general/base/ProtocolParsing.h \
+    ../../general/base/ProtocolParsingCheck.h \
+    ../../general/base/GeneralStructures.h \
+    ../../general/base/FacilityLibGeneral.h \
+    ../../general/base/GeneralVariable.h \
+    ../../general/base/CommonSettingsCommon.h \
+    ../../general/base/cpp11addition.h \
     ../base/DatabaseBase.h \
     ../base/PreparedDBQuery.h \
     ../base/PreparedStatementUnit.h \
-    LinkToMaster.h \
-    ../epoll/EpollClientToServer.h \
-    ../epoll/EpollSslClientToServer.h \
-    CharactersGroupForLogin.h \
     ../base/BaseServerLogin.h \
-    ../../general/base/GeneralStructures.h \
-    ../../general/base/FacilityLibGeneral.h \
     ../base/SqlFunction.h \
     ../base/DictionaryLogin.h \
-    ../VariableServer.h \
-    ../../general/base/GeneralVariable.h \
-    ../../general/base/CommonSettingsCommon.h \
-    LinkToGameServer.h \
-    TimerDdos.h \
-    ../epoll/EpollTimer.h \
-    ../../general/base/cpp11addition.h \
     ../base/TinyXMLSettings.h \
     ../base/DatabaseFunction.h \
     ../base/StringWithReplacement.h \
-    VariableLoginServer.h \
-    ../epoll/BaseClassSwitch.h
+    ../VariableServer.h
 
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 
