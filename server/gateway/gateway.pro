@@ -29,72 +29,72 @@ TEMPLATE = app
 SOURCES += \
     EpollClientLoginSlave.cpp \
     EpollServerLoginSlave.cpp \
+    EpollClientLoginSlaveStaticVar.cpp \
+    EpollClientLoginSlaveProtocolParsing.cpp \
+    EpollClientLoginSlaveWrite.cpp \
+    LinkToGameServerStaticVar.cpp \
+    LinkToGameServerProtocolParsing.cpp \
+    LinkToGameServer.cpp \
+    TimerDdos.cpp \
+    DatapackDownloaderBase.cpp \
+    DatapackDownloader_sub.cpp \
+    DatapackDownloader_main.cpp \
+    DatapackDownloaderMainSub.cpp \
+    EpollClientLoginSlaveDatapack.cpp \
+    FacilityLibGateway.cpp \
+    main-epoll-gateway.cpp \
     ../epoll/Epoll.cpp \
     ../epoll/EpollGenericSslServer.cpp \
     ../epoll/EpollGenericServer.cpp \
     ../epoll/EpollClient.cpp \
     ../epoll/EpollSocket.cpp \
+    ../epoll/EpollSslClient.cpp \
+    ../epoll/EpollClientToServer.cpp \
+    ../epoll/EpollSslClientToServer.cpp \
+    ../epoll/EpollTimer.cpp \
+    ../../client/base/DatapackChecksum.cpp \
+    ../../client/base/qt-tar-compressed/QTarDecode.cpp \
+    ../../general/base/FacilityLibGeneral.cpp \
     ../../general/base/ProtocolParsingCheck.cpp \
     ../../general/base/ProtocolParsingGeneral.cpp \
     ../../general/base/ProtocolParsingInput.cpp \
     ../../general/base/ProtocolParsingOutput.cpp \
-    EpollClientLoginSlaveStaticVar.cpp \
-    ../epoll/EpollSslClient.cpp \
-    EpollClientLoginSlaveProtocolParsing.cpp \
-    ../epoll/EpollClientToServer.cpp \
-    ../epoll/EpollSslClientToServer.cpp \
-    EpollClientLoginSlaveWrite.cpp \
-    ../../general/base/FacilityLibGeneral.cpp \
-    LinkToGameServerStaticVar.cpp \
-    LinkToGameServerProtocolParsing.cpp \
-    LinkToGameServer.cpp \
-    TimerDdos.cpp \
-    ../epoll/EpollTimer.cpp \
-    DatapackDownloaderBase.cpp \
-    DatapackDownloader_sub.cpp \
-    DatapackDownloader_main.cpp \
-    DatapackDownloaderMainSub.cpp \
-    ../../client/base/DatapackChecksum.cpp \
-    ../../client/base/qt-tar-compressed/QTarDecode.cpp \
     ../../general/base/CommonSettingsCommon.cpp \
     ../../general/base/CommonSettingsServer.cpp \
-    EpollClientLoginSlaveDatapack.cpp \
     ../../general/base/cpp11addition.cpp \
     ../../general/base/cpp11additionstringtointc.cpp \
     ../../general/base/cpp11additionstringtointcpp.cpp \
-    FacilityLibGateway.cpp \
-    ../base/TinyXMLSettings.cpp \
-    main-epoll-gateway.cpp
+    ../base/TinyXMLSettings.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
     EpollServerLoginSlave.h \
+    LinkToGameServer.h \
+    TimerDdos.h \
+    DatapackDownloaderBase.h \
+    DatapackDownloaderMainSub.h \
+    FacilityLibGateway.h \
     ../epoll/Epoll.h \
     ../epoll/EpollGenericSslServer.h \
     ../epoll/EpollGenericServer.h \
     ../epoll/EpollClient.h \
     ../epoll/EpollSocket.h \
-    ../../general/base/ProtocolParsing.h \
-    ../../general/base/ProtocolParsingCheck.h \
     ../epoll/EpollSslClient.h \
     ../epoll/EpollClientToServer.h \
     ../epoll/EpollSslClientToServer.h \
-    ../../general/base/GeneralStructures.h \
-    ../../general/base/FacilityLibGeneral.h \
-    ../VariableServer.h \
-    ../../general/base/GeneralVariable.h \
-    LinkToGameServer.h \
-    TimerDdos.h \
     ../epoll/EpollTimer.h \
-    DatapackDownloaderBase.h \
-    DatapackDownloaderMainSub.h \
-    ../../client/base/DatapackChecksum.h \
-    ../../client/base/qt-tar-compressed/QTarDecode.h \
+    ../epoll/BaseClassSwitch.h \
     ../../general/base/CommonSettingsCommon.h \
     ../../general/base/CommonSettingsServer.h \
-    FacilityLibGateway.h \
+    ../../general/base/GeneralStructures.h \
+    ../../general/base/FacilityLibGeneral.h \
+    ../../general/base/ProtocolParsing.h \
+    ../../general/base/ProtocolParsingCheck.h \
+    ../../general/base/GeneralVariable.h \
+    ../../client/base/DatapackChecksum.h \
+    ../../client/base/qt-tar-compressed/QTarDecode.h \
     ../base/TinyXMLSettings.h \
-    ../epoll/BaseClassSwitch.h
+    ../VariableServer.h
 
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
