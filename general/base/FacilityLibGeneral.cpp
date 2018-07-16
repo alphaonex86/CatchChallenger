@@ -154,13 +154,15 @@ std::vector<std::string> FacilityLibGeneral::skinIdList(const std::string& skinP
 {
     std::vector<std::string> skinFolderList;
     std::vector<FacilityLibGeneral::InodeDescriptor> entryList=listFolderNotRecursive(skinPath,FacilityLibGeneral::ListFolder::Dirs);//possible wait time here
-    for(unsigned int index=0;index<entryList.size();++index)
+    size_t entryMax = entryList.size();
+    for(unsigned int index=0; index < entryMax; ++index)
     {
         const FacilityLibGeneral::InodeDescriptor &fileInfo=entryList.at(index);
         if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Type::Dir)
             if(FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/back.png") &&
                     FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/front.png") &&
-                    FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/trainer.png"))
+                    FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/trainer.png") &&
+                    FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/monster.png"))
                 skinFolderList.push_back(fileInfo.name);
     }
     std::sort(skinFolderList.begin(), skinFolderList.end());

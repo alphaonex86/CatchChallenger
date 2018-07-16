@@ -15,6 +15,7 @@
 #include <iostream>
 
 std::string MapVisualiserPlayer::text_slashtrainerpng="/trainer.png";
+std::string MapVisualiserPlayer::text_slashtrainerMonsterpng="/monster.png";
 std::string MapVisualiserPlayer::text_slash="/";
 std::string MapVisualiserPlayer::text_antislash="\\";
 std::string MapVisualiserPlayer::text_dotpng=".png";
@@ -84,6 +85,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
 
     defaultTileset="trainer";
     playerMapObject = new Tiled::MapObject();
+    followingMonsterMapObject = new Tiled::MapObject();
     grassCurrentObject->setName("playerMapObject");
 
     lastTileset=defaultTileset;
@@ -99,6 +101,7 @@ MapVisualiserPlayer::~MapVisualiserPlayer()
     delete nextCurrentObject;
     delete grassCurrentObject;
     delete playerMapObject;
+    delete followingMonsterMapObject;
     //delete playerTileset;
     std::unordered_set<Tiled::Tileset *> deletedTileset;
     for(auto i : playerTilesetCache) {
@@ -175,6 +178,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_left;
             lookToMove.start();
+            updateFollowingMonster(10);
             emit send_player_direction(direction);
             parseStop();
         }
@@ -197,11 +201,12 @@ void MapVisualiserPlayer::keyPressParse()
         //look in this direction
         else
         {
-            Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(4);
+            Tiled::Cell cell = playerMapObject->cell();
+            cell.tile = playerTileset->tileAt(4);
             playerMapObject->setCell(cell);
-            direction=CatchChallenger::Direction_look_at_right;
+            direction = CatchChallenger::Direction_look_at_right;
             lookToMove.start();
+            updateFollowingMonster(4);
             emit send_player_direction(direction);
             parseStop();
         }
@@ -229,6 +234,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_top;
             lookToMove.start();
+            updateFollowingMonster(1);
             emit send_player_direction(direction);
             parseStop();
         }
@@ -256,8 +262,19 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_bottom;
             lookToMove.start();
+            updateFollowingMonster(7);
             emit send_player_direction(direction);
             parseStop();
+        }
+    }
+}
+
+void MapVisualiserPlayer::updateFollowingMonster(int tiledPos) {
+    if (followingMonsterMapObject != nullptr) {
+        Tiled::Cell cell = followingMonsterMapObject->cell();
+        if (followingMonsterTileset != nullptr) {
+            cell.tile = followingMonsterTileset->tileAt(tiledPos);
+            followingMonsterMapObject->setCell(cell);
         }
     }
 }
@@ -331,6 +348,7 @@ void MapVisualiserPlayer::moveStepSlot()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(baseTile+0);
             playerMapObject->setCell(cell);
+            updateFollowingMonster(baseTile);
             return;
         }
     }
@@ -355,6 +373,7 @@ void MapVisualiserPlayer::moveStepSlot()
             case 3:
             case 4:
             playerMapObject->setX(playerMapObject->x()-0.20);
+            //followingMonsterMapObject->setX();
             break;
         }
         break;
@@ -367,6 +386,7 @@ void MapVisualiserPlayer::moveStepSlot()
             case 3:
             case 4:
             playerMapObject->setX(playerMapObject->x()+0.20);
+            //followingMonsterMapObject->setX();
             break;
         }
         break;
@@ -379,6 +399,7 @@ void MapVisualiserPlayer::moveStepSlot()
             case 3:
             case 4:
             playerMapObject->setY(playerMapObject->y()-0.20);
+            //followingMonsterMapObject->setY();
             break;
         }
         break;
@@ -391,6 +412,7 @@ void MapVisualiserPlayer::moveStepSlot()
             case 3:
             case 4:
             playerMapObject->setY(playerMapObject->y()+0.20);
+            //followingMonsterMapObject->setY();
             break;
         }
         break;
@@ -408,6 +430,7 @@ void MapVisualiserPlayer::moveStepSlot()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(baseTile+0);
             playerMapObject->setCell(cell);
+            updateFollowingMonster(baseTile);
         }
         break;
         case 1:
@@ -417,10 +440,13 @@ void MapVisualiserPlayer::moveStepSlot()
         case 2:
         {
             Tiled::Cell cell=playerMapObject->cell();
-            if(stepAlternance)
+            if(stepAlternance) {
                 cell.tile=playerTileset->tileAt(baseTile-1);
-            else
+                updateFollowingMonster(baseTile - 1);
+            } else {
                 cell.tile=playerTileset->tileAt(baseTile+1);
+                updateFollowingMonster(baseTile + 1);
+            }
             playerMapObject->setCell(cell);
             stepAlternance=!stepAlternance;
         }
@@ -431,6 +457,7 @@ void MapVisualiserPlayer::moveStepSlot()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(baseTile+0);
             playerMapObject->setCell(cell);
+            updateFollowingMonster(baseTile);
         }
         break;
     }
@@ -686,6 +713,7 @@ void MapVisualiserPlayer::finalPlayerStep()
                             int tileId=cell.tile->id();
                             cell.tile=playerTileset->tileAt(tileId);
                             playerMapObject->setCell(cell);
+                            updateFollowingMonster(tileId);
                         }
                     }
                     break;
@@ -702,11 +730,12 @@ void MapVisualiserPlayer::finalPlayerStep()
                 int tileId=cell.tile->id();
                 cell.tile=playerTileset->tileAt(tileId);
                 playerMapObject->setCell(cell);
+                updateFollowingMonster(tileId);
             }
         }
     }
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-    playerMapObject->setPosition(QPoint(x,y+1));
+    playerMapObject->setPosition(QPoint(x,y+1));followingMonsterMapObject->setPosition(QPoint(x+2,y+1));
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
     if(centerOnPlayer)
         centerOn(MapObjectItem::objectLink.at(playerMapObject));
@@ -752,6 +781,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(10);
             playerMapObject->setCell(cell);
+            updateFollowingMonster(10);
             inMove=false;
             emit send_player_direction(direction);//see the top note
             parseStop();
@@ -778,6 +808,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(4);
             playerMapObject->setCell(cell);
+            updateFollowingMonster(4);
             inMove=false;
             emit send_player_direction(direction);//see the top note
             parseStop();
@@ -804,6 +835,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(1);
             playerMapObject->setCell(cell);
+            updateFollowingMonster(1);
             inMove=false;
             emit send_player_direction(direction);//see the top note
             parseStop();
@@ -830,6 +862,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(7);
             playerMapObject->setCell(cell);
+            updateFollowingMonster(7);
             inMove=false;
             emit send_player_direction(direction);//see the top note
             parseStop();
@@ -1359,6 +1392,8 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
+    followingMonsterMapObject->setPosition(QPoint(x + 2, y + 1));
+    //MapObjectItem::objectLink.at(followingMonsterMapObject)->setZValue(y);
     if(centerOnPlayer)
         centerOn(MapObjectItem::objectLink.at(playerMapObject));
 }

@@ -19,6 +19,7 @@ public:
     virtual void resetAll();
     virtual void connectAllSignals(CatchChallenger::Api_protocol *client);
     void setScale(const float &scaleSize);
+    bool setMonster();
 public slots:
     //map move Qt
     void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
@@ -47,6 +48,8 @@ public slots:
     virtual void reinject_signals();
     virtual void reinject_signals_on_valid_map();
 private:
+    //following monster
+    CatchChallenger::Player_public_informations followingMonsterInformation;
     //the other player
     struct OtherPlayer
     {
@@ -160,7 +163,9 @@ private:
 protected:
     //current player
     CatchChallenger::Player_private_and_public_informations player_informations;
+    CatchChallenger::Player_private_and_public_informations followingMonster_informations;
     bool player_informations_is_set;
+    bool followingMonster_informations_is_set;
 private slots:
     bool loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y);
     void moveOtherPlayerStepSlot();

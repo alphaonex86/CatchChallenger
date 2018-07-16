@@ -27,6 +27,7 @@ public:
     std::string currentZone() const;
     std::string currentBackgroundsound() const;
     CatchChallenger::Direction getDirection();
+    void updateFollowingMonster(int tiledPos);
     enum BlockedOn
     {
         BlockedOn_ZoneItem,
@@ -58,9 +59,12 @@ protected:
     std::string datapackMapPathBase;
     std::string datapackMapPathSpec;
     //player
-    Tiled::MapObject * playerMapObject;
-    Tiled::Tileset * playerTileset;
+    Tiled::MapObject* playerMapObject;
+    Tiled::MapObject* followingMonsterMapObject;
+    Tiled::Tileset* playerTileset;
+    Tiled::Tileset* followingMonsterTileset;
     std::string playerSkinPath;
+    std::string followingMonsterSkinPath;
     std::unordered_map<std::string,Tiled::Tileset *> playerTilesetCache;
     std::string lastTileset;
     std::string defaultTileset;
@@ -105,6 +109,7 @@ protected:
     std::unordered_map<uint16_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
 protected:
     static std::string text_slashtrainerpng;
+    static std::string text_slashtrainerMonsterpng;
     static std::string text_slash;
     static std::string text_antislash;
     static std::string text_dotpng;
