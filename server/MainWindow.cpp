@@ -1498,7 +1498,15 @@ void MainWindow::on_db_type_currentIndexChanged(int index)
                     settings->setValue("file","database.sqlite");
             break;
             case 2:
-                settings->setValue("type","postgresql");
+                #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+                    settings->setValue("type","postgresql");
+                #else
+                    #ifdef CATCHCHALLENGER_DB_MYSQL
+                        settings->setValue("type","mysql");
+                    #else
+                        settings->setValue("type","mysql");//CATCHCHALLENGER_CLASS_QT
+                    #endif
+                #endif
                 if(!settings->contains("host"))
                     settings->setValue("host","localhost");
                 if(!settings->contains("login"))

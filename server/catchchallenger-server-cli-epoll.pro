@@ -24,7 +24,7 @@ LIBS += -lssl -lcrypto
 # postgresql 9+
 DEFINES += CATCHCHALLENGER_DB_POSTGRESQL
 LIBS    += -lpq
-# mysql 5.5+
+# mysql 5.7+
 #LIBS    += -lmysqlclient
 #DEFINES += CATCHCHALLENGER_DB_MYSQL
 
