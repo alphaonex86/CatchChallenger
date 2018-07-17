@@ -234,7 +234,17 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         if(!settings.contains("pass"))
             settings.setValue("pass","root");
         if(!settings.contains("type"))
-            settings.setValue("type","postgresql");
+        {
+            #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+                settings.setValue("type","postgresql");
+            #else
+                #ifdef CATCHCHALLENGER_DB_MYSQL
+                    settings.setValue("type","mysql");
+                #else
+                    settings.setValue("type","mysql");//CATCHCHALLENGER_CLASS_QT
+                #endif
+            #endif
+        }
         settings.sync();
         EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry=stringtouint32(settings.value("considerDownAfterNumberOfTry"),&ok);
         if(EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry==0 || !ok)
@@ -293,7 +303,17 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             if(!settings.contains("pass"))
                 settings.setValue("pass","root");
             if(!settings.contains("type"))
-                settings.setValue("type","postgresql");
+            {
+                #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+                    settings.setValue("type","postgresql");
+                #else
+                    #ifdef CATCHCHALLENGER_DB_MYSQL
+                        settings.setValue("type","mysql");
+                    #else
+                        settings.setValue("type","mysql");//CATCHCHALLENGER_CLASS_QT
+                    #endif
+                #endif
+            }
             if(!settings.contains("charactersGroup"))
                 settings.setValue("charactersGroup","");
             if(!settings.contains("comment"))
