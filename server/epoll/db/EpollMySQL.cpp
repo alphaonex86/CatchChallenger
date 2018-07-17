@@ -17,6 +17,7 @@
 #include <chrono>
 #include <ctime>
 #include <thread>
+#include <mysql/mysqld_error.h>
 
 char EpollMySQL::emptyString[]={'\0'};
 CatchChallenger::DatabaseBase::CallBack EpollMySQL::emptyCallback;
@@ -86,7 +87,7 @@ bool EpollMySQL::syncConnectInternal(bool infinityTry)
     if(!mysql_real_connect(conn,strCohost,strCouser,strCopass,strCodatabase,3306,NULL,0))
     {
         std::string lastErrorMessage=errorMessage();
-        if(mysql_errno()==ER_ACCESS_DENIED_ERROR || mysql_sqlstate()==28000)
+        if(mysql_errno(conn)==ER_ACCESS_DENIED_ERROR || strcmp(mysql_sqlstate(conn),"28000")==0)
             return false;
         std::cerr << "mysql connexion not OK: " << lastErrorMessage << ", retrying..." << std::endl;
 

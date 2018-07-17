@@ -83,9 +83,22 @@
 #endif
 
 #if defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
-#define CATCHCHALLENGERDEFAULTDBTYPE "postgresql"
+    #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+        #define CATCHCHALLENGERDEFAULTDBTYPE "postgresql"
+    #else
+        #ifdef CATCHCHALLENGER_DB_MYSQL
+            #define CATCHCHALLENGERDEFAULTDBTYPE "mysql"
+        #else
+            //CATCHCHALLENGER_CLASS_QT
+            #ifdef CATCHCHALLENGER_CLIENT
+                #define CATCHCHALLENGERDEFAULTDBTYPE "sqlite"
+            #else
+                #define CATCHCHALLENGERDEFAULTDBTYPE "mysql"
+            #endif
+        #endif
+    #endif
 #else
-#define CATCHCHALLENGERDEFAULTDBTYPE "sqlite"
+    #define CATCHCHALLENGERDEFAULTDBTYPE "sqlite"
 #endif
 
 #endif // VARIABLESERVER_H

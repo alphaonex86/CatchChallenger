@@ -349,7 +349,17 @@ void EpollServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
         if(!settings.contains("pass"))
             settings.setValue("pass","root");
         if(!settings.contains("type"))
-            settings.setValue("type","postgresql");
+        {
+            #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+                settings.setValue("type","postgresql");
+            #else
+                #ifdef CATCHCHALLENGER_DB_MYSQL
+                    settings.setValue("type","mysql");
+                #else
+                    settings.setValue("type","mysql");//CATCHCHALLENGER_CLASS_QT
+                #endif
+            #endif
+        }
         if(!settings.contains("comment"))
             settings.setValue("comment","to do maxAccountId");
         settings.sync();
@@ -419,7 +429,17 @@ void EpollServerLoginMaster::loadDBLoginSettings(TinyXMLSettings &settings)
         if(!settings.contains("pass"))
             settings.setValue("pass","root");
         if(!settings.contains("type"))
-            settings.setValue("type","postgresql");
+        {
+            #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+                settings.setValue("type","postgresql");
+            #else
+                #ifdef CATCHCHALLENGER_DB_MYSQL
+                    settings.setValue("type","mysql");
+                #else
+                    settings.setValue("type","mysql");//CATCHCHALLENGER_CLASS_QT
+                #endif
+            #endif
+        }
         if(!settings.contains("comment"))
             settings.setValue("comment","to do maxAccountId");
         settings.sync();
@@ -494,7 +514,17 @@ std::vector<std::string> EpollServerLoginMaster::loadCharactersGroup(TinyXMLSett
             if(!settings.contains("pass"))
                 settings.setValue("pass","root");
             if(!settings.contains("type"))
-                settings.setValue("type","postgresql");
+            {
+                #ifdef CATCHCHALLENGER_DB_POSTGRESQL
+                    settings.setValue("type","postgresql");
+                #else
+                    #ifdef CATCHCHALLENGER_DB_MYSQL
+                        settings.setValue("type","mysql");
+                    #else
+                        settings.setValue("type","mysql");//CATCHCHALLENGER_CLASS_QT
+                    #endif
+                #endif
+            }
             if(!settings.contains("charactersGroup"))
                 settings.setValue("charactersGroup","");
             if(!settings.contains("comment"))

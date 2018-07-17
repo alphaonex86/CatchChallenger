@@ -3,6 +3,7 @@
 #include "base/Client.h"
 #include "../general/base/FacilityLibGeneral.h"
 #include "../general/base/Version.h"
+#include "../general/base/ProtocolVersion.h"
 
 #include <regex>
 
@@ -35,6 +36,18 @@ void NormalServerGlobal::displayInfo()
         #endif
     #endif
     std::cout << "CatchChallenger version: " << CATCHCHALLENGER_VERSION << std::endl;
+    #ifndef CATCHCHALLENGER_CLASS_ALLINONESERVER
+    unsigned char masterheader[]=PROTOCOL_HEADER_MASTERSERVER;
+    #endif
+    unsigned char gameheader[]=PROTOCOL_HEADER_GAMESERVER;
+    unsigned char loginheader[]=PROTOCOL_HEADER_LOGIN;
+    std::cout << "CatchChallenger protocol version: "
+             #ifndef CATCHCHALLENGER_CLASS_ALLINONESERVER
+              << binarytoHexa(masterheader,sizeof(masterheader)) << " "
+             #endif
+              << binarytoHexa(gameheader,sizeof(gameheader)) << " "
+              << binarytoHexa(loginheader,sizeof(loginheader))
+              << std::endl;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     std::cout << "Qt version: " << qVersion() << " (" << QT_VERSION << ")" << std::endl;
     #endif
