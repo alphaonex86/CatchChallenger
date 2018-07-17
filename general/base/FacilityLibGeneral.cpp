@@ -161,8 +161,7 @@ std::vector<std::string> FacilityLibGeneral::skinIdList(const std::string& skinP
         if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Type::Dir)
             if(FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/back.png") &&
                     FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/front.png") &&
-                    FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/trainer.png") &&
-                    FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/monster.png"))
+                    FacilityLibGeneral::isFile(fileInfo.absoluteFilePath+"/trainer.png"))
                 skinFolderList.push_back(fileInfo.name);
     }
     std::sort(skinFolderList.begin(), skinFolderList.end());

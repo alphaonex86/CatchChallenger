@@ -41,13 +41,6 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     resetAll();
 
     scaleSize=1;
-
-    followingMonsterInformation.monsterId = 100;
-    followingMonsterInformation.pseudo = "default";
-    followingMonsterInformation.simplifiedId = 1;
-    followingMonsterInformation.skinId = 4;
-    followingMonsterInformation.speed = 1000;
-    followingMonsterInformation.type = CatchChallenger::Player_type::Player_type_normal;
 }
 
 MapControllerMP::~MapControllerMP()
@@ -252,7 +245,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_top:
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(1);
+                cell.tile=playerTileset->tileAt(CatchChallenger::DrawTiledPosition::Stop_At_Bottom);
                 playerMapObject->setCell(cell);
             }
             break;
@@ -260,7 +253,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_right:
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(4);
+                cell.tile=playerTileset->tileAt(CatchChallenger::DrawTiledPosition::Stop_At_Right);
                 playerMapObject->setCell(cell);
             }
             break;
@@ -268,7 +261,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_bottom:
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(7);
+                cell.tile=playerTileset->tileAt(CatchChallenger::DrawTiledPosition::Stop_At_Bottom);
                 playerMapObject->setCell(cell);
             }
             break;
@@ -276,7 +269,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_left:
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(10);
+                cell.tile=playerTileset->tileAt(CatchChallenger::DrawTiledPosition::Stop_At_Left);
                 playerMapObject->setCell(cell);
             }
             break;

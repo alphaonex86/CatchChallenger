@@ -48,8 +48,6 @@ public slots:
     virtual void reinject_signals();
     virtual void reinject_signals_on_valid_map();
 private:
-    //following monster
-    CatchChallenger::Player_public_informations followingMonsterInformation;
     //the other player
     struct OtherPlayer
     {

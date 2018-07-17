@@ -78,6 +78,9 @@ protected:
     bool blocked;
     bool wasPathFindingUsed;
 
+    //monster default info
+    CatchChallenger::Player_public_informations followingMonsterInformation;
+
     //display
     bool centerOnPlayer;
 

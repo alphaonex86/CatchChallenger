@@ -92,6 +92,13 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
     playerTilesetCache[lastTileset]=playerTileset;
 
+    followingMonsterInformation.monsterId = 100;
+    followingMonsterInformation.pseudo = "following Monster";
+    followingMonsterInformation.simplifiedId = 1;
+    followingMonsterInformation.skinId = 5;
+    followingMonsterInformation.speed = 250;
+    followingMonsterInformation.type = CatchChallenger::Player_type::Player_type_normal;
+
     lastAction.restart();
 }
 
@@ -735,7 +742,8 @@ void MapVisualiserPlayer::finalPlayerStep()
         }
     }
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-    playerMapObject->setPosition(QPoint(x,y+1));followingMonsterMapObject->setPosition(QPoint(x+2,y+1));
+    playerMapObject->setPosition(QPoint(x,y+1));
+    followingMonsterMapObject->setPosition(QPoint(x + 2, y + 1));
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
     if(centerOnPlayer)
         centerOn(MapObjectItem::objectLink.at(playerMapObject));

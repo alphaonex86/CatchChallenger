@@ -73,6 +73,23 @@ enum ActionAllow : uint8_t
     ActionAllow_Clan=0x01
 };
 
+/*According 12 pictures in 1, png: 48x96, tiled: 16x24*/
+enum DrawTiledPosition
+{
+    LeftFoot_Top     = 0,
+    Stop_At_Top      = 1,
+    RightFoot_Top    = 2,
+    LeftFoot_Right   = 3,
+    Stop_At_Right    = 4,
+    RightFoot_Right  = 5,
+    LeftFoot_Bottom  = 6,
+    Stop_At_Bottom   = 7,
+    RightFoot_Bottom = 8,
+    LeftFoot_Left    = 9,
+    Stop_At_Left     = 10,
+    RightFoot_Left   = 11,
+};
+
 enum Direction : uint8_t
 {
     Direction_look_at_top = 1,
