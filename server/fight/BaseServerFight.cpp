@@ -33,7 +33,7 @@ void BaseServer::load_sql_monsters_max_id()
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
-        #if defined(CATCHCHALLENGER_DB_MYSQL) && (not defined(EPOLLCATCHCHALLENGERSERVER))
+        #if defined(CATCHCHALLENGER_DB_MYSQL)
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;";
         break;
@@ -43,7 +43,7 @@ void BaseServer::load_sql_monsters_max_id()
             queryText="SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;";
         break;
         #endif
-        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id FROM monster ORDER BY id DESC LIMIT 1;";
         break;
