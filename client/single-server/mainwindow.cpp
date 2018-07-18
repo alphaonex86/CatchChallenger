@@ -28,12 +28,12 @@
 #endif
 
 #define SERVER_DNS_OR_IP "catchchallenger.first-world.info"
-#define SERVER_PORT 42489
+#define SERVER_PORT "42489"
 
 #define SERVER_NAME tr("Official server")
 
 //#define SERVER_DNS_OR_IP "localhost"
-//#define SERVER_PORT 39034
+//#define SERVER_PORT "39034"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -60,27 +60,35 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->news->setVisible(false);
     server_name=SERVER_NAME;
     server_dns_or_ip=SERVER_DNS_OR_IP;
-    server_port=SERVER_PORT;
+    server_port=QString(SERVER_PORT).toUInt();
     QString settingsServerPath=QCoreApplication::applicationDirPath()+QStringLiteral("/server.conf");
     if(QFile(settingsServerPath).exists())
     {
         QSettings settingsServer(settingsServerPath,QSettings::IniFormat);
-        if(settingsServer.contains(QStringLiteral("server_dns_or_ip")) && settingsServer.contains(QStringLiteral("server_port")) && settingsServer.contains(QStringLiteral("proxy_port")))
+        settingsServer.setValue("sdfsdf","sdfsd");
+        if(settingsServer.contains(QStringLiteral("server_dns_or_ip")) && settingsServer.contains(QStringLiteral("server_port")))
         {
-            bool ok,ok2;
+            bool ok;
             uint16_t server_port_temp=settingsServer.value(QStringLiteral("server_port")).toString().toUShort(&ok);
-            uint16_t proxy_port_temp=settingsServer.value(QStringLiteral("proxy_port")).toString().toUShort(&ok2);
-            if(settingsServer.value(QStringLiteral("server_dns_or_ip")).toString().contains(QRegularExpression(QStringLiteral("^([a-zA-Z0-9]{8}\\.onion|.*\\.i2p)$"))) && ok && ok2 && server_port_temp>0 && proxy_port_temp>0)
+            if(settingsServer.value(QStringLiteral("server_dns_or_ip")).toString().contains(QRegularExpression(QStringLiteral("^([a-zA-Z0-9]{8}\\.onion|.*\\.i2p)$"))) && ok && server_port_temp>0)
             {
+                bool ok2=true;
                 server_name=tr("Hidden server");
                 if(settingsServer.contains(QStringLiteral("server_name")))
                     server_name=settingsServer.value(QStringLiteral("server_name")).toString();
                 server_dns_or_ip=settingsServer.value(QStringLiteral("server_dns_or_ip")).toString();
                 proxy_dns_or_ip=QStringLiteral("localhost");
                 server_port=server_port_temp;
-                proxy_port=proxy_port_temp;
-                if(settingsServer.contains(QStringLiteral("proxy_dns_or_ip")))
-                    proxy_dns_or_ip=settingsServer.value(QStringLiteral("proxy_dns_or_ip")).toString();
+                if(settingsServer.contains(QStringLiteral("proxy_port")))
+                {
+                    const uint16_t t=settingsServer.value(QStringLiteral("proxy_port")).toString().toUShort(&ok2);
+                    if(ok2 && t>0)
+                    {
+                        proxy_port=t;
+                        if(settingsServer.contains(QStringLiteral("proxy_dns_or_ip")))
+                            proxy_dns_or_ip=settingsServer.value(QStringLiteral("proxy_dns_or_ip")).toString();
+                    }
+                }
                 ui->label_login_register->setStyleSheet(ui->label_login_register->styleSheet()+QStringLiteral("text-decoration:line-through;"));
                 ui->label_login_website->setStyleSheet(ui->label_login_website->styleSheet()+QStringLiteral("text-decoration:line-through;"));
                 ui->label_login_register->setText(tr("Register"));
