@@ -40,6 +40,8 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
 
     resetAll();
 
+    followingMonster_informations.public_informations.simplifiedId = 0;
+    std::cerr << followingMonsterTileset->name().toStdString() << std::endl;
     scaleSize=1;
 }
 
@@ -75,7 +77,9 @@ void MapControllerMP::resetAll()
     if(!playerTileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
         qDebug() << "Unable the load the default player tileset";
 
-    //if (!followingMonsterTileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/monster.png")),QStringLiteral(":/images/player_default/monster.png")))
+    followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + std::string("followingmonster");
+    const std::string& imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
+    if (!followingMonsterTileset->loadFromImage(imagePath))
     {
         qDebug() << "Unable the load the default following monster tileset";
     }
@@ -282,7 +286,8 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
                       static_cast<uint8_t>(x),static_cast<uint8_t>(y));
         setSpeed(player.speed);
 
-        setMonster();//following monster,
+        //current following monster,
+        setMonster();
     }
     //other player
     else
@@ -522,71 +527,43 @@ bool MapControllerMP::setMonster()
         {
             followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + skinFolderList.at(followingMonsterInformation.skinId);
             const std::string &imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
-            QImage image(QString::fromStdString(imagePath));
-            if (!image.isNull()) {
-                followingMonsterTileset->loadFromImage(image, QString::fromStdString(imagePath));
-            } else {
-                qDebug() << "Unable to load the player tilset: " + QString::fromStdString(imagePath);
+            if (!followingMonsterTileset->loadFromImage(imagePath)) {
+                qDebug() << "Unable to load the following monster tilset: " + QString::fromStdString(imagePath);
             }
         }
         else {
-            qDebug() << "The skin id: " + QString::number(followingMonsterInformation.skinId) + ", into a list of: " + QString::number(skinFolderList.size()) + " item(s) info MapControllerMP::insert_player()";
+            qDebug() << "The skin id: " + QString::number(followingMonsterInformation.skinId) + ", into a list of: " + QString::number(skinFolderList.size()) + " item(s) info MapControllerMP::setMonster()";
         }
 
         //the direction
-        this->direction = direction;
-        switch(direction)
-        {
-            case CatchChallenger::Direction_move_at_top:
-            case CatchChallenger::Direction_move_at_right:
-            case CatchChallenger::Direction_move_at_bottom:
-            case CatchChallenger::Direction_move_at_left:
-                return true;
-            default:
-                break;
-        }
         switch(direction)
         {
             case CatchChallenger::Direction_look_at_top:
             case CatchChallenger::Direction_move_at_top:
-            {
-                Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=followingMonsterTileset->tileAt(1);
-                playerMapObject->setCell(cell);
-            }
-            break;
+                updateFollowingMonster(0);
+                break;
             case CatchChallenger::Direction_look_at_right:
             case CatchChallenger::Direction_move_at_right:
-            {
-                Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=followingMonsterTileset->tileAt(4);
-                playerMapObject->setCell(cell);
-            }
-            break;
+                updateFollowingMonster(5);
+                break;
             case CatchChallenger::Direction_look_at_bottom:
             case CatchChallenger::Direction_move_at_bottom:
-            {
-                Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=followingMonsterTileset->tileAt(7);
-                playerMapObject->setCell(cell);
-            }
-            break;
+                updateFollowingMonster(4);
+                break;
             case CatchChallenger::Direction_look_at_left:
             case CatchChallenger::Direction_move_at_left:
-            {
-                Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=followingMonsterTileset->tileAt(10);
-                playerMapObject->setCell(cell);
-            }
-            break;
+                updateFollowingMonster(1);
+                break;
             default:
-                return true;
+                return false;
         }
 
         //loadPlayerMap(datapackMapPathSpec + DatapackClientLoader::datapackLoader.maps.at(mapId),
         //              static_cast<uint8_t>(x),static_cast<uint8_t>(y));
-        setSpeed(followingMonsterInformation.speed);
+        //setSpeed(followingMonsterInformation.speed);
     }
+
+    return true;
 }
 
 //call after enter on new map
@@ -722,7 +699,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
     QStringList moveString;
-    int index_temp=0;
+    unsigned int index_temp=0;
     while(index_temp<movement.size())
     {
         std::pair<uint8_t, CatchChallenger::Direction> move=movement.at(index_temp);

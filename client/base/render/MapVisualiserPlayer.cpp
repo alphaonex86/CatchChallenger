@@ -15,7 +15,7 @@
 #include <iostream>
 
 std::string MapVisualiserPlayer::text_slashtrainerpng="/trainer.png";
-std::string MapVisualiserPlayer::text_slashtrainerMonsterpng="/monster.png";
+std::string MapVisualiserPlayer::text_slashtrainerMonsterpng="/following.png";
 std::string MapVisualiserPlayer::text_slash="/";
 std::string MapVisualiserPlayer::text_antislash="\\";
 std::string MapVisualiserPlayer::text_dotpng=".png";
@@ -84,18 +84,21 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     haveNextCurrentObject=false;
 
     defaultTileset="trainer";
+    defaultMonsterTileset = "following";
     playerMapObject = new Tiled::MapObject();
     followingMonsterMapObject = new Tiled::MapObject();
     grassCurrentObject->setName("playerMapObject");
 
     lastTileset=defaultTileset;
     playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
+    followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
     playerTilesetCache[lastTileset]=playerTileset;
+    playerTilesetCache[defaultMonsterTileset]=followingMonsterTileset;
 
     followingMonsterInformation.monsterId = 100;
-    followingMonsterInformation.pseudo = "following Monster";
+    followingMonsterInformation.pseudo = "followingmonster";
     followingMonsterInformation.simplifiedId = 1;
-    followingMonsterInformation.skinId = 5;
+    followingMonsterInformation.skinId = 1;
     followingMonsterInformation.speed = 250;
     followingMonsterInformation.type = CatchChallenger::Player_type::Player_type_normal;
 

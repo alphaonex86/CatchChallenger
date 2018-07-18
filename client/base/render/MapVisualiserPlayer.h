@@ -68,6 +68,7 @@ protected:
     std::unordered_map<std::string,Tiled::Tileset *> playerTilesetCache;
     std::string lastTileset;
     std::string defaultTileset;
+    std::string defaultMonsterTileset;
     int moveStep;
     CatchChallenger::Direction direction;
     uint8_t x,y;
