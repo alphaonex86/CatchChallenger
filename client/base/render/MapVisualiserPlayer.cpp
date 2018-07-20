@@ -1321,6 +1321,7 @@ void MapVisualiserPlayer::resetAll()
     }
     lastTileset=defaultTileset;
     playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
+    followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
     playerTilesetCache[lastTileset]=playerTileset;
 }
 

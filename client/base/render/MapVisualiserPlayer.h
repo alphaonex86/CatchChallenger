@@ -60,9 +60,7 @@ protected:
     std::string datapackMapPathSpec;
     //player
     Tiled::MapObject* playerMapObject;
-    Tiled::MapObject* followingMonsterMapObject;
     Tiled::Tileset* playerTileset;
-    Tiled::Tileset* followingMonsterTileset;
     std::string playerSkinPath;
     std::string followingMonsterSkinPath;
     std::unordered_map<std::string,Tiled::Tileset *> playerTilesetCache;
@@ -111,6 +109,8 @@ protected:
     std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests;
     std::unordered_set<uint16_t> *itemOnMap;
     std::unordered_map<uint16_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
+    Tiled::MapObject * followingMonsterMapObject;
+    Tiled::Tileset * followingMonsterTileset;
 protected:
     static std::string text_slashtrainerpng;
     static std::string text_slashtrainerMonsterpng;

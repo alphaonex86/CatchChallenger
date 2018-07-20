@@ -77,9 +77,9 @@ void MapControllerMP::resetAll()
     if(!playerTileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
         qDebug() << "Unable the load the default player tileset";
 
-    followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + std::string("followingmonster");
-    const std::string& imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
-    if (!followingMonsterTileset->loadFromImage(imagePath))
+    //followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + std::string("followingmonster");
+    //const std::string& imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
+    //if (!followingMonsterTileset->loadFromImage(imagePath))
     {
         qDebug() << "Unable the load the default following monster tileset";
     }
@@ -525,6 +525,9 @@ bool MapControllerMP::setMonster()
         //the following monster skin
         if (followingMonsterInformation.skinId < skinFolderList.size())
         {
+            followingMonsterMapObject = new Tiled::MapObject();
+            followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
+
             followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + skinFolderList.at(followingMonsterInformation.skinId);
             const std::string &imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
             if (!followingMonsterTileset->loadFromImage(imagePath)) {
