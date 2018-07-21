@@ -268,7 +268,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                         {
                             const std::pair<uint8_t,uint8_t> &dirtPoint=blockObject->block.at(index);
                             const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &positionsList=DatapackClientLoader::datapackLoader.plantOnMap.at(tempMapFile);
-                            std::vector<uint8_t,uint8_t> pos;
+                            std::pair<uint8_t,uint8_t> pos;
                             pos.first=dirtPoint.first;
                             pos.second=dirtPoint.second;
                             if(positionsList.find(pos)!=positionsList.cend())
@@ -289,7 +289,9 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         //const CatchChallenger::Plant::Rewards &rewards=plant.rewards;
                                         QListWidgetItem * newItem=new QListWidgetItem();
 
-                                        newItem->setText(QString("Plant to collect %1 at %2,%3").arg(itemExtra.name).arg(dirtPoint.first).arg(dirtPoint.second));
+                                        newItem->setText(QString("Plant to collect %1 at %2,%3")
+                                                         .arg(QString::fromStdString(itemExtra.name))
+                                                         .arg(dirtPoint.first).arg(dirtPoint.second));
                                         newItem->setIcon(QIcon(itemExtra.image));
 
                                         ActionsBotInterface::GlobalTarget globalTarget;
