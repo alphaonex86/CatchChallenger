@@ -1514,12 +1514,12 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const std::string &da
             serverListIndex=0;
             while(serverListIndex<serverListSize)
             {
-                const ServerFromPoolForDisplay * const tempPoint=addLogicalServer(serverTempList.at(serverListIndex),language);
+                const ServerFromPoolForDisplayTemp &server=serverTempList.at(serverListIndex);
+                ServerFromPoolForDisplay * const tempPoint=addLogicalServer(server,language);
                 if(tempPoint!=NULL)
                 {
-                    ServerFromPoolForDisplay tempVar=*tempPoint;
-                    tempVar.serverOrdenedListIndex=static_cast<uint8_t>(serverOrdenedList.size());
-                    serverOrdenedList.push_back(tempVar);
+                    tempPoint->serverOrdenedListIndex=static_cast<uint8_t>(serverOrdenedList.size());
+                    serverOrdenedList.push_back(*tempPoint);
                 }
                 serverListIndex++;
             }

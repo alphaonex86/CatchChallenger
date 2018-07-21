@@ -6,6 +6,7 @@
 #include "../../../general/base/CommonSettingsCommon.h"
 #include "../FacilityLibClient.h"
 #include "NewGame.h"
+#include <iostream>
 
 using namespace CatchChallenger;
 
@@ -335,6 +336,8 @@ bool ServerFromPoolForDisplay::operator<(const ServerFromPoolForDisplay &serverF
 
 void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView)
 {
+    if(client->getServerOrdenedList().empty())
+        std::cerr << "BaseWindow::addToServerList(): client->serverOrdenedList.empty()" << std::endl;
     item->setText(0,QString::fromStdString(logicialGroup.name));
     {
         //to order the group
@@ -489,7 +492,11 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
                 itemServer->setData(99,99,server.serverOrdenedListIndex);
             else
             {
-                error("BaseWindow::addToServerList(): server.serverOrdenedListIndex>=serverOrdenedList.size()), error");
+                error("BaseWindow::addToServerList(): server.serverOrdenedListIndex>=serverOrdenedList.size(), "+
+                      std::to_string(server.serverOrdenedListIndex)+
+                      ">="+
+                      std::to_string(serverOrdenedList.size())+
+                      ", error");
                 return;
             }
             index++;
