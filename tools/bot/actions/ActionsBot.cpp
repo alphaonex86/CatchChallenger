@@ -1,5 +1,7 @@
 #include "ActionsAction.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
+#include "../../../general/base/tinyXML2/customtinyxml2.h"
+#include <iostream>
 
 void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
 {
@@ -526,8 +528,8 @@ void ActionsAction::loadBotFile(const std::string &mapfile,const std::string &fi
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
-        const auto loadOkay = domDocument->LoadFile(CATCHCHALLENGER_XMLSTDSTRING_TONATIVESTRING(file));
-        if(!CATCHCHALLENGER_XMLDOCUMENTRETURNISLOADED(loadOkay))
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
             return;
@@ -539,7 +541,7 @@ void ActionsAction::loadBotFile(const std::string &mapfile,const std::string &fi
     const tinyxml2::XMLElement * root = domDocument->RootElement();
     if(root==NULL)
         return;
-    if(!CATCHCHALLENGER_XMLNATIVETYPECOMPAREISSAME(root->Name(),"bots"))
+    if(strcmp(root->Name(),"bots")!=0)
     {
         std::cerr << "\"bots\" root balise not found for the xml file" << std::endl;
         return;
@@ -549,27 +551,23 @@ void ActionsAction::loadBotFile(const std::string &mapfile,const std::string &fi
     while(child!=NULL)
     {
         if(child->Attribute("id")==NULL)
-            std::cerr << "Has not attribute \"id\": child->Name(): " << child->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
-        else if(!CATCHCHALLENGER_XMLELENTISXMLELEMENT(child))
-            std::cerr << "Is not an element: child->Name(): " << child->Name() << ", name: " << child->Attribute(std::string("name")) << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
+            std::cerr << "Has not attribute \"id\": child->Name(): " << child->Name() << std::endl;
         else
         {
             uint32_t id=stringtouint32(child->Attribute("id"),&ok);
             if(ok)
             {
                 if(botIdLoaded.find(id)!=botIdLoaded.cend())
-                    std::cerr << "Bot " << id << " into file " << file << " have same id as another bot: bot->Name(): " << child->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
+                    std::cerr << "Bot " << id << " into file " << file << " have same id as another bot: bot->Name(): " << child->Name() << std::endl;
                 botIdLoaded.insert(id);
                 botFiles[file][id];
                 const tinyxml2::XMLElement * step = child->FirstChildElement("step");
                 while(step!=NULL)
                 {
                     if(step->Attribute("id")==NULL)
-                        std::cerr << "Has not attribute \"type\": bot->Name(): " << step->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
+                        std::cerr << "Has not attribute \"type\": bot->Name(): " << step->Name() << std::endl;
                     else if(step->Attribute("type")==NULL)
-                        std::cerr << "Has not attribute \"type\": bot->Name(): " << step->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
-                    else if(!CATCHCHALLENGER_XMLELENTISXMLELEMENT(step))
-                        std::cerr << "Is not an element: bot->Name(): " << step->Name() << ", type: " << step->Attribute(std::string("type")) << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(step) << ")" << std::endl;
+                        std::cerr << "Has not attribute \"type\": bot->Name(): " << step->Name() << std::endl;
                     else
                     {
                         uint32_t stepId=stringtouint32(step->Attribute("id"),&ok);
@@ -582,7 +580,7 @@ void ActionsAction::loadBotFile(const std::string &mapfile,const std::string &fi
                     botFiles[file].erase(id);
             }
             else
-                std::cerr << "Attribute \"id\" is not a number: bot->Name(): " << child->Name() << " (at line: " << CATCHCHALLENGER_XMLELENTATLINE(child) << ")" << std::endl;
+                std::cerr << "Attribute \"id\" is not a number: bot->Name(): " << child->Name() << std::endl;
         }
         child = child->NextSiblingElement("bot");
     }

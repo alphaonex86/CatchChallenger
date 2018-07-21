@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <QMessageBox>
+#include <iostream>
 
 void BotTargetList::updatePlayerInformation()
 {
@@ -150,13 +151,13 @@ void BotTargetList::updatePlayerInformation()
             const uint32_t &itemId=n.first;
             const uint32_t &quantity=n.second;
             QListWidgetItem *item=new QListWidgetItem();
-            if(DatapackClientLoader::datapackLoader.itemsExtra.contains(itemId))
+            if(DatapackClientLoader::datapackLoader.itemsExtra.find(itemId)!=DatapackClientLoader::datapackLoader.itemsExtra.cend())
             {
-                item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).image);
+                item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.at(itemId).image);
                 if(quantity>1)
                     item->setText(QString::number(quantity));
-                item->setText(item->text()+" "+DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name);
-                item->setToolTip(DatapackClientLoader::datapackLoader.itemsExtra.value(itemId).name);
+                item->setText(item->text()+" "+QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra.at(itemId).name));
+                item->setToolTip(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra.at(itemId).name));
             }
             else
             {
@@ -202,11 +203,11 @@ void BotTargetList::updateFightStats()
                 CatchChallenger::Monster::Stat stat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster),monster.level);
 
                 QListWidgetItem *item=new QListWidgetItem();
-                item->setToolTip(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).description);
-                if(!DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).thumb.isNull())
-                    item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).thumb);
+                item->setToolTip(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(monster.monster).description));
+                if(!DatapackClientLoader::datapackLoader.monsterExtra.at(monster.monster).thumb.isNull())
+                    item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.at(monster.monster).thumb);
                 else
-                    item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).front);
+                    item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.at(monster.monster).front);
 
                 QString lastSkill;
                 QHash<uint32_t,uint8_t> skillToDisplay;
@@ -257,7 +258,7 @@ void BotTargetList::updateFightStats()
                 }
                 const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
                 item->setText(tr("%1, level: %2\nHP: %3/%4, SP: %5, XP: %6/%7\n%8")
-                        .arg(DatapackClientLoader::datapackLoader.monsterExtra.value(monster.monster).name)
+                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(monster.monster).name))
                         .arg(monster.level)
                         .arg(monster.hp)
                         .arg(stat.hp)
@@ -293,8 +294,8 @@ void BotTargetList::updateFightStats()
             ui->fightOtherHp->setMaximum(wildMonsterStat.hp);
             ui->fightOtherHp->setValue(othermonster->hp);
             ui->fightOtherHp->setFormat(QString("%1/%2").arg(othermonster->hp).arg(wildMonsterStat.hp));
-            const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.value(othermonster->monster);
-            ui->monsterFightName->setText(QString("%1 level %2").arg(monsterExtra.name).arg(othermonster->level));
+            const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.at(othermonster->monster);
+            ui->monsterFightName->setText(QString("%1 level %2").arg(QString::fromStdString(monsterExtra.name)).arg(othermonster->level));
             ui->monsterFightImage->setPixmap(monsterExtra.front);
         }
     }

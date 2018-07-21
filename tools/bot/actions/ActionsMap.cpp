@@ -8,6 +8,7 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <iostream>
 
 bool ActionsAction::preload_the_map()
 {
