@@ -62,7 +62,7 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
             break;
             case ActionsBotInterface::GlobalTarget::Dirt:
             {
-                const DatapackClientLoader::PlantIndexContent &plantOrDirt=DatapackClientLoader::datapackLoader.plantIndexOfOnMap.value(target.extra);
+                const DatapackClientLoader::PlantIndexContent &plantOrDirt=DatapackClientLoader::datapackLoader.plantIndexOfOnMap.at(target.extra);
                 point.first=plantOrDirt.x;
                 point.second=plantOrDirt.y;
                 return point;
@@ -70,7 +70,7 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
             break;
             case ActionsBotInterface::GlobalTarget::Plant:
             {
-                const DatapackClientLoader::PlantIndexContent &plantOrDirt=DatapackClientLoader::datapackLoader.plantIndexOfOnMap.value(target.extra);
+                const DatapackClientLoader::PlantIndexContent &plantOrDirt=DatapackClientLoader::datapackLoader.plantIndexOfOnMap.at(target.extra);
                 point.first=plantOrDirt.x;
                 point.second=plantOrDirt.y;
                 return point;

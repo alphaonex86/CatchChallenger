@@ -5,6 +5,7 @@
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../client/fight/interface/ClientFightEngine.h"
+#include "../../client/base/Api_client_real.h"
 #include <iostream>
 
 ActionsAction *ActionsAction::actionsAction=NULL;
@@ -149,9 +150,9 @@ void ActionsAction::forcedEvent(CatchChallenger::Api_protocol *api,const uint8_t
     botplayer.events[event]=event_value;
 }
 
-void ActionsAction::newRandomNumber_slot(const QByteArray &data)
+void ActionsAction::newRandomNumber_slot(const std::string &data)
 {
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(api==NULL)
         return;
     if(!clientList.contains(api))
@@ -167,12 +168,12 @@ void ActionsAction::newRandomNumber_slot(const QByteArray &data)
         std::cerr << "clientList.find(api)==NULL" << std::endl;
         abort();
     }
-    botplayer.fightEngine->newRandomNumber(std::string(data.constData(),data.size()));
+    botplayer.fightEngine->newRandomNumber(data);
 }
 
-void ActionsAction::setEvents_slot(const QList<QPair<uint8_t,uint8_t> > &events)
+void ActionsAction::setEvents_slot(const std::vector<std::pair<uint8_t,uint8_t> > &events)
 {
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(api==NULL)
         return;
     setEvents(api,events);
@@ -180,13 +181,13 @@ void ActionsAction::setEvents_slot(const QList<QPair<uint8_t,uint8_t> > &events)
 
 void ActionsAction::newEvent_slot(const uint8_t &event,const uint8_t &event_value)
 {
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(api==NULL)
         return;
     newEvent(api,event,event_value);
 }
 
-void ActionsAction::setEvents(CatchChallenger::Api_protocol *api,const QList<QPair<uint8_t,uint8_t> > &events)
+void ActionsAction::setEvents(CatchChallenger::Api_protocol *api, const std::vector<std::pair<uint8_t, uint8_t> > &events)
 {
     if(clientList.find(api)==clientList.cend())
     {
@@ -203,7 +204,7 @@ void ActionsAction::setEvents(CatchChallenger::Api_protocol *api,const QList<QPa
     unsigned int index=0;
     while(index<botplayer.events.size())
     {
-        const QPair<uint8_t,uint8_t> event=events.at(index);
+        const std::pair<uint8_t,uint8_t> event=events.at(index);
         if(event.first>=CatchChallenger::CommonDatapack::commonDatapack.events.size())
         {
             std::cerr << "ActionsAction::setEvents() event out of range" << std::endl;
@@ -960,7 +961,7 @@ void ActionsAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,co
     Q_UNUSED(text);
     Q_UNUSED(pseudo);
     Q_UNUSED(type);
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(api==NULL)
         return;
 
@@ -1003,7 +1004,7 @@ void ActionsAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,co
 
 void ActionsAction::have_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
 {
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     have_inventory(api,items,warehouse_items);
 }
 
@@ -1019,15 +1020,15 @@ void ActionsAction::have_inventory(CatchChallenger::Api_protocol *api,const std:
 
 void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api, const uint32_t &item, const uint32_t &quantity)
 {
-    QList<QPair<uint16_t,uint32_t> > items;
-    items << QPair<uint16_t,uint32_t>(item,quantity);
+    std::vector<std::pair<uint16_t,uint32_t> > items;
+    items.push_back(std::pair<uint16_t,uint32_t>(item,quantity));
     add_to_inventory(api,items);
 }
 
-void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const QList<QPair<uint16_t,uint32_t> > &items)
+void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const std::vector<std::pair<uint16_t,uint32_t> > &items)
 {
-    int index=0;
-    QHash<uint16_t,uint32_t> tempHash;
+    unsigned int index=0;
+    std::unordered_map<uint16_t,uint32_t> tempHash;
     while(index<items.size())
     {
         tempHash[items.at(index).first]=items.at(index).second;
@@ -1036,13 +1037,13 @@ void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const QL
     add_to_inventory(api,tempHash);
 }
 
-void ActionsAction::add_to_inventory_slot(const QHash<uint16_t,uint32_t> &items)
+void ActionsAction::add_to_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items)
 {
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     add_to_inventory(api,items);
 }
 
-void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const QHash<uint16_t,uint32_t> &items)
+void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const std::unordered_map<uint16_t,uint32_t> &items)
 {
     if(api==NULL)
         return;
@@ -1051,53 +1052,47 @@ void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol *api,const QH
     if(items.empty())
         return;
 
-    QHashIterator<uint16_t,uint32_t> i(items);
-    while (i.hasNext()) {
-        i.next();
-
-        const uint16_t &item=i.key();
+    for( const auto& n : items ) {
+        const uint16_t &item=n.first;
         if(player.encyclopedia_item!=NULL)
             player.encyclopedia_item[item/8]|=(1<<(7-item%8));
         else
             std::cerr << "encyclopedia_item is null, unable to set" << std::endl;
         //add really to the list
         if(player.items.find(item)!=player.items.cend())
-            player.items[item]+=i.value();
+            player.items[item]+=n.second;
         else
-            player.items[item]=i.value();
+            player.items[item]=n.second;
     }
 }
 
 void ActionsAction::remove_to_inventory(CatchChallenger::Api_protocol *api,const uint32_t &itemId,const uint32_t &quantity)
 {
-    QHash<uint16_t,uint32_t> items;
+    std::unordered_map<uint16_t,uint32_t> items;
     items[itemId]=quantity;
     remove_to_inventory(api,items);
 }
 
-void ActionsAction::remove_to_inventory_slot(const QHash<uint16_t,uint32_t> &items)
+void ActionsAction::remove_to_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items)
 {
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     remove_to_inventory(api,items);
 }
 
-void ActionsAction::remove_to_inventory(CatchChallenger::Api_protocol *api,const QHash<uint16_t,uint32_t> &items)
+void ActionsAction::remove_to_inventory(CatchChallenger::Api_protocol *api,const std::unordered_map<uint16_t,uint32_t> &items)
 {
     if(api==NULL)
         return;
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
 
-    QHashIterator<uint16_t,uint32_t> i(items);
-    while (i.hasNext()) {
-        i.next();
-
+    for( const auto& n : items ) {
         //add really to the list
-        if(player.items.find(i.key())!=player.items.cend())
+        if(player.items.find(n.first)!=player.items.cend())
         {
-            if(player.items.at(i.key())<=i.value())
-                player.items.erase(i.key());
+            if(player.items.at(n.first)<=n.second)
+                player.items.erase(n.first);
             else
-                player.items[i.key()]-=i.value();
+                player.items[n.first]-=n.second;
         }
     }
 }
@@ -1140,7 +1135,7 @@ bool ActionsAction::needBeTeleported(const MapServerMini &map, const COORD_TYPE 
 void ActionsAction::monsterCatch(const bool &success)
 {
     std::cout << "ActionsAction::monsterCatch(" << std::to_string(success) << ")" << std::endl;
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(api==NULL)
         return;
     if(!clientList.contains(api))
@@ -1191,7 +1186,7 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
 {
     Q_UNUSED(direction);
     //std::cout << "ActionsAction::teleportTo()" << std::endl;
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(api==NULL)
         return;
     if(!clientList.contains(api))

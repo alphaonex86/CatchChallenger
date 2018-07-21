@@ -24,7 +24,6 @@
 namespace CatchChallenger {
 class Api_protocol : public ProtocolParsingInputOutput, public MoveOnTheMap, public Api_protocol_Qt
 {
-    Q_OBJECT
 public:
     static bool internalVersionDisplayed;
     explicit Api_protocol(ConnectedSocket *socket,bool tolerantMode=false);

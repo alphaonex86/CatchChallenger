@@ -26,7 +26,7 @@ bool ActionsAction::nextStepQuest(CatchChallenger::Api_protocol *api,const Catch
     while(index<requirements.items.size())
     {
         const CatchChallenger::Quest::Item &item=requirements.items.at(index);
-        QHash<uint16_t,uint32_t> items;
+        std::unordered_map<uint16_t,uint32_t> items;
         items[item.item]=item.quantity;
         remove_to_inventory(api,items);
         index++;

@@ -2,13 +2,14 @@
 #include "../../client/base/interface/DatapackClientLoader.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonSettingsServer.h"
+#include "../../client/base/Api_client_real.h"
 
 #include <QMessageBox>
 #include <QString>
 
 void ActionsAction::seed_planted_slot(const bool &ok)
 {
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     seed_planted(api,ok);
 }
 
@@ -46,7 +47,7 @@ void ActionsAction::seed_planted(CatchChallenger::Api_protocol *api,const bool &
 
 void ActionsAction::plant_collected_slot(const CatchChallenger::Plant_collect &stat)
 {
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     plant_collected(api,stat);
 }
 
