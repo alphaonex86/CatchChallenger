@@ -420,56 +420,61 @@ void MainWindow::on_serverListSelect_clicked()
 
 void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView)
 {
-    item->setText(0,logicialGroup.name);
+    item->setText(0,QString::fromStdString(logicialGroup.name));
     {
         //to order the group
-        QStringList keys=logicialGroup.logicialGroupList.keys();
-        keys.sort();
+        std::vector<std::string> keys;
+        for( const auto& n : logicialGroup.logicialGroupList )
+            keys.push_back(n.first);
+        std::sort(keys.begin(), keys.end());
         //list the group
-        int index=0;
+        unsigned int index=0;
         while(index<keys.size())
         {
             QTreeWidgetItem * const itemGroup=new QTreeWidgetItem(item);
-            addToServerList(logicialGroup.logicialGroupList[keys.value(index)],itemGroup,currentDate,fullView);
+            CatchChallenger::LogicialGroup * logicialGroupSub=logicialGroup.logicialGroupList[keys.at(index)];
+            addToServerList(*logicialGroupSub,itemGroup,currentDate,fullView);
             index++;
         }
     }
     {
         qSort(logicialGroup.servers);
         //list the server
-        int index=0;
+        unsigned int index=0;
         while(index<logicialGroup.servers.size())
         {
             const CatchChallenger::ServerFromPoolForDisplay &server=logicialGroup.servers.at(index);
             QTreeWidgetItem *itemServer=new QTreeWidgetItem(item);
-            QString text;
-            QString groupText;
+            std::string text;
+            std::string groupText;
             if(serverByCharacterGroup.size()>1)
-                groupText=QStringLiteral(" (%1)").arg(serverByCharacterGroup.value(server.charactersGroupIndex).second);
-            QString name=server.name;
-            if(name.isEmpty())
-                name=tr("Default server");
+                groupText=" ("+std::to_string(serverByCharacterGroup.value(server.charactersGroupIndex).second)+")";
+            std::string name=server.name;
+            if(name.empty())
+                name=tr("Default server").toStdString();
             if(fullView)
             {
                 text=name+groupText;
                 if(server.playedTime>0)
                 {
-                    if(!server.description.isEmpty())
-                        text+=" "+tr("%1 played").arg(CatchChallenger::FacilityLibClient::timeToString(server.playedTime));
+                    if(!server.description.empty())
+                        text+=" "+tr("%1 played").arg(QString::fromStdString(
+                                                          CatchChallenger::FacilityLibClient::timeToString(server.playedTime))).toStdString();
                     else
-                        text+="\n"+tr("%1 played").arg(CatchChallenger::FacilityLibClient::timeToString(server.playedTime));
+                        text+="\n"+tr("%1 played").arg(QString::fromStdString(
+                                                           CatchChallenger::FacilityLibClient::timeToString(server.playedTime))).toStdString();
                 }
-                if(!server.description.isEmpty())
+                if(!server.description.empty())
                     text+="\n"+server.description;
             }
             else
             {
-                if(server.description.isEmpty())
+                if(server.description.empty())
                     text=name+groupText;
                 else
                     text=name+groupText+" - "+server.description;
             }
-            itemServer->setText(0,text);
+            itemServer->setText(0,QString::fromStdString(text));
 
             //do the icon here
             if(server.playedTime>5*365*24*3600)
@@ -499,7 +504,7 @@ void MainWindow::datapackIsReady()
         ui->autoCreateCharacter->setEnabled(true);
         ui->groupBox_char->setEnabled(true);
     }
-    DatapackClientLoader::datapackLoader.parseDatapack(QCoreApplication::applicationDirPath()+"/datapack/");
+    DatapackClientLoader::datapackLoader.parseDatapack(QCoreApplication::applicationDirPath().toStdString()+"/datapack/");
 }
 
 void MainWindow::datapackMainSubIsReady()
@@ -508,8 +513,8 @@ void MainWindow::datapackMainSubIsReady()
     {
     }
     DatapackClientLoader::datapackLoader.parseDatapackMainSub(
-                QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode),
-                QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)
+                CommonSettingsServer::commonSettingsServer.mainDatapackCode,
+                CommonSettingsServer::commonSettingsServer.subDatapackCode
                 );
 }
 

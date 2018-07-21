@@ -1,5 +1,6 @@
 #include "ActionsAction.h"
 #include "../../general/base/CommonDatapack.h"
+#include <iostream>
 
 void ActionsAction::showTip(const QString &text)
 {
@@ -24,7 +25,8 @@ void ActionsAction::appendReputationRewards(CatchChallenger::Api_protocol *api,c
     while(index<reputationList.size())
     {
         const CatchChallenger::ReputationRewards &reputationRewards=reputationList.at(index);
-        appendReputationPoint(api,QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId).name),reputationRewards.point);
+        appendReputationPoint(api,CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId).name,
+                reputationRewards.point);
         index++;
     }
     //show_reputation();

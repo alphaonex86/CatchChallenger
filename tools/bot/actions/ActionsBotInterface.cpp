@@ -1,5 +1,6 @@
 #include "ActionsBotInterface.h"
 #include "../../general/base/Version.h"
+#include <iostream>
 
 QHash<CatchChallenger::Api_protocol *,ActionsBotInterface::Player> ActionsBotInterface::clientList;
 QHash<CatchChallenger::Api_protocol *,std::vector<ActionsBotInterface::DelayedMapPlayerChange> > ActionsBotInterface::delayedMessage;
