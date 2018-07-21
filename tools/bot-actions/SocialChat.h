@@ -38,9 +38,9 @@ private slots:
     QString getSkinPath(const QString &skinName,const QString &type);
     void on_note_textChanged();
     //chat
-    void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &player_type);
+    void new_chat_text(const CatchChallenger::Chat_type &chat_type,const std::string &text,const std::string &pseudo,const CatchChallenger::Player_type &player_type);
     void new_chat_text_internal(const CatchChallenger::Chat_type &chat_type, const QString &text, const QString &pseudo, const QString &theotherpseudo, const CatchChallenger::Player_type &player_type);
-    void new_system_text(const CatchChallenger::Chat_type &chat_type,const QString &text);
+    void new_system_text(const CatchChallenger::Chat_type &chat_type, const std::string &text);
     void update_chat();
     void removeNumberForFlood();
     void on_globalChatText_returnPressed();

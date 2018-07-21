@@ -35,15 +35,16 @@ private:
     BotTargetList *botTargetList;
 
     QHash<uint8_t/*character group index*/,QPair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
-    QList<CatchChallenger::ServerFromPoolForDisplay *> serverOrdenedList;
-    QList<QList<CatchChallenger::CharacterEntry> > characterEntryList;
+    std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList;
+    std::vector<std::vector<CatchChallenger::CharacterEntry> > characterEntryList;
 public slots:
     void detectSlowDown(uint32_t queryCount, uint32_t worseTime);
 private slots:
     void lastReplyTime(const quint32 &time);
     void on_connect_clicked();
     void on_characterSelect_clicked();
-    void logged(CatchChallenger::Api_client_real *senderObject,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack);
+    void logged(CatchChallenger::Api_client_real *senderObject, const std::vector<CatchChallenger::ServerFromPoolForDisplay> &serverOrdenedList,
+                const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList, bool haveTheDatapack);
     void statusError(QString error);
     void display_numberOfBotConnected(quint16 numberOfBotConnected);
     void display_numberOfSelectedCharacter(quint16 numberOfSelectedCharacter);

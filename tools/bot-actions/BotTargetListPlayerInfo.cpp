@@ -315,7 +315,7 @@ void BotTargetList::teleportTo()
         MultipleBotConnection::CatchChallengerClient * currentSelectedclient=pseudoToBot.value(pseudo);
         apiSelectedClient=currentSelectedclient->api;
     }
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(api==NULL)
         return;
     if(api==apiSelectedClient)
@@ -341,7 +341,7 @@ void BotTargetList::monsterCatch(const bool &success)
         MultipleBotConnection::CatchChallengerClient * currentSelectedclient=pseudoToBot.value(pseudo);
         apiSelectedClient=currentSelectedclient->api;
     }
-    CatchChallenger::Api_protocol *api = qobject_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(api==NULL)
         return;
     if(api==apiSelectedClient)
