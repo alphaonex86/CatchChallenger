@@ -2184,17 +2184,22 @@ ServerFromPoolForDisplay * Api_protocol::addLogicalServer(const ServerFromPoolFo
     else
         logicialGroupCursor=logicialGroupIndexList.at(server.logicalGroupIndex);
 
+    //serverOrdenedListIndex, should always be set at Api_protocol_message //Internal server list for the current pool
     ServerFromPoolForDisplay newServer;
-    newServer.charactersGroupIndex=server.charactersGroupIndex;
-    newServer.currentPlayer=server.currentPlayer;
-    newServer.description=descriptionString;
+
     newServer.host=server.host;
-    newServer.maxPlayer=server.maxPlayer;
-    newServer.name=nameString;
     newServer.port=server.port;
     newServer.uniqueKey=server.uniqueKey;
-    newServer.lastConnect=0;
+
+    newServer.name=nameString;
+    newServer.description=descriptionString;
+    newServer.charactersGroupIndex=server.charactersGroupIndex;
+    newServer.maxPlayer=server.maxPlayer;
+    newServer.currentPlayer=server.currentPlayer;
     newServer.playedTime=0;
+    newServer.lastConnect=0;
+
+    newServer.serverOrdenedListIndex=255;
 
     logicialGroupCursor->servers.push_back(newServer);
     return &logicialGroupCursor->servers.back();
