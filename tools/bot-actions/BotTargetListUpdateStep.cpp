@@ -462,8 +462,10 @@ void BotTargetList::updatePlayerStep()
                     CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
                     const QPair<uint8_t,uint8_t> QtPoint(x,y);
                     std::pair<uint8_t,uint8_t> p(x,y);
-                    QString mapQtString=DatapackClientLoader::datapackLoader.getDatapackPath()+DatapackClientLoader::datapackLoader.getMainDatapackPath()+QString::fromStdString(mapServer->map_file);
-                    if(!mapQtString.endsWith(".tmx"))
+                    std::string mapQtString=DatapackClientLoader::datapackLoader.getDatapackPath()+
+                            DatapackClientLoader::datapackLoader.getMainDatapackPath()+
+                            mapServer->map_file;
+                    if(!stringEndsWith(mapQtString,".tmx"))
                         mapQtString+=".tmx";
                     //finish correctly the step
                     if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
@@ -549,14 +551,16 @@ void BotTargetList::updatePlayerStep()
                         {
                             bool haveSeedToPlant=false;
                             const uint32_t &itemId=BotTargetList::getSeedToPlant(api,&haveSeedToPlant);
-                            if(!DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
+                            if(DatapackClientLoader::datapackLoader.itemToPlants.find(itemId)==DatapackClientLoader::datapackLoader.itemToPlants.cend())
                                 abort();
-                            const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
-                            if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(mapQtString))
+                            const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.at(itemId);
+                            if(DatapackClientLoader::datapackLoader.plantOnMap.find(mapQtString)==DatapackClientLoader::datapackLoader.plantOnMap.cend())
                                 abort();
-                            if(!DatapackClientLoader::datapackLoader.plantOnMap.value(mapQtString).contains(QtPoint))
+                            const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &mapS=
+                                    DatapackClientLoader::datapackLoader.plantOnMap.at(mapQtString);
+                            if(mapS.find(p)==mapS.cend())
                                 abort();
-                            const uint16_t &indexOnMapPlant=DatapackClientLoader::datapackLoader.plantOnMap.value(mapQtString).value(QtPoint);
+                            const uint16_t &indexOnMapPlant=mapS.at(p);
                             if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
                             {
                                 ActionsAction::remove_to_inventory(api,itemId);
@@ -582,12 +586,14 @@ void BotTargetList::updatePlayerStep()
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant:
                         {
-                            const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.value(player.target.extra/*itemUsed*/);
-                            if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(mapQtString))
+                            const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.at(player.target.extra/*itemUsed*/);
+                            if(DatapackClientLoader::datapackLoader.plantOnMap.find(mapQtString)==DatapackClientLoader::datapackLoader.plantOnMap.cend())
                                 abort();
-                            if(!DatapackClientLoader::datapackLoader.plantOnMap.value(mapQtString).contains(QtPoint))
+                            const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &pS=
+                                    DatapackClientLoader::datapackLoader.plantOnMap.at(mapQtString);
+                            if(pS.find(p)==pS.cend())
                                 abort();
-                            const uint16_t &indexOnMapPlant=DatapackClientLoader::datapackLoader.plantOnMap.value(mapQtString).value(QtPoint);
+                            const uint16_t &indexOnMapPlant=pS.at(p);
                             if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
                                 if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
                                     abort();
@@ -605,9 +611,10 @@ void BotTargetList::updatePlayerStep()
                             }
                             else
                             {
-                                if(!DatapackClientLoader::datapackLoader.plantOnMap.contains(mapQtString))
+                                if(DatapackClientLoader::datapackLoader.plantOnMap.find(mapQtString)==DatapackClientLoader::datapackLoader.plantOnMap.cend())
                                     abort();
-                                if(!DatapackClientLoader::datapackLoader.plantOnMap.value(mapQtString).contains(QtPoint))
+                                const auto &pS=DatapackClientLoader::datapackLoader.plantOnMap.at(mapQtString);
+                                if(pS.find(p)==pS.cend())
                                     abort();
                                 playerInformations.plantOnMap.erase(indexOnMapPlant);
                             }
@@ -631,12 +638,14 @@ void BotTargetList::updatePlayerStep()
                                 player.canMoveOnMap=false;
                                 player.api->stopMove();
                                 player.api->requestFight(fightId);
-                                QList<CatchChallenger::PlayerMonster> botFightMonstersTransformed;
+                                std::vector<CatchChallenger::PlayerMonster> botFightMonstersTransformed;
                                 const std::vector<CatchChallenger::BotFight::BotFightMonster> &monsters=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId).monsters;
                                 unsigned int index=0;
                                 while(index<monsters.size())
                                 {
-                                    botFightMonstersTransformed << CatchChallenger::FacilityLib::botFightMonsterToPlayerMonster(monsters.at(index),CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsters.at(index).id),monsters.at(index).level));
+                                    botFightMonstersTransformed.push_back(CatchChallenger::FacilityLib::botFightMonsterToPlayerMonster(
+                                         monsters.at(index),CatchChallenger::ClientFightEngine::getStat(
+                                              CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsters.at(index).id),monsters.at(index).level)));
                                     index++;
                                 }
                                 player.fightEngine->setBotMonster(botFightMonstersTransformed,fightId);

@@ -146,9 +146,13 @@ void MainWindow::detectSlowDown(uint32_t queryCount,uint32_t worseTime)
         ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));
 }
 
-void MainWindow::logged(CatchChallenger::Api_client_real *api,const QList<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,const QList<QList<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
+void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,
+                        const std::vector<CatchChallenger::ServerFromPoolForDisplay> &serverOrdenedList,
+                        const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList,
+                        bool haveTheDatapack)
 {
     Q_UNUSED(haveTheDatapack);
+    CatchChallenger::Api_client_real * api=senderObject;
     if(api==NULL)
     {
         qDebug() << "MainWindow::logged(): qobject_cast<CatchChallenger::Api_client_real *>(sender())==NULL";
@@ -214,11 +218,11 @@ void MainWindow::updateServerList(CatchChallenger::Api_client_real *senderObject
     //do the grouping for characterGroup count
     {
         serverByCharacterGroup.clear();
-        int index=0;
+        unsigned int index=0;
         int serverByCharacterGroupTempIndexToDisplay=1;
         while(index<serverOrdenedList.size())
         {
-            const CatchChallenger::ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
+            const CatchChallenger::ServerFromPoolForDisplay &server=serverOrdenedList.at(index);
             if(serverByCharacterGroup.contains(server.charactersGroupIndex))
                 serverByCharacterGroup[server.charactersGroupIndex].first++;
             else
@@ -342,8 +346,8 @@ void MainWindow::on_serverListSelect_clicked()
     const QTreeWidgetItem * const selectedItem=selectedItems.at(0);
     unsigned int serverSelectedIndex=selectedItem->data(99,99).toUInt();
 
-    CatchChallenger::ServerFromPoolForDisplay * const serverSelected=serverOrdenedList.at(serverSelectedIndex);
-    const uint8_t &charactersGroupIndex=serverSelected->charactersGroupIndex;
+    const CatchChallenger::ServerFromPoolForDisplay &serverSelected=serverOrdenedList.at(serverSelectedIndex);
+    const uint8_t &charactersGroupIndex=serverSelected.charactersGroupIndex;
     if(charactersGroupIndex>=characterEntryList.size())
     {
         ui->groupBox_Server->setEnabled(false);
@@ -352,9 +356,9 @@ void MainWindow::on_serverListSelect_clicked()
     }
     const quint32 &connectionTargetCount=ui->connexionCountTarget->value();
     if(ui->multipleConnexion->isChecked())
-        if(serverSelected->maxPlayer<65533 && serverSelected->maxPlayer>=serverSelected->currentPlayer)
+        if(serverSelected.maxPlayer<65533 && serverSelected.maxPlayer>=serverSelected.currentPlayer)
         {
-            const quint32 &freeSlot=serverSelected->maxPlayer-serverSelected->currentPlayer;
+            const quint32 &freeSlot=serverSelected.maxPlayer-serverSelected.currentPlayer;
             if(connectionTargetCount>freeSlot)
             {
                 ui->groupBox_Server->setEnabled(false);
@@ -362,7 +366,7 @@ void MainWindow::on_serverListSelect_clicked()
                 return;
             }
         }
-    multipleBotConnexion.serverSelect(serverSelected->charactersGroupIndex,serverSelected->uniqueKey);
+    multipleBotConnexion.serverSelect(serverSelected.charactersGroupIndex,serverSelected.uniqueKey);
 
     ui->groupBox_Server->setEnabled(false);
     if(!ui->multipleConnexion->isChecked())
@@ -387,7 +391,7 @@ void MainWindow::on_serverListSelect_clicked()
         }
         else
         {
-            int index=0;
+            unsigned int index=0;
             while(index<characterEntryList.at(charactersGroupIndex).size())
             {
                 const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).at(index);
@@ -407,7 +411,7 @@ void MainWindow::on_serverListSelect_clicked()
                 qDebug() << "MainWindow::on_serverListSelect_clicked(): ui->characterList->count()==0";
                 return;
             }
-            const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).first();
+            const CatchChallenger::CharacterEntry &character=characterEntryList.at(charactersGroupIndex).front();
             multipleBotConnexion.characterSelectForFirstCharacter(character.character_id);
         }
         else
