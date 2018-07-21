@@ -240,7 +240,7 @@ void BotTargetList::loadAllBotsInformation2()
         {
             QSqlQuery query;
             query.prepare("SELECT plant,item,fight,shop,wild FROM preferences WHERE pseudo=:pseudo");
-            query.bindValue(":pseudo",api->getPseudo());
+            query.bindValue(":pseudo",QString::fromStdString(api->getPseudo()));
             if(!query.exec())
                 qDebug() << "note load error: " << query.lastError();
             else if(query.next())
@@ -266,7 +266,7 @@ void BotTargetList::loadAllBotsInformation2()
                 QSqlQuery query;
                 query.prepare("INSERT INTO preferences (pseudo,plant,item,fight,shop,wild) "
                               "VALUES (:pseudo, :plant, :item, :fight, :shop, :wild)");
-                query.bindValue(":pseudo", api->getPseudo());
+                query.bindValue(":pseudo", QString::fromStdString(api->getPseudo()));
                 query.bindValue(":plant", catchChallengerClient->preferences.plant);
                 query.bindValue(":item", catchChallengerClient->preferences.item);
                 query.bindValue(":fight", catchChallengerClient->preferences.fight);

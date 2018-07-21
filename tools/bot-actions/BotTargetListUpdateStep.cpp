@@ -11,6 +11,7 @@
 #include <QMessageBox>
 #include <stdlib.h>
 #include "MainWindow.h"
+#include <iostream>
 
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
 void BotTargetList::checkDuplicatePointOnMap_Item(const std::map<std::pair<uint8_t, uint8_t>, MapServerMini::ItemOnMap> &pointOnMap_Item)

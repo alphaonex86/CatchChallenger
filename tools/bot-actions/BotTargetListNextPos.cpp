@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <QMessageBox>
+#include <iostream>
 
 //if(target.bestPath.empty()) return real target, else near search the next block
 std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::BlockObject * const blockObject,ActionsBotInterface::GlobalTarget &target)

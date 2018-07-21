@@ -5,6 +5,7 @@
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../client/fight/interface/ClientFightEngine.h"
+#include <iostream>
 
 ActionsAction *ActionsAction::actionsAction=NULL;
 
@@ -166,7 +167,7 @@ void ActionsAction::newRandomNumber_slot(const QByteArray &data)
         std::cerr << "clientList.find(api)==NULL" << std::endl;
         abort();
     }
-    botplayer.fightEngine->newRandomNumber(data);
+    botplayer.fightEngine->newRandomNumber(std::string(data.constData(),data.size()));
 }
 
 void ActionsAction::setEvents_slot(const QList<QPair<uint8_t,uint8_t> > &events)
@@ -702,12 +703,18 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
                 qDebug() <<  "is now in fight with: " << fightId;
                 player.canMoveOnMap=false;
                 player.api->stopMove();
-                QList<CatchChallenger::PlayerMonster> botFightMonstersTransformed;
+                std::vector<CatchChallenger::PlayerMonster> botFightMonstersTransformed;
                 const std::vector<CatchChallenger::BotFight::BotFightMonster> &monsters=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId).monsters;
                 unsigned int index=0;
                 while(index<monsters.size())
                 {
-                    botFightMonstersTransformed << CatchChallenger::FacilityLib::botFightMonsterToPlayerMonster(monsters.at(index),CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsters.at(index).id),monsters.at(index).level));
+                    botFightMonstersTransformed.push_back(
+                                CatchChallenger::FacilityLib::botFightMonsterToPlayerMonster(
+                                    monsters.at(index),CatchChallenger::ClientFightEngine::getStat(
+                                        CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsters.at(index).id),
+                                        monsters.at(index).level)
+                                    )
+                                );
                     index++;
                 }
                 player.fightEngine->setBotMonster(botFightMonstersTransformed,fightId);
@@ -837,7 +844,7 @@ void ActionsAction::doMove()
                     }
                     else
                     {
-                        std::cerr << "Blocked on: " << playerMap->map_file << " " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << " for " << api->getPseudo().toStdString() << std::endl;
+                        std::cerr << "Blocked on: " << playerMap->map_file << " " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << " for " << api->getPseudo() << std::endl;
                         if(player.target.bestPath.size()>1)
                         {
                             std::cerr << "Something is wrong to go to the destination, path finding buggy? block not walkable?" << std::endl;
@@ -944,7 +951,8 @@ void ActionsAction::doText()
     }
 }
 
-void ActionsAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type)
+void ActionsAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,const std::string &text,
+                                  const std::string &pseudo,const CatchChallenger::Player_type &type)
 {
     if(!globalChatRandomReply && chat_type!=CatchChallenger::Chat_type_pm)
         return;
@@ -1148,7 +1156,7 @@ void ActionsAction::monsterCatch(const bool &success)
         std::cerr << "clientList.find(api)==NULL" << std::endl;
         abort();
     }
-    if(player.fightEngine->playerMonster_catchInProgress.isEmpty())
+    if(player.fightEngine->playerMonster_catchInProgress.empty())
     {
         std::cerr << "Internal bug: cupture monster list is emtpy" << std::endl;
         return;
@@ -1170,12 +1178,12 @@ void ActionsAction::monsterCatch(const bool &success)
                 std::cerr << "You have already the maximum number of monster into you warehouse" << std::endl;
                 abort();
             }
-            playerInformations.warehouse_playerMonster.push_back(player.fightEngine->playerMonster_catchInProgress.first());
+            playerInformations.warehouse_playerMonster.push_back(player.fightEngine->playerMonster_catchInProgress.front());
         }
         else
-            player.fightEngine->addPlayerMonster(player.fightEngine->playerMonster_catchInProgress.first());
+            player.fightEngine->addPlayerMonster(player.fightEngine->playerMonster_catchInProgress.front());
     }
-    player.fightEngine->playerMonster_catchInProgress.removeFirst();
+    player.fightEngine->playerMonster_catchInProgress.erase(player.fightEngine->playerMonster_catchInProgress.cbegin());
     player.fightEngine->fightFinished();
 }
 

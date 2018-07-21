@@ -25,13 +25,13 @@ void ActionsAction::seed_planted(CatchChallenger::Api_protocol *api,const bool &
         //do the rewards
         {
             const uint32_t &itemId=player.seed_in_waiting.first().seedItemId;
-            if(!DatapackClientLoader::datapackLoader.itemToPlants.contains(itemId))
+            if(DatapackClientLoader::datapackLoader.itemToPlants.find(itemId)==DatapackClientLoader::datapackLoader.itemToPlants.cend())
             {
                 qDebug() << "Item is not a plant";
                 QMessageBox::critical(NULL,tr("Error"),tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
                 return;
             }
-            const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.value(itemId);
+            const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.at(itemId);
             appendReputationRewards(api,CatchChallenger::CommonDatapack::commonDatapack.plants.at(plant).rewards.reputation);
         }
     }
