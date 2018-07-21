@@ -58,7 +58,7 @@ public:
     static bool startQuest(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest);
     static std::vector<std::pair<uint16_t,std::string> > getQuestList(CatchChallenger::Api_protocol *api, const uint16_t &botId);
     static bool nextStepQuest(CatchChallenger::Api_protocol *api,const CatchChallenger::Quest &quest);
-    static void appendReputationPoint(CatchChallenger::Api_protocol *api,const QString &type,const int32_t &point);
+    static void appendReputationPoint(CatchChallenger::Api_protocol *api, const std::string &type, const int32_t &point);
     static uint32_t itemQuantity(const CatchChallenger::Api_protocol *api, const uint16_t &itemId);
     static bool haveReputationRequirements(const CatchChallenger::Api_protocol *api,const QList<CatchChallenger::ReputationRequirements> &reputationList);
     static bool haveReputationRequirements(const CatchChallenger::Api_protocol *api, const std::vector<CatchChallenger::ReputationRequirements> &reputationList);
@@ -215,7 +215,8 @@ public:
 private:
     void doMove();
     void doText();
-    void new_chat_text(const CatchChallenger::Chat_type &chat_type,const QString &text,const QString &pseudo,const CatchChallenger::Player_type &type);
+    void new_chat_text(const CatchChallenger::Chat_type &chat_type, const std::string &text, const std::string &pseudo,
+                       const CatchChallenger::Player_type &type);
     void preload_the_bots(const std::vector<Map_semi> &semi_loaded_map);
     void loadBotFile(const std::string &mapfile,const std::string &file);
 };
