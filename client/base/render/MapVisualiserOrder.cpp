@@ -118,13 +118,13 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                                                 }
                                             }
                                             else
-                                                qDebug() << "ms is 0 or frame is <=1";
+                                                qDebug() << "ms is 0 or frame is <=1" << animation;
                                         }
                                         else
-                                            qDebug() << "Wrong animation tile args regex match";
+                                            qDebug() << "Wrong animation tile args regex match" << animation;
                                     }
                                     else
-                                        qDebug() << "Wrong animation tile args count";
+                                        qDebug() << "Wrong animation tile args count (Order): " << animation;
                                 }
                                 else
                                 {
