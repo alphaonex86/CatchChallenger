@@ -978,10 +978,10 @@ void DatapackClientLoader::parseMaps()
                                         pointOnMapIndexItem++;
                                     }
                                     else
-                                        qDebug() << QStringLiteral("object_y too big or not number");
+                                        qDebug() << QStringLiteral("object_y too big or not number") << object->Attribute("y") << QString::fromStdString(basePath+file);
                                 }
                                 else
-                                    qDebug() << QStringLiteral("object_x too big or not number");
+                                    qDebug() << QStringLiteral("object_x too big or not number") << object->Attribute("x") << QString::fromStdString(basePath+file);
                             }
                             object = object->NextSiblingElement("object");
                         }

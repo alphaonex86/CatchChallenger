@@ -369,16 +369,16 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                                                 tempMapObject->animatedObject[ms].animatedObjectList.push_back(map_animation_object);
                                             }
                                             else
-                                                qDebug() << "frames is not in good range";
+                                                qDebug() << "frames is not in good range" << tile->property("animation");
                                         }
                                         else
-                                            qDebug() << "ms is not in good range";
+                                            qDebug() << "ms is not in good range" << tile->property("animation");
                                     }
                                     else
-                                        qDebug() << "Wrong animation tile args regex match";
+                                        qDebug() << "Wrong animation tile args regex match" << tile->property("animation");
                                 }
                                 else
-                                    qDebug() << "Wrong animation tile args count";
+                                    qDebug() << "Wrong animation tile args count (thread)" << tile->property("animation");
                             }
                             else
                             {

@@ -188,7 +188,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         property = property->NextSiblingElement("property");
                                     }
                                 }
-                                if(type=="borderleft" || type=="borderright" || type=="bordertop" || type=="borderbottom")
+                                if(type=="border-left" || type=="border-right" || type=="border-top" || type=="border-bottom")
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
                                     DebugClass::debugConsole(std::stringLiteral("type: %1, object_x: %2, object_y: %3, border")
