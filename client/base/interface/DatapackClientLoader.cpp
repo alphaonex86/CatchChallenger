@@ -966,10 +966,10 @@ void DatapackClientLoader::parseMaps()
                             {
                                 /** the -1 is important to fix object layer bug into tiled!!!
                                  * Don't remove! */
-                                const uint32_t &object_y=stringtouint8(object->Attribute("y"),&ok)/tileheight-1;
+                                const uint32_t &object_y=/*16Bits: /tileheight at final*/stringtouint32(object->Attribute("y"),&ok)/tileheight-1;
                                 if(ok && object_y<256)
                                 {
-                                    const uint32_t &object_x=stringtouint8(object->Attribute("x"),&ok)/tilewidth;
+                                    const uint32_t &object_x=/*16Bits: /tileheight at final*/stringtouint32(object->Attribute("x"),&ok)/tilewidth;
                                     if(ok && object_x<256)
                                     {
                                         itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+file]
@@ -978,10 +978,10 @@ void DatapackClientLoader::parseMaps()
                                         pointOnMapIndexItem++;
                                     }
                                     else
-                                        qDebug() << QStringLiteral("object_y too big or not number") << object->Attribute("y") << QString::fromStdString(basePath+file);
+                                        qDebug() << QStringLiteral("object_y too big or not number") << object->Attribute("y") << QString::fromStdString(file);
                                 }
                                 else
-                                    qDebug() << QStringLiteral("object_x too big or not number") << object->Attribute("x") << QString::fromStdString(basePath+file);
+                                    qDebug() << QStringLiteral("object_x too big or not number") << object->Attribute("x") << QString::fromStdString(file);
                             }
                             object = object->NextSiblingElement("object");
                         }
