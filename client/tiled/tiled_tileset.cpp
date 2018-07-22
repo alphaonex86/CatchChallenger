@@ -62,9 +62,6 @@ void Tileset::resize(int tileCount)
 
 bool Tileset::loadFromImage(const std::string &fileName)
 {
-    std::cerr << "width:" << mTileWidth << " height:" << mTileHeight << std::endl;
-    std::cerr << "space:" << mTileSpacing << " name:" << mName.toStdString() << std::endl;
-
     const QImage image(fileName.c_str());
 
     if (image.isNull()) {
@@ -115,9 +112,6 @@ bool Tileset::loadFromImage(const std::string &fileName)
 
 bool Tileset::loadFromImage(const QImage &image, const QString &fileName)
 {
-    std::cerr << "width:" << mTileWidth << " height:" << mTileHeight << std::endl;
-    std::cerr << "space:" << mTileSpacing << std::endl;
-
     Q_ASSERT(mTileWidth > 0 && mTileHeight > 0);
 
     if (image.isNull())

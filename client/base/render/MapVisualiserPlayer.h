@@ -16,6 +16,8 @@ class MapVisualiserPlayer : public MapVisualiser
 public:
     explicit MapVisualiserPlayer(const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true);
     ~MapVisualiserPlayer();
+    void fetchFollowingMonster();
+    void fetchPlayer();
     virtual bool haveMapInMemory(const std::string &mapPath);
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
@@ -27,7 +29,8 @@ public:
     std::string currentZone() const;
     std::string currentBackgroundsound() const;
     CatchChallenger::Direction getDirection();
-    void updateFollowingMonster(int tiledPos);
+    void updateFollowingMonster(int tiledPos = CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Bottom);
+    void transitionMonster(int baseMonster);
     enum BlockedOn
     {
         BlockedOn_ZoneItem,

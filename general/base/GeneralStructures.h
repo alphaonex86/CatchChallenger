@@ -90,6 +90,18 @@ enum DrawTiledPosition
     RightFoot_Left   = 11,
 };
 
+enum DrawSmallTiledPosition
+{
+    walkLeftFoot_Top     = 0,
+    walkLeftFoot_Left    = 1,
+    walkRightFoot_Top    = 2,
+    walkRightFoot_Left   = 3,
+    walkLeftFoot_Bottom  = 4,
+    walkLeftFoot_Right   = 5,
+    walkRightFoot_Bottom = 6,
+    walkRightFoot_Right  = 7,
+};
+
 enum Direction : uint8_t
 {
     Direction_look_at_top = 1,

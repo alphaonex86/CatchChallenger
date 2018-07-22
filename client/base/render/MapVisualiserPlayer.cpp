@@ -93,7 +93,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
     followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
     playerTilesetCache[lastTileset]=playerTileset;
-    playerTilesetCache[defaultMonsterTileset]=followingMonsterTileset;
+    playerTilesetCache[defaultMonsterTileset] = followingMonsterTileset;
 
     followingMonsterInformation.monsterId = 100;
     followingMonsterInformation.pseudo = "followingmonster";
@@ -176,6 +176,7 @@ void MapVisualiserPlayer::keyPressParse()
             direction=CatchChallenger::Direction_move_at_left;
             inMove=true;
             moveStep=1;
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Left);
             moveStepSlot();
             emit send_player_direction(direction);
             //startGrassAnimation(direction);
@@ -188,7 +189,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_left;
             lookToMove.start();
-            updateFollowingMonster(10);
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Left);
             emit send_player_direction(direction);
             parseStop();
         }
@@ -204,6 +205,7 @@ void MapVisualiserPlayer::keyPressParse()
             direction=CatchChallenger::Direction_move_at_right;
             inMove=true;
             moveStep=1;
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Right);
             moveStepSlot();
             emit send_player_direction(direction);
             //startGrassAnimation(direction);
@@ -216,7 +218,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setCell(cell);
             direction = CatchChallenger::Direction_look_at_right;
             lookToMove.start();
-            updateFollowingMonster(4);
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Right);
             emit send_player_direction(direction);
             parseStop();
         }
@@ -232,6 +234,7 @@ void MapVisualiserPlayer::keyPressParse()
             direction=CatchChallenger::Direction_move_at_top;
             inMove=true;
             moveStep=1;
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Top);
             moveStepSlot();
             emit send_player_direction(direction);
             //startGrassAnimation(direction);
@@ -244,7 +247,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_top;
             lookToMove.start();
-            updateFollowingMonster(1);
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Top);
             emit send_player_direction(direction);
             parseStop();
         }
@@ -260,6 +263,7 @@ void MapVisualiserPlayer::keyPressParse()
             direction=CatchChallenger::Direction_move_at_bottom;
             inMove=true;
             moveStep=1;
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Bottom);
             moveStepSlot();
             emit send_player_direction(direction);
             //startGrassAnimation(direction);
@@ -272,7 +276,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_bottom;
             lookToMove.start();
-            updateFollowingMonster(7);
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Bottom);
             emit send_player_direction(direction);
             parseStop();
         }
@@ -283,6 +287,11 @@ void MapVisualiserPlayer::updateFollowingMonster(int tiledPos) {
     if (followingMonsterMapObject != nullptr) {
         Tiled::Cell cell = followingMonsterMapObject->cell();
         if (followingMonsterTileset != nullptr) {
+            if (!tiledPos) {
+                if (cell.tile) {
+                    tiledPos = cell.tile->id();
+                }
+            }
             cell.tile = followingMonsterTileset->tileAt(tiledPos);
             followingMonsterMapObject->setCell(cell);
         }
@@ -337,19 +346,24 @@ void MapVisualiserPlayer::moveStepSlot()
 
             //block but set good look direction
             uint8_t baseTile;
+            uint8_t baseMonster;
             switch(direction)
             {
                 case CatchChallenger::Direction_move_at_left:
                 baseTile=10;
+                baseMonster = CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Left;
                 break;
                 case CatchChallenger::Direction_move_at_right:
                 baseTile=4;
+                baseMonster = CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Right;
                 break;
                 case CatchChallenger::Direction_move_at_top:
                 baseTile=1;
+                baseMonster = CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Top;
                 break;
                 case CatchChallenger::Direction_move_at_bottom:
                 baseTile=7;
+                baseMonster = CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Bottom;
                 break;
                 default:
                 qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction").arg(moveStep);
@@ -358,7 +372,7 @@ void MapVisualiserPlayer::moveStepSlot()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(baseTile+0);
             playerMapObject->setCell(cell);
-            updateFollowingMonster(baseTile);
+            updateFollowingMonster(baseMonster);
             return;
         }
     }
@@ -371,11 +385,13 @@ void MapVisualiserPlayer::moveStepSlot()
     #endif
     //moveTimer.stop();
     int baseTile=1;
+    int baseMonster = CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Bottom;
     //move the player for intermediate step and define the base tile (define the stopped step with direction)
     switch(direction)
     {
         case CatchChallenger::Direction_move_at_left:
         baseTile=10;
+        baseMonster = CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Left;
         switch(moveStep)
         {
             case 1:
@@ -383,11 +399,12 @@ void MapVisualiserPlayer::moveStepSlot()
             case 3:
             case 4:
             playerMapObject->setX(playerMapObject->x()-0.20);
-            //followingMonsterMapObject->setX();
+            followingMonsterMapObject->setX(followingMonsterMapObject->x() - 0.20);
             break;
         }
         break;
         case CatchChallenger::Direction_move_at_right:
+        baseMonster = CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Right;
         baseTile=4;
         switch(moveStep)
         {
@@ -396,11 +413,12 @@ void MapVisualiserPlayer::moveStepSlot()
             case 3:
             case 4:
             playerMapObject->setX(playerMapObject->x()+0.20);
-            //followingMonsterMapObject->setX();
+            followingMonsterMapObject->setX(followingMonsterMapObject->x() + 0.20);
             break;
         }
         break;
         case CatchChallenger::Direction_move_at_top:
+        baseMonster = CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Top;
         baseTile=1;
         switch(moveStep)
         {
@@ -409,11 +427,12 @@ void MapVisualiserPlayer::moveStepSlot()
             case 3:
             case 4:
             playerMapObject->setY(playerMapObject->y()-0.20);
-            //followingMonsterMapObject->setY();
+            followingMonsterMapObject->setY(followingMonsterMapObject->y()-0.20);
             break;
         }
         break;
         case CatchChallenger::Direction_move_at_bottom:
+        baseMonster = CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Bottom;
         baseTile=7;
         switch(moveStep)
         {
@@ -422,7 +441,7 @@ void MapVisualiserPlayer::moveStepSlot()
             case 3:
             case 4:
             playerMapObject->setY(playerMapObject->y()+0.20);
-            //followingMonsterMapObject->setY();
+            followingMonsterMapObject->setY(followingMonsterMapObject->y() + 0.20);
             break;
         }
         break;
@@ -440,7 +459,7 @@ void MapVisualiserPlayer::moveStepSlot()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(baseTile+0);
             playerMapObject->setCell(cell);
-            updateFollowingMonster(baseTile);
+            updateFollowingMonster(baseMonster);
         }
         break;
         case 1:
@@ -452,11 +471,10 @@ void MapVisualiserPlayer::moveStepSlot()
             Tiled::Cell cell=playerMapObject->cell();
             if(stepAlternance) {
                 cell.tile=playerTileset->tileAt(baseTile-1);
-                updateFollowingMonster(baseTile - 1);
             } else {
                 cell.tile=playerTileset->tileAt(baseTile+1);
-                updateFollowingMonster(baseTile + 1);
             }
+            transitionMonster(baseMonster);
             playerMapObject->setCell(cell);
             stepAlternance=!stepAlternance;
         }
@@ -467,7 +485,7 @@ void MapVisualiserPlayer::moveStepSlot()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(baseTile+0);
             playerMapObject->setCell(cell);
-            updateFollowingMonster(baseTile);
+            updateFollowingMonster(baseMonster);
         }
         break;
     }
@@ -522,6 +540,29 @@ void MapVisualiserPlayer::moveStepSlot()
     }
     else
         moveTimer.start();
+}
+
+void MapVisualiserPlayer::transitionMonster(int baseMonster) {
+    if (baseMonster == CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Left) {
+        updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Left);
+    } else if (baseMonster == CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Left) {
+        updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Left);
+    }
+    if (baseMonster == CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Right) {
+        updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Right);
+    } else if (baseMonster == CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Right) {
+        updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Right);
+    }
+    if (baseMonster == CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Top) {
+        updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Top);
+    } else if (baseMonster == CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Top) {
+        updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Top);
+    }
+    if (baseMonster == CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Bottom) {
+        updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Bottom);
+    } else if (baseMonster == CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Bottom) {
+        updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Bottom);
+    }
 }
 
 bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject)
@@ -665,6 +706,58 @@ void MapVisualiserPlayer::unblock()
     blocked=false;
 }
 
+void MapVisualiserPlayer::fetchPlayer() {
+    if (playerTilesetCache.find(lastTileset)!=playerTilesetCache.cend()) {
+        playerTileset=playerTilesetCache.at(lastTileset);
+    } else
+    {
+        if(!lastTileset.empty()) {
+            playerTileset=playerTilesetCache[defaultTileset];
+        }
+        else
+        {
+            const std::string &imagePath=playerSkinPath+MapVisualiserPlayer::text_slash+lastTileset+MapVisualiserPlayer::text_dotpng;
+            QImage image(QString::fromStdString(imagePath));
+            if(!image.isNull())
+            {
+                playerTileset = new Tiled::Tileset(QString::fromStdString(lastTileset),16,24);
+                playerTileset->loadFromImage(image,QString::fromStdString(imagePath));
+            }
+            else
+            {
+                qDebug() << "Unable to load the player tilset: "+QString::fromStdString(imagePath);
+                playerTileset=playerTilesetCache[defaultTileset];
+            }
+        }
+        playerTilesetCache[lastTileset]=playerTileset;
+    }
+}
+
+void MapVisualiserPlayer::fetchFollowingMonster() {
+    if(playerTilesetCache.find(defaultMonsterTileset) == playerTilesetCache.cend()) {
+        followingMonsterTileset=playerTilesetCache.at(defaultMonsterTileset);
+    } else
+    {
+        if (defaultMonsterTileset.empty()) {
+            followingMonsterTileset=playerTilesetCache[defaultMonsterTileset];
+        }
+        else
+        {
+            std::string imagePath2 = datapackPath + DATAPACK_BASE_PATH_SKIN + std::string("followingmonster") + MapVisualiserPlayer::text_slashtrainerMonsterpng;
+            followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
+
+            if (!followingMonsterTileset->loadFromImage(imagePath2))
+            {
+                qDebug() << "Unable to load the player tilset: " + QString::fromStdString(imagePath2);
+                followingMonsterTileset = playerTilesetCache[defaultMonsterTileset];
+            }
+            const_cast<Tiled::Cell&>(followingMonsterMapObject->cell()).tile = followingMonsterTileset->tileAt(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Top);
+        }
+
+        playerTilesetCache[defaultMonsterTileset] = followingMonsterTileset;
+    }
+}
+
 void MapVisualiserPlayer::finalPlayerStep()
 {
     if(all_map.find(current_map)==all_map.cend())
@@ -678,7 +771,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
         return;
     }
-
+    fetchFollowingMonster();
     /// \see into haveStopTileAction(), to NPC fight: std::vector<std::pair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
     if(!CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.empty())
     {
@@ -695,35 +788,13 @@ void MapVisualiserPlayer::finalPlayerStep()
                     if(monstersCollision.tile!=lastTileset)
                     {
                         lastTileset=monstersCollision.tile;
-                        if(playerTilesetCache.find(lastTileset)!=playerTilesetCache.cend())
-                            playerTileset=playerTilesetCache.at(lastTileset);
-                        else
-                        {
-                            if(lastTileset.empty())
-                                playerTileset=playerTilesetCache[defaultTileset];
-                            else
-                            {
-                                const std::string &imagePath=playerSkinPath+MapVisualiserPlayer::text_slash+lastTileset+MapVisualiserPlayer::text_dotpng;
-                                QImage image(QString::fromStdString(imagePath));
-                                if(!image.isNull())
-                                {
-                                    playerTileset = new Tiled::Tileset(QString::fromStdString(lastTileset),16,24);
-                                    playerTileset->loadFromImage(image,QString::fromStdString(imagePath));
-                                }
-                                else
-                                {
-                                    qDebug() << "Unable to load the player tilset: "+QString::fromStdString(imagePath);
-                                    playerTileset=playerTilesetCache[defaultTileset];
-                                }
-                            }
-                            playerTilesetCache[lastTileset]=playerTileset;
-                        }
+                        fetchPlayer();
                         {
                             Tiled::Cell cell=playerMapObject->cell();
                             int tileId=cell.tile->id();
                             cell.tile=playerTileset->tileAt(tileId);
                             playerMapObject->setCell(cell);
-                            updateFollowingMonster(tileId);
+                            updateFollowingMonster();
                         }
                     }
                     break;
@@ -740,13 +811,13 @@ void MapVisualiserPlayer::finalPlayerStep()
                 int tileId=cell.tile->id();
                 cell.tile=playerTileset->tileAt(tileId);
                 playerMapObject->setCell(cell);
-                updateFollowingMonster(tileId);
+                updateFollowingMonster();
             }
         }
     }
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
-    followingMonsterMapObject->setPosition(QPoint(x + 2, y + 1));
+    followingMonsterMapObject->setPosition(QPoint(x + 1, y + 1));
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
     if(centerOnPlayer)
         centerOn(MapObjectItem::objectLink.at(playerMapObject));
@@ -792,7 +863,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(10);
             playerMapObject->setCell(cell);
-            updateFollowingMonster(10);
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Left);
             inMove=false;
             emit send_player_direction(direction);//see the top note
             parseStop();
@@ -802,6 +873,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         {
             direction=CatchChallenger::Direction_move_at_left;
             moveStep=0;
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Left);
             moveStepSlot();
             emit send_player_direction(direction);
             if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && x==0)
@@ -819,7 +891,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(4);
             playerMapObject->setCell(cell);
-            updateFollowingMonster(4);
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Right);
             inMove=false;
             emit send_player_direction(direction);//see the top note
             parseStop();
@@ -829,6 +901,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         {
             direction=CatchChallenger::Direction_move_at_right;
             moveStep=0;
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Right);
             moveStepSlot();
             emit send_player_direction(direction);
             if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && x==(current_map_pointer->logicalMap.width-1))
@@ -846,7 +919,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(1);
             playerMapObject->setCell(cell);
-            updateFollowingMonster(1);
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Top);
             inMove=false;
             emit send_player_direction(direction);//see the top note
             parseStop();
@@ -856,6 +929,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         {
             direction=CatchChallenger::Direction_move_at_top;
             moveStep=0;
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Top);
             moveStepSlot();
             emit send_player_direction(direction);
             if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && y==0)
@@ -873,7 +947,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             Tiled::Cell cell=playerMapObject->cell();
             cell.tile=playerTileset->tileAt(7);
             playerMapObject->setCell(cell);
-            updateFollowingMonster(7);
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Bottom);
             inMove=false;
             emit send_player_direction(direction);//see the top note
             parseStop();
@@ -883,6 +957,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         {
             direction=CatchChallenger::Direction_move_at_bottom;
             moveStep=0;
+            updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Bottom);
             moveStepSlot();
             emit send_player_direction(direction);
             if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && y==(current_map_pointer->logicalMap.height-1))
@@ -977,6 +1052,7 @@ void MapVisualiserPlayer::stopAndSend()
         default:
         break;
     }
+    updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Bottom);
     emit send_player_direction(direction);
 }
 
@@ -1323,6 +1399,7 @@ void MapVisualiserPlayer::resetAll()
     playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
     followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
     playerTilesetCache[lastTileset]=playerTileset;
+    playerTilesetCache[defaultMonsterTileset] = followingMonsterTileset;
 }
 
 void MapVisualiserPlayer::setSpeed(const SPEED_TYPE &speed)
@@ -1387,6 +1464,7 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
         return;
     }
     Tiled::ObjectGroup *currentGroup=playerMapObject->objectGroup();
+    Tiled::ObjectGroup *othercurrentGroup=followingMonsterMapObject->objectGroup();
     if(currentGroup!=NULL)
     {
         if(ObjectGroupItem::objectGroupLink.find(currentGroup)!=ObjectGroupItem::objectGroupLink.cend())
@@ -1394,9 +1472,13 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
         //currentGroup->removeObject(playerMapObject);
         if(currentGroup!=all_map.at(current_map)->objectGroup)
             qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
+        if(othercurrentGroup!=all_map.at(current_map)->objectGroup)
+            qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), the followingmonster group is wrong: %1").arg(othercurrentGroup->name());
     }
-    if(ObjectGroupItem::objectGroupLink.find(all_map.at(current_map)->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
+    if(ObjectGroupItem::objectGroupLink.find(all_map.at(current_map)->objectGroup)!=ObjectGroupItem::objectGroupLink.cend()){
         ObjectGroupItem::objectGroupLink.at(all_map.at(current_map)->objectGroup)->addObject(playerMapObject);
+        ObjectGroupItem::objectGroupLink.at(all_map.at(current_map)->objectGroup)->addObject(followingMonsterMapObject);
+    }
     else
         qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
     mLastLocation=all_map.at(current_map)->logicalMap.map_file;
@@ -1404,10 +1486,12 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
-    followingMonsterMapObject->setPosition(QPoint(x + 2, y + 1));
+    followingMonsterMapObject->setPosition(QPoint(x + 2, y));
+    MapObjectItem::objectLink.at(followingMonsterMapObject)->setZValue(y);
     //MapObjectItem::objectLink.at(followingMonsterMapObject)->setZValue(y);
     if(centerOnPlayer)
         centerOn(MapObjectItem::objectLink.at(playerMapObject));
+    centerOn(MapObjectItem::objectLink.at(followingMonsterMapObject));
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
