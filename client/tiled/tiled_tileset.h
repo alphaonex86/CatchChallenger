@@ -226,6 +226,7 @@ public:
      */
     bool loadFromImage(const QImage &image, const QString &fileName);
     bool loadFromImage(const std::string &fileName);
+    bool isLoaded(const std::string& tilesetFileName);
     /**
      * This checks if there is a similar tileset in the given list.
      * It is needed for replacing this tileset by its similar copy.

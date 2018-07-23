@@ -110,6 +110,16 @@ bool Tileset::loadFromImage(const std::string &fileName)
     return true;
 }
 
+bool Tileset::isLoaded(const std::string& tilesetFileName) {
+    return (
+        this->mImageSource.toStdString() == tilesetFileName &&
+        !this->tileSize().isNull() &&
+        this->mColumnCount > 0 &&
+        this->mImageWidth > 0 &&
+        this->mImageHeight > 0
+    );
+}
+
 bool Tileset::loadFromImage(const QImage &image, const QString &fileName)
 {
     Q_ASSERT(mTileWidth > 0 && mTileHeight > 0);

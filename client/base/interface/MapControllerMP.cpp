@@ -74,14 +74,18 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol *client)
 
 void MapControllerMP::resetAll()
 {
-    if(!playerTileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
-        qDebug() << "Unable the load the default player tileset";
+    std::string filename = ":/images/player_default/trainer.png";
 
-    //followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + std::string("followingmonster");
-    //const std::string& imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
-    //if (!followingMonsterTileset->loadFromImage(imagePath))
-    {
-        qDebug() << "Unable the load the default following monster tileset";
+    if (!playerTileset->isLoaded(filename)) {
+        if (!playerTileset->loadFromImage(filename))
+            qDebug() << "Unable the load the default player tileset";
+    }
+
+    filename = ":/images/followingMonster_default/following.png";
+
+    if (!followingMonsterTileset->isLoaded(filename)) {
+        if (!followingMonsterTileset->loadFromImage(filename))
+            qDebug() << "Unable the load the default following monster tileset";
     }
 
     unloadPlayerFromCurrentMap();
@@ -286,8 +290,6 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
                       static_cast<uint8_t>(x),static_cast<uint8_t>(y));
         setSpeed(player.speed);
 
-        //current following monster,
-        setMonster();
     }
     //other player
     else
@@ -515,6 +517,10 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         }
         return true;
     }
+
+    //current following monster,
+    setMonster();
+
     return true;
 }
 
@@ -533,33 +539,14 @@ bool MapControllerMP::setMonster()
             if (!followingMonsterTileset->loadFromImage(imagePath)) {
                 qDebug() << "Unable to load the following monster tilset: " + QString::fromStdString(imagePath);
             }
+            playerTilesetCache[defaultMonsterTileset] = followingMonsterTileset;
         }
         else {
             qDebug() << "The skin id: " + QString::number(followingMonsterInformation.skinId) + ", into a list of: " + QString::number(skinFolderList.size()) + " item(s) info MapControllerMP::setMonster()";
         }
 
         //the direction
-        switch(direction)
-        {
-            case CatchChallenger::Direction_look_at_top:
-            case CatchChallenger::Direction_move_at_top:
-                updateFollowingMonster(0);
-                break;
-            case CatchChallenger::Direction_look_at_right:
-            case CatchChallenger::Direction_move_at_right:
-                updateFollowingMonster(5);
-                break;
-            case CatchChallenger::Direction_look_at_bottom:
-            case CatchChallenger::Direction_move_at_bottom:
-                updateFollowingMonster(4);
-                break;
-            case CatchChallenger::Direction_look_at_left:
-            case CatchChallenger::Direction_move_at_left:
-                updateFollowingMonster(1);
-                break;
-            default:
-                return false;
-        }
+
 
         //loadPlayerMap(datapackMapPathSpec + DatapackClientLoader::datapackLoader.maps.at(mapId),
         //              static_cast<uint8_t>(x),static_cast<uint8_t>(y));

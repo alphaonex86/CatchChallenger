@@ -31,6 +31,7 @@ public:
     CatchChallenger::Direction getDirection();
     void updateFollowingMonster(int tiledPos = CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Bottom);
     void transitionMonster(int baseMonster);
+    std::string StepToSTring(int step);
     enum BlockedOn
     {
         BlockedOn_ZoneItem,
@@ -68,6 +69,7 @@ protected:
     std::string followingMonsterSkinPath;
     std::unordered_map<std::string,Tiled::Tileset *> playerTilesetCache;
     std::string lastTileset;
+    std::string lastMonsterTileset;
     std::string defaultTileset;
     std::string defaultMonsterTileset;
     int moveStep;

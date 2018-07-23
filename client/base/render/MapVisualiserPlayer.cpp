@@ -83,21 +83,22 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     haveGrassCurrentObject=false;
     haveNextCurrentObject=false;
 
-    defaultTileset="trainer";
-    defaultMonsterTileset = "following";
+    lastTileset = defaultTileset = "trainer";
+    lastMonsterTileset = defaultMonsterTileset = "following";
+
     playerMapObject = new Tiled::MapObject();
     followingMonsterMapObject = new Tiled::MapObject();
     grassCurrentObject->setName("playerMapObject");
 
-    lastTileset=defaultTileset;
     playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
     followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
-    playerTilesetCache[lastTileset]=playerTileset;
+
+    playerTilesetCache[lastTileset] = playerTileset;
     playerTilesetCache[defaultMonsterTileset] = followingMonsterTileset;
 
     followingMonsterInformation.monsterId = 100;
     followingMonsterInformation.pseudo = "followingmonster";
-    followingMonsterInformation.simplifiedId = 1;
+    followingMonsterInformation.simplifiedId = 0;
     followingMonsterInformation.skinId = 1;
     followingMonsterInformation.speed = 250;
     followingMonsterInformation.type = CatchChallenger::Player_type::Player_type_normal;
@@ -296,6 +297,20 @@ void MapVisualiserPlayer::updateFollowingMonster(int tiledPos) {
             followingMonsterMapObject->setCell(cell);
         }
     }
+}
+
+std::string MapVisualiserPlayer::StepToSTring(int step) {
+    switch(step) {
+            case CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Top: return "top leftfoot";
+            case CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Left: return "left leftfoot";
+            case CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Top:return "top rightfoot";
+            case CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Left:return "left rightfoot";
+            case CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Bottom:return "down leftfoot";
+            case CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Right:return "right leftfoot";
+            case CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Bottom:return "down rightfoot";
+            case CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Right:return "right rightfoot";
+    }
+    return "unknow";
 }
 
 void MapVisualiserPlayer::doMoveAnimation()
@@ -707,21 +722,29 @@ void MapVisualiserPlayer::unblock()
 }
 
 void MapVisualiserPlayer::fetchPlayer() {
-    if (playerTilesetCache.find(lastTileset)!=playerTilesetCache.cend()) {
-        playerTileset=playerTilesetCache.at(lastTileset);
-    } else
+    if (playerTilesetCache.find(lastTileset) != playerTilesetCache.cend())
     {
-        if(!lastTileset.empty()) {
-            playerTileset=playerTilesetCache[defaultTileset];
+        //found in playerTilesetCache
+        playerTileset = playerTilesetCache.at(lastTileset);
+    }
+    else
+    {
+        if (!lastTileset.empty())
+        //if the id string was not initializated?
+        {
+            //take the default one.
+            playerTileset = playerTilesetCache[defaultTileset];
         }
         else
+        //load again, should no happenend, this
         {
-            const std::string &imagePath=playerSkinPath+MapVisualiserPlayer::text_slash+lastTileset+MapVisualiserPlayer::text_dotpng;
+            const std::string &imagePath = playerSkinPath + MapVisualiserPlayer::text_slash + lastTileset + MapVisualiserPlayer::text_dotpng;
             QImage image(QString::fromStdString(imagePath));
             if(!image.isNull())
             {
-                playerTileset = new Tiled::Tileset(QString::fromStdString(lastTileset),16,24);
+                playerTileset = new Tiled::Tileset(QString::fromStdString(lastTileset), 16, 24);
                 playerTileset->loadFromImage(image,QString::fromStdString(imagePath));
+                std::cout <<" 742 MapVISUALIzer player playertileset loading...................................."<<std::endl;
             }
             else
             {
@@ -729,17 +752,21 @@ void MapVisualiserPlayer::fetchPlayer() {
                 playerTileset=playerTilesetCache[defaultTileset];
             }
         }
-        playerTilesetCache[lastTileset]=playerTileset;
+        //save in cache
+        playerTilesetCache[lastTileset] = playerTileset;
     }
 }
 
 void MapVisualiserPlayer::fetchFollowingMonster() {
-    if(playerTilesetCache.find(defaultMonsterTileset) == playerTilesetCache.cend()) {
-        followingMonsterTileset=playerTilesetCache.at(defaultMonsterTileset);
-    } else
+    if(playerTilesetCache.find(defaultMonsterTileset) != playerTilesetCache.cend())
     {
-        if (defaultMonsterTileset.empty()) {
-            followingMonsterTileset=playerTilesetCache[defaultMonsterTileset];
+        followingMonsterTileset = playerTilesetCache.at(defaultMonsterTileset);
+    }
+    else
+    {
+        if (!defaultMonsterTileset.empty())
+        {
+            followingMonsterTileset = playerTilesetCache[defaultMonsterTileset];
         }
         else
         {
@@ -782,7 +809,7 @@ void MapVisualiserPlayer::finalPlayerStep()
             const unsigned int &newIndex=monstersCollisionValue.walkOn.at(index);
             if(newIndex<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
             {
-                const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
+                const CatchChallenger::MonstersCollision &monstersCollision = CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
                 if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
                 {
                     if(monstersCollision.tile!=lastTileset)
@@ -1395,11 +1422,12 @@ void MapVisualiserPlayer::resetAll()
             }
         playerTilesetCache.clear();
     }
-    lastTileset=defaultTileset;
+    lastTileset = defaultTileset;
+    lastMonsterTileset = defaultMonsterTileset;
     playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
     followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
-    playerTilesetCache[lastTileset]=playerTileset;
-    playerTilesetCache[defaultMonsterTileset] = followingMonsterTileset;
+    playerTilesetCache[lastTileset] = playerTileset;
+    playerTilesetCache[lastMonsterTileset] = followingMonsterTileset;
 }
 
 void MapVisualiserPlayer::setSpeed(const SPEED_TYPE &speed)
