@@ -95,7 +95,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_f
                                 const QString &animation=tile->property("animation");
                                 if(!animation.isEmpty())
                                 {
-                                    const QStringList &animationList=animation.split("dotcomma");
+                                    const QStringList &animationList=animation.split(";");
                                     if(animationList.size()==2)
                                     {
                                         if(animationList.at(0).contains(regexMs) && animationList.at(1).contains(regexFrames))

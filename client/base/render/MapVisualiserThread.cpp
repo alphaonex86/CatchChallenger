@@ -314,7 +314,8 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                                 const std::vector<std::string> &animationList=stringsplit(animation,';');
                                 if(animationList.size()>=2)
                                 {
-                                    if(QString::fromStdString(animationList.at(0)).contains(regexMs) && QString::fromStdString(animationList.at(1)).contains(regexFrames))
+                                    if(QString::fromStdString(animationList.at(0)).contains(regexMs) &&
+                                            QString::fromStdString(animationList.at(1)).contains(regexFrames))
                                     {
                                         std::string msString=animationList.at(0);
                                         std::string framesString=animationList.at(1);
