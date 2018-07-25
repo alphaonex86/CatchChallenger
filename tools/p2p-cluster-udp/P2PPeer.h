@@ -12,6 +12,7 @@ class P2PPeer
 public:
     P2PPeer(const uint8_t * const publickey, const uint64_t &local_sequence_number_validated,
             const uint64_t &remote_sequence_number,const sockaddr_in &si_other);
+    virtual ~P2PPeer();
 public:
     //P2PPeer();
     void emitAck();

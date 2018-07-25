@@ -40,7 +40,7 @@ P2PServerUDP::P2PServerUDP(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_
         abort();
     }
 
-    std::cout << "public key: " << binarytoHexa(publickey,sizeof(publickey)) << std::endl;
+    std::cout << "public key: " << "\e[1m\e[92m" << binarytoHexa(publickey,sizeof(publickey)) << "\e[0m" << std::endl;
 
     ptr_random = fopen("/dev/urandom","rb");  // r for read, b for binary
     if(ptr_random == NULL)
@@ -370,6 +370,7 @@ void P2PServerUDP::read()
                             }
                             else
                             {
+                                delete P2PServerUDP::hostConnectionEstablished.at(remoteClient);
                                 P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
 
                                 //new peer
@@ -478,12 +479,18 @@ void P2PServerUDP::read()
                 if(messageType==0x04 && recv_len!=(8+8+1+ED25519_SIGNATURE_SIZE))
                 {
                     std::cerr << "messageType==0x04 && recv_len!=8+8+1+ED25519_SIGNATURE_SIZE" << std::endl;
+                    delete P2PServerUDP::hostConnectionEstablished.at(remoteClient);
                     P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
                     return;
                 }
                 //get valid public key from in: handShake1, out: handShake2
                 if(P2PServerUDP::hostConnectionEstablished.find(remoteClient)==P2PServerUDP::hostConnectionEstablished.cend())
+                {
+                    std::cerr << "P2P peer bug P2PServerUDP::hostConnectionEstablished.find(remoteClient)=="
+                                 "P2PServerUDP::hostConnectionEstablished.cend() at "
+                              __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                     return;
+                }
                 P2PPeer *hostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
                 //check the message content
                 const int rc2 = ed25519_sha512_verify(
@@ -493,14 +500,18 @@ void P2PServerUDP::read()
                     reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
                                                      );
                 if(rc2 != 1)
+                {
+                    std::cerr << "P2P peer bug ed25519_sha512_verify at "
+                              __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                     return;
+                }
 
                 //load the data size
                 const uint16_t &size=recv_len-8-8-1-ED25519_SIGNATURE_SIZE;
                 //the data
                 uint64_t sequenceNumber=0;
                 memcpy(&sequenceNumber,readOnlyReadBuffer,8);
-                if(memcmp(readOnlyReadBuffer+8,&hostConnected->get_remote_sequence_number(),8)==0)
+                if(memcmp(readOnlyReadBuffer,&hostConnected->get_remote_sequence_number(),8)==0)
                 {
                     //flush buffer, if have more buffer send else ACK
                     uint64_t ackNumber=0;
@@ -515,6 +526,7 @@ void P2PServerUDP::read()
                         if(!hostConnected->parseData(reinterpret_cast<const uint8_t * const>(readOnlyReadBuffer+8+8+1),size))
                         {
                             std::cerr << "P2P peer bug !hostConnected.parseData()" << std::endl;
+                            delete P2PServerUDP::hostConnectionEstablished.at(remoteClient);
                             P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
                             return;
                         }
@@ -523,6 +535,7 @@ void P2PServerUDP::read()
                             if(size!=0)
                             {
                                 std::cerr << "P2P peer missing data (disconnect)" << std::endl;
+                                delete P2PServerUDP::hostConnectionEstablished.at(remoteClient);
                                 P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
                                 return;
                             }
