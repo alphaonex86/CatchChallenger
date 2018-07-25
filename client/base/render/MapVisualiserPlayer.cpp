@@ -744,7 +744,6 @@ void MapVisualiserPlayer::fetchPlayer() {
             {
                 playerTileset = new Tiled::Tileset(QString::fromStdString(lastTileset), 16, 24);
                 playerTileset->loadFromImage(image,QString::fromStdString(imagePath));
-                std::cout <<" 742 MapVISUALIzer player playertileset loading...................................."<<std::endl;
             }
             else
             {
@@ -770,12 +769,12 @@ void MapVisualiserPlayer::fetchFollowingMonster() {
         }
         else
         {
-            std::string imagePath2 = datapackPath + DATAPACK_BASE_PATH_SKIN + std::string("followingmonster") + MapVisualiserPlayer::text_slashtrainerMonsterpng;
+            std::string imagePath = datapackPath + DATAPACK_BASE_PATH_SKIN + std::string("followingmonster") + MapVisualiserPlayer::text_slashtrainerMonsterpng;
             followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
 
-            if (!followingMonsterTileset->loadFromImage(imagePath2))
+            if (!followingMonsterTileset->loadFromImage(imagePath))
             {
-                qDebug() << "Unable to load the player tilset: " + QString::fromStdString(imagePath2);
+                qDebug() << "Unable to load the player tilset: " + QString::fromStdString(imagePath);
                 followingMonsterTileset = playerTilesetCache[defaultMonsterTileset];
             }
             const_cast<Tiled::Cell&>(followingMonsterMapObject->cell()).tile = followingMonsterTileset->tileAt(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Top);
@@ -1484,56 +1483,87 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, C
 }
 
 //call after enter on new map
+//TODO: separate following monster from player
 void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 {
-    if(all_map.find(current_map)==all_map.cend())
+    if (all_map.find(current_map) == all_map.cend())
     {
         qDebug() << QStringLiteral("all_map have not the current map: %1").arg(QString::fromStdString(current_map));
         return;
     }
-    Tiled::ObjectGroup *currentGroup=playerMapObject->objectGroup();
-    Tiled::ObjectGroup *othercurrentGroup=followingMonsterMapObject->objectGroup();
-    if(currentGroup!=NULL)
+    Tiled::ObjectGroup *currentGroup = playerMapObject->objectGroup();
+    Tiled::ObjectGroup *othercurrentGroup = followingMonsterMapObject->objectGroup();
+    if (currentGroup != NULL)
     {
-        if(ObjectGroupItem::objectGroupLink.find(currentGroup)!=ObjectGroupItem::objectGroupLink.cend())
+        if (ObjectGroupItem::objectGroupLink.find(currentGroup) != ObjectGroupItem::objectGroupLink.cend()) {
             ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(playerMapObject);
-        //currentGroup->removeObject(playerMapObject);
-        if(currentGroup!=all_map.at(current_map)->objectGroup)
+        }
+
+        if (currentGroup!=all_map.at(current_map)->objectGroup) {
             qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
-        if(othercurrentGroup!=all_map.at(current_map)->objectGroup)
+        }
+    }
+    if (othercurrentGroup != NULL)
+    {
+        if (ObjectGroupItem::objectGroupLink.find(othercurrentGroup) != ObjectGroupItem::objectGroupLink.cend()) {
+            ObjectGroupItem::objectGroupLink.at(othercurrentGroup)->removeObject(followingMonsterMapObject);
+        }
+
+        if (othercurrentGroup!=all_map.at(current_map)->objectGroup) {
             qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), the followingmonster group is wrong: %1").arg(othercurrentGroup->name());
+        }
     }
-    if(ObjectGroupItem::objectGroupLink.find(all_map.at(current_map)->objectGroup)!=ObjectGroupItem::objectGroupLink.cend()){
-        ObjectGroupItem::objectGroupLink.at(all_map.at(current_map)->objectGroup)->addObject(playerMapObject);
-        ObjectGroupItem::objectGroupLink.at(all_map.at(current_map)->objectGroup)->addObject(followingMonsterMapObject);
-    }
-    else
+
+    Tiled::ObjectGroup *currentMapGroup = all_map.at(current_map)->objectGroup;
+    if (ObjectGroupItem::objectGroupLink.find(currentMapGroup) != ObjectGroupItem::objectGroupLink.cend()) {
+        ObjectGroupItem::objectGroupLink.at(currentMapGroup)->addObject(playerMapObject);
+        ObjectGroupItem::objectGroupLink.at(currentMapGroup)->addObject(followingMonsterMapObject);
+    } else {
         qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
-    mLastLocation=all_map.at(current_map)->logicalMap.map_file;
+    }
+    mLastLocation = all_map.at(current_map)->logicalMap.map_file;
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-    playerMapObject->setPosition(QPoint(x,y+1));
+    playerMapObject->setPosition(QPoint(x, y + 1));
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
+    //move following to the final position (integer), x + 2 because the tile lib start x behind the player
     followingMonsterMapObject->setPosition(QPoint(x + 2, y));
     MapObjectItem::objectLink.at(followingMonsterMapObject)->setZValue(y);
-    //MapObjectItem::objectLink.at(followingMonsterMapObject)->setZValue(y);
-    if(centerOnPlayer)
+
+    if (centerOnPlayer) {
         centerOn(MapObjectItem::objectLink.at(playerMapObject));
+    }
     centerOn(MapObjectItem::objectLink.at(followingMonsterMapObject));
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
 void MapVisualiserPlayer::unloadPlayerFromCurrentMap()
 {
-    Tiled::ObjectGroup *currentGroup=playerMapObject->objectGroup();
-    if(currentGroup==NULL)
+    Tiled::ObjectGroup* currentGroup = playerMapObject->objectGroup();
+    if (currentGroup == NULL) {
         return;
+    }
     //unload the player sprite
-    if(ObjectGroupItem::objectGroupLink.find(playerMapObject->objectGroup())!=
-            ObjectGroupItem::objectGroupLink.cend())
-        ObjectGroupItem::objectGroupLink.at(playerMapObject->objectGroup())->removeObject(playerMapObject);
-    else
+    if(ObjectGroupItem::objectGroupLink.find(currentGroup) != ObjectGroupItem::objectGroupLink.cend()) {
+        ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(playerMapObject);
+    } else {
         qDebug() << QStringLiteral("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains playerMapObject->objectGroup()");
+    }
+}
+
+
+void MapVisualiserPlayer::unloadFollowingMonsterFromCurrentMap()
+{
+    Tiled::ObjectGroup *currentGroup = followingMonsterMapObject->objectGroup();
+    if (currentGroup == NULL) {
+        return;
+    }
+    //unload the following monster sprite
+    if (ObjectGroupItem::objectGroupLink.find(currentGroup) != ObjectGroupItem::objectGroupLink.cend()) {
+        ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(followingMonsterMapObject);
+    } else {
+        qDebug() << QStringLiteral("unloadFollowingMonsterFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains followingMonsterMapObject->objectGroup()");
+    }
 }
 
 /*void MapVisualiserPlayer::startGrassAnimation(const CatchChallenger::Direction &direction)

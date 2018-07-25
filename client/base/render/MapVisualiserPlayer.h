@@ -142,6 +142,7 @@ protected slots:
     virtual void loadPlayerFromCurrentMap();
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadPlayerFromCurrentMap();
+    virtual void unloadFollowingMonsterFromCurrentMap();
     virtual void parseStop();
     virtual void parseAction();
     void stopAndSend();

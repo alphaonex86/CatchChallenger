@@ -113,7 +113,7 @@ bool Tileset::loadFromImage(const std::string &fileName)
 bool Tileset::isLoaded(const std::string& tilesetFileName) {
     return (
         this->mImageSource.toStdString() == tilesetFileName &&
-        !this->tileSize().isNull() &&
+        !this->mTiles.size() > 0 &&
         this->mColumnCount > 0 &&
         this->mImageWidth > 0 &&
         this->mImageHeight > 0
