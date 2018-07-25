@@ -2,6 +2,7 @@
 #include "P2PServerUDP.h"
 #include <cstring>
 #include <iostream>
+#include <arpa/inet.h>
 
 //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_SIGNATURE_SIZE(node)]
 char P2PPeer::buffer[];
@@ -161,7 +162,7 @@ bool P2PPeer::sendData(const uint8_t * const data, const uint16_t &size)
         return false;
     if(size==0)
         return false;
-    const unsigned int dataSize=8+8+size+ED25519_SIGNATURE_SIZE;
+    const unsigned int dataSize=8+8+1+size+ED25519_SIGNATURE_SIZE;
     memcpy(P2PPeer::buffer,&local_sequence_number_validated,sizeof(local_sequence_number_validated));
     local_sequence_number_validated++;
     memcpy(P2PPeer::buffer+8,&remote_sequence_number,sizeof(remote_sequence_number));
@@ -263,4 +264,11 @@ bool P2PPeer::sendRawDataWithoutPutInQueue(const uint8_t * const data, const uin
         std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize (2)" << std::endl;
     }
     return true;
+}
+
+std::string P2PPeer::toString() const
+{
+    char str[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(si_other), str, INET_ADDRSTRLEN);
+    return std::string(str)+":"+std::to_string(ntohs(si_other.sin_port));
 }

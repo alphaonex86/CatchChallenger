@@ -7,9 +7,7 @@
 #include <vector>
 #include <string>
 
-#include "HostConnected.h"
-
-class P2PPeer : public HostConnected
+class P2PPeer
 {
 public:
     P2PPeer(const uint8_t * const publickey, const uint64_t &local_sequence_number_validated,
@@ -25,6 +23,8 @@ public:
     const uint8_t *getPublickey() const;
     const uint64_t &get_remote_sequence_number() const;
     void incremente_remote_sequence_number();
+    std::string toString() const;
+    virtual bool parseData(const uint8_t * const data, const uint16_t &size) = 0;
 private:
     uint8_t publickey[ED25519_KEY_SIZE];
     uint64_t local_sequence_number_validated;

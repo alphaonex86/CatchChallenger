@@ -50,7 +50,8 @@ public:
         #endif
         #ifdef CATCHCHALLENGER_CLASS_P2PCLUSTER
             ServerP2P,
-            Timer
+            Timer,
+            Stdin
         #endif
     };
     virtual EpollObjectType getType() const = 0;

@@ -13,7 +13,7 @@ public:
             const int &infd
         #endif
             );
-    void updateJsonFile();
+    void updateJsonFile(const bool &withIndentation);
     void tryReconnect();
     static std::string numberToStringWithK(unsigned int number);
     static LinkToLoginShow2 *linkToLogin;
