@@ -62,7 +62,7 @@ double stringtodouble(const char * const string,bool *ok=NULL);*/
 
 std::string binarytoHexa(const std::vector<char> &data,bool *ok=NULL);
 std::string binarytoHexa(const char * const data,const uint32_t &size,bool *ok=NULL);
-std::string binarytoHexa(const unsigned char * const data,const uint32_t &size,bool *ok=NULL);
+std::string binarytoHexa(const void * const data, const uint32_t &size, bool *ok=NULL);
 uint8_t hexToDecUnit(const std::string& data,bool *ok=NULL);
 std::vector<char> hexatoBinary(const std::string &data,bool *ok=NULL);
 void binaryAppend(std::vector<char> &data,const std::vector<char> &add);
