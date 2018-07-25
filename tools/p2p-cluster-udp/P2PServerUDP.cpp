@@ -1,4 +1,5 @@
 #include "P2PServerUDP.h"
+#include "Status.h"
 #include <string>
 #include <iostream>
 #include <netdb.h>
@@ -236,7 +237,7 @@ void P2PServerUDP::read()
                         memcpy(&local_sequence_number_validated,handShake2,8);
                         uint64_t remote_sequence_number=0;
                         memcpy(&remote_sequence_number,readOnlyReadBuffer/*==handShake2+8, see above*/,8);
-                        hostToFirstReplyEntry.hostConnected=new P2PPeer(publickey,local_sequence_number_validated,
+                        hostToFirstReplyEntry.hostConnected=new HostConnected(publickey,local_sequence_number_validated,
                             remote_sequence_number,si_other);
                         memcpy(hostToFirstReplyEntry.random,handShake2,8);
                         hostToFirstReplyEntry.round=0;
@@ -351,7 +352,7 @@ void P2PServerUDP::read()
                             {
                                 //new peer
                                 std::cerr << "new peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                                P2PPeer * const newHostConnected=new P2PPeer(publickey,local_sequence_number_validated,
+                                HostConnected * const newHostConnected=new HostConnected(publickey,local_sequence_number_validated,
                                                                      remote_sequence_number,si_other);
                                 P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+indexSearch);
                                 P2PServerUDP::hostConnectionEstablished[remoteClient]=newHostConnected;
@@ -373,13 +374,13 @@ void P2PServerUDP::read()
 
                                 //new peer
                                 std::cerr << "new peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                                P2PPeer * const newHostConnected=new P2PPeer(publickey,local_sequence_number_validated,
+                                HostConnected * const newHostConnected=new HostConnected(publickey,local_sequence_number_validated,
                                                                      remote_sequence_number,si_other);
                                 P2PServerUDP::hostConnectionEstablished[remoteClient]=newHostConnected;
                             }
                         }
 
-                        P2PPeer *currentHostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
+                        HostConnected *currentHostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
                         currentHostConnected->sendDataWithMessageType(reinterpret_cast<uint8_t *>(handShake3),sizeof(handShake3));//and emit
                     }
                     break;
@@ -437,12 +438,16 @@ void P2PServerUDP::read()
                                     }
                                     indexSearch++;
                                 }
+                                if(indexSearch>=P2PServerUDP::p2pserver->hostToConnect.size())
+                                    std::cout << "set peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 P2PServerUDP::hostConnectionEstablished[remoteClient]=hostToFirstReply.hostConnected;
 
                                 P2PServerUDP::hostToFirstReply.erase(remoteClient);
                             }
                             else
                                 std::cerr << "wrong random key at handcheck3 at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+
+                            CatchChallenger::Status::status.clear();
                             return;
                         }
 

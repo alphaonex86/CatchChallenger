@@ -49,7 +49,7 @@ void LinkToLoginShow2::tryReconnect()
     displayedMaxPlayer=0;
 }
 
-void LinkToLoginShow2::updateJsonFile()
+void LinkToLoginShow2::updateJsonFile(const bool &withIndentation)
 {
     unsigned int connectedPlayer=0;
     unsigned int maxPlayer=0;

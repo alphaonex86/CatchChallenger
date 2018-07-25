@@ -27,7 +27,10 @@ SOURCES += main.cpp \
     P2PTimerHandshake2.cpp \
     P2PTimerHandshake3.cpp \
     HostConnected.cpp \
-    P2PPeer.cpp
+    P2PPeer.cpp \
+    Status.cpp \
+    Stdin.cpp \
+    ../../server/epoll/EpollStdin.cpp
 
 HEADERS += \
     ../../server/epoll/Epoll.h \
@@ -44,7 +47,12 @@ HEADERS += \
     P2PTimerHandshake2.h \
     P2PTimerHandshake3.h \
     HostConnected.h \
-    P2PPeer.h
+    P2PPeer.h \
+    Status.h \
+    Stdin.h \
+    ../../server/epoll/EpollStdin.h
 
 HEADERS += $$PWD/../../general/base/tinyXML2/tinyxml2.h
-SOURCES += $$PWD/../../general/base/tinyXML2/tinyxml2.cpp
+SOURCES += $$PWD/../../general/base/tinyXML2/tinyxml2.cpp \
+$$PWD/../../general/base/tinyXML2/tinyxml2b.cpp \
+$$PWD/../../general/base/tinyXML2/tinyxml2c.cpp

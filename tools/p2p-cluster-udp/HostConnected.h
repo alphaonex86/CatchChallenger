@@ -1,14 +1,14 @@
 #ifndef HostConnected_H
 #define HostConnected_H
 
-#include <stdint.h>
+#include "P2PPeer.h"
 
-class HostConnected
+class HostConnected : public P2PPeer
 {
 public:
-    HostConnected();
+    HostConnected(const uint8_t * const publickey, const uint64_t &local_sequence_number_validated,
+                  const uint64_t &remote_sequence_number,const sockaddr_in &si_other);
     bool parseData(const uint8_t * const data, const uint16_t &size);
-    virtual bool sendDataWithMessageType(const uint8_t * const data, const uint16_t &size) = 0;
 };
 
 #endif // HostConnected_H

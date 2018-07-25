@@ -9,7 +9,7 @@
 #include <utility>
 #include <unordered_map>
 #include <nettle/eddsa.h>
-#include "P2PPeer.h"
+#include "HostConnected.h"
 
 class P2PServerUDP : public BaseClassSwitch
 {
@@ -24,12 +24,12 @@ public:
     const char *getPublicKey() const;
     const char * getCaSignature() const;
 
-    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,P2PPeer *> hostConnectionEstablished;
+    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostConnected *> hostConnectionEstablished;
 
     struct HostToSecondReply {
         uint8_t round;
         char reply[8+8+1+ED25519_SIGNATURE_SIZE];
-        P2PPeer *hostConnected;
+        HostConnected *hostConnected;
     };
     std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostToSecondReply> hostToSecondReply;
 
@@ -37,7 +37,7 @@ public:
         uint8_t round;//if timeout, remove from connect
         char random[8];
         char reply[8+8+1+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE+ED25519_SIGNATURE_SIZE];
-        P2PPeer *hostConnected;
+        HostConnected *hostConnected;
     };
     std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostToFirstReply> hostToFirstReply;
 
