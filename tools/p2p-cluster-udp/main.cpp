@@ -16,12 +16,14 @@
 #include "P2PTimerConnect.h"
 #include "P2PTimerHandshake2.h"
 #include "P2PTimerHandshake3.h"
+#include "Status.h"
+#include "Stdin.h"
 
 #define MAXEVENTS 512
 
 using namespace CatchChallenger;
 
-/* Catch Signal Handler functio */
+/* Catch Signal Handler function */
 void signal_callback_handler(int signum){
     printf("Caught signal SIGPIPE %d\n",signum);
 }
@@ -219,6 +221,8 @@ int main(int argc, char *argv[])
     p2pTimerHandshake2.start();
     P2PTimerHandshake3 p2pTimerHandshake3;
     p2pTimerHandshake3.start();
+    Status::status.start();
+    Stdin s;
 
     /* The event loop */
     std::vector<std::pair<void *,BaseClassSwitch::EpollObjectType> > elementsToDelete;
@@ -270,6 +274,12 @@ int main(int argc, char *argv[])
                     P2PTimerConnect * const timer=static_cast<P2PTimerConnect *>(event.data.ptr);
                     timer->exec();
                     timer->validateTheTimer();
+                }
+                break;
+                case BaseClassSwitch::EpollObjectType::Stdin:
+                {
+                    Stdin * const s=static_cast<Stdin *>(event.data.ptr);
+                    s->read();
                 }
                 break;
                 default:
