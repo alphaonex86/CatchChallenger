@@ -475,71 +475,71 @@ void P2PServerUDP::read()
             case 0x04:
             case 0xFF:
             {
-                switch(recv_len)
+                if(messageType==0x04 && recv_len!=(8+8+1+ED25519_SIGNATURE_SIZE))
                 {
-                    //in: ACK or data
-                    case 8+8+1+ED25519_SIGNATURE_SIZE:
-                    {
-                        //get valid public key from in: handShake1, out: handShake2
-                        if(P2PServerUDP::hostConnectionEstablished.find(remoteClient)==P2PServerUDP::hostConnectionEstablished.cend())
-                            return;
-                        P2PPeer *hostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
-                        //check the message content
-                        const int rc2 = ed25519_sha512_verify(
-                            reinterpret_cast<const uint8_t *>(hostConnected->getPublickey()),//pub
-                            recv_len-ED25519_SIGNATURE_SIZE,//length
-                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer),//msg
-                            reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
-                                                             );
-                        if(rc2 != 1)
-                            return;
-
-                        //load the data size
-                        const uint16_t &size=recv_len-8-8-1-ED25519_SIGNATURE_SIZE;
-                        //the data
-                        uint64_t sequenceNumber=0;
-                        memcpy(&sequenceNumber,readOnlyReadBuffer,8);
-                        if(memcmp(readOnlyReadBuffer+8,&hostConnected->get_remote_sequence_number(),8)==0)
-                        {
-                            //flush buffer, if have more buffer send else ACK
-                            uint64_t ackNumber=0;
-                            memcpy(&ackNumber,readOnlyReadBuffer+8,8);
-                            if(!hostConnected->discardBuffer(ackNumber))
-                                return;
-
-                            hostConnected->incremente_remote_sequence_number();
-                            switch(messageType)
-                            {
-                                case 0x04:
-                                if(!hostConnected->parseData(reinterpret_cast<const uint8_t * const>(readOnlyReadBuffer+8+8+1),size))
-                                {
-                                    std::cerr << "P2P peer bug !hostConnected.parseData()" << std::endl;
-                                    P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
-                                    return;
-                                }
-                                break;
-                                case 0xFF:
-                                    if(size!=0)
-                                    {
-                                        std::cerr << "P2P peer missing data (disconnect)" << std::endl;
-                                        P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
-                                        return;
-                                    }
-                                break;
-                                default:
-                                    std::cerr << "P2P peer bug not known message" << std::endl;
-                                break;
-                            }
-                        }
-                        else
-                            std::cerr << "P2P peer missing packet" << std::endl;
-                    }
-                    break;
-                    default:
-                    {
-                        std::cerr << "messageType, 0x04 0xFF, some problem" << std::endl;
-                    }
+                    std::cerr << "messageType==0x04 && recv_len!=8+8+1+ED25519_SIGNATURE_SIZE" << std::endl;
+                    P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
                     return;
+                }
+                //get valid public key from in: handShake1, out: handShake2
+                if(P2PServerUDP::hostConnectionEstablished.find(remoteClient)==P2PServerUDP::hostConnectionEstablished.cend())
+                    return;
+                P2PPeer *hostConnected=P2PServerUDP::hostConnectionEstablished.at(remoteClient);
+                //check the message content
+                const int rc2 = ed25519_sha512_verify(
+                    reinterpret_cast<const uint8_t *>(hostConnected->getPublickey()),//pub
+                    recv_len-ED25519_SIGNATURE_SIZE,//length
+                    reinterpret_cast<const uint8_t *>(readOnlyReadBuffer),//msg
+                    reinterpret_cast<const uint8_t *>(readOnlyReadBuffer+recv_len-ED25519_SIGNATURE_SIZE)//signature
+                                                     );
+                if(rc2 != 1)
+                    return;
+
+                //load the data size
+                const uint16_t &size=recv_len-8-8-1-ED25519_SIGNATURE_SIZE;
+                //the data
+                uint64_t sequenceNumber=0;
+                memcpy(&sequenceNumber,readOnlyReadBuffer,8);
+                if(memcmp(readOnlyReadBuffer+8,&hostConnected->get_remote_sequence_number(),8)==0)
+                {
+                    //flush buffer, if have more buffer send else ACK
+                    uint64_t ackNumber=0;
+                    memcpy(&ackNumber,readOnlyReadBuffer+8,8);
+                    if(!hostConnected->discardBuffer(ackNumber))
+                        return;
+
+                    hostConnected->incremente_remote_sequence_number();
+                    switch(messageType)
+                    {
+                        case 0x04:
+                        if(!hostConnected->parseData(reinterpret_cast<const uint8_t * const>(readOnlyReadBuffer+8+8+1),size))
+                        {
+                            std::cerr << "P2P peer bug !hostConnected.parseData()" << std::endl;
+                            P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
+                            return;
+                        }
+                        break;
+                        case 0xFF:
+                            if(size!=0)
+                            {
+                                std::cerr << "P2P peer missing data (disconnect)" << std::endl;
+                                P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
+                                return;
+                            }
+                        break;
+                        default:
+                            std::cerr << "P2P peer bug not known message" << std::endl;
+                        break;
+                    }
+                }
+                else
+                {
+                    const uint64_t t=hostConnected->get_remote_sequence_number();
+                    std::cerr << "P2P peer missing packet: "
+                              << binarytoHexa(&t,sizeof(t))
+                              << ", data: "
+                              << binarytoHexa(readOnlyReadBuffer,recv_len)
+                              << std::endl;
                 }
             }
             break;
