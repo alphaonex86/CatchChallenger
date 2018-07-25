@@ -19,6 +19,10 @@ P2PPeer::P2PPeer(const uint8_t * const publickey, const uint64_t &local_sequence
     memcpy(P2PPeer::ack+8+8,ackNumber,sizeof(ackNumber));*/
 }
 
+P2PPeer::~P2PPeer()
+{
+}
+
 void P2PPeer::sign(uint8_t *msg,const size_t &length)
 {
     ed25519_sha512_sign(reinterpret_cast<const uint8_t *>(P2PServerUDP::p2pserver->getPublicKey()),

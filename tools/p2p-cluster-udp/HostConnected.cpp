@@ -7,6 +7,11 @@ HostConnected::HostConnected(const uint8_t * const publickey, const uint64_t &lo
 {
 }
 
+HostConnected::~HostConnected()
+{
+    std::cout << "\e[1m\e[91mHostConnected::~HostConnected()\e[0m" << std::endl;
+}
+
 bool HostConnected::parseData(const uint8_t * const data, const uint16_t &size)
 {
     std::cout << "From: " << toString() << ": " << std::string(reinterpret_cast<const char *>(data),size) << std::endl;
