@@ -30,5 +30,10 @@ void EpollStdin::read()
 {
     const char * const r=fgets(buff_input,sizeof(buff_input),stdin);
     if(r!=NULL)
+    {
+        std::cout << "EpollStdin::read() ok" << std::endl;
         input(buff_input,strlen(r));
+    }
+    else
+        std::cerr << "EpollStdin::read() error" << std::endl;
 }
