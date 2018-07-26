@@ -194,6 +194,7 @@ int main(int argc, char *argv[])
                 {
                     hostToConnect.round=0;
                     hostToConnect.serv_addr=serv_addr;
+                    hostToConnect.serialised_serv_addr=P2PServerUDP::sockSerialised(serv_addr);
                     //pass to temp list because P2PServerUDP::p2pserver not init for now
                     hostToConnectTemp.push_back(hostToConnect);
                 }

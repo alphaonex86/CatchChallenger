@@ -24,6 +24,7 @@ public:
     const uint8_t *getPublickey() const;
     const uint64_t &get_remote_sequence_number() const;
     void incremente_remote_sequence_number();
+    static void incremented_sequence_number(uint64_t &number);
     std::string toString() const;
     virtual bool parseData(const uint8_t * const data, const uint16_t &size) = 0;
 private:

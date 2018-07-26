@@ -18,7 +18,7 @@ P2PTimerHandshake3::P2PTimerHandshake3()
 }
 void P2PTimerHandshake3::exec()
 {
-    if(P2PServerUDP::p2pserver->hostToFirstReply.empty())
+    if(P2PServerUDP::p2pserver->hostConnectionEstablished.empty())
         return;
     {
         const std::chrono::time_point<std::chrono::steady_clock> end=std::chrono::steady_clock::now();
@@ -50,5 +50,5 @@ void P2PTimerHandshake3::exec()
         startTime=std::chrono::steady_clock::now();
     }
 
-    std::cout << "P2PTimerHandshake3::exec()" << std::endl;
+    //std::cout << "P2PTimerHandshake3::exec()" << std::endl;
 }

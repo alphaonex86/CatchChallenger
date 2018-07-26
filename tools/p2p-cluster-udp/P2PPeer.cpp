@@ -3,6 +3,8 @@
 #include <cstring>
 #include <iostream>
 #include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_SIGNATURE_SIZE(node)]
 char P2PPeer::buffer[];
@@ -99,7 +101,15 @@ const uint64_t &P2PPeer::get_remote_sequence_number() const
 
 void P2PPeer::incremente_remote_sequence_number()
 {
-    remote_sequence_number++;
+    incremented_sequence_number(remote_sequence_number);
+}
+
+void P2PPeer::incremented_sequence_number(uint64_t &number)
+{
+    if(number==0xFFFFFFFFFFFFFFFF)
+        number=0;
+    else
+        number++;
 }
 
 bool P2PPeer::sendDataWithMessageType(const uint8_t * const data, const uint16_t &size)
@@ -272,7 +282,7 @@ bool P2PPeer::sendRawDataWithoutPutInQueue(const uint8_t * const data, const uin
 
 std::string P2PPeer::toString() const
 {
-    char str[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &(si_other), str, INET_ADDRSTRLEN);
-    return std::string(str)+":"+std::to_string(ntohs(si_other.sin_port));
+    sockaddr_in socket;
+    memcpy(&socket,&si_other,sizeof(socket));
+    return std::string(inet_ntoa(socket.sin_addr))+":"+std::to_string(ntohs(si_other.sin_port));
 }
