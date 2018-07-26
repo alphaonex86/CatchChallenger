@@ -72,23 +72,28 @@ void P2PTimerConnect::exec()
         if(lastScannedIndex>=P2PServerUDP::p2pserver->hostToConnect.size())
             lastScannedIndex=0;
 
-        peerToConnect.round++;
-        if(peerToConnect.round<3 || peerToConnect.round==13)
+        if(P2PServerUDP::p2pserver->hostToFirstReply.find(peerToConnect.serialised_serv_addr)==P2PServerUDP::p2pserver->hostToFirstReply.cend() &&
+                P2PServerUDP::p2pserver->hostToSecondReply.find(peerToConnect.serialised_serv_addr)==P2PServerUDP::p2pserver->hostToSecondReply.cend() &&
+                P2PServerUDP::p2pserver->hostConnectionEstablished.find(peerToConnect.serialised_serv_addr)==P2PServerUDP::p2pserver->hostConnectionEstablished.cend())
         {
-            if(peerToConnect.round==13)
-                peerToConnect.round=3;
+            peerToConnect.round++;
+            if(peerToConnect.round<3 || peerToConnect.round==13)
+            {
+                if(peerToConnect.round==13)
+                    peerToConnect.round=3;
 
-            //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
-            const int readSize=fread(handShake1,1,8,P2PServerUDP::p2pserver->ptr_random);
-            if(readSize != 8)
-                abort();
-            memcpy(&peerToConnect.random,handShake1,8);
-            P2PPeer::sign(reinterpret_cast<uint8_t *>(handShake1),8+8+1+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE);
-            P2PServerUDP::p2pserver->write(handShake1,sizeof(handShake1),peerToConnect.serv_addr);
+                //[8(current sequence number)+8(acknowledgement number)+1(request type)+ED25519_KEY_SIZE(node)+ED25519_SIGNATURE_SIZE(ca)+ED25519_SIGNATURE_SIZE(node)]
+                const int readSize=fread(handShake1,1,8,P2PServerUDP::p2pserver->ptr_random);
+                if(readSize != 8)
+                    abort();
+                memcpy(&peerToConnect.random,handShake1,8);
+                P2PPeer::sign(reinterpret_cast<uint8_t *>(handShake1),8+8+1+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE);
+                P2PServerUDP::p2pserver->write(handShake1,sizeof(handShake1),peerToConnect.serv_addr);
 
-            P2PServerUDP::p2pserver->hostToConnectIndex=lastScannedIndex;
-            //std::cout << "P2PTimerConnect::exec() try co" << std::endl;
-            return;
+                P2PServerUDP::p2pserver->hostToConnectIndex=lastScannedIndex;
+                //std::cout << "P2PTimerConnect::exec() try co" << std::endl;
+                return;
+            }
         }
     } while(lastScannedIndex!=P2PServerUDP::p2pserver->hostToConnectIndex);
     P2PServerUDP::p2pserver->hostToConnectIndex=lastScannedIndex;

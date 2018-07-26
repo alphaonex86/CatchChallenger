@@ -287,6 +287,7 @@ void P2PServerUDP::read()
                         if(it!=hostToFirstReply.cend())
                             P2PServerUDP::p2pserver->write(hostToFirstReplyEntry.reply,sizeof(hostToFirstReplyEntry.reply),si_other);
                         hostToFirstReply[remoteClient]=hostToFirstReplyEntry;
+                        hostToFirstReplyEntry.hostConnected->incremente_remote_sequence_number();
                     }
                     break;
                     default:
@@ -422,31 +423,54 @@ void P2PServerUDP::read()
                             //hostToFirstReply -> P2PServerUDP::hostConnectionEstablished, first receive
                             HostToFirstReply &hostToFirstReply=P2PServerUDP::hostToFirstReply.at(remoteClient);
 
-                            if(memcmp(hostToFirstReply.random,readOnlyReadBuffer+8,sizeof(hostToFirstReply.random))==0)
+                            if(memcmp(hostToFirstReply.random,readOnlyReadBuffer+8,sizeof(hostToFirstReply.random))==0 )
                             {
-                                std::cerr << "new peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                                //search into the connect and remove if address is same
-                                unsigned int indexSearch=0;
-                                while(indexSearch<P2PServerUDP::p2pserver->hostToConnect.size())
+                                /*not needed, replay attack protection done via him self random number */
+                                const uint64_t &remote_sequence_number=hostToFirstReply.hostConnected->get_remote_sequence_number();
+                                if(memcmp(readOnlyReadBuffer,&remote_sequence_number,8)==0)
                                 {
-                                    HostToConnect &hostToConnect=P2PServerUDP::p2pserver->hostToConnect.at(indexSearch);
-                                    if(memcmp(&hostToConnect.serv_addr,&si_other,sizeof(sockaddr_in))==0)
+                                    std::cerr << "new peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                    //search into the connect and remove if address is same
+                                    unsigned int indexSearch=0;
+                                    while(indexSearch<P2PServerUDP::p2pserver->hostToConnect.size())
                                     {
-                                        //new peer
-                                        std::cerr << "remove peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                                        P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+indexSearch);
-                                        break;
+                                        HostToConnect &hostToConnect=P2PServerUDP::p2pserver->hostToConnect.at(indexSearch);
+                                        if(memcmp(&hostToConnect.serv_addr,&si_other,sizeof(sockaddr_in))==0)
+                                        {
+                                            //new peer
+                                            std::cerr << "remove peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                            P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+indexSearch);
+                                            break;
+                                        }
+                                        indexSearch++;
                                     }
-                                    indexSearch++;
-                                }
-                                if(indexSearch>=P2PServerUDP::p2pserver->hostToConnect.size())
-                                    std::cout << "set peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
-                                P2PServerUDP::hostConnectionEstablished[remoteClient]=hostToFirstReply.hostConnected;
+                                    if(indexSearch>=P2PServerUDP::p2pserver->hostToConnect.size())
+                                        std::cout << "set peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                    hostToFirstReply.hostConnected->incremente_remote_sequence_number();
+                                    P2PServerUDP::hostConnectionEstablished[remoteClient]=hostToFirstReply.hostConnected;
 
-                                P2PServerUDP::hostToFirstReply.erase(remoteClient);
+                                    P2PServerUDP::hostToFirstReply.erase(remoteClient);
+                                }
+                                else
+                                {
+                                    const uint64_t t=hostToFirstReply.hostConnected->get_remote_sequence_number();
+                                    std::cerr << "wrong random key at handcheck3 a at: "
+                                              << binarytoHexa(&t,sizeof(t))
+                                              << ", data: "
+                                              << binarytoHexa(readOnlyReadBuffer,recv_len)
+                                              << " at " << __FILE__ << ":" << std::to_string(__LINE__)
+                                              << std::endl;
+                                }
                             }
                             else
-                                std::cerr << "wrong random key at handcheck3 at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                            {
+                                std::cerr << "wrong random key at handcheck3 b at: "
+                                          << binarytoHexa(&hostToFirstReply.random,sizeof(hostToFirstReply.random))
+                                          << ", data: "
+                                          << binarytoHexa(readOnlyReadBuffer,recv_len)
+                                          << " at " << __FILE__ << ":" << std::to_string(__LINE__)
+                                          << std::endl;
+                            }
 
                             CatchChallenger::Status::status.clear();
                             return;

@@ -27,25 +27,34 @@ void P2PTimerHandshake2::exec()
             startTime=end;
     }
     unsigned int sendedClient=0;
+    std::vector<std::string> toRemove;
     for( auto& n : P2PServerUDP::p2pserver->hostToFirstReply ) {
         if(clientSend.find(n.first)==clientSend.cend())
         {
             P2PServerUDP::HostToFirstReply &peerToConnect=n.second;
-            peerToConnect.round++;
-            if(peerToConnect.round>=1 && peerToConnect.round<=5)
+            if(P2PServerUDP::p2pserver->hostToSecondReply.find(n.first)==P2PServerUDP::p2pserver->hostToSecondReply.cend() &&
+               P2PServerUDP::p2pserver->hostConnectionEstablished.find(n.first)==P2PServerUDP::p2pserver->hostConnectionEstablished.cend())
             {
-                peerToConnect.hostConnected->sendRawDataWithoutPutInQueue(reinterpret_cast<uint8_t *>(peerToConnect.reply),
-                                                sizeof(peerToConnect.reply)
-                                                );
-                return;
+                peerToConnect.round++;
+                if(peerToConnect.round>=1 && peerToConnect.round<=5)
+                {
+                    peerToConnect.hostConnected->sendRawDataWithoutPutInQueue(reinterpret_cast<uint8_t *>(peerToConnect.reply),
+                                                    sizeof(peerToConnect.reply)
+                                                    );
+                    return;
+                }
+                else if(peerToConnect.round > 5)//after try at 100ms and at 500ms, drop the reply
+                    P2PServerUDP::p2pserver->hostToFirstReply.erase(n.first);
+                clientSend.insert(n.first);
+                sendedClient++;
             }
-            else if(peerToConnect.round > 5)//after try at 100ms and at 500ms, drop the reply
-                P2PServerUDP::p2pserver->hostToFirstReply.erase(n.first);
-            clientSend.insert(n.first);
-            sendedClient++;
+            /*else
+                toRemove.push_back(n.first);*/
             break;
         }
     }
+    for( auto& n : toRemove )
+        P2PServerUDP::p2pserver->hostToFirstReply.erase(n);
 
     //if no more data to send, reset and recall
     if(sendedClient==0)
@@ -54,5 +63,5 @@ void P2PTimerHandshake2::exec()
         startTime=std::chrono::steady_clock::now();
     }
 
-    std::cout << "P2PTimerHandshake2::exec()" << std::endl;
+    //std::cout << "P2PTimerHandshake2::exec()" << std::endl;
 }

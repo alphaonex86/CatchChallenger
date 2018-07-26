@@ -45,6 +45,7 @@ public:
         uint8_t round;
         sockaddr_in serv_addr;
         char random[8];
+        std::string serialised_serv_addr;/*sockaddr_in serv_addr;*/
     };
     std::vector<HostToConnect> hostToConnect;
     size_t hostToConnectIndex;
