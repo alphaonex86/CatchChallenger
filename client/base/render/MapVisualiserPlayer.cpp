@@ -1,4 +1,4 @@
-#include "MapVisualiserPlayer.h"
+﻿#include "MapVisualiserPlayer.h"
 
 #include "../../../general/base/MoveOnTheMap.h"
 #include "../../../general/base/CommonDatapack.h"
@@ -190,6 +190,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_left;
             lookToMove.start();
+            updateFollowingMonsterPosition();
             updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Left);
             emit send_player_direction(direction);
             parseStop();
@@ -219,6 +220,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setCell(cell);
             direction = CatchChallenger::Direction_look_at_right;
             lookToMove.start();
+            updateFollowingMonsterPosition();
             updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Right);
             emit send_player_direction(direction);
             parseStop();
@@ -248,6 +250,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_top;
             lookToMove.start();
+            updateFollowingMonsterPosition();
             updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Top);
             emit send_player_direction(direction);
             parseStop();
@@ -277,6 +280,7 @@ void MapVisualiserPlayer::keyPressParse()
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_bottom;
             lookToMove.start();
+            updateFollowingMonsterPosition();
             updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Bottom);
             emit send_player_direction(direction);
             parseStop();
@@ -295,7 +299,26 @@ void MapVisualiserPlayer::updateFollowingMonster(int tiledPos) {
             }
             cell.tile = followingMonsterTileset->tileAt(tiledPos);
             followingMonsterMapObject->setCell(cell);
+            monsterLastTileset = tiledPos;
         }
+    }
+}
+
+void MapVisualiserPlayer::updateFollowingMonsterPosition() {
+    //follow the player dirrection
+    switch (direction) {
+        case CatchChallenger::Direction_look_at_left:
+            followingMonsterMapObject->setPosition(QPoint(x + 1, y + 1));
+            break;
+        case CatchChallenger::Direction_look_at_right:
+            followingMonsterMapObject->setPosition(QPoint(x - 2, y + 1));
+            break;
+        case CatchChallenger::Direction_look_at_top:
+            followingMonsterMapObject->setPosition(QPoint(x, y + 2));
+            break;
+        case CatchChallenger::Direction_look_at_bottom:
+            followingMonsterMapObject->setPosition(QPoint(x, y));
+            break;
     }
 }
 
@@ -310,7 +333,7 @@ std::string MapVisualiserPlayer::StepToSTring(int step) {
             case CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Bottom:return "down rightfoot";
             case CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Right:return "right rightfoot";
     }
-    return "unknow";
+    return "unknown";
 }
 
 void MapVisualiserPlayer::doMoveAnimation()
@@ -784,6 +807,16 @@ void MapVisualiserPlayer::fetchFollowingMonster() {
     }
 }
 
+void MapVisualiserPlayer::updateTilesetForNewTerrain()
+{
+    Tiled::Cell cell = playerMapObject->cell();
+    int tileId = cell.tile->id();
+    cell.tile = playerTileset->tileAt(tileId);//new contents of playerTileset according terrain
+    playerMapObject->setCell(cell);
+
+    updateFollowingMonster();
+}
+
 void MapVisualiserPlayer::finalPlayerStep()
 {
     if(all_map.find(current_map)==all_map.cend())
@@ -813,15 +846,9 @@ void MapVisualiserPlayer::finalPlayerStep()
                 {
                     if(monstersCollision.tile!=lastTileset)
                     {
-                        lastTileset=monstersCollision.tile;
+                        lastTileset = monstersCollision.tile;
                         fetchPlayer();
-                        {
-                            Tiled::Cell cell=playerMapObject->cell();
-                            int tileId=cell.tile->id();
-                            cell.tile=playerTileset->tileAt(tileId);
-                            playerMapObject->setCell(cell);
-                            updateFollowingMonster();
-                        }
+                        updateTilesetForNewTerrain();
                     }
                     break;
                 }
@@ -832,18 +859,12 @@ void MapVisualiserPlayer::finalPlayerStep()
         {
             lastTileset=defaultTileset;
             playerTileset=playerTilesetCache[defaultTileset];
-            {
-                Tiled::Cell cell=playerMapObject->cell();
-                int tileId=cell.tile->id();
-                cell.tile=playerTileset->tileAt(tileId);
-                playerMapObject->setCell(cell);
-                updateFollowingMonster();
-            }
+            updateTilesetForNewTerrain();
         }
     }
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
-    followingMonsterMapObject->setPosition(QPoint(x + 1, y + 1));
+    updateFollowingMonsterPosition();
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
     if(centerOnPlayer)
         centerOn(MapObjectItem::objectLink.at(playerMapObject));
@@ -937,6 +958,7 @@ void MapVisualiserPlayer::finalPlayerStep()
     }
     else if(keyPressed.find(Qt::Key_Up)!=keyPressed.cend())
     {
+
         //can't go into this direction, then just look into this direction
         if(!canGoTo(CatchChallenger::Direction_move_at_top,current_map_pointer->logicalMap,x,y,true))
         {
@@ -1527,7 +1549,7 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
     playerMapObject->setPosition(QPoint(x, y + 1));
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
     //move following to the final position (integer), x + 2 because the tile lib start x behind the player
-    followingMonsterMapObject->setPosition(QPoint(x + 2, y));
+    updateFollowingMonsterPosition();
     MapObjectItem::objectLink.at(followingMonsterMapObject)->setZValue(y);
 
     if (centerOnPlayer) {
