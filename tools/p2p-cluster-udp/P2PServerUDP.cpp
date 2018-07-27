@@ -11,14 +11,28 @@
 #include <cstring>
 #include <arpa/inet.h> // for inet_ntoa, drop after debug
 
+/// \todo control duplicate public key peer
+
 char P2PServerUDP::readBuffer[];
 P2PServerUDP *P2PServerUDP::p2pserver=NULL;
 char P2PServerUDP::handShake2[];
 char P2PServerUDP::handShake3[];
 
-P2PServerUDP::P2PServerUDP(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_publickey/*ED25519_KEY_SIZE*/, uint8_t *ca_signature/*ED25519_SIGNATURE_SIZE*/) :
+P2PServerUDP::P2PServerUDP() :
     hostToConnectIndex(0),
     sfd(-1)
+{
+    ptr_random = fopen("/dev/urandom","rb");  // r for read, b for binary
+    if(ptr_random == NULL)
+        abort();
+}
+
+P2PServerUDP::~P2PServerUDP()
+{
+    fclose(ptr_random);
+}
+
+bool P2PServerUDP::setKey(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_publickey/*ED25519_KEY_SIZE*/, uint8_t *ca_signature/*ED25519_SIGNATURE_SIZE*/)
 {
     memcpy(this->privatekey,privatekey,ED25519_KEY_SIZE);
     memcpy(this->ca_publickey,ca_publickey,ED25519_KEY_SIZE);
@@ -37,14 +51,10 @@ P2PServerUDP::P2PServerUDP(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_
     {
         std::cerr << "ed25519_sha512_verify failed at " << __FILE__ << ":" << std::to_string(__LINE__)
                   << ", your public key seam not firmed by ca" << std::endl;
-        abort();
+        return false;
     }
 
     std::cout << "public key: " << "\e[1m\e[92m" << binarytoHexa(publickey,sizeof(publickey)) << "\e[0m" << std::endl;
-
-    ptr_random = fopen("/dev/urandom","rb");  // r for read, b for binary
-    if(ptr_random == NULL)
-        abort();
 
     const uint8_t requestType3=3;
     const uint8_t requestType2=2;
@@ -72,11 +82,7 @@ P2PServerUDP::P2PServerUDP(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_
     //8+8 -> managed by class, [1(request type)+ED25519_SIGNATURE_SIZE]
     memset(handShake3,0,sizeof(handShake3));
     memcpy(handShake3,&requestType3,sizeof(requestType3));
-}
-
-P2PServerUDP::~P2PServerUDP()
-{
-    fclose(ptr_random);
+    return true;
 }
 
 bool P2PServerUDP::tryListen(const uint16_t &port)
@@ -378,6 +384,7 @@ void P2PServerUDP::read()
                                 std::cerr << "new peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
                                 HostConnected * const newHostConnected=new HostConnected(publickey,local_sequence_number_validated,
                                                                      remote_sequence_number,si_other);
+                                newPeer(si_other);
                                 P2PServerUDP::hostConnectionEstablished[remoteClient]=newHostConnected;
                             }
                         }
@@ -430,6 +437,7 @@ void P2PServerUDP::read()
                                 if(memcmp(readOnlyReadBuffer,&remote_sequence_number,8)==0)
                                 {
                                     std::cerr << "new peer at " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                                    newPeer(si_other);
                                     //search into the connect and remove if address is same
                                     unsigned int indexSearch=0;
                                     while(indexSearch<P2PServerUDP::p2pserver->hostToConnect.size())

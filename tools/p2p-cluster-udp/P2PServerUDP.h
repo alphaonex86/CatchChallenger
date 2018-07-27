@@ -14,7 +14,7 @@
 class P2PServerUDP : public BaseClassSwitch
 {
 public:
-    P2PServerUDP(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_publickey/*ED25519_KEY_SIZE*/, uint8_t *ca_signature/*ED25519_SIGNATURE_SIZE*/);
+    P2PServerUDP();
     ~P2PServerUDP();
     bool tryListen(const uint16_t &port);
     void read();
@@ -54,6 +54,9 @@ public:
 
     const uint8_t *get_privatekey() const;
     const uint8_t *get_ca_publickey() const;
+protected:
+    bool setKey(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_publickey/*ED25519_KEY_SIZE*/, uint8_t *ca_signature/*ED25519_SIGNATURE_SIZE*/);
+    virtual bool newPeer(const sockaddr_in &si_other) = 0;
 private:
     int sfd;
     static char readBuffer[4096];
