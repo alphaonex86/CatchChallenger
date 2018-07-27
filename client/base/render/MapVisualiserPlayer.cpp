@@ -292,11 +292,6 @@ void MapVisualiserPlayer::updateFollowingMonster(int tiledPos) {
     if (followingMonsterMapObject != nullptr) {
         Tiled::Cell cell = followingMonsterMapObject->cell();
         if (followingMonsterTileset != nullptr) {
-            if (!tiledPos) {
-                if (cell.tile) {
-                    tiledPos = cell.tile->id();
-                }
-            }
             cell.tile = followingMonsterTileset->tileAt(tiledPos);
             followingMonsterMapObject->setCell(cell);
             monsterLastTileset = tiledPos;
@@ -305,7 +300,17 @@ void MapVisualiserPlayer::updateFollowingMonster(int tiledPos) {
 }
 
 void MapVisualiserPlayer::updateFollowingMonsterPosition() {
-    //follow the player dirrection
+    //Update before the direction variable change
+    if (keyPressed.find(Qt::Key_Left) != keyPressed.cend()) {
+        direction = CatchChallenger::Direction_look_at_left;
+    } else if (keyPressed.find(Qt::Key_Right) != keyPressed.cend()) {
+        direction = CatchChallenger::Direction_look_at_right;
+    } else if (keyPressed.find(Qt::Key_Up) != keyPressed.cend()) {
+        direction = CatchChallenger::Direction_look_at_top;
+    } else if (keyPressed.find(Qt::Key_Down) != keyPressed.cend()) {
+        direction = CatchChallenger::Direction_look_at_bottom;
+    }
+    //follow the player direction
     switch (direction) {
         case CatchChallenger::Direction_look_at_left:
             followingMonsterMapObject->setPosition(QPoint(x + 1, y + 1));
@@ -318,6 +323,9 @@ void MapVisualiserPlayer::updateFollowingMonsterPosition() {
             break;
         case CatchChallenger::Direction_look_at_bottom:
             followingMonsterMapObject->setPosition(QPoint(x, y));
+            break;
+        default:
+            std::cerr << "direction " << static_cast<unsigned int>(direction) << " cannot be handled." << std::endl;
             break;
     }
 }
@@ -1100,7 +1108,7 @@ void MapVisualiserPlayer::stopAndSend()
         default:
         break;
     }
-    updateFollowingMonster(CatchChallenger::DrawSmallTiledPosition::walkRightFoot_Bottom);
+    updateFollowingMonster(monsterLastTileset);
     emit send_player_direction(direction);
 }
 
@@ -1328,7 +1336,9 @@ void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
     keyPressed.erase(event->key());
 
     if(keyPressed.size()>0)//another key pressed, repeat
+    {
         keyPressParse();
+    }
 }
 
 std::string MapVisualiserPlayer::lastLocation() const
