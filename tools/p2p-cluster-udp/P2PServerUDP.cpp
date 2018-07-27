@@ -556,12 +556,22 @@ void P2PServerUDP::read()
                         }
                         break;
                         case 0xFF:
-                            if(size!=0)
+                            if(size==0)
                             {
                                 std::cerr << "P2P peer missing data (disconnect)" << std::endl;
                                 delete P2PServerUDP::hostConnectionEstablished.at(remoteClient);
                                 P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
                                 return;
+                            }
+                            else
+                            {
+                                if(!hostConnected->parseData(reinterpret_cast<const uint8_t * const>(readOnlyReadBuffer+8+8+1),size))
+                                {
+                                    std::cerr << "P2P peer bug !hostConnected.parseData()" << std::endl;
+                                    delete P2PServerUDP::hostConnectionEstablished.at(remoteClient);
+                                    P2PServerUDP::hostConnectionEstablished.erase(remoteClient);
+                                    return;
+                                }
                             }
                         break;
                         default:

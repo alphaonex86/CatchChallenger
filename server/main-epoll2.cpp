@@ -27,6 +27,12 @@ void send_settings(
         uint8_t &master_considerDownAfterNumberOfTry
         )
 {
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    (void)master_host;
+    (void)master_port;
+    (void)master_tryInterval;
+    (void)master_considerDownAfterNumberOfTry;
+    #endif
     bool ok;
     GameServerSettings formatedServerSettings=server->getSettings();
     NormalServerSettings formatedServerNormalSettings=server->getNormalSettings();

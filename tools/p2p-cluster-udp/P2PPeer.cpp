@@ -63,22 +63,25 @@ bool P2PPeer::discardBuffer(const uint64_t &ackNumber)
             dataToSend.erase(dataToSend.cbegin());
 
         //reemit the last packet
-        const std::string &data=dataToSend.front();
-        const int returnVal=P2PServerUDP::p2pserver->write(data.data(), data.size(), si_other);
-        if (returnVal < 0)
+        if(!dataToSend.empty())
         {
-            std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem" << std::endl;
-            return false;
-        }
-        else if ((uint32_t)returnVal != data.size())
-        {
-            std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize" << std::endl;
-            return false;
-        }
-        if (data.size() > 1200)
-        {
-            return false;
-            std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize (2)" << std::endl;
+            const std::string &data=dataToSend.front();
+            const int returnVal=P2PServerUDP::p2pserver->write(data.data(), data.size(), si_other);
+            if (returnVal < 0)
+            {
+                std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem" << std::endl;
+                return false;
+            }
+            else if ((uint32_t)returnVal != data.size())
+            {
+                std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize" << std::endl;
+                return false;
+            }
+            if (data.size() > 1200)
+            {
+                return false;
+                std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize (2)" << std::endl;
+            }
         }
         return true;
     }
