@@ -30,7 +30,8 @@ SOURCES += main.cpp \
     P2PPeer.cpp \
     Status.cpp \
     Stdin.cpp \
-    ../../server/epoll/EpollStdin.cpp
+    ../../server/epoll/EpollStdin.cpp \
+    P2PServerUDPSettings.cpp
 
 HEADERS += \
     ../../server/epoll/Epoll.h \
@@ -50,7 +51,8 @@ HEADERS += \
     P2PPeer.h \
     Status.h \
     Stdin.h \
-    ../../server/epoll/EpollStdin.h
+    ../../server/epoll/EpollStdin.h \
+    P2PServerUDPSettings.h
 
 HEADERS += $$PWD/../../general/base/tinyXML2/tinyxml2.h
 SOURCES += $$PWD/../../general/base/tinyXML2/tinyxml2.cpp \
