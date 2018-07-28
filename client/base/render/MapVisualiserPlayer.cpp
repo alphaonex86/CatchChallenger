@@ -737,13 +737,13 @@ void MapVisualiserPlayer::setInformations(std::unordered_map<uint16_t, uint32_t>
     this->quests=quests;
     this->itemOnMap=itemOnMap;
     this->plantOnMap=plantOnMap;
-    if(plantOnMap->size()>65535)
+    if(plantOnMap->size()>USHRT_MAX)
         abort();
-    if(items->size()>65535)
+    if(items->size()>USHRT_MAX)
         abort();
-    if(quests->size()>65535)
+    if(quests->size()>USHRT_MAX)
         abort();
-    if(itemOnMap->size()>65535)
+    if(itemOnMap->size()>USHRT_MAX)
         abort();
 }
 
@@ -800,6 +800,10 @@ void MapVisualiserPlayer::fetchFollowingMonster() {
         }
         else
         {
+            if (followingMonsterTileset) {
+                delete followingMonsterTileset;
+                followingMonsterTileset = nullptr;
+            }
             std::string imagePath = datapackPath + DATAPACK_BASE_PATH_SKIN + std::string("followingmonster") + MapVisualiserPlayer::text_slashtrainerMonsterpng;
             followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
 
@@ -838,7 +842,7 @@ void MapVisualiserPlayer::finalPlayerStep()
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
         return;
     }
-    fetchFollowingMonster();
+
     /// \see into haveStopTileAction(), to NPC fight: std::vector<std::pair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
     if(!CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.empty())
     {
@@ -856,6 +860,7 @@ void MapVisualiserPlayer::finalPlayerStep()
                     {
                         lastTileset = monstersCollision.tile;
                         fetchPlayer();
+                        fetchFollowingMonster();
                         updateTilesetForNewTerrain();
                     }
                     break;
@@ -1560,7 +1565,7 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
     //move following to the final position (integer), x + 2 because the tile lib start x behind the player
     updateFollowingMonsterPosition();
-    MapObjectItem::objectLink.at(followingMonsterMapObject)->setZValue(y);
+    MapObjectItem::objectLink.at(followingMonsterMapObject)->setZValue(-1);
 
     if (centerOnPlayer) {
         centerOn(MapObjectItem::objectLink.at(playerMapObject));

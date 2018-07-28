@@ -531,7 +531,15 @@ bool MapControllerMP::setMonster()
         //the following monster skin
         if (followingMonsterInformation.skinId < skinFolderList.size())
         {
+            if (followingMonsterMapObject != nullptr) {
+                delete followingMonsterMapObject;
+                followingMonsterMapObject = nullptr;
+            }
             followingMonsterMapObject = new Tiled::MapObject();
+            if (followingMonsterTileset != nullptr) {
+                delete followingMonsterTileset;
+                followingMonsterTileset = nullptr;
+            }
             followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
 
             followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + skinFolderList.at(followingMonsterInformation.skinId);
