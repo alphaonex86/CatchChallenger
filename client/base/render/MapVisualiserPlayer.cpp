@@ -96,11 +96,9 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     playerTilesetCache[lastTileset] = playerTileset;
     playerTilesetCache[defaultMonsterTileset] = followingMonsterTileset;
 
-    followingMonsterInformation.monsterId = 100;
     followingMonsterInformation.pseudo = "followingmonster";
     followingMonsterInformation.simplifiedId = 0;
     followingMonsterInformation.skinId = 1;
-    followingMonsterInformation.speed = 250;
     followingMonsterInformation.type = CatchChallenger::Player_type::Player_type_normal;
 
     lastAction.restart();

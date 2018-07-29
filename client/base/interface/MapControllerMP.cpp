@@ -519,18 +519,21 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
     }
 
     //current following monster,
-    setMonster();
+    setMonster(player);
 
     return true;
 }
 
-bool MapControllerMP::setMonster()
+bool MapControllerMP::setMonster(const CatchChallenger::Player_public_informations &player)
 {
     if (followingMonsterInformation.simplifiedId == followingMonster_informations.public_informations.simplifiedId)
     {
         //the following monster skin
         if (followingMonsterInformation.skinId < skinFolderList.size())
         {
+            followingMonsterInformation.speed = player.speed;
+            followingMonsterInformation.monsterId = player.monsterId;
+
             if (followingMonsterMapObject != nullptr) {
                 delete followingMonsterMapObject;
                 followingMonsterMapObject = nullptr;
@@ -542,11 +545,16 @@ bool MapControllerMP::setMonster()
             }
             followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
 
-            followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + skinFolderList.at(followingMonsterInformation.skinId);
-            const std::string &imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
+            followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + "/monsters/" + std::to_string(followingMonsterInformation.monsterId);
+            std::string imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
             if (!followingMonsterTileset->loadFromImage(imagePath)) {
-                qDebug() << "Unable to load the following monster tilset: " + QString::fromStdString(imagePath);
+                followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + skinFolderList.at(followingMonsterInformation.skinId);
+                imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
+                if (!followingMonsterTileset->loadFromImage(imagePath)) {
+                    qDebug() << "Unable to load the following monster tilset: " + QString::fromStdString(imagePath);
+                }
             }
+
             playerTilesetCache[defaultMonsterTileset] = followingMonsterTileset;
         }
         else {
