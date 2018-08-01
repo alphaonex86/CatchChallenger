@@ -61,5 +61,6 @@
         <file>images/colorflags/1.png</file>
         <file>images/colorflags/2.png</file>
         <file>images/colorflags/3.png</file>
+        <file>images/followingMonster_default/following.png</file>
     </qresource>
 </RCC>
