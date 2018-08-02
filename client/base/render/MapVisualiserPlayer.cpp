@@ -798,17 +798,24 @@ void MapVisualiserPlayer::fetchFollowingMonster() {
         }
         else
         {
+            //Should not happened
             if (followingMonsterTileset) {
                 delete followingMonsterTileset;
                 followingMonsterTileset = nullptr;
             }
-            std::string imagePath = datapackPath + DATAPACK_BASE_PATH_SKIN + std::string("followingmonster") + MapVisualiserPlayer::text_slashtrainerMonsterpng;
-            followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
+            //The main following monster character selected by ID.
+            followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + "/monsters/" + std::to_string(followingMonsterInformation.monsterId);
+            std::string imagePath = followingMonsterSkinPath + MapVisualiserPlayer::text_slashtrainerMonsterpng;
+            if (!followingMonsterTileset->loadFromImage(imagePath)) {
+                //The default following monster character selected from skinFolderList (hardcoded, cannot access MapControllerMP::skinFolderList)
+                imagePath = datapackPath + DATAPACK_BASE_PATH_SKIN + std::string("followingmonster") + MapVisualiserPlayer::text_slashtrainerMonsterpng;
+                followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
 
-            if (!followingMonsterTileset->loadFromImage(imagePath))
-            {
-                qDebug() << "Unable to load the player tilset: " + QString::fromStdString(imagePath);
-                followingMonsterTileset = playerTilesetCache[defaultMonsterTileset];
+                if (!followingMonsterTileset->loadFromImage(imagePath))
+                {
+                    qDebug() << "Unable to load the player tilset: " + QString::fromStdString(imagePath);
+                    followingMonsterTileset = playerTilesetCache[defaultMonsterTileset];
+                }
             }
             const_cast<Tiled::Cell&>(followingMonsterMapObject->cell()).tile = followingMonsterTileset->tileAt(CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Top);
         }
@@ -1563,7 +1570,7 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
     //move following to the final position (integer), x + 2 because the tile lib start x behind the player
     updateFollowingMonsterPosition();
-    MapObjectItem::objectLink.at(followingMonsterMapObject)->setZValue(-1);
+    MapObjectItem::objectLink.at(followingMonsterMapObject)->setZValue(y);
 
     if (centerOnPlayer) {
         centerOn(MapObjectItem::objectLink.at(playerMapObject));

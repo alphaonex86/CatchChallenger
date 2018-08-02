@@ -545,9 +545,11 @@ bool MapControllerMP::setMonster(const CatchChallenger::Player_public_informatio
             }
             followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
 
+            //The main following monster character selected by ID.
             followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + "/monsters/" + std::to_string(followingMonsterInformation.monsterId);
             std::string imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
             if (!followingMonsterTileset->loadFromImage(imagePath)) {
+                //The default following monster character selected by skinID from skinFolderList.
                 followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + skinFolderList.at(followingMonsterInformation.skinId);
                 imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
                 if (!followingMonsterTileset->loadFromImage(imagePath)) {
