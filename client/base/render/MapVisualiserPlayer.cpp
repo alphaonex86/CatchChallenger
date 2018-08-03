@@ -16,6 +16,7 @@
 
 std::string MapVisualiserPlayer::text_slashtrainerpng="/trainer.png";
 std::string MapVisualiserPlayer::text_slashtrainerMonsterpng="/following.png";
+std::string MapVisualiserPlayer::text_slashMonsterpng="/overworld.png";
 std::string MapVisualiserPlayer::text_slash="/";
 std::string MapVisualiserPlayer::text_antislash="\\";
 std::string MapVisualiserPlayer::text_dotpng=".png";
@@ -803,14 +804,13 @@ void MapVisualiserPlayer::fetchFollowingMonster() {
                 delete followingMonsterTileset;
                 followingMonsterTileset = nullptr;
             }
+            followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
             //The main following monster character selected by ID.
-            followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + "/monsters/" + std::to_string(followingMonsterInformation.monsterId);
-            std::string imagePath = followingMonsterSkinPath + MapVisualiserPlayer::text_slashtrainerMonsterpng;
+            followingMonsterSkinPath = datapackPath + "monsters/" + std::to_string(followingMonsterInformation.monsterId);
+            std::string imagePath = followingMonsterSkinPath + MapVisualiserPlayer::text_slashMonsterpng;
             if (!followingMonsterTileset->loadFromImage(imagePath)) {
                 //The default following monster character selected from skinFolderList (hardcoded, cannot access MapControllerMP::skinFolderList)
-                imagePath = datapackPath + DATAPACK_BASE_PATH_SKIN + std::string("followingmonster") + MapVisualiserPlayer::text_slashtrainerMonsterpng;
-                followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
-
+                imagePath = ":/images/followingMonster_default" + MapVisualiserPlayer::text_slashtrainerMonsterpng;
                 if (!followingMonsterTileset->loadFromImage(imagePath))
                 {
                     qDebug() << "Unable to load the player tilset: " + QString::fromStdString(imagePath);

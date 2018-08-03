@@ -122,6 +122,7 @@ protected:
 protected:
     static std::string text_slashtrainerpng;
     static std::string text_slashtrainerMonsterpng;
+    static std::string text_slashMonsterpng;
     static std::string text_slash;
     static std::string text_antislash;
     static std::string text_dotpng;

@@ -539,19 +539,13 @@ bool MapControllerMP::setMonster(const CatchChallenger::Player_public_informatio
                 followingMonsterMapObject = nullptr;
             }
             followingMonsterMapObject = new Tiled::MapObject();
-            if (followingMonsterTileset != nullptr) {
-                delete followingMonsterTileset;
-                followingMonsterTileset = nullptr;
-            }
-            followingMonsterTileset = new Tiled::Tileset(QStringLiteral("followingmonster"), 32, 32);
 
             //The main following monster character selected by ID.
-            followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + "/monsters/" + std::to_string(followingMonsterInformation.monsterId);
-            std::string imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
+            followingMonsterSkinPath = datapackPath + "monsters/" + std::to_string(followingMonsterInformation.monsterId);
+            std::string imagePath = followingMonsterSkinPath + MapControllerMP::text_slashMonsterpng;
             if (!followingMonsterTileset->loadFromImage(imagePath)) {
                 //The default following monster character selected by skinID from skinFolderList.
-                followingMonsterSkinPath = datapackPath + DATAPACK_BASE_PATH_SKIN + skinFolderList.at(followingMonsterInformation.skinId);
-                imagePath = followingMonsterSkinPath + MapControllerMP::text_slashtrainerMonsterpng;
+                imagePath = ":/images/followingMonster_default" + MapControllerMP::text_slashtrainerMonsterpng;
                 if (!followingMonsterTileset->loadFromImage(imagePath)) {
                     qDebug() << "Unable to load the following monster tilset: " + QString::fromStdString(imagePath);
                 }
