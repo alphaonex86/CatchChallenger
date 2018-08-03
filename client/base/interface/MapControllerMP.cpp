@@ -13,6 +13,7 @@
 #include <QPixmap>
 #include <qmath.h>
 #include <iostream>
+#include <QString>
 
 QFont MapControllerMP::playerpseudofont;
 QPixmap * MapControllerMP::imgForPseudoAdmin=NULL;
@@ -39,6 +40,8 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
 
     resetAll();
 
+    followingMonster_informations.public_informations.simplifiedId = 0;
+    std::cerr << followingMonsterTileset->name().toStdString() << std::endl;
     scaleSize=1;
 }
 
@@ -71,8 +74,19 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol *client)
 
 void MapControllerMP::resetAll()
 {
-    if(!playerTileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
-        qDebug() << "Unable the load the default player tileset";
+    std::string filename = ":/images/player_default/trainer.png";
+
+    if (!playerTileset->isLoaded(filename)) {
+        if (!playerTileset->loadFromImage(filename))
+            qDebug() << "Unable the load the default player tileset";
+    }
+
+    filename = ":/images/followingMonster_default/following.png";
+
+    if (!followingMonsterTileset->isLoaded(filename)) {
+        if (!followingMonsterTileset->loadFromImage(filename))
+            qDebug() << "Unable the load the default following monster tileset";
+    }
 
     unloadPlayerFromCurrentMap();
     current_map.clear();
@@ -170,7 +184,13 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             delayedActions.push_back(multiplex);
         }
         #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-        qDebug() << QStringLiteral("delayed: insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(mapId).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+        qDebug() << QStringLiteral("delayed: insert_player(%1->%2,%3,%4,%5,%6)")
+                    .arg(QString::fromStdString(player.pseudo))
+                    .arg(QString::number(player.simplifiedId))
+                    .arg(QString::number(mapId))
+                    .arg(QString::number(x))
+                    .arg(QString::number(y))
+                    .arg(QString::fromStdString(CatchChallenger::MoveOnTheMap::directionToString(direction)));
         #endif
         return false;
     }
@@ -182,7 +202,13 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         return true;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(DatapackClientLoader::datapackLoader.maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+    qDebug() << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)")
+                .arg(QString::fromStdString(player.pseudo))
+                .arg(player.simplifiedId)
+                .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.maps.at(mapId)))
+                .arg(x)
+                .arg(y)
+                .arg(QString::fromStdString(CatchChallenger::MoveOnTheMap::directionToString(direction)));
     #endif
     //current player
     if(player.simplifiedId==player_informations.public_informations.simplifiedId)
@@ -227,7 +253,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_top:
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(1);
+                cell.tile=playerTileset->tileAt(CatchChallenger::DrawTiledPosition::Stop_At_Bottom);
                 playerMapObject->setCell(cell);
             }
             break;
@@ -235,7 +261,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_right:
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(4);
+                cell.tile=playerTileset->tileAt(CatchChallenger::DrawTiledPosition::Stop_At_Right);
                 playerMapObject->setCell(cell);
             }
             break;
@@ -243,7 +269,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_bottom:
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(7);
+                cell.tile=playerTileset->tileAt(CatchChallenger::DrawTiledPosition::Stop_At_Bottom);
                 playerMapObject->setCell(cell);
             }
             break;
@@ -251,7 +277,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_left:
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(10);
+                cell.tile=playerTileset->tileAt(CatchChallenger::DrawTiledPosition::Stop_At_Left);
                 playerMapObject->setCell(cell);
             }
             break;
@@ -263,6 +289,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         loadPlayerMap(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(mapId),
                       static_cast<uint8_t>(x),static_cast<uint8_t>(y));
         setSpeed(player.speed);
+
     }
     //other player
     else
@@ -490,6 +517,54 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         }
         return true;
     }
+
+    //current following monster,
+    setMonster(player);
+
+    return true;
+}
+
+bool MapControllerMP::setMonster(const CatchChallenger::Player_public_informations &player)
+{
+    if (followingMonsterInformation.simplifiedId == followingMonster_informations.public_informations.simplifiedId)
+    {
+        //the following monster skin
+        if (followingMonsterInformation.skinId < skinFolderList.size())
+        {
+            followingMonsterInformation.speed = player.speed;
+            followingMonsterInformation.monsterId = player.monsterId;
+
+            if (followingMonsterMapObject != nullptr) {
+                delete followingMonsterMapObject;
+                followingMonsterMapObject = nullptr;
+            }
+            followingMonsterMapObject = new Tiled::MapObject();
+
+            //The main following monster character selected by ID.
+            followingMonsterSkinPath = datapackPath + "monsters/" + std::to_string(followingMonsterInformation.monsterId);
+            std::string imagePath = followingMonsterSkinPath + MapControllerMP::text_slashMonsterpng;
+            if (!followingMonsterTileset->loadFromImage(imagePath)) {
+                //The default following monster character selected by skinID from skinFolderList.
+                imagePath = ":/images/followingMonster_default" + MapControllerMP::text_slashtrainerMonsterpng;
+                if (!followingMonsterTileset->loadFromImage(imagePath)) {
+                    qDebug() << "Unable to load the following monster tilset: " + QString::fromStdString(imagePath);
+                }
+            }
+
+            playerTilesetCache[defaultMonsterTileset] = followingMonsterTileset;
+        }
+        else {
+            qDebug() << "The skin id: " + QString::number(followingMonsterInformation.skinId) + ", into a list of: " + QString::number(skinFolderList.size()) + " item(s) info MapControllerMP::setMonster()";
+        }
+
+        //the direction
+
+
+        //loadPlayerMap(datapackMapPathSpec + DatapackClientLoader::datapackLoader.maps.at(mapId),
+        //              static_cast<uint8_t>(x),static_cast<uint8_t>(y));
+        //setSpeed(followingMonsterInformation.speed);
+    }
+
     return true;
 }
 
@@ -626,15 +701,20 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
     QStringList moveString;
-    int index_temp=0;
+    unsigned int index_temp=0;
     while(index_temp<movement.size())
     {
         std::pair<uint8_t, CatchChallenger::Direction> move=movement.at(index_temp);
-        moveString << QStringLiteral("{%1,%2}").arg(move.first).arg(CatchChallenger::MoveOnTheMap::directionToString(move.second));
+        moveString << QStringLiteral("{%1,%2}")
+                      .arg(QString::number(move.first))
+                      .arg(QString::fromStdString(CatchChallenger::MoveOnTheMap::directionToString(move.second)));
         index_temp++;
     }
 
-    qDebug() << QStringLiteral("move_player(%1,%2), previous direction: %3").arg(id).arg(moveString.join(";")).arg(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList.value(id).direction));
+    qDebug() << QStringLiteral("move_player(%1,%2), previous direction: %3")
+                .arg(QString::number(id))
+                .arg(moveString.join(";"))
+                .arg(QString::fromStdString(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList.at(id).direction)));
     #endif
 
 
@@ -1060,7 +1140,11 @@ void MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const u
         tempItem.direction=direction;
         delayedTeleportTo.push_back(tempItem);
         #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-        qDebug() << QStringLiteral("delayed teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+        qDebug() << QStringLiteral("delayed teleportTo(%1,%2,%3,%4)")
+                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.maps.at(mapId)))
+                    .arg(QString::number(x))
+                    .arg(QString::number(y))
+                    .arg(QString::fromStdString(CatchChallenger::MoveOnTheMap::directionToString(direction)));
         #endif
         return;
     }
@@ -1071,8 +1155,15 @@ void MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const u
         return;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QStringLiteral("teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
-    qDebug() << QStringLiteral("currently on: %1 (%2,%3)").arg(current_map).arg(this->x).arg(this->y);
+    qDebug() << QStringLiteral("teleportTo(%1,%2,%3,%4)")
+                .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.maps.at(mapId)))
+                .arg(QString::number(x))
+                .arg(QString::number(y))
+                .arg(QString::fromStdString(CatchChallenger::MoveOnTheMap::directionToString(direction)));
+    qDebug() << QStringLiteral("currently on: %1 (%2,%3)")
+                .arg(QString::fromStdString(current_map))
+                .arg(QString::number(this->x))
+                .arg(QString::number(this->y));
     #endif
     //the direction
     this->direction=direction;

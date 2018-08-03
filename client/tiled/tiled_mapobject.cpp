@@ -78,6 +78,9 @@ void MapObject::flip(FlipDirection direction)
     }
 }
 
+/*  Need to review this-- is creating a local instance, it is detroyed at the block ending
+    ---> a Factory pattern
+*/
 MapObject *MapObject::clone() const
 {
     MapObject *o = new MapObject(mName, mType, mPos, mSize);

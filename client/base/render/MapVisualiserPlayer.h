@@ -16,6 +16,8 @@ class MapVisualiserPlayer : public MapVisualiser
 public:
     explicit MapVisualiserPlayer(const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true);
     ~MapVisualiserPlayer();
+    void fetchFollowingMonster();
+    void fetchPlayer();
     virtual bool haveMapInMemory(const std::string &mapPath);
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
@@ -27,6 +29,11 @@ public:
     std::string currentZone() const;
     std::string currentBackgroundsound() const;
     CatchChallenger::Direction getDirection();
+    void updateFollowingMonster(int tiledPos = CatchChallenger::DrawSmallTiledPosition::walkLeftFoot_Bottom);
+    void transitionMonster(int baseMonster);
+    std::string StepToSTring(int step);
+    void updateTilesetForNewTerrain();
+    void updateFollowingMonsterPosition();
     enum BlockedOn
     {
         BlockedOn_ZoneItem,
@@ -58,12 +65,16 @@ protected:
     std::string datapackMapPathBase;
     std::string datapackMapPathSpec;
     //player
-    Tiled::MapObject * playerMapObject;
-    Tiled::Tileset * playerTileset;
+    Tiled::MapObject* playerMapObject;
+    Tiled::Tileset* playerTileset;
     std::string playerSkinPath;
+    std::string followingMonsterSkinPath;
     std::unordered_map<std::string,Tiled::Tileset *> playerTilesetCache;
     std::string lastTileset;
+    std::string lastMonsterTileset;
     std::string defaultTileset;
+    std::string defaultMonsterTileset;
+    int monsterLastTileset = 0;
     int moveStep;
     CatchChallenger::Direction direction;
     uint8_t x,y;
@@ -73,6 +84,9 @@ protected:
     std::string mLastLocation;
     bool blocked;
     bool wasPathFindingUsed;
+
+    //monster default info
+    CatchChallenger::Player_public_informations followingMonsterInformation;
 
     //display
     bool centerOnPlayer;
@@ -103,8 +117,12 @@ protected:
     std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests;
     std::unordered_set<uint16_t> *itemOnMap;
     std::unordered_map<uint16_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
+    Tiled::MapObject * followingMonsterMapObject;
+    Tiled::Tileset * followingMonsterTileset;
 protected:
     static std::string text_slashtrainerpng;
+    static std::string text_slashtrainerMonsterpng;
+    static std::string text_slashMonsterpng;
     static std::string text_slash;
     static std::string text_antislash;
     static std::string text_dotpng;
@@ -128,6 +146,7 @@ protected slots:
     virtual void loadPlayerFromCurrentMap();
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadPlayerFromCurrentMap();
+    virtual void unloadFollowingMonsterFromCurrentMap();
     virtual void parseStop();
     virtual void parseAction();
     void stopAndSend();

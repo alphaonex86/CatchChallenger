@@ -60,6 +60,66 @@ void Tileset::resize(int tileCount)
         delete mTiles.takeLast();
 }
 
+bool Tileset::loadFromImage(const std::string &fileName)
+{
+    const QImage image(fileName.c_str());
+
+    if (image.isNull()) {
+        return false;
+    }
+
+    const int stopWidth = image.width() - mTileWidth;
+    const int stopHeight = image.height() - mTileHeight;
+
+    int oldTilesetSize = mTiles.size();
+    int tileNum = 0;
+
+    QPixmap pixmap = QPixmap::fromImage(image);
+    if (mTransparentColor.isValid())
+    {
+        const QImage mask = image.createMaskFromColor(mTransparentColor.rgb());
+        pixmap.setMask(QBitmap::fromImage(mask));
+    }
+
+    const int jumpHeight = mTileHeight + mTileSpacing;
+    const int jumpWidth = mTileWidth + mTileSpacing;
+
+    for (int y = mMargin; y <= stopHeight; y += jumpHeight)
+    {
+        for (int x = mMargin; x <= stopWidth; x += jumpWidth)
+        {
+            const QPixmap& tilePixmap = pixmap.copy(x, y, mTileWidth, mTileHeight);
+
+            if (tileNum < oldTilesetSize)
+            {
+                mTiles.at(tileNum)->setImage(tilePixmap);
+            }
+            else
+            {
+                mTiles.append(new Tile(tilePixmap, tileNum, this));
+            }
+            tileNum++;
+        }
+    }
+
+    mImageWidth  = image.width();
+    mImageHeight = image.height();
+    mColumnCount = columnCountForWidth(mImageWidth);
+    mImageSource = fileName.c_str();
+
+    return true;
+}
+
+bool Tileset::isLoaded(const std::string& tilesetFileName) {
+    return (
+        this->mImageSource.toStdString() == tilesetFileName &&
+        !this->mTiles.size() > 0 &&
+        this->mColumnCount > 0 &&
+        this->mImageWidth > 0 &&
+        this->mImageHeight > 0
+    );
+}
+
 bool Tileset::loadFromImage(const QImage &image, const QString &fileName)
 {
     Q_ASSERT(mTileWidth > 0 && mTileHeight > 0);
