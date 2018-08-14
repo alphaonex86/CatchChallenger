@@ -268,52 +268,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         }
 
         //monster
-        const std::string &imagePath=datapackPath+DATAPACK_BASE_PATH_MONSTERS+std::to_string(player.monsterId)+"/overworld.png";
-        if(monsterTilesetCache.find(imagePath)!=monsterTilesetCache.cend())
-            monsterTileset=monsterTilesetCache.at(imagePath);
-        else
-        {
-            QImage image(QString::fromStdString(imagePath));
-            if(!image.isNull())
-            {
-                monsterTileset = new Tiled::Tileset(QString::fromStdString(lastTileset),32,32);
-                if(!monsterTileset->loadFromImage(image,QString::fromStdString(imagePath)))
-                    abort();
-                monsterTilesetCache[imagePath]=monsterTileset;
-            }
-            else
-                monsterTileset=NULL;
-        }
-        if(monsterTileset!=NULL)
-        {
-            monsterMapObject = new Tiled::MapObject();
-            monsterMapObject->setName("Current player monster");
-
-            Tiled::Cell cell=monsterMapObject->cell();
-            switch(direction)
-            {
-                case CatchChallenger::Direction_look_at_top:
-                case CatchChallenger::Direction_move_at_top:
-                    cell.tile=monsterTileset->tileAt(2);
-                break;
-                case CatchChallenger::Direction_look_at_right:
-                case CatchChallenger::Direction_move_at_right:
-                    cell.tile=monsterTileset->tileAt(7);
-                break;
-                case CatchChallenger::Direction_look_at_bottom:
-                case CatchChallenger::Direction_move_at_bottom:
-                    cell.tile=monsterTileset->tileAt(6);
-                break;
-                case CatchChallenger::Direction_look_at_left:
-                case CatchChallenger::Direction_move_at_left:
-                    cell.tile=monsterTileset->tileAt(3);
-                break;
-                default:
-                break;
-            }
-            monsterMapObject->setCell(cell);
-            monsterMapObject->setVisible(false);
-        }
+        updatePlayerMonsterTile(player.monsterId);
 
         loadPlayerMap(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(mapId),
                       static_cast<uint8_t>(x),static_cast<uint8_t>(y));
@@ -547,6 +502,71 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         return true;
     }
     return true;
+}
+
+void MapControllerMP::updatePlayerMonsterTile(const uint16_t &monster)
+{
+    bool resetMonster=false;
+    pendingMonsterMoves.clear();
+    if(monsterMapObject!=NULL)
+    {
+        unloadMonsterFromCurrentMap();
+        delete monsterMapObject;
+        monsterMapObject=NULL;
+        resetMonster=true;
+    }
+    this->monster_x=x;
+    this->monster_y=y;
+    monsterTileset=NULL;
+    player_informations.public_informations.monsterId=monster;
+    const std::string &imagePath=datapackPath+DATAPACK_BASE_PATH_MONSTERS+std::to_string(monster)+"/overworld.png";
+    if(monsterTilesetCache.find(imagePath)!=monsterTilesetCache.cend())
+        monsterTileset=monsterTilesetCache.at(imagePath);
+    else
+    {
+        QImage image(QString::fromStdString(imagePath));
+        if(!image.isNull())
+        {
+            monsterTileset = new Tiled::Tileset(QString::fromStdString(lastTileset),32,32);
+            if(!monsterTileset->loadFromImage(image,QString::fromStdString(imagePath)))
+                abort();
+            monsterTilesetCache[imagePath]=monsterTileset;
+        }
+        else
+            monsterTileset=NULL;
+    }
+    if(monsterTileset!=NULL)
+    {
+        monsterMapObject = new Tiled::MapObject();
+        monsterMapObject->setName("Current player monster");
+
+        Tiled::Cell cell=monsterMapObject->cell();
+        switch(direction)
+        {
+            case CatchChallenger::Direction_look_at_top:
+            case CatchChallenger::Direction_move_at_top:
+                cell.tile=monsterTileset->tileAt(2);
+            break;
+            case CatchChallenger::Direction_look_at_right:
+            case CatchChallenger::Direction_move_at_right:
+                cell.tile=monsterTileset->tileAt(7);
+            break;
+            case CatchChallenger::Direction_look_at_bottom:
+            case CatchChallenger::Direction_move_at_bottom:
+                cell.tile=monsterTileset->tileAt(6);
+            break;
+            case CatchChallenger::Direction_look_at_left:
+            case CatchChallenger::Direction_move_at_left:
+                cell.tile=monsterTileset->tileAt(3);
+            break;
+            default:
+            break;
+        }
+        monsterMapObject->setCell(cell);
+        monsterMapObject->setVisible(false);
+    }
+    if(resetMonster)
+        loadMonsterFromCurrentMap();
 }
 
 //call after enter on new map
