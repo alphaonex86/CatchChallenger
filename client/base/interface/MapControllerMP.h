@@ -34,7 +34,6 @@ public slots:
     bool reinsert_player_final(const uint16_t &id, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction, bool inReplayMode);
     bool full_reinsert_player_final(const uint16_t &id, const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction, bool inReplayMode);
     bool dropAllPlayerOnTheMap_final(bool inReplayMode);
-    void updatePlayerMonsterTile(const uint16_t &monster);
 
     void teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
     virtual bool asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject);
@@ -158,10 +157,6 @@ private:
     std::vector<PathResolved> pathList;
 
     CatchChallenger::Api_protocol * client;
-protected:
-    //current player
-    CatchChallenger::Player_private_and_public_informations player_informations;
-    bool player_informations_is_set;
 private slots:
     bool loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y);
     void moveOtherPlayerStepSlot();
