@@ -76,6 +76,7 @@ void MapControllerMP::resetAll()
 
     unloadPlayerFromCurrentMap();
     current_map.clear();
+    current_monster_map.clear();
     pathList.clear();
     delayedActions.clear();
     skinFolderList.clear();
@@ -113,8 +114,11 @@ bool MapControllerMP::loadPlayerMap(const std::string &fileName,const uint8_t &x
     //position
     this->x=x;
     this->y=y;
+    this->monster_x=x;
+    this->monster_y=y;
     QFileInfo fileInformations(QString::fromStdString(fileName));
     current_map=fileInformations.absoluteFilePath().toStdString();
+    current_monster_map=fileInformations.absoluteFilePath().toStdString();
     mapVisualiserThread.stopIt=false;
     loadOtherMap(current_map);
     return true;
@@ -201,7 +205,10 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             const std::string &imagePath=playerSkinPath+MapControllerMP::text_slashtrainerpng;
             QImage image(QString::fromStdString(imagePath));
             if(!image.isNull())
-                playerTileset->loadFromImage(image,QString::fromStdString(imagePath));
+            {
+                if(!playerTileset->loadFromImage(image,QString::fromStdString(imagePath)))
+                    abort();
+            }
             else
                 qDebug() << "Unable to load the player tilset: "+QString::fromStdString(imagePath);
         }
@@ -260,6 +267,54 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             return true;
         }
 
+        //monster
+        const std::string &imagePath=datapackPath+DATAPACK_BASE_PATH_MONSTERS+std::to_string(player.monsterId)+"/overworld.png";
+        if(monsterTilesetCache.find(imagePath)!=monsterTilesetCache.cend())
+            monsterTileset=monsterTilesetCache.at(imagePath);
+        else
+        {
+            QImage image(QString::fromStdString(imagePath));
+            if(!image.isNull())
+            {
+                monsterTileset = new Tiled::Tileset(QString::fromStdString(lastTileset),32,32);
+                if(!monsterTileset->loadFromImage(image,QString::fromStdString(imagePath)))
+                    abort();
+                monsterTilesetCache[imagePath]=monsterTileset;
+            }
+            else
+                monsterTileset=NULL;
+        }
+        if(monsterTileset!=NULL)
+        {
+            monsterMapObject = new Tiled::MapObject();
+            monsterMapObject->setName("Current player monster");
+
+            Tiled::Cell cell=monsterMapObject->cell();
+            switch(direction)
+            {
+                case CatchChallenger::Direction_look_at_top:
+                case CatchChallenger::Direction_move_at_top:
+                    cell.tile=monsterTileset->tileAt(2);
+                break;
+                case CatchChallenger::Direction_look_at_right:
+                case CatchChallenger::Direction_move_at_right:
+                    cell.tile=monsterTileset->tileAt(7);
+                break;
+                case CatchChallenger::Direction_look_at_bottom:
+                case CatchChallenger::Direction_move_at_bottom:
+                    cell.tile=monsterTileset->tileAt(6);
+                break;
+                case CatchChallenger::Direction_look_at_left:
+                case CatchChallenger::Direction_move_at_left:
+                    cell.tile=monsterTileset->tileAt(3);
+                break;
+                default:
+                break;
+            }
+            monsterMapObject->setCell(cell);
+            monsterMapObject->setVisible(false);
+        }
+
         loadPlayerMap(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(mapId),
                       static_cast<uint8_t>(x),static_cast<uint8_t>(y));
         setSpeed(player.speed);
@@ -314,8 +369,9 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
                 tempPlayer.playerMapObject = new Tiled::MapObject();
                 tempPlayer.playerMapObject->setName("Other player");
                 tempPlayer.playerTileset = new Tiled::Tileset(QString::fromStdString(skinFolderList.at(player.skinId)),16,24);
-                tempPlayer.playerTileset->loadFromImage(image,QString::fromStdString(datapackPath+
-                     DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+MapControllerMP::text_slashtrainerpng));
+                if(!tempPlayer.playerTileset->loadFromImage(image,QString::fromStdString(datapackPath+
+                     DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+MapControllerMP::text_slashtrainerpng)))
+                    abort();
             }
             else
             {

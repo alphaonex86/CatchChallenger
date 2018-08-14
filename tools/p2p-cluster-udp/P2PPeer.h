@@ -11,7 +11,7 @@ class P2PPeer
 {
 public:
     P2PPeer(const uint8_t * const publickey, const uint64_t &local_sequence_number_validated,
-            const uint64_t &remote_sequence_number,const sockaddr_in &si_other);
+            const uint64_t &remote_sequence_number,const sockaddr_in6 &si_other);
     virtual ~P2PPeer();
 public:
     //P2PPeer();
@@ -26,12 +26,13 @@ public:
     void incremente_remote_sequence_number();
     static void incremented_sequence_number(uint64_t &number);
     std::string toString() const;
+    static std::string toString(const sockaddr_in6 &si_other, const std::string &separator);
     virtual bool parseData(const uint8_t * const data, const uint16_t &size) = 0;
 private:
     uint8_t publickey[ED25519_KEY_SIZE];
     uint64_t local_sequence_number_validated;
     uint64_t remote_sequence_number;
-    const sockaddr_in si_other;
+    const sockaddr_in6 si_other;
 
     std::vector<std::string> dataToSend;
 

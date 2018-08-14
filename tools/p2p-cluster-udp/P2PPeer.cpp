@@ -10,7 +10,7 @@
 char P2PPeer::buffer[];
 
 P2PPeer::P2PPeer(const uint8_t * const publickey, const uint64_t &local_sequence_number,
-                 const uint64_t &remote_sequence_number, const sockaddr_in &si_other) :
+                 const uint64_t &remote_sequence_number, const sockaddr_in6 &si_other) :
     local_sequence_number_validated(local_sequence_number),
     remote_sequence_number(remote_sequence_number),
     si_other(si_other)
@@ -285,7 +285,16 @@ bool P2PPeer::sendRawDataWithoutPutInQueue(const uint8_t * const data, const uin
 
 std::string P2PPeer::toString() const
 {
-    sockaddr_in socket;
+    return P2PPeer::toString(si_other,":");
+}
+
+std::string P2PPeer::toString(const sockaddr_in6 &si_other,const std::string &separator)
+{
+    sockaddr_in6 socket;
     memcpy(&socket,&si_other,sizeof(socket));
-    return std::string(inet_ntoa(socket.sin_addr))+":"+std::to_string(ntohs(si_other.sin_port));
+    char str[INET6_ADDRSTRLEN];
+    if(inet_ntop(socket.sin6_family,&socket.sin6_addr,str,sizeof(str))==NULL)
+        return std::string();
+    else
+        return std::string(str)+separator+std::to_string(ntohs(si_other.sin6_port));
 }
