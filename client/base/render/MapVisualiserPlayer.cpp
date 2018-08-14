@@ -114,6 +114,14 @@ MapVisualiserPlayer::~MapVisualiserPlayer()
                 delete cur;
             }
         }
+    for(auto i : monsterTilesetCache) {
+            Tiled::Tileset * cur = i.second;
+            if(deletedTileset.find(cur)==deletedTileset.cend())
+            {
+                deletedTileset.insert(cur);
+                delete cur;
+            }
+        }
 }
 
 bool MapVisualiserPlayer::haveMapInMemory(const std::string &mapPath)
@@ -347,113 +355,116 @@ void MapVisualiserPlayer::moveStepSlot()
     }
     #endif
     //monster
-    if(inMove && moveStep==1)
-        switch(direction)
-        {
-            case CatchChallenger::Direction_move_at_left:
-            case CatchChallenger::Direction_move_at_right:
-            case CatchChallenger::Direction_move_at_top:
-            case CatchChallenger::Direction_move_at_bottom:
-                pendingMonsterMoves.push_back(direction);
-            break;
-            default:
-            break;
-        }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(pendingMonsterMoves.size()>2)
-        abort();
-    #endif
-    if(pendingMonsterMoves.size()>1)
+    if(monsterMapObject!=NULL)
     {
-        //start move
-        //moveTimer.stop();
-        int baseTile=1;
-        //move the player for intermediate step and define the base tile (define the stopped step with direction)
-        switch(pendingMonsterMoves.front())
+        if(inMove && moveStep==1)
+            switch(direction)
+            {
+                case CatchChallenger::Direction_move_at_left:
+                case CatchChallenger::Direction_move_at_right:
+                case CatchChallenger::Direction_move_at_top:
+                case CatchChallenger::Direction_move_at_bottom:
+                    pendingMonsterMoves.push_back(direction);
+                break;
+                default:
+                break;
+            }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(pendingMonsterMoves.size()>2)
+            abort();
+        #endif
+        if(pendingMonsterMoves.size()>1)
         {
-            case CatchChallenger::Direction_move_at_left:
-            baseTile=3;
-            switch(moveStep)
+            //start move
+            //moveTimer.stop();
+            int baseTile=1;
+            //move the player for intermediate step and define the base tile (define the stopped step with direction)
+            switch(pendingMonsterMoves.front())
             {
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                monsterMapObject->setX(monsterMapObject->x()-0.20);
+                case CatchChallenger::Direction_move_at_left:
+                baseTile=3;
+                switch(moveStep)
+                {
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    monsterMapObject->setX(monsterMapObject->x()-0.20);
+                    break;
+                }
                 break;
-            }
-            break;
-            case CatchChallenger::Direction_move_at_right:
-            baseTile=7;
-            switch(moveStep)
-            {
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                monsterMapObject->setX(monsterMapObject->x()+0.20);
+                case CatchChallenger::Direction_move_at_right:
+                baseTile=7;
+                switch(moveStep)
+                {
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    monsterMapObject->setX(monsterMapObject->x()+0.20);
+                    break;
+                }
                 break;
-            }
-            break;
-            case CatchChallenger::Direction_move_at_top:
-            baseTile=2;
-            switch(moveStep)
-            {
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                monsterMapObject->setY(monsterMapObject->y()-0.20);
+                case CatchChallenger::Direction_move_at_top:
+                baseTile=2;
+                switch(moveStep)
+                {
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    monsterMapObject->setY(monsterMapObject->y()-0.20);
+                    break;
+                }
                 break;
-            }
-            break;
-            case CatchChallenger::Direction_move_at_bottom:
-            baseTile=4;
-            switch(moveStep)
-            {
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                monsterMapObject->setY(monsterMapObject->y()+0.20);
+                case CatchChallenger::Direction_move_at_bottom:
+                baseTile=4;
+                switch(moveStep)
+                {
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    monsterMapObject->setY(monsterMapObject->y()+0.20);
+                    break;
+                }
                 break;
+                default:
+                qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction").arg(moveStep);
+                return;
             }
-            break;
-            default:
-            qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction").arg(moveStep);
-            return;
-        }
 
-        //apply the right step of the base step defined previously by the direction
-        switch(moveStep%5)
-        {
-            //stopped step
-            case 0:
+            //apply the right step of the base step defined previously by the direction
+            switch(moveStep%5)
             {
-                Tiled::Cell cell=monsterMapObject->cell();
-                cell.tile=monsterTileset->tileAt(baseTile+0);
-                monsterMapObject->setCell(cell);
+                //stopped step
+                case 0:
+                {
+                    Tiled::Cell cell=monsterMapObject->cell();
+                    cell.tile=monsterTileset->tileAt(baseTile+0);
+                    monsterMapObject->setCell(cell);
+                }
+                break;
+                case 1:
+                MapObjectItem::objectLink.at(monsterMapObject)->setZValue(qCeil(monsterMapObject->y()));
+                break;
+                //transition step
+                case 2:
+                {
+                    Tiled::Cell cell=monsterMapObject->cell();
+                    cell.tile=monsterTileset->tileAt(baseTile-2);
+                    monsterMapObject->setCell(cell);
+                }
+                break;
+                //stopped step
+                case 4:
+                {
+                    Tiled::Cell cell=monsterMapObject->cell();
+                    cell.tile=monsterTileset->tileAt(baseTile+0);
+                    monsterMapObject->setCell(cell);
+                }
+                break;
             }
-            break;
-            case 1:
-            MapObjectItem::objectLink.at(monsterMapObject)->setZValue(qCeil(monsterMapObject->y()));
-            break;
-            //transition step
-            case 2:
-            {
-                Tiled::Cell cell=monsterMapObject->cell();
-                cell.tile=monsterTileset->tileAt(baseTile-2);
-                monsterMapObject->setCell(cell);
-            }
-            break;
-            //stopped step
-            case 4:
-            {
-                Tiled::Cell cell=monsterMapObject->cell();
-                cell.tile=monsterTileset->tileAt(baseTile+0);
-                monsterMapObject->setCell(cell);
-            }
-            break;
         }
     }
     //moveTimer.stop();
@@ -559,42 +570,43 @@ void MapVisualiserPlayer::moveStepSlot()
     //if have finish the step
     if(moveStep>5)
     {
-        if(pendingMonsterMoves.size()>1)
-        {
-            const CatchChallenger::Direction direction=pendingMonsterMoves.front();
-            pendingMonsterMoves.erase(pendingMonsterMoves.cbegin());
-
-            CatchChallenger::CommonMap * map=&all_map.at(current_monster_map)->logicalMap;
-            const CatchChallenger::CommonMap * old_map=map;
-            //set the final value (direction, position, ...)
-            switch(direction)
+        if(monsterMapObject!=NULL)
+            if(pendingMonsterMoves.size()>1)
             {
-                case CatchChallenger::Direction_move_at_left:
-                case CatchChallenger::Direction_move_at_right:
-                case CatchChallenger::Direction_move_at_top:
-                case CatchChallenger::Direction_move_at_bottom:
-                    if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&monster_x,&monster_y))
-                    {
-                        qDebug() << "Bug at move";
-                        return;
-                    }
-                break;
-                default:
-                    qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction (%2) when moveStep>2").arg(moveStep).arg(direction);
-                return;
-            }
-            //if the map have changed
-            if(old_map!=map)
-            {
-                unloadMonsterFromCurrentMap();
-                current_monster_map=map->map_file;
-                if(old_all_map.find(current_monster_map)==old_all_map.cend())
-                    std::cerr << "old_all_map.find(current_map)==old_all_map.cend() in monster follow" << std::endl;
-            }
+                const CatchChallenger::Direction direction=pendingMonsterMoves.front();
+                pendingMonsterMoves.erase(pendingMonsterMoves.cbegin());
 
-            monsterMapObject->setPosition(QPointF(monster_x-0.5,monster_y+1));
-            MapObjectItem::objectLink.at(monsterMapObject)->setZValue(monster_y);
-        }
+                CatchChallenger::CommonMap * map=&all_map.at(current_monster_map)->logicalMap;
+                const CatchChallenger::CommonMap * old_map=map;
+                //set the final value (direction, position, ...)
+                switch(direction)
+                {
+                    case CatchChallenger::Direction_move_at_left:
+                    case CatchChallenger::Direction_move_at_right:
+                    case CatchChallenger::Direction_move_at_top:
+                    case CatchChallenger::Direction_move_at_bottom:
+                        if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&monster_x,&monster_y))
+                        {
+                            qDebug() << "Bug at move";
+                            return;
+                        }
+                    break;
+                    default:
+                        qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction (%2) when moveStep>2").arg(moveStep).arg(direction);
+                    return;
+                }
+                //if the map have changed
+                if(old_map!=map)
+                {
+                    unloadMonsterFromCurrentMap();
+                    current_monster_map=map->map_file;
+                    if(old_all_map.find(current_monster_map)==old_all_map.cend())
+                        std::cerr << "old_all_map.find(current_map)==old_all_map.cend() in monster follow" << std::endl;
+                }
+
+                monsterMapObject->setPosition(QPointF(monster_x-0.5,monster_y+1));
+                MapObjectItem::objectLink.at(monsterMapObject)->setZValue(monster_y);
+            }
         animationDisplayed=false;
         CatchChallenger::CommonMap * map=&all_map.at(current_map)->logicalMap;
         const CatchChallenger::CommonMap * old_map=map;
@@ -797,32 +809,35 @@ void MapVisualiserPlayer::finalPlayerStep()
     if(!CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.empty())
     {
         //locate the right layer for monster
-        const MapVisualiserThread::Map_full * current_monster_map_pointer=all_map.at(current_monster_map);
-        if(current_monster_map_pointer==NULL)
+        if(monsterMapObject!=NULL)
         {
-            qDebug() << "current_monster_map_pointer not loaded null pointer, unable to do finalPlayerStep()";
-            return;
-        }
-        {
-            const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=
-                    CatchChallenger::MoveOnTheMap::getZoneCollision(current_monster_map_pointer->logicalMap,monster_x,monster_y);
-            monsterMapObject->setVisible(false);
-            unsigned int index=0;
-            while(index<monstersCollisionValue.walkOn.size())
+            const MapVisualiserThread::Map_full * current_monster_map_pointer=all_map.at(current_monster_map);
+            if(current_monster_map_pointer==NULL)
             {
-                const unsigned int &newIndex=monstersCollisionValue.walkOn.at(index);
-                if(newIndex<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
+                qDebug() << "current_monster_map_pointer not loaded null pointer, unable to do finalPlayerStep()";
+                return;
+            }
+            {
+                const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=
+                        CatchChallenger::MoveOnTheMap::getZoneCollision(current_monster_map_pointer->logicalMap,monster_x,monster_y);
+                monsterMapObject->setVisible(false);
+                unsigned int index=0;
+                while(index<monstersCollisionValue.walkOn.size())
                 {
-                    const CatchChallenger::MonstersCollision &monstersCollision=
-                            CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
-                    if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
+                    const unsigned int &newIndex=monstersCollisionValue.walkOn.at(index);
+                    if(newIndex<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
                     {
-                        monsterMapObject->setVisible((monstersCollision.tile.empty() && pendingMonsterMoves.size()>=1) ||
-                                                     (pendingMonsterMoves.size()==1 && !inMove)
-                                                     );
+                        const CatchChallenger::MonstersCollision &monstersCollision=
+                                CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
+                        if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
+                        {
+                            monsterMapObject->setVisible((monstersCollision.tile.empty() && pendingMonsterMoves.size()>=1) ||
+                                                         (pendingMonsterMoves.size()==1 && !inMove)
+                                                         );
+                        }
                     }
+                    index++;
                 }
-                index++;
             }
         }
         //locate the right layer
@@ -1553,6 +1568,8 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 
 void MapVisualiserPlayer::loadMonsterFromCurrentMap()
 {
+    if(monsterMapObject==nullptr)
+        return;
     //monster
     if(all_map.find(current_monster_map)==all_map.cend())
     {
@@ -1582,6 +1599,8 @@ void MapVisualiserPlayer::loadMonsterFromCurrentMap()
 //call before leave the old map (and before loadPlayerFromCurrentMap())
 void MapVisualiserPlayer::unloadPlayerFromCurrentMap()
 {
+    if(monsterMapObject==nullptr)
+        return;
     {
         Tiled::ObjectGroup *currentGroup=playerMapObject->objectGroup();
         if(currentGroup==NULL)
