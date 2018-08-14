@@ -1594,6 +1594,7 @@ void BaseWindow::on_monsterListMoveUp_clicked()
         return;
     if(!fightEngine.moveUpMonster(currentRow))
         return;
+    const bool updateMonsterTile=(currentRow==1);
     client->monsterMoveUp(currentRow+1);
     QListWidgetItem * item=ui->monsterList->takeItem(currentRow);
     ui->monsterList->insertItem(currentRow-1,item);
@@ -1601,6 +1602,8 @@ void BaseWindow::on_monsterListMoveUp_clicked()
     ui->monsterList->item(currentRow-1)->setSelected(true);
     ui->monsterList->setCurrentRow(currentRow-1);
     on_monsterList_itemSelectionChanged();
+    if(updateMonsterTile)
+        mapController->updatePlayerMonsterTile(fightEngine.monsterByPosition(0)->monster);
 }
 
 void BaseWindow::on_monsterListMoveDown_clicked()
@@ -1615,6 +1618,7 @@ void BaseWindow::on_monsterListMoveDown_clicked()
         return;
     if(!fightEngine.moveDownMonster(static_cast<uint8_t>(currentRow)))
         return;
+    const bool updateMonsterTile=(currentRow==0);
     client->monsterMoveDown(static_cast<uint8_t>(currentRow+1));
     QListWidgetItem * item=ui->monsterList->takeItem(currentRow);
     ui->monsterList->insertItem(currentRow+1,item);
@@ -1622,6 +1626,8 @@ void BaseWindow::on_monsterListMoveDown_clicked()
     ui->monsterList->item(currentRow+1)->setSelected(true);
     ui->monsterList->setCurrentRow(currentRow+1);
     on_monsterList_itemSelectionChanged();
+    if(updateMonsterTile)
+        mapController->updatePlayerMonsterTile(fightEngine.monsterByPosition(0)->monster);
 }
 
 void BaseWindow::on_monsterList_itemSelectionChanged()
