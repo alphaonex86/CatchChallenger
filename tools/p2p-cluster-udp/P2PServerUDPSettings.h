@@ -15,7 +15,7 @@ public:
     std::vector<P2PServerUDP::HostToConnect> hostToConnectTemp;
     uint16_t port;
 protected:
-    bool newPeer(const sockaddr_in &si_other);
+    bool newPeer(const sockaddr_in6 &si_other);
 private:
     std::unordered_set<std::string> knownPeers;
 };

@@ -88,27 +88,32 @@ P2PServerUDPSettings::P2PServerUDPSettings(uint8_t *privatekey, uint8_t *ca_publ
         const uint16_t port=stringtouint16(portstring,&ok);
         if(ok)
         {
-            sockaddr_in serv_addr;
+            sockaddr_in6 serv_addr;
             memset(&serv_addr, 0, sizeof(serv_addr));
-            serv_addr.sin_family = AF_INET;
-            serv_addr.sin_port = htobe16(port);
+            serv_addr.sin6_port = htobe16(port);
             const char * const hostC=host.c_str();
-            int convertResult=inet_pton(AF_INET6,hostC,&serv_addr.sin_addr);
+            int convertResult=inet_pton(AF_INET6,hostC,&serv_addr.sin6_addr);
             if(convertResult!=1)
             {
-                convertResult=inet_pton(AF_INET,hostC,&serv_addr.sin_addr);
+                convertResult=inet_pton(AF_INET,hostC,&serv_addr.sin6_addr);
                 if(convertResult!=1)
                     std::cerr << "not IPv4 and IPv6 address, host: \"" << host << "\", portstring: \"" << portstring
                               << "\", errno: " << std::to_string(errno) << std::endl;
+                else
+                    serv_addr.sin6_family = AF_INET;
             }
+            else
+                serv_addr.sin6_family = AF_INET6;
             if(convertResult==1)
             {
                 hostToConnect.round=0;
                 hostToConnect.serv_addr=serv_addr;
                 hostToConnect.serialised_serv_addr=P2PServerUDP::sockSerialised(serv_addr);
 
-                const std::string &serialisedPeer=std::string(inet_ntoa(serv_addr.sin_addr))+","+std::to_string(ntohs(serv_addr.sin_port));
+                const std::string &serialisedPeer=P2PPeer::toString(serv_addr,",");
                 knownPeers.insert(serialisedPeer);
+                if(serialisedPeer!=(host+",",portstring))
+                    std::cerr << serialisedPeer <<"!=" << (host+",",portstring) << ", ip list change" << std::endl;
 
                 //pass to temp list because P2PServerUDP::p2pserver not init for now
                 hostToConnectTemp.push_back(hostToConnect);
@@ -134,11 +139,11 @@ void P2PServerUDPSettings::genPrivateKey(uint8_t *privatekey)
     fclose(ptr);
 }
 
-bool P2PServerUDPSettings::newPeer(const sockaddr_in &si_other)
+bool P2PServerUDPSettings::newPeer(const sockaddr_in6 &si_other)
 {
-    sockaddr_in socket;
+    sockaddr_in6 socket;
     memcpy(&socket,&si_other,sizeof(socket));
-    const std::string &serialisedPeer=std::string(inet_ntoa(socket.sin_addr))+","+std::to_string(ntohs(si_other.sin_port));
+    const std::string &serialisedPeer=P2PPeer::toString(socket,",");
 
     P2PServerUDP::sockSerialised(si_other);
     if(knownPeers.find(serialisedPeer)!=knownPeers.cend())

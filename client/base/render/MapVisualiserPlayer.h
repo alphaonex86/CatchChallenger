@@ -49,7 +49,9 @@ public:
     virtual void datapackParsed();
     virtual void datapackParsedMainSub();
 
-    void setInformations(std::unordered_map<uint16_t,uint32_t> *items, std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests, std::vector<uint8_t> *events, std::unordered_set<uint16_t> *itemOnMap, std::unordered_map<uint16_t, CatchChallenger::PlayerPlant> *plantOnMap);
+    void setInformations(std::unordered_map<uint16_t,uint32_t> *items, std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests,
+                         std::vector<uint8_t> *events, std::unordered_set<uint16_t> *itemOnMap,
+                         std::unordered_map<uint16_t, CatchChallenger::PlayerPlant> *plantOnMap);
     void unblock();
 protected:
     //datapack
@@ -61,9 +63,6 @@ protected:
     Tiled::MapObject * playerMapObject;
     Tiled::Tileset * playerTileset;
     std::string playerSkinPath;
-    std::unordered_map<std::string,Tiled::Tileset *> playerTilesetCache;
-    std::string lastTileset;
-    std::string defaultTileset;
     int moveStep;
     CatchChallenger::Direction direction;
     uint8_t x,y;
@@ -73,6 +72,17 @@ protected:
     std::string mLastLocation;
     bool blocked;
     bool wasPathFindingUsed;
+    //monster
+    std::vector<CatchChallenger::Direction> pendingMonsterMoves;
+    Tiled::MapObject * monsterMapObject;
+    Tiled::Tileset * monsterTileset;
+    std::string current_monster_map;
+    uint8_t monster_x,monster_y;
+    //cache
+    std::unordered_map<std::string,Tiled::Tileset *> playerTilesetCache;
+    std::unordered_map<std::string,Tiled::Tileset *> monsterTilesetCache;
+    std::string lastTileset;
+    std::string defaultTileset;
 
     //display
     bool centerOnPlayer;
@@ -126,8 +136,10 @@ protected slots:
     void loadGrassTile();
     //call after enter on new map
     virtual void loadPlayerFromCurrentMap();
+    virtual void loadMonsterFromCurrentMap();
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadPlayerFromCurrentMap();
+    virtual void unloadMonsterFromCurrentMap();
     virtual void parseStop();
     virtual void parseAction();
     void stopAndSend();
