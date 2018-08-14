@@ -14,14 +14,6 @@
 #include <QDebug>
 #include <iostream>
 
-std::string MapVisualiserPlayer::text_slashtrainerpng="/trainer.png";
-std::string MapVisualiserPlayer::text_slash="/";
-std::string MapVisualiserPlayer::text_antislash="\\";
-std::string MapVisualiserPlayer::text_dotpng=".png";
-std::string MapVisualiserPlayer::text_type="type";
-std::string MapVisualiserPlayer::text_zone="zone";
-std::string MapVisualiserPlayer::text_backgroundsound="backgroundsound";
-
 /* why send the look at because blocked into the wall?
 to be sync if connexion is stop, but use more bandwith
 To not send: store "is blocked but direction not send", cautch the close event, at close: if "is blocked but direction not send" then send it
@@ -43,6 +35,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     plantOnMap=NULL;
     animationDisplayed=false;
     monsterTileset=nullptr;
+    monsterMapObject=nullptr;
     monster_x=0;
     monster_y=0;
 
@@ -418,7 +411,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 }
                 break;
                 case CatchChallenger::Direction_move_at_bottom:
-                baseTile=4;
+                baseTile=6;
                 switch(moveStep)
                 {
                     case 1:
@@ -602,6 +595,8 @@ void MapVisualiserPlayer::moveStepSlot()
                     current_monster_map=map->map_file;
                     if(old_all_map.find(current_monster_map)==old_all_map.cend())
                         std::cerr << "old_all_map.find(current_map)==old_all_map.cend() in monster follow" << std::endl;
+                    if(!vectorcontainsAtLeastOne(old_map->near_map,map))
+                        resetMonsterTile();
                 }
 
                 monsterMapObject->setPosition(QPointF(monster_x-0.5,monster_y+1));
@@ -638,6 +633,8 @@ void MapVisualiserPlayer::moveStepSlot()
                 emit inWaitingOfMap();
             loadOtherMap(current_map);
             hideNotloadedMap();
+            if(!vectorcontainsAtLeastOne(old_map->near_map,map))
+                resetMonsterTile();
             return;
         }
         else
@@ -865,7 +862,7 @@ void MapVisualiserPlayer::finalPlayerStep()
                                 playerTileset=playerTilesetCache[defaultTileset];
                             else
                             {
-                                const std::string &imagePath=playerSkinPath+MapVisualiserPlayer::text_slash+lastTileset+MapVisualiserPlayer::text_dotpng;
+                                const std::string &imagePath=playerSkinPath+"/"+lastTileset+".png";
                                 QImage image(QString::fromStdString(imagePath));
                                 if(!image.isNull())
                                 {
@@ -1793,3 +1790,74 @@ void MapVisualiserPlayer::datapackParsedMainSub()
         return;
     mHaveTheDatapack=true;
 }
+
+void MapVisualiserPlayer::resetMonsterTile()
+{
+    this->monster_x=x;
+    this->monster_y=y;
+    pendingMonsterMoves.clear();
+    monsterMapObject->setVisible(false);
+}
+
+void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
+{
+    bool resetMonster=false;
+    if(monsterMapObject!=NULL)
+    {
+        unloadMonsterFromCurrentMap();
+        delete monsterMapObject;
+        monsterMapObject=NULL;
+        resetMonster=true;
+    }
+    monsterTileset=NULL;
+    player_informations.public_informations.monsterId=monster;
+    const std::string &imagePath=datapackPath+DATAPACK_BASE_PATH_MONSTERS+std::to_string(monster)+"/overworld.png";
+    if(monsterTilesetCache.find(imagePath)!=monsterTilesetCache.cend())
+        monsterTileset=monsterTilesetCache.at(imagePath);
+    else
+    {
+        QImage image(QString::fromStdString(imagePath));
+        if(!image.isNull())
+        {
+            monsterTileset = new Tiled::Tileset(QString::fromStdString(lastTileset),32,32);
+            if(!monsterTileset->loadFromImage(image,QString::fromStdString(imagePath)))
+                abort();
+            monsterTilesetCache[imagePath]=monsterTileset;
+        }
+        else
+            monsterTileset=NULL;
+    }
+    if(monsterTileset!=NULL)
+    {
+        monsterMapObject = new Tiled::MapObject();
+        monsterMapObject->setName("Current player monster");
+
+        Tiled::Cell cell=monsterMapObject->cell();
+        switch(direction)
+        {
+            case CatchChallenger::Direction_look_at_top:
+            case CatchChallenger::Direction_move_at_top:
+                cell.tile=monsterTileset->tileAt(2);
+            break;
+            case CatchChallenger::Direction_look_at_right:
+            case CatchChallenger::Direction_move_at_right:
+                cell.tile=monsterTileset->tileAt(7);
+            break;
+            case CatchChallenger::Direction_look_at_bottom:
+            case CatchChallenger::Direction_move_at_bottom:
+                cell.tile=monsterTileset->tileAt(6);
+            break;
+            case CatchChallenger::Direction_look_at_left:
+            case CatchChallenger::Direction_move_at_left:
+                cell.tile=monsterTileset->tileAt(3);
+            break;
+            default:
+            break;
+        }
+        monsterMapObject->setCell(cell);
+    }
+    if(resetMonster)
+        loadMonsterFromCurrentMap();
+    resetMonsterTile();
+}
+

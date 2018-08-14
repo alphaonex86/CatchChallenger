@@ -27,6 +27,7 @@ public:
     std::string currentZone() const;
     std::string currentBackgroundsound() const;
     CatchChallenger::Direction getDirection();
+    void updatePlayerMonsterTile(const uint16_t &monster);
     enum BlockedOn
     {
         BlockedOn_ZoneItem,
@@ -114,13 +115,9 @@ protected:
     std::unordered_set<uint16_t> *itemOnMap;
     std::unordered_map<uint16_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
 protected:
-    static std::string text_slashtrainerpng;
-    static std::string text_slash;
-    static std::string text_antislash;
-    static std::string text_dotpng;
-    static std::string text_type;
-    static std::string text_zone;
-    static std::string text_backgroundsound;
+    //current player
+    CatchChallenger::Player_private_and_public_informations player_informations;
+    bool player_informations_is_set;
 protected slots:
     virtual void keyPressParse();
 
@@ -150,6 +147,8 @@ protected slots:
     virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
     void mapDisplayedSlot(const std::string &fileName);
     virtual bool asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject);
+
+    void resetMonsterTile();
 signals:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void stopped_in_front_of(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
