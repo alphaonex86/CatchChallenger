@@ -9,7 +9,6 @@
 #include "../../server/epoll/Epoll.h"
 #include "../../general/base/cpp11addition.h"
 #include <cstring>
-#include <arpa/inet.h> // for inet_ntoa, drop after debug
 
 /// \todo control duplicate public key peer
 
@@ -96,12 +95,12 @@ bool P2PServerUDP::tryListen(const uint16_t &port)
     }
 
     // zero out the structure
-    sockaddr_in si_me;
+    sockaddr_in6 si_me;
     memset((char *) &si_me, 0, sizeof(si_me));
 
-    si_me.sin_family = AF_INET;
-    si_me.sin_port = htons(port);
-    si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+    si_me.sin6_family = AF_INET;
+    si_me.sin6_port = htons(port);
+    si_me.sin6_addr = IN6ADDR_ANY_INIT;
 
     //bind socket to port
     if( bind(sfd , (struct sockaddr*)&si_me, sizeof(si_me) ) == -1)
@@ -141,15 +140,15 @@ bool P2PServerUDP::tryListen(const uint16_t &port)
     return true;
 }
 
-std::string P2PServerUDP::sockSerialised(const sockaddr_in &si_other)
+std::string P2PServerUDP::sockSerialised(const sockaddr_in6 &si_other)
 {
-    if (si_other.sin_family == AF_INET) {
-        return std::string(reinterpret_cast<const char *>(&si_other.sin_addr.s_addr),sizeof(si_other.sin_addr.s_addr))+
-                std::string(reinterpret_cast<const char *>(&si_other.sin_port),sizeof(si_other.sin_port));
-    } else if (si_other.sin_family == AF_INET6) {
-        const sockaddr_in6 *x6 = reinterpret_cast<const sockaddr_in6 *>(&si_other);
-        return std::string(reinterpret_cast<const char *>(&x6->sin6_addr.s6_addr),sizeof(x6->sin6_addr.s6_addr))+
-                std::string(reinterpret_cast<const char *>(&x6->sin6_port),sizeof(x6->sin6_port));
+    if (si_other.sin6_family == AF_INET) {
+        const sockaddr_in *ipv4 = reinterpret_cast<const sockaddr_in *>(&si_other);
+        return std::string(reinterpret_cast<const char *>(&ipv4->sin_addr.s_addr),sizeof(ipv4->sin_addr.s_addr))+
+                std::string(reinterpret_cast<const char *>(&ipv4->sin_port),sizeof(ipv4->sin_port));
+    } else if (si_other.sin6_family == AF_INET6) {
+        return std::string(reinterpret_cast<const char *>(&si_other.sin6_addr.s6_addr),sizeof(si_other.sin6_addr.s6_addr))+
+                std::string(reinterpret_cast<const char *>(&si_other.sin6_port),sizeof(si_other.sin6_port));
     } else {
         std::cerr << "unknown sa_family" << std::endl;
         abort();
@@ -158,7 +157,7 @@ std::string P2PServerUDP::sockSerialised(const sockaddr_in &si_other)
 
 void P2PServerUDP::read()
 {
-    sockaddr_in si_other;
+    sockaddr_in6 si_other;
     unsigned int slen = sizeof(si_other);
     memset(&si_other,0,sizeof(si_other));
 
@@ -186,7 +185,7 @@ void P2PServerUDP::read()
         data3=data.substr(8+8+1,recv_len-8-8-1-ED25519_SIGNATURE_SIZE);
         data4=data.substr(recv_len-ED25519_SIGNATURE_SIZE,ED25519_SIGNATURE_SIZE);
         std::cout << "(" << std::to_string(messageType) << ") "
-                  << inet_ntoa(si_other.sin_addr) << ":" << ntohs(si_other.sin_port) << ": "
+                  << P2PPeer::toString(si_other,":") << ": "
                   << binarytoHexa(data1.data(),data1.size()) << " "
                   << binarytoHexa(data2.data(),data2.size()) << " "
                   << binarytoHexa(data3.data(),data3.size()) << " "
@@ -610,7 +609,7 @@ void P2PServerUDP::read()
     }
 }
 
-int P2PServerUDP::write(const char * const data,const uint32_t dataSize,const sockaddr_in &si_other)
+int P2PServerUDP::write(const char * const data,const uint32_t dataSize,const sockaddr_in6 &si_other)
 {
     #ifdef CATCHCHALLENGER_EXTRACHECK
     {
