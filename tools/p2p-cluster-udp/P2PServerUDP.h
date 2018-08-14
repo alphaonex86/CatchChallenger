@@ -18,20 +18,20 @@ public:
     ~P2PServerUDP();
     bool tryListen(const uint16_t &port);
     void read();
-    static std::string sockSerialised(const sockaddr_in &si_other);
-    int write(const char * const data, const uint32_t dataSize, const sockaddr_in &si_other);
+    static std::string sockSerialised(const sockaddr_in6 &si_other);
+    int write(const char * const data, const uint32_t dataSize, const sockaddr_in6 &si_other);
     EpollObjectType getType() const;
     const char *getPublicKey() const;
     const char * getCaSignature() const;
 
-    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostConnected *> hostConnectionEstablished;
+    std::unordered_map<std::string/*sockaddr_in6 serv_addr;*/,HostConnected *> hostConnectionEstablished;
 
     struct HostToSecondReply {
         uint8_t round;
         char reply[8+8+1+ED25519_SIGNATURE_SIZE];
         HostConnected *hostConnected;
     };
-    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostToSecondReply> hostToSecondReply;
+    std::unordered_map<std::string/*sockaddr_in6 serv_addr;*/,HostToSecondReply> hostToSecondReply;
 
     struct HostToFirstReply {
         uint8_t round;//if timeout, remove from connect
@@ -39,13 +39,13 @@ public:
         char reply[8+8+1+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE+ED25519_SIGNATURE_SIZE];
         HostConnected *hostConnected;
     };
-    std::unordered_map<std::string/*sockaddr_in serv_addr;*/,HostToFirstReply> hostToFirstReply;
+    std::unordered_map<std::string/*sockaddr_in6 serv_addr;*/,HostToFirstReply> hostToFirstReply;
 
     struct HostToConnect {
         uint8_t round;
-        sockaddr_in serv_addr;
+        sockaddr_in6 serv_addr;
         char random[8];
-        std::string serialised_serv_addr;/*sockaddr_in serv_addr;*/
+        std::string serialised_serv_addr;/*sockaddr_in6 serv_addr;*/
     };
     std::vector<HostToConnect> hostToConnect;
     size_t hostToConnectIndex;
@@ -56,7 +56,7 @@ public:
     const uint8_t *get_ca_publickey() const;
 protected:
     bool setKey(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_publickey/*ED25519_KEY_SIZE*/, uint8_t *ca_signature/*ED25519_SIGNATURE_SIZE*/);
-    virtual bool newPeer(const sockaddr_in &si_other) = 0;
+    virtual bool newPeer(const sockaddr_in6 &si_other) = 0;
 private:
     int sfd;
     static char readBuffer[4096];
