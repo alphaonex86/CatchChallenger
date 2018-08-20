@@ -109,7 +109,22 @@ bool MapControllerMP::loadPlayerMap(const std::string &fileName,const uint8_t &x
 {
     //position
     mapVisualiserThread.stopIt=false;
-    loadOtherMap(current_map);
+    if(current_map.empty())
+    {
+        error("MapControllerMP::loadPlayerMap() map empty");
+        return false;
+    }
+    if(fileName.empty())
+    {
+        error("MapControllerMP::loadPlayerMap() fileName empty");
+        return false;
+    }
+    if(stringEndsWith(fileName,"/"))
+    {
+        error("MapControllerMP::loadPlayerMap() map is directory");
+        return false;
+    }
+    loadOtherMap(fileName);
     return MapVisualiserPlayer::loadPlayerMap(fileName,x,y);
 }
 
