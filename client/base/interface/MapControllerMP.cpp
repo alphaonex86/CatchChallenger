@@ -71,12 +71,8 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol *client)
 
 void MapControllerMP::resetAll()
 {
-    if(!playerTileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
-        qDebug() << "Unable the load the default player tileset";
-
     unloadPlayerFromCurrentMap();
     current_map.clear();
-    current_monster_map.clear();
     pathList.clear();
     delayedActions.clear();
     skinFolderList.clear();
@@ -112,16 +108,9 @@ void MapControllerMP::setScale(const float &scaleSize)
 bool MapControllerMP::loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y)
 {
     //position
-    this->x=x;
-    this->y=y;
-    this->monster_x=x;
-    this->monster_y=y;
-    QFileInfo fileInformations(QString::fromStdString(fileName));
-    current_map=fileInformations.absoluteFilePath().toStdString();
-    current_monster_map=fileInformations.absoluteFilePath().toStdString();
     mapVisualiserThread.stopIt=false;
     loadOtherMap(current_map);
-    return true;
+    return MapVisualiserPlayer::loadPlayerMap(fileName,x,y);
 }
 
 void MapControllerMP::insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
@@ -155,7 +144,8 @@ void MapControllerMP::dropAllPlayerOnTheMap()
 }
 
 //map move
-bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction,bool inReplayMode)
+bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_informations &player,
+             const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction,bool inReplayMode)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -190,90 +180,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
     #endif
     //current player
     if(player.simplifiedId==player_informations.public_informations.simplifiedId)
-    {
-        //ignore to improve the performance server because can reinsert all player of map using the overall client list
-        if(!current_map.empty())
-        {
-            qDebug() << "Current player already loaded on the map";
-            return true;
-        }
-        /// \todo do a player cache here
-        //the player skin
-        if(player.skinId<skinFolderList.size())
-        {
-            playerSkinPath=datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId);
-            const std::string &imagePath=playerSkinPath+"/trainer.png";
-            QImage image(QString::fromStdString(imagePath));
-            if(!image.isNull())
-            {
-                if(!playerTileset->loadFromImage(image,QString::fromStdString(imagePath)))
-                    abort();
-            }
-            else
-                qDebug() << "Unable to load the player tilset: "+QString::fromStdString(imagePath);
-        }
-        else
-            qDebug() << "The skin id: "+QString::number(player.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) info MapControllerMP::insert_player()";
-
-        //the direction
-        this->direction=direction;
-        switch(direction)
-        {
-            case CatchChallenger::Direction_move_at_top:
-            case CatchChallenger::Direction_move_at_right:
-            case CatchChallenger::Direction_move_at_bottom:
-            case CatchChallenger::Direction_move_at_left:
-            QMessageBox::critical(NULL,tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),tr("The direction send by the server is wrong"));
-            return true;
-            default:
-            break;
-        }
-        switch(direction)
-        {
-            case CatchChallenger::Direction_look_at_top:
-            case CatchChallenger::Direction_move_at_top:
-            {
-                Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(1);
-                playerMapObject->setCell(cell);
-            }
-            break;
-            case CatchChallenger::Direction_look_at_right:
-            case CatchChallenger::Direction_move_at_right:
-            {
-                Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(4);
-                playerMapObject->setCell(cell);
-            }
-            break;
-            case CatchChallenger::Direction_look_at_bottom:
-            case CatchChallenger::Direction_move_at_bottom:
-            {
-                Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(7);
-                playerMapObject->setCell(cell);
-            }
-            break;
-            case CatchChallenger::Direction_look_at_left:
-            case CatchChallenger::Direction_move_at_left:
-            {
-                Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(10);
-                playerMapObject->setCell(cell);
-            }
-            break;
-            default:
-            QMessageBox::critical(NULL,tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),tr("The direction send by the server is wrong"));
-            return true;
-        }
-
-        //monster
-        updatePlayerMonsterTile(player.monsterId);
-
-        loadPlayerMap(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(mapId),
-                      static_cast<uint8_t>(x),static_cast<uint8_t>(y));
-        setSpeed(player.speed);
-    }
+        MapVisualiserPlayer::insert_player_internal(player,mapId,x,y,direction,skinFolderList);
     //other player
     else
     {
@@ -504,6 +411,76 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
     return true;
 }
 
+void MapControllerMP::updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const uint16_t &monster)
+{
+    bool resetMonster=false;
+    if(tempPlayer.monsterMapObject!=NULL)
+    {
+        unloadOtherMonsterFromCurrentMap(tempPlayer);
+        delete tempPlayer.monsterMapObject;
+        tempPlayer.monsterMapObject=NULL;
+        resetMonster=true;
+    }
+    tempPlayer.monsterTileset=NULL;
+    tempPlayer.informations.monsterId=monster;
+    const std::string &imagePath=datapackPath+DATAPACK_BASE_PATH_MONSTERS+std::to_string(monster)+"/overworld.png";
+    if(monsterTilesetCache.find(imagePath)!=monsterTilesetCache.cend())
+        tempPlayer.monsterTileset=monsterTilesetCache.at(imagePath);
+    else
+    {
+        QImage image(QString::fromStdString(imagePath));
+        if(!image.isNull())
+        {
+            tempPlayer.monsterTileset = new Tiled::Tileset(QString::fromStdString(lastTileset),32,32);
+            if(!tempPlayer.monsterTileset->loadFromImage(image,QString::fromStdString(imagePath)))
+                abort();
+            monsterTilesetCache[imagePath]=tempPlayer.monsterTileset;
+        }
+        else
+            tempPlayer.monsterTileset=NULL;
+    }
+    if(tempPlayer.monsterTileset!=NULL)
+    {
+        tempPlayer.monsterMapObject = new Tiled::MapObject();
+        tempPlayer.monsterMapObject->setName("Current player monster");
+
+        Tiled::Cell cell=tempPlayer.monsterMapObject->cell();
+        switch(tempPlayer.direction)
+        {
+            case CatchChallenger::Direction_look_at_top:
+            case CatchChallenger::Direction_move_at_top:
+                cell.tile=tempPlayer.monsterTileset->tileAt(2);
+            break;
+            case CatchChallenger::Direction_look_at_right:
+            case CatchChallenger::Direction_move_at_right:
+                cell.tile=tempPlayer.monsterTileset->tileAt(7);
+            break;
+            case CatchChallenger::Direction_look_at_bottom:
+            case CatchChallenger::Direction_move_at_bottom:
+                cell.tile=tempPlayer.monsterTileset->tileAt(6);
+            break;
+            case CatchChallenger::Direction_look_at_left:
+            case CatchChallenger::Direction_move_at_left:
+                cell.tile=tempPlayer.monsterTileset->tileAt(3);
+            break;
+            default:
+            break;
+        }
+        tempPlayer.monsterMapObject->setCell(cell);
+    }
+    if(resetMonster)
+        loadOtherMonsterFromCurrentMap(tempPlayer);
+    resetOtherMonsterTile(tempPlayer);
+}
+
+void MapControllerMP::resetOtherMonsterTile(OtherPlayer &tempPlayer)
+{
+    tempPlayer.monster_x=tempPlayer.x;
+    tempPlayer.monster_y=tempPlayer.y;
+    tempPlayer.pendingMonsterMoves.clear();
+    tempPlayer.monsterMapObject->setVisible(false);
+}
+
 //call after enter on new map
 void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool &display)
 {
@@ -544,7 +521,8 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool 
         removeUnusedMap();
     }*/
     /// \todo temp fix, do a better fix
-    centerOn(MapObjectItem::objectLink.at(playerMapObject));
+    const Tiled::MapObject * playerMapObject=getPlayerMapObject();
+    centerOn(MapObjectItem::objectLink.at(const_cast<Tiled::MapObject *>(playerMapObject)));
 
     if(ObjectGroupItem::objectGroupLink.find(otherPlayer.presumed_map->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
     {
@@ -567,6 +545,38 @@ void MapControllerMP::loadOtherPlayerFromMap(OtherPlayer otherPlayer,const bool 
     }
     else
         qDebug() << QStringLiteral("loadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
+
+    loadOtherMonsterFromCurrentMap(otherPlayer);
+}
+
+void MapControllerMP::loadOtherMonsterFromCurrentMap(OtherPlayer &tempPlayer)
+{
+    if(tempPlayer.monsterMapObject==nullptr)
+        return;
+    //monster
+    if(all_map.find(tempPlayer.current_monster_map)==all_map.cend())
+    {
+        qDebug() << QStringLiteral("all_map have not the current map: %1").arg(QString::fromStdString(tempPlayer.current_monster_map));
+        return;
+    }
+    {
+        Tiled::ObjectGroup *currentGroup=tempPlayer.monsterMapObject->objectGroup();
+        if(currentGroup!=NULL)
+        {
+            if(ObjectGroupItem::objectGroupLink.find(currentGroup)!=ObjectGroupItem::objectGroupLink.cend())
+                ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(tempPlayer.monsterMapObject);
+            //currentGroup->removeObject(monsterMapObject);
+            if(currentGroup!=all_map.at(tempPlayer.current_map)->objectGroup)
+                qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), the monsterMapObject group is wrong: %1").arg(currentGroup->name());
+        }
+        if(ObjectGroupItem::objectGroupLink.find(all_map.at(tempPlayer.current_map)->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
+            ObjectGroupItem::objectGroupLink.at(all_map.at(tempPlayer.current_map)->objectGroup)->addObject(tempPlayer.monsterMapObject);
+        else
+            qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
+        //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
+        tempPlayer.monsterMapObject->setPosition(QPointF(tempPlayer.x-0.5,tempPlayer.y+1));
+        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.y);
+    }
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
@@ -605,6 +615,22 @@ void MapControllerMP::unloadOtherPlayerFromMap(OtherPlayer otherPlayer)
         else
             qDebug() << QStringLiteral("map not found into mapUsedByOtherPlayer for player: %1, map: %2")
                         .arg(otherPlayer.informations.simplifiedId).arg(QString::fromStdString(map));
+    }
+}
+
+void MapControllerMP::unloadOtherMonsterFromCurrentMap(OtherPlayer &tempPlayer)
+{
+    //monster
+    {
+        Tiled::ObjectGroup *currentGroup=tempPlayer.monsterMapObject->objectGroup();
+        if(currentGroup==NULL)
+            return;
+        //unload the player sprite
+        if(ObjectGroupItem::objectGroupLink.find(tempPlayer.monsterMapObject->objectGroup())!=
+                ObjectGroupItem::objectGroupLink.cend())
+            ObjectGroupItem::objectGroupLink.at(tempPlayer.monsterMapObject->objectGroup())->removeObject(tempPlayer.monsterMapObject);
+        else
+            qDebug() << QStringLiteral("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains monsterMapObject->objectGroup()");
     }
 }
 
@@ -1085,54 +1111,8 @@ void MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const u
     qDebug() << QStringLiteral("teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
     qDebug() << QStringLiteral("currently on: %1 (%2,%3)").arg(current_map).arg(this->x).arg(this->y);
     #endif
-    //the direction
-    this->direction=direction;
-    switch(direction)
-    {
-        case CatchChallenger::Direction_look_at_top:
-        case CatchChallenger::Direction_move_at_top:
-        {
-            Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(1);
-            playerMapObject->setCell(cell);
-        }
-        break;
-        case CatchChallenger::Direction_look_at_right:
-        case CatchChallenger::Direction_move_at_right:
-        {
-            Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(4);
-            playerMapObject->setCell(cell);
-        }
-        break;
-        case CatchChallenger::Direction_look_at_bottom:
-        case CatchChallenger::Direction_move_at_bottom:
-        {
-            Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(7);
-            playerMapObject->setCell(cell);
-        }
-        break;
-        case CatchChallenger::Direction_look_at_left:
-        case CatchChallenger::Direction_move_at_left:
-        {
-            Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(10);
-            playerMapObject->setCell(cell);
-        }
-        break;
-        default:
-        QMessageBox::critical(NULL,tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),tr("The direction send by the server is wrong"));
-        return;
-    }
-
     client->teleportDone();
-
-    //position
-    this->x=static_cast<uint8_t>(x);
-    this->y=static_cast<uint8_t>(y);
-
-    unloadPlayerFromCurrentMap();
+    MapVisualiserPlayer::unloadPlayerFromCurrentMap();
     current_map=QFileInfo(QString::fromStdString(
                     datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(mapId)))
             .absoluteFilePath().toStdString();
@@ -1162,34 +1142,7 @@ void MapControllerMP::finalPlayerStep()
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
         return;
     }
-    if(!isTeleported)
-    {
-        int index=0;
-        const int size=current_map_pointer->logicalMap.teleport_semi.size();
-        while(index<size)
-        {
-            const CatchChallenger::Map_semi_teleport &current_teleport=current_map_pointer->logicalMap.teleport_semi.at(index);
-            //if need be teleported
-            if(current_teleport.source_x==x && current_teleport.source_y==y)
-            {
-                isTeleported=true;
-                unloadPlayerFromCurrentMap();
-                passMapIntoOld();
-                current_map=current_teleport.map;
-                x=current_teleport.destination_x;
-                y=current_teleport.destination_y;
-                if(!haveMapInMemory(current_map))
-                    emit inWaitingOfMap();
-                loadOtherMap(current_map);
-                hideNotloadedMap();
-                resetMonsterTile();
-                return;
-            }
-            index++;
-        }
-    }
-    else
-        isTeleported=false;
+    finalPlayerStepTeleported(isTeleported);
     MapVisualiserPlayer::finalPlayerStep();
 }
 
@@ -1520,7 +1473,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         case 2:
         {
             Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-            if(stepAlternance)
+            if(otherPlayer.stepAlternance)
                 cell.tile=otherPlayer.playerTileset->tileAt(baseTile-1);
             else
                 cell.tile=otherPlayer.playerTileset->tileAt(baseTile+1);
@@ -1543,6 +1496,48 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
     //if have finish the step
     if(otherPlayer.moveStep>5)
     {
+        if(otherPlayer.monsterMapObject!=NULL)
+            if(otherPlayer.pendingMonsterMoves.size()>1)
+            {
+                const CatchChallenger::Direction direction=otherPlayer.pendingMonsterMoves.front();
+                otherPlayer.pendingMonsterMoves.erase(otherPlayer.pendingMonsterMoves.cbegin());
+
+                CatchChallenger::CommonMap * map=&all_map.at(otherPlayer.current_monster_map)->logicalMap;
+                const CatchChallenger::CommonMap * old_map=map;
+                //set the final value (direction, position, ...)
+                switch(direction)
+                {
+                    case CatchChallenger::Direction_move_at_left:
+                    case CatchChallenger::Direction_move_at_right:
+                    case CatchChallenger::Direction_move_at_top:
+                    case CatchChallenger::Direction_move_at_bottom:
+                        if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&otherPlayer.monster_x,&otherPlayer.monster_y))
+                        {
+                            std::cerr << "Bug at move for pendingMonsterMoves, unknown move: " << std::to_string(direction)
+                                      << " from " << map->map_file << " (" << std::to_string(otherPlayer.monster_x) << "," << std::to_string(otherPlayer.monster_y) << ")"
+                                      << std::endl;
+                            resetMonsterTile();
+                        }
+                    break;
+                    default:
+                        qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction (%2) when moveStep>2").arg(otherPlayer.moveStep).arg(direction);
+                    return;
+                }
+                //if the map have changed
+                if(old_map!=map)
+                {
+                    unloadOtherMonsterFromCurrentMap(otherPlayer);
+                    otherPlayer.current_monster_map=map->map_file;
+                    if(old_all_map.find(otherPlayer.current_monster_map)==old_all_map.cend())
+                        std::cerr << "old_all_map.find(current_map)==old_all_map.cend() in monster follow" << std::endl;
+                    if(!vectorcontainsAtLeastOne(old_map->near_map,map))
+                        resetOtherMonsterTile(otherPlayer);
+                    loadOtherMonsterFromCurrentMap(otherPlayer);
+                }
+
+                otherPlayer.monsterMapObject->setPosition(QPointF(otherPlayer.monster_x-0.5,otherPlayer.monster_y+1));
+                MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.monster_y);
+            }
         otherPlayer.animationDisplayed=false;
         CatchChallenger::CommonMap * old_map=&otherPlayer.presumed_map->logicalMap;
         CatchChallenger::CommonMap * map=&otherPlayer.presumed_map->logicalMap;
@@ -1574,6 +1569,8 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 unloadOtherPlayerFromMap(otherPlayer);
                 otherPlayer.presumed_map=all_map.at(map->map_file);
                 loadOtherPlayerFromMap(otherPlayer);
+                if(!vectorcontainsAtLeastOne(old_map->near_map,map))
+                    resetOtherMonsterTile(otherPlayer);
             }
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -1691,6 +1688,9 @@ void MapControllerMP::destroyMap(MapVisualiserThread::Map_full *map)
 
 CatchChallenger::Direction MapControllerMP::moveFromPath()
 {
+    const std::pair<uint8_t,uint8_t> pos(getPos());
+    const uint8_t &x=pos.first;
+    const uint8_t &y=pos.second;
     CatchChallenger::Orientation orientation;
     if(pathList.size()>1)
     {
@@ -1761,12 +1761,15 @@ CatchChallenger::Direction MapControllerMP::moveFromPath()
 
 void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,uint8_t x,uint8_t y)
 {
+    const std::pair<uint8_t,uint8_t> pos(getPos());
+    const uint8_t &thisx=pos.first;
+    const uint8_t &thisy=pos.second;
     if(event==CatchChallenger::MapEvent_SimpleClick)
     {
         if(keyAccepted.empty() || (keyAccepted.find(Qt::Key_Return)!=keyAccepted.cend() && keyAccepted.size()))
         {
             MapVisualiser::eventOnMap(event,tempMapObject,x,y);
-            pathFinding.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,this->x,this->y,*items);
+            pathFinding.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,thisx,thisy,*items);
             if(pathList.empty())
             {
                 while(pathList.size()>1)
@@ -1781,85 +1784,8 @@ bool MapControllerMP::nextPathStep()//true if have step
 {
     if(!pathList.empty())
     {
-        if(!inMove)
-        {
-            std::cerr << "inMove=false into MapControllerMP::nextPathStep(), fixed" << std::endl;
-            inMove=true;
-        }
         const CatchChallenger::Direction &direction=MapControllerMP::moveFromPath();
-        if(canGoTo(direction,all_map.at(current_map)->logicalMap,x,y,true))
-        {
-            this->direction=direction;
-            moveStep=0;
-            moveStepSlot();
-            if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange)
-            {
-                if(direction==CatchChallenger::Direction_move_at_bottom)
-                {
-                    if(y==(all_map.at(current_map)->logicalMap.height-1))
-                        emit send_player_direction(CatchChallenger::Direction_look_at_bottom);
-                }
-                else if(direction==CatchChallenger::Direction_move_at_top)
-                {
-                    if(y==0)
-                        emit send_player_direction(CatchChallenger::Direction_look_at_top);
-                }
-                else if(direction==CatchChallenger::Direction_move_at_right)
-                {
-                    if(x==(all_map.at(current_map)->logicalMap.width-1))
-                        emit send_player_direction(CatchChallenger::Direction_look_at_right);
-                }
-                else if(direction==CatchChallenger::Direction_move_at_left)
-                {
-                    if(x==0)
-                        emit send_player_direction(CatchChallenger::Direction_look_at_left);
-                }
-            }
-            emit send_player_direction(direction);
-            //startGrassAnimation(direction);
-            return true;
-        }
-        else
-        {
-            if(direction==CatchChallenger::Direction_move_at_bottom)
-                this->direction=CatchChallenger::Direction_look_at_bottom;
-            else if(direction==CatchChallenger::Direction_move_at_top)
-                this->direction=CatchChallenger::Direction_look_at_top;
-            else if(direction==CatchChallenger::Direction_move_at_right)
-                this->direction=CatchChallenger::Direction_look_at_right;
-            else if(direction==CatchChallenger::Direction_move_at_left)
-                this->direction=CatchChallenger::Direction_look_at_left;
-            //emit send_player_direction(this->direction);
-
-            moveStep=0;
-            uint8_t baseTile;
-            switch(this->direction)
-            {
-                case CatchChallenger::Direction_look_at_left:
-                baseTile=10;
-                break;
-                case CatchChallenger::Direction_look_at_right:
-                baseTile=4;
-                break;
-                case CatchChallenger::Direction_look_at_top:
-                baseTile=1;
-                break;
-                case CatchChallenger::Direction_look_at_bottom:
-                baseTile=7;
-                break;
-                default:
-                qDebug() << QStringLiteral("moveStepSlot(): nextPathStep: %1, wrong direction").arg(moveStep);
-                pathList.clear();
-                return false;
-            }
-            Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(baseTile+0);
-            playerMapObject->setCell(cell);
-
-            std::cerr << "Error at path found, collision detected" << std::endl;
-            pathList.clear();
-            return false;
-        }
+        MapVisualiserPlayer::nextPathStepInternal(pathList,direction);
     }
     return false;
 }
@@ -1874,37 +1800,7 @@ void MapControllerMP::pathFindingResult(const std::string &current_map,const uin
             pathFindingNotFound();
             return;
         }
-        if(keyAccepted.empty() || keyAccepted.find(Qt::Key_Return)!=keyAccepted.cend())
-        {
-            //take care of the returned data
-            PathResolved pathResolved;
-            pathResolved.startPoint.map=current_map;
-            pathResolved.startPoint.x=x;
-            pathResolved.startPoint.y=y;
-            pathResolved.path=path;
-
-            if(!inMove)
-            {
-                inMove=true;
-                if(this->current_map==current_map && this->x==x && this->y==y)
-                {
-                    if(pathList.size()>1)
-                        pathList.pop_back();
-                    pathList.push_back(pathResolved);
-                    if(!nextPathStep())
-                    {
-                        stopAndSend();
-                        parseStop();
-                    }
-                    if(keyPressed.empty())
-                        parseAction();
-                }
-                else
-                    std::cerr << "Wrong start point to start the path finding" << std::endl;
-            }
-            wasPathFindingUsed=true;
-            return;
-        }
+        MapVisualiserPlayer::pathFindingResultInternal(pathList,current_map,x,y,path);
     }
     else
         pathFindingNotFound();

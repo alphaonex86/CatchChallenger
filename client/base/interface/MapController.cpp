@@ -128,7 +128,7 @@ void MapController::updateBot()
 
     for (const auto &n : currentMap->logicalMap.botsDisplay) {
         CatchChallenger::BotDisplay &botDisplay=currentMap->logicalMap.botsDisplay[n.first];
-        if(botDisplay.mapObject==playerMapObject)
+        if(botDisplay.mapObject==getPlayerMapObject())
             continue;
         if(botDisplay.tileset!=NULL && botDisplay.mapObject!=NULL)
         switch(botDisplay.botMove)

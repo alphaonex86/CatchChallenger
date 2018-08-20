@@ -64,6 +64,12 @@ private:
         Tiled::Tileset * labelTileset;
         uint32_t playerSpeed;
         bool animationDisplayed;
+        //monster
+        std::vector<CatchChallenger::Direction> pendingMonsterMoves;
+        Tiled::MapObject * monsterMapObject;
+        Tiled::Tileset * monsterTileset;
+        std::string current_monster_map;
+        uint8_t monster_x,monster_y;
 
         //presumed map
         MapVisualiserThread::Map_full *presumed_map;
@@ -144,16 +150,6 @@ private:
     static QPixmap *imgForPseudoAdmin;
     static QPixmap *imgForPseudoDev;
     static QPixmap *imgForPseudoPremium;
-    struct PathResolved
-    {
-        struct StartPoint
-        {
-            std::string map;
-            uint8_t x,y;
-        };
-        StartPoint startPoint;
-        std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > path;
-    };
     std::vector<PathResolved> pathList;
 
     CatchChallenger::Api_protocol * client;
@@ -167,6 +163,10 @@ private slots:
     void eventOnMap(CatchChallenger::MapEvent event, MapVisualiserThread::Map_full * tempMapObject, uint8_t x, uint8_t y);
     CatchChallenger::Direction moveFromPath();
     //virtual std::unordered_set<std::string> loadMap(MapVisualiserThread::Map_full *map,const bool &display);
+    void updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const uint16_t &monster);
+    void resetOtherMonsterTile(OtherPlayer &tempPlayer);
+    void loadOtherMonsterFromCurrentMap(OtherPlayer &tempPlayer);
+    void unloadOtherMonsterFromCurrentMap(OtherPlayer &tempPlayer);
 protected slots:
     virtual void finalPlayerStep();
     //call after enter on new map
