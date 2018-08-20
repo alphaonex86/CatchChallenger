@@ -80,6 +80,11 @@ void MapVisualiser::resetAll()
 //open the file, and load it into the variables
 void MapVisualiser::loadOtherMap(const std::string &resolvedFileName)
 {
+    if(current_map.empty())
+    {
+        std::cerr << "MapVisualiser::loadOtherMap() map empty" << std::endl;
+        return;
+    }
     //already loaded
     if(all_map.find(resolvedFileName)!=all_map.cend())
         return;
