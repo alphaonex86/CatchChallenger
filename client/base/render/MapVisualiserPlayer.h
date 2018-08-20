@@ -12,7 +12,7 @@
 class MapVisualiserPlayer : public MapVisualiser
 {
     Q_OBJECT
-
+    friend class MapVisualiserPlayerWithFight;
 public:
     explicit MapVisualiserPlayer(const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true);
     ~MapVisualiserPlayer();
@@ -41,6 +41,16 @@ public:
         LandFight_Grass,
         LandFight_Cave
     };
+    struct PathResolved
+    {
+        struct StartPoint
+        {
+            std::string map;
+            uint8_t x,y;
+        };
+        StartPoint startPoint;
+        std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > path;
+    };
     uint8_t getX();
     uint8_t getY();
     CatchChallenger::Map_client * getMapObject();
@@ -54,12 +64,8 @@ public:
                          std::vector<uint8_t> *events, std::unordered_set<uint16_t> *itemOnMap,
                          std::unordered_map<uint16_t, CatchChallenger::PlayerPlant> *plantOnMap);
     void unblock();
-protected:
-    //datapack
-    bool mHaveTheDatapack;
-    std::string datapackPath;
-    std::string datapackMapPathBase;
-    std::string datapackMapPathSpec;
+    virtual void teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
+private:
     //player
     Tiled::MapObject * playerMapObject;
     Tiled::Tileset * playerTileset;
@@ -79,6 +85,13 @@ protected:
     Tiled::Tileset * monsterTileset;
     std::string current_monster_map;
     uint8_t monster_x,monster_y;
+
+protected:
+    //datapack
+    bool mHaveTheDatapack;
+    std::string datapackPath;
+    std::string datapackMapPathBase;
+    std::string datapackMapPathSpec;
     //cache
     std::unordered_map<std::string,Tiled::Tileset *> playerTilesetCache;
     std::unordered_map<std::string,Tiled::Tileset *> monsterTilesetCache;
@@ -124,7 +137,11 @@ protected slots:
     virtual void doMoveAnimation();
     virtual void moveStepSlot();
     virtual void finalPlayerStep();
+    virtual void finalPlayerStepTeleported(bool &isTeleported);
     virtual bool nextPathStep() = 0;//true if have step
+    void pathFindingResultInternal(std::vector<PathResolved> &pathList, const std::string &current_map, const uint8_t &x, const uint8_t &y,
+                                   const std::vector<std::pair<CatchChallenger::Orientation, uint8_t> > &path);
+    bool nextPathStepInternal(std::vector<PathResolved> &pathList, const CatchChallenger::Direction &direction);//true if have step
     virtual bool haveStopTileAction();
     //have look into another direction, if the key remain pressed, apply like move
     void transformLookToMove();
@@ -149,6 +166,15 @@ protected slots:
     virtual bool asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject);
 
     void resetMonsterTile();
+    virtual bool loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y);
+    virtual bool insert_player_internal(const CatchChallenger::Player_public_informations &player, const uint32_t &mapId,
+                                     const uint16_t &x, const uint16_t &y, const CatchChallenger::Direction &direction,
+                                     const std::vector<std::string> &skinFolderList);
+    const Tiled::MapObject * getPlayerMapObject() const;
+    std::pair<uint8_t,uint8_t> getPos() const;
+    bool isInMove() const;
+    CatchChallenger::Direction getDirection() const;
+    void stopMove();
 signals:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void stopped_in_front_of(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);

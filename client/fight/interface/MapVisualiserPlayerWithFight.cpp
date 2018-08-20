@@ -116,7 +116,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         fightMonster=fightEngine->getCurrentMonster();
     if(fightMonster!=NULL)
     {
-        std::pair<uint8_t,uint8_t> pos(x,y);
+        std::pair<uint8_t,uint8_t> pos(getPos());
         const MapVisualiserThread::Map_full * current_map_pointer=all_map.at(current_map);
         const std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>,pairhash> &botsFightTrigger=current_map_pointer->logicalMap.botsFightTrigger;
 
@@ -124,7 +124,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         {
             std::vector<uint16_t> botFightList=botsFightTrigger.at(pos);
             std::vector<std::pair<uint8_t,uint8_t> > botFightRemotePointList=
-                    current_map_pointer->logicalMap.botsFightTriggerExtra.at(std::pair<uint8_t,uint8_t>(x,y));
+                    current_map_pointer->logicalMap.botsFightTriggerExtra.at(pos);
             unsigned int index=0;
             while(index<botFightList.size())
             {
@@ -132,10 +132,10 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
                 if(!haveBeatBot(fightId))
                 {
                     qDebug() <<  "is now in fight with: " << fightId;
-                    if(inMove)
+                    if(isInMove())
                     {
-                        inMove=false;
-                        emit send_player_direction(direction);
+                        stopMove();
+                        emit send_player_direction(getDirection());
                         keyPressed.clear();
                     }
                     parseStop();
