@@ -284,8 +284,12 @@ bool MapVisualiser::asyncMapLoaded(const std::string &fileName, MapVisualiserThr
                             tempMapObject->relative_y_pixel=border_map->relative_y_pixel+border_map->logicalMap.height*border_map->tiledMap->tileHeight();
                             tempMapObject->logicalMap.border.top.map=&border_map->logicalMap;
                             tempMapObject->logicalMap.border.top.x_offset=static_cast<int16_t>(offset);
+                            if(!vectorcontainsAtLeastOne(tempMapObject->logicalMap.near_map,static_cast<CatchChallenger::CommonMap *>(&border_map->logicalMap)))
+                                tempMapObject->logicalMap.near_map.push_back(&border_map->logicalMap);
                             border_map->logicalMap.border.bottom.map=&tempMapObject->logicalMap;
                             border_map->logicalMap.border.bottom.x_offset=static_cast<int16_t>(-offset);
+                            if(!vectorcontainsAtLeastOne(border_map->logicalMap.near_map,static_cast<CatchChallenger::CommonMap *>(&tempMapObject->logicalMap)))
+                                tempMapObject->logicalMap.near_map.push_back(&tempMapObject->logicalMap);
                             QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
                             if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
                             {
@@ -313,8 +317,12 @@ bool MapVisualiser::asyncMapLoaded(const std::string &fileName, MapVisualiserThr
                             tempMapObject->relative_y_pixel=border_map->relative_y_pixel-tempMapObject->logicalMap.height*tempMapObject->tiledMap->tileHeight();
                             tempMapObject->logicalMap.border.bottom.map=&border_map->logicalMap;
                             tempMapObject->logicalMap.border.bottom.x_offset=static_cast<int16_t>(offset);
+                            if(!vectorcontainsAtLeastOne(tempMapObject->logicalMap.near_map,static_cast<CatchChallenger::CommonMap *>(&border_map->logicalMap)))
+                                tempMapObject->logicalMap.near_map.push_back(&border_map->logicalMap);
                             border_map->logicalMap.border.top.map=&tempMapObject->logicalMap;
                             border_map->logicalMap.border.top.x_offset=static_cast<int16_t>(-offset);
+                            if(!vectorcontainsAtLeastOne(border_map->logicalMap.near_map,static_cast<CatchChallenger::CommonMap *>(&tempMapObject->logicalMap)))
+                                tempMapObject->logicalMap.near_map.push_back(&tempMapObject->logicalMap);
                             QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
                             if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
                             {
@@ -342,8 +350,12 @@ bool MapVisualiser::asyncMapLoaded(const std::string &fileName, MapVisualiserThr
                             tempMapObject->relative_y_pixel=border_map->relative_y_pixel+offset_pixel;
                             tempMapObject->logicalMap.border.right.map=&border_map->logicalMap;
                             tempMapObject->logicalMap.border.right.y_offset=static_cast<int16_t>(offset);
+                            if(!vectorcontainsAtLeastOne(tempMapObject->logicalMap.near_map,static_cast<CatchChallenger::CommonMap *>(&border_map->logicalMap)))
+                                tempMapObject->logicalMap.near_map.push_back(&border_map->logicalMap);
                             border_map->logicalMap.border.left.map=&tempMapObject->logicalMap;
                             border_map->logicalMap.border.left.y_offset=static_cast<int16_t>(-offset);
+                            if(!vectorcontainsAtLeastOne(border_map->logicalMap.near_map,static_cast<CatchChallenger::CommonMap *>(&tempMapObject->logicalMap)))
+                                tempMapObject->logicalMap.near_map.push_back(&tempMapObject->logicalMap);
                             QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
                             if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
                             {
@@ -371,8 +383,12 @@ bool MapVisualiser::asyncMapLoaded(const std::string &fileName, MapVisualiserThr
                             tempMapObject->relative_y_pixel=border_map->relative_y_pixel+offset_pixel;
                             tempMapObject->logicalMap.border.left.map=&border_map->logicalMap;
                             tempMapObject->logicalMap.border.left.y_offset=static_cast<int16_t>(offset);
+                            if(!vectorcontainsAtLeastOne(tempMapObject->logicalMap.near_map,static_cast<CatchChallenger::CommonMap *>(&border_map->logicalMap)))
+                                tempMapObject->logicalMap.near_map.push_back(&border_map->logicalMap);
                             border_map->logicalMap.border.right.map=&tempMapObject->logicalMap;
                             border_map->logicalMap.border.right.y_offset=static_cast<int16_t>(-offset);
+                            if(!vectorcontainsAtLeastOne(border_map->logicalMap.near_map,static_cast<CatchChallenger::CommonMap *>(&tempMapObject->logicalMap)))
+                                tempMapObject->logicalMap.near_map.push_back(&tempMapObject->logicalMap);
                             QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,tempMapObject->logicalMap.width,tempMapObject->logicalMap.height);
                             if(CatchChallenger::FacilityLibClient::rectTouch(current_map_rect,map_rect))
                             {

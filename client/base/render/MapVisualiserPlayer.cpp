@@ -591,7 +591,7 @@ void MapVisualiserPlayer::moveStepSlot()
                         if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&monster_x,&monster_y))
                         {
                             std::cerr << "Bug at move for pendingMonsterMoves, unknown move: " << std::to_string(direction)
-                                      << " from " << map->map_file << " (" << monster_x << "," << monster_y << ")"
+                                      << " from " << map->map_file << " (" << std::to_string(monster_x) << "," << std::to_string(monster_y) << ")"
                                       << std::endl;
                             resetMonsterTile();
                         }
@@ -609,6 +609,7 @@ void MapVisualiserPlayer::moveStepSlot()
                         std::cerr << "old_all_map.find(current_map)==old_all_map.cend() in monster follow" << std::endl;
                     if(!vectorcontainsAtLeastOne(old_map->near_map,map))
                         resetMonsterTile();
+                    loadMonsterFromCurrentMap();
                 }
 
                 monsterMapObject->setPosition(QPointF(monster_x-0.5,monster_y+1));
@@ -627,7 +628,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y))
                 {
                     std::cerr << "Bug at move, unknown move: " << std::to_string(direction)
-                              << " from " << map->map_file << " (" << x << "," << y << ")"
+                              << " from " << map->map_file << " (" << std::to_string(x) << "," << std::to_string(y) << ")"
                               << std::endl;
                     return;
                 }
