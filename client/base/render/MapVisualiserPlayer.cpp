@@ -148,8 +148,18 @@ void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
 void MapVisualiserPlayer::keyPressParse()
 {
     //ignore is already in move
-    if(inMove || blocked)
+    if(blocked)
         return;
+    if(inMove)
+    {
+        if(!moveTimer.isActive())
+        {
+            std::cerr << "!moveTimer.isActive() && inMove==true, reset, internal error" << std::endl;
+            return;
+        }
+        else
+            return;
+    }
 
     if(keyPressed.size()==1 && keyPressed.find(Qt::Key_Return)!=keyPressed.cend())
     {
@@ -580,8 +590,10 @@ void MapVisualiserPlayer::moveStepSlot()
                     case CatchChallenger::Direction_move_at_bottom:
                         if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&monster_x,&monster_y))
                         {
-                            qDebug() << "Bug at move";
-                            return;
+                            std::cerr << "Bug at move for pendingMonsterMoves, unknown move: " << std::to_string(direction)
+                                      << " from " << map->map_file << " (" << monster_x << "," << monster_y << ")"
+                                      << std::endl;
+                            resetMonsterTile();
                         }
                     break;
                     default:
@@ -614,7 +626,9 @@ void MapVisualiserPlayer::moveStepSlot()
             case CatchChallenger::Direction_move_at_bottom:
                 if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y))
                 {
-                    qDebug() << "Bug at move";
+                    std::cerr << "Bug at move, unknown move: " << std::to_string(direction)
+                              << " from " << map->map_file << " (" << x << "," << y << ")"
+                              << std::endl;
                     return;
                 }
                 direction=CatchChallenger::MoveOnTheMap::directionToDirectionLook(direction);
