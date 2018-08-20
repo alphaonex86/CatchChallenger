@@ -1607,6 +1607,7 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
         //monster
         updatePlayerMonsterTile(player.monsterId);
 
+        current_map=DatapackClientLoader::datapackLoader.maps.at(mapId);
         loadPlayerMap(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(mapId),
                       static_cast<uint8_t>(x),static_cast<uint8_t>(y));
         setSpeed(player.speed);
