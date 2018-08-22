@@ -347,6 +347,14 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         tempPlayer.presumed_map=all_map.at(mapPath);
         tempPlayer.presumed_x=static_cast<uint8_t>(x);
         tempPlayer.presumed_y=static_cast<uint8_t>(y);
+
+        //monster
+        tempPlayer.monsterMapObject=nullptr;
+        tempPlayer.monsterTileset=nullptr;
+        tempPlayer.monster_x=static_cast<uint8_t>(x);
+        tempPlayer.monster_y=static_cast<uint8_t>(y);
+        tempPlayer.current_monster_map=mapPath;
+
         switch(direction)
         {
             case CatchChallenger::Direction_look_at_top:
@@ -388,6 +396,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             return true;
         }
 
+        updateOtherPlayerMonsterTile(tempPlayer,player.monsterId);
         loadOtherPlayerFromMap(tempPlayer,false);
 
         tempPlayer.animationDisplayed=false;
