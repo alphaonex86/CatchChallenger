@@ -829,9 +829,15 @@ void MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
                 isTeleported=true;
                 unloadPlayerFromCurrentMap();
                 passMapIntoOld();
+                //player coord
                 current_map=current_teleport.map;
                 x=current_teleport.destination_x;
                 y=current_teleport.destination_y;
+                //monster coord
+                current_monster_map=current_teleport.map;
+                monster_x=current_teleport.destination_x;
+                monster_y=current_teleport.destination_y;
+
                 if(!haveMapInMemory(current_map))
                     emit inWaitingOfMap();
                 loadOtherMap(current_map);
