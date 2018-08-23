@@ -91,12 +91,19 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
 
 MapVisualiserPlayer::~MapVisualiserPlayer()
 {
-    delete animationTileset;
-    delete nextCurrentObject;
-    delete grassCurrentObject;
-    delete playerMapObject;
+    if(animationTileset!=NULL)
+        delete animationTileset;
+    if(nextCurrentObject!=NULL)
+        delete nextCurrentObject;
+    if(grassCurrentObject!=NULL)
+        delete grassCurrentObject;
+    if(playerMapObject!=NULL)
+        delete playerMapObject;
     if(monsterMapObject!=nullptr)
-        delete monsterMapObject;
+    {
+        //delete monsterMapObject;-> do a clean fix
+        monsterMapObject=nullptr;
+    }
     //delete playerTileset;
     std::unordered_set<Tiled::Tileset *> deletedTileset;
     for(auto i : playerTilesetCache) {
@@ -1981,6 +1988,8 @@ void MapVisualiserPlayer::datapackParsedMainSub()
 
 void MapVisualiserPlayer::resetMonsterTile()
 {
+    if(monsterMapObject==nullptr)
+        return;
     this->monster_x=x;
     this->monster_y=y;
     pendingMonsterMoves.clear();
@@ -1993,7 +2002,7 @@ void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
     if(monsterMapObject!=NULL)
     {
         unloadMonsterFromCurrentMap();
-        delete monsterMapObject;
+        //delete monsterMapObject;
         monsterMapObject=NULL;
         resetMonster=true;
     }

@@ -19,34 +19,7 @@ public:
     virtual void resetAll();
     virtual void connectAllSignals(CatchChallenger::Api_protocol *client);
     void setScale(const float &scaleSize);
-public slots:
-    //map move Qt
-    void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
-    void move_player(const uint16_t &id, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement);
-    void remove_player(const uint16_t &id);
-    void reinsert_player(const uint16_t &id, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction);
-    void full_reinsert_player(const uint16_t &id, const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction);
-    void dropAllPlayerOnTheMap();
-    //map move
-    bool insert_player_final(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction,bool inReplayMode);
-    bool move_player_final(const uint16_t &id, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement, bool inReplayMode);
-    bool remove_player_final(const uint16_t &id, bool inReplayMode);
-    bool reinsert_player_final(const uint16_t &id, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction, bool inReplayMode);
-    bool full_reinsert_player_final(const uint16_t &id, const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction, bool inReplayMode);
-    bool dropAllPlayerOnTheMap_final(bool inReplayMode);
 
-    void teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
-    virtual bool asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject);
-
-    //player info
-    void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
-
-    //the datapack
-    virtual void datapackParsed();
-    virtual void datapackParsedMainSub();
-    virtual void reinject_signals();
-    virtual void reinject_signals_on_valid_map();
-private:
     //the other player
     struct OtherPlayer
     {
@@ -79,6 +52,35 @@ private:
         QTimer *oneStepMore;
         QTimer *moveAnimationTimer;
     };
+    const std::unordered_map<uint16_t,OtherPlayer> &getOtherPlayerList() const;
+public slots:
+    //map move Qt
+    void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
+    void move_player(const uint16_t &id, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement);
+    void remove_player(const uint16_t &id);
+    void reinsert_player(const uint16_t &id, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction);
+    void full_reinsert_player(const uint16_t &id, const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction);
+    void dropAllPlayerOnTheMap();
+    //map move
+    bool insert_player_final(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction,bool inReplayMode);
+    bool move_player_final(const uint16_t &id, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement, bool inReplayMode);
+    bool remove_player_final(const uint16_t &id, bool inReplayMode);
+    bool reinsert_player_final(const uint16_t &id, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction, bool inReplayMode);
+    bool full_reinsert_player_final(const uint16_t &id, const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction, bool inReplayMode);
+    bool dropAllPlayerOnTheMap_final(bool inReplayMode);
+
+    void teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
+    virtual bool asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject);
+
+    //player info
+    void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
+
+    //the datapack
+    virtual void datapackParsed();
+    virtual void datapackParsedMainSub();
+    virtual void reinject_signals();
+    virtual void reinject_signals_on_valid_map();
+private:
     PathFinding pathFinding;
     std::unordered_map<uint16_t,OtherPlayer> otherPlayerList;
     std::unordered_map<QTimer *,uint16_t> otherPlayerListByTimer,otherPlayerListByAnimationTimer;

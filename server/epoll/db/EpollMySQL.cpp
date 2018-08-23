@@ -211,7 +211,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const std::strin
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << "host: " << strCohost << ", database: " << strCodatabase << ", query " << query << std::endl;
+    std::cout << "host: " << strCohost << ", database: " << strCodatabase << ", query " << query << " at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
     #endif
     const int &query_id=mysql_send_query(conn,query.c_str(),stringlen);
     if(query_id<0)
@@ -247,7 +247,7 @@ bool EpollMySQL::asyncWrite(const std::string &query)
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << "host: " << strCohost << ", database: " << strCodatabase << ", query " << query << std::endl;
+    std::cout << "host: " << strCohost << ", database: " << strCodatabase << ", query " << query << " at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
     #endif
     const int &query_id=mysql_send_query(conn,query.c_str(),stringlen);
     if(query_id==0)
@@ -349,7 +349,7 @@ bool EpollMySQL::sendNextQuery()
     const std::string &query=queriesList.front();
     const int &query_id=mysql_send_query(conn,query.c_str(),query.size());
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << strCoPG << ", query " << query << " from queue" << std::endl;
+    std::cout << strCoPG << ", query " << query << " from queue at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
     #endif
     if(query_id!=0)
     {
