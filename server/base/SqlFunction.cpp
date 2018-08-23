@@ -24,3 +24,17 @@ std::string SqlFunction::quoteSqlVariable(const std::string &variable)
     return newVariable;
 }
 #endif
+
+#ifdef DEBUG_MESSAGE_CLIENT_SQL
+std::string SqlFunction::replaceSQLValues(const std::string &query,const std::vector<std::string> &values)
+{
+    std::string newQuery(query);
+    unsigned int index=values.size();
+    while(index>0)
+    {
+        stringreplaceAll(newQuery,"$"+std::to_string(index),"\""+values.at(index-1)+"\"");
+        index--;
+    }
+    return newQuery;
+}
+#endif

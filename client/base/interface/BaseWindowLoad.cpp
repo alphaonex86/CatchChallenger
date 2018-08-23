@@ -346,6 +346,23 @@ void BaseWindow::updatePlayerType()
             ui->player_informations_type->setPixmap(QPixmap(":/images/chat/admin.png"));
         break;
     }
+    const CatchChallenger::Player_type &type=informations.public_informations.type;
+    const bool isAdmin=type==CatchChallenger::Player_type_dev || type==CatchChallenger::Player_type_gm;
+    ui->toolButtonAdmin->setVisible(isAdmin);
+    if(isAdmin)
+    {
+        ui->listAllItem->clear();
+        for (const auto &n : DatapackClientLoader::datapackLoader.itemsExtra)
+        {
+            const uint16_t &itemId=n.first;
+            const DatapackClientLoader::ItemExtra &itemsExtra=n.second;
+            QListWidgetItem *item=new QListWidgetItem();
+            item->setText(QString::fromStdString(itemsExtra.name));
+            item->setData(99,itemId);
+            item->setIcon(QIcon(itemsExtra.image));
+            ui->listAllItem->addItem(item);
+        }
+    }
 }
 
 void BaseWindow::insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
@@ -355,7 +372,9 @@ void BaseWindow::insert_player(const CatchChallenger::Player_public_informations
     Q_UNUSED(x);
     Q_UNUSED(y);
     Q_UNUSED(direction);
-    updatePlayerImage();
+    const Player_public_informations &informations=client->get_player_informations().public_informations;
+    if(informations.simplifiedId==player.simplifiedId)
+        updatePlayerImage();
 }
 
 void BaseWindow::haveTheDatapack()

@@ -73,7 +73,8 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                      std::to_string(objectId)+
                      " in quantity: "+
                      std::to_string(quantity));
-        playerByPseudo.at(arguments.at(1))->addObjectAndSend(objectId,quantity);
+        Client * const client=playerByPseudo.at(arguments.at(1));
+        client->addObjectAndSend(objectId,quantity);
     }
     else if(command==StaticText::text_setevent)
     {
@@ -159,8 +160,9 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
         normalOutput(public_and_private_informations.public_informations.pseudo+" have take to "+arguments.at(1)+" the item with id: "+std::to_string(objectId)+" in quantity: "+std::to_string(quantity));
-        playerByPseudo.at(arguments.at(1))->sendRemoveObject(
-                    objectId,playerByPseudo.at(arguments.at(1))->
+        Client * const client=playerByPseudo.at(arguments.at(1));
+        client->sendRemoveObject(
+                    objectId,client->
                     removeObject(objectId,quantity));
     }
     else if(command==StaticText::text_tp)
@@ -185,7 +187,8 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 return;
             }
             Client * const otherPlayerTo=playerByPseudo.at(arguments.back());
-            playerByPseudo.at(arguments.front())->receiveTeleportTo(otherPlayerTo->map,otherPlayerTo->x,otherPlayerTo->y,MoveOnTheMap::directionToOrientation(otherPlayerTo->getLastDirection()));
+            playerByPseudo.at(arguments.front())->receiveTeleportTo(otherPlayerTo->map,otherPlayerTo->x,otherPlayerTo->y,
+                             MoveOnTheMap::directionToOrientation(otherPlayerTo->getLastDirection()));
         }
         else
         {
@@ -220,17 +223,18 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("You are already in battle");
             return;
         }
-        if(playerByPseudo.at(extraText)->getInTrade())
+        Client * const client=playerByPseudo.at(extraText);
+        if(client->getInTrade())
         {
             receiveSystemText(extraText+" is already in trade");
             return;
         }
-        if(playerByPseudo.at(extraText)->isInBattle())
+        if(client->isInBattle())
         {
             receiveSystemText(extraText+" is already in battle");
             return;
         }
-        if(!otherPlayerIsInRange(playerByPseudo.at(extraText)))
+        if(!otherPlayerIsInRange(client))
         {
             receiveSystemText(extraText+" is not in range");
             return;
@@ -238,7 +242,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         normalOutput("Trade requested");
         #endif
-        otherPlayerTrade=playerByPseudo.at(extraText);
+        otherPlayerTrade=client;
         otherPlayerTrade->registerTradeRequest(this);
     }
     else if(command==StaticText::text_battle)
@@ -268,22 +272,23 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("you are already in trade");
             return;
         }
-        if(playerByPseudo.at(extraText)->isInBattle())
+        Client * const client=playerByPseudo.at(extraText);
+        if(client->isInBattle())
         {
             receiveSystemText(extraText+" is already in battle");
             return;
         }
-        if(playerByPseudo.at(extraText)->getInTrade())
+        if(client->getInTrade())
         {
             receiveSystemText(extraText+" is already in battle");
             return;
         }
-        if(!otherPlayerIsInRange(playerByPseudo.at(extraText)))
+        if(!otherPlayerIsInRange(client))
         {
             receiveSystemText(extraText+" is not in range");
             return;
         }
-        if(!playerByPseudo.at(extraText)->getAbleToFight())
+        if(!client->getAbleToFight())
         {
             receiveSystemText("The other player can't fight");
             return;
@@ -293,7 +298,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("You can't fight");
             return;
         }
-        if(playerByPseudo.at(extraText)->isInFight())
+        if(client->isInFight())
         {
             receiveSystemText("The other player is in fight");
             return;
@@ -313,6 +318,6 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         normalOutput("Battle requested");
         #endif
-        playerByPseudo.at(extraText)->registerBattleRequest(this);
+        client->registerBattleRequest(this);
     }
 }

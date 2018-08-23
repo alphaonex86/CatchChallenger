@@ -65,7 +65,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>11</number>
+        <number>21</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -772,29 +772,55 @@ color: rgb(0, 0, 0);
            <property name="styleSheet">
             <string notr="true">#frame_main_display_bottom{background-image: url(:/images/interface/baroption.png);}</string>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_10">
+           <layout class="QHBoxLayout" name="horizontalLayout_64">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
             <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
              <number>0</number>
             </property>
             <property name="bottomMargin">
              <number>0</number>
             </property>
             <item>
-             <widget class="QPushButton" name="pushButton_interface_bag">
-              <property name="minimumSize">
-               <size>
-                <width>110</width>
-                <height>25</height>
-               </size>
+             <layout class="QHBoxLayout" name="horizontalLayout_10">
+              <property name="spacing">
+               <number>2</number>
               </property>
-              <property name="maximumSize">
-               <size>
-                <width>110</width>
-                <height>25</height>
-               </size>
+              <property name="leftMargin">
+               <number>2</number>
               </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton::hover {
+              <property name="topMargin">
+               <number>2</number>
+              </property>
+              <property name="rightMargin">
+               <number>2</number>
+              </property>
+              <property name="bottomMargin">
+               <number>2</number>
+              </property>
+              <item>
+               <widget class="QPushButton" name="pushButton_interface_bag">
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>110</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton::hover {
 background-position:left center;
 }
 QPushButton::pressed {
@@ -811,28 +837,28 @@ padding-bottom:3px;
 background-attachment:fixed;
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Bag</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_interface_trainer">
-              <property name="minimumSize">
-               <size>
-                <width>110</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>110</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton::hover {
+                </property>
+                <property name="text">
+                 <string>Bag</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_interface_trainer">
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>110</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton::hover {
 background-position:left center;
 }
 QPushButton::pressed {
@@ -847,28 +873,28 @@ padding-right:4px;
 padding-top:8px;
 padding-bottom:3px;
 }</string>
-              </property>
-              <property name="text">
-               <string>Player</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_interface_crafting">
-              <property name="minimumSize">
-               <size>
-                <width>110</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>110</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton::hover {
+                </property>
+                <property name="text">
+                 <string>Player</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_interface_crafting">
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>110</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton::hover {
 background-position:left center;
 }
 QPushButton::pressed {
@@ -883,28 +909,28 @@ padding-right:4px;
 padding-top:8px;
 padding-bottom:3px;
 }</string>
-              </property>
-              <property name="text">
-               <string>Crafting</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_interface_monsters">
-              <property name="minimumSize">
-               <size>
-                <width>110</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>110</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton::hover {
+                </property>
+                <property name="text">
+                 <string>Crafting</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_interface_monsters">
+                <property name="minimumSize">
+                 <size>
+                  <width>110</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>110</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton::hover {
 background-position:left center;
 }
 QPushButton::pressed {
@@ -919,31 +945,31 @@ padding-right:4px;
 padding-top:8px;
 padding-bottom:3px;
 }</string>
-              </property>
-              <property name="text">
-               <string>Monsters</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QToolButton" name="toolButtonOptions">
-              <property name="minimumSize">
-               <size>
-                <width>22</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>22</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string>Options</string>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QToolButton::hover {
+                </property>
+                <property name="text">
+                 <string>Monsters</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="toolButtonOptions">
+                <property name="minimumSize">
+                 <size>
+                  <width>22</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>22</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Options</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QToolButton::hover {
 background-position:left center;
 }
 QToolButton::pressed {
@@ -953,28 +979,28 @@ QToolButton {
 background-image: url(:/images/interface/option-options.png);
 border-image: url(:/images/empty.png);
 }</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QToolButton" name="toolButtonEncyclopedia">
-              <property name="minimumSize">
-               <size>
-                <width>28</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>28</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string>Encyclopedia</string>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QToolButton::hover {
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="toolButtonEncyclopedia">
+                <property name="minimumSize">
+                 <size>
+                  <width>28</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>28</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Encyclopedia</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QToolButton::hover {
 background-position:left center;
 }
 QToolButton::pressed {
@@ -984,167 +1010,198 @@ QToolButton {
 background-image: url(:/images/interface/option-map.png);
 border-image: url(:/images/empty.png);
 }</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_main_display_tools">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>1</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_ultimate">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">#label_ultimate
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="toolButtonAdmin">
+                <property name="minimumSize">
+                 <size>
+                  <width>28</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>28</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Admin</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/option-admin.png);
+border-image: url(:/images/empty.png);
+}</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_main_display_tools">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>1</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_ultimate">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">#label_ultimate
 {
 border: 1px solid #343434;
 background-image: url(:/images/light-white.png);
 }</string>
-              </property>
-              <property name="text">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;http://catchchallenger.first-world.info/shop/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0057ae;&quot;&gt;Buy the Ultimate version&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-              <property name="openExternalLinks">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="labelSlow">
-              <property name="minimumSize">
-               <size>
-                <width>24</width>
-                <height>16</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>24</width>
-                <height>16</height>
-               </size>
-              </property>
-              <property name="pixmap">
-               <pixmap resource="../resources/client-resources-multi.qrc">:/images/multi/slow.png</pixmap>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QFrame" name="frame_main_display_interface_player">
-              <property name="minimumSize">
-               <size>
-                <width>25</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">#frame_main_display_interface_player
+                </property>
+                <property name="text">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;http://catchchallenger.first-world.info/shop/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0057ae;&quot;&gt;Buy Ultimate&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="openExternalLinks">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="labelSlow">
+                <property name="minimumSize">
+                 <size>
+                  <width>24</width>
+                  <height>16</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>24</width>
+                  <height>16</height>
+                 </size>
+                </property>
+                <property name="pixmap">
+                 <pixmap resource="../resources/client-resources-multi.qrc">:/images/multi/slow.png</pixmap>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_main_display_interface_player">
+                <property name="minimumSize">
+                 <size>
+                  <width>25</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">#frame_main_display_interface_player
 {
 border: 1px solid #343434;
 background-image: url(:/images/light-white.png);
 }</string>
-              </property>
-              <layout class="QHBoxLayout" name="horizontalLayout_11">
-               <property name="leftMargin">
-                <number>2</number>
-               </property>
-               <property name="topMargin">
-                <number>0</number>
-               </property>
-               <property name="rightMargin">
-                <number>2</number>
-               </property>
-               <property name="bottomMargin">
-                <number>0</number>
-               </property>
-               <item>
-                <widget class="QLabel" name="label_interface_player_img">
-                 <property name="minimumSize">
-                  <size>
-                   <width>0</width>
-                   <height>23</height>
-                  </size>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_11">
+                 <property name="leftMargin">
+                  <number>2</number>
                  </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>23</height>
-                  </size>
+                 <property name="topMargin">
+                  <number>0</number>
                  </property>
-                 <property name="styleSheet">
-                  <string notr="true">border: 0px;
+                 <property name="rightMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QLabel" name="label_interface_player_img">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>23</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>23</height>
+                    </size>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">border: 0px;
 background-image: url(:/images/empty.png);</string>
-                 </property>
-                 <property name="pixmap">
-                  <pixmap resource="../resources/client-resources.qrc">:/images/interface/player.png</pixmap>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="label_interface_number_of_player">
-                 <property name="styleSheet">
-                  <string notr="true">border: 0px;
+                   </property>
+                   <property name="pixmap">
+                    <pixmap resource="../resources/client-resources.qrc">:/images/interface/player.png</pixmap>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label_interface_number_of_player">
+                   <property name="styleSheet">
+                    <string notr="true">border: 0px;
 background-image: url(:/images/empty.png);
 color: rgb(0, 0, 0);</string>
-                 </property>
-                 <property name="text">
-                  <string notr="true">?/?</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </item>
-            <item>
-             <widget class="QToolButton" name="toolButton_interface_quit">
-              <property name="minimumSize">
-               <size>
-                <width>22</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>22</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string>Quit</string>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QToolButton::hover {
+                   </property>
+                   <property name="text">
+                    <string notr="true">?/?</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="toolButton_interface_quit">
+                <property name="minimumSize">
+                 <size>
+                  <width>22</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>22</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Quit</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QToolButton::hover {
 background-position:left center;
 }
 QToolButton::pressed {
@@ -1154,8 +1211,10 @@ QToolButton {
 background-image: url(:/images/interface/quit.png);
 border-image: url(:/images/empty.png);
 }</string>
-              </property>
-             </widget>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
            </layout>
           </widget>
@@ -7310,6 +7369,117 @@ padding-bottom:3px;
            </item>
            <item>
             <widget class="QToolButton" name="toolButton_quit_encyclopedia">
+             <property name="minimumSize">
+              <size>
+               <width>22</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>22</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/quit.png);
+border-image: url(:/images/empty.png);
+}</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="page_admin">
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QListWidget" name="listNearPlayer">
+           <property name="iconSize">
+            <size>
+             <width>80</width>
+             <height>80</height>
+            </size>
+           </property>
+           <property name="viewMode">
+            <enum>QListView::IconMode</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="itemFilterAdmin">
+           <property name="placeholderText">
+            <string>item filter</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QListWidget" name="listAllItem">
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="gridSize">
+            <size>
+             <width>120</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="viewMode">
+            <enum>QListView::IconMode</enum>
+           </property>
+           <property name="sortingEnabled">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_65">
+           <item>
+            <spacer name="horizontalSpacer_62">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton">
+             <property name="text">
+              <string>Give</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_63">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QToolButton" name="toolButton_quit_admin">
              <property name="minimumSize">
               <size>
                <width>22</width>
