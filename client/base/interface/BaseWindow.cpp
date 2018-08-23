@@ -346,8 +346,13 @@ BaseWindow::~BaseWindow()
     if(movie!=NULL)
         delete movie;
     delete ui;
-    delete mapController;
-    mapController=NULL;
+    if(mapController!=NULL)
+    {
+        delete mapController;
+        mapController=NULL;
+    }
+    else
+        abort();
 }
 
 void BaseWindow::connectAllSignals()
@@ -1866,4 +1871,85 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
             ++i;
         }
     }
+}
+
+void CatchChallenger::BaseWindow::on_toolButtonAdmin_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_admin);
+    ui->listNearPlayer->clear();
+    {
+        const Player_private_and_public_informations &player_private_and_public_informations=client->get_player_informations_ro();
+        QListWidgetItem *item=new QListWidgetItem();
+        item->setText(QString::fromStdString(player_private_and_public_informations.public_informations.pseudo));
+        item->setData(99,QString::fromStdString(player_private_and_public_informations.public_informations.pseudo));
+        item->setIcon(getFrontSkin(player_private_and_public_informations.public_informations.skinId));
+        ui->listNearPlayer->addItem(item);
+    }
+    if(multiplayer)
+    {
+        const std::unordered_map<uint16_t,MapControllerMP::OtherPlayer> &playerList=mapController->getOtherPlayerList();
+
+        for( const auto& n : playerList ) {
+                const MapControllerMP::OtherPlayer &player = n.second;
+
+                QListWidgetItem *item=new QListWidgetItem();
+                item->setText(QString::fromStdString(player.informations.pseudo));
+                item->setData(99,QString::fromStdString(player.informations.pseudo));
+                item->setIcon(getFrontSkin(player.informations.skinId));
+                ui->listNearPlayer->addItem(item);
+        }
+    }
+}
+
+void CatchChallenger::BaseWindow::on_toolButton_quit_admin_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+}
+
+char CatchChallenger::BaseWindow::my_toupper(char ch)
+{
+    return std::toupper(static_cast<unsigned char>(ch));
+}
+
+std::string CatchChallenger::BaseWindow::str_toupper(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(),
+                // static_cast<int(*)(int)>(std::toupper)         // wrong
+                // [](int c){ return std::toupper(c); }           // wrong
+                // [](char c){ return std::toupper(c); }          // wrong
+                   [](unsigned char c){ return std::toupper(c); } // correct
+                  );
+    return s;
+}
+
+void CatchChallenger::BaseWindow::on_itemFilterAdmin_returnPressed()
+{
+    ui->listAllItem->clear();
+    const std::string &text=ui->itemFilterAdmin->text().toUpper().toStdString();
+    for (const auto &n : DatapackClientLoader::datapackLoader.itemsExtra)
+    {
+        const uint16_t &itemId=n.first;
+        const DatapackClientLoader::ItemExtra &itemsExtra=n.second;
+        const std::string up=str_toupper(itemsExtra.name);
+        if(text.empty() || up.find(text) != std::string::npos || std::to_string(itemId).find(text) != std::string::npos)
+        {
+            QListWidgetItem *item=new QListWidgetItem();
+            item->setText(QString::fromStdString(itemsExtra.name));
+            item->setData(99,itemId);
+            item->setIcon(QIcon(itemsExtra.image));
+            ui->listAllItem->addItem(item);
+        }
+    }
+}
+
+void CatchChallenger::BaseWindow::on_pushButton_clicked()
+{
+    QList<QListWidgetItem *> players=ui->listNearPlayer->selectedItems();
+    if(players.size()!=1)
+        return;
+    QList<QListWidgetItem *> items=ui->listAllItem->selectedItems();
+    if(items.size()!=1)
+        return;
+    client->sendChatText(CatchChallenger::Chat_type_local,"/give "+items.first()->data(99).toString().toStdString()+
+                         " "+players.first()->data(99).toString().toStdString());
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
 }

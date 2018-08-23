@@ -12,6 +12,9 @@
 #include "../Epoll.h"
 #include "../../../general/base/GeneralVariable.h"
 #include "../../../general/base/cpp11addition.h"
+#ifdef DEBUG_MESSAGE_CLIENT_SQL
+#include "../../base/SqlFunction.h"
+#endif
 #include <chrono>
 #include <ctime>
 #include <thread>
@@ -268,7 +271,8 @@ void EpollPostgresql::syncDisconnect()
 }
 
 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(const std::string &query,char * const id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
+CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(
+        const std::string &query,char * const id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
 {
     if(conn==NULL)
     {
@@ -329,7 +333,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(con
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << simplifiedstrCoPG << ", query " << query << std::endl;
+    std::cout << simplifiedstrCoPG << ", query " << CatchChallenger::SqlFunction::replaceSQLValues(query,values) << " at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
     #endif
     const int &query_id=PQsendQueryPrepared(conn,id,static_cast<int>(values.size()),paramValues, NULL, NULL, 0);
     if(query_id==0)
@@ -395,7 +399,7 @@ bool EpollPostgresql::asyncPreparedWrite(const std::string &query,char * const i
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << simplifiedstrCoPG << ", query " << query << std::endl;
+    std::cout << simplifiedstrCoPG << ", query " << CatchChallenger::SqlFunction::replaceSQLValues(query,values) << " at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
     #endif
     const int &query_id=PQsendQueryPrepared(conn,id,static_cast<int>(values.size()),paramValues, NULL, NULL, 0);
     if(query_id==0)
@@ -478,7 +482,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << simplifiedstrCoPG << ", query " << query << std::endl;
+    std::cout << simplifiedstrCoPG << ", query " << query << " at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
     #endif
     const int &query_id=PQsendQuery(conn,query.c_str());
     if(query_id==0)
@@ -522,7 +526,7 @@ bool EpollPostgresql::asyncWrite(const std::string &query)
     }
     #endif
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << simplifiedstrCoPG << ", query " << query << std::endl;
+    std::cout << simplifiedstrCoPG << ", query " << query << " at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
     #endif
     const int &query_id=PQsendQuery(conn,query.c_str());
     if(query_id==0)
@@ -722,7 +726,7 @@ bool EpollPostgresql::sendNextQuery()
         return false;
     }
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cout << simplifiedstrCoPG << ", query " << firstEntry.query << " from queue" << std::endl;
+    std::cout << simplifiedstrCoPG << ", query " << firstEntry.query << " from queue at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
     #endif
     return true;
 }

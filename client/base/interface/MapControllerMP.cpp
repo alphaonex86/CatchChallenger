@@ -105,6 +105,11 @@ void MapControllerMP::setScale(const float &scaleSize)
     this->scaleSize=scaleSize;
 }
 
+const std::unordered_map<uint16_t,MapControllerMP::OtherPlayer> &MapControllerMP::getOtherPlayerList() const
+{
+    return otherPlayerList;
+}
+
 bool MapControllerMP::loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y)
 {
     //position
@@ -499,6 +504,8 @@ void MapControllerMP::updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const
 
 void MapControllerMP::resetOtherMonsterTile(OtherPlayer &tempPlayer)
 {
+    if(tempPlayer.monsterMapObject==nullptr)
+        return;
     tempPlayer.monster_x=tempPlayer.x;
     tempPlayer.monster_y=tempPlayer.y;
     tempPlayer.pendingMonsterMoves.clear();

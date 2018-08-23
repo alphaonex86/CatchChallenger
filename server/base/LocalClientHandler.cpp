@@ -131,7 +131,7 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=y;
     posOutput+=1;
-    if(GlobalServerData::serverSettings.dontSendPlayerType)
+    if(GlobalServerData::serverSettings.dontSendPlayerType && public_and_private_informations.public_informations.type==Player_type_premium)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=uint8_t((uint8_t)orientation | (uint8_t)Player_type_normal);
     else
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=uint8_t((uint8_t)orientation | (uint8_t)public_and_private_informations.public_informations.type);

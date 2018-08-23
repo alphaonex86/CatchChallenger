@@ -45,7 +45,7 @@ void Client::sendLocalChatText(const std::string &text)
         posOutput+=public_and_private_informations.public_informations.pseudo.size();
 
         //sender type
-        if(GlobalServerData::serverSettings.dontSendPlayerType)
+        if(GlobalServerData::serverSettings.dontSendPlayerType && public_and_private_informations.public_informations.type==Player_type_premium)
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=Player_type_normal;
         else
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.type;
