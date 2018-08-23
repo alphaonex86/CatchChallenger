@@ -481,8 +481,9 @@ private slots:
     void on_toolButtonAdmin_clicked();
     void on_toolButton_quit_admin_clicked();
     void on_itemFilterAdmin_returnPressed();
-    void on_pushButton_clicked();
-
+    void on_playerGiveAdmin_clicked();
+    void on_listNearPlayer_itemActivated(QListWidgetItem *item);
+    void on_listAllItem_itemActivated(QListWidgetItem *item);
 protected slots:
     //datapack
     void datapackParsed();

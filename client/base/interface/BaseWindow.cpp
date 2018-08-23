@@ -1941,7 +1941,7 @@ void CatchChallenger::BaseWindow::on_itemFilterAdmin_returnPressed()
     }
 }
 
-void CatchChallenger::BaseWindow::on_pushButton_clicked()
+void CatchChallenger::BaseWindow::on_playerGiveAdmin_clicked()
 {
     QList<QListWidgetItem *> players=ui->listNearPlayer->selectedItems();
     if(players.size()!=1)
@@ -1952,4 +1952,16 @@ void CatchChallenger::BaseWindow::on_pushButton_clicked()
     client->sendChatText(CatchChallenger::Chat_type_local,"/give "+items.first()->data(99).toString().toStdString()+
                          " "+players.first()->data(99).toString().toStdString());
     ui->stackedWidget->setCurrentWidget(ui->page_map);
+}
+
+void CatchChallenger::BaseWindow::on_listNearPlayer_itemActivated(QListWidgetItem *item)
+{
+    item->setSelected(true);
+    ui->listAllItem->setFocus();
+}
+
+void CatchChallenger::BaseWindow::on_listAllItem_itemActivated(QListWidgetItem *item)
+{
+    item->setSelected(true);
+    on_playerGiveAdmin_clicked();
 }

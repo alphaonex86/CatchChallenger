@@ -1905,6 +1905,7 @@ void Api_protocol::resetAll()
     player_informations.public_informations.skinId=0;
     player_informations.public_informations.speed=0;
     player_informations.public_informations.type=Player_type_normal;
+    player_informations.public_informations.monsterId=0;
     player_informations.repel_step=0;
     player_informations.playerMonster.clear();
     player_informations.items.clear();
