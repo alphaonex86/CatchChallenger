@@ -76,6 +76,7 @@ void BaseWindow::resetAll()
     ui->inventoryInformation->setVisible(false);
     ui->inventoryUse->setVisible(false);
     ui->inventoryDestroy->setVisible(false);
+    ui->toolButtonAdmin->setVisible(false);
     previousRXSize=0;
     previousTXSize=0;
     attack_quantity_changed=0;
@@ -294,6 +295,7 @@ void BaseWindow::have_character_position()
     haveCharacterPosition=true;
 
     updateConnectingStatus();
+    updatePlayerType();
 }
 
 void BaseWindow::have_main_and_sub_datapack_loaded()
@@ -322,7 +324,6 @@ void BaseWindow::have_main_and_sub_datapack_loaded()
                  );
     updateConnectingStatus();
     updateClanDisplay();
-    updatePlayerType();
 }
 
 void BaseWindow::updatePlayerType()
