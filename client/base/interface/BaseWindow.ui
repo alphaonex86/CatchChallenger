@@ -7400,6 +7400,9 @@ border-image: url(:/images/empty.png);
         </layout>
        </widget>
        <widget class="QWidget" name="page_admin">
+        <property name="styleSheet">
+         <string notr="true">#page_admin{background-image: url(:/images/background.jpg);}</string>
+        </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
           <widget class="QListWidget" name="listNearPlayer">
@@ -7459,7 +7462,7 @@ border-image: url(:/images/empty.png);
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton">
+            <widget class="QPushButton" name="playerGiveAdmin">
              <property name="text">
               <string>Give</string>
              </property>
