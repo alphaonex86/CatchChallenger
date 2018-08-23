@@ -125,15 +125,27 @@ void PathFinding::searchPath(const std::unordered_map<std::string, MapVisualiser
     //load for thread and unload if needed
     {
         QMutexLocker locker(&mutex);
-        for ( const auto &n : simplifiedMapList ) {
+        for ( auto &n : simplifiedMapList ) {
             if(n.second.dirt!=NULL)
+            {
                 delete n.second.dirt;
+                n.second.dirt=NULL;
+            }
             if(n.second.ledges!=NULL)
+            {
                 delete n.second.ledges;
+                n.second.ledges=NULL;
+            }
             if(n.second.walkable!=NULL)
+            {
                 delete n.second.walkable;
+                n.second.walkable=NULL;
+            }
             if(n.second.monstersCollisionMap!=NULL)
+            {
                 delete n.second.monstersCollisionMap;
+                n.second.monstersCollisionMap=NULL;
+            }
         }
         this->simplifiedMapList=simplifiedMapList;
     }
@@ -493,15 +505,27 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
     }
     //drop the local variable
     {
-        for ( const auto &n : simplifiedMapList ) {
+        for ( auto &n : simplifiedMapList ) {
             if(n.second.dirt!=NULL)
+            {
                 delete n.second.dirt;
+                n.second.dirt=NULL;
+            }
             if(n.second.ledges!=NULL)
+            {
                 delete n.second.ledges;
+                n.second.ledges=NULL;
+            }
             if(n.second.walkable!=NULL)
+            {
                 delete n.second.walkable;
+                n.second.walkable=NULL;
+            }
             if(n.second.monstersCollisionMap!=NULL)
+            {
                 delete n.second.monstersCollisionMap;
+                n.second.monstersCollisionMap=NULL;
+            }
         }
     }
     tryCancel=false;
