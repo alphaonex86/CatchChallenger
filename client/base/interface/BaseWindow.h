@@ -478,6 +478,11 @@ private slots:
     void on_listWidgetEncyclopediaMonster_itemSelectionChanged();
     void on_checkBoxEncyclopediaMonsterKnown_toggled(bool checked);
     void on_checkBoxEncyclopediaItemKnown_toggled(bool checked);
+    void on_toolButtonAdmin_clicked();
+    void on_toolButton_quit_admin_clicked();
+    void on_itemFilterAdmin_returnPressed();
+    void on_pushButton_clicked();
+
 protected slots:
     //datapack
     void datapackParsed();
@@ -486,6 +491,8 @@ protected slots:
     void loadSoundSettings();
     //UI
     void updateConnectingStatus();
+    char my_toupper(char ch);
+    std::string str_toupper(std::string s);
 private:
     Ui::BaseWindowUI *ui;
     QFrame *renderFrame;
