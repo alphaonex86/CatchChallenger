@@ -1798,7 +1798,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
         while(max>0 && !(informations.encyclopedia_monster[max/8] & (1<<(7-max%8))))
             max--;
         uint32_t i=0;
-        while (i<max)
+        while (i<max && i<keys.size())
         {
             const uint16_t &monsterId=keys.at(i);
             const DatapackClientLoader::MonsterExtra &monsterExtra=DatapackClientLoader::datapackLoader.monsterExtra.at(monsterId);
@@ -1844,7 +1844,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
         while(max>0 && !(informations.encyclopedia_item[max/8] & (1<<(7-max%8))))
             max--;
         uint32_t i=0;
-        while (i<max)
+        while (i<max && i<keys.size())
         {
             const uint16_t &itemId=keys.at(i);
             const DatapackClientLoader::ItemExtra &itemsExtra=DatapackClientLoader::datapackLoader.itemsExtra.at(itemId);
