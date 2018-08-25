@@ -1877,9 +1877,10 @@ void CatchChallenger::BaseWindow::on_toolButtonAdmin_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->page_admin);
     ui->listNearPlayer->clear();
+    QListWidgetItem *item=new QListWidgetItem();
     {
         const Player_private_and_public_informations &player_private_and_public_informations=client->get_player_informations_ro();
-        QListWidgetItem *item=new QListWidgetItem();
+
         item->setText(QString::fromStdString(player_private_and_public_informations.public_informations.pseudo));
         item->setData(99,QString::fromStdString(player_private_and_public_informations.public_informations.pseudo));
         item->setIcon(getFrontSkin(player_private_and_public_informations.public_informations.skinId));
@@ -1898,6 +1899,11 @@ void CatchChallenger::BaseWindow::on_toolButtonAdmin_clicked()
                 item->setIcon(getFrontSkin(player.informations.skinId));
                 ui->listNearPlayer->addItem(item);
         }
+    }
+    if(ui->listNearPlayer->count()==1)
+    {
+        item->setSelected(true);
+        ui->listAllItem->setFocus();
     }
 }
 
