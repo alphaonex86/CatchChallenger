@@ -33,6 +33,7 @@ void BaseWindow::resetAll()
     ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(:/images/empty.png);border-width: 0px;}");
     ui->stackedWidget->setCurrentWidget(ui->page_init);
     chat->resetAll();
+    ui->itemFilterAdmin->clear();
     mapController->resetAll();
     waitedObjectType=ObjectType_All;
     lastReplyTimeValue=-1;
