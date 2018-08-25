@@ -271,6 +271,14 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                         pos+=2;
                         continue;
                     }
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(public_and_private_informations.itemOnMap.find(static_cast<uint16_t>(pointOnMapDatabaseId))!=public_and_private_informations.itemOnMap.cend())
+                    {
+                        normalOutput("item on map duplicate, skip: "+std::to_string(pointOnMapDatabaseId));
+                        pos+=2;
+                        continue;
+                    }
+                    #endif
                     public_and_private_informations.itemOnMap.insert(static_cast<uint16_t>(pointOnMapDatabaseId));
                     pos+=2;
                 }
@@ -352,6 +360,14 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     plant.mature_at=le64toh(mature_at)+CommonDatapack::commonDatapack.plants.at(plant.plant).fruits_seconds;
                     pos+=8;
 
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(public_and_private_informations.plantOnMap.find(static_cast<uint16_t>(pointOnMap))!=public_and_private_informations.plantOnMap.cend())
+                    {
+                        normalOutput("duplicate for plant dirt on map, skip: "+std::to_string(plant.plant));
+                        pos+=8;
+                        continue;
+                    }
+                    #endif
                     public_and_private_informations.plantOnMap[static_cast<uint16_t>(pointOnMap)]=plant;
                 }
             }
@@ -435,6 +451,14 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                         pos+=2;
                         continue;
                     }
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(public_and_private_informations.quests.find(questId)!=public_and_private_informations.quests.cend())
+                    {
+                        normalOutput("can't be to step 0 if have never finish the quest, skip: "+std::to_string(questId));
+                        pos+=2;
+                        continue;
+                    }
+                    #endif
                     public_and_private_informations.quests[questId]=playerQuest;
                     if(playerQuest.step>0)
                         addQuestStepDrop(questId,playerQuest.step);

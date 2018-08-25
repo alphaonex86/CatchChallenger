@@ -358,10 +358,11 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             characterSelectionIsWrong(query_id,0x04,"item have wrong size");
             return;
         }
+        normalOutput("item: "+binarytoHexa(data));
         uint32_t lastItemId=0;
         while(pos<data.size())
         {
-            uint32_t item=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos))+static_cast<uint8_t>(lastItemId);
+            uint32_t item=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(data_raw+pos))+lastItemId;
             if(item>65535)
                 item-=65536;
             lastItemId=static_cast<uint16_t>(item);
@@ -370,11 +371,20 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                 normalOutput("Take care load unknown item: "+std::to_string(item));
             else
             {
+                const uint16_t &item16=static_cast<uint16_t>(item);
                 const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
-                pos+=4;
                 public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
-                public_and_private_informations.items[static_cast<uint16_t>(item)]=quantity;
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(public_and_private_informations.items.find(item16)!=public_and_private_informations.items.cend())
+                {
+                    character_id=characterId;
+                    characterSelectionIsWrong(query_id,0x04,"item duplicate");
+                    return;
+                }
+                #endif
+                public_and_private_informations.items[item16]=quantity;
             }
+            pos+=4;
         }
     }
     //item_warehouse
@@ -407,11 +417,20 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                 normalOutput("Take care load unknown item: "+std::to_string(item));
             else
             {
+                const uint16_t &item16=static_cast<uint16_t>(item);
                 const uint32_t &quantity=le32toh(*reinterpret_cast<const uint32_t *>(data_raw+pos));
-                pos+=4;
                 public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(public_and_private_informations.warehouse_items.find(item16)!=public_and_private_informations.warehouse_items.cend())
+                {
+                    character_id=characterId;
+                    characterSelectionIsWrong(query_id,0x04,"item duplicate in ware house");
+                    return;
+                }
+                #endif
                 public_and_private_informations.warehouse_items[static_cast<uint16_t>(item)]=quantity;
             }
+            pos+=4;
         }
     }
     //recipes
@@ -535,6 +554,13 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                         continue;
                     }
                 }
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(public_and_private_informations.reputation.find(reputationInternalId)!=public_and_private_informations.reputation.cend())
+                {
+                    normalOutput("The reputation duplicate");
+                    continue;
+                }
+                #endif
                 public_and_private_informations.reputation[reputationInternalId]=playerReputation;
             }
         }
