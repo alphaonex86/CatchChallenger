@@ -23,6 +23,7 @@ public:
     //the other player
     struct OtherPlayer
     {
+        std::string lastTileset;
         Tiled::MapObject * playerMapObject;
         Tiled::Tileset * playerTileset;
         int moveStep;
@@ -159,6 +160,7 @@ private slots:
     bool loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y);
     void moveOtherPlayerStepSlot();
     void moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer);
+    void finalOtherPlayerStep(OtherPlayer &otherPlayer);
     void doMoveOtherAnimation();
     /// \warning all ObjectGroupItem destroyed into removeMap()
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
@@ -167,14 +169,14 @@ private slots:
     //virtual std::unordered_set<std::string> loadMap(MapVisualiserThread::Map_full *map,const bool &display);
     void updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const uint16_t &monster);
     void resetOtherMonsterTile(OtherPlayer &tempPlayer);
-    void loadOtherMonsterFromCurrentMap(OtherPlayer &tempPlayer);
-    void unloadOtherMonsterFromCurrentMap(OtherPlayer &tempPlayer);
+    void loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlayer);
+    void unloadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlayer);
 protected slots:
     virtual void finalPlayerStep();
     //call after enter on new map
-    virtual void loadOtherPlayerFromMap(OtherPlayer otherPlayer, const bool &display=true);
+    virtual void loadOtherPlayerFromMap(const OtherPlayer &otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
-    virtual void unloadOtherPlayerFromMap(OtherPlayer otherPlayer);
+    virtual void unloadOtherPlayerFromMap(const OtherPlayer &otherPlayer);
     void pathFindingResult(const std::string &current_map, const uint8_t &x, const uint8_t &y, const std::vector<std::pair<CatchChallenger::Orientation, uint8_t> > &path);
     bool nextPathStep();//true if have step
     virtual void keyPressParse();
