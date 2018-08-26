@@ -358,7 +358,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             characterSelectionIsWrong(query_id,0x04,"item have wrong size");
             return;
         }
-        normalOutput("item: "+binarytoHexa(data));
         uint32_t lastItemId=0;
         while(pos<data.size())
         {
