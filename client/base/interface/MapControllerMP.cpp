@@ -1542,11 +1542,127 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 return;
             }
     }
+
+    //monster
+    if(otherPlayer.monsterMapObject!=NULL)
+    {
+        if(otherPlayer.inMove && otherPlayer.moveStep==1)
+            switch(otherPlayer.direction)
+            {
+                case CatchChallenger::Direction_move_at_left:
+                case CatchChallenger::Direction_move_at_right:
+                case CatchChallenger::Direction_move_at_top:
+                case CatchChallenger::Direction_move_at_bottom:
+                    otherPlayer.pendingMonsterMoves.push_back(otherPlayer.direction);
+                break;
+                default:
+                break;
+            }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(otherPlayer.pendingMonsterMoves.size()>2)
+            abort();
+        #endif
+        if(otherPlayer.pendingMonsterMoves.size()>1)
+        {
+            //start move
+            //moveTimer.stop();
+            int baseTile=1;
+            //move the player for intermediate step and define the base tile (define the stopped step with direction)
+            switch(otherPlayer.pendingMonsterMoves.front())
+            {
+                case CatchChallenger::Direction_move_at_left:
+                baseTile=3;
+                switch(otherPlayer.moveStep)
+                {
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    otherPlayer.monsterMapObject->setX(otherPlayer.monsterMapObject->x()-0.20);
+                    break;
+                }
+                break;
+                case CatchChallenger::Direction_move_at_right:
+                baseTile=7;
+                switch(otherPlayer.moveStep)
+                {
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    otherPlayer.monsterMapObject->setX(otherPlayer.monsterMapObject->x()+0.20);
+                    break;
+                }
+                break;
+                case CatchChallenger::Direction_move_at_top:
+                baseTile=2;
+                switch(otherPlayer.moveStep)
+                {
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    otherPlayer.monsterMapObject->setY(otherPlayer.monsterMapObject->y()-0.20);
+                    break;
+                }
+                break;
+                case CatchChallenger::Direction_move_at_bottom:
+                baseTile=6;
+                switch(otherPlayer.moveStep)
+                {
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    otherPlayer.monsterMapObject->setY(otherPlayer.monsterMapObject->y()+0.20);
+                    break;
+                }
+                break;
+                default:
+                qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction").arg(otherPlayer.moveStep);
+                return;
+            }
+
+            //apply the right step of the base step defined previously by the direction
+            switch(otherPlayer.moveStep%5)
+            {
+                //stopped step
+                case 0:
+                {
+                    Tiled::Cell cell=otherPlayer.monsterMapObject->cell();
+                    cell.tile=otherPlayer.monsterTileset->tileAt(baseTile+0);
+                    otherPlayer.monsterMapObject->setCell(cell);
+                }
+                break;
+                case 1:
+                MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(qCeil(otherPlayer.monsterMapObject->y()));
+                break;
+                //transition step
+                case 2:
+                {
+                    Tiled::Cell cell=otherPlayer.monsterMapObject->cell();
+                    cell.tile=otherPlayer.monsterTileset->tileAt(baseTile-2);
+                    otherPlayer.monsterMapObject->setCell(cell);
+                }
+                break;
+                //stopped step
+                case 4:
+                {
+                    Tiled::Cell cell=otherPlayer.monsterMapObject->cell();
+                    cell.tile=otherPlayer.monsterTileset->tileAt(baseTile+0);
+                    otherPlayer.monsterMapObject->setCell(cell);
+                }
+                break;
+            }
+        }
+    }
+
     int baseTile=1;
     //move the player for intermediate step and define the base tile (define the stopped step with direction)
     switch(otherPlayer.presumed_direction)
     {
         case CatchChallenger::Direction_move_at_left:
+        otherPlayer.inMove=true;
         baseTile=10;
         switch(otherPlayer.moveStep)
         {
@@ -1561,6 +1677,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         }
         break;
         case CatchChallenger::Direction_move_at_right:
+        otherPlayer.inMove=true;
         baseTile=4;
         switch(otherPlayer.moveStep)
         {
@@ -1575,6 +1692,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         }
         break;
         case CatchChallenger::Direction_move_at_top:
+        otherPlayer.inMove=true;
         baseTile=1;
         switch(otherPlayer.moveStep)
         {
@@ -1589,6 +1707,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         }
         break;
         case CatchChallenger::Direction_move_at_bottom:
+        otherPlayer.inMove=true;
         baseTile=7;
         switch(otherPlayer.moveStep)
         {
