@@ -30,7 +30,7 @@
 #include "../../../general/base/GeneralStructures.h"
 #include "../../fight/interface/ClientFightEngine.h"
 #include "../Api_protocol.h"
-#include "MapController.h"
+#include "../render/MapController.h"
 #include "Chat.h"
 #include "NewProfile.h"
 #include "../QmlInterface/AnimationControl.h"

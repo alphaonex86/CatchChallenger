@@ -23,8 +23,8 @@
 #include "../../../client/base/Map_client.h"
 #include "../../../client/base/DisplayStructures.h"
 #include "../../../general/base/Map_loader.h"
-#include "../interface/MapDoor.h"
-#include "../interface/TriggerAnimation.h"
+#include "MapDoor.h"
+#include "TriggerAnimation.h"
 #include "MapVisualiserOrder.h"
 
 class MapVisualiserThread : public QThread, public MapVisualiserOrder

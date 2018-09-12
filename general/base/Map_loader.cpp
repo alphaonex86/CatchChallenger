@@ -85,11 +85,16 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
             case Z_NEED_DICT:
             case Z_STREAM_ERROR:
             ret = Z_DATA_ERROR;
+            inflateEnd(&strm);
+            logZlibError(ret);
+            return -1;
             case Z_DATA_ERROR:
             case Z_MEM_ERROR:
             inflateEnd(&strm);
             logZlibError(ret);
             return -1;
+            default:
+            break;
         }
 
         if (ret != Z_OK && ret != Z_STREAM_END)
