@@ -108,6 +108,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         tempPlayer.direction=direction;
         tempPlayer.moveStep=0;
         tempPlayer.inMove=false;
+        tempPlayer.pendingMonsterMoves.clear();
         tempPlayer.stepAlternance=false;
 
         const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(mapId)))
@@ -372,6 +373,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
     otherPlayer.oneStepMore->stop();
     otherPlayer.inMove=false;
     otherPlayer.moveStep=0;
+    otherPlayer.pendingMonsterMoves.clear();
     if(otherPlayer.current_map!=otherPlayer.presumed_map->logicalMap.map_file)
     {
         unloadOtherPlayerFromMap(otherPlayer);
@@ -438,7 +440,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
                             .arg(QString::fromStdString(
                                      CatchChallenger::MoveOnTheMap::directionToString(
                                          otherPlayer.presumed_direction)));
-                return true;
+                return false;
             }
             //if the map have changed
             if(old_map!=map)
@@ -720,88 +722,87 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
         std::vector<std::pair<uint8_t, CatchChallenger::Direction> > movement;
         std::pair<uint8_t, CatchChallenger::Direction> t(moveOffset,direction);
         movement.push_back(t);
-        move_player_final(id,movement,false);
-    }
-    else
-    {
-        tempPlayer.presumed_x=static_cast<uint8_t>(x);
-        tempPlayer.presumed_y=static_cast<uint8_t>(y);
-
-        //monster
-        tempPlayer.monster_x=static_cast<uint8_t>(x);
-        tempPlayer.monster_y=static_cast<uint8_t>(y);
-
-        switch(direction)
-        {
-            case CatchChallenger::Direction_look_at_top:
-            case CatchChallenger::Direction_move_at_top:
-            {
-                Tiled::Cell cell=tempPlayer.playerMapObject->cell();
-                cell.tile=tempPlayer.playerTileset->tileAt(1);
-                tempPlayer.playerMapObject->setCell(cell);
-            }
-            break;
-            case CatchChallenger::Direction_look_at_right:
-            case CatchChallenger::Direction_move_at_right:
-            {
-                Tiled::Cell cell=tempPlayer.playerMapObject->cell();
-                cell.tile=tempPlayer.playerTileset->tileAt(4);
-                tempPlayer.playerMapObject->setCell(cell);
-            }
-            break;
-            case CatchChallenger::Direction_look_at_bottom:
-            case CatchChallenger::Direction_move_at_bottom:
-            {
-                Tiled::Cell cell=tempPlayer.playerMapObject->cell();
-                cell.tile=tempPlayer.playerTileset->tileAt(7);
-                tempPlayer.playerMapObject->setCell(cell);
-            }
-            break;
-            case CatchChallenger::Direction_look_at_left:
-            case CatchChallenger::Direction_move_at_left:
-            {
-                Tiled::Cell cell=tempPlayer.playerMapObject->cell();
-                cell.tile=tempPlayer.playerTileset->tileAt(10);
-                tempPlayer.playerMapObject->setCell(cell);
-            }
-            break;
-            default:
-                delete tempPlayer.playerMapObject;
-                delete tempPlayer.playerTileset;
-                qDebug() << QStringLiteral("The direction send by the server is wrong");
+        if(move_player_final(id,movement,false))
             return true;
-        }
+    }
 
-        switch(direction)
-        {
-            case CatchChallenger::Direction_move_at_top:
-            case CatchChallenger::Direction_move_at_right:
-            case CatchChallenger::Direction_move_at_bottom:
-            case CatchChallenger::Direction_move_at_left:
-            {
-                std::vector<std::pair<uint8_t, CatchChallenger::Direction> > movement;
-                std::pair<uint8_t, CatchChallenger::Direction> move;
-                move.first=0;
-                move.second=direction;
-                movement.push_back(move);
-                move_player_final(id,movement,inReplayMode);
-            }
-            break;
-            default:
-            break;
-        }
-        finalOtherPlayerStep(tempPlayer);
+    tempPlayer.presumed_x=static_cast<uint8_t>(x);
+    tempPlayer.presumed_y=static_cast<uint8_t>(y);
 
-        if(tempPlayer.playerMapObject!=NULL)
+    //monster
+    tempPlayer.monster_x=static_cast<uint8_t>(x);
+    tempPlayer.monster_y=static_cast<uint8_t>(y);
+
+    switch(direction)
+    {
+        case CatchChallenger::Direction_look_at_top:
+        case CatchChallenger::Direction_move_at_top:
         {
-            tempPlayer.playerMapObject->setPosition(QPointF(tempPlayer.x-0.5,tempPlayer.y+1));
-            MapObjectItem::objectLink.at(tempPlayer.playerMapObject)->setZValue(tempPlayer.y);
+            Tiled::Cell cell=tempPlayer.playerMapObject->cell();
+            cell.tile=tempPlayer.playerTileset->tileAt(1);
+            tempPlayer.playerMapObject->setCell(cell);
         }
-        if(tempPlayer.monsterMapObject!=NULL)
+        break;
+        case CatchChallenger::Direction_look_at_right:
+        case CatchChallenger::Direction_move_at_right:
         {
-            tempPlayer.monsterMapObject->setPosition(QPointF(tempPlayer.x-0.5,tempPlayer.y+1));
-            MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.y);
+            Tiled::Cell cell=tempPlayer.playerMapObject->cell();
+            cell.tile=tempPlayer.playerTileset->tileAt(4);
+            tempPlayer.playerMapObject->setCell(cell);
         }
+        break;
+        case CatchChallenger::Direction_look_at_bottom:
+        case CatchChallenger::Direction_move_at_bottom:
+        {
+            Tiled::Cell cell=tempPlayer.playerMapObject->cell();
+            cell.tile=tempPlayer.playerTileset->tileAt(7);
+            tempPlayer.playerMapObject->setCell(cell);
+        }
+        break;
+        case CatchChallenger::Direction_look_at_left:
+        case CatchChallenger::Direction_move_at_left:
+        {
+            Tiled::Cell cell=tempPlayer.playerMapObject->cell();
+            cell.tile=tempPlayer.playerTileset->tileAt(10);
+            tempPlayer.playerMapObject->setCell(cell);
+        }
+        break;
+        default:
+            delete tempPlayer.playerMapObject;
+            delete tempPlayer.playerTileset;
+            qDebug() << QStringLiteral("The direction send by the server is wrong");
+        return true;
+    }
+
+    switch(direction)
+    {
+        case CatchChallenger::Direction_move_at_top:
+        case CatchChallenger::Direction_move_at_right:
+        case CatchChallenger::Direction_move_at_bottom:
+        case CatchChallenger::Direction_move_at_left:
+        {
+            std::vector<std::pair<uint8_t, CatchChallenger::Direction> > movement;
+            std::pair<uint8_t, CatchChallenger::Direction> move;
+            move.first=0;
+            move.second=direction;
+            movement.push_back(move);
+            move_player_final(id,movement,inReplayMode);
+        }
+        break;
+        default:
+        break;
+    }
+    finalOtherPlayerStep(tempPlayer);
+
+    if(tempPlayer.playerMapObject!=NULL)
+    {
+        tempPlayer.playerMapObject->setPosition(QPointF(tempPlayer.x-0.5,tempPlayer.y+1));
+        MapObjectItem::objectLink.at(tempPlayer.playerMapObject)->setZValue(tempPlayer.y);
+    }
+    if(tempPlayer.monsterMapObject!=NULL)
+    {
+        tempPlayer.monsterMapObject->setPosition(QPointF(tempPlayer.x-0.5,tempPlayer.y+1));
+        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.y);
     }
 
     return true;
