@@ -65,6 +65,9 @@ public slots:
     //map move
     bool insert_player_final(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction,bool inReplayMode);
     bool move_player_final(const uint16_t &id, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement, bool inReplayMode);
+    bool move_otherMonster(OtherPlayer &otherPlayer, const bool &haveMoved,
+                           const uint8_t &previous_different_x, const uint8_t &previous_different_y, const CatchChallenger::CommonMap *previous_different_map,
+                           CatchChallenger::Direction &previous_different_move, const std::vector<CatchChallenger::Direction> &lastMovedDirection);
     bool remove_player_final(const uint16_t &id, bool inReplayMode);
     bool reinsert_player_final(const uint16_t &id, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction, bool inReplayMode);
     bool full_reinsert_player_final(const uint16_t &id, const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction, bool inReplayMode);
