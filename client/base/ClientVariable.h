@@ -8,9 +8,9 @@
 //#define DEBUG_CLIENT_PLAYER_ON_MAP
 //#define DEBUG_CLIENT_QUEST
 //#define DEBUG_CLIENT_OTHER_PLAYER_MOVE_STEP
-#define DEBUG_CLIENT_BATTLE
+//#define DEBUG_CLIENT_BATTLE
 //#define DEBUG_CLIENT_BOT
-#define DEBUG_CLIENT_NETWORK_USAGE
+//#define DEBUG_CLIENT_NETWORK_USAGE
 
 #define CATCHCHALLENGER_SERVER_LIST_URL "http://catchchallenger-static.first-world.info:10852/server_list.xml"
 #define CATCHCHALLENGER_UPDATER_URL "http://catchchallenger-update.first-world.info:10852/updater.txt"
