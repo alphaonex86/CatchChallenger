@@ -59,7 +59,9 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         case CatchChallenger::Direction_move_at_top:
         case CatchChallenger::Direction_move_at_bottom:
         otherPlayer.inMove=true;
-        return;
+        break;
+        default:
+        break;
     }
 
     //monster
