@@ -663,6 +663,8 @@ bool MapControllerMP::remove_player_final(const uint16_t &id,bool inReplayMode)
     #endif
     const OtherPlayer &otherPlayer=otherPlayerList.at(id);
     unloadOtherPlayerFromMap(otherPlayer);
+    if(otherPlayer.monsterMapObject!=NULL)
+        unloadOtherMonsterFromCurrentMap(otherPlayer);
 
     otherPlayerListByTimer.erase(otherPlayer.oneStepMore);
     otherPlayerListByAnimationTimer.erase(otherPlayer.moveAnimationTimer);
@@ -685,6 +687,8 @@ bool MapControllerMP::remove_player_final(const uint16_t &id,bool inReplayMode)
 
     /*delete otherPlayer.playerMapObject;
     delete otherPlayer.playerTileset;*/
+    if(otherPlayer.monsterMapObject!=NULL)
+        delete otherPlayer.monsterMapObject;
     delete otherPlayer.oneStepMore;
     delete otherPlayer.moveAnimationTimer;
     if(otherPlayer.labelMapObject!=NULL)
