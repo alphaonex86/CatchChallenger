@@ -1,6 +1,6 @@
 #include "BotTargetList.h"
 #include "ui_BotTargetList.h"
-#include "../../client/base/interface/DatapackClientLoader.h"
+#include "../../client/base/DatapackClientLoader.h"
 #include "../../client/fight/interface/ClientFightEngine.h"
 #include "MapBrowse.h"
 #include <chrono>

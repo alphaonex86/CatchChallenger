@@ -14,7 +14,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../base/Api_client_real.h"
 #include "../base/Api_client_virtual.h"
-#include "../base/interface/MapController.h"
+#include "../base/render/MapController.h"
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/ListEntryEnvolued.h"
 #include "InternalServer.h"

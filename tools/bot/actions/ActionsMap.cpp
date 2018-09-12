@@ -3,7 +3,7 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/Map_loader.h"
 #include "../../general/base/FacilityLibGeneral.h"
-#include "../../client/base/interface/DatapackClientLoader.h"
+#include "../../client/base/DatapackClientLoader.h"
 
 #include <regex>
 #include <string>

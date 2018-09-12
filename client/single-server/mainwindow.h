@@ -20,7 +20,7 @@
 #include "../../general/base/ConnectedSocket.h"
 #include "../base/FeedNews.h"
 #include "../base/Api_client_real.h"
-#include "../base/interface/MapController.h"
+#include "../base/render/MapController.h"
 #include "../base/interface/BaseWindow.h"
 
 namespace Ui {

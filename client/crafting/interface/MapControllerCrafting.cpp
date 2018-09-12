@@ -1,6 +1,6 @@
-#include "../../base/interface/MapController.h"
+#include "../../base/render/MapController.h"
 #include "../../../general/base/CommonDatapack.h"
-#include "../../base/interface/DatapackClientLoader.h"
+#include "../../base/DatapackClientLoader.h"
 
 
 std::string MapController::mapIdToString(const uint32_t &mapId) const

@@ -26,7 +26,7 @@
 #include "../base/Audio.h"
 #endif
 #include "../base/Api_client_real.h"
-#include "../base/interface/MapController.h"
+#include "../base/render/MapController.h"
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/ListEntryEnvolued.h"
 #include "../base/solo/SoloWindow.h"

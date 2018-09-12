@@ -21,13 +21,13 @@ SOURCES += main.cpp \
          map2png.cpp \
     ../../client/base/Map_client.cpp \
     ../../client/base/render/MapVisualiserOrder.cpp \
-    ../../client/base/interface/MapDoor.cpp
+    ../../client/base/render/MapDoor.cpp
 
 HEADERS += map2png.h \
     ../../client/base/ClientStructures.h \
     ../../client/base/Map_client.h \
     ../../client/base/render/MapVisualiserOrder.h \
-    ../../client/base/interface/MapDoor.h
+    ../../client/base/render/MapDoor.h
 
 RESOURCES += \
     resources.qrc
