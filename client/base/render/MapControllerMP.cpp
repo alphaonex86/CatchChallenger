@@ -189,8 +189,8 @@ void MapControllerMP::resetOtherMonsterTile(OtherPlayer &tempPlayer)
 {
     if(tempPlayer.monsterMapObject==nullptr)
         return;
-    tempPlayer.monster_x=tempPlayer.x;
-    tempPlayer.monster_y=tempPlayer.y;
+    tempPlayer.monster_x=tempPlayer.presumed_x;
+    tempPlayer.monster_y=tempPlayer.presumed_y;
     tempPlayer.pendingMonsterMoves.clear();
     tempPlayer.monsterMapObject->setVisible(false);
 }
@@ -635,9 +635,11 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
                     {
                         const CatchChallenger::MonstersCollision &monstersCollision=
                                 CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
-                            otherPlayer.monsterMapObject->setVisible((monstersCollision.tile.empty() && otherPlayer.pendingMonsterMoves.size()>=1) ||
-                                                         (otherPlayer.pendingMonsterMoves.size()==1 && !otherPlayer.inMove)
-                                                         );
+                        const bool needBeVisible=(monstersCollision.tile.empty() && otherPlayer.pendingMonsterMoves.size()>=1) ||
+                                (otherPlayer.pendingMonsterMoves.size()==1 && !otherPlayer.inMove);
+                        otherPlayer.monsterMapObject->setVisible(needBeVisible);
+                        if(!needBeVisible)
+                            resetOtherMonsterTile(otherPlayer);
                     }
                     index++;
                 }
