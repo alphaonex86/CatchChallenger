@@ -327,6 +327,51 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
     return true;
 }
 
+bool MapControllerMP::move_otherMonster(MapControllerMP::OtherPlayer &otherPlayer, const bool &haveMoved,
+    const uint8_t &previous_different_x, const uint8_t &previous_different_y, const CatchChallenger::CommonMap * previous_different_map,
+    CatchChallenger::Direction &previous_different_move, const std::vector<CatchChallenger::Direction> &lastMovedDirection)
+{
+    if(otherPlayer.monsterMapObject==NULL)
+        return false;
+    else if(!otherPlayer.monsterMapObject->isVisible())
+    {
+        otherPlayer.pendingMonsterMoves.clear();
+        return false;
+    }
+    else if(otherPlayer.pendingMonsterMoves.size()>1)
+    {
+        if(haveMoved)
+        {
+            otherPlayer.pendingMonsterMoves.clear();
+
+            //detect last monster pos (player -1 pos)
+            unloadOtherMonsterFromCurrentMap(otherPlayer);
+            otherPlayer.current_monster_map=previous_different_map->map_file;
+            otherPlayer.monster_x=previous_different_x;
+            otherPlayer.monster_y=previous_different_y;
+            loadOtherMonsterFromCurrentMap(otherPlayer);
+            //detect last monster orientation (player -1 move)
+            if(lastMovedDirection.size()>1)
+                    previous_different_move=lastMovedDirection.at(
+                             lastMovedDirection.size()-1/*last item*/-1/*before the last item*/);
+            //do the next move
+            if(lastMovedDirection.size()>1)
+                otherPlayer.pendingMonsterMoves.push_back(
+                            lastMovedDirection.at(
+                                    lastMovedDirection.size()-1/*last item*/));
+
+            return true;
+        }
+        else
+        {
+            while(otherPlayer.pendingMonsterMoves.size()>1)
+                otherPlayer.pendingMonsterMoves.erase(otherPlayer.pendingMonsterMoves.cbegin());
+            return false;
+        }
+    }
+    return false;
+}
+
 bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<std::pair<uint8_t, CatchChallenger::Direction> > &movement,bool inReplayMode)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
@@ -373,7 +418,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
     otherPlayer.oneStepMore->stop();
     otherPlayer.inMove=false;
     otherPlayer.moveStep=0;
-    otherPlayer.pendingMonsterMoves.clear();
+
     if(otherPlayer.current_map!=otherPlayer.presumed_map->logicalMap.map_file)
     {
         unloadOtherPlayerFromMap(otherPlayer);
@@ -406,6 +451,12 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
     CatchChallenger::CommonMap * map=&otherPlayer.presumed_map->logicalMap;
     CatchChallenger::CommonMap * old_map;
 
+    bool haveMoved=false;
+    uint8_t previous_different_x=x;
+    uint8_t previous_different_y=y;
+    CatchChallenger::CommonMap * previous_different_map=map;
+    CatchChallenger::Direction previous_different_move=otherPlayer.presumed_direction;
+    std::vector<CatchChallenger::Direction> lastMovedDirection;
     //move to have the new position if needed
     unsigned int index=0;
     while(index<movement.size())
@@ -414,6 +465,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
         int index2=0;
         while(index2<move.first)
         {
+            haveMoved=true;
             old_map=map;
             //set the final value (direction, position, ...)
             switch(otherPlayer.presumed_direction)
@@ -423,7 +475,14 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
                 case CatchChallenger::Direction_move_at_top:
                 case CatchChallenger::Direction_move_at_bottom:
                 if(CatchChallenger::MoveOnTheMap::canGoTo(otherPlayer.presumed_direction,*map,x,y,true))
+                {
+                    previous_different_x=x;
+                    previous_different_y=y;
+                    previous_different_map=map;
+                    lastMovedDirection.push_back(otherPlayer.presumed_direction);
+
                     CatchChallenger::MoveOnTheMap::move(otherPlayer.presumed_direction,&map,&x,&y);
+                }
                 else
                 {
                     qDebug() << QStringLiteral("move_player(): at %1(%2,%3) can't go to %4")
@@ -440,7 +499,9 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
                             .arg(QString::fromStdString(
                                      CatchChallenger::MoveOnTheMap::directionToString(
                                          otherPlayer.presumed_direction)));
-                return false;
+                move_otherMonster(otherPlayer,haveMoved,previous_different_x,previous_different_y,previous_different_map,
+                    previous_different_move,lastMovedDirection);
+                return true;
             }
             //if the map have changed
             if(old_map!=map)
@@ -461,6 +522,8 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
         index++;
     }
 
+    move_otherMonster(otherPlayer,haveMoved,previous_different_x,previous_different_y,previous_different_map,
+        previous_different_move,lastMovedDirection);
 
     //set the new variables
     otherPlayer.current_map=map->map_file;
@@ -482,6 +545,12 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
         MapObjectItem::objectLink.at(otherPlayer.labelMapObject)->setZValue(otherPlayer.presumed_y);
     }
     MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(otherPlayer.presumed_y);
+
+    if(otherPlayer.monsterMapObject!=NULL)
+    {
+        otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.x-0.5,(float)otherPlayer.y+1));
+        MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.y);
+    }
 
     //start moving into the right direction
     switch(otherPlayer.presumed_direction)
@@ -801,7 +870,7 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
     }
     if(tempPlayer.monsterMapObject!=NULL)
     {
-        tempPlayer.monsterMapObject->setPosition(QPointF(tempPlayer.x-0.5,tempPlayer.y+1));
+        tempPlayer.monsterMapObject->setPosition(QPointF((float)tempPlayer.x-0.5,(float)tempPlayer.y+1));
         MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.y);
     }
 

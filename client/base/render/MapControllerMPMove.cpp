@@ -380,7 +380,6 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 cell.tile=otherPlayer.playerTileset->tileAt(10);
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
-                otherPlayer.pendingMonsterMoves.clear();
                 otherPlayer.oneStepMore->stop();
             }
             //if can go, then do the move
@@ -401,7 +400,6 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 cell.tile=otherPlayer.playerTileset->tileAt(4);
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
-                otherPlayer.pendingMonsterMoves.clear();
                 otherPlayer.oneStepMore->stop();
             }
             //if can go, then do the move
@@ -423,7 +421,6 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 cell.tile=otherPlayer.playerTileset->tileAt(1);
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
-                otherPlayer.pendingMonsterMoves.clear();
                 otherPlayer.oneStepMore->stop();
             }
             //if can go, then do the move
@@ -444,7 +441,6 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 cell.tile=otherPlayer.playerTileset->tileAt(7);
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
-                otherPlayer.pendingMonsterMoves.clear();
                 otherPlayer.oneStepMore->stop();
             }
             //if can go, then do the move
@@ -460,7 +456,6 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         {
             otherPlayer.moveStep=0;
             otherPlayer.inMove=false;
-            otherPlayer.pendingMonsterMoves.clear();
             otherPlayer.oneStepMore->stop();
         }
         finalOtherPlayerStep(otherPlayer);
