@@ -324,7 +324,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                     loadOtherMonsterFromCurrentMap(otherPlayer);
                 }
 
-                otherPlayer.monsterMapObject->setPosition(QPointF(otherPlayer.monster_x-0.5,otherPlayer.monster_y+1));
+                otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.monster_x-0.5,(float)otherPlayer.monster_y+1));
                 MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.monster_y);
             }
         otherPlayer.animationDisplayed=false;
@@ -380,6 +380,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 cell.tile=otherPlayer.playerTileset->tileAt(10);
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
+                otherPlayer.pendingMonsterMoves.clear();
                 otherPlayer.oneStepMore->stop();
             }
             //if can go, then do the move
@@ -400,6 +401,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 cell.tile=otherPlayer.playerTileset->tileAt(4);
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
+                otherPlayer.pendingMonsterMoves.clear();
                 otherPlayer.oneStepMore->stop();
             }
             //if can go, then do the move
@@ -421,6 +423,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 cell.tile=otherPlayer.playerTileset->tileAt(1);
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
+                otherPlayer.pendingMonsterMoves.clear();
                 otherPlayer.oneStepMore->stop();
             }
             //if can go, then do the move
@@ -441,6 +444,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 cell.tile=otherPlayer.playerTileset->tileAt(7);
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
+                otherPlayer.pendingMonsterMoves.clear();
                 otherPlayer.oneStepMore->stop();
             }
             //if can go, then do the move
@@ -456,6 +460,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         {
             otherPlayer.moveStep=0;
             otherPlayer.inMove=false;
+            otherPlayer.pendingMonsterMoves.clear();
             otherPlayer.oneStepMore->stop();
         }
         finalOtherPlayerStep(otherPlayer);
