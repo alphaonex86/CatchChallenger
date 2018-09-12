@@ -8,7 +8,7 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/SavegameVersion.h"
-#include "../base/interface/DatapackClientLoader.h"
+#include "../base/DatapackClientLoader.h"
 #include "../base/LanguagesSelect.h"
 #include "../fight/interface/ClientFightEngine.h"
 #include "../../general/base/Version.h"

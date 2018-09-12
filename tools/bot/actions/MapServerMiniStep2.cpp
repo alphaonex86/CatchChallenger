@@ -1,6 +1,6 @@
 #include "MapServerMini.h"
 #include <iostream>
-#include "../../client/base/interface/DatapackClientLoader.h"
+#include "../../client/base/DatapackClientLoader.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "ActionsAction.h"

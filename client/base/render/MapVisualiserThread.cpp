@@ -9,7 +9,7 @@
 #include <QFileInfo>
 #include <QRegularExpression>
 #include "../ClientVariable.h"
-#include "../interface/DatapackClientLoader.h"
+#include "../DatapackClientLoader.h"
 #include "../LanguagesSelect.h"
 #include "../FacilityLibClient.h"
 #include <QDebug>

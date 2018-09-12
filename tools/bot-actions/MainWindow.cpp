@@ -5,7 +5,7 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../client/base/FacilityLibClient.h"
 #include "../bot/actions/ActionsAction.h"
-#include "../../client/base/interface/DatapackClientLoader.h"
+#include "../../client/base/DatapackClientLoader.h"
 #include "../../client/base/LanguagesSelect.h"
 
 #include <QNetworkProxy>

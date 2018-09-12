@@ -1,6 +1,6 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "DatapackClientLoader.h"
+#include "../DatapackClientLoader.h"
 #include "../../fight/interface/ClientFightEngine.h"
 #include "../../../general/base/CommonSettingsCommon.h"
 #include "../../../general/base/CommonSettingsServer.h"
