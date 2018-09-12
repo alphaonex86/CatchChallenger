@@ -1,5 +1,5 @@
 #include "ActionsAction.h"
-#include "../../client/base/interface/DatapackClientLoader.h"
+#include "../../client/base/DatapackClientLoader.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/FacilityLib.h"
 

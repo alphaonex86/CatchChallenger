@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include "../../../../general/base/CommonDatapack.h"
-#include "../../../base/interface/DatapackClientLoader.h"
+#include "../../../base/DatapackClientLoader.h"
 
 class QmlMonsterGeneralInformations : public QObject
 {

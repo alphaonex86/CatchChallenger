@@ -5,7 +5,7 @@
 
 #include "../tiled/tiled_mapobject.h"
 #include "../tiled/tiled_tileset.h"
-#include "interface/TemporaryTile.h"
+#include "render/TemporaryTile.h"
 
 namespace CatchChallenger {
 

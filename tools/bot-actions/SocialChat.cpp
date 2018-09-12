@@ -1,6 +1,6 @@
 #include "SocialChat.h"
 #include "ui_SocialChat.h"
-#include "../../client/base/interface/DatapackClientLoader.h"
+#include "../../client/base/DatapackClientLoader.h"
 #include "../../client/base/Api_client_real.h"
 #include "../../general/base/ChatParsing.h"
 #include "DatabaseBot.h"

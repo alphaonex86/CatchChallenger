@@ -5,7 +5,7 @@
 #include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/CommonSettingsCommon.h"
 #include "../../../general/base/CommonSettingsServer.h"
-#include "../interface/DatapackClientLoader.h"
+#include "../DatapackClientLoader.h"
 #include "../../../general/base/GeneralVariable.h"
 
 #include <qmath.h>

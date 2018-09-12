@@ -1,7 +1,7 @@
 #include "BotTargetList.h"
 #include "SocialChat.h"
 #include "ui_BotTargetList.h"
-#include "../../client/base/interface/DatapackClientLoader.h"
+#include "../../client/base/DatapackClientLoader.h"
 #include "../../client/fight/interface/ClientFightEngine.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "MapBrowse.h"
