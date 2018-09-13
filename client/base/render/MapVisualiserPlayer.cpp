@@ -1783,7 +1783,7 @@ void MapVisualiserPlayer::loadMonsterFromCurrentMap()
         else
             qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-        monsterMapObject->setPosition(QPointF(x-0.5,y+1));
+        monsterMapObject->setPosition(QPointF(monster_x-0.5,monster_y+1));
         MapObjectItem::objectLink.at(monsterMapObject)->setZValue(y);
     }
 }
