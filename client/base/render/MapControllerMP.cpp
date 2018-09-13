@@ -289,8 +289,8 @@ void MapControllerMP::loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlay
         else
             qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-        tempPlayer.monsterMapObject->setPosition(QPointF(tempPlayer.x-0.5,tempPlayer.y+1));
-        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.y);
+        tempPlayer.monsterMapObject->setPosition(QPointF(tempPlayer.monster_x-0.5,tempPlayer.monster_y+1));
+        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.monster_y);
     }
 }
 
@@ -637,8 +637,9 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
                                 CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
                         const bool needBeVisible=(monstersCollision.tile.empty() && otherPlayer.pendingMonsterMoves.size()>=1) ||
                                 (otherPlayer.pendingMonsterMoves.size()==1 && !otherPlayer.inMove);
+                        const bool wasVisible=otherPlayer.monsterMapObject->isVisible();
                         otherPlayer.monsterMapObject->setVisible(needBeVisible);
-                        if(!needBeVisible)
+                        if(wasVisible && !needBeVisible)
                             resetOtherMonsterTile(otherPlayer);
                     }
                     index++;
