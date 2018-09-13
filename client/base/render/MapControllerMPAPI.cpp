@@ -546,12 +546,6 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
     }
     MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(otherPlayer.presumed_y);
 
-    if(otherPlayer.monsterMapObject!=NULL)
-    {
-        otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.x-0.5,(float)otherPlayer.y+1));
-        MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.y);
-    }
-
     //start moving into the right direction
     switch(otherPlayer.presumed_direction)
     {
