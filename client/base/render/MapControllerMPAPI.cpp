@@ -345,11 +345,19 @@ bool MapControllerMP::move_otherMonster(MapControllerMP::OtherPlayer &otherPlaye
             otherPlayer.pendingMonsterMoves.clear();
 
             //detect last monster pos (player -1 pos)
-            unloadOtherMonsterFromCurrentMap(otherPlayer);
+            const bool mapChange=otherPlayer.current_monster_map!=previous_different_map->map_file;
+            if(mapChange)
+                unloadOtherMonsterFromCurrentMap(otherPlayer);
+            else
+            {
+                otherPlayer.monsterMapObject->setPosition(QPointF(otherPlayer.monster_x-0.5,otherPlayer.monster_y+1));
+                MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.monster_y);
+            }
             otherPlayer.current_monster_map=previous_different_map->map_file;
             otherPlayer.monster_x=previous_different_x;
             otherPlayer.monster_y=previous_different_y;
-            loadOtherMonsterFromCurrentMap(otherPlayer);
+            if(mapChange)
+                loadOtherMonsterFromCurrentMap(otherPlayer);
             //detect last monster orientation (player -1 move)
             if(lastMovedDirection.size()>1)
                     previous_different_move=lastMovedDirection.at(
