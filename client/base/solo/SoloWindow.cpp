@@ -55,13 +55,6 @@ SoloWindow::SoloWindow(QWidget *parent, const std::string &datapackPath, const s
     this->savegamePath=savegamePath;//QCoreApplication::applicationDirPath()+"/savegames/";
     datapackPathExists=QDir(QString::fromStdString(datapackPath)).exists();//QCoreApplication::applicationDirPath()+"/datapack/internal/";
 
-    /*connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::protocol_is_good,this,&SoloWindow::protocol_is_good,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_protocol::disconnected,this,&SoloWindow::disconnected,Qt::QueuedConnection);
-    connect(CatchChallenger::Api_client_real::client,&CatchChallenger::Api_client_real::message,this,&SoloWindow::message,Qt::QueuedConnection);
-    connect(socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),this,&SoloWindow::error,Qt::QueuedConnection);
-    connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,this,&SoloWindow::stateChanged,Qt::QueuedConnection);
-    connect(socket,&CatchChallenger::ConnectedSocket::stateChanged,CatchChallenger::BaseWindow::baseWindow,&CatchChallenger::BaseWindow::stateChanged,Qt::QueuedConnection);*/
-
     updateSavegameList();
 
     ui->update->setVisible(false);
