@@ -27,12 +27,18 @@ void QFakeServer::addPendingConnection(QFakeSocket * socket)
     newEntry.second->theOtherSocket=newEntry.first;
     newEntry.first->RX_size=0;
     newEntry.second->RX_size=0;
-    connect(newEntry.first,&QFakeSocket::disconnected,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection);
-    connect(newEntry.second,&QFakeSocket::disconnected,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection);
-    connect(newEntry.first,&QFakeSocket::aboutToDelete,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection);
-    connect(newEntry.second,&QFakeSocket::aboutToDelete,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection);
-    connect(newEntry.first,&QFakeSocket::destroyed,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection);
-    connect(newEntry.second,&QFakeSocket::destroyed,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection);
+    if(!connect(newEntry.first,&QFakeSocket::disconnected,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection))
+        abort();
+    if(!connect(newEntry.second,&QFakeSocket::disconnected,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection))
+        abort();
+    if(!connect(newEntry.first,&QFakeSocket::aboutToDelete,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection))
+        abort();
+    if(!connect(newEntry.second,&QFakeSocket::aboutToDelete,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection))
+        abort();
+    if(!connect(newEntry.first,&QFakeSocket::destroyed,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection))
+        abort();
+    if(!connect(newEntry.second,&QFakeSocket::destroyed,this,&QFakeServer::disconnectedSocket,Qt::DirectConnection))
+        abort();
     emit newConnection();
 }
 

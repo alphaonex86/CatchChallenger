@@ -3,8 +3,10 @@
 
 SimpleAction::SimpleAction()
 {
-    connect(&moveTimer,&QTimer::timeout,this,&SimpleAction::doMove);
-    connect(&textTimer,&QTimer::timeout,this,&SimpleAction::doText);
+    if(!connect(&moveTimer,&QTimer::timeout,this,&SimpleAction::doMove))
+        abort();
+    if(!connect(&textTimer,&QTimer::timeout,this,&SimpleAction::doText))
+        abort();
     moveTimer.start(1000);
     textTimer.start(1000);
     purgeCpuCache();
@@ -23,7 +25,8 @@ void SimpleAction::insert_player(CatchChallenger::Api_protocol *api, const Catch
     Q_UNUSED(direction);
 
     SimpleBotInterface::insert_player(api,player,mapId,x,y,direction);
-    connect(api,&CatchChallenger::Api_protocol::new_chat_text,this,&SimpleAction::new_chat_text,Qt::QueuedConnection);
+    if(!connect(api,&CatchChallenger::Api_protocol::new_chat_text,this,&SimpleAction::new_chat_text,Qt::QueuedConnection))
+        abort();
 }
 
 void SimpleAction::purgeCpuCache()

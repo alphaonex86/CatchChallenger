@@ -118,13 +118,20 @@ MainClass::MainClass()
     client.sslSocket->ignoreSslErrors();
     client.sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
     client.api->setDatapackPath(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"));
-    connect(client.sslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainClass::sslErrors,Qt::QueuedConnection);
-    connect(client.api,&CatchChallenger::Api_client_real::logged,                   this,&MainClass::logged);
-    connect(client.api,&CatchChallenger::Api_client_real::newError,                 this,&MainClass::newError);
-    connect(client.socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),                    this,&MainClass::newSocketError);
-    connect(client.socket,&CatchChallenger::ConnectedSocket::disconnected,          this,&MainClass::disconnected);
-    connect(client.socket,&CatchChallenger::ConnectedSocket::connected,             this,&MainClass::tryLink,Qt::QueuedConnection);
-    connect(client.api,&CatchChallenger::Api_client_real::haveTheDatapack,      this,&MainClass::haveTheDatapack);
+    if(!connect(client.sslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&MainClass::sslErrors,Qt::QueuedConnection))
+        abort();
+    if(!connect(client.api,&CatchChallenger::Api_client_real::logged,                   this,&MainClass::logged))
+        abort();
+    if(!connect(client.api,&CatchChallenger::Api_client_real::newError,                 this,&MainClass::newError))
+        abort();
+    if(!connect(client.socket,static_cast<void(CatchChallenger::ConnectedSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::ConnectedSocket::error),                    this,&MainClass::newSocketError))
+        abort();
+    if(!connect(client.socket,&CatchChallenger::ConnectedSocket::disconnected,          this,&MainClass::disconnected))
+        abort();
+    if(!connect(client.socket,&CatchChallenger::ConnectedSocket::connected,             this,&MainClass::tryLink,Qt::QueuedConnection))
+        abort();
+    if(!connect(client.api,&CatchChallenger::Api_client_real::haveTheDatapack,      this,&MainClass::haveTheDatapack))
+        abort();
     client.sslSocket->setProxy(proxyObject);
     client.socket->connectToHost(host,port_int);
     needQuit=false;

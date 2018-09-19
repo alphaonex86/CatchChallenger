@@ -13,8 +13,10 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
     botNumber = 0;
 
     //the bot management
-    connect(&timerBotMove,SIGNAL(timeout()),this,SLOT(botMove()));
-    connect(&timerBotManagement,SIGNAL(timeout()),this,SLOT(botManagement()));
+    if(!connect(&timerBotMove,SIGNAL(timeout()),this,SLOT(botMove())))
+        abort();
+    if(!connect(&timerBotManagement,SIGNAL(timeout()),this,SLOT(botManagement())))
+        abort();
     timerBotMove.start(66);
     timerBotManagement.start(3000);
 

@@ -18,8 +18,10 @@ FeedNews::FeedNews()
     start();
     moveToThread(this);
     qnam=NULL;
-    connect(&newUpdateTimer,&QTimer::timeout,this,&FeedNews::downloadFile);
-    connect(&firstUpdateTimer,&QTimer::timeout,this,&FeedNews::downloadFile);
+    if(!connect(&newUpdateTimer,&QTimer::timeout,this,&FeedNews::downloadFile))
+        abort();
+    if(!connect(&firstUpdateTimer,&QTimer::timeout,this,&FeedNews::downloadFile))
+        abort();
     newUpdateTimer.start(60*60*1000);
     firstUpdateTimer.setSingleShot(true);
     firstUpdateTimer.start(5);
