@@ -66,6 +66,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
     qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
     qRegisterMetaType<std::vector<CatchChallenger::ServerFromPoolForDisplay> >("std::vector<CatchChallenger::ServerFromPoolForDisplay>");
+    qRegisterMetaType<std::vector<std::vector<CatchChallenger::CharacterEntry> > >("std::vector<std::vector<CatchChallenger::CharacterEntry> >");
 
     ui->setupUi(this);
     CatchChallenger::ProtocolParsing::initialiseTheVariable();

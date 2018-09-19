@@ -68,7 +68,8 @@ void InternetUpdater::downloadFile()
     networkRequest.setHeader(QNetworkRequest::UserAgentHeader,catchChallengerVersion);
     networkRequest.setRawHeader("Connection", "Close");
     reply = qnam.get(networkRequest);
-    connect(reply, &QNetworkReply::finished, this, &InternetUpdater::httpFinished);
+    if(!connect(reply, &QNetworkReply::finished, this, &InternetUpdater::httpFinished))
+        abort();
 }
 
 void InternetUpdater::httpFinished()

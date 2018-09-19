@@ -12,8 +12,10 @@ ActionsAction *ActionsAction::actionsAction=NULL;
 
 ActionsAction::ActionsAction()
 {
-    connect(&moveTimer,&QTimer::timeout,this,&ActionsAction::doMove);
-    connect(&textTimer,&QTimer::timeout,this,&ActionsAction::doText);
+    if(!connect(&moveTimer,&QTimer::timeout,this,&ActionsAction::doMove))
+        abort();
+    if(!connect(&textTimer,&QTimer::timeout,this,&ActionsAction::doText))
+        abort();
     textTimer.start(1000);
     flat_map_list=NULL;
     loaded=0;
