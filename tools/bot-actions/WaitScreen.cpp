@@ -7,7 +7,8 @@ WaitScreen::WaitScreen(QWidget *parent) :
     ui(new Ui::WaitScreen)
 {
     ui->setupUi(this);
-    connect(&updateWaitScreenTimer,&QTimer::timeout,this,&WaitScreen::updateWaitScreen);
+    if(!connect(&updateWaitScreenTimer,&QTimer::timeout,this,&WaitScreen::updateWaitScreen))
+        abort();
 }
 
 WaitScreen::~WaitScreen()

@@ -24,8 +24,10 @@ SocialChat::SocialChat() :
     numberForFlood=0;
     completer=NULL;
     lastText.push_back(std::unordered_set<std::string>());
-    connect(ui->globalChatText,&QLineEdit::textChanged,this,&SocialChat::globalChatText_updateCompleter,Qt::QueuedConnection);
-    connect(ui->globalChatText,&QLineEdit::cursorPositionChanged,this,&SocialChat::globalChatText_updateCompleter,Qt::QueuedConnection);
+    if(!connect(ui->globalChatText,&QLineEdit::textChanged,this,&SocialChat::globalChatText_updateCompleter,Qt::QueuedConnection))
+        abort();
+    if(!connect(ui->globalChatText,&QLineEdit::cursorPositionChanged,this,&SocialChat::globalChatText_updateCompleter,Qt::QueuedConnection))
+        abort();
 
     {
         QSqlQuery query;
@@ -62,8 +64,10 @@ void SocialChat::showEvent(QShowEvent * event)
         {
             if(first==true)
             {
-                connect(client.api,&CatchChallenger::Api_protocol::new_system_text,this,&SocialChat::new_system_text);
-                connect(client.api,&CatchChallenger::Api_protocol::new_chat_text,this,&SocialChat::new_chat_text);
+                if(!connect(client.api,&CatchChallenger::Api_protocol::new_system_text,this,&SocialChat::new_system_text))
+                    abort();
+                if(!connect(client.api,&CatchChallenger::Api_protocol::new_chat_text,this,&SocialChat::new_chat_text))
+                    abort();
                 first=false;
             }
             const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=client.api->get_player_informations();
