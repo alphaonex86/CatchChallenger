@@ -299,8 +299,10 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         tempPlayer.playerSpeed=player.speed;
         otherPlayerListByTimer[tempPlayer.oneStepMore]=player.simplifiedId;
         otherPlayerListByAnimationTimer[tempPlayer.moveAnimationTimer]=player.simplifiedId;
-        connect(tempPlayer.oneStepMore,&QTimer::timeout,this,&MapControllerMP::moveOtherPlayerStepSlot);
-        connect(tempPlayer.moveAnimationTimer,&QTimer::timeout,this,&MapControllerMP::doMoveOtherAnimation);
+        if(!connect(tempPlayer.oneStepMore,&QTimer::timeout,this,&MapControllerMP::moveOtherPlayerStepSlot))
+            abort();
+        if(!connect(tempPlayer.moveAnimationTimer,&QTimer::timeout,this,&MapControllerMP::doMoveOtherAnimation))
+            abort();
         otherPlayerList[player.simplifiedId]=tempPlayer;
 
         switch(direction)
