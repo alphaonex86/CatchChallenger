@@ -206,21 +206,21 @@ void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,
         ActionsAction::clientList[api]=newPlayer;
         newPlayer.fightEngine->setClient(api);
 
-        if(!connect(api,&CatchChallenger::Api_protocol::have_inventory,     actionsAction,&ActionsAction::have_inventory_slot,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol::Qthave_inventory,     actionsAction,&ActionsAction::have_inventory_slot,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::add_to_inventory,   actionsAction,&ActionsAction::add_to_inventory_slot,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol::Qtadd_to_inventory,   actionsAction,&ActionsAction::add_to_inventory_slot,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::remove_to_inventory,actionsAction,&ActionsAction::remove_to_inventory_slot,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol::Qtremove_to_inventory,actionsAction,&ActionsAction::remove_to_inventory_slot,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::setEvents,   actionsAction,&ActionsAction::setEvents_slot,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol::QtsetEvents,   actionsAction,&ActionsAction::setEvents_slot,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::newEvent,actionsAction,&ActionsAction::newEvent_slot,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol::QtnewEvent,actionsAction,&ActionsAction::newEvent_slot,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::random_seeds,actionsAction,&ActionsAction::newRandomNumber_slot,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol::Qtrandom_seeds,actionsAction,&ActionsAction::newRandomNumber_slot,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::monsterCatch,actionsAction,&ActionsAction::monsterCatch))
+        if(!connect(api,&CatchChallenger::Api_protocol::QtmonsterCatch,actionsAction,&ActionsAction::monsterCatch))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::teleportTo,actionsAction,&ActionsAction::teleportTo))
+        if(!connect(api,&CatchChallenger::Api_protocol::QtteleportTo,actionsAction,&ActionsAction::teleportTo))
             abort();
     }
     else

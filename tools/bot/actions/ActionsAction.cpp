@@ -79,11 +79,11 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol *api,const Catch
     {
         botplayer.fightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
         ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
-        if(!connect(api,&CatchChallenger::Api_protocol::new_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol::Qtnew_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::seed_planted,       actionsAction,&ActionsAction::seed_planted_slot))
+        if(!connect(api,&CatchChallenger::Api_protocol::Qtseed_planted,       actionsAction,&ActionsAction::seed_planted_slot))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::plant_collected,    actionsAction,&ActionsAction::plant_collected_slot))
+        if(!connect(api,&CatchChallenger::Api_protocol::Qtplant_collected,    actionsAction,&ActionsAction::plant_collected_slot))
             abort();
 
         if(!moveTimer.isActive())
