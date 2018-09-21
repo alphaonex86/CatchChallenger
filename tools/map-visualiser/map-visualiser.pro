@@ -16,8 +16,6 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 SOURCES += main.cpp \
     ../../general/base/MoveOnTheMap.cpp \
     ../../general/base/Map_loader.cpp \
-    ../../general/base/Map.cpp \
-    ../../general/base/DebugClass.cpp \
     ../../general/base/FacilityLib.cpp \
     ../../client/base/Map_client.cpp \
     ../../client/base/render/TileLayerItem.cpp \
@@ -33,12 +31,10 @@ SOURCES += main.cpp \
 
 HEADERS += \
     ../../general/base/Map_loader.h \
-    ../../general/base/Map.h \
     ../../general/base/GeneralVariable.h \
     ../../general/base/GeneralStructures.h \
     ../../general/base/MoveOnTheMap.h \
     ../../client/base/ClientStructures.h \
-    ../../general/base/DebugClass.h \
     ../../general/base/FacilityLib.h \
     ../../client/base/Map_client.h \
     ../../client/base/render/TileLayerItem.h \
