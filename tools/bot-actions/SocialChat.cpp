@@ -64,9 +64,9 @@ void SocialChat::showEvent(QShowEvent * event)
         {
             if(first==true)
             {
-                if(!connect(client.api,&CatchChallenger::Api_protocol::new_system_text,this,&SocialChat::new_system_text))
+                if(!connect(client.api,&CatchChallenger::Api_protocol::Qtnew_system_text,this,&SocialChat::new_system_text))
                     abort();
-                if(!connect(client.api,&CatchChallenger::Api_protocol::new_chat_text,this,&SocialChat::new_chat_text))
+                if(!connect(client.api,&CatchChallenger::Api_protocol::Qtnew_chat_text,this,&SocialChat::new_chat_text))
                     abort();
                 first=false;
             }
@@ -81,11 +81,11 @@ void SocialChat::showEvent(QShowEvent * event)
                 abort();
             }
 
-            if(!connect(api,&CatchChallenger::Api_protocol::insert_player,            this,&SocialChat::insert_player))
+            if(!connect(api,&CatchChallenger::Api_protocol::Qtinsert_player,            this,&SocialChat::insert_player))
                 abort();
-            if(!connect(api,&CatchChallenger::Api_protocol::dropAllPlayerOnTheMap,    this,&SocialChat::dropAllPlayerOnTheMap))
+            if(!connect(api,&CatchChallenger::Api_protocol::QtdropAllPlayerOnTheMap,    this,&SocialChat::dropAllPlayerOnTheMap))
                 abort();
-            if(!connect(api,&CatchChallenger::Api_protocol::remove_player,            this,&SocialChat::remove_player))
+            if(!connect(api,&CatchChallenger::Api_protocol::Qtremove_player,            this,&SocialChat::remove_player))
                 abort();
         }
         ++i;

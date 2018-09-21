@@ -232,7 +232,8 @@ bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchCha
     if(!MapVisualiserPlayerWithFight::canGoTo(direction,map,x,y,checkCollision))
         return false;
     CatchChallenger::CommonMap *new_map=&map;
-    CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false);
+    if(!CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false))
+        return false;
     if(all_map.at(new_map->map_file)->
             logicalMap.bots.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
             all_map.at(new_map->map_file)->
