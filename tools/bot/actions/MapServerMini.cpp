@@ -23,7 +23,7 @@ bool MapServerMini::preload_post_subdatapack()
     std::string resolvedFileName=DatapackClientLoader::datapackLoader.getDatapackPath()+
             DatapackClientLoader::datapackLoader.getMainDatapackPath()+
             map_file;
-    if(stringEndsWith(resolvedFileName,".tmx"))
+    if(!stringEndsWith(resolvedFileName,".tmx"))
         resolvedFileName+=".tmx";
     for (auto it = pointOnMap_Item.begin(); it != pointOnMap_Item.end(); ++it) { // calls a_map.begin() and a_map.end()
         const std::pair<uint8_t,uint8_t> &pair=it->first;

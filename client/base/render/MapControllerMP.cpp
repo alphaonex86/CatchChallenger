@@ -51,7 +51,9 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol *client)
         abort();
     if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtreinsert_player,               this,&MapControllerMP::reinsert_player,Qt::QueuedConnection))
         abort();
-    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtreinsert_player,               this,&MapControllerMP::reinsert_player,Qt::QueuedConnection))
+    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtfull_reinsert_player,               this,&MapControllerMP::full_reinsert_player,Qt::QueuedConnection))
+        abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_client_real::QtdropAllPlayerOnTheMap,               this,&MapControllerMP::dropAllPlayerOnTheMap,Qt::QueuedConnection))
         abort();
     if(!QObject::connect(this,&MapControllerMP::send_player_direction,client,&CatchChallenger::Api_client_real::send_player_direction))
         abort();

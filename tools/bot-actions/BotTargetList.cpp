@@ -49,9 +49,9 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
             const QString &qtpseudo=QString::fromStdString(player_private_and_public_informations.public_informations.pseudo);
             ui->bots->addItem(qtpseudo);
             pseudoToBot[qtpseudo]=client;
-            if(!connect(client->api,&CatchChallenger::Api_protocol::teleportTo,this,&BotTargetList::teleportTo))
+            if(!connect(client->api,&CatchChallenger::Api_protocol::QtteleportTo,this,&BotTargetList::teleportTo))
                 abort();
-            if(!connect(client->api,&CatchChallenger::Api_protocol::monsterCatch,this,&BotTargetList::monsterCatch))
+            if(!connect(client->api,&CatchChallenger::Api_protocol::QtmonsterCatch,this,&BotTargetList::monsterCatch))
                 abort();
         }
         ++i;
