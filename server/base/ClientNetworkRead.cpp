@@ -230,14 +230,14 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 switch(ProtocolParsing::compressionTypeServer)
                 {
-                    case CompressionType_None:
+                    case CompressionType::None:
                         *(Client::protocolReplyCompressionNone+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                         memcpy(Client::protocolReplyCompressionNone+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionNone),sizeof(Client::protocolReplyCompressionNone));
                     break;
-                    case CompressionType_Zstandard:
+                    case CompressionType::Zstandard:
                         *(Client::protocolReplyCompresssionZstandard+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                         memcpy(Client::protocolReplyCompresssionZstandard+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
