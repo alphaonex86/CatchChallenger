@@ -451,6 +451,14 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
         //item on map
         if(itemFight)
         {
+            bool tooHard=false;
+            if(player_map!=nullptr)
+            {
+                const MapServerMini::MapParsedForBot &step2=player_map->step[1];
+                const uint16_t codeZone=step2.map[player_x+player_y*player_map->width];
+                MapServerMini::BlockObject *playerBlockObject=step2.layers[codeZone-1].blockObject;
+                tooHard=!canGoFromBlockToBlock(blockObject,playerBlockObject);
+            }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             {
                 std::unordered_set<uint32_t> known_indexOfItemOnMap;
@@ -467,8 +475,6 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             {
                 const std::pair<uint8_t,uint8_t> &point=it->first;
                 const MapServerMini::ItemOnMap &itemOnMap=it->second;
-                /*if(blockObject->map->map_file=="hidden-place" && itemOnMap.item==101)
-                    std::cout << "test tmp" << std::endl;*/
 
                 if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
                 {
@@ -545,6 +551,14 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                             newItem->setBackgroundColor(alternateColorValue);
                         alternateColor=!alternateColor;
                         newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
+                    }
+                    if(tooHard)
+                    {
+                        if(!alternateColor)
+                            newItem->setBackgroundColor(redAlternateColorValue);
+                        else
+                            newItem->setBackgroundColor(redColorValue);
+                        newItem->setToolTip("No go back");
                     }
                     itemToReturn.push_back(newItem->text().toStdString());
                     if(listGUI!=NULL)

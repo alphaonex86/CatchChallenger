@@ -38,6 +38,11 @@ public:
         std::unordered_map<std::pair<uint8_t,uint8_t>,PathToGo,pairhash> pathToGo;
         std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> pointQueued;
     };
+    enum ZoneAccessible {
+        ZoneIsAccessible,
+        ZoneIsNotAccessible_TooHard,
+        ZoneIsNotAccessible_NoGoBack
+    };
 
     void loadAllBotsInformation();
     void loadAllBotsInformation2();
@@ -58,7 +63,10 @@ public:
     void teleportTo();
     void monsterCatch(const bool &success);
     static void finishTheLocalStep(ActionsAction::Player &player);
-    static bool nextZoneIsAccessible(const CatchChallenger::Api_protocol *api, const MapServerMini::BlockObject * const blockObject);
+    static ZoneAccessible nextZoneIsAccessible(const CatchChallenger::Api_protocol *api, const MapServerMini::BlockObject * const currentBlockObject, const MapServerMini::BlockObject * const blockObject);
+    static bool canGoFromBlockToBlock(const MapServerMini::BlockObject * const from,
+                                      const MapServerMini::BlockObject * const to,
+                                      const unsigned int maxDepthGoBack = 10);
     std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject, const CatchChallenger::Api_protocol * const api, QListWidget *listGUI=NULL);
     std::vector<std::string> contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster);
     std::vector<std::string> contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget);
