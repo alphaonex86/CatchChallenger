@@ -247,8 +247,8 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const uint32_t &newP
     itemsToSell.erase(itemsToSell.cbegin());
     switch(stat)
     {
-        case BuyStat_Done:
-        case BuyStat_BetterPrice:
+        case SoldStat_Done:
+        case SoldStat_BetterPrice:
         {
             if(factoryInProduction)
                 break;
