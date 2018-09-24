@@ -89,12 +89,22 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                         {
                             if(accessibleBlock.find(&block)!=accessibleBlock.cend())
                             {
-                                const bool &zoneIsAccessible=nextZoneIsAccessible(client->api,&block);
+                                const BotTargetList::ZoneAccessible &zoneIsAccessible=nextZoneIsAccessible(client->api,currentNearBlock,&block);
                                 subgraph+="struct"+std::to_string((uint64_t)&block)+" [label=\"";
                                 //subgraph+="<f0> "+mapServer->map_file+" | "+layer.name+" |";
                                 subgraph+="<f0> "+layer.name;
-                                if(!zoneIsAccessible)
-                                    subgraph+=" (Not accessible)";
+                                switch (zoneIsAccessible) {
+                                case BotTargetList::ZoneAccessible::ZoneIsAccessible:
+                                    break;
+                                default:
+                                    break;
+                                case BotTargetList::ZoneAccessible::ZoneIsNotAccessible_TooHard:
+                                    subgraph+=" (Too hard)";
+                                    break;
+                                case BotTargetList::ZoneAccessible::ZoneIsNotAccessible_NoGoBack:
+                                    subgraph+=" (No go back)";
+                                    break;
+                                }
                                 /*unsigned int index=0;
                                 while(index<layer.contentList.size())
                                 {
@@ -122,12 +132,12 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                                     }
                                 }
                                 subgraph+="\" style=filled fillcolor=\"";
-                                if(zoneIsAccessible)
+                                if(zoneIsAccessible!=BotTargetList::ZoneAccessible::ZoneIsAccessible)
                                     subgraph+=block.color.name(QColor::HexRgb).toStdString();
                                 else
                                     subgraph+="red";
                                 subgraph+="\"";
-                                if(!zoneIsAccessible)
+                                if(zoneIsAccessible!=BotTargetList::ZoneAccessible::ZoneIsAccessible)
                                     subgraph+=" fontcolor=\"#999999\"";
                                 subgraph+="]\n";
                                 contentDisplayed++;
@@ -459,7 +469,8 @@ bool operator==(const CatchChallenger::MapCondition& lhs, const CatchChallenger:
     //return std::memcmp(&lhs,&rhs,sizeof(CatchChallenger::MapCondition))==0;//produce bug
 }
 
-bool BotTargetList::nextZoneIsAccessible(const CatchChallenger::Api_protocol *api,const MapServerMini::BlockObject * const blockObject)
+BotTargetList::ZoneAccessible BotTargetList::nextZoneIsAccessible(const CatchChallenger::Api_protocol *api,
+               const MapServerMini::BlockObject * const currentBlockObject,const MapServerMini::BlockObject * const blockObject)
 {
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations_ro();
     uint32_t maxMonsterLevel=0;
@@ -495,7 +506,7 @@ bool BotTargetList::nextZoneIsAccessible(const CatchChallenger::Api_protocol *ap
             }
             const bool tooHard=maxFightLevel>(maxMonsterLevel+2);
             if(tooHard)
-                return false;
+                return BotTargetList::ZoneAccessible::ZoneIsNotAccessible_TooHard;
             index++;
         }
     }
@@ -521,10 +532,24 @@ bool BotTargetList::nextZoneIsAccessible(const CatchChallenger::Api_protocol *ap
 
                 const bool tooHard=maxFightLevel>(maxMonsterLevel+2);
                 if(tooHard)
-                    return false;
+                    return BotTargetList::ZoneAccessible::ZoneIsNotAccessible_TooHard;
             }
         }
     }
 
-    return true;
+    const unsigned int maxDepthGoBack = 10;
+    //detect if can go from blockObject to currentBlockObject
+    if(!canGoFromBlockToBlock(blockObject,currentBlockObject,maxDepthGoBack))
+        return BotTargetList::ZoneAccessible::ZoneIsNotAccessible_NoGoBack;
+
+    return BotTargetList::ZoneAccessible::ZoneIsAccessible;
+}
+
+bool BotTargetList::canGoFromBlockToBlock(const MapServerMini::BlockObject * const from,
+                                          const MapServerMini::BlockObject * const to,
+                                          const unsigned int maxDepthGoBack)
+{
+    const std::unordered_set<const MapServerMini *> &validMaps=from->map->getValidMaps(maxDepthGoBack);
+    const std::unordered_set<const MapServerMini::BlockObject *> &accessibleBlock=from->map->getAccessibleBlock(validMaps,from);
+    return accessibleBlock.find(to)!=accessibleBlock.cend();
 }

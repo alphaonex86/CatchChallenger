@@ -75,7 +75,7 @@ std::unordered_set<const MapServerMini::BlockObject *> MapServerMini::getAccessi
                     }
                     searchNext=(indexCondition<linkConditions.size());
                     if(searchNext)
-                        searchNext=BotTargetList::nextZoneIsAccessible(api,nextBlock);
+                        searchNext=(BotTargetList::nextZoneIsAccessible(api,currentNearBlock,nextBlock)==BotTargetList::ZoneAccessible::ZoneIsAccessible);
                 }
                 if(searchNext)
                     if(accessibleBlock.find(nextBlock)==accessibleBlock.cend() && validMaps.find(nextBlock->map)!=validMaps.cend())
