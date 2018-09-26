@@ -31,9 +31,13 @@ SocialChat::SocialChat() :
 
     {
         QSqlQuery query;
-        query.prepare("SELECT * FROM globalchat");
+        if(!query.prepare("SELECT * FROM globalchat"))
+            abort();
         if(!query.exec())
+        {
             qDebug() << "note load error: " << query.lastError();
+            abort();
+        }
         else while(query.next())
         {
             ChatEntry newEntry;
@@ -186,10 +190,14 @@ void SocialChat::loadPlayerInformation()
 
     {
         QSqlQuery query;
-        query.prepare("SELECT * FROM note WHERE player = (:player)");
+        if(!query.prepare("SELECT * FROM note WHERE player = (:player)"))
+            abort();
         query.bindValue(":player",pseudo);
         if(!query.exec())
+        {
             qDebug() << "note load error: " << query.lastError();
+            abort();
+        }
         else if(query.next())
             ui->note->setPlainText(query.value("text").toString());
         updatePlayerKnownList(api);
@@ -203,10 +211,14 @@ void SocialChat::loadPlayerInformation()
         ui->listWidgetChatType->addItem("clan");
 
         QSqlQuery query;
-        query.prepare("SELECT theotherplayer FROM privatechat WHERE player = (:player) GROUP BY theotherplayer;");
+        if(!query.prepare("SELECT theotherplayer FROM privatechat WHERE player = (:player) GROUP BY theotherplayer;"))
+            abort();
         query.bindValue(":player",pseudo);
         if(!query.exec())
+        {
             qDebug() << "note load error: " << query.lastError();
+            abort();
+        }
         else
         {
             while(query.next())
@@ -332,18 +344,26 @@ void SocialChat::on_note_textChanged()
         return;
     {
         QSqlQuery query;
-        query.prepare("DELETE FROM note WHERE player = (:player)");
+        if(!query.prepare("DELETE FROM note WHERE player = (:player)"))
+            abort();
         query.bindValue(":player", pseudo);
         if(!query.exec())
+        {
             qDebug() << "on_note_textChanged del error:  " << query.lastError();
+            abort();
+        }
     }
     {
         QSqlQuery query;
-        query.prepare("INSERT INTO note (player,text) VALUES (:player,:text)");
+        if(!query.prepare("INSERT INTO note (player,text) VALUES (:player,:text)"))
+            abort();
         query.bindValue(":player", pseudo);
         query.bindValue(":text", ui->note->toPlainText());
         if(!query.exec())
+        {
             qDebug() << "on_note_textChanged add error:  " << query.lastError();
+            abort();
+        }
     }
 }
 
@@ -476,13 +496,17 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
         switch(chat_type)
         {
             case CatchChallenger::Chat_type::Chat_type_all:
-            query.prepare("INSERT INTO globalchat (chat_type,text,pseudo,player_type) VALUES (:chat_type,:text,:pseudo,:player_type)");
+            if(!query.prepare("INSERT INTO globalchat (chat_type,text,pseudo,player_type) VALUES (:chat_type,:text,:pseudo,:player_type)"))
+                abort();
             query.bindValue(":chat_type", (uint8_t)newEntry.chat_type);
             query.bindValue(":text", QString::fromStdString(newEntry.text));
             query.bindValue(":pseudo", QString::fromStdString(newEntry.player_pseudo));
             query.bindValue(":player_type", (uint8_t)newEntry.player_type);
             if(!query.exec())
+            {
                 qDebug() << "on_note_textChanged add error:  " << query.lastError();
+                abort();
+            }
             chat_list << newEntry;
             while(chat_list.size()>64)
                 chat_list.removeFirst();
@@ -491,14 +515,18 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
             case CatchChallenger::Chat_type::Chat_type_local:
             case CatchChallenger::Chat_type::Chat_type_clan:
             {
-                query.prepare("INSERT INTO otherchat (chat_type,text,player_type,player,theotherplayer) VALUES (:chat_type,:text,:player_type,:player,:theotherplayer)");
+                if(!query.prepare("INSERT INTO otherchat (chat_type,text,player_type,player,theotherplayer) VALUES (:chat_type,:text,:player_type,:player,:theotherplayer)"))
+                    abort();
                 query.bindValue(":chat_type", (uint8_t)newEntry.chat_type);
                 query.bindValue(":text", QString::fromStdString(newEntry.text));
                 query.bindValue(":player", pseudo);
                 query.bindValue(":theotherplayer", QString::fromStdString(newEntry.player_pseudo));
                 query.bindValue(":player_type", (uint8_t)newEntry.player_type);
                 if(!query.exec())
+                {
                     qDebug() << "on_note_textChanged add error:  " << query.lastError();
+                    abort();
+                }
                 switch(chat_type)
                 {
                     case CatchChallenger::Chat_type::Chat_type_local:
@@ -516,14 +544,18 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
             break;
             case CatchChallenger::Chat_type::Chat_type_pm:
             {
-                query.prepare("INSERT INTO privatechat (text,player_type,player,theotherplayer,fromplayer) VALUES (:text,:player_type,:player,:theotherplayer,:fromplayer)");
+                if(!query.prepare("INSERT INTO privatechat (text,player_type,player,theotherplayer,fromplayer) VALUES (:text,:player_type,:player,:theotherplayer,:fromplayer)"))
+                    abort();
                 query.bindValue(":text", QString::fromStdString(newEntry.text));
                 query.bindValue(":player", pseudo);
                 query.bindValue(":theotherplayer", QString::fromStdString(newEntry.player_pseudo));
                 query.bindValue(":player_type", (uint8_t)newEntry.player_type);
                 query.bindValue(":fromplayer",0);
                 if(!query.exec())
+                {
                     qDebug() << "on_note_textChanged add error:  " << query.lastError();
+                    abort();
+                }
                 const QList<QListWidgetItem*> &selectedItemsType=ui->listWidgetChatType->selectedItems();
                 if(selectedItemsType.size()!=1)
                     return;
@@ -537,7 +569,8 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
     }
     /*{
         QSqlQuery query;
-        query.prepare("DELETE FROM globalchat WHERE player = (:player)");
+        if(!query.prepare("DELETE FROM globalchat WHERE player = (:player)"))
+        abort();
         query.bindValue(":player", pseudo);
         if(!query.exec())
             qDebug() << "on_note_textChanged del error:  " << query.lastError();
@@ -1008,14 +1041,18 @@ void SocialChat::on_chatSpecText_returnPressed()
                 if(!text.startsWith('/'))
                 {
                     QSqlQuery query;
-                    query.prepare("INSERT INTO privatechat (text,player_type,player,theotherplayer,fromplayer) VALUES (:text,:player_type,:player,:theotherplayer,:fromplayer)");
+                    if(!query.prepare("INSERT INTO privatechat (text,player_type,player,theotherplayer,fromplayer) VALUES (:text,:player_type,:player,:theotherplayer,:fromplayer)"))
+                        abort();
                     query.bindValue(":text", text);
                     query.bindValue(":player", QString::fromStdString(api->getPseudo()));
                     query.bindValue(":theotherplayer", textSelectionChatType);
                     query.bindValue(":player_type", (uint8_t) api->get_player_informations().public_informations.type);
                     query.bindValue(":fromplayer",1);
                     if(!query.exec())
+                    {
                         qDebug() << "note load error: " << query.lastError();
+                        abort();
+                    }
                     on_listWidgetChatType_itemSelectionChanged();
                 }
                 ui->chatSpecText->clear();
@@ -1087,11 +1124,15 @@ void SocialChat::on_listWidgetChatType_itemSelectionChanged()
     {
         ui->listWidgetChatType->item(1)->setBackground(Qt::NoBrush);
         QSqlQuery query;
-        query.prepare("SELECT * FROM otherchat WHERE player = (:player) AND chat_type = (:chat_type)");
+        if(!query.prepare("SELECT * FROM otherchat WHERE player = (:player) AND chat_type = (:chat_type)"))
+            abort();
         query.bindValue(":player",pseudo);
         query.bindValue(":chat_type",CatchChallenger::Chat_type_local);
         if(!query.exec())
+        {
             qDebug() << "note load error: " << query.lastError();
+            abort();
+        }
         else
         {
             QString nameHtml;
@@ -1118,11 +1159,15 @@ void SocialChat::on_listWidgetChatType_itemSelectionChanged()
     {
         ui->listWidgetChatType->item(1)->setBackground(Qt::NoBrush);
         QSqlQuery query;
-        query.prepare("SELECT * FROM otherchat WHERE player = (:player) AND chat_type = (:chat_type)");
+        if(!query.prepare("SELECT * FROM otherchat WHERE player = (:player) AND chat_type = (:chat_type)"))
+            abort();
         query.bindValue(":player",pseudo);
         query.bindValue(":chat_type",CatchChallenger::Chat_type_clan);
         if(!query.exec())
+        {
             qDebug() << "note load error: " << query.lastError();
+            abort();
+        }
         else
         {
             QString nameHtml;
@@ -1160,11 +1205,15 @@ void SocialChat::on_listWidgetChatType_itemSelectionChanged()
 
                 const CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
                 QSqlQuery query;
-                query.prepare("SELECT * FROM privatechat WHERE player = (:player) AND theotherplayer = (:theotherplayer)");
+                if(!query.prepare("SELECT * FROM privatechat WHERE player = (:player) AND theotherplayer = (:theotherplayer)"))
+                    abort();
                 query.bindValue(":player",pseudo);
                 query.bindValue(":theotherplayer",text);
                 if(!query.exec())
+                {
                     qDebug() << "note load error: " << query.lastError();
+                    abort();
+                }
                 else
                 {
                     QString nameHtml;

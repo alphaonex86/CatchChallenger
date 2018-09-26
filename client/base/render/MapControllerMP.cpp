@@ -351,7 +351,7 @@ void MapControllerMP::unloadOtherMonsterFromCurrentMap(const MapControllerMP::Ot
     }
 }
 
-void MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
+bool MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -364,34 +364,26 @@ void MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const u
         #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
         qDebug() << QStringLiteral("delayed teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
         #endif
-        return;
+        return true;
     }
-    if(mapId>=(uint32_t)DatapackClientLoader::datapackLoader.maps.size())
-    {
-        emit error("mapId greater than DatapackClientLoader::datapackLoader.maps.size(): "+
-                   std::to_string(DatapackClientLoader::datapackLoader.maps.size()));
-        return;
-    }
-    #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QStringLiteral("teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
-    qDebug() << QStringLiteral("currently on: %1 (%2,%3)").arg(current_map).arg(this->x).arg(this->y);
-    #endif
     client->teleportDone();
     MapVisualiserPlayer::unloadPlayerFromCurrentMap();
-    current_map=QFileInfo(QString::fromStdString(
-                    datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(mapId)))
-            .absoluteFilePath().toStdString();
+    if(!MapVisualiserPlayer::teleportTo(mapId,x,y,direction))
+        return false;
+
     passMapIntoOld();
     if(!haveMapInMemory(current_map))
     {
         emit inWaitingOfMap();
         loadOtherMap(current_map);
-        return;//because the rest is wrong
+        return true;//because the rest is wrong
     }
     loadOtherMap(current_map);
     hideNotloadedMap();
     removeUnusedMap();
     loadPlayerFromCurrentMap();
+
+    return true;
 }
 
 void MapControllerMP::finalPlayerStep()
