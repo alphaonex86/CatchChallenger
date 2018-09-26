@@ -595,17 +595,28 @@ bool MapServerMini::preload_step2c()
                                         if(!monstersCollisionValue.walkOnMonsters.empty())
                                         {
                                             std::pair<uint8_t,uint8_t> newPoint{x,y};
-                                            if(codeZone>0)
+                                            unsigned int index_teleporter=0;
+                                            while(index_teleporter<teleporter_list_size)
                                             {
-                                                BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
-                                                blockObject.monstersCollisionValue=&monstersCollisionValue;
-                                                blockObject.block.push_back(newPoint);
+                                                const Teleporter &teleporterEntry=teleporter[index_teleporter];//for very small list < 20 teleporter, it's this structure the more fast, code not ready for more than 127
+                                                if(x==teleporterEntry.source_x && y==teleporterEntry.source_y)
+                                                    break;
+                                                index_teleporter++;
                                             }
-                                            else
+                                            if(index_teleporter>=teleporter_list_size)
                                             {
-                                                BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
-                                                blockObject.monstersCollisionValue=&monstersCollisionValue;
-                                                blockObject.block.push_back(newPoint);
+                                                if(codeZone>0)
+                                                {
+                                                    BlockObject &blockObject=*currentStep.layers[codeZone-1].blockObject;
+                                                    blockObject.monstersCollisionValue=&monstersCollisionValue;
+                                                    blockObject.block.push_back(newPoint);
+                                                }
+                                                else
+                                                {
+                                                    BlockObject &blockObject=*currentStep.layers[currentStep.layers.size()-1].blockObject;
+                                                    blockObject.monstersCollisionValue=&monstersCollisionValue;
+                                                    blockObject.block.push_back(newPoint);
+                                                }
                                             }
                                         }
                                     }
