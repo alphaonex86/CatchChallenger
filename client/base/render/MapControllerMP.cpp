@@ -386,7 +386,7 @@ bool MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const u
     return true;
 }
 
-void MapControllerMP::finalPlayerStep()
+void MapControllerMP::finalPlayerStep(bool parseKey)
 {
     if(all_map.find(current_map)==all_map.cend())
     {
@@ -399,8 +399,8 @@ void MapControllerMP::finalPlayerStep()
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
         return;
     }
-    finalPlayerStepTeleported(isTeleported);
-    MapVisualiserPlayer::finalPlayerStep();
+    const bool newlyTeleported=finalPlayerStepTeleported(isTeleported);
+    MapVisualiserPlayer::finalPlayerStep(!newlyTeleported && parseKey);
 }
 
 //player info
