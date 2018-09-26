@@ -64,7 +64,7 @@ public:
                          std::vector<uint8_t> *events, std::unordered_set<uint16_t> *itemOnMap,
                          std::unordered_map<uint16_t, CatchChallenger::PlayerPlant> *plantOnMap);
     void unblock();
-    virtual void teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
+    virtual bool teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
 private:
     //player
     Tiled::MapObject * playerMapObject;
