@@ -114,7 +114,7 @@ public:
         std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
         std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
         std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
-        std::vector<std::pair<uint8_t,uint8_t> > block;
+        std::vector<std::pair<uint8_t,uint8_t> > block;//exclude special like teleporter
 
         QColor color;
         void *layer;

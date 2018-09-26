@@ -1608,6 +1608,10 @@ void BotTargetList::autoStartAction()
                             startPlayerMove(api);
                     break;
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::None:
+                        player.target.wildBackwardStep.clear();
+                        player.target.bestPath.clear();
+                        player.target.localStep.clear();
+                        wildMonsterTarget(player);
                     break;
                     default:
                     break;

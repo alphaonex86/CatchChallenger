@@ -2083,9 +2083,32 @@ void MapVisualiserPlayer::stopMove()
     inMove=false;
 }
 
-void MapVisualiserPlayer::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
+bool MapVisualiserPlayer::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
-    (void)mapId;
+    if(mapId>=(uint32_t)DatapackClientLoader::datapackLoader.maps.size())
+    {
+        emit error("mapId greater than DatapackClientLoader::datapackLoader.maps.size(): "+
+                   std::to_string(DatapackClientLoader::datapackLoader.maps.size()));
+        return false;
+    }
+    #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
+    qDebug() << QStringLiteral("teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+    qDebug() << QStringLiteral("currently on: %1 (%2,%3)").arg(current_map).arg(this->x).arg(this->y);
+    #endif
+
+    current_map=QFileInfo(QString::fromStdString(
+                    datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(mapId)))
+            .absoluteFilePath().toStdString();
+    this->x=x;
+    this->y=y;
+
+    if(monsterMapObject!=nullptr)
+        monsterMapObject->setVisible(false);
+    pendingMonsterMoves.clear();
+    current_monster_map=current_map;
+    monster_x=x;
+    monster_y=y;
+
     //the direction
     this->direction=direction;
     switch(direction)
@@ -2124,12 +2147,14 @@ void MapVisualiserPlayer::teleportTo(const uint32_t &mapId,const uint16_t &x,con
         break;
         default:
         QMessageBox::critical(NULL,tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__),tr("The direction send by the server is wrong"));
-        return;
+        return false;
     }
 
     //position
     this->x=static_cast<uint8_t>(x);
     this->y=static_cast<uint8_t>(y);
+
+    return true;
 }
 
 bool MapVisualiserPlayer::nextPathStepInternal(std::vector<PathResolved> &pathList,const CatchChallenger::Direction &direction)//true if have step
