@@ -136,8 +136,8 @@ protected slots:
 
     virtual void doMoveAnimation();
     virtual void moveStepSlot();
-    virtual void finalPlayerStep();
-    virtual void finalPlayerStepTeleported(bool &isTeleported);
+    virtual void finalPlayerStep(bool parseKey=true);
+    virtual bool finalPlayerStepTeleported(bool &isTeleported);
     virtual bool nextPathStep() = 0;//true if have step
     void pathFindingResultInternal(std::vector<PathResolved> &pathList, const std::string &current_map, const uint8_t &x, const uint8_t &y,
                                    const std::vector<std::pair<CatchChallenger::Orientation, uint8_t> > &path);

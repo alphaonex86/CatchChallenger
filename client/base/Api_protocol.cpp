@@ -522,6 +522,9 @@ void Api_protocol::send_player_direction(const Direction &the_direction)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
+    std::cout << "Api_protocol::send_player_direction " << std::to_string(the_direction) << std::endl;
+    if(last_step==4)
+        std::cout << "Api_protocol::send_player_direction last_step" << std::endl;
     newDirection(the_direction);
 }
 

@@ -175,7 +175,7 @@ private slots:
     void loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlayer);
     void unloadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlayer);
 protected slots:
-    virtual void finalPlayerStep();
+    virtual void finalPlayerStep(bool parseKey=true);
     //call after enter on new map
     virtual void loadOtherPlayerFromMap(const OtherPlayer &otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
