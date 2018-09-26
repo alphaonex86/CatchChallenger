@@ -810,18 +810,18 @@ void MapVisualiserPlayer::unblock()
     blocked=false;
 }
 
-void MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
+bool MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
 {
     if(all_map.find(current_map)==all_map.cend())
     {
         qDebug() << "current map not loaded, unable to do finalPlayerStep()";
-        return;
+        return false;
     }
     const MapVisualiserThread::Map_full * current_map_pointer=all_map.at(current_map);
     if(current_map_pointer==NULL)
     {
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
-        return;
+        return false;
     }
     if(!isTeleported)
     {
@@ -850,16 +850,17 @@ void MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
                 loadOtherMap(current_map);
                 hideNotloadedMap();
                 resetMonsterTile();
-                return;
+                return true;
             }
             index++;
         }
     }
     else
         isTeleported=false;
+    return false;
 }
 
-void MapVisualiserPlayer::finalPlayerStep()
+void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
 {
     if(all_map.find(current_map)==all_map.cend())
     {
@@ -1008,6 +1009,8 @@ void MapVisualiserPlayer::finalPlayerStep()
         return;
     }
 
+    if(!parseKey)
+        return;
     //check if one arrow key is pressed to continue to move into this direction
     if(keyPressed.find(Qt::Key_Left)!=keyPressed.cend())
     {
