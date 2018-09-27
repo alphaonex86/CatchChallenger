@@ -17,43 +17,46 @@ DatabaseBot::DatabaseBot()
         QFile sourceFile(":/config.db");
         if(!sourceFile.exists())
             abort();
-        if(sourceFile.open(QIODevice::ReadOnly))
+        else
         {
-            if(sourceFile.size()<1024)
+            if(sourceFile.open(QIODevice::ReadOnly))
             {
-                std::cerr << "destination.size()<1024 for db " << std::to_string(sourceFile.size()) << ", abort" << std::endl;
-                abort();
-            }
-            const QByteArray &data=sourceFile.readAll();
-            if(data.size()<1024)
-            {
-                std::cerr << "data.size()<1024 for db " << std::to_string(data.size()) << ", abort" << std::endl;
-                abort();
-            }
-            if(destinationFile.open(QIODevice::WriteOnly))
-            {
-                if(!destinationFile.write(data))
+                if(sourceFile.size()<1024)
+                {
+                    std::cerr << "destination.size()<1024 for db " << std::to_string(sourceFile.size()) << ", abort" << std::endl;
+                    abort();
+                }
+                const QByteArray &data=sourceFile.readAll();
+                if(data.size()<1024)
+                {
+                    std::cerr << "data.size()<1024 for db " << std::to_string(data.size()) << ", abort" << std::endl;
+                    abort();
+                }
+                if(destinationFile.open(QIODevice::WriteOnly))
+                {
+                    if(!destinationFile.write(data))
+                        abort();
+
+                    destinationFile.close();
+                }
+                else
                     abort();
 
-                destinationFile.close();
+                sourceFile.close();
             }
             else
                 abort();
-
-            sourceFile.close();
+            if(!destinationFile.setPermissions(destinationFile.permissions() | QFileDevice::WriteOwner | QFileDevice::WriteUser))
+                abort();
         }
-        else
-            abort();
-        if(!destinationFile.setPermissions(destinationFile.permissions() | QFileDevice::WriteOwner | QFileDevice::WriteUser))
-            abort();
     }
-    if(destinationFile.size()<1024)
+/*    if(destinationFile.size()<1024)
     {
         std::cerr << "destination.size()<1024 for db " << std::to_string(destinationFile.size()) << ", abort" << std::endl;
         abort();
     }
     else
-        std::cout << "database config size is: " << std::to_string(destinationFile.size())  << std::endl;
+        std::cout << "database config size is: " << std::to_string(destinationFile.size())  << std::endl;*/
 
     database = QSqlDatabase::addDatabase("QSQLITE");
     database.setDatabaseName(destination);
