@@ -363,7 +363,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             }
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-        otherPlayer.playerMapObject->setPosition(QPoint(x,y+1));
+        otherPlayer.playerMapObject->setPosition(QPointF(x,y+1));
         if(otherPlayer.labelMapObject!=NULL)
             otherPlayer.labelMapObject->setPosition(QPointF(static_cast<qreal>(x)-static_cast<qreal>(otherPlayer.labelTileset->tileWidth())
                                                             /2/16+0.5,y+1-1.4));
