@@ -546,7 +546,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
     otherPlayer.presumed_direction=otherPlayer.direction;
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-    otherPlayer.playerMapObject->setPosition(QPoint(otherPlayer.presumed_x,otherPlayer.presumed_y+1));
+    otherPlayer.playerMapObject->setPosition(QPointF(otherPlayer.presumed_x,otherPlayer.presumed_y+1));
     if(otherPlayer.labelMapObject!=NULL)
     {
         otherPlayerList.at(id).labelMapObject->setPosition(QPointF(static_cast<qreal>(otherPlayer.presumed_x)-
@@ -786,146 +786,21 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
     OtherPlayer &tempPlayer=otherPlayerList[id];
     if(tempPlayer.x==x && tempPlayer.y==y && tempPlayer.direction==direction)
     {
-        error("supected bug at insert: tempPlayer.x==x && tempPlayer.y==y && tempPlayer.direction==direction");
+        error("supected bug at insert: tempPlayer.x "+std::to_string(tempPlayer.x)+" == x  "+std::to_string(x)+
+        "  && tempPlayer.y "+std::to_string(tempPlayer.y)+" == y "+std::to_string(y)+"  && tempPlayer.direction "+
+        std::to_string(tempPlayer.direction)+" == direction "+std::to_string(direction));
         return false;
     }
-    if(tempPlayer.x==x || tempPlayer.y==y)
-    {
-        /// \warning no path finding because too many player update can overflow the cpu
-        int moveOffset=0;
-        if(tempPlayer.x==x)
-        {
-            if(y<tempPlayer.y)
-            {
-                tempPlayer.presumed_direction=CatchChallenger::Direction_move_at_top;
-                tempPlayer.pendingMonsterMoves.clear();
-                tempPlayer.pendingMonsterMoves.push_back(tempPlayer.presumed_direction);
-                uint8_t temp_x=x;
-                uint8_t temp_y=y;
-                CatchChallenger::CommonMap *map=&all_map.at(tempCurrentMap)->logicalMap;
-                CatchChallenger::CommonMap *new_map=map;
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&new_map,&temp_x,&temp_y,true,false))
-                {
-                    tempPlayer.current_monster_map=new_map->map_file;
-                    tempPlayer.monster_x=temp_x;
-                    tempPlayer.monster_y=temp_y;
-                    if(tempPlayer.monsterMapObject!=NULL)
-                    {
-                        tempPlayer.monsterMapObject->setVisible(true);
-                        if(map!=new_map)
-                            unloadOtherMonsterFromCurrentMap(tempPlayer);
-                        tempPlayer.monsterMapObject->setPosition(QPointF((float)tempPlayer.monster_x-0.5,(float)tempPlayer.monster_y+1));
-                        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.monster_y);
-                        if(map!=new_map)
-                            loadOtherMonsterFromCurrentMap(tempPlayer);
-                    }
-                }
-                moveOffset=tempPlayer.y-y;
-            }
-            else if(tempPlayer.y<y)
-            {
-                tempPlayer.presumed_direction=CatchChallenger::Direction_move_at_bottom;
-                tempPlayer.pendingMonsterMoves.clear();
-                tempPlayer.pendingMonsterMoves.push_back(tempPlayer.presumed_direction);
-                uint8_t temp_x=x;
-                uint8_t temp_y=y;
-                tempPlayer.monsterMapObject->setVisible(true);
-                CatchChallenger::CommonMap *map=&all_map.at(tempCurrentMap)->logicalMap;
-                CatchChallenger::CommonMap *new_map=map;
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&new_map,&temp_x,&temp_y,true,false))
-                {
-                    tempPlayer.current_monster_map=new_map->map_file;
-                    tempPlayer.monster_x=temp_x;
-                    tempPlayer.monster_y=temp_y;
-                    if(tempPlayer.monsterMapObject!=NULL)
-                    {
-                        tempPlayer.monsterMapObject->setVisible(true);
-                        if(map!=new_map)
-                            unloadOtherMonsterFromCurrentMap(tempPlayer);
-                        tempPlayer.monsterMapObject->setPosition(QPointF((float)tempPlayer.monster_x-0.5,(float)tempPlayer.monster_y+1));
-                        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.monster_y);
-                        if(map!=new_map)
-                            loadOtherMonsterFromCurrentMap(tempPlayer);
-                    }
-                }
-                moveOffset=y-tempPlayer.y;
-            }
-        }
-        else if(tempPlayer.y==y)
-        {
-            if(x<tempPlayer.x)
-            {
-                tempPlayer.presumed_direction=CatchChallenger::Direction_move_at_left;
-                tempPlayer.pendingMonsterMoves.clear();
-                tempPlayer.pendingMonsterMoves.push_back(tempPlayer.presumed_direction);
-                uint8_t temp_x=x;
-                uint8_t temp_y=y;
-                tempPlayer.monsterMapObject->setVisible(true);
-                CatchChallenger::CommonMap *map=&all_map.at(tempCurrentMap)->logicalMap;
-                CatchChallenger::CommonMap *new_map=map;
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&new_map,&temp_x,&temp_y,true,false))
-                {
-                    tempPlayer.current_monster_map=new_map->map_file;
-                    tempPlayer.monster_x=temp_x;
-                    tempPlayer.monster_y=temp_y;
-                    if(tempPlayer.monsterMapObject!=NULL)
-                    {
-                        tempPlayer.monsterMapObject->setVisible(true);
-                        if(map!=new_map)
-                            unloadOtherMonsterFromCurrentMap(tempPlayer);
-                        tempPlayer.monsterMapObject->setPosition(QPointF((float)tempPlayer.monster_x-0.5,(float)tempPlayer.monster_y+1));
-                        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.monster_y);
-                        if(map!=new_map)
-                            loadOtherMonsterFromCurrentMap(tempPlayer);
-                    }
-                }
-                moveOffset=tempPlayer.x-x;
-            }
-            else if(tempPlayer.x<x)
-            {
-                tempPlayer.presumed_direction=CatchChallenger::Direction_move_at_right;
-                tempPlayer.pendingMonsterMoves.clear();
-                tempPlayer.pendingMonsterMoves.push_back(tempPlayer.presumed_direction);
-                uint8_t temp_x=x;
-                uint8_t temp_y=y;
-                tempPlayer.monsterMapObject->setVisible(true);
-                CatchChallenger::CommonMap *map=&all_map.at(tempCurrentMap)->logicalMap;
-                CatchChallenger::CommonMap *new_map=map;
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&new_map,&temp_x,&temp_y,true,false))
-                {
-                    tempPlayer.current_monster_map=new_map->map_file;
-                    tempPlayer.monster_x=temp_x;
-                    tempPlayer.monster_y=temp_y;
-                    if(tempPlayer.monsterMapObject!=NULL)
-                    {
-                        tempPlayer.monsterMapObject->setVisible(true);
-                        if(map!=new_map)
-                            unloadOtherMonsterFromCurrentMap(tempPlayer);
-                        tempPlayer.monsterMapObject->setPosition(QPointF((float)tempPlayer.monster_x-0.5,(float)tempPlayer.monster_y+1));
-                        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.monster_y);
-                        if(map!=new_map)
-                            loadOtherMonsterFromCurrentMap(tempPlayer);
-                    }
-                }
-                moveOffset=x-tempPlayer.x;
-            }
-        }
-        else
-            abort();
 
-        std::vector<std::pair<uint8_t, CatchChallenger::Direction> > movement;
-        std::pair<uint8_t, CatchChallenger::Direction> t(moveOffset,direction);
-        movement.push_back(t);
-        if(move_player_final(id,movement,false))
-            return true;
-    }
-
+    //set the player coord
+    uint8_t old_tempPlayer_x=tempPlayer.x;
+    uint8_t old_tempPlayer_y=tempPlayer.y;
+    tempPlayer.y=static_cast<uint8_t>(y);
     tempPlayer.presumed_x=static_cast<uint8_t>(x);
     tempPlayer.presumed_y=static_cast<uint8_t>(y);
-
-    //monster
-    tempPlayer.monster_x=static_cast<uint8_t>(x);
-    tempPlayer.monster_y=static_cast<uint8_t>(y);
+    tempPlayer.x=static_cast<uint8_t>(x);
+    tempPlayer.y=static_cast<uint8_t>(y);
+    tempPlayer.presumed_direction=direction;
 
     switch(direction)
     {
@@ -990,13 +865,175 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
 
     if(tempPlayer.playerMapObject!=NULL)
     {
-        tempPlayer.playerMapObject->setPosition(QPointF(tempPlayer.x-0.5,tempPlayer.y+1));
+        tempPlayer.playerMapObject->setPosition(QPointF(tempPlayer.x,tempPlayer.y+1));
         MapObjectItem::objectLink.at(tempPlayer.playerMapObject)->setZValue(tempPlayer.y);
     }
+
+    if(old_tempPlayer_x==x || old_tempPlayer_y==y)
+    {
+        /// \warning no path finding because too many player update can overflow the cpu
+        int moveOffset=0;
+        if(old_tempPlayer_x==x)
+        {
+            if(y<old_tempPlayer_y)
+            {
+                tempPlayer.pendingMonsterMoves.clear();
+                tempPlayer.pendingMonsterMoves.push_back(CatchChallenger::Direction_move_at_top);
+                uint8_t temp_x=x;
+                uint8_t temp_y=y;
+                CatchChallenger::CommonMap *map=&all_map.at(tempCurrentMap)->logicalMap;
+                CatchChallenger::CommonMap *new_map=map;
+                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&new_map,&temp_x,&temp_y,true,false))
+                {
+                    tempPlayer.current_monster_map=new_map->map_file;
+                    tempPlayer.monster_x=temp_x;
+                    tempPlayer.monster_y=temp_y;
+                    if(tempPlayer.monsterMapObject!=NULL)
+                    {
+                        Tiled::Cell cell=tempPlayer.monsterMapObject->cell();
+                        cell.tile=tempPlayer.monsterTileset->tileAt(2);
+                        tempPlayer.monsterMapObject->setCell(cell);
+                        tempPlayer.monsterMapObject->setVisible(true);
+                        if(map!=new_map)
+                            unloadOtherMonsterFromCurrentMap(tempPlayer);
+                        tempPlayer.monsterMapObject->setPosition(QPointF((float)tempPlayer.monster_x-0.5,(float)tempPlayer.monster_y+1));
+                        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.monster_y);
+                        if(map!=new_map)
+                            loadOtherMonsterFromCurrentMap(tempPlayer);
+                    }
+                }
+                moveOffset=old_tempPlayer_y-y;
+            }
+            else if(old_tempPlayer_y<y)
+            {
+                tempPlayer.pendingMonsterMoves.clear();
+                tempPlayer.pendingMonsterMoves.push_back(CatchChallenger::Direction_move_at_bottom);
+                uint8_t temp_x=x;
+                uint8_t temp_y=y;
+                CatchChallenger::CommonMap *map=&all_map.at(tempCurrentMap)->logicalMap;
+                CatchChallenger::CommonMap *new_map=map;
+                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&new_map,&temp_x,&temp_y,true,false))
+                {
+                    tempPlayer.current_monster_map=new_map->map_file;
+                    tempPlayer.monster_x=temp_x;
+                    tempPlayer.monster_y=temp_y;
+                    if(tempPlayer.monsterMapObject!=NULL)
+                    {
+                        Tiled::Cell cell=tempPlayer.monsterMapObject->cell();
+                        cell.tile=tempPlayer.monsterTileset->tileAt(6);
+                        tempPlayer.monsterMapObject->setCell(cell);
+                        tempPlayer.monsterMapObject->setVisible(true);
+                        if(map!=new_map)
+                            unloadOtherMonsterFromCurrentMap(tempPlayer);
+                        tempPlayer.monsterMapObject->setPosition(QPointF((float)tempPlayer.monster_x-0.5,(float)tempPlayer.monster_y+1));
+                        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.monster_y);
+                        if(map!=new_map)
+                            loadOtherMonsterFromCurrentMap(tempPlayer);
+                    }
+                }
+                moveOffset=y-old_tempPlayer_y;
+            }
+        }
+        else if(old_tempPlayer_y==y)
+        {
+            if(x<old_tempPlayer_x)
+            {
+                tempPlayer.pendingMonsterMoves.clear();
+                tempPlayer.pendingMonsterMoves.push_back(CatchChallenger::Direction_move_at_left);
+                uint8_t temp_x=x;
+                uint8_t temp_y=y;
+                CatchChallenger::CommonMap *map=&all_map.at(tempCurrentMap)->logicalMap;
+                CatchChallenger::CommonMap *new_map=map;
+                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&new_map,&temp_x,&temp_y,true,false))
+                {
+                    tempPlayer.current_monster_map=new_map->map_file;
+                    tempPlayer.monster_x=temp_x;
+                    tempPlayer.monster_y=temp_y;
+                    if(tempPlayer.monsterMapObject!=NULL)
+                    {
+                        Tiled::Cell cell=tempPlayer.monsterMapObject->cell();
+                        cell.tile=tempPlayer.monsterTileset->tileAt(3);
+                        tempPlayer.monsterMapObject->setCell(cell);
+                        tempPlayer.monsterMapObject->setVisible(true);
+                        if(map!=new_map)
+                            unloadOtherMonsterFromCurrentMap(tempPlayer);
+                        tempPlayer.monsterMapObject->setPosition(QPointF((float)tempPlayer.monster_x-0.5,(float)tempPlayer.monster_y+1));
+                        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.monster_y);
+                        if(map!=new_map)
+                            loadOtherMonsterFromCurrentMap(tempPlayer);
+                    }
+                }
+                moveOffset=old_tempPlayer_x-x;
+            }
+            else if(old_tempPlayer_x<x)
+            {
+                tempPlayer.pendingMonsterMoves.clear();
+                tempPlayer.pendingMonsterMoves.push_back(CatchChallenger::Direction_move_at_right);
+                uint8_t temp_x=x;
+                uint8_t temp_y=y;
+                CatchChallenger::CommonMap *map=&all_map.at(tempCurrentMap)->logicalMap;
+                CatchChallenger::CommonMap *new_map=map;
+                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&new_map,&temp_x,&temp_y,true,false))
+                {
+                    tempPlayer.current_monster_map=new_map->map_file;
+                    tempPlayer.monster_x=temp_x;
+                    tempPlayer.monster_y=temp_y;
+                    if(tempPlayer.monsterMapObject!=NULL)
+                    {
+                        Tiled::Cell cell=tempPlayer.monsterMapObject->cell();
+                        cell.tile=tempPlayer.monsterTileset->tileAt(7);
+                        tempPlayer.monsterMapObject->setCell(cell);
+                        tempPlayer.monsterMapObject->setVisible(true);
+                        if(map!=new_map)
+                            unloadOtherMonsterFromCurrentMap(tempPlayer);
+                        tempPlayer.monsterMapObject->setPosition(QPointF((float)tempPlayer.monster_x-0.5,(float)tempPlayer.monster_y+1));
+                        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.monster_y);
+                        if(map!=new_map)
+                            loadOtherMonsterFromCurrentMap(tempPlayer);
+                    }
+                }
+                moveOffset=x-old_tempPlayer_x;
+            }
+        }
+        else
+            abort();
+
+        switch(direction)
+        {
+            case CatchChallenger::Direction_move_at_left:
+            case CatchChallenger::Direction_move_at_right:
+            case CatchChallenger::Direction_move_at_top:
+            case CatchChallenger::Direction_move_at_bottom:
+            {
+                if(!tempPlayer.pendingMonsterMoves.empty())
+                {
+                    std::vector<std::pair<uint8_t, CatchChallenger::Direction> > movement;
+                    std::pair<uint8_t, CatchChallenger::Direction> t(moveOffset,tempPlayer.pendingMonsterMoves.back());
+                    movement.push_back(t);
+                    if(move_player_final(id,movement,false))
+                        return true;
+                }
+            }
+            break;
+            case CatchChallenger::Direction_look_at_left:
+            case CatchChallenger::Direction_look_at_right:
+            case CatchChallenger::Direction_look_at_top:
+            case CatchChallenger::Direction_look_at_bottom:
+                return true;
+            break;
+            default:
+            break;
+        }
+    }
+
+    //monster
+    tempPlayer.monster_x=static_cast<uint8_t>(x);
+    tempPlayer.monster_y=static_cast<uint8_t>(y);
     if(tempPlayer.monsterMapObject!=NULL)
     {
-        tempPlayer.monsterMapObject->setPosition(QPointF((float)tempPlayer.x-0.5,(float)tempPlayer.y+1));
-        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(tempPlayer.y);
+        tempPlayer.monsterMapObject->setPosition(QPointF((float)x-0.5,(float)y+1));
+        MapObjectItem::objectLink.at(tempPlayer.monsterMapObject)->setZValue(y);
+        tempPlayer.monsterMapObject->setVisible(false);
     }
 
     return true;

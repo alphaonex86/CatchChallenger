@@ -216,7 +216,7 @@ void MapControllerMP::loadOtherPlayerFromMap(const OtherPlayer &otherPlayer,cons
     }
 
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-    otherPlayer.playerMapObject->setPosition(QPoint(otherPlayer.x,otherPlayer.y+1));
+    otherPlayer.playerMapObject->setPosition(QPointF(otherPlayer.x,otherPlayer.y+1));
     if(otherPlayer.labelMapObject!=NULL)
         otherPlayer.labelMapObject->setPosition(QPointF(static_cast<qreal>(otherPlayer.x)-
                 static_cast<qreal>(otherPlayer.labelTileset->tileWidth())/2/16+0.5,
