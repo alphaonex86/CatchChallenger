@@ -11,6 +11,18 @@ void MapControllerMP::moveOtherPlayerStepSlot()
         return;
     }
     const uint16_t &simplifiedId=otherPlayerListByTimer.at(timer);
+    OtherPlayer &otherPlayer=otherPlayerList[simplifiedId];
+    switch(otherPlayer.presumed_direction)
+    {
+        case CatchChallenger::Direction_move_at_right:
+        case CatchChallenger::Direction_move_at_top:
+        case CatchChallenger::Direction_move_at_bottom:
+        case CatchChallenger::Direction_move_at_left:
+        break;
+        default:
+        return;
+    }
+//    std::cout << "MapControllerMP::moveOtherPlayerStepSlot(): " << std::to_string(otherPlayer.presumed_direction) << std::endl;
     moveOtherPlayerStepSlotWithPlayer(otherPlayerList[simplifiedId]);
 }
 
