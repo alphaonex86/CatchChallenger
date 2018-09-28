@@ -10,6 +10,10 @@ DatabaseBot DatabaseBot::databaseBot;
 
 DatabaseBot::DatabaseBot()
 {
+}
+
+void DatabaseBot::init()
+{
     const QString destination("config.db");
     QFile destinationFile(destination);
     if(!destinationFile.exists())
