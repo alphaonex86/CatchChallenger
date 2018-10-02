@@ -429,6 +429,8 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
     otherPlayer.oneStepMore->stop();
     otherPlayer.inMove=false;
     otherPlayer.moveStep=0;
+    while(otherPlayer.pendingMonsterMoves.size()>1)
+        otherPlayer.pendingMonsterMoves.erase(otherPlayer.pendingMonsterMoves.cbegin());
 
     if(otherPlayer.current_map!=otherPlayer.presumed_map->logicalMap.map_file)
     {
@@ -810,6 +812,8 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
     otherPlayer.direction=direction;
     otherPlayer.inMove=false;
     otherPlayer.moveStep=0;
+    while(otherPlayer.pendingMonsterMoves.size()>1)
+        otherPlayer.pendingMonsterMoves.erase(otherPlayer.pendingMonsterMoves.cbegin());
 
     switch(direction)
     {
