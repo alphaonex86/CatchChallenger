@@ -297,48 +297,52 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
     //if have finish the step
     if(otherPlayer.moveStep>5)
     {
-        if(otherPlayer.monsterMapObject!=NULL)
-            if(otherPlayer.pendingMonsterMoves.size()>1)
+        if(otherPlayer.pendingMonsterMoves.size()>1)
+        {
+            const CatchChallenger::Direction direction=otherPlayer.pendingMonsterMoves.front();
+            otherPlayer.pendingMonsterMoves.erase(otherPlayer.pendingMonsterMoves.cbegin());
+
+            CatchChallenger::CommonMap * map=&all_map.at(otherPlayer.current_monster_map)->logicalMap;
+            const CatchChallenger::CommonMap * old_map=map;
+            //set the final value (direction, position, ...)
+            switch(direction)
             {
-                const CatchChallenger::Direction direction=otherPlayer.pendingMonsterMoves.front();
-                otherPlayer.pendingMonsterMoves.erase(otherPlayer.pendingMonsterMoves.cbegin());
+                case CatchChallenger::Direction_move_at_left:
+                case CatchChallenger::Direction_move_at_right:
+                case CatchChallenger::Direction_move_at_top:
+                case CatchChallenger::Direction_move_at_bottom:
+                    if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&otherPlayer.monster_x,&otherPlayer.monster_y))
+                    {
+                        std::cerr << "Bug at move for pendingMonsterMoves, unknown move: " << std::to_string(direction)
+                                  << " from " << map->map_file << " (" << std::to_string(otherPlayer.monster_x) << "," << std::to_string(otherPlayer.monster_y) << ")"
+                                  << std::endl;
+                        resetMonsterTile();
+                    }
+                break;
+                default:
+                    qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction (%2) when moveStep>2").arg(otherPlayer.moveStep).arg(direction);
+                return;
+            }
+            //if the map have changed
+            if(old_map!=map)
+            {
+                unloadOtherMonsterFromCurrentMap(otherPlayer);
+                otherPlayer.current_monster_map=map->map_file;
+                if(old_all_map.find(otherPlayer.current_monster_map)==old_all_map.cend())
+                    std::cerr << "old_all_map.find(current_map)==old_all_map.cend() in monster follow" << std::endl;
+                if(!vectorcontainsAtLeastOne(old_map->near_map,map))
+                    resetOtherMonsterTile(otherPlayer);
+                loadOtherMonsterFromCurrentMap(otherPlayer);
+            }
 
-                CatchChallenger::CommonMap * map=&all_map.at(otherPlayer.current_monster_map)->logicalMap;
-                const CatchChallenger::CommonMap * old_map=map;
-                //set the final value (direction, position, ...)
-                switch(direction)
-                {
-                    case CatchChallenger::Direction_move_at_left:
-                    case CatchChallenger::Direction_move_at_right:
-                    case CatchChallenger::Direction_move_at_top:
-                    case CatchChallenger::Direction_move_at_bottom:
-                        if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&otherPlayer.monster_x,&otherPlayer.monster_y))
-                        {
-                            std::cerr << "Bug at move for pendingMonsterMoves, unknown move: " << std::to_string(direction)
-                                      << " from " << map->map_file << " (" << std::to_string(otherPlayer.monster_x) << "," << std::to_string(otherPlayer.monster_y) << ")"
-                                      << std::endl;
-                            resetMonsterTile();
-                        }
-                    break;
-                    default:
-                        qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction (%2) when moveStep>2").arg(otherPlayer.moveStep).arg(direction);
-                    return;
-                }
-                //if the map have changed
-                if(old_map!=map)
-                {
-                    unloadOtherMonsterFromCurrentMap(otherPlayer);
-                    otherPlayer.current_monster_map=map->map_file;
-                    if(old_all_map.find(otherPlayer.current_monster_map)==old_all_map.cend())
-                        std::cerr << "old_all_map.find(current_map)==old_all_map.cend() in monster follow" << std::endl;
-                    if(!vectorcontainsAtLeastOne(old_map->near_map,map))
-                        resetOtherMonsterTile(otherPlayer);
-                    loadOtherMonsterFromCurrentMap(otherPlayer);
-                }
-
+            if(otherPlayer.monsterMapObject!=NULL)
+            {
                 otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.monster_x-0.5,(float)otherPlayer.monster_y+1));
                 MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.monster_y);
             }
+            else
+                otherPlayer.pendingMonsterMoves.clear();
+        }
         otherPlayer.animationDisplayed=false;
         CatchChallenger::CommonMap * old_map=&otherPlayer.presumed_map->logicalMap;
         CatchChallenger::CommonMap * map=&otherPlayer.presumed_map->logicalMap;
@@ -393,12 +397,17 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
                 otherPlayer.oneStepMore->stop();
+                std::cout << "[debug], can't go left" << std::endl;
             }
             //if can go, then do the move
             else
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_move_at_left;
                 otherPlayer.moveStep=0;
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(otherPlayer.pendingMonsterMoves.size()>1)
+                    abort();
+                #endif
                 moveOtherPlayerStepSlot();
             }
         }
@@ -413,12 +422,17 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
                 otherPlayer.oneStepMore->stop();
+                std::cout << "[debug], can't go right" << std::endl;
             }
             //if can go, then do the move
             else
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_move_at_right;
                 otherPlayer.moveStep=0;
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(otherPlayer.pendingMonsterMoves.size()>1)
+                    abort();
+                #endif
                 moveOtherPlayerStepSlot();
             }
         }
@@ -434,12 +448,17 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
                 otherPlayer.oneStepMore->stop();
+                std::cout << "[debug], can't go top" << std::endl;
             }
             //if can go, then do the move
             else
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_move_at_top;
                 otherPlayer.moveStep=0;
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(otherPlayer.pendingMonsterMoves.size()>1)
+                    abort();
+                #endif
                 moveOtherPlayerStepSlot();
             }
         }
@@ -454,12 +473,17 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
                 otherPlayer.oneStepMore->stop();
+                std::cout << "[debug], can't go bottom" << std::endl;
             }
             //if can go, then do the move
             else
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_move_at_bottom;
                 otherPlayer.moveStep=0;
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(otherPlayer.pendingMonsterMoves.size()>1)
+                    abort();
+                #endif
                 moveOtherPlayerStepSlot();
             }
         }
@@ -471,6 +495,11 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             otherPlayer.oneStepMore->stop();
         }
         finalOtherPlayerStep(otherPlayer);
+
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(otherPlayer.pendingMonsterMoves.size()>1)
+            abort();
+        #endif
     }
     else
         otherPlayer.oneStepMore->start();
