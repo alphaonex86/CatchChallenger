@@ -21,13 +21,17 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<QList<CatchChallenger::ServerFromPoolForDisplay*> >("QList<CatchChallenger::ServerFromPoolForDisplay*>");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
+
+    qRegisterMetaType<CatchChallenger::Player_type>("std::vector<CatchChallenger::ServerFromPoolForDisplay>");
+    qRegisterMetaType<std::vector<std::vector<CatchChallenger::CharacterEntry> > >("std::vector<std::vector<CatchChallenger::CharacterEntry> >");
+
     ui->setupUi(this);
     CatchChallenger::ProtocolParsing::initialiseTheVariable();
     CatchChallenger::ProtocolParsing::setMaxPlayers(65535);
 
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::loggedDone,this,&MainWindow::logged,Qt::QueuedConnection))
         abort();
-    if(connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackIsReady,this,&MainWindow::datapackIsReady,Qt::QueuedConnection))
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackIsReady,this,&MainWindow::datapackIsReady,Qt::QueuedConnection))
         abort();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::datapackMainSubIsReady,this,&MainWindow::datapackMainSubIsReady,Qt::QueuedConnection))
         abort();
@@ -110,8 +114,10 @@ void MainWindow::detectSlowDown(uint32_t queryCount,uint32_t worseTime)
         ui->labelQueryList->setText(tr("Running query: %1 Query with worse time: %2ms").arg(queryCount).arg(worseTime));
 }
 
-void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,const std::vector<CatchChallenger::ServerFromPoolForDisplay *> &serverOrdenedList,
-                        const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList,bool haveTheDatapack)
+void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,
+                        const std::vector<CatchChallenger::ServerFromPoolForDisplay> &serverOrdenedList,
+                        const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList,
+                        bool haveTheDatapack)
 {
     Q_UNUSED(haveTheDatapack);
     if(senderObject==NULL)
@@ -140,7 +146,7 @@ void MainWindow::updateServerList(CatchChallenger::Api_client_real *senderObject
         int serverByCharacterGroupTempIndexToDisplay=1;
         while(index<serverOrdenedList.size())
         {
-            const CatchChallenger::ServerFromPoolForDisplay &server=*serverOrdenedList.at(index);
+            const CatchChallenger::ServerFromPoolForDisplay &server=serverOrdenedList.at(index);
             if(serverByCharacterGroup.contains(server.charactersGroupIndex))
                 serverByCharacterGroup[server.charactersGroupIndex].first++;
             else
@@ -284,7 +290,7 @@ void MainWindow::on_serverListSelect_clicked()
     const QTreeWidgetItem * const selectedItem=selectedItems.at(0);
     unsigned int serverSelectedIndex=selectedItem->data(99,99).toUInt();
 
-    CatchChallenger::ServerFromPoolForDisplay * const serverSelected=serverOrdenedList.at(serverSelectedIndex);
+    CatchChallenger::ServerFromPoolForDisplay * const serverSelected=&serverOrdenedList[serverSelectedIndex];
     const uint8_t &charactersGroupIndex=serverSelected->charactersGroupIndex;
     if(charactersGroupIndex>=characterEntryList.size())
     {
