@@ -380,7 +380,7 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
 {
     qDebug() << "newSocketError()" << error;
     mHaveAnError=true;
-    #ifndef BOTTESTCONNECT
+    #ifdef BOTACTIONS
     ActionsAction::actionsAction->stopAll();
     #endif
 
@@ -495,7 +495,7 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
 void MultipleBotConnectionImplForGui::newError(const std::string &error, const std::string &detailedError)
 {
     mHaveAnError=true;
-    #ifndef BOTTESTCONNECT
+    #ifdef BOTACTIONS
     ActionsAction::actionsAction->stopAll();
     #endif
 
