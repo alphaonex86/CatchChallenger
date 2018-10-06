@@ -279,11 +279,16 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const std::string &da
 
                     if(public_informations.simplifiedId==player_informations.public_informations.simplifiedId)
                     {
-                        setLastDirection(direction);
-                        player_informations.public_informations=public_informations;
-                        have_current_player_info(player_informations);
+                        if(last_direction_is_set==false)//to work with reemit
+                        {
+                            setLastDirection(direction);
+                            player_informations.public_informations=public_informations;
+                            have_current_player_info(player_informations);
+                            insert_player(public_informations,mapId,x,y,direction);
+                        }
                     }
-                    insert_player(public_informations,mapId,x,y,direction);
+                    else
+                        insert_player(public_informations,mapId,x,y,direction);
                     index_sub_loop++;
                 }
                 index++;

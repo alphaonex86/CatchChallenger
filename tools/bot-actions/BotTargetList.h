@@ -47,8 +47,8 @@ public:
     void loadAllBotsInformation();
     void loadAllBotsInformation2();
     void updateLayerElements();
-    void updateMapInformation();
-    void updateMapContent();
+    void updateMapInformation(const bool &forceUpdate=false);
+    void updateMapContent(const bool &forceUpdate=false);
     void updatePlayerInformation();
     void updatePlayerMapSlot();
     void updatePlayerMap(const bool &force=false);

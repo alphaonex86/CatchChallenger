@@ -43,6 +43,7 @@ MapVisibilityAlgorithm_Simple_StoreOnSender::~MapVisibilityAlgorithm_Simple_Stor
     extraStop();
 }
 
+/// \todo at client insert, check buffer overflow
 void MapVisibilityAlgorithm_Simple_StoreOnSender::insertClient()
 {
     Map_server_MapVisibility_Simple_StoreOnSender * const temp_map=static_cast<Map_server_MapVisibility_Simple_StoreOnSender*>(map);
@@ -212,6 +213,13 @@ void MapVisibilityAlgorithm_Simple_StoreOnSender::removeClient()
             #endif
             temp_map->show=true;
             //insert all the client because it start to be visible
+            if(loop_size<=0)
+            {
+                temp_map->to_send_insert=false;
+                temp_map->send_drop_all=false;
+                temp_map->send_reinsert_all=false;
+                temp_map->have_change=false;
+            }
             if(temp_map->send_drop_all==false)
                 temp_map->send_reinsert_all=true;
             else
