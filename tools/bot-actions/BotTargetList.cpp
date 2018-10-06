@@ -306,7 +306,7 @@ void BotTargetList::on_bots_itemSelectionChanged()
     updateMapContentMapId=0;
     updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
 
-    updateMapInformation();
+    updateMapInformation(true);
     updatePlayerInformation();
 }
 
@@ -545,7 +545,7 @@ std::string BotTargetList::stepToString(const std::vector<std::pair<CatchChallen
     return stepToDo;
 }
 
-void BotTargetList::updateMapInformation()
+void BotTargetList::updateMapInformation(const bool &forceUpdate)
 {
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()!=1)
@@ -608,11 +608,11 @@ void BotTargetList::updateMapInformation()
     updateMapContentY=0;
     updateMapContentMapId=0;
     updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
-    updateMapContent();
+    updateMapContent(forceUpdate);
     updateLayerElements();
 }
 
-void BotTargetList::updateMapContent()
+void BotTargetList::updateMapContent(const bool &forceUpdate)
 {
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()!=1)
@@ -629,7 +629,8 @@ void BotTargetList::updateMapContent()
         ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
     else
         ui->label_action->setText("Start this: In fight, can't move, elapsed since the last action: "+QString::number(player.lastFightAction.elapsed()));
-    if(updateMapContentX==player.x && updateMapContentY==player.y && updateMapContentMapId==player.mapId && updateMapContentDirection==player.api->getDirection())
+    if(updateMapContentX==player.x && updateMapContentY==player.y &&
+            updateMapContentMapId==player.mapId && updateMapContentDirection==player.api->getDirection() && !forceUpdate)
         return;
     updateMapContentX=player.x;
     updateMapContentY=player.y;

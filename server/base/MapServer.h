@@ -19,6 +19,7 @@ class MapServer : public CommonMap, public MapServerCrafting
 public:
     MapServer();
     void doDDOSLocalChat();
+    static unsigned int playerToFullInsert(const Client * const player, char * const bufferForOutput);
     std::map<std::pair<uint8_t,uint8_t>,Orientation/*,pairhash*/> rescue;
     uint8_t localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     uint8_t localChatDropTotalCache;
