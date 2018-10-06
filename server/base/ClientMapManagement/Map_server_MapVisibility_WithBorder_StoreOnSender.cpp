@@ -198,6 +198,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
             int index_subindex=0;
             while(index_subindex<clientsToSendDataSizeNewClients)
             {
+            use posOutput+=playerToFullInsert(clients.at(index),ProtocolParsingBase::tempBigBufferForOutput);
                 if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
                     out << (uint8_t)clientsToSendDataNewClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
                 else
@@ -264,6 +265,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
             int index=0;
             while(index<clients.size())
             {
+            use posOutput+=playerToFullInsert(clients.at(index),ProtocolParsingBase::tempBigBufferForOutput);
                 if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
                     out << (uint8_t)clients.at(index)->public_and_private_informations.public_informations.simplifiedId;
                 else
@@ -328,6 +330,7 @@ void Map_server_MapVisibility_WithBorder_StoreOnSender::purgeBuffer()
                 {
                     if(index!=index_subindex)
                     {
+                    use posOutput+=playerToFullInsert(clients.at(index),ProtocolParsingBase::tempBigBufferForOutput);
                         if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime<=255)
                             out << (uint8_t)clients.at(index_subindex)->public_and_private_informations.public_informations.simplifiedId;
                         else

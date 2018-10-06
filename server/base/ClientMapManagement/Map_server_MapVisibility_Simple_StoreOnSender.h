@@ -26,7 +26,7 @@ public:
     bool show;
     bool to_send_insert;
     bool send_drop_all;
-    bool send_reinsert_all;
+    bool send_reinsert_all;//threasold, hide after 100 player, reshow below 50
     bool have_change;
 
     static MapVisibilityAlgorithm_Simple_StoreOnSender * clientsToSendDataNewClients[65535];

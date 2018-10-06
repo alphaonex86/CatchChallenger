@@ -1,6 +1,8 @@
 #include "Map_server_MapVisibility_Simple_StoreOnSender.h"
 #include "../GlobalServerData.h"
 
+/// \todo optimise: preserialize, filter streaming to send + filter
+
 using namespace CatchChallenger;
 
 MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataNewClients[65535];
@@ -16,6 +18,8 @@ Map_server_MapVisibility_Simple_StoreOnSender::Map_server_MapVisibility_Simple_S
     have_change(false)
 {
 }
+
+//buffer overflow check via buffer usage at player insert, per map if player are visible
 
 void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 {
@@ -42,19 +46,18 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     }
     if(!show)
         return;
-    /// \todo use simplified id with max visible player and updater http://catchchallenger.first-world.info/wiki/Base_protocol_messages#C0
+    /// \todo use simplified id via 9
     //Insert player on map (Fast)
-    if(send_reinsert_all)
+    if(send_reinsert_all)//for reshow because player number lower than 50, after hide because more than 100
     {
         //send the network message
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x6B;
         posOutput+=1+4;
-
         //prepare the data
         {
             //////////////////////////// insert //////////////////////////
-            /* can be only this map with this algo, then 1 map */
+            // can be only this map with this algo, then 1 map
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
             if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
@@ -74,74 +77,62 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             }
             if(GlobalServerData::serverSettings.max_players<=255)
             {
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(clients.size());
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(clients.size()-1);
                 posOutput+=1;
             }
             else
             {
-                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(clients.size());
+                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(clients.size()-1);
                 posOutput+=2;
             }
-            unsigned int index=0;
-            while(index<clients.size())
+            if(GlobalServerData::serverSettings.mapVisibility.simple.reemit)
             {
-                if(GlobalServerData::serverSettings.max_players<=255)
+                if(clients.size()>1)
                 {
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=
-                            static_cast<uint8_t>(clients.at(index)->public_and_private_informations.public_informations.simplifiedId);
-                    posOutput+=1;
+                    unsigned int index=0;
+                    while(index<clients.size())
+                    {
+                        MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
+                        posOutput+=playerToFullInsert(client,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+                        ++index;
+                    }
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+                    index=0;
+                    while(index<clients.size())
+                    {
+                        MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
+                        client->to_send_insert=false;
+                        client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                        ++index;
+                    }
                 }
-                else
+            }
+            else
+            {
+                unsigned int index=0;
+                while(index<clients.size())
                 {
-                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(clients.at(index)->public_and_private_informations.public_informations.simplifiedId);
-                    posOutput+=2;
-                }
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.at(index)->getX();
-                posOutput+=1;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.at(index)->getY();
-                posOutput+=1;
-                if(GlobalServerData::serverSettings.dontSendPlayerType)
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)clients.at(index)->getLastDirection() | (uint8_t)Player_type_normal);
-                else
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)clients.at(index)->getLastDirection() | (uint8_t)clients.at(index)->public_and_private_informations.public_informations.type);
-                posOutput+=1;
-                if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-                {
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.at(index)->public_and_private_informations.public_informations.speed;
-                    posOutput+=1;
-                }
-                //pseudo
-                if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
-                {
-                    const std::string &text=clients.at(index)->public_and_private_informations.public_informations.pseudo;
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
-                    posOutput+=1;
-                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                    posOutput+=text.size();
-                }
-                //skin
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=clients.at(index)->public_and_private_informations.public_informations.skinId;
-                posOutput+=1;
-                //the following monster id to show
-                if(clients.at(index)->public_and_private_informations.playerMonster.empty())
-                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
-                else
-                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(clients.at(index)->public_and_private_informations.playerMonster.front().monster);
-                posOutput+=2;
+                    MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
 
-                ++index;
+                    uint32_t posOutputSub=posOutput;
+                    unsigned int indexSub=0;
+                    while(indexSub<clients.size())
+                    {
+                        if(index!=indexSub)
+                            posOutputSub+=playerToFullInsert(client,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+                        ++indexSub;
+                    }
+
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutputSub-1-4);//set the dynamic size
+                    client->to_send_insert=false;
+                    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutputSub);
+
+                    ++index;
+                }
             }
         }
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
-        unsigned int index=0;
-        while(index<clients.size())
-        {
-            Client * const client=clients.at(index);
-            client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-            index++;
-        }
-        send_reinsert_all=true;
+        send_reinsert_all=false;
         return;
     }
 
@@ -208,51 +199,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     {
                         MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index);
                         if(client->to_send_insert)
-                        {
-                            if(GlobalServerData::serverSettings.max_players<=255)
-                            {
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=
-                                        static_cast<uint8_t>(client->public_and_private_informations.public_informations.simplifiedId);
-                                posOutput+=1;
-                            }
-                            else
-                            {
-                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.public_informations.simplifiedId);
-                                posOutput+=2;
-                            }
-                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getX();
-                            posOutput+=1;
-                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getY();
-                            posOutput+=1;
-                            if(GlobalServerData::serverSettings.dontSendPlayerType)
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
-                            else
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
-                            posOutput+=1;
-                            if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-                            {
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.speed;
-                                posOutput+=1;
-                            }
-                            //pseudo
-                            if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
-                            {
-                                const std::string &text=client->public_and_private_informations.public_informations.pseudo;
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
-                                posOutput+=1;
-                                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                                posOutput+=text.size();
-                            }
-                            //skin
-                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.skinId;
-                            posOutput+=1;
-                            //the following monster id to show
-                            if(client->public_and_private_informations.playerMonster.empty())
-                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
-                            else
-                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.playerMonster.front().monster);
-                            posOutput+=2;
-                        }
+                            posOutput+=playerToFullInsert(clients.at(index),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                         ++index;
                     }
                 }
@@ -323,7 +270,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         {
             //count the player will be insered
             unsigned int index=0;
-            while(index<clients.size())
+            while(index<clients.size())/// \todo optimize, use clientsToSendDataNewClients
             {
                 if(clients.at(index)->to_send_insert)
                 {
@@ -355,104 +302,21 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     {
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(clients.size()-1);
                         posOutput+=1;
-                        unsigned int index_subindex=0;
-                        while(index_subindex<clients.size())
-                        {
-                            const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index_subindex);
-                            if(index!=index_subindex)
-                            {
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(client->public_and_private_informations.public_informations.simplifiedId);
-                                posOutput+=1;
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getX();
-                                posOutput+=1;
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getY();
-                                posOutput+=1;
-                                /// \todo, put this out of loop
-                                if(GlobalServerData::serverSettings.dontSendPlayerType)
-                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
-                                else
-                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
-                                posOutput+=1;
-                                /// \todo, put this out of loop
-                                if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-                                {
-                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.speed;
-                                    posOutput+=1;
-                                }
-                                /// \todo, put this out of loop
-                                //pseudo
-                                if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
-                                {
-                                    const std::string &text=client->public_and_private_informations.public_informations.pseudo;
-                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
-                                    posOutput+=1;
-                                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                                    posOutput+=text.size();
-                                }
-                                //skin
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.skinId;
-                                posOutput+=1;
-                                //the following monster id to show
-                                if(client->public_and_private_informations.playerMonster.empty())
-                                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
-                                else
-                                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.playerMonster.front().monster);
-                                posOutput+=2;
-                            }
-                            ++index_subindex;
-                        }
                     }
                     else
                     {
                         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(clients.size()-1);
                         posOutput+=2;
-                        unsigned int index_subindex=0;
-                        while(index_subindex<clients.size())
-                        {
-                            const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index_subindex);
-                            if(index!=index_subindex)
-                            {
-                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.public_informations.simplifiedId);
-                                posOutput+=2;
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getX();
-                                posOutput+=1;
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->getY();
-                                posOutput+=1;
-                                /// \todo, put this out of loop
-                                if(GlobalServerData::serverSettings.dontSendPlayerType)
-                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)Player_type_normal);
-                                else
-                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)client->getLastDirection() | (uint8_t)client->public_and_private_informations.public_informations.type);
-                                posOutput+=1;
-                                /// \todo, put this out of loop
-                                if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-                                {
-                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.speed;
-                                    posOutput+=1;
-                                }
-                                /// \todo, put this out of loop
-                                //pseudo
-                                if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
-                                {
-                                    const std::string &text=client->public_and_private_informations.public_informations.pseudo;
-                                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
-                                    posOutput+=1;
-                                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                                    posOutput+=text.size();
-                                }
-                                //skin
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=client->public_and_private_informations.public_informations.skinId;
-                                posOutput+=1;
-                                //the following monster id to show
-                                if(client->public_and_private_informations.playerMonster.empty())
-                                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
-                                else
-                                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(client->public_and_private_informations.playerMonster.front().monster);
-                                posOutput+=2;
-                            }
-                            ++index_subindex;
-                        }
                     }
+                    unsigned int index_subindex=0;
+                    while(index_subindex<clients.size())/// \todo optimize, use clientsToSendDataNewClients (exclude) + clientsToSendDataOldClients
+                    {
+                        const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index_subindex);
+                        if(index!=index_subindex)
+                            posOutput+=playerToFullInsert(client,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+                        ++index_subindex;
+                    }
+
 
                     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
@@ -513,11 +377,9 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
             if((sizeof(uint16_t)+to_send_remove.size()*sizeof(uint16_t))<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
             {
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(sizeof(uint16_t)+to_send_remove.size()*sizeof(uint16_t));//set the dynamic size
-                std::cout << "data: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", line " << std::to_string(__LINE__) << std::endl;
 
                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(to_send_remove.size());
                 posOutput+=2;
-                std::cout << "data: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", line " << std::to_string(__LINE__) << std::endl;
                 unsigned int index_subindex=0;
                 while(index_subindex<to_send_remove.size())
                 {
@@ -525,12 +387,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     posOutput+=2;
                     index_subindex++;
                 }
-                std::cout << "data: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", line " << std::to_string(__LINE__) << std::endl;
                 index_subindex=0;
                 while(index_subindex<clientsToSendDataSizeOldClients)
                 {
                     clientsToSendDataOldClients[index_subindex]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                    std::cout << "data: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput) << ", line " << std::to_string(__LINE__) << std::endl;
                     index_subindex++;
                 }
             }
@@ -584,12 +444,13 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     if(GlobalServerData::serverSettings.max_players<=255)
                         while(index_subindex<clientsToSendDataSizeOldClients)
                         {
-                            if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
+                            const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clientsToSendDataOldClients[index_subindex];
+                            if(client->haveNewMove)
                             {
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+3]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+0]=(uint8_t)client->public_and_private_informations.public_informations.simplifiedId;
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+1]=(uint8_t)client->getX();
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+2]=(uint8_t)client->getY();
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+3]=(uint8_t)client->getLastDirection();
                                 posOutput+=sizeof(uint8_t)+sizeof(uint8_t)*3;
                             }
                             index_subindex++;
@@ -597,12 +458,13 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     else
                         while(index_subindex<clientsToSendDataSizeOldClients)
                         {
-                            if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
+                            const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clientsToSendDataOldClients[index_subindex];
+                            if(client->haveNewMove)
                             {
-                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint16_t)htole16((uint16_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint16_t)htole16((uint16_t)client->public_and_private_informations.public_informations.simplifiedId);
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+0]=(uint8_t)client->getX();
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+1]=(uint8_t)client->getY();
+                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+2]=(uint8_t)client->getLastDirection();
                                 posOutput+=sizeof(uint16_t)+sizeof(uint8_t)*3;
                             }
                             index_subindex++;
@@ -664,12 +526,13 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                 posOutput+=1;
                                 while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
-                                    if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
+                                    const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clientsToSendDataOldClients[index_subindex];
+                                    if(index!=index_subindex && client->haveNewMove)
                                     {
-                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId;
-                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
-                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
-                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+3]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+0]=(uint8_t)client->public_and_private_informations.public_informations.simplifiedId;
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+1]=(uint8_t)client->getX();
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+2]=(uint8_t)client->getY();
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+3]=(uint8_t)client->getLastDirection();
                                         posOutput+=sizeof(uint8_t)+sizeof(uint8_t)*3;
                                     }
                                     index_subindex++;
@@ -695,12 +558,13 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                 posOutput+=2;
                                 while(index_subindex<clientsToSendDataSizeOldClients)
                                 {
-                                    if(index!=index_subindex && clientsToSendDataOldClients[index_subindex]->haveNewMove)
+                                    const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clientsToSendDataOldClients[index_subindex];
+                                    if(index!=index_subindex && client->haveNewMove)
                                     {
-                                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint16_t)htole16((uint16_t)clientsToSendDataOldClients[index_subindex]->public_and_private_informations.public_informations.simplifiedId);
-                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+0]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getX();
-                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+1]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getY();
-                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+2]=(uint8_t)clientsToSendDataOldClients[index_subindex]->getLastDirection();
+                                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint16_t)htole16((uint16_t)client->public_and_private_informations.public_informations.simplifiedId);
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+0]=(uint8_t)client->getX();
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+1]=(uint8_t)client->getY();
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+2]=(uint8_t)client->getLastDirection();
                                         posOutput+=sizeof(uint16_t)+sizeof(uint8_t)*3;
                                     }
                                     index_subindex++;
