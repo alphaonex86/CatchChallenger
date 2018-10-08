@@ -314,7 +314,7 @@ std::string Api_protocol::socketDisconnectedForReconnect()
     message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
     stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3;//prevent loop in stage2
     haveFirstHeader=false;
-    std::cout << "Api_protocol::socketDisconnectedForReconnect(), Try connect to: " << serverFromPoolForDisplay.host << ":" << serverFromPoolForDisplay.port << std::endl;
+    //std::cout << "Api_protocol::socketDisconnectedForReconnect(), Try connect to: " << serverFromPoolForDisplay.host << ":" << serverFromPoolForDisplay.port << std::endl;
     socket->connectToHost(QString::fromStdString(serverFromPoolForDisplay.host),serverFromPoolForDisplay.port);
     return serverFromPoolForDisplay.host+":"+std::to_string(serverFromPoolForDisplay.port);
 }
@@ -373,14 +373,14 @@ bool Api_protocol::tryLogin(const std::string &login, const std::string &pass)
         hashAndToken.addData(QByteArray(token.data(),token.size()));
         outputData+=std::string(hashAndToken.result().data(),hashAndToken.result().size());
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::cout << "Try auth: password " << binarytoHexa(passHash.data(),passHash.size())
               << ", token: " << binarytoHexa(token.data(),token.size())
               << ", password+token " << binarytoHexa(hashAndToken.result().data(),hashAndToken.result().size())
               << " (" << binarytoHexa(tempDoubleHash.data(),tempDoubleHash.size())
               << ") for the login: "
               << binarytoHexa(passHash.data(),passHash.size());
-    #endif
+    #endif*/
     std::string peerName=socket->peerName().toStdString();
     if(peerName.size()>255)
     {
@@ -735,7 +735,7 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
     out << characterId;
     is_logged=packOutcommingQuery(0xAC,queryNumber(),outputData.constData(),outputData.size());
     this->selectedServerIndex=serverIndex;
-    std::cerr << "this: " << this << ", socket: " << socket << ", select char: " << characterId << ", charactersGroupIndex: " << (uint32_t)charactersGroupIndex << ", serverUniqueKey: " << serverUniqueKey << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
+    //std::cout << "this: " << this << ", socket: " << socket << ", select char: " << characterId << ", charactersGroupIndex: " << (uint32_t)charactersGroupIndex << ", serverUniqueKey: " << serverUniqueKey << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
     return true;
 }
 
@@ -2715,7 +2715,7 @@ bool Api_protocol::setMapNumber(const unsigned int number_of_map)
         std::cerr << "to reset this number use resetAll()" << std::endl;
         return false;
     }
-    std::cout << "number of map: " << std::to_string(number_of_map) << std::endl;
+    //std::cout << "number of map: " << std::to_string(number_of_map) << std::endl;
     this->number_of_map=number_of_map;
     return true;
 }

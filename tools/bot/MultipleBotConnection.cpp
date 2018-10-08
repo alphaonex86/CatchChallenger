@@ -140,7 +140,7 @@ void MultipleBotConnection::tryLink(CatchChallengerClient * client)
 {
     numberOfBotConnected++;
     emit emit_numberOfBotConnected(numberOfBotConnected);
-    std::cout << "MultipleBotConnection::tryLink(): numberOfBotConnected++: multipleConnexion():" << std::to_string(multipleConnexion()) << std::endl;
+    //std::cout << "MultipleBotConnection::tryLink(): numberOfBotConnected++: multipleConnexion():" << std::to_string(multipleConnexion()) << std::endl;
 
     if(client->api==NULL)
     {
@@ -255,7 +255,7 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
                             abort();
                         client->api->have_main_and_sub_datapack_loaded();
                     }
-                    qDebug() << "MultipleBotConnection::logged_with_client(): Add char on map: Manual select character:" << character_id;
+                    //qDebug() << "MultipleBotConnection::logged_with_client(): Add char on map: Manual select character:" << character_id;
                     characterOnMap << character_id;
                 }
             }
@@ -467,7 +467,7 @@ void MultipleBotConnection::connectTimerSlot()
             if(diff<=(quint32)maxDiffConnectedSelected())
             {
                 createClient();
-                qDebug() << "MultipleBotConnection::connectTimerSlot(): createClient()";
+                //qDebug() << "MultipleBotConnection::connectTimerSlot(): createClient()";
             }
         }
     }
