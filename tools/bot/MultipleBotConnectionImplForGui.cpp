@@ -257,7 +257,7 @@ void MultipleBotConnectionImplForGui::logged(const std::vector<std::vector<Catch
 
 void MultipleBotConnectionImplForGui::haveCharacter()
 {
-    qDebug() << "MultipleBotConnectionImplFoprGui::haveCharacter()";
+    //qDebug() << "MultipleBotConnectionImplFoprGui::haveCharacter()";
     if(apiToCatchChallengerClient.size()==1)
     {
         CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
