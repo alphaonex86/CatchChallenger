@@ -107,7 +107,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     }
                     have_receive_protocol=true;
                     protocol_is_good();
-                    std::cout << "Api_protocol::protocol_is_good(), stageConnexion==StageConnexion::Stage1" << std::endl;
+                    //std::cout << "Api_protocol::protocol_is_good(), stageConnexion==StageConnexion::Stage1" << std::endl;
                 }
                 else if(stageConnexion==StageConnexion::Stage4)
                 {
@@ -327,10 +327,10 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         uint8_t characterListSize;
                         in >> characterListSize;
                         uint8_t characterListIndex=0;
-                        if(characterListSize>0)
+                        /*if(characterListSize>0)
                             messageParsingLayer("For the character group "+std::to_string(charatersGroupIndex)+" you have "+std::to_string(characterListSize)+" character:");
                         else
-                            messageParsingLayer("For the character group "+std::to_string(charatersGroupIndex)+" you don't have character");
+                            messageParsingLayer("For the character group "+std::to_string(charatersGroupIndex)+" you don't have character");*/
                         while(characterListIndex<characterListSize)
                         {
                             CharacterEntry characterEntry;
@@ -417,7 +417,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                             //important
                             characterEntry.charactersGroupIndex=charatersGroupIndex;
 
-                            messageParsingLayer("- "+characterEntry.pseudo+" ("+std::to_string(characterEntry.character_id)+")");
+                            //messageParsingLayer("- "+characterEntry.pseudo+" ("+std::to_string(characterEntry.character_id)+")");
 
                             characterEntryList.push_back(characterEntry);
                             characterListIndex++;
@@ -647,10 +647,10 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             {
                 if(stageConnexion==StageConnexion::Stage4 || serverFromPoolForDisplay.host.empty())
                 {
-                    if(stageConnexion==StageConnexion::Stage4)
+                    /*if(stageConnexion==StageConnexion::Stage4)
                         qDebug() << "stageConnexion==StageConnexion::Stage4";
                     qDebug() << "stageConnexion==StageConnexion::Stage: " << (int)stageConnexion;
-                    qDebug() << "serverFromPoolForDisplay.host: " << QString::fromStdString(serverFromPoolForDisplay.host);
+                    qDebug() << "serverFromPoolForDisplay.host: " << QString::fromStdString(serverFromPoolForDisplay.host);*/
                     if(serverFromPoolForDisplay.host.empty() && proxyMode==Api_protocol::ProxyMode::Reconnect)
                         qDebug() << "serverFromPoolForDisplay.host.isEmpty() and reconnect, seam be a bug";
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(
