@@ -232,9 +232,8 @@ void BotTargetList::loadAllBotsInformation2()
     SocialChat::socialChat->show();
     //waitScreen.hide();
 
-    QHash<CatchChallenger::Api_protocol *,ActionsBotInterface::Player>::const_iterator i = ActionsBotInterface::clientList.constBegin();
-    while (i != ActionsBotInterface::clientList.constEnd()) {
-        CatchChallenger::Api_protocol * const api=i.key();
+    for (const auto &n:ActionsBotInterface::clientList) {
+        CatchChallenger::Api_protocol * const api=n.first;
         //ActionsBotInterface::Player &client=const_cast<ActionsBotInterface::Player &>(i.value());
         if(api->getCaracterSelected())
         {
@@ -275,7 +274,6 @@ void BotTargetList::loadAllBotsInformation2()
                 query.exec();
             }
         }
-        ++i;
     }
 }
 
@@ -288,7 +286,7 @@ void BotTargetList::on_bots_itemSelectionChanged()
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
 
     ui->label_local_target->setEnabled(true);
@@ -297,7 +295,7 @@ void BotTargetList::on_bots_itemSelectionChanged()
     ui->browseMap->setEnabled(true);
     ui->groupBoxPlayer->setEnabled(true);
 
-    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
     mapId=player.mapId;
     ui->trackThePlayer->setChecked(true);
 
@@ -324,10 +322,10 @@ void BotTargetList::updatePlayerMap(const bool &force)
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
 
-    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
 
     if(player.mapId==mapId || force)
     {
@@ -359,10 +357,43 @@ void BotTargetList::startPlayerMove()
 
 void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
 {
-    if(!actionsAction->clientList.contains(api))
+    if(actionsAction->clientList.find(api)==actionsAction->clientList.cend())
         return;
 
     ActionsBotInterface::Player &player=actionsAction->clientList[api];
+
+    for (const auto &n:actionsAction->clientList) {
+        CatchChallenger::Api_protocol *api=n.first;
+        ActionsAction::Player &player=actionsAction->clientList[api];
+        if(player.api->getCaracterSelected())
+        {
+            if(!player.target.bestPath.empty())
+            {
+                if(actionsAction->id_map_to_map.find(player.mapId)!=actionsAction->id_map_to_map.cend())
+                {
+                    const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+                    const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+                    if(playerMap->step.size()<2)
+                        abort();
+                    const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
+                    const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
+                    if(playerCodeZone<=0 || (uint32_t)(playerCodeZone-1)>=(uint32_t)stepPlayer.layers.size())
+                        abort();
+                    const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
+                    std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
+
+                    if(layer.blockObject->links.find(player.target.bestPath.front())==layer.blockObject->links.cend())
+                    {
+                        std::cerr << player.api->getPseudo() << ", can't go from " <<
+                                     layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
+                                     " to " <<
+                                     player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
+                        abort();
+                    }
+                }
+            }
+        }
+    }
 
     if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
         return;
@@ -378,7 +409,43 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
         return;
     const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
     std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
+
+    if(!player.target.bestPath.empty())
+    {
+        if(layer.blockObject->links.find(player.target.bestPath.front())==layer.blockObject->links.cend())
+        {
+            std::cerr << player.api->getPseudo() << ", can't go from " <<
+                         layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
+                         " to " <<
+                         player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
+            abort();
+        }
+    }
+    if(player.target.blockObject!=NULL)
+        std::cerr << player.api->getPseudo() << " set blockObject " << player.target.blockObject->map->map_file
+                  << " block " << (player.target.blockObject->id+1) << std::endl;
+
+    const std::vector<const MapServerMini::BlockObject *> old_bestPath=player.target.bestPath;
+    const MapServerMini::BlockObject * old_blockObject=player.target.blockObject;
     playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value());
+    if(old_bestPath!=player.target.bestPath || old_blockObject!=player.target.blockObject)
+        std::cerr << player.api->getPseudo() << " old_bestPath!=player.target.bestPath || old_blockObject!=player.target.blockObject" << std::endl;
+    if(player.target.blockObject!=NULL)
+        std::cerr << player.api->getPseudo() << " set blockObject " << player.target.blockObject->map->map_file
+                  << " block " << (player.target.blockObject->id+1) << std::endl;
+
+    if(!player.target.bestPath.empty())
+    {
+        if(layer.blockObject->links.find(player.target.bestPath.front())==layer.blockObject->links.cend())
+        {
+            std::cerr << player.api->getPseudo() << ", can't got from " <<
+                         layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
+                         " to " <<
+                         player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
+            abort();
+        }
+    }
+
     const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
     if(step.map==NULL)
         return;
@@ -433,7 +500,13 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
             std::cout << std::endl;*/
         }
         if(layer.blockObject->links.find(player.target.bestPath.front())==layer.blockObject->links.cend())
+        {
+            std::cerr << player.api->getPseudo() << ", can't got from " <<
+                         layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
+                         " to " <<
+                         player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
             abort();
+        }
         const MapServerMini::BlockObject::LinkInformation &linkInformation=layer.blockObject->links.at(player.target.bestPath.front());
         unsigned int indexLinkInformation=0;
         while(indexLinkInformation<linkInformation.linkConditions.size())
@@ -554,10 +627,10 @@ void BotTargetList::updateMapInformation(const bool &forceUpdate)
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
 
-    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
 
     if(actionsAction->id_map_to_map.find(mapId)!=actionsAction->id_map_to_map.cend())
     {
@@ -621,10 +694,10 @@ void BotTargetList::updateMapContent(const bool &forceUpdate)
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
 
-    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
     if(player.canMoveOnMap)
         ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
     else
@@ -761,12 +834,12 @@ void BotTargetList::updateLayerElements()
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
     if(ui->comboBox_Layer->count()==0)
         return;
 
-    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
     QString mapString="Unknown map ("+QString::number(mapId)+")";
     if(actionsAction->id_map_to_map.find(mapId)==actionsAction->id_map_to_map.cend())
         return;
@@ -807,7 +880,7 @@ void BotTargetList::on_localTargets_itemActivated(QListWidgetItem *item)
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
     if(ui->comboBox_Layer->count()==0)
         return;
@@ -872,9 +945,9 @@ void BotTargetList::on_searchDeep_editingFinished()
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
-    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
 
     if(actionsAction->id_map_to_map.find(player.mapId)!=actionsAction->id_map_to_map.cend())
     {
@@ -913,7 +986,7 @@ void BotTargetList::on_globalTargets_itemActivated(QListWidgetItem *item)
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
     ActionsBotInterface::Player &player=actionsAction->clientList[client->api];
 
@@ -1524,7 +1597,7 @@ void BotTargetList::on_trackThePlayer_clicked()
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
     mapId=player.mapId;
     updateMapContentX=0;
     updateMapContentY=0;
@@ -1560,11 +1633,42 @@ void BotTargetList::autoStartAction()
         apiSelectClient=currentSelectedclient->api;
     }
 
-    QHashIterator<CatchChallenger::Api_protocol *,ActionsAction::Player> i(actionsAction->clientList);
-    while (i.hasNext()) {
-        i.next();
-        CatchChallenger::Api_protocol *api=i.key();
-        ActionsAction::Player &player=actionsAction->clientList[i.key()];
+    for (const auto &n:actionsAction->clientList) {
+        CatchChallenger::Api_protocol *api=n.first;
+        ActionsAction::Player &player=actionsAction->clientList[api];
+        if(player.api->getCaracterSelected())
+        {
+            if(!player.target.bestPath.empty())
+            {
+                if(actionsAction->id_map_to_map.find(player.mapId)!=actionsAction->id_map_to_map.cend())
+                {
+                    const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
+                    const MapServerMini * const playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
+                    if(playerMap->step.size()<2)
+                        abort();
+                    const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
+                    const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
+                    if(playerCodeZone<=0 || (uint32_t)(playerCodeZone-1)>=(uint32_t)stepPlayer.layers.size())
+                        abort();
+                    const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
+                    std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
+
+                    if(layer.blockObject->links.find(player.target.bestPath.front())==layer.blockObject->links.cend())
+                    {
+                        std::cerr << player.api->getPseudo() << ", can't go from " <<
+                                     layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
+                                     " to " <<
+                                     player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
+                        abort();
+                    }
+                }
+            }
+        }
+    }
+
+    for (const auto &n:actionsAction->clientList) {
+        CatchChallenger::Api_protocol *api=n.first;
+        ActionsAction::Player &player=actionsAction->clientList[api];
         if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
             abort();
         if(api->getCaracterSelected())
@@ -1589,11 +1693,55 @@ void BotTargetList::autoStartAction()
                     return;
                 const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
                 std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
+
+                if(!player.target.bestPath.empty())
+                {
+                    if(layer.blockObject->links.find(player.target.bestPath.front())==layer.blockObject->links.cend())
+                    {
+                        std::cerr << player.api->getPseudo() << ", can't got from " <<
+                                     layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
+                                     " to " <<
+                                     player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
+                        abort();
+                    }
+                }
+
                 playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value(),api);
+                if(player.target.blockObject!=NULL)
+                    std::cerr << player.api->getPseudo() << " set blockObject " << player.target.blockObject->map->map_file
+                              << " block " << (player.target.blockObject->id+1) << std::endl;
+
+                if(!player.target.bestPath.empty())
+                {
+                    if(layer.blockObject->links.find(player.target.bestPath.front())==layer.blockObject->links.cend())
+                    {
+                        std::cerr << player.api->getPseudo() << ", can't got from " <<
+                                     layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
+                                     " to " <<
+                                     player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
+                        abort();
+                    }
+                }
+
                 const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
                 if(step.map==NULL)
                     return;
+
+                //no thing with the GUI, just to define: target, path
                 contentToGUI(api,NULL,resolvedBlock,false,dirt,itemOnMap,fight,shop,heal,wildMonster,player.target,playerMap,player.x,player.y);
+
+                if(!player.target.bestPath.empty())
+                {
+                    if(layer.blockObject->links.find(player.target.bestPath.front())==layer.blockObject->links.cend())
+                    {
+                        std::cerr << player.api->getPseudo() << ", can't go from " <<
+                                     layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
+                                     " to " <<
+                                     player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
+                        abort();
+                    }
+                }
+
                 switch(player.target.type)
                 {
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::ItemOnMap:
@@ -1603,10 +1751,19 @@ void BotTargetList::autoStartAction()
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster:
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::Dirt:
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant:
-                        if(api==apiSelectClient)
-                            startPlayerMove();
-                        else
-                            startPlayerMove(api);
+                        std::cout << player.api->getPseudo() << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                        startPlayerMove(api);
+                        if(!player.target.bestPath.empty())
+                        {
+                            if(layer.blockObject->links.find(player.target.bestPath.front())==layer.blockObject->links.cend())
+                            {
+                                std::cerr << player.api->getPseudo() << ", can't go from " <<
+                                             layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
+                                             " to " <<
+                                             player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
+                                abort();
+                            }
+                        }
                     break;
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::None:
                         player.target.wildBackwardStep.clear();
@@ -1707,7 +1864,7 @@ void BotTargetList::on_PrefPlant_valueChanged(int value)
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
     if((unsigned int)value==client->preferences.plant)
         return;
@@ -1731,7 +1888,7 @@ void BotTargetList::on_PrefItem_valueChanged(int value)
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
     if((unsigned int)value==client->preferences.item)
         return;
@@ -1755,7 +1912,7 @@ void BotTargetList::on_PrefFight_valueChanged(int value)
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
     if((unsigned int)value==client->preferences.fight)
         return;
@@ -1779,7 +1936,7 @@ void BotTargetList::on_PrefShop_valueChanged(int value)
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
     if((unsigned int)value==client->preferences.shop)
         return;
@@ -1803,7 +1960,7 @@ void BotTargetList::on_PrefWild_valueChanged(int value)
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
     if((unsigned int)value==client->preferences.wild)
         return;

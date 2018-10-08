@@ -52,11 +52,9 @@ void BotTargetList::updatePlayerStep()
         }
     }
 
-    QHashIterator<CatchChallenger::Api_protocol *,ActionsAction::Player> i(actionsAction->clientList);
-    while (i.hasNext()) {
-        i.next();
-        CatchChallenger::Api_protocol *api=i.key();
-        ActionsAction::Player &player=actionsAction->clientList[i.key()];
+    for (const auto &n:actionsAction->clientList) {
+        CatchChallenger::Api_protocol *api=n.first;
+        ActionsAction::Player &player=actionsAction->clientList[api];
         if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
             abort();
         if(api->getCaracterSelected())
@@ -568,7 +566,7 @@ void BotTargetList::updatePlayerStep()
                                 ActionsBotInterface::Player::SeedInWaiting seedInWaiting;
                                 seedInWaiting.indexOnMap=indexOnMapPlant;
                                 seedInWaiting.seedItemId=itemId;
-                                player.seed_in_waiting << seedInWaiting;
+                                player.seed_in_waiting.push_back(seedInWaiting);
                                 //std::cout << api->getPseudo().toStdString() << ", useSeed(): " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                                 api->useSeed(plant);
                                 CatchChallenger::PlayerPlant playerPlant;
@@ -607,7 +605,7 @@ void BotTargetList::updatePlayerStep()
                                 clientPlantInCollecting.indexOnMap=indexOnMapPlant;
                                 clientPlantInCollecting.plant_id=plant;
                                 clientPlantInCollecting.seconds_to_mature=0;
-                                player.plant_collect_in_waiting << clientPlantInCollecting;
+                                player.plant_collect_in_waiting.push_back(clientPlantInCollecting);
                             }
                             else
                             {
