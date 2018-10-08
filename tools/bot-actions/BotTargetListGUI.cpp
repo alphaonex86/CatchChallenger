@@ -130,8 +130,9 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
     for(const auto& n:resolvedBlockList)
         resolvedBlockListOrdered[n.first]=n.second;
 
+    ActionsBotInterface::Player &player=actionsAction->clientList[apiReal];
     if(listGUI==ui->localTargets)
-        mapIdListLocalTarget.clear();
+        player.mapIdListLocalTarget.clear();
     std::vector<std::string> itemToReturn;
     QColor alternateColorValue(230,230,230,255);
     QColor redColorValue(255,240,240,255);
@@ -144,7 +145,6 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
     bestTarget.extra=0;
     bestTarget.bestPath.clear();
     bestTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
-    targetListGlobalTarget.clear();
 
     struct BufferMonstersCollisionEntry
     {
@@ -181,7 +181,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                 case MapServerMini::BlockObject::LinkType::SourceLeftMap:
                                 {
                                     QListWidgetItem * newItem=new QListWidgetItem();
-                                    mapIdListLocalTarget.push_back(nextBlock->map->id);
+                                    player.mapIdListLocalTarget.push_back(nextBlock->map->id);
                                     newItem->setIcon(QIcon(":/7.png"));
                                     switch(linkPoint.type)
                                     {
@@ -351,7 +351,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         {
                                             if(isMature)
                                             {
-                                                targetListGlobalTarget.push_back(globalTarget);
+                                                player.targetListGlobalTarget.push_back(globalTarget);
                                                 if(alternateColor)
                                                     newItem->setBackgroundColor(alternateColorValue);
                                                 newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
@@ -417,7 +417,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         newItem->setIcon(QIcon(":/dirt.png"));
                                         if(listGUI==ui->globalTargets)
                                         {
-                                            targetListGlobalTarget.push_back(globalTarget);
+                                            player.targetListGlobalTarget.push_back(globalTarget);
                                             if(alternateColor)
                                                 newItem->setBackgroundColor(alternateColorValue);
                                             alternateColor=!alternateColor;
@@ -546,7 +546,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
 
                     if(listGUI==ui->globalTargets)
                     {
-                        targetListGlobalTarget.push_back(globalTarget);
+                        player.targetListGlobalTarget.push_back(globalTarget);
 
                         if(alternateColor)
                             newItem->setBackgroundColor(alternateColorValue);
@@ -697,7 +697,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         if(listGUI==ui->globalTargets)
                                         {
                                             globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
-                                            targetListGlobalTarget.push_back(globalTarget);
+                                            player.targetListGlobalTarget.push_back(globalTarget);
                                             if(alternateColor)
                                                 newItem->setBackgroundColor(alternateColorValueL);
                                             else if(colorValueL.isValid())
@@ -732,7 +732,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         if(listGUI==ui->globalTargets)
                                         {
                                             globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
-                                            targetListGlobalTarget.push_back(globalTarget);
+                                            player.targetListGlobalTarget.push_back(globalTarget);
                                             if(alternateColor)
                                                 newItem->setBackgroundColor(alternateColorValueL);
                                             else if(colorValueL.isValid())
@@ -799,7 +799,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                 itemToReturn.push_back(newItem->text().toStdString());
                                 if(listGUI==ui->globalTargets)
                                 {
-                                    targetListGlobalTarget.push_back(globalTarget);
+                                    player.targetListGlobalTarget.push_back(globalTarget);
                                     if(tooHard)
                                     {
                                         if(alternateColor)
@@ -849,7 +849,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             itemToReturn.push_back(newItem->text().toStdString());
             if(listGUI==ui->globalTargets)
             {
-                targetListGlobalTarget.push_back(globalTarget);
+                player.targetListGlobalTarget.push_back(globalTarget);
                 if(alternateColor)
                     newItem->setBackgroundColor(alternateColorValue);
                 newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
@@ -1042,7 +1042,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                         if(listGUI==ui->globalTargets)
                         {
                             globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
-                            targetListGlobalTarget.push_back(globalTarget);
+                            player.targetListGlobalTarget.push_back(globalTarget);
                             if(alternateColor)
                                 newItem->setBackgroundColor(alternateColorValueL);
                             else if(colorValueL.isValid())
@@ -1068,9 +1068,9 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
         unsigned int lowerBestPoints=bestPoint*90/100;//90%
         std::vector<ActionsBotInterface::GlobalTarget> bestTargetListGlobalTarget;
         size_t index=0;
-        while(index<targetListGlobalTarget.size())
+        while(index<player.targetListGlobalTarget.size())
         {
-            const ActionsBotInterface::GlobalTarget &tempTarget=targetListGlobalTarget.at(index);
+            const ActionsBotInterface::GlobalTarget &tempTarget=player.targetListGlobalTarget.at(index);
             if(tempTarget.points>=lowerBestPoints)
                 bestTargetListGlobalTarget.push_back(tempTarget);
             index++;
@@ -1095,7 +1095,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
         }
     }
     if(listGUI==ui->globalTargets)
-        if(targetListGlobalTarget.size()!=(uint32_t)ui->globalTargets->count())
+        if(player.targetListGlobalTarget.size()!=(uint32_t)ui->globalTargets->count())
         {
             std::cerr << "The target count not match with visual elements" << std::endl;
             abort();

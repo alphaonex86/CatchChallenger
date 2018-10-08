@@ -100,6 +100,9 @@ public:
         };
         std::vector<ClientPlantInCollecting> plant_collect_in_waiting;
         QRegularExpression regexMatchPseudo;
+
+        std::vector<uint32_t> mapIdListLocalTarget;
+        std::vector<GlobalTarget> targetListGlobalTarget;
     };
 
     ActionsBotInterface();
