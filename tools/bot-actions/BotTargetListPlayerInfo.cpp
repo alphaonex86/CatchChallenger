@@ -21,7 +21,7 @@ void BotTargetList::updatePlayerInformation()
     if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
 
-    const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
+    ActionsBotInterface::Player &player=actionsAction->clientList[client->api];
 
     if(actionsAction->id_map_to_map.find(player.mapId)!=actionsAction->id_map_to_map.cend())
     {
@@ -62,7 +62,7 @@ void BotTargetList::updatePlayerInformation()
                     return;
 
                 ui->globalTargets->clear();
-                targetListGlobalTarget.clear();
+                player.targetListGlobalTarget.clear();
                 alternateColor=false;
                 ActionsBotInterface::GlobalTarget bestTarget;
                 contentToGUI(client->api,ui->globalTargets,resolvedBlock,!ui->hideTooHard->isChecked(),dirt,itemOnMap,fight,shop,heal,wildMonster,bestTarget,playerMap,player.x,player.y);
