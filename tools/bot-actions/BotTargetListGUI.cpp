@@ -144,6 +144,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
     bestTarget.extra=0;
     bestTarget.bestPath.clear();
     bestTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
+    targetListGlobalTarget.clear();
 
     struct BufferMonstersCollisionEntry
     {

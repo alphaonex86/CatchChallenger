@@ -93,11 +93,9 @@ bool ActionsAction::preload_post_subdatapack()
 void ActionsAction::loadFinishedReemitTheDelayedFunction()
 {
     allMapIsLoaded=true;
-    QHashIterator<CatchChallenger::Api_protocol *,std::vector<DelayedMapPlayerChange> > i(delayedMessage);
-    while (i.hasNext()) {
-        i.next();
-        CatchChallenger::Api_protocol *api=i.key();
-        const std::vector<DelayedMapPlayerChange> &delayedMapPlayerChangeList=i.value();
+    for(const auto& n:delayedMessage) {
+        CatchChallenger::Api_protocol *api=n.first;
+        const std::vector<DelayedMapPlayerChange> &delayedMapPlayerChangeList=n.second;
 
         unsigned int index=0;
         while(index<delayedMapPlayerChangeList.size())

@@ -15,7 +15,7 @@ void ActionsAction::seed_planted_slot(const bool &ok)
 
 void ActionsAction::seed_planted(CatchChallenger::Api_protocol *api,const bool &ok)
 {
-    if(!ActionsBotInterface::clientList.contains(api))
+    if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
     ActionsBotInterface::Player &player=ActionsBotInterface::clientList[api];
     CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
@@ -25,7 +25,7 @@ void ActionsAction::seed_planted(CatchChallenger::Api_protocol *api,const bool &
         showTip(tr("Seed correctly planted"));
         //do the rewards
         {
-            const uint32_t &itemId=player.seed_in_waiting.first().seedItemId;
+            const uint32_t &itemId=player.seed_in_waiting.front().seedItemId;
             if(DatapackClientLoader::datapackLoader.itemToPlants.find(itemId)==DatapackClientLoader::datapackLoader.itemToPlants.cend())
             {
                 qDebug() << "Item is not a plant";
@@ -38,11 +38,11 @@ void ActionsAction::seed_planted(CatchChallenger::Api_protocol *api,const bool &
     }
     else
     {
-        playerInformations.plantOnMap.erase(player.seed_in_waiting.first().indexOnMap);
-        add_to_inventory(api,player.seed_in_waiting.first().seedItemId,1);
+        playerInformations.plantOnMap.erase(player.seed_in_waiting.front().indexOnMap);
+        add_to_inventory(api,player.seed_in_waiting.front().seedItemId,1);
         showTip(tr("Seed cannot be planted"));
     }
-    player.seed_in_waiting.removeFirst();
+    player.seed_in_waiting.erase(player.seed_in_waiting.cbegin());
 }
 
 void ActionsAction::plant_collected_slot(const CatchChallenger::Plant_collect &stat)
@@ -53,7 +53,7 @@ void ActionsAction::plant_collected_slot(const CatchChallenger::Plant_collect &s
 
 void ActionsAction::plant_collected(CatchChallenger::Api_protocol *api,const CatchChallenger::Plant_collect &stat)
 {
-    if(!ActionsBotInterface::clientList.contains(api))
+    if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
     ActionsAction::Player &player=actionsAction->clientList[api];
     if(player.plant_collect_in_waiting.empty())
@@ -85,5 +85,5 @@ void ActionsAction::plant_collected(CatchChallenger::Api_protocol *api,const Cat
         break;
     }
     if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-        player.plant_collect_in_waiting.removeFirst();
+        player.plant_collect_in_waiting.erase(player.plant_collect_in_waiting.cbegin());
 }
