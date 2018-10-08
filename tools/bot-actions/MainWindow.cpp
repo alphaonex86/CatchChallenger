@@ -184,7 +184,7 @@ void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,
     updateServerList(api);
 
     ActionsAction *actionsAction=static_cast<ActionsAction *>(multipleBotConnexion.botInterface);
-    if(!ActionsAction::clientList.contains(api))
+    if(ActionsAction::clientList.find(api)==ActionsAction::clientList.cend())
     {
         ActionsBotInterface::Player newPlayer;
         //newPlayer.player=0;

@@ -127,7 +127,7 @@ void ActionsAction::insert_player_all(CatchChallenger::Api_protocol *api,const C
     if(player.simplifiedId!=botplayer.api->get_player_informations().public_informations.simplifiedId)
     {
         botplayer.visiblePlayers[player.simplifiedId]=player;
-        botplayer.viewedPlayers << QString::fromStdString(player.pseudo);
+        botplayer.viewedPlayers.insert(QString::fromStdString(player.pseudo));
     }
 }
 
@@ -156,8 +156,6 @@ void ActionsAction::newRandomNumber_slot(const std::string &data)
 {
     CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(api==NULL)
-        return;
-    if(!clientList.contains(api))
         return;
     if(clientList.find(api)==clientList.cend())
     {
@@ -266,7 +264,7 @@ void ActionsAction::remove_player(CatchChallenger::Api_protocol *api, const uint
         abort();
     }
     if(allMapIsLoaded)
-        botplayer.visiblePlayers.remove(id);
+        botplayer.visiblePlayers.erase(id);
     else
     {
         DelayedMapPlayerChange delayedMapPlayerChange;
@@ -757,11 +755,9 @@ void ActionsAction::doMove()
 {
     if(mStop)
         return;
-    QHashIterator<CatchChallenger::Api_protocol *,Player> i(clientList);
-    while (i.hasNext()) {
-        i.next();
-        CatchChallenger::Api_protocol *api=i.key();
-        Player &player=clientList[i.key()];
+    for (const auto &n:clientList) {
+        CatchChallenger::Api_protocol *api=n.first;
+        Player &player=clientList[api];
         if(id_map_to_map.find(player.mapId)==id_map_to_map.cend())
             abort();
         const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
@@ -902,14 +898,13 @@ void ActionsAction::doText()
         return;
     if(!randomText)
         return;
-    if(clientList.isEmpty())
+    if(clientList.empty())
         return;
 
     QList<CatchChallenger::Api_protocol *> clientListApi;
-    QHashIterator<CatchChallenger::Api_protocol *,Player> i(clientList);
-    while (i.hasNext()) {
-        i.next();
-        clientListApi << i.key();
+
+    for (const auto &n:clientList) {
+        clientListApi << n.first;
     }
     CatchChallenger::Api_protocol *api=clientListApi.at(rand()%clientListApi.size());
     //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
@@ -1140,8 +1135,6 @@ void ActionsAction::monsterCatch(const bool &success)
     CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(api==NULL)
         return;
-    if(!clientList.contains(api))
-        return;
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
@@ -1191,7 +1184,7 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
     CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(api==NULL)
         return;
-    if(!clientList.contains(api))
+    if(clientList.find(api)==clientList.cend())
         return;
     Player &player=clientList[api];
 

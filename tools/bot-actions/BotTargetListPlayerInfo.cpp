@@ -18,10 +18,10 @@ void BotTargetList::updatePlayerInformation()
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
 
-    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
 
     if(actionsAction->id_map_to_map.find(player.mapId)!=actionsAction->id_map_to_map.cend())
     {
@@ -47,10 +47,16 @@ void BotTargetList::updatePlayerInformation()
 
             {
                 std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
+
                 if(ui->hideTooHard->isChecked())
                     playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value(),client->api);
                 else
                     playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value());
+
+                if(player.target.blockObject!=NULL)
+                    std::cerr << player.api->getPseudo() << " set blockObject " << player.target.blockObject->map->map_file
+                              << " block " << (player.target.blockObject->id+1) << std::endl;
+
                 const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
                 if(step.map==NULL)
                     return;
@@ -125,17 +131,6 @@ void BotTargetList::updatePlayerInformation()
                     }
                 }
             }
-            /*//the best target
-            {
-                std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
-                playerMap->targetBlockList(layer.blockObject,resolvedBlock,ui->searchDeep->value(),client->api);
-                const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
-                if(step.map==NULL)
-                    return;
-                ActionsBotInterface::GlobalTarget bestTarget;
-                contentToGUI(client->api,NULL,resolvedBlock,false,dirt,itemOnMap,fight,shop,heal,wildMonster,bestTarget,playerMap,player.x,player.y);
-
-            }*/
         }
         else
             ui->label_local_target->setTitle(ui->label_local_target->title()+" (Out of the map)");
@@ -183,10 +178,10 @@ void BotTargetList::updateFightStats()
     if(!pseudoToBot.contains(pseudo))
         return;
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
 
-    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
 
     {
         const std::vector<CatchChallenger::PlayerMonster> &playerMonsters=player.fightEngine->getPlayerMonster();

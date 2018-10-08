@@ -14,6 +14,8 @@
 #include <QTime>
 #include <QList>
 #include <QtWidgets/QListWidgetItem>
+#include <map>
+#include <set>
 
 class ActionsBotInterface : public BotInterface
 {
@@ -80,8 +82,8 @@ public:
         CatchChallenger::ClientFightEngine *fightEngine;
         QTime lastFightAction;
         CatchChallenger::Api_protocol *api;
-        QHash<uint16_t,CatchChallenger::Player_public_informations> visiblePlayers;
-        QSet<QString> viewedPlayers;
+        std::map<uint16_t,CatchChallenger::Player_public_informations> visiblePlayers;
+        std::set<QString> viewedPlayers;
 
         //plant seed in waiting
         struct SeedInWaiting
@@ -89,14 +91,14 @@ public:
             uint32_t seedItemId;
             uint16_t indexOnMap;
         };
-        QList<SeedInWaiting> seed_in_waiting;
+        std::vector<SeedInWaiting> seed_in_waiting;
         struct ClientPlantInCollecting
         {
             uint16_t indexOnMap;
             uint8_t plant_id;
             uint16_t seconds_to_mature;
         };
-        QList<ClientPlantInCollecting> plant_collect_in_waiting;
+        std::vector<ClientPlantInCollecting> plant_collect_in_waiting;
         QRegularExpression regexMatchPseudo;
     };
 
@@ -109,9 +111,9 @@ public:
     QString name();
     QString version();
     virtual void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
-    static QHash<CatchChallenger::Api_protocol *,Player> clientList;
+    static std::map<CatchChallenger::Api_protocol *,Player> clientList;
     //not into clientList because clientList is not initialised when receive the signals (due to delay of map loading)
-    static QHash<CatchChallenger::Api_protocol *,std::vector<DelayedMapPlayerChange> > delayedMessage;
+    static std::map<CatchChallenger::Api_protocol *,std::vector<DelayedMapPlayerChange> > delayedMessage;
 protected:
     bool randomText;
     bool globalChatRandomReply;
