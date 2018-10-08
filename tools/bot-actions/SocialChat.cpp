@@ -60,10 +60,9 @@ SocialChat::SocialChat() :
 void SocialChat::showEvent(QShowEvent * event)
 {
     bool first=true;
-    QHash<CatchChallenger::Api_protocol *,ActionsBotInterface::Player>::const_iterator i = ActionsBotInterface::clientList.constBegin();
-    while (i != ActionsBotInterface::clientList.constEnd()) {
-        CatchChallenger::Api_protocol * const api=i.key();
-        ActionsBotInterface::Player &client=const_cast<ActionsBotInterface::Player &>(i.value());
+    for (const auto &n:ActionsBotInterface::clientList) {
+        CatchChallenger::Api_protocol * const api=n.first;
+        ActionsBotInterface::Player &client=const_cast<ActionsBotInterface::Player &>(n.second);
         if(client.api->getCaracterSelected())
         {
             if(first==true)
@@ -92,7 +91,6 @@ void SocialChat::showEvent(QShowEvent * event)
             if(!connect(api,&CatchChallenger::Api_protocol::Qtremove_player,            this,&SocialChat::remove_player))
                 abort();
         }
-        ++i;
     }
 
     if(!event->spontaneous())
@@ -151,7 +149,7 @@ void SocialChat::loadPlayerInformation()
     if(!pseudoToBot.contains(pseudo))
         return;
     CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
-    if(!ActionsBotInterface::clientList.contains(api))
+    if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
 
     selectedItems.at(0)->setBackground(Qt::NoBrush);
@@ -396,9 +394,8 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
     newEntry.chat_type=chat_type;
     newEntry.text=text.toStdString();
 
-    QHash<CatchChallenger::Api_protocol *,ActionsBotInterface::Player>::const_iterator i = ActionsBotInterface::clientList.constBegin();
-    while (i != ActionsBotInterface::clientList.constEnd()) {
-        const ActionsBotInterface::Player &client=i.value();
+    for (const auto &n:ActionsBotInterface::clientList) {
+        const ActionsBotInterface::Player &client=n.second;
         bool found=false;
         if(chat_type!=CatchChallenger::Chat_type::Chat_type_pm)
             found=text.contains(client.regexMatchPseudo);
@@ -471,7 +468,6 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
                 index++;
             }
         }
-        ++i;
     }
 
     //drop duplicate message
@@ -613,9 +609,9 @@ void SocialChat::update_chat()
     if(!pseudoToBot.contains(pseudo))
         return;
     CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
-    if(!ActionsBotInterface::clientList.contains(api))
+    if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
-    const ActionsBotInterface::Player &client=ActionsBotInterface::clientList.value(api);
+    const ActionsBotInterface::Player &client=ActionsBotInterface::clientList.at(api);
 
     QString nameHtml;
     int index=0;
@@ -673,7 +669,7 @@ void SocialChat::on_globalChatText_returnPressed()
     if(!pseudoToBot.contains(pseudo))
         return;
     CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
-    if(!ActionsBotInterface::clientList.contains(api))
+    if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
 
     selectedItems.at(0)->setBackground(Qt::NoBrush);
@@ -712,7 +708,7 @@ void SocialChat::on_globalChatText_returnPressed()
     if(!text.startsWith("/pm "))
     {
         ui->globalChat->setText(QString());
-        if(!ActionsBotInterface::clientList.contains(api))
+        if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
             return;
         const CatchChallenger::Player_private_and_public_informations &player_informations=api->get_player_informations();
 
@@ -799,7 +795,7 @@ void SocialChat::dropAllPlayerOnTheMap()
 
 void SocialChat::updatePlayerKnownList(CatchChallenger::Api_protocol *api)
 {
-    if(!ActionsBotInterface::clientList.contains(api))
+    if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()!=1)
@@ -813,7 +809,7 @@ void SocialChat::updatePlayerKnownList(CatchChallenger::Api_protocol *api)
 
 void SocialChat::updateVisiblePlayers(CatchChallenger::Api_protocol *api)
 {
-    if(!ActionsBotInterface::clientList.contains(api))
+    if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()!=1)
@@ -824,10 +820,8 @@ void SocialChat::updateVisiblePlayers(CatchChallenger::Api_protocol *api)
     if(api->getPseudo()==pseudo.toStdString())
     {
         QString newHtml;
-        const QHash<uint16_t,CatchChallenger::Player_public_informations> &visiblePlayers=ActionsBotInterface::clientList[api].visiblePlayers;
-        QHash<uint16_t,CatchChallenger::Player_public_informations>::const_iterator i = visiblePlayers.constBegin();
-        while (i != visiblePlayers.constEnd()) {
-            const CatchChallenger::Player_public_informations &playerInformations=i.value();
+        for (const auto &n:ActionsBotInterface::clientList[api].visiblePlayers) {
+            const CatchChallenger::Player_public_informations &playerInformations=n.second;
             if(!newHtml.isEmpty())
                 newHtml+=", ";
 
@@ -868,7 +862,6 @@ void SocialChat::updateVisiblePlayers(CatchChallenger::Api_protocol *api)
             newHtml+=QString::fromStdString(playerInformations.pseudo);
 
             newHtml+="</div>";
-            ++i;
         }
         ui->labelVisiblePlayer->setText(newHtml);
     }
@@ -890,7 +883,10 @@ void SocialChat::globalChatText_updateCompleter()
         return;
     CatchChallenger::Api_protocol * const api=pseudoToBot.value(pseudo);
 
-    QList<QString> wordList=QSet<QString>(knownGlobalChatPlayers+ActionsBotInterface::clientList[api].viewedPlayers).toList();
+    QSet<QString> viewedPlayers;
+    for(const auto &n:ActionsBotInterface::clientList[api].viewedPlayers)
+        viewedPlayers.insert(n);
+    QList<QString> wordList=QSet<QString>(knownGlobalChatPlayers+viewedPlayers).toList();
     if(completer!=NULL)
     {
         delete completer;
@@ -964,7 +960,7 @@ void SocialChat::on_chatSpecText_returnPressed()
     if(!pseudoToBot.contains(pseudo))
         return;
     CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
-    if(!ActionsBotInterface::clientList.contains(api))
+    if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
 
     selectedItems.at(0)->setBackground(Qt::NoBrush);
@@ -1013,7 +1009,7 @@ void SocialChat::on_chatSpecText_returnPressed()
     if(!text.startsWith("/pm "))
     {
         ui->chatSpec->setText(QString());
-        if(!ActionsBotInterface::clientList.contains(api))
+        if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
             return;
         const CatchChallenger::Player_private_and_public_informations &player_informations=api->get_player_informations();
 
@@ -1114,9 +1110,9 @@ void SocialChat::on_listWidgetChatType_itemSelectionChanged()
     if(!pseudoToBot.contains(pseudo))
         return;
     CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
-    if(!ActionsBotInterface::clientList.contains(api))
+    if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
-    const ActionsBotInterface::Player &client=ActionsBotInterface::clientList.value(api);
+    const ActionsBotInterface::Player &client=ActionsBotInterface::clientList.at(api);
 
     if(ui->listWidgetChatType->count()<=1)
         return;

@@ -251,12 +251,12 @@ std::string BotTargetList::graphLocalMap()
     if(!pseudoToBot.contains(pseudo))
         return "";
     MultipleBotConnection::CatchChallengerClient * client=pseudoToBot.value(pseudo);
-    if(!actionsAction->clientList.contains(client->api))
+    if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return "";
     if(ui->comboBox_Layer->count()==0)
         return "";
 
-    const ActionsBotInterface::Player &player=actionsAction->clientList.value(client->api);
+    const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
     QString mapString="Unknown map ("+QString::number(mapId)+")";
     if(actionsAction->id_map_to_map.find(mapId)==actionsAction->id_map_to_map.cend())
         return "";
