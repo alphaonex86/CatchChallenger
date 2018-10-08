@@ -134,8 +134,6 @@ private:
 
     bool dirt,itemOnMap,fight,shop,heal,wildMonster;
 
-    std::vector<uint32_t> mapIdListLocalTarget;
-    std::vector<ActionsBotInterface::GlobalTarget> targetListGlobalTarget;
     bool alternateColor;
     static std::string pathFindingToString(const MapServerMini::BlockObjectPathFinding &resolvedBlock, unsigned int points=0);
     static bool isSame(const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentA,const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentB);

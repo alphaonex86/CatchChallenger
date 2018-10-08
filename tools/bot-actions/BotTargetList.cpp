@@ -887,9 +887,10 @@ void BotTargetList::on_localTargets_itemActivated(QListWidgetItem *item)
 
     if(ui->localTargets->currentRow()<0)
         return;
-    if(ui->localTargets->currentRow()>=(int32_t)mapIdListLocalTarget.size())
+    const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
+    if(ui->localTargets->currentRow()>=(int32_t)player.mapIdListLocalTarget.size())
         return;
-    const uint32_t &newMapId=mapIdListLocalTarget.at(ui->localTargets->currentRow());
+    const uint32_t &newMapId=player.mapIdListLocalTarget.at(ui->localTargets->currentRow());
     if(mapId!=newMapId)
     {
         mapId=newMapId;
@@ -977,7 +978,6 @@ void BotTargetList::on_globalTargets_itemActivated(QListWidgetItem *item)
         return;
     if(currentRow>=ui->globalTargets->count())
         abort();
-    const ActionsBotInterface::GlobalTarget &globalTarget=targetListGlobalTarget.at(currentRow);
 
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()!=1)
@@ -989,6 +989,7 @@ void BotTargetList::on_globalTargets_itemActivated(QListWidgetItem *item)
     if(actionsAction->clientList.find(client->api)==actionsAction->clientList.cend())
         return;
     ActionsBotInterface::Player &player=actionsAction->clientList[client->api];
+    const ActionsBotInterface::GlobalTarget &globalTarget=player.targetListGlobalTarget.at(currentRow);
 
     if(player.target.blockObject!=NULL || player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
         return;
