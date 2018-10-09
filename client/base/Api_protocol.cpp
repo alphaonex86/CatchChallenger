@@ -220,7 +220,7 @@ const Player_private_and_public_informations &Api_protocol::get_player_informati
     return player_informations;
 }
 
-std::string Api_protocol::getPseudo()
+std::string Api_protocol::getPseudo() const
 {
     if(!getCaracterSelected())
     {
@@ -230,7 +230,7 @@ std::string Api_protocol::getPseudo()
     return player_informations.public_informations.pseudo;
 }
 
-uint16_t Api_protocol::getId()
+uint16_t Api_protocol::getId() const
 {
     if(!getCaracterSelected())
     {

@@ -1093,6 +1093,30 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             bestItems.at(index)->setToolTip("Internal id: "+QString::number(index));
             index++;
         }
+
+        if(ui->bots->count()<2)
+        {
+            ui->PrefFight->setValue(catchChallengerClient->preferences.fight);
+            ui->PrefItem->setValue(catchChallengerClient->preferences.item);
+            ui->PrefPlant->setValue(catchChallengerClient->preferences.plant);
+            ui->PrefShop->setValue(catchChallengerClient->preferences.shop);
+            ui->PrefWild->setValue(catchChallengerClient->preferences.wild);
+        }
+        else
+        {
+            const QList<QListWidgetItem*> items=ui->bots->selectedItems();
+            if(items.size()==1)
+            {
+                const QListWidgetItem* item=items.at(0);
+                if(api->getPseudo()==item->text().toStdString()) {
+                    ui->PrefFight->setValue(catchChallengerClient->preferences.fight);
+                    ui->PrefItem->setValue(catchChallengerClient->preferences.item);
+                    ui->PrefPlant->setValue(catchChallengerClient->preferences.plant);
+                    ui->PrefShop->setValue(catchChallengerClient->preferences.shop);
+                    ui->PrefWild->setValue(catchChallengerClient->preferences.wild);
+                }
+            }
+        }
     }
     if(listGUI==ui->globalTargets)
         if(player.targetListGlobalTarget.size()!=(uint32_t)ui->globalTargets->count())
@@ -1100,12 +1124,6 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             std::cerr << "The target count not match with visual elements" << std::endl;
             abort();
         }
-
-    ui->PrefFight->setValue(catchChallengerClient->preferences.fight);
-    ui->PrefItem->setValue(catchChallengerClient->preferences.item);
-    ui->PrefPlant->setValue(catchChallengerClient->preferences.plant);
-    ui->PrefShop->setValue(catchChallengerClient->preferences.shop);
-    ui->PrefWild->setValue(catchChallengerClient->preferences.wild);
 
     return itemToReturn;
 }

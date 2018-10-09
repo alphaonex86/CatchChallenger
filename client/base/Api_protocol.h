@@ -44,8 +44,8 @@ public:
     //get the stored data
     Player_private_and_public_informations &get_player_informations();
     const Player_private_and_public_informations &get_player_informations_ro() const;
-    std::string getPseudo();
-    uint16_t getId();
+    std::string getPseudo() const;
+    uint16_t getId() const;
 
     virtual void sendDatapackContentBase(const std::string &hashBase=std::string()) = 0;
     virtual void sendDatapackContentMainSub(const std::string &hashMain=std::string(),const std::string &hashSub=std::string()) = 0;
