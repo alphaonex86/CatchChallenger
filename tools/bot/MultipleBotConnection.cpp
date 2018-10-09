@@ -534,7 +534,7 @@ void MultipleBotConnection::have_current_player_info_with_client(CatchChallenger
         emit emit_all_player_on_map();
 
     Q_UNUSED(informations);
-    std::cout << "MultipleBotConnection::have_current_player_info() pseudo: " << informations.public_informations.pseudo << std::endl;
+    //std::cout << "MultipleBotConnection::have_current_player_info() pseudo: " << informations.public_informations.pseudo << std::endl;
 }
 
 void MultipleBotConnection::newError_with_client(CatchChallengerClient *client, QString error,QString detailedError)

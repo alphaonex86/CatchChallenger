@@ -549,7 +549,21 @@ bool BotTargetList::canGoFromBlockToBlock(const MapServerMini::BlockObject * con
                                           const MapServerMini::BlockObject * const to,
                                           const unsigned int maxDepthGoBack)
 {
+    //try get cache
+    if(cacheCanGoFromBlockToBlock.find(from)!=cacheCanGoFromBlockToBlock.cend())
+    {
+        const std::unordered_map<const MapServerMini::BlockObject *, bool> &cachelevel2=cacheCanGoFromBlockToBlock.at(from);
+        if(cachelevel2.find(to)!=cachelevel2.cend())
+            return cachelevel2.at(to);
+    }
+
+    //resolv
     const std::unordered_set<const MapServerMini *> &validMaps=from->map->getValidMaps(maxDepthGoBack);
     const std::unordered_set<const MapServerMini::BlockObject *> &accessibleBlock=from->map->getAccessibleBlock(validMaps,from);
+
+    //save into cache
+    cacheCanGoFromBlockToBlock[from][to]=accessibleBlock.find(to)!=accessibleBlock.cend();
+
+    //return the value
     return accessibleBlock.find(to)!=accessibleBlock.cend();
 }

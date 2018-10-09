@@ -1225,8 +1225,8 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
 void ActionsAction::resetTarget(GlobalTarget &target)
 {
     //reset the target
-    target.wildForwardStep.clear();
-    target.wildBackwardStep.clear();
+    /*target.wildForwardStep.clear();
+    target.wildBackwardStep.clear();*/
     target.wildCycle=0;
     target.blockObject=NULL;
     target.extra=0;
