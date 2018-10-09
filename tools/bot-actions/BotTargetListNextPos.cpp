@@ -92,12 +92,17 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
 
 bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
 {
-    if(!player.target.bestPath.empty())
+    /// \warning path finding here cause performance problem
+
+/*    if(!player.target.bestPath.empty())
         return true;
     if(!player.target.localStep.empty() && !player.target.wildBackwardStep.empty())
         return true;
     if(player.target.wildBackwardStep.empty())
     {
+        // method: choose random direction, if can go 1, detect max and random to max
+        do this without path finding
+
         if(!player.target.wildBackwardStep.empty())
             abort();
         player.target.wildCycle=0;
@@ -141,7 +146,7 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
             destinations.push_back(destinationForPath);
             bool ok=false;
             unsigned int destinationIndexSelected=0;
-            const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+            const std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > &returnPath=pathFinding(
                         blockObject,
                         static_cast<CatchChallenger::Orientation>(o),player.x,player.y,
                         destinations,
@@ -175,7 +180,7 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
             destinations.push_back(destinationForPath);
             bool ok=false;
             unsigned int destinationIndexSelected=0;
-            const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+            const std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > &returnPath=pathFinding(
                         blockObject,
                         static_cast<CatchChallenger::Orientation>(directionToPoint1),point1.first,point1.second,
                         destinations,
@@ -203,7 +208,7 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
             destinations.push_back(destinationForPath);
             bool ok=false;
             unsigned int destinationIndexSelected=0;
-            const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath=pathFinding(
+            const std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > &returnPath=pathFinding(
                         blockObject,
                         static_cast<CatchChallenger::Orientation>(directionToPoint2),point2.first,point2.second,
                         destinations,
@@ -236,8 +241,119 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
             else
                 return false;
         }
+    }*/
+
+    if(!player.target.bestPath.empty())
+            return true;
+    if(!player.target.localStep.empty())
+        return true;
+
+    player.target.wildCycle++;
+    if(player.target.wildCycle>10)
+    {
+        player.target.wildCycle=0;
+        return false;
     }
-    return true;
+
+    // method: choose random direction, if can go 1, detect max and random to max
+
+    const std::string &mapStdString=actionsAction->id_map_to_map.at(player.mapId);
+    CatchChallenger::CommonMap *map=actionsAction->map_list.at(mapStdString);
+    const MapServerMini *mapServer=static_cast<MapServerMini *>(map);
+    if(mapServer->step.size()<2)
+        abort();
+    const uint16_t &currentCodeZone=mapServer->step.at(1).map[player.x+player.y*mapServer->width];
+    if(currentCodeZone==0)
+        abort();
+
+    //random direction list and try one step
+    std::vector<CatchChallenger::Orientation> dlist{
+        CatchChallenger::Orientation::Orientation_bottom,
+        CatchChallenger::Orientation::Orientation_top,
+        CatchChallenger::Orientation::Orientation_left,
+        CatchChallenger::Orientation::Orientation_right
+    };
+    std::shuffle(dlist.begin(), dlist.end(), g);
+    for (const auto &n:dlist) {
+        uint8_t x=player.x;
+        uint8_t y=player.y;
+        /* not use if(ActionsAction::canGoTo(api,newDirectionToMove,*playerMap,x,y,true,true))
+         * - simplified algo improve the performance
+         * - no need multi-map algo */
+        bool canGO=false;
+        switch(n)
+        {
+            case CatchChallenger::Orientation::Orientation_bottom:
+                if(y<(map->height-1))
+                    if(currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width])
+                        canGO=true;
+            break;
+            case CatchChallenger::Orientation::Orientation_top:
+                if(y>0)
+                    if(currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width])
+                        canGO=true;
+            break;
+            case CatchChallenger::Orientation::Orientation_right:
+                if(x<(map->width-1))
+                    if(currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width])
+                        canGO=true;
+            break;
+            case CatchChallenger::Orientation::Orientation_left:
+                if(x>0)
+                    if(currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width])
+                        canGO=true;
+            break;
+            default:
+            break;
+        }
+
+        if(canGO)
+        {
+            uint8_t step=0;
+            //continue at least 10 to detect the max
+            switch(n)
+            {
+                case CatchChallenger::Orientation::Orientation_bottom:
+                    while(y<(map->height-1) && currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width] && (y-player.y)<10)
+                        y++;
+                    step=y-player.y;
+                break;
+                case CatchChallenger::Orientation::Orientation_top:
+                    while(y>0 && currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width] && (player.y-y)<10)
+                        y--;
+                    step=player.y-y;
+                break;
+                case CatchChallenger::Orientation::Orientation_right:
+                    while(x<(map->width-1) && currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width] && (x-player.x)<10)
+                        x++;
+                    step=x-player.x;
+                break;
+                case CatchChallenger::Orientation::Orientation_left:
+                    while(x>0 && currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width] && (player.x-x)<10)
+                        x--;
+                    step=player.x-x;
+                break;
+                default:
+                break;
+            }
+            //choose random step
+            if(step>1)
+                step=1+rand()%step;//1 to step
+            std::pair<CatchChallenger::Orientation,uint8_t> newEntry(n,step);
+            player.target.localStep.push_back(newEntry);
+
+            //reset some values
+            MapServerMini::BlockObject::LinkPoint linkPoint;
+            linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+            linkPoint.inLedge=false;
+            linkPoint.x=player.x;
+            linkPoint.y=player.y;
+            player.target.linkPoint=linkPoint;
+
+            return true;
+        }
+    }
+    return false;
 }
 
 void BotTargetList::finishTheLocalStep(ActionsAction::Player &player)

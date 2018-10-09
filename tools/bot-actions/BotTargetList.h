@@ -4,6 +4,8 @@
 #include <QDialog>
 #include <QHash>
 #include <QListWidgetItem>
+#include <unordered_map>
+#include <random>
 
 #include "../bot/MultipleBotConnection.h"
 #include "../bot/actions/ActionsAction.h"
@@ -134,6 +136,10 @@ private:
 
     bool dirt,itemOnMap,fight,shop,heal,wildMonster;
 
+    std::random_device rd;
+    std::mt19937 g;
+
+    static std::unordered_map<const MapServerMini::BlockObject *, std::unordered_map<const MapServerMini::BlockObject *, bool> > cacheCanGoFromBlockToBlock;
     bool alternateColor;
     static std::string pathFindingToString(const MapServerMini::BlockObjectPathFinding &resolvedBlock, unsigned int points=0);
     static bool isSame(const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentA,const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentB);
