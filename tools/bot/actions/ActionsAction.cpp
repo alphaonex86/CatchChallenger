@@ -763,7 +763,7 @@ void ActionsAction::doMove()
         const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
         const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
         //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
-        if(api->getCaracterSelected() && player.canMoveOnMap)
+        if(api->getCaracterSelected() && player.canMoveOnMap && !player.fightEngine->isInFight())
         {
             CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
             //get item if in front of

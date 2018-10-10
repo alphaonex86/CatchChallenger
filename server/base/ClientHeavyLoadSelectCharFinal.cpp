@@ -439,4 +439,22 @@ void Client::characterIsRightFinalStep()
         mapToDebug+=this->map->map_file;
     }
     #endif
+
+    if(GlobalServerData::serverSettings.sendPlayerNumber)
+    {
+        ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x64;
+        uint8_t outputSize;
+        if(GlobalServerData::serverSettings.max_players<=255)
+        {
+            ProtocolParsingBase::tempBigBufferForOutput[0x01]=static_cast<uint8_t>(connected_players);
+            outputSize=2;
+        }
+        else
+        {
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+0x01)=htole16(connected_players);
+            outputSize=3;
+        }
+        //can't use receive_instant_player_number() due this->connected_players==connected_players
+        sendRawBlock(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),outputSize);
+    }
 }

@@ -114,7 +114,9 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
                 } while(ledge==ParsedLayerLedges_LedgesTop);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    errorOutput("Try pass on wrong ledge, direction: "+std::to_string(last_direction)+", ledge: "+std::to_string(ledge));
+                    errorOutput("Try pass on wrong ledge, direction: "+std::to_string(last_direction)+", ledge: "+std::to_string(ledge)+
+                                ", map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")"
+                                );
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -148,7 +150,8 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
                 } while(ledge==ParsedLayerLedges_LedgesRight);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    errorOutput("Try pass on wrong ledge, direction: "+std::to_string(last_direction)+", ledge: "+std::to_string(ledge));
+                    errorOutput("Try pass on wrong ledge, direction: "+std::to_string(last_direction)+", ledge: "+std::to_string(ledge)+
+                                ", map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -182,7 +185,8 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
                 } while(ledge==ParsedLayerLedges_LedgesBottom);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    errorOutput("Try pass on wrong ledge, direction: "+std::to_string(last_direction)+", ledge: "+std::to_string(ledge));
+                    errorOutput("Try pass on wrong ledge, direction: "+std::to_string(last_direction)+", ledge: "+std::to_string(ledge)+
+                                ", map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                     return false;
                 }
                 moveThePlayer_index_move++;
@@ -216,7 +220,8 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
                 } while(ledge==ParsedLayerLedges_LedgesLeft);
                 if(ledge!=ParsedLayerLedges_NoLedges)
                 {
-                    errorOutput("Try pass on wrong ledge, direction: "+std::to_string(last_direction)+", ledge: "+std::to_string(ledge));
+                    errorOutput("Try pass on wrong ledge, direction: "+std::to_string(last_direction)+", ledge: "+std::to_string(ledge)+
+                                ", map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                     return false;
                 }
                 moveThePlayer_index_move++;
