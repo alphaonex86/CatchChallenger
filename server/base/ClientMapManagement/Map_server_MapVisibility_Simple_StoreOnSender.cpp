@@ -11,6 +11,7 @@ Map_server_MapVisibility_Simple_StoreOnSender ** Map_server_MapVisibility_Simple
 uint32_t Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
 
 Map_server_MapVisibility_Simple_StoreOnSender::Map_server_MapVisibility_Simple_StoreOnSender() :
+    to_send_remove_size(0),
     show(true),
     to_send_insert(false),
     send_drop_all(false),
