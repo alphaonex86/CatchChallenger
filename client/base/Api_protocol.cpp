@@ -121,7 +121,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
 
 Api_protocol::~Api_protocol()
 {
-    qDebug() << "Api_protocol::~Api_protocol()";
+    //qDebug() << "Api_protocol::~Api_protocol()";
     if(player_informations.encyclopedia_monster!=NULL)
     {
         delete player_informations.encyclopedia_monster;
