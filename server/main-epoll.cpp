@@ -105,6 +105,13 @@ void send_settings(
 
 int main(int argc, char *argv[])
 {
+    /* Catch Signal Handler SIGPIPE */
+    if(signal(SIGPIPE, signal_callback_handler)==SIG_ERR)
+    {
+        std::cerr << "signal(SIGPIPE, signal_callback_handler)==SIG_ERR, errno: " << std::to_string(errno) << std::endl;
+        abort();
+    }
+
     NormalServerGlobal::displayInfo();
     if(argc<1)
     {

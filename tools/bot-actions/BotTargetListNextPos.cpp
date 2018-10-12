@@ -113,7 +113,8 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
     const MapServerMini *mapServer=static_cast<MapServerMini *>(map);
     if(mapServer->step.size()<2)
         abort();
-    const uint16_t &currentCodeZone=mapServer->step.at(1).map[player.x+player.y*mapServer->width];
+    const MapServerMini::MapParsedForBot &stepMap=mapServer->step.at(1);
+    const uint16_t &currentCodeZone=stepMap.map[player.x+player.y*mapServer->width];
     if(currentCodeZone==0)
         abort();
 
@@ -136,22 +137,22 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
         {
             case CatchChallenger::Orientation::Orientation_bottom:
                 if(y<(map->height-1))
-                    if(currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width])
+                    if(currentCodeZone==stepMap.map[x+(y+1)*mapServer->width])
                         canGO=true;
             break;
             case CatchChallenger::Orientation::Orientation_top:
                 if(y>0)
-                    if(currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width])
+                    if(currentCodeZone==stepMap.map[x+(y-1)*mapServer->width])
                         canGO=true;
             break;
             case CatchChallenger::Orientation::Orientation_right:
                 if(x<(map->width-1))
-                    if(currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width])
+                    if(currentCodeZone==stepMap.map[(x+1)+y*mapServer->width])
                         canGO=true;
             break;
             case CatchChallenger::Orientation::Orientation_left:
                 if(x>0)
-                    if(currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width])
+                    if(currentCodeZone==stepMap.map[(x-1)+y*mapServer->width])
                         canGO=true;
             break;
             default:
@@ -166,37 +167,40 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
             switch(n)
             {
                 case CatchChallenger::Orientation::Orientation_bottom:
-                    do {
+                    while(y<(map->height-1) && currentCodeZone==stepMap.map[x+(y+1)*mapServer->width] && (y-player.y)<10)
                         y++;
-                    } while(y<(map->height-1) && currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width] && (y-player.y)<10);
-                    y--;
                     step=y-player.y;
                 break;
                 case CatchChallenger::Orientation::Orientation_top:
-                    do {
+                    while(y>0 && currentCodeZone==stepMap.map[x+(y-1)*mapServer->width] && (player.y-y)<10)
                         y--;
-                    } while(y>0 && currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width] && (player.y-y)<10);
-                    y++;
                     step=player.y-y;
                 break;
                 case CatchChallenger::Orientation::Orientation_right:
-                    do {
+                    while(x<(map->width-1) && currentCodeZone==stepMap.map[(x+1)+y*mapServer->width] && (x-player.x)<10)
                         x++;
-                    } while(x<(map->width-1) && currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width] && (x-player.x)<10);
-                    x--;
                     step=x-player.x;
                 break;
                 case CatchChallenger::Orientation::Orientation_left:
-                    do {
+                    while(x>0 && currentCodeZone==stepMap.map[(x-1)+y*mapServer->width] && (player.x-x)<10)
                         x--;
-                    } while(x>0 && currentCodeZone==mapServer->step.at(1).map[x+y*mapServer->width] && (player.x-x)<10);
-                    x++;
                     step=player.x-x;
                 break;
                 default:
                 abort();
                 break;
             }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(step==0)
+            {
+                const std::string &debugMapString=actionsAction->id_map_to_map.at(player.mapId);
+                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                          << " from " << debugMapString << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                          << ", n: " << n << ", currentCodeZone: " << currentCodeZone
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                abort();
+            }
+            #endif
             //choose random step
             if(step>1)
                 step=1+rand()%step;//1 to step
