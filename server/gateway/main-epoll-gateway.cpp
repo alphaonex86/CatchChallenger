@@ -38,7 +38,11 @@ void signal_callback_handler(int signum){
 int main(int argc, char *argv[])
 {
     /* Catch Signal Handler SIGPIPE */
-    signal(SIGPIPE, signal_callback_handler);
+    if(signal(SIGPIPE, signal_callback_handler)==SIG_ERR)
+    {
+        std::cerr << "signal(SIGPIPE, signal_callback_handler)==SIG_ERR, errno: " << std::to_string(errno) << std::endl;
+        abort();
+    }
 
     if(argc<1)
     {
