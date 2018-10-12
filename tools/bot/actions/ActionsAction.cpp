@@ -6,6 +6,7 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../client/fight/interface/ClientFightEngine.h"
 #include "../../client/base/Api_client_real.h"
+#include "../bot-actions/BotTargetList.h"
 #include <iostream>
 
 ActionsAction *ActionsAction::actionsAction=NULL;
@@ -844,6 +845,7 @@ void ActionsAction::doMove()
                     else
                     {
                         std::cerr << "Blocked on: " << playerMap->map_file << " " << std::to_string(player.x) << "," << std::to_string(player.y) << ", can't move in the direction: " << std::to_string(direction) << " for " << api->getPseudo() << std::endl;
+                        abort();
                         if(player.target.bestPath.size()>1)
                         {
                             std::cerr << "Something is wrong to go to the destination, path finding buggy? block not walkable?" << std::endl;
@@ -881,6 +883,11 @@ void ActionsAction::doMove()
                 }
                 else
                     player.target.localStep.erase(player.target.localStep.cbegin());
+
+                const std::string &debugMapString=actionsAction->id_map_to_map.at(player.mapId);
+                    std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                              << " from " << debugMapString << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                              << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             }
             else
             {
