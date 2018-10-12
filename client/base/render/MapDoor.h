@@ -16,7 +16,7 @@ public:
     ~MapDoor();
     void startOpen(const uint16_t &timeRemainOpen);
     void startClose();
-    uint16_t timeToOpen();
+    uint16_t timeToOpen() const;
 private:
     Tiled::MapObject* object;
     Tiled::Cell cell;

@@ -674,7 +674,7 @@ bool MapControllerMP::remove_player_final(const uint16_t &id,bool inReplayMode)
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
     qDebug() << QStringLiteral("remove_player(%1)").arg(id);
     #endif
-    const OtherPlayer &otherPlayer=otherPlayerList.at(id);
+    OtherPlayer &otherPlayer=otherPlayerList[id];
     unloadOtherPlayerFromMap(otherPlayer);
     if(otherPlayer.monsterMapObject!=NULL)
         unloadOtherMonsterFromCurrentMap(otherPlayer);
@@ -702,8 +702,12 @@ bool MapControllerMP::remove_player_final(const uint16_t &id,bool inReplayMode)
     delete otherPlayer.playerTileset;*/
     if(otherPlayer.monsterMapObject!=NULL)
         delete otherPlayer.monsterMapObject;
-    delete otherPlayer.oneStepMore;
-    delete otherPlayer.moveAnimationTimer;
+    if(otherPlayer.oneStepMore!=NULL)
+        delete otherPlayer.oneStepMore;
+    otherPlayer.oneStepMore=NULL;
+    if(otherPlayer.moveAnimationTimer!=NULL)
+        delete otherPlayer.moveAnimationTimer;
+    otherPlayer.moveAnimationTimer=NULL;
     if(otherPlayer.labelMapObject!=NULL)
         delete otherPlayer.labelMapObject;
     if(otherPlayer.labelTileset!=NULL)
@@ -795,10 +799,11 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
     OtherPlayer &otherPlayer=otherPlayerList[id];
     if(otherPlayer.x==x && otherPlayer.y==y && otherPlayer.direction==direction)
     {
-        error("supected bug at insert: tempPlayer.x "+std::to_string(otherPlayer.x)+" == x  "+std::to_string(x)+
+        /*error("supected bug at insert: tempPlayer.x "+std::to_string(otherPlayer.x)+" == x  "+std::to_string(x)+
         "  && tempPlayer.y "+std::to_string(otherPlayer.y)+" == y "+std::to_string(y)+"  && tempPlayer.direction "+
         std::to_string(otherPlayer.direction)+" == direction "+std::to_string(direction));
-        return false;
+        return false;*/
+        return true;
     }
 
     //set the player coord
