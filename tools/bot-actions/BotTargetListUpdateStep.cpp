@@ -326,6 +326,12 @@ void BotTargetList::updatePlayerStep()
                                     abort();
                                 player.target.linkPoint=pointsList.at(destinationIndexSelected);
                                 player.target.localStep=returnPath;
+
+                                const std::string &debugMapString=actionsAction->id_map_to_map.at(player.mapId);
+                                    std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                                              << " from " << debugMapString << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                                              << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+
                                 BotTargetList::finishTheLocalStep(player);
                             }
                             else
@@ -360,7 +366,7 @@ void BotTargetList::updatePlayerStep()
                                     linkPoint.x=point.first;
                                     linkPoint.y=point.second;
                                     pointsList.push_back(linkPoint);
-                                    std::cout << "player.target.bestPath.empty(): blockObject!=player.target.blockObject && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster" << std::endl;
+                                    std::cout << player.api->getPseudo() << ", player.target.bestPath.empty(): blockObject!=player.target.blockObject && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster" << std::endl;
                                     if(pointsList.size()!=destinations.size())
                                         abort();
                                     uint8_t o=api->getDirection();
@@ -378,6 +384,12 @@ void BotTargetList::updatePlayerStep()
                                         abort();
                                     player.target.linkPoint=pointsList.at(destinationIndexSelected);
                                     player.target.localStep=returnPath;
+
+                                    const std::string &debugMapString=actionsAction->id_map_to_map.at(player.mapId);
+                                        std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                                                  << " from " << debugMapString << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                                                  << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+
                                     BotTargetList::finishTheLocalStep(player);
                                 }
                             }

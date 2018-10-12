@@ -486,7 +486,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
             linkPoint.x=point.first;
             linkPoint.y=point.second;
             pointsList.push_back(linkPoint);
-            std::cout << "player.target.bestPath.empty(): player.target.bestPath.empty() && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster" << std::endl;
+            std::cout << player.api->getPseudo() << ", player.target.bestPath.empty(): player.target.bestPath.empty() && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster" << std::endl;
             player.target.wildCycle=0;
         }
     }
@@ -577,6 +577,12 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
         abort();
     player.target.linkPoint=pointsList.at(destinationIndexSelected);
     player.target.localStep=returnPath;
+
+    const std::string &debugMapString=actionsAction->id_map_to_map.at(player.mapId);
+    std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+              << " from " << debugMapString << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+              << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+
     BotTargetList::finishTheLocalStep(player);
 
     updateMapContentX=0;
