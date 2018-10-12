@@ -10,6 +10,12 @@ void MapControllerMP::moveOtherPlayerStepSlot()
         qDebug() << "moveOtherPlayerStepSlot() timer not located";
         return;
     }
+    if(otherPlayerListByTimer.find(timer)==otherPlayerListByTimer.cend())
+    {
+        timer->stop();
+        timer->deleteLater();
+        return;
+    }
     const uint16_t &simplifiedId=otherPlayerListByTimer.at(timer);
     OtherPlayer &otherPlayer=otherPlayerList[simplifiedId];
     switch(otherPlayer.presumed_direction)
