@@ -48,7 +48,7 @@ void MapDoor::startClose()
     events << eventCall;
 }
 
-uint16_t MapDoor::timeToOpen()
+uint16_t MapDoor::timeToOpen() const
 {
     return ms*framesCount;
 }
