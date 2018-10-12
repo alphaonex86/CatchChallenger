@@ -71,7 +71,7 @@ void MapControllerMP::resetAll()
 
     for(const auto &n : otherPlayerList) {
         unloadOtherPlayerFromMap(n.second);
-        delete n.second.playerTileset;
+//        delete n.second.playerTileset;mem leak to prevent crash for now
     }
     otherPlayerList.clear();
     otherPlayerListByTimer.clear();
