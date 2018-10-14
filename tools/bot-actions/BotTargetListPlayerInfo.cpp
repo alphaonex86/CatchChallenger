@@ -311,15 +311,29 @@ void BotTargetList::teleportTo()
         apiSelectedClient=currentSelectedclient->api;
     }
     CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
+
+    ActionsBotInterface::Player &player=actionsAction->clientList[api];
     if(api==NULL)
         return;
+    std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+              << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+              << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+
+    //player reset local step
+    player.target.bestPath.clear();
+    player.target.localStep.clear();
+    player.canMoveOnMap=true;
+    player.target.extra=0;
+    player.target.linkPoint.x=0;
+    player.target.linkPoint.y=0;
+    player.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
+    player.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
+    player.target.wildCycle=0;
+
     if(api==apiSelectedClient)
     {
-        updateMapContentX=0;
-        updateMapContentY=0;
-        updateMapContentMapId=0;
-        updateMapContentDirection=CatchChallenger::Direction::Direction_look_at_bottom;
         updatePlayerInformation();
+        updatePlayerMap(true);
     }
 }
 
