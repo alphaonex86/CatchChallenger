@@ -407,6 +407,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 otherPlayer.inMove=false;
                 otherPlayer.oneStepMore->stop();
                 //std::cout << "[debug], can't go left" << std::endl;
+                finalOtherPlayerStep(otherPlayer);
             }
             //if can go, then do the move
             else
@@ -433,6 +434,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 otherPlayer.inMove=false;
                 otherPlayer.oneStepMore->stop();
                 //std::cout << "[debug], can't go right" << std::endl;
+                finalOtherPlayerStep(otherPlayer);
             }
             //if can go, then do the move
             else
@@ -460,6 +462,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 otherPlayer.inMove=false;
                 otherPlayer.oneStepMore->stop();
                 //std::cout << "[debug], can't go top" << std::endl;
+                finalOtherPlayerStep(otherPlayer);
             }
             //if can go, then do the move
             else
@@ -486,6 +489,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 otherPlayer.inMove=false;
                 otherPlayer.oneStepMore->stop();
                 //std::cout << "[debug], can't go bottom" << std::endl;
+                finalOtherPlayerStep(otherPlayer);
             }
             //if can go, then do the move
             else
