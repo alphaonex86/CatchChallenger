@@ -417,7 +417,8 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 if(otherPlayer.pendingMonsterMoves.size()>1)
                     abort();
                 #endif
-                moveOtherPlayerStepSlot();
+                finalOtherPlayerStep(otherPlayer);
+                moveOtherPlayerStepSlotWithPlayer(otherPlayer);
             }
         }
         else if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_right)
@@ -442,7 +443,8 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 if(otherPlayer.pendingMonsterMoves.size()>1)
                     abort();
                 #endif
-                moveOtherPlayerStepSlot();
+                finalOtherPlayerStep(otherPlayer);
+                moveOtherPlayerStepSlotWithPlayer(otherPlayer);
             }
         }
         else if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_top)
@@ -468,7 +470,8 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 if(otherPlayer.pendingMonsterMoves.size()>1)
                     abort();
                 #endif
-                moveOtherPlayerStepSlot();
+                finalOtherPlayerStep(otherPlayer);
+                moveOtherPlayerStepSlotWithPlayer(otherPlayer);
             }
         }
         else if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_bottom)
@@ -493,7 +496,8 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 if(otherPlayer.pendingMonsterMoves.size()>1)
                     abort();
                 #endif
-                moveOtherPlayerStepSlot();
+                finalOtherPlayerStep(otherPlayer);
+                moveOtherPlayerStepSlotWithPlayer(otherPlayer);
             }
         }
         //now stop walking, no more arrow key is pressed
@@ -503,7 +507,6 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             otherPlayer.inMove=false;
             otherPlayer.oneStepMore->stop();
         }
-        finalOtherPlayerStep(otherPlayer);
 
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(otherPlayer.pendingMonsterMoves.size()>1)
