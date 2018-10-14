@@ -77,6 +77,9 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         {
             qDebug() << QStringLiteral("Other player (%1) already loaded on the map").arg(player.simplifiedId);
             //return true;-> ignored to fix temporally, but need remove at map unload
+
+            //clean other player
+            remove_player_final(player.simplifiedId,false);
         }
 
         OtherPlayer otherPlayer;
@@ -422,7 +425,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
     qDebug() << QStringLiteral("move_player(%1,%2), previous direction: %3").arg(id).arg(moveString.join(";")).arg(CatchChallenger::MoveOnTheMap::directionToString(otherPlayerList.value(id).direction));
     #endif
 
-    qDebug() << "MapControllerMP::move_player_final";
+    //qDebug() << "MapControllerMP::move_player_final";
 
     //reset to the good position
     OtherPlayer &otherPlayer=otherPlayerList[id];
@@ -475,7 +478,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
     {
         //var tho use
         std::pair<uint8_t, CatchChallenger::Direction> move=movement.at(index);
-        qDebug() << "MapControllerMP::move_player_final" << move.first << ", " << move.second;
+        //qDebug() << "MapControllerMP::move_player_final" << move.first << ", " << move.second;
 
         //set the direction
         otherPlayer.direction=move.second;
@@ -706,7 +709,7 @@ bool MapControllerMP::remove_player_final(const uint16_t &id,bool inReplayMode)
         delete otherPlayer.oneStepMore;
     otherPlayer.oneStepMore=NULL;
     if(otherPlayer.moveAnimationTimer!=NULL)
-        delete otherPlayer.moveAnimationTimer;
+        /*delete */otherPlayer.moveAnimationTimer->deleteLater();
     otherPlayer.moveAnimationTimer=NULL;
     if(otherPlayer.labelMapObject!=NULL)
         delete otherPlayer.labelMapObject;

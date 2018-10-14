@@ -593,6 +593,11 @@ void MapControllerMP::doMoveOtherAnimation()
         qDebug() << "moveOtherPlayerStepSlot() timer not located";
         return;
     }
+    if(otherPlayerListByAnimationTimer.find(timer)==otherPlayerListByAnimationTimer.cend())
+    {
+        timer->stop();
+        return;
+    }
     const uint16_t &simplifiedId=otherPlayerListByAnimationTimer.at(timer);
     moveOtherPlayerStepSlotWithPlayer(otherPlayerList[simplifiedId]);
 }
