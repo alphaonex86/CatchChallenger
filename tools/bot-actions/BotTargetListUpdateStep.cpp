@@ -327,12 +327,15 @@ void BotTargetList::updatePlayerStep()
                                 player.target.linkPoint=pointsList.at(destinationIndexSelected);
                                 player.target.localStep=returnPath;
 
-                                const std::string &debugMapString=actionsAction->id_map_to_map.at(player.mapId);
-                                    std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
-                                              << " from " << debugMapString << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                                              << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                                          << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
 
                                 BotTargetList::finishTheLocalStep(player);
+
+                                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                                          << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                             }
                             else
                                 std::cerr << "Unable to search the next path, the target should be into the current block and map" << std::endl;
@@ -385,10 +388,9 @@ void BotTargetList::updatePlayerStep()
                                     player.target.linkPoint=pointsList.at(destinationIndexSelected);
                                     player.target.localStep=returnPath;
 
-                                    const std::string &debugMapString=actionsAction->id_map_to_map.at(player.mapId);
-                                        std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
-                                                  << " from " << debugMapString << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                                                  << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                                    std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                                              << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                                              << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
 
                                     BotTargetList::finishTheLocalStep(player);
                                 }
@@ -399,6 +401,9 @@ void BotTargetList::updatePlayerStep()
 
                 if(haveChange && api==apiSelectedClient)
                 {
+                    std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                              << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                              << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                     if(ui->trackThePlayer->isChecked())
                     {
                         mapId=player.mapId;
@@ -408,9 +413,15 @@ void BotTargetList::updatePlayerStep()
                     updatePlayerMap(true);
                 }
 
+                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                          << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                 if(player.target.localStep.empty() && player.target.bestPath.empty()
                         && player.target.blockObject!=NULL && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                 {
+                    std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                              << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                              << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                     //get the next tile
                     if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                     {
@@ -470,7 +481,6 @@ void BotTargetList::updatePlayerStep()
                         abort();
                     }
                     CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
-                    const QPair<uint8_t,uint8_t> QtPoint(x,y);
                     std::pair<uint8_t,uint8_t> p(x,y);
                     std::string mapQtString=DatapackClientLoader::datapackLoader.getDatapackPath()+
                             DatapackClientLoader::datapackLoader.getMainDatapackPath()+
@@ -685,9 +695,15 @@ void BotTargetList::updatePlayerStep()
                         updatePlayerMap(true);
                     }
                 }
+                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                          << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             }
             else
             {
+                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                          << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                 //can't move: can be in fight
                 if(player.fightEngine->isInFight())
                 {
@@ -920,10 +936,16 @@ void BotTargetList::updatePlayerStep()
                             else
                             {
                                 //loose, wait the server teleport, see ActionsAction::teleportTo()
+                                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                                          << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                             }
                             if(apiSelectedClient==api)
                                 ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
                         }
+                        std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                                  << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                                  << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
 
                         if(!player.canMoveOnMap && !player.fightEngine->isInFight())
                         {
@@ -953,7 +975,16 @@ void BotTargetList::updatePlayerStep()
                             updateFightStats();
                    }
                 }
+                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                          << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             }
+            std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                      << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                      << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         }
+        std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                  << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
+                  << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
     }
 }
