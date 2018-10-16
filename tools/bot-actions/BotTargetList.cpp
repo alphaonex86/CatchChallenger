@@ -744,15 +744,27 @@ void BotTargetList::updateMapContent(const bool &forceUpdate)
             abort();
         //if map not sync with x and y
         if(player.x>=playerMap->width)
-            abort();
+        {
+            std::cerr << "player.x>=playerMap->width" << std::endl;
+            if(forceUpdate)
+                QMessageBox::critical(this,"Error","This player is out of map");
+            return;
+        }
         if(player.y>=playerMap->height)
-            abort();
+        {
+            std::cerr << "player.y>=playerMap->height" << std::endl;
+            if(forceUpdate)
+                QMessageBox::critical(this,"Error","This player is out of map");
+            return;
+        }
         const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
         const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
         if(playerCodeZone==0)
         {
-            std::cerr << "out of map" << std::endl;
-            abort();
+            std::cerr << "playerCodeZone==0, out of map" << std::endl;
+            if(forceUpdate)
+                QMessageBox::critical(this,"Error","This player is in blocked zone");
+            return;
         }
 
         {
@@ -1636,7 +1648,7 @@ void BotTargetList::autoStartAction()
     if(MainWindow::multipleBotConnexion.haveAnError())
         return;
 
-    CatchChallenger::Api_protocol * apiSelectClient=NULL;
+    CatchChallenger::Api_protocol * apiSelectedClient=NULL;
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()==1)
     {
@@ -1644,7 +1656,7 @@ void BotTargetList::autoStartAction()
         if(!pseudoToBot.contains(pseudo))
             return;
         MultipleBotConnection::CatchChallengerClient * currentSelectedclient=pseudoToBot.value(pseudo);
-        apiSelectClient=currentSelectedclient->api;
+        apiSelectedClient=currentSelectedclient->api;
     }
 
     for (const auto &n:actionsAction->clientList) {
@@ -1671,7 +1683,7 @@ void BotTargetList::autoStartAction()
                 const MapServerMini::MapParsedForBot &stepPlayer=playerMap->step.at(1);
                 const uint8_t playerCodeZone=stepPlayer.map[player.x+player.y*playerMap->width];
                 if(playerCodeZone<=0 || (uint32_t)(playerCodeZone-1)>=(uint32_t)stepPlayer.layers.size())
-                    return;
+                    continue;
                 const MapServerMini::MapParsedForBot::Layer &layer=stepPlayer.layers.at(playerCodeZone-1);
                 std::unordered_map<const MapServerMini::BlockObject *,MapServerMini::BlockObjectPathFinding> resolvedBlock;
 
@@ -1706,7 +1718,7 @@ void BotTargetList::autoStartAction()
 
                 const MapServerMini::MapParsedForBot &step=playerMap->step.at(ui->comboBoxStep->currentIndex());
                 if(step.map==NULL)
-                    return;
+                    continue;
 
                 //no thing with the GUI, just to define: target, path
                 contentToGUI(api,NULL,resolvedBlock,false,dirt,itemOnMap,fight,shop,heal,wildMonster,player.target,playerMap,player.x,player.y);
