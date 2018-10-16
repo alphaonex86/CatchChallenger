@@ -31,6 +31,7 @@ void BotTargetList::updatePlayerStep()
 {
     if(MainWindow::multipleBotConnexion.haveAnError())
         return;
+
     CatchChallenger::Api_protocol * apiSelectedClient=NULL;
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()==1)
@@ -41,6 +42,7 @@ void BotTargetList::updatePlayerStep()
         MultipleBotConnection::CatchChallengerClient * currentSelectedclient=pseudoToBot.value(pseudo);
         apiSelectedClient=currentSelectedclient->api;
     }
+
     if(ui->bots->count()==1)
     {
         QListWidgetItem * item=ui->bots->itemAt(0,0);
@@ -416,6 +418,7 @@ void BotTargetList::updatePlayerStep()
                 /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                           << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
                           << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
+                //apply the order, see BotTargetList.cpp: BotTargetList::autoStartAction()
                 if(player.target.localStep.empty() && player.target.bestPath.empty()
                         && player.target.blockObject!=NULL && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                 {
@@ -429,7 +432,10 @@ void BotTargetList::updatePlayerStep()
                         abort();
                     }
                     if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
-                        return;
+                    {
+                        std::cerr << "actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend(): " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
+                        abort();
+                    }
                     if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                     {
                         std::cerr << "player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None: " << __FILE__ << ":" << std::to_string(__LINE__) << std::endl;
@@ -646,7 +652,10 @@ void BotTargetList::updatePlayerStep()
                             if(apiSelectedClient==api)
                                 ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
                             if(returnedValue==true)
-                                return;
+                            {
+                                std::cout << "wildMonsterTarget(player), file: "+std::string(__FILE__)+":"+std::to_string(__LINE__) << std::endl;
+                                continue;
+                            }
                         }
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight:
@@ -676,7 +685,8 @@ void BotTargetList::updatePlayerStep()
                                 ActionsAction::resetTarget(player.target);
                                 stopAll();
                                 QMessageBox::critical(this,tr("Already beaten"),tr("This bot is already beaten (1): %1").arg(fightId));
-                                return;
+                                std::cerr << "Already beaten, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__) << std::endl;
+                                continue;
                             }
                         }
                         break;
@@ -684,7 +694,8 @@ void BotTargetList::updatePlayerStep()
                             ActionsAction::resetTarget(player.target);
                             stopAll();
                             QMessageBox::critical(this,tr("Not coded"),tr("This target type is not coded (1): %1").arg(player.target.type));
-                            return;
+                            std::cerr << "This target type is not coded, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__) << std::endl;
+                            continue;
                         break;
                     }
                     ActionsAction::resetTarget(player.target);
@@ -701,9 +712,9 @@ void BotTargetList::updatePlayerStep()
             }
             else
             {
-                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                           << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
                 //can't move: can be in fight
                 if(player.fightEngine->isInFight())
                 {
@@ -717,13 +728,13 @@ void BotTargetList::updatePlayerStep()
                         if(monster==NULL)
                         {
                             std::cerr << ", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+"NULL pointer at updateCurrentMonsterInformation()" << std::endl;
-                            return;
+                            continue;
                         }
                         CatchChallenger::PublicPlayerMonster *othermonster=player.fightEngine->getOtherMonster();
                         if(othermonster==NULL)
                         {
                             std::cerr << ", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+"NULL pointer at updateCurrentMonsterInformation()" << std::endl;
-                            return;
+                            continue;
                         }
                         const CatchChallenger::Monster::Stat &wildMonsterStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(othermonster->monster),othermonster->level);
 
@@ -817,7 +828,8 @@ void BotTargetList::updatePlayerStep()
                             ui->label_action->setText("Start this: Try capture with: "+QString::number(itemToCapture)+" for the monster "+QString::number(othermonster->monster));
                             if(api==apiSelectedClient)
                                 updatePlayerInformation();
-                            return;//need wait the server reply, monsterCatch(const bool &success)
+                            std::cerr << "tryCaptureWithItem, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__) << std::endl;
+                            continue;//need wait the server reply, monsterCatch(const bool &success)
                         }
                         else
                         {
@@ -906,7 +918,10 @@ void BotTargetList::updatePlayerStep()
                                         abort();
                                     }
                                     if(!player.fightEngine->changeOfMonsterInFight(currentPos))
-                                        return;
+                                    {
+                                        std::cerr << "!player.fightEngine->changeOfMonsterInFight" << std::endl;
+                                        continue;
+                                    }
                                     player.api->changeOfMonsterInFightByPosition(currentPos);
                                 }
                                 else if(!player.canMoveOnMap)
@@ -975,9 +990,9 @@ void BotTargetList::updatePlayerStep()
                             updateFightStats();
                    }
                 }
-                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                           << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
             }
             /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                       << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
