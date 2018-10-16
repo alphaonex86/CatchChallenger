@@ -557,10 +557,14 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     goToFinal=true;
                 if(y>=map->height)
                     goToFinal=true;
+                if(ok)
+                    if(!MoveOnTheMap::isWalkable(*map,x,y))
+                        goToFinal=true;
             }
         }
         if(goToFinal)
         {
+            normalOutput("Problem with map spawn, fixed by rescue");
             map=serverProfileInternal.map;
             x=serverProfileInternal.x;
             y=serverProfileInternal.y;
