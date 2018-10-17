@@ -566,7 +566,8 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
              static_cast<qreal>(otherPlayer.presumed_y)+1-1.4));
         MapObjectItem::objectLink.at(otherPlayer.labelMapObject)->setZValue(otherPlayer.presumed_y);
     }
-    MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(otherPlayer.presumed_y);
+    if(MapObjectItem::objectLink.find(otherPlayer.playerMapObject)!=MapObjectItem::objectLink.cend())
+        MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(otherPlayer.presumed_y);
 
     //start moving into the right direction
     switch(otherPlayer.presumed_direction)
@@ -867,7 +868,8 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
     if(otherPlayer.playerMapObject!=NULL)
     {
         otherPlayer.playerMapObject->setPosition(QPointF(otherPlayer.x,otherPlayer.y+1));
-        MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(otherPlayer.y);
+        if(MapObjectItem::objectLink.find(otherPlayer.playerMapObject)!=MapObjectItem::objectLink.cend())
+            MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(otherPlayer.y);
         if(otherPlayer.labelMapObject!=NULL)
             otherPlayer.labelMapObject->setPosition(QPointF(static_cast<qreal>(x)-static_cast<qreal>(otherPlayer.labelTileset->tileWidth())
                                                             /2/16+0.5,y+1-1.4));
