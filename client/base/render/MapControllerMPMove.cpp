@@ -277,7 +277,8 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         }
         break;
         case 1:
-        MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(qCeil(otherPlayer.playerMapObject->y()));
+        if(MapObjectItem::objectLink.find(otherPlayer.playerMapObject)!=MapObjectItem::objectLink.cend())
+            MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(qCeil(otherPlayer.playerMapObject->y()));
         break;
         //transition step
         case 2:
@@ -392,7 +393,8 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         if(otherPlayer.labelMapObject!=NULL)
             otherPlayer.labelMapObject->setPosition(QPointF(static_cast<qreal>(x)-static_cast<qreal>(otherPlayer.labelTileset->tileWidth())
                                                             /2/16+0.5,y+1-1.4));
-        MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(y);
+        if(MapObjectItem::objectLink.find(otherPlayer.playerMapObject)!=MapObjectItem::objectLink.cend())
+            MapObjectItem::objectLink.at(otherPlayer.playerMapObject)->setZValue(y);
 
         //check if one arrow key is pressed to continue to move into this direction
         if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_left)
