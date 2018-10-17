@@ -1,6 +1,7 @@
 #include "Chat.h"
 #include "ui_Chat.h"
 #include "../Api_client_real.h"
+#include "../render/MapController.h"
 
 #include <QRegularExpression>
 #include <QScrollBar>
@@ -128,7 +129,24 @@ void Chat::lineEdit_chat_text_returnPressed()
             chat_type=Chat_type_clan;
         break;
         }
-        client->sendChatText(chat_type,text.toStdString());
+        if(text.startsWith("/clip "))
+        {
+            MapController *mapController=static_cast<MapController *>(parent());
+            if(text=="/clip on")
+            {
+                mapController->setClip(true);
+                new_system_text(Chat_type_system,"[clipping on]");
+            }
+            else if(text=="/clip off")
+            {
+                mapController->setClip(false);
+                new_system_text(Chat_type_system,"[clipping off]");
+            }
+            else
+                new_system_text(Chat_type_system_important,"Usage: /clip [on|off]");
+        }
+        else
+            client->sendChatText(chat_type,text.toStdString());
         if(!text.startsWith('/'))
             new_chat_text(chat_type,text.toStdString(),client->player_informations.public_informations.pseudo,
                     client->player_informations.public_informations.type);

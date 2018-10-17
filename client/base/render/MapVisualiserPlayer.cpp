@@ -38,6 +38,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     monsterMapObject=nullptr;
     monster_x=0;
     monster_y=0;
+    clip=false;
 
     keyAccepted.insert(Qt::Key_Left);
     keyAccepted.insert(Qt::Key_Right);
@@ -1686,9 +1687,9 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, C
     CatchChallenger::ParsedLayerLedges ledge;
     do
     {
-        if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*mapPointer,x,y,checkCollision))
+        if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*mapPointer,x,y,checkCollision && !clip))
             return false;
-        if(!CatchChallenger::MoveOnTheMap::move(direction,&mapPointer,&x,&y,checkCollision))
+        if(!CatchChallenger::MoveOnTheMap::move(direction,&mapPointer,&x,&y,checkCollision && !clip))
             return false;
         CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(&all_map.at(map.map_file)->logicalMap);
         if(map_client->itemsOnMap.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
@@ -2059,6 +2060,11 @@ void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
     if(resetMonster)
         loadMonsterFromCurrentMap();
     resetMonsterTile();
+}
+
+void MapVisualiserPlayer::setClip(const bool &clip)
+{
+    this->clip=clip;
 }
 
 const Tiled::MapObject * MapVisualiserPlayer::getPlayerMapObject() const
