@@ -28,6 +28,7 @@ public:
     std::string currentBackgroundsound() const;
     CatchChallenger::Direction getDirection();
     void updatePlayerMonsterTile(const uint16_t &monster);
+    void setClip(const bool &clip);
     enum BlockedOn
     {
         BlockedOn_ZoneItem,
@@ -112,6 +113,7 @@ protected:
     //control
     std::unordered_set<int> keyPressed;
     std::unordered_set<int> keyAccepted;
+    bool clip;
 
     //grass
     bool haveGrassCurrentObject;
