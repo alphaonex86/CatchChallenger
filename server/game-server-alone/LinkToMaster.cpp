@@ -110,6 +110,8 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
         {
             std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
             auto start = std::chrono::high_resolution_clock::now();
+            std::cout << "Try connect again to master " << host << ":" << port << " ... ("
+                      << std::to_string(index+1) << "/" << std::to_string(considerDownAfterNumberOfTry) << ")" << std::endl;
             connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
