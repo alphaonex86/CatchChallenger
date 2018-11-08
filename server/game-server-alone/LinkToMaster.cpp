@@ -110,9 +110,11 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
         {
             std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
             auto start = std::chrono::high_resolution_clock::now();
-            std::cout << "Try connect again to master " << host << ":" << port << " ... ("
-                      << std::to_string(index+1) << "/" << std::to_string(considerDownAfterNumberOfTry) << ")" << std::endl;
             connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+            if(connStatusType<0)
+                std::cout << "Try connect again to master " << host << ":" << port << " ... ("
+                          << std::to_string(index+1) << "/" << std::to_string(considerDownAfterNumberOfTry) << ") failed: "
+                          << std::to_string(errno)<< std::endl;
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
             index++;
@@ -125,7 +127,10 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
         if(connStatusType<0)
         {
             memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));
-            std::cerr << "ERROR connecting to master server (abort)" << std::endl;
+            std::cerr << "ERROR connecting to master server (abort) failed: "
+                      << std::to_string(errno) << ", after "
+                      << std::to_string(considerDownAfterNumberOfTry) << " try"
+                      << std::endl;
             abort();
         }
     }
