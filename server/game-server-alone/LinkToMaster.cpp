@@ -18,6 +18,7 @@
 #include <time.h>
 #include <cstring>
 #include <openssl/sha.h>
+#include <iomanip>
 
 using namespace CatchChallenger;
 
@@ -112,9 +113,14 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
             auto start = std::chrono::high_resolution_clock::now();
             connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
             if(connStatusType<0)
-                std::cout << "Try connect again to master " << host << ":" << port << " ... ("
+            {
+                auto t = std::time(nullptr);
+                auto tm = *std::localtime(&t);
+                std::cout << std::put_time(&tm, "%d-%m-%Y %H-%M-%S ")
+                          << "Try connect again to master " << host << ":" << port << " ... ("
                           << std::to_string(index+1) << "/" << std::to_string(considerDownAfterNumberOfTry) << ") failed: "
                           << std::to_string(errno)<< std::endl;
+            }
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> elapsed = end-start;
             index++;
