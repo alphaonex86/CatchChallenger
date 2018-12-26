@@ -643,11 +643,11 @@ int P2PServerUDP::write(const char * const data,const uint32_t dataSize,const so
     #endif
     const int returnVal=sendto(sfd, data, dataSize, 0, (struct sockaddr*) &si_other, sizeof(si_other));
     if (returnVal < 0)
-        std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem" << std::endl;
+        std::cerr << "P2PServerUDP::write(): sendto() problem " << errno << std::endl;
     else if ((uint32_t)returnVal != dataSize)
-        std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize" << std::endl;
+        std::cerr << "P2PServerUDP::write(): sendto() problem dataSize " << errno << std::endl;
     if (dataSize > 1200)
-        std::cerr << "P2PServerUDP::parseIncommingData(): sendto() problem dataSize (2)" << std::endl;
+        std::cerr << "P2PServerUDP::write(): sendto() problem dataSize (2) " << errno << std::endl;
     return returnVal;
 }
 
