@@ -88,7 +88,12 @@ void P2PTimerConnect::exec()
                     abort();
                 memcpy(&peerToConnect.random,handShake1,8);
                 P2PPeer::sign(reinterpret_cast<uint8_t *>(handShake1),8+8+1+ED25519_KEY_SIZE+ED25519_SIGNATURE_SIZE);
-                P2PServerUDP::p2pserver->write(handShake1,sizeof(handShake1),peerToConnect.serv_addr);
+                if(P2PServerUDP::p2pserver->write(handShake1,sizeof(handShake1),peerToConnect.serv_addr)<0)
+                {
+                    std::cout << P2PPeer::toString(peerToConnect.serv_addr,",") << " removed because unable to send packet to this destinatinon in this protocol (IPv6 over IPv4 only network?)" << std::endl;
+                    P2PServerUDP::p2pserver->hostToConnect.erase(P2PServerUDP::p2pserver->hostToConnect.cbegin()+lastScannedIndex);
+                    return;
+                }
 
                 P2PServerUDP::p2pserver->hostToConnectIndex=lastScannedIndex;
                 //std::cout << "P2PTimerConnect::exec() try co" << std::endl;
