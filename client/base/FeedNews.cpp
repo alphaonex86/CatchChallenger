@@ -45,7 +45,7 @@ void FeedNews::downloadFile()
     else
         catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
     #if defined(_WIN32) || defined(Q_OS_MAC)
-    catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(InternetUpdater::GetOSDisplayString());
+    catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(QString::fromStdString(InternetUpdater::GetOSDisplayString()));
     #endif
     if(qnam==NULL)
         qnam=new QNetworkAccessManager(this);

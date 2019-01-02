@@ -53,7 +53,7 @@ void InternetUpdater::downloadFile()
     else
         catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
     #if defined(_WIN32) || defined(Q_OS_MAC)
-    catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(GetOSDisplayString());
+    catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(QString::fromStdString(GetOSDisplayString()));
     #endif
     catchChallengerVersion+=QStringLiteral(" ")+CATCHCHALLENGER_PLATFORM_CODE;
     QNetworkRequest networkRequest(QStringLiteral(CATCHCHALLENGER_UPDATER_URL));
@@ -142,8 +142,8 @@ std::string InternetUpdater::getText(const std::string &version)
             .toStdString()+"<br />"+tr("Click here to go on download page").toStdString();
 }
 
-#if defined(_WIN32) || defined(Q_OS_WIN32)
-QString InternetUpdater::GetOSDisplayString()
+#ifdef Q_OS_WIN32
+std::string InternetUpdater::GetOSDisplayString()
 {
    QString Os;
    OSVERSIONINFOEX osvi;
@@ -159,7 +159,7 @@ QString InternetUpdater::GetOSDisplayString()
    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
    bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO*) &osvi);
 
-   if(bOsVersionInfoEx == NULL)
+   if(bOsVersionInfoEx == 0)
         return "Os detection blocked";
 
    // Call GetNativeSystemInfo if supported or GetSystemInfo otherwise.
@@ -179,18 +179,18 @@ QString InternetUpdater::GetOSDisplayString()
           {
             case 0:
                 if(osvi.wProductType==VER_NT_WORKSTATION)
-                    Os+="Windows Vista ";
-                else Os+="Windows Server 2008 " ;
+                    Os+=QStringLiteral("Windows Vista ");
+                else Os+=QStringLiteral("Windows Server 2008 ");
             break;
             case 1:
                 if(osvi.wProductType==VER_NT_WORKSTATION)
-                    Os+="Windows 7 ";
-                else Os+="Windows Server 2008 R2 ";
+                    Os+=QStringLiteral("Windows 7 ");
+                else Os+=QStringLiteral("Windows Server 2008 R2 ");
             break;
             case 2:
                 if(osvi.wProductType==VER_NT_WORKSTATION)
-                    Os+="Windows 8 ";
-                else Os+="Windows Server 2012 ";
+                    Os+=QStringLiteral("Windows 8 ");
+                else Os+=QStringLiteral("Windows Server 2012 ");
             break;
             default:
                  if(osvi.wProductType==VER_NT_WORKSTATION)
@@ -208,58 +208,58 @@ QString InternetUpdater::GetOSDisplayString()
          switch(dwType)
          {
             case PRODUCT_ULTIMATE:
-               Os+="Ultimate Edition";
+               Os+=QStringLiteral("Ultimate Edition");
                break;
             case PRODUCT_PROFESSIONAL:
-               Os+="Professional";
+               Os+=QStringLiteral("Professional");
                break;
             case PRODUCT_HOME_PREMIUM:
-               Os+="Home Premium Edition";
+               Os+=QStringLiteral("Home Premium Edition");
                break;
             case PRODUCT_HOME_BASIC:
-               Os+="Home Basic Edition";
+               Os+=QStringLiteral("Home Basic Edition");
                break;
             case PRODUCT_ENTERPRISE:
-               Os+="Enterprise Edition";
+               Os+=QStringLiteral("Enterprise Edition");
                break;
             case PRODUCT_BUSINESS:
-               Os+="Business Edition";
+               Os+=QStringLiteral("Business Edition");
                break;
             case PRODUCT_STARTER:
-               Os+="Starter Edition";
+               Os+=QStringLiteral("Starter Edition");
                break;
             case PRODUCT_CLUSTER_SERVER:
-               Os+="Cluster Server Edition";
+               Os+=QStringLiteral("Cluster Server Edition");
                break;
             case PRODUCT_DATACENTER_SERVER:
-               Os+="Datacenter Edition";
+               Os+=QStringLiteral("Datacenter Edition");
                break;
             case PRODUCT_DATACENTER_SERVER_CORE:
-               Os+="Datacenter Edition (core installation)";
+               Os+=QStringLiteral("Datacenter Edition (core installation)");
                break;
             case PRODUCT_ENTERPRISE_SERVER:
-               Os+="Enterprise Edition";
+               Os+=QStringLiteral("Enterprise Edition");
                break;
             case PRODUCT_ENTERPRISE_SERVER_CORE:
-               Os+="Enterprise Edition (core installation)";
+               Os+=QStringLiteral("Enterprise Edition (core installation)");
                break;
             case PRODUCT_ENTERPRISE_SERVER_IA64:
-               Os+="Enterprise Edition for Itanium-based Systems";
+               Os+=QStringLiteral("Enterprise Edition for Itanium-based Systems");
                break;
             case PRODUCT_SMALLBUSINESS_SERVER:
-               Os+="Small Business Server";
+               Os+=QStringLiteral("Small Business Server");
                break;
             case PRODUCT_SMALLBUSINESS_SERVER_PREMIUM:
-               Os+="Small Business Server Premium Edition";
+               Os+=QStringLiteral("Small Business Server Premium Edition");
                break;
             case PRODUCT_STANDARD_SERVER:
-               Os+="Standard Edition";
+               Os+=QStringLiteral("Standard Edition");
                break;
             case PRODUCT_STANDARD_SERVER_CORE:
-               Os+="Standard Edition (core installation)";
+               Os+=QStringLiteral("Standard Edition (core installation)");
                break;
             case PRODUCT_WEB_SERVER:
-               Os+="Web Server Edition";
+               Os+=QStringLiteral("Web Server Edition");
                break;
          }
       }
@@ -268,63 +268,63 @@ QString InternetUpdater::GetOSDisplayString()
             switch(osvi.dwMinorVersion)
             {
                 case 0:
-                    Os+="Windows 2000 ";
+                    Os+=QStringLiteral("Windows 2000 ");
                     if(osvi.wProductType==VER_NT_WORKSTATION)
-                       Os+="Professional";
+                       Os+=QStringLiteral("Professional");
                     else
                     {
                        if(osvi.wSuiteMask & VER_SUITE_DATACENTER)
-                          Os+="Datacenter Server";
+                          Os+=QStringLiteral("Datacenter Server");
                        else if(osvi.wSuiteMask & VER_SUITE_ENTERPRISE)
-                          Os+="Advanced Server";
-                       else Os+="Server";
+                          Os+=QStringLiteral("Advanced Server");
+                       else Os+=QStringLiteral("Server");
                     }
                 break;
                 case 1:
-                    Os+="Windows XP ";
+                    Os+=QStringLiteral("Windows XP ");
                     if(osvi.wSuiteMask & VER_SUITE_PERSONAL)
-                       Os+="Home Edition";
-                    else Os+="Professional";
+                       Os+=QStringLiteral("Home Edition");
+                    else Os+=QStringLiteral("Professional");
                 break;
                 case 2:
                     if(GetSystemMetrics(SM_SERVERR2))
-                        Os+="Windows Server 2003 R2, ";
+                        Os+=QStringLiteral("Windows Server 2003 R2, ");
                     else if(osvi.wSuiteMask & VER_SUITE_STORAGE_SERVER )
-                        Os+="Windows Storage Server 2003";
+                        Os+=QStringLiteral("Windows Storage Server 2003");
                     else if(osvi.wSuiteMask & VER_SUITE_WH_SERVER )
-                        Os+="Windows Home Server";
+                        Os+=QStringLiteral("Windows Home Server");
                     else if(osvi.wProductType==VER_NT_WORKSTATION && si.wProcessorArchitecture==PROCESSOR_ARCHITECTURE_AMD64)
-                        Os+="Windows XP Professional x64 Edition";
-                    else Os+="Windows Server 2003, ";
+                        Os+=QStringLiteral("Windows XP Professional x64 Edition");
+                    else Os+=QStringLiteral("Windows Server 2003, ");
                     // Test for the server type.
                     if(osvi.wProductType!=VER_NT_WORKSTATION )
                     {
                         if(si.wProcessorArchitecture==PROCESSOR_ARCHITECTURE_IA64)
                         {
                             if( osvi.wSuiteMask & VER_SUITE_DATACENTER )
-                                Os+="Datacenter Edition for Itanium-based Systems";
+                                Os+=QStringLiteral("Datacenter Edition for Itanium-based Systems");
                             else if( osvi.wSuiteMask & VER_SUITE_ENTERPRISE )
-                                Os+="Enterprise Edition for Itanium-based Systems";
+                                Os+=QStringLiteral("Enterprise Edition for Itanium-based Systems");
                         }
                         else if(si.wProcessorArchitecture==PROCESSOR_ARCHITECTURE_AMD64)
                         {
                             if(osvi.wSuiteMask & VER_SUITE_DATACENTER)
-                                Os+="Datacenter x64 Edition";
+                                Os+=QStringLiteral("Datacenter x64 Edition");
                             else if(osvi.wSuiteMask & VER_SUITE_ENTERPRISE)
-                                Os+="Enterprise x64 Edition";
-                            else Os+="Standard x64 Edition";
+                                Os+=QStringLiteral("Enterprise x64 Edition");
+                            else Os+=QStringLiteral("Standard x64 Edition");
                         }
                         else
                         {
                             if(osvi.wSuiteMask & VER_SUITE_COMPUTE_SERVER)
-                                Os+="Compute Cluster Edition";
+                                Os+=QStringLiteral("Compute Cluster Edition");
                             else if( osvi.wSuiteMask & VER_SUITE_DATACENTER)
-                                Os+="Datacenter Edition";
+                                Os+=QStringLiteral("Datacenter Edition");
                             else if(osvi.wSuiteMask & VER_SUITE_ENTERPRISE)
-                                Os+="Enterprise Edition";
+                                Os+=QStringLiteral("Enterprise Edition");
                             else if(osvi.wSuiteMask & VER_SUITE_BLADE)
-                                Os+="Web Edition";
-                            else Os+="Standard Edition";
+                                Os+=QStringLiteral("Web Edition");
+                            else Os+=QStringLiteral("Standard Edition");
                         }
                     }
                 break;
@@ -345,9 +345,9 @@ QString InternetUpdater::GetOSDisplayString()
         if(osvi.dwMajorVersion >= 6)
         {
             if(si.wProcessorArchitecture==PROCESSOR_ARCHITECTURE_AMD64)
-                Os+=", 64-bit";
+                Os+=QStringLiteral(", 64-bit");
             else if(si.wProcessorArchitecture==PROCESSOR_ARCHITECTURE_INTEL)
-                Os+=", 32-bit";
+                Os+=QStringLiteral(", 32-bit");
         }
     }
     else
@@ -356,16 +356,16 @@ QString InternetUpdater::GetOSDisplayString()
            Os+=QStringLiteral("Windows (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
        else Os+=QStringLiteral("Windows Server (dwMajorVersion: %1, dwMinorVersion: %2)").arg(osvi.dwMinorVersion).arg(osvi.dwMinorVersion);
     }
-    return Os;
+    return Os.toStdString();
 }
 #endif
 
 #ifdef Q_OS_MAC
-QString InternetUpdater::GetOSDisplayString()
+std::string InternetUpdater::GetOSDisplayString()
 {
         QStringList key;
     QStringList string;
-    QFile xmlFile("/System/Library/CoreServices/SystemVersion.plist");
+    QFile xmlFile(QStringLiteral("/System/Library/CoreServices/SystemVersion.plist"));
     if(xmlFile.open(QIODevice::ReadOnly))
     {
         QString content=xmlFile.readAll();
@@ -378,40 +378,40 @@ QString InternetUpdater::GetOSDisplayString()
             return "Mac OS X";
         else
         {
-            tinyxml2::XMLElement root = domDocument.RootElement();
-            if(root.tagName()!="plist")
+            QDomElement root = domDocument.documentElement();
+            if(root.tagName()!=QStringLiteral("plist"))
                 return "Mac OS X";
             else
             {
                 if(root.isElement())
                 {
-                    tinyxml2::XMLElement SubChild=root.FirstChildElement("dict");
+                    QDomElement SubChild=root.firstChildElement(QStringLiteral("dict"));
                     while(!SubChild.isNull())
                     {
                         if(SubChild.isElement())
                         {
-                            tinyxml2::XMLElement SubChild2=SubChild.FirstChildElement("key");
+                            QDomElement SubChild2=SubChild.firstChildElement(QStringLiteral("key"));
                             while(!SubChild2.isNull())
                             {
                                 if(SubChild2.isElement())
                                     key << SubChild2.text();
                                 else
                                     return "Mac OS X";
-                                SubChild2 = SubChild2.NextSiblingElement("key");
+                                SubChild2 = SubChild2.nextSiblingElement(QStringLiteral("key"));
                             }
-                            SubChild2=SubChild.FirstChildElement("string");
+                            SubChild2=SubChild.firstChildElement(QStringLiteral("string"));
                             while(!SubChild2.isNull())
                             {
                                 if(SubChild2.isElement())
                                     string << SubChild2.text();
                                 else
                                     return "Mac OS X";
-                                SubChild2 = SubChild2.NextSiblingElement("string");
+                                SubChild2 = SubChild2.nextSiblingElement(QStringLiteral("string"));
                             }
                         }
                         else
                             return "Mac OS X";
-                        SubChild = SubChild.NextSiblingElement("property");
+                        SubChild = SubChild.nextSiblingElement(QStringLiteral("property"));
                     }
                 }
                 else
@@ -424,8 +424,8 @@ QString InternetUpdater::GetOSDisplayString()
     int index=0;
     while(index<key.size())
     {
-        if(key.at(index)=="ProductVersion")
-            return "Mac OS X "+string.at(index);
+        if(key.at(index)==QStringLiteral("ProductVersion"))
+            return "Mac OS X "+string.at(index).toStdString();
         index++;
     }
     return "Mac OS X";

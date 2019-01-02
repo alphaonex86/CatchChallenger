@@ -14,13 +14,13 @@ std::string ExtraSocket::pathSocket(const std::string &name)
 #if defined(__unix__) || defined(Q_OS_UNIX) || !defined(Q_OS_WIN32)
     return name+"-"+std::to_string(getuid());
 #else
-    std::string userName;
+    QString userName;
 
     /* bad way for catchcopy compatibility
     char uname[1024];
     DWORD len=1023;
     if(GetUserNameA(uname, &len)!=FALSE)
-        userName=QString::fromLatin1(toHex(uname));*/
+        userName=toHex(uname);*/
 
     QChar charTemp;
     DWORD size=255;
@@ -39,7 +39,7 @@ std::string ExtraSocket::pathSocket(const std::string &name)
         userName=tempArray.toHex();
     }
     delete userNameW;
-    return name+"-"+userName;
+    return name+"-"+userName.toStdString();
 #endif
 }
 
