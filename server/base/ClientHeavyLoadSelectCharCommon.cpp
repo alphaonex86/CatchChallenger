@@ -426,6 +426,8 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                     characterSelectionIsWrong(query_id,0x04,"item duplicate in ware house");
                     return;
                 }
+                #else
+                (void)item16;
                 #endif
                 public_and_private_informations.warehouse_items[static_cast<uint16_t>(item)]=quantity;
             }
