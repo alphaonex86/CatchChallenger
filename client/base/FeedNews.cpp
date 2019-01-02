@@ -4,6 +4,7 @@
 #include "../../general/base/Version.h"
 #include "ClientVariable.h"
 #include "InternetUpdater.h"
+#include "Ultimate.h"
 
 #include <QNetworkRequest>
 #include <QUrl>
@@ -39,19 +40,10 @@ FeedNews::~FeedNews()
 void FeedNews::downloadFile()
 {
     QString catchChallengerVersion;
-    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-    catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
-    #else
-        #ifdef CATCHCHALLENGER_VERSION_SINGLESERVER
-        catchChallengerVersion=QStringLiteral("CatchChallenger SingleServer/%1").arg(CATCHCHALLENGER_VERSION);
-        #else
-            #ifdef CATCHCHALLENGER_VERSION_SOLO
-            catchChallengerVersion=QStringLiteral("CatchChallenger Solo/%1").arg(CATCHCHALLENGER_VERSION);
-            #else
-            catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
-            #endif
-        #endif
-    #endif
+    if(Ultimate::ultimate.isUltimate())
+        catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
+    else
+        catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
     #if defined(_WIN32) || defined(Q_OS_MAC)
     catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(InternetUpdater::GetOSDisplayString());
     #endif

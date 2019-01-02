@@ -128,8 +128,10 @@ private slots:
     void audioLoop(void *player);
     #endif
     void on_server_edit_clicked();
-    void askForUltimateCopy();
+    bool askForUltimateCopy();
     void on_showPassword_toggled(bool);
+    void on_UltimateKey_clicked();
+
 private:
     enum ServerMode
     {
@@ -175,7 +177,6 @@ private:
     QHash<QString,uint32_t> lastServerWaitBeforeConnectAfterKick;
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
-    QTimer triggerUltimateCopy;
     CatchChallenger::BaseWindow *baseWindow;
     CatchChallenger::Api_protocol *client;
     QCompleter *completer;

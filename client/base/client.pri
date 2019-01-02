@@ -81,7 +81,8 @@ SOURCES += \
     $$PWD/CachedString.cpp \
     $$PWD/Map_client.cpp \
     $$PWD/FacilityLibClient.cpp \
-    $$PWD/Api_protocol_Qt.cpp
+    $$PWD/Api_protocol_Qt.cpp \
+    $$PWD/Ultimate.cpp
 
 HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/render/TileLayerItem.h \
@@ -129,7 +130,8 @@ HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/Api_client_virtual.h \
     $$PWD/Api_protocol.h \
     $$PWD/FacilityLibClient.h \
-    $$PWD/ClientVariableAudio.h
+    $$PWD/ClientVariableAudio.h \
+    $$PWD/Ultimate.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \

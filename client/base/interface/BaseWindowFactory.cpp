@@ -3,6 +3,7 @@
 #include "../DatapackClientLoader.h"
 #include "../../../general/base/FacilityLib.h"
 #include "../../../general/base/CommonDatapack.h"
+#include "../base/Ultimate.h"
 
 #include <QInputDialog>
 #include <iostream>
@@ -334,27 +335,28 @@ void BaseWindow::updateFactoryStatProduction(const IndustryStatus &industryStatu
     if(FacilityLib::factoryProductionStarted(industryStatus,industry))
     {
         factoryInProduction=true;
-        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-        std::string productionTime;
-        uint64_t remainingProductionTime=0;
-        if((uint64_t)(industryStatus.last_update+industry.time)>(uint64_t)(QDateTime::currentMSecsSinceEpoch()/1000))
-            remainingProductionTime=static_cast<uint32_t>((industryStatus.last_update+industry.time)-(QDateTime::currentMSecsSinceEpoch()/1000));
-        else if((uint64_t)(industryStatus.last_update+industry.time)<(uint64_t)(QDateTime::currentMSecsSinceEpoch()/1000))
-            remainingProductionTime=((QDateTime::currentMSecsSinceEpoch()/1000)-industryStatus.last_update)%industry.time;
-        else
-            remainingProductionTime=industry.time;
-        if(remainingProductionTime>0)
+        if(Ultimate::ultimate.isUltimate())
         {
-            productionTime=tr("Remaining time:").toStdString()+"<br />";
-            if(remainingProductionTime<60)
-                productionTime+=tr("Less than a minute").toStdString();
+            std::string productionTime;
+            uint64_t remainingProductionTime=0;
+            if((uint64_t)(industryStatus.last_update+industry.time)>(uint64_t)(QDateTime::currentMSecsSinceEpoch()/1000))
+                remainingProductionTime=static_cast<uint32_t>((industryStatus.last_update+industry.time)-(QDateTime::currentMSecsSinceEpoch()/1000));
+            else if((uint64_t)(industryStatus.last_update+industry.time)<(uint64_t)(QDateTime::currentMSecsSinceEpoch()/1000))
+                remainingProductionTime=((QDateTime::currentMSecsSinceEpoch()/1000)-industryStatus.last_update)%industry.time;
             else
-                productionTime+=tr("%n minute(s)","",static_cast<uint32_t>(remainingProductionTime/60)).toStdString();
+                remainingProductionTime=industry.time;
+            if(remainingProductionTime>0)
+            {
+                productionTime=tr("Remaining time:").toStdString()+"<br />";
+                if(remainingProductionTime<60)
+                    productionTime+=tr("Less than a minute").toStdString();
+                else
+                    productionTime+=tr("%n minute(s)","",static_cast<uint32_t>(remainingProductionTime/60)).toStdString();
+            }
+            ui->factoryStatText->setText(tr("In production")+"<br />"+QString::fromStdString(productionTime));
         }
-        ui->factoryStatText->setText(tr("In production")+"<br />"+QString::fromStdString(productionTime));
-        #else
-        ui->factoryStatText->setText(tr("In production"));
-        #endif
+        else
+            ui->factoryStatText->setText(tr("In production"));
     }
     else
     {
