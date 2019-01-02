@@ -218,16 +218,14 @@ void BaseWindow::notLogged(std::string reason)
 void BaseWindow::logged(const std::vector<std::vector<CharacterEntry> > &characterEntryList)
 {
     this->characterListForSelection=characterEntryList;
-    #ifndef CATCHCHALLENGER_EXTRA_CHECK
-    if(settings.contains("DatapackHashBase-"+client->datapackPathBase()))
-        client->sendDatapackContentBase(settings.value("DatapackHashBase-"+client->datapackPathBase()).toByteArray());
+    if(settings.contains("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())))
+        client->sendDatapackContentBase(settings.value("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())).toString().toStdString());
     else
-    #endif
-    if(client==NULL)
-    {
-        std::cerr << "BaseWindow::logged() client==NULL" << std::endl;
-        abort();
-    }
+        if(client==NULL)
+        {
+            std::cerr << "BaseWindow::logged() client==NULL" << std::endl;
+            abort();
+        }
     client->sendDatapackContentBase();
     isLogged=true;
     datapackGatewayProgression.clear();
@@ -279,13 +277,11 @@ void BaseWindow::haveCharacter()
 
 void BaseWindow::sendDatapackContentMainSub()
 {
-    #ifndef CATCHCHALLENGER_EXTRA_CHECK
-    if(settings.contains("DatapackHashMain-"+client->datapackPathMain()) &&
-            settings.contains("DatapackHashSub-"+client->datapackPathSub()))
-        client->sendDatapackContentMainSub(settings.value("DatapackHashMain"+client->datapackPathMain()).toByteArray(),
-                                                                             settings.value("DatapackHashSub"+client->datapackPathSub()).toByteArray());
+    if(settings.contains("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())) &&
+            settings.contains("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())))
+        client->sendDatapackContentMainSub(settings.value("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())).toString().toStdString(),
+                settings.value("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())).toString().toStdString());
     else
-    #endif
         client->sendDatapackContentMainSub();
 }
 
