@@ -4,6 +4,7 @@
 #include "../../general/base/Version.h"
 #include "../../general/base/cpp11addition.h"
 #include "ClientVariable.h"
+#include "Ultimate.h"
 
 #include <QNetworkRequest>
 #include <QUrl>
@@ -47,19 +48,10 @@ InternetUpdater::InternetUpdater()
 void InternetUpdater::downloadFile()
 {
     QString catchChallengerVersion;
-    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-    catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
-    #else
-        #ifdef CATCHCHALLENGER_VERSION_SINGLESERVER
-        catchChallengerVersion=QStringLiteral("CatchChallenger SingleServer/%1").arg(CATCHCHALLENGER_VERSION);
-        #else
-            #ifdef CATCHCHALLENGER_VERSION_SOLO
-            catchChallengerVersion=QStringLiteral("CatchChallenger Solo/%1").arg(CATCHCHALLENGER_VERSION);
-            #else
-            catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
-            #endif
-        #endif
-    #endif
+    if(Ultimate::ultimate.isUltimate())
+        catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
+    else
+        catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
     #if defined(_WIN32) || defined(Q_OS_MAC)
     catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(GetOSDisplayString());
     #endif
@@ -143,22 +135,11 @@ bool InternetUpdater::versionIsNewer(const std::string &version)
 
 std::string InternetUpdater::getText(const std::string &version)
 {
-    std::string url;
-    #if !defined(CATCHCHALLENGER_VERSION_ULTIMATE)
-        url="http://catchchallenger.first-world.info/download.html";
-    #else
-        url="http://catchchallenger.first-world.info/shop/";
-    #endif
-        return QStringLiteral("<a href=\"%1\" style=\"text-decoration:none;color:#100;\">%2</a>")
-                .arg(QString::fromStdString(url))
-                .arg(tr("New version: %1").arg("<b>"+QString::fromStdString(version)+"</b>"))
-                .toStdString()+"<br />"+
-                           #if !defined(CATCHCHALLENGER_VERSION_ULTIMATE)
-                               tr("Click here to go on download page").toStdString()
-                           #else
-                               tr("Click here to <b>go to the shop</b> and login. Download the new version <b>into the order details</b>.<br />The new version have been sended <b>by email too</b>, look into your spams if needed.").toStdString()
-                           #endif
-                                                         ;
+    std::string url="http://catchchallenger.first-world.info/download.html";
+    return QStringLiteral("<a href=\"%1\" style=\"text-decoration:none;color:#100;\">%2</a>")
+            .arg(QString::fromStdString(url))
+            .arg(tr("New version: %1").arg("<b>"+QString::fromStdString(version)+"</b>"))
+            .toStdString()+"<br />"+tr("Click here to go on download page").toStdString();
 }
 
 #if defined(_WIN32) || defined(Q_OS_WIN32)

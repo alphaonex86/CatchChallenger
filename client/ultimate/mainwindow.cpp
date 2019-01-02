@@ -3,6 +3,7 @@
 #include "ui_mainwindow.h"
 #include "../base/InternetUpdater.h"
 #include "../base/BlacklistPassword.h"
+#include "../base/Ultimate.h"
 #include <QStandardPaths>
 #include <QNetworkProxy>
 #include <QCoreApplication>
@@ -191,13 +192,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION));
     #endif
 
-    if(!connect(&triggerUltimateCopy,&QTimer::timeout,this,&MainWindow::askForUltimateCopy,Qt::QueuedConnection))
+    QSettings keySettings;
+    if(keySettings.contains(QStringLiteral("key")))
     {
-        std::cerr << "failed: !connect(&triggerUltimateCopy,&QTimer::timeout,this,&MainWindow::askForUltimateCopy): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
-        abort();
+        if(Ultimate::ultimate.setKey(keySettings.value("key").toString().toStdString()))
+            ui->UltimateKey->hide();
     }
-    triggerUltimateCopy.setSingleShot(true);
-    triggerUltimateCopy.start(0);
 }
 
 MainWindow::~MainWindow()
@@ -235,45 +235,23 @@ MainWindow::~MainWindow()
 }
 
 //MS-Windows don't support show modal input into the contructor, then move out it
-void MainWindow::askForUltimateCopy()
+bool MainWindow::askForUltimateCopy()
 {
     //after all to prevent not initialised pointer
-    static bool crackedVersion=false;
-    if(!crackedVersion)
+    QString key=QInputDialog::getText(this,tr("Key"),tr("Give the key of this software, more information on <a href=\"http://catchchallenger.first-world.info/\">catchchallenger.first-world.info</a>"));
+    if(key.isEmpty())
     {
-        while(1)
-        {
-            QSettings keySettings;
-            QString key;
-            if(keySettings.contains(QStringLiteral("key")))
-            {
-                QCryptographicHash hash(QCryptographicHash::Sha224);
-                hash.addData(keySettings.value(QStringLiteral("key")).toString().toUtf8());
-                const QByteArray &result=hash.result();
-                if(!result.isEmpty() && result.at(0)==0x00 && result.at(1)==0x00)
-                    break;
-            }
-            key=QInputDialog::getText(this,tr("Key"),tr("Give the key of this software, more information on <a href=\"http://catchchallenger.first-world.info/\">catchchallenger.first-world.info</a>"));
-            if(key.isEmpty())
-            {
-                //Windows crash: QCoreApplication::quit();->do crash under windows
-                toQuit=true;
-                QCoreApplication::quit();
-                std::cout << "key.isEmpty() for ultimate version: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
-                return;
-            }
-            {
-                QCryptographicHash hash(QCryptographicHash::Sha224);
-                hash.addData(key.toUtf8());
-                const QByteArray &result=hash.result();
-                if(!result.isEmpty() && result.at(0)==0x00 && result.at(1)==0x00)
-                {
-                    keySettings.setValue(QStringLiteral("key"),key);
-                    break;
-                }
-            }
-        }
+        //Windows crash: QCoreApplication::quit();->do crash under windows
+        toQuit=true;
+        QCoreApplication::quit();
+        std::cout << "key.isEmpty() for ultimate version: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        return false;
     }
+    {
+        if(Ultimate::ultimate.setKey(key.toStdString()))
+            ui->UltimateKey->hide();
+    }
+    return false;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -2119,4 +2097,9 @@ void MainWindow::on_showPassword_toggled(bool)
         ui->lineEditPass->setEchoMode(QLineEdit::Normal);
     else
         ui->lineEditPass->setEchoMode(QLineEdit::Password);
+}
+
+void MainWindow::on_UltimateKey_clicked()
+{
+    askForUltimateCopy();
 }

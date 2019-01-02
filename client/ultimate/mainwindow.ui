@@ -52,7 +52,7 @@
        <string notr="true">#datapack{background-image: url(:/images/background.png);}</string>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="mode">
        <property name="styleSheet">
@@ -222,6 +222,13 @@ color: rgb(0, 0, 0);</string>
             </property>
             <property name="openExternalLinks">
              <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="UltimateKey">
+            <property name="text">
+             <string>Ultimate key</string>
             </property>
            </widget>
           </item>

@@ -6,6 +6,7 @@
 #include "../../../general/base/CommonSettingsCommon.h"
 #include "../../../general/base/CommonSettingsServer.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
+#include "../Ultimate.h"
 
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../Audio.h"
@@ -19,13 +20,16 @@ using namespace CatchChallenger;
 
 void BaseWindow::resetAll()
 {
-    #ifndef CATCHCHALLENGER_VERSION_ULTIMATE
-    ui->labelLastReplyTime->hide();
-    ui->labelQueryList->hide();
-    #else
-    ui->labelLastReplyTime->setText(tr("Last reply time: ?"));
-    ui->labelQueryList->setText(tr("Running query: ? Query with worse time: ?"));
-    #endif
+    if(!Ultimate::ultimate.isUltimate())
+    {
+        ui->labelLastReplyTime->hide();
+        ui->labelQueryList->hide();
+    }
+    else
+    {
+        ui->labelLastReplyTime->setText(tr("Last reply time: ?"));
+        ui->labelQueryList->setText(tr("Running query: ? Query with worse time: ?"));
+    }
     datapackGatewayProgression.clear();
     ui->labelSlow->hide();
     ui->frame_main_display_interface_player->hide();
@@ -1099,16 +1103,17 @@ void BaseWindow::updateDisplayedQuests()
             }
             if(i->second.step==0 || i->second.finish_one_time)
             {
-                #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-                html+="<li>";
-                if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i->first).repeatable)
-                    html+=imagesInterfaceRepeatableString;
-                if(i->second.step>0)
-                    html+=imagesInterfaceInProgressString;
-                html+=DatapackClientLoader::datapackLoader.questsExtra.at(i->first).name+"</li>";
-                #else
-                html+="<li>"+DatapackClientLoader::datapackLoader.questsExtra.at(i->first).name+"</li>";
-                #endif
+                if(Ultimate::ultimate.isUltimate())
+                {
+                    html+="<li>";
+                    if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(i->first).repeatable)
+                        html+=imagesInterfaceRepeatableString;
+                    if(i->second.step>0)
+                        html+=imagesInterfaceInProgressString;
+                    html+=DatapackClientLoader::datapackLoader.questsExtra.at(i->first).name+"</li>";
+                }
+                else
+                    html+="<li>"+DatapackClientLoader::datapackLoader.questsExtra.at(i->first).name+"</li>";
             }
         }
         ++i;
@@ -1207,11 +1212,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
         stepRequirements+=tr("Step requirements: ").toStdString()+"<br />"+stringimplode(objects,", ");
     }
     std::string finalRewards;
-    if(questExtra.showRewards
-        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-            || true
-        #endif
-            )
+    if(questExtra.showRewards || Ultimate::ultimate.isUltimate())
     {
         finalRewards+=tr("Final rewards: ").toStdString();
         {
