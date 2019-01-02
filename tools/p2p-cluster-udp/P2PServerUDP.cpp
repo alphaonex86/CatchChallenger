@@ -86,7 +86,7 @@ bool P2PServerUDP::setKey(uint8_t *privatekey/*ED25519_KEY_SIZE*/, uint8_t *ca_p
 
 bool P2PServerUDP::tryListen(const uint16_t &port)
 {
-    int sfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    int sfd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
     //create a UDP socket
     if (sfd == -1)
     {
@@ -98,7 +98,7 @@ bool P2PServerUDP::tryListen(const uint16_t &port)
     sockaddr_in6 si_me;
     memset((char *) &si_me, 0, sizeof(si_me));
 
-    si_me.sin6_family = AF_INET;
+    si_me.sin6_family = AF_INET6;
     si_me.sin6_port = htons(port);
     si_me.sin6_addr = IN6ADDR_ANY_INIT;
 
