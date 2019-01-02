@@ -67,7 +67,7 @@ std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> 
                             if(filedesc!=NULL)
                             {
                                 #ifdef _WIN32
-                                stringreplaceAll(fileName,StaticText::text_antislash,StaticText::text_slash);//remplace if is under windows server
+                                stringreplaceAll(fileName,"\\","/");//remplace if is under windows server
                                 #endif
                                 const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
                                 SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));

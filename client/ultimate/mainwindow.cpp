@@ -1536,7 +1536,7 @@ void MainWindow::downloadFile()
         #endif
     #endif
     #if defined(_WIN32) || defined(Q_OS_MAC)
-    catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(InternetUpdater::GetOSDisplayString());
+    catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(QString::fromStdString(InternetUpdater::GetOSDisplayString()));
     #endif
     catchChallengerVersion+=QStringLiteral(" ")+CATCHCHALLENGER_PLATFORM_CODE;
 
