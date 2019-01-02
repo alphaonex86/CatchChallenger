@@ -2,6 +2,7 @@
 #include "ui_BaseWindow.h"
 #include "../../../general/base/FacilityLib.h"
 #include "../ClientVariable.h"
+#include "../Ultimate.h"
 #include "../../fight/interface/ClientFightEngine.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
@@ -125,9 +126,8 @@ BaseWindow::BaseWindow() :
     currentAmbiance.player=NULL;
     #endif
 
-    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-    ui->label_ultimate->setVisible(false);
-    #endif
+    if(Ultimate::ultimate.isUltimate())
+        ui->label_ultimate->setVisible(false);
     {
         const QList<QByteArray> &supportedImageFormats=QImageReader::supportedImageFormats();
         int index=0;
@@ -290,24 +290,25 @@ BaseWindow::BaseWindow() :
     loadSoundSettings();
     //qInstallMessageHandler(&BaseWindow::customMessageHandler);
 
-    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+    if(Ultimate::ultimate.isUltimate())
     {
-        QFile file(":/images/interface/repeatable.png");
-        if(file.open(QIODevice::ReadOnly))
         {
-            imagesInterfaceRepeatableString=QStringLiteral("<img src=\"data:image/png;base64,%1\" alt=\"Repeatable\" title=\"Repeatable\" />").arg(QString(file.readAll().toBase64())).toStdString();
-            file.close();
+            QFile file(":/images/interface/repeatable.png");
+            if(file.open(QIODevice::ReadOnly))
+            {
+                imagesInterfaceRepeatableString=QStringLiteral("<img src=\"data:image/png;base64,%1\" alt=\"Repeatable\" title=\"Repeatable\" />").arg(QString(file.readAll().toBase64())).toStdString();
+                file.close();
+            }
+        }
+        {
+            QFile file(":/images/interface/in-progress.png");
+            if(file.open(QIODevice::ReadOnly))
+            {
+                imagesInterfaceInProgressString=QStringLiteral("<img src=\"data:image/png;base64,%1\" alt=\"In progress\" title=\"In progress\" />").arg(QString(file.readAll().toBase64())).toStdString();
+                file.close();
+            }
         }
     }
-    {
-        QFile file(":/images/interface/in-progress.png");
-        if(file.open(QIODevice::ReadOnly))
-        {
-            imagesInterfaceInProgressString=QStringLiteral("<img src=\"data:image/png;base64,%1\" alt=\"In progress\" title=\"In progress\" />").arg(QString(file.readAll().toBase64())).toStdString();
-            file.close();
-        }
-    }
-    #endif
 
     #ifndef CATCHCHALLENGER_NOAUDIO
     Audio::audio.setVolume(Options::options.getAudioVolume());
