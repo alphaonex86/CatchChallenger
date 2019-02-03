@@ -808,6 +808,8 @@ void BaseWindow::updateConnectingStatus()
             std::cerr << "void BaseWindow::updateConnectingStatus(): waitedData.isEmpty(), playerInformations.bot_already_beaten==NULL" << std::endl;
             abort();
         }
+        if(Ultimate::ultimate.isUltimate())
+            ui->label_ultimate->setVisible(false);
         mapController->setBotsAlreadyBeaten(playerInformations.bot_already_beaten);
         mapController->setInformations(&playerInformations.items,&playerInformations.quests,&events,&playerInformations.itemOnMap,&playerInformations.plantOnMap);
         client->unloadSelection();

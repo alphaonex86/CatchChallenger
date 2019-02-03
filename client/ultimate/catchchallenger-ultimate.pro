@@ -6,3 +6,12 @@ include(../../server/catchchallenger-server-qt.pri)
 include(specific.pri)
 
 TARGET = catchchallenger-ultimate
+
+FORMS += \
+    AskKey.ui
+
+HEADERS += \
+    AskKey.h
+
+SOURCES += \
+    AskKey.cpp

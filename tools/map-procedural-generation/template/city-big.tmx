@@ -2,7 +2,6 @@
 <map version="1.0" orientation="orthogonal" renderorder="right-down" width="24" height="24" tilewidth="16" tileheight="16" nextobjectid="1">
  <tileset firstgid="1" source="../dest/map/tileset/building-small.tsx"/>
  <tileset firstgid="1025" source="../dest/map/tileset/terra.tsx"/>
- <tileset firstgid="2049" source="../dest/map/tileset/animation.tsx"/>
  <layer name="Walkable" width="24" height="24">
   <data encoding="base64" compression="zlib">
    eJxjYKA9eMNCGzxq/qj5o+aPmj9q/qj5o+YPX/NpCQDkw8XQ
