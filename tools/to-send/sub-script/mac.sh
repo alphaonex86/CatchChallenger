@@ -27,7 +27,7 @@ ssh user@${IPMAC} "mkdir /opt/ > /dev/null 2>&1;mkdir /opt/local/ > /dev/null 2>
 function compil {
     cd ${TEMP_PATH}/
     TARGET=$1
-    FINAL_ARCHIVE="catchchallenger-${TARGET}-mac-os-x-${CATCHCHALLENGER_VERSION}.zip"
+    FINAL_ARCHIVE="catchchallenger-mac-os-x-${CATCHCHALLENGER_VERSION}.zip"
     if [ ! -e ${FINAL_ARCHIVE} ]
     then
         echo "Making Mac zip: ${FINAL_ARCHIVE} ..."
@@ -102,10 +102,11 @@ function compil {
             ssh ${SSHUSER}@${IPMAC} "mkdir /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/datapack/internal/"
             rsync -art ${DATAPACK_SOURCE} ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.app/Contents/MacOS/datapack/internal/
         fi
-        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSION}/clang_64/bin/macdeployqt ${BASEAPPNAME}/;zip -r9 catchchallenger-${TARGET}.zip catchchallenger-${TARGET}.app/ > /dev/null 2>&1"
-        rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger-${TARGET}.zip ${TEMP_PATH}/${FINAL_ARCHIVE}
+        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;mv catchchallenger-${TARGET}.app/ catchchallenger.app/ > /dev/null 2>&1"
+        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSION}/clang_64/bin/macdeployqt catchchallenger.app/;zip -r9 catchchallenger.zip catchchallenger.app/ > /dev/null 2>&1"
+        rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/catchchallenger.zip ${TEMP_PATH}/${FINAL_ARCHIVE}
         if [ ! -e ${FINAL_ARCHIVE} ]; then
-            echo ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSION}/clang_64/bin/macdeployqt ${BASEAPPNAME}/;zip -r9 catchchallenger-${TARGET}.zip catchchallenger-${TARGET}.app/"
+            echo ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/client/${TARGET}/;/Users/user/Qt${QTVERSION}/${QTVERSION}/clang_64/bin/macdeployqt catchchallenger.app/;zip -r9 catchchallenger.zip catchchallenger.app/"
             echo "${FINAL_ARCHIVE} not exists!";
             exit;
         fi
@@ -180,8 +181,8 @@ function compilserver {
         
         rsync -art ${DATAPACK_SOURCE} ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger-${TARGET}.app/Contents/MacOS/datapack/
         rsync -art ${TEMP_PATH}/${TARGET}-mac-os-x/server/databases/catchchallenger.db.sqlite ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger-${TARGET}.app/Contents/MacOS/
-        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Users/user/Qt${QTVERSION}/${QTVERSION}/clang_64/bin/macdeployqt ${BASEAPPNAME}/;zip -r9 catchchallenger-${TARGET}.zip catchchallenger-${TARGET}.app/ > /dev/null 2>&1"
-        rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger-${TARGET}.zip ${TEMP_PATH}/${FINAL_ARCHIVE}
+        ssh ${SSHUSER}@${IPMAC} "cd /Users/${SSHUSER}/Desktop/CatchChallenger/server/;/Users/user/Qt${QTVERSION}/${QTVERSION}/clang_64/bin/macdeployqt ${BASEAPPNAME}/;zip -r9 catchchallenger.zip catchchallenger-${TARGET}.app/ > /dev/null 2>&1"
+        rsync -art ${SSHUSER}@${IPMAC}:/Users/${SSHUSER}/Desktop/CatchChallenger/server/catchchallenger.zip ${TEMP_PATH}/${FINAL_ARCHIVE}
         if [ ! -e ${FINAL_ARCHIVE} ]; then
             echo "${FINAL_ARCHIVE} not exists!";
             exit;
@@ -201,8 +202,6 @@ function compilserver {
     fi
 }
 
-compil "single-player"
 compil "ultimate"
-compil "single-server"
 compilserver "server-cli"
 compilserver "server-gui"

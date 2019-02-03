@@ -126,8 +126,6 @@ BaseWindow::BaseWindow() :
     currentAmbiance.player=NULL;
     #endif
 
-    if(Ultimate::ultimate.isUltimate())
-        ui->label_ultimate->setVisible(false);
     {
         const QList<QByteArray> &supportedImageFormats=QImageReader::supportedImageFormats();
         int index=0;
