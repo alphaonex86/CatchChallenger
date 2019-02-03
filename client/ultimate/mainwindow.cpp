@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <string>
 #include <iostream>
+#include "AskKey.h"
 
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/Version.h"
@@ -238,18 +239,24 @@ MainWindow::~MainWindow()
 bool MainWindow::askForUltimateCopy()
 {
     //after all to prevent not initialised pointer
-    QString key=QInputDialog::getText(this,tr("Key"),tr("Give the key of this software, more information on <a href=\"http://catchchallenger.first-world.info/\">catchchallenger.first-world.info</a>"));
+    AskKey askKey(this);
+    askKey.exec();
+    QString key=askKey.key();
     if(key.isEmpty())
     {
         //Windows crash: QCoreApplication::quit();->do crash under windows
-        toQuit=true;
-        QCoreApplication::quit();
         std::cout << "key.isEmpty() for ultimate version: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         return false;
     }
     {
         if(Ultimate::ultimate.setKey(key.toStdString()))
+        {
             ui->UltimateKey->hide();
+            QSettings keySettings;
+            keySettings.setValue("key",key);
+        }
+        else
+            QMessageBox::critical(this,tr("Error"),tr("The key is wrong"));
     }
     return false;
 }

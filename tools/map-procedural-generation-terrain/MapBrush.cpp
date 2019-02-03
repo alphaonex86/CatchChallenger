@@ -253,15 +253,19 @@ void MapBrush::brushTheMap(Tiled::Map &worldMap, const MapTemplate &selectedTemp
                 const int y_world=selectedTemplate.y+y+object->y();
                 Tiled::MapObject* const newobject=new Tiled::MapObject(object->name(),object->type(),QPoint(x_world,y_world),object->size());
 
-                const unsigned int &tileId=object->cell().tile->id();
-                Tiled::Tileset *oldTileset=object->cell().tile->tileset();
-                Tiled::Tileset *worldTileset=selectedTemplate.templateTilesetToMapTileset.at(oldTileset);
+                Tiled::Tile *tile=object->cell().tile;
+                if(tile!=NULL)
+                {
+                    const unsigned int &tileId=tile->id();
+                    Tiled::Tileset *oldTileset=tile->tileset();
+                    Tiled::Tileset *worldTileset=selectedTemplate.templateTilesetToMapTileset.at(oldTileset);
 
-                Tiled::Cell cell=newobject->cell();
-                cell.tile=worldTileset->tileAt(tileId);
-                newobject->setCell(cell);
-                newobject->setProperties(object->properties());
-                worldLayer->addObject(newobject);
+                    Tiled::Cell cell=newobject->cell();
+                    cell.tile=worldTileset->tileAt(tileId);
+                    newobject->setCell(cell);
+                    newobject->setProperties(object->properties());
+                    worldLayer->addObject(newobject);
+                }
                 index++;
             }
         }

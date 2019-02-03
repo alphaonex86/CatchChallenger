@@ -28,8 +28,6 @@
 #ifdef Q_OS_MAC
 #include <QStringList>
 #include <QFile>
-#include <QDomDocument>
-#include <tinyxml2::XMLElement>
 #endif
 
 InternetUpdater *InternetUpdater::internetUpdater=NULL;
