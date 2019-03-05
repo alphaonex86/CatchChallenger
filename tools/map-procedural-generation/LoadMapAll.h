@@ -1,4 +1,4 @@
-#ifndef LOADMAPALL_H
+﻿#ifndef LOADMAPALL_H
 #define LOADMAPALL_H
 
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"
@@ -85,6 +85,13 @@ public:
         uint8_t maxLevel;
         uint8_t luck;
     };
+    struct RoadBot
+    {
+        uint8_t id;
+        uint8_t look_at;
+        uint8_t skin;
+        unsigned int x,y;
+    };
     struct RoadIndex
     {
         unsigned int roadIndex;
@@ -93,6 +100,23 @@ public:
         uint8_t level;//average zone level
 
         std::vector<RoadMonster> roadMonsters;
+        std::vector<RoadBot> roadBot;
+    };
+    struct RoadPart
+    {
+        RoadPart(unsigned int sx,unsigned int sy,unsigned int dx,unsigned int dy,unsigned int type){
+            this->sx = sx; this->sy = sy; this->dx = dx; this->dy = dy; this->type = type;
+        }
+        // Start point
+        unsigned int sx;
+        unsigned int sy;
+
+        // End Point
+        unsigned int dx;
+        unsigned int dy;
+
+        // Main / Secondary / Other
+        unsigned int type;
     };
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,RoadIndex> > roadCoordToIndex;
     struct Zone
@@ -125,6 +149,12 @@ public:
     static std::vector<Tiled::MapObject*> getDoorsListAndTp(Tiled::Map * map);
     static void addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap, const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
                                  const std::pair<uint8_t,uint8_t> pos, const City &city, const std::string &zone);
+
+    static void addRoadContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
+    static std::vector<RoadPart> constructRandomRoad(unsigned int orientation, unsigned int sx, unsigned int sy, unsigned int dx, unsigned int dy, unsigned int width, unsigned int height, unsigned int type=1);
+    static unsigned int *cleanRoadPath(std::vector<RoadPart> &path, unsigned int width, unsigned int height);
+    static bool checkPathing(unsigned int * map, unsigned int width, unsigned int height, unsigned int sx, unsigned int sy, unsigned int dx, unsigned int dy);
+    static void writeRoadContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
 };
 
 #endif // LOADMAPALL_H
