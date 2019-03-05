@@ -12,9 +12,19 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <algorithm>
 #include <QFileInfo>
 #include <QDir>
 #include <QCoreApplication>
+#include <QDebug>
+
+struct LedgeMarker
+{
+    unsigned int x;
+    unsigned int y;
+    unsigned int length;
+    bool horizontal;
+};
 
 void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap,
                                   const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
@@ -123,8 +133,8 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
                 if(!zone.empty())
                     content+=" zone=\""+QString::fromStdString(zone)+"\"";
                 content+=">\n"
-                "  <name>"+QString::fromStdString(description)+"</name>\n"
-                "</map>";
+                         "  <name>"+QString::fromStdString(description)+"</name>\n"
+                                                                        "</map>";
                 QByteArray contentData(content.toUtf8());
                 xmlinfo.write(contentData.constData(),contentData.size());
                 xmlinfo.close();
@@ -274,7 +284,6 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
     MapBrush::MapTemplate mapTemplatebuilding1;
     MapBrush::MapTemplate mapTemplatebuilding2;
     MapBrush::MapTemplate mapTemplatebuildingbig1;
-    MapBrush::MapTemplate mapTemplategrass;
     if(full)
     {
         loadMapTemplate("building-shop/",mapTemplatebuildingshop,"building-shop",mapWidth,mapHeight,worldMap);
@@ -282,7 +291,6 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
         loadMapTemplate("building-1/",mapTemplatebuilding1,"building-1",mapWidth,mapHeight,worldMap);
         loadMapTemplate("building-2/",mapTemplatebuilding2,"building-2",mapWidth,mapHeight,worldMap);
         loadMapTemplate("building-big-1/",mapTemplatebuildingbig1,"building-big-1",mapWidth,mapHeight,worldMap);
-        loadMapTemplate("",mapTemplategrass,"grass",mapWidth,mapHeight,worldMap);
     }
 
     unsigned int index=0;
@@ -382,123 +390,6 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
         index++;
     }
 
-    //do the path
-    const unsigned int w=worldMap.width()/mapWidth;
-    const unsigned int h=worldMap.height()/mapHeight;
-    {
-        Tiled::TileLayer *waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
-        unsigned int y=0;
-        while(y<h)
-        {
-            unsigned int x=0;
-            while(x<w)
-            {
-                const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
-                if(zoneOrientation!=0)
-                {
-                    const bool isCity=haveCityEntry(citiesCoordToIndex,x,y);
-                    if(zoneOrientation&Orientation_bottom)
-                    {
-                        const unsigned int minX=x*mapWidth+mapWidth/2-2;
-                        const unsigned int maxX=x*mapWidth+mapWidth/2+2;
-                        unsigned int yTile=y*mapHeight+mapHeight/2;
-                        const unsigned int maxYGrass=y*mapHeight+mapHeight-2;
-                        while(yTile<(y+1)*mapHeight)
-                        {
-                            unsigned int xTile=minX;
-                            while(xTile<maxX)
-                            {
-                                const unsigned int &bitMask=xTile+yTile*worldMap.width();
-                                const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
-                                if(bitMask/8>=maxMapSize)
-                                    abort();
-                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
-                                if(full && yTile<maxYGrass && !isCity)
-                                    if(waterLayer->cellAt(xTile,yTile).isEmpty())
-                                        MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
-                                xTile++;
-                            }
-                            yTile++;
-                        }
-                    }
-                    if(zoneOrientation&Orientation_top)
-                    {
-                        const unsigned int minX=x*mapWidth+mapWidth/2-2;
-                        const unsigned int maxX=x*mapWidth+mapWidth/2+2;
-                        unsigned int yTile=y*mapHeight;
-                        const unsigned int minYGrass=y*mapHeight+2;
-                        while(yTile<y*mapHeight+mapHeight/2)
-                        {
-                            unsigned int xTile=minX;
-                            while(xTile<maxX)
-                            {
-                                const unsigned int &bitMask=xTile+yTile*worldMap.width();
-                                const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
-                                if(bitMask/8>=maxMapSize)
-                                    abort();
-                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
-                                if(full && yTile>=minYGrass && !isCity)
-                                    if(waterLayer->cellAt(xTile,yTile).isEmpty())
-                                        MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
-                                xTile++;
-                            }
-                            yTile++;
-                        }
-                    }
-                    if(zoneOrientation&Orientation_left)
-                    {
-                        const unsigned int minX=x*mapWidth;
-                        const unsigned int maxX=x*mapWidth+mapWidth/2;
-                        unsigned int yTile=y*mapHeight+mapHeight/2-2;
-                        const unsigned int minXGrass=x*mapWidth+2;
-                        while(yTile<y*mapHeight+mapHeight/2+2)
-                        {
-                            unsigned int xTile=minX;
-                            while(xTile<maxX)
-                            {
-                                const unsigned int &bitMask=xTile+yTile*worldMap.width();
-                                const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
-                                if(bitMask/8>=maxMapSize)
-                                    abort();
-                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
-                                if(full && xTile>=minXGrass && !isCity)
-                                    if(waterLayer->cellAt(xTile,yTile).isEmpty())
-                                        MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
-                                xTile++;
-                            }
-                            yTile++;
-                        }
-                    }
-                    if(zoneOrientation&Orientation_right)
-                    {
-                        const unsigned int minX=x*mapWidth+mapWidth/2;
-                        const unsigned int maxX=(x+1)*mapWidth;
-                        unsigned int yTile=y*mapHeight+mapHeight/2-2;
-                        const unsigned int maxXGrass=x*mapWidth+mapWidth-2;
-                        while(yTile<y*mapHeight+mapHeight/2+2)
-                        {
-                            unsigned int xTile=minX;
-                            while(xTile<maxX)
-                            {
-                                const unsigned int &bitMask=xTile+yTile*worldMap.width();
-                                const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
-                                if(bitMask/8>=maxMapSize)
-                                    abort();
-                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
-                                if(full && xTile<maxXGrass && !isCity)
-                                    if(waterLayer->cellAt(xTile,yTile).isEmpty())
-                                        MapBrush::brushTheMap(worldMap,mapTemplategrass,xTile,yTile,MapBrush::mapMask);
-                                xTile++;
-                            }
-                            yTile++;
-                        }
-                    }
-                }
-                x++;
-            }
-            y++;
-        }
-    }
     LoadMapAll::deleteMapList(mapTemplateBig);
     LoadMapAll::deleteMapList(mapTemplateMedium);
     LoadMapAll::deleteMapList(mapTemplateSmall);
@@ -509,6 +400,711 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
         LoadMapAll::deleteMapList(mapTemplatebuilding1);
         LoadMapAll::deleteMapList(mapTemplatebuilding2);
         LoadMapAll::deleteMapList(mapTemplatebuildingbig1);
+    }
+}
+
+void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount)
+{
+    const unsigned int mapWidth=worldMap.width()/mapXCount;
+    const unsigned int mapHeight=worldMap.height()/mapYCount;
+    const unsigned int w=worldMap.width()/mapWidth;
+    const unsigned int h=worldMap.height()/mapHeight;
+
+    unsigned int botCount = 0;
+
+    MapBrush::MapTemplate mapTemplategrass;
+    Tiled::TileLayer *waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
+    Tiled::TileLayer *ldownLayer=LoadMap::searchTileLayerByName(worldMap,"LedgesDown");
+    Tiled::TileLayer *lleftLayer=LoadMap::searchTileLayerByName(worldMap,"LedgesLeft");
+    Tiled::TileLayer *lrighLayer=LoadMap::searchTileLayerByName(worldMap,"LedgesRight");
+    Tiled::TileLayer *grassLayer=LoadMap::searchTileLayerByName(worldMap,"Grass");
+    const Tiled::Tileset * const invisibleTileset=LoadMap::searchTilesetByName(worldMap,"invisible");
+    const Tiled::Tileset * const mainTileset=LoadMap::searchTilesetByName(worldMap,"t1.tsx");
+    Tiled::Cell newCell;
+
+    newCell.flippedAntiDiagonally=false;
+    newCell.flippedHorizontally=false;
+    newCell.flippedVertically=false;
+    newCell.tile=invisibleTileset->tileAt(0);
+
+    loadMapTemplate("",mapTemplategrass,"grass",mapWidth,mapHeight,worldMap);
+
+    unsigned int y=0;
+
+    while(y<h)
+    {
+        unsigned int x=0;
+        while(x<w)
+        {
+            // For each chunk
+            // Do the random road gen
+            const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
+            const bool isCity=haveCityEntry(citiesCoordToIndex,x,y);
+
+            if((zoneOrientation&(Orientation_bottom|Orientation_left|Orientation_right|Orientation_top)) != 0 && !isCity){
+
+                unsigned int* map = NULL;
+
+                // Generate road path [normal, grass, normal]
+                for(unsigned int i =0; i<3; i++){
+                    std::vector<RoadPart> roadParts;
+                    unsigned int type = 1;
+
+                    // Random center point
+                    const unsigned int cx = mapWidth/2 + rand() % (mapWidth/4);
+                    const unsigned int cy = mapHeight/2 + rand() % (mapHeight/4);
+
+                    if(i==1) type = 3;
+                    else type = 1;
+
+                    if(zoneOrientation&Orientation_bottom){
+                        auto parts = constructRandomRoad(Orientation_bottom, mapWidth /2, mapHeight+1, cx, cy, mapWidth, mapHeight, type);
+                        roadParts.insert(roadParts.end(), parts.begin(), parts.end());
+                    }
+
+                    if(zoneOrientation&Orientation_top){
+                        auto parts = constructRandomRoad(Orientation_top, mapWidth /2, 0, cx, cy, mapWidth, mapHeight, type);
+                        roadParts.insert(roadParts.end(), parts.begin(), parts.end());
+                    }
+
+                    if(zoneOrientation&Orientation_left){
+                        auto parts = constructRandomRoad(Orientation_left, 0, mapHeight/2, cx, cy, mapWidth, mapHeight, type);
+                        roadParts.insert(roadParts.end(), parts.begin(), parts.end());
+                    }
+
+                    if(zoneOrientation&Orientation_right){
+                        auto parts = constructRandomRoad(Orientation_right, mapWidth+1, mapHeight/2, cx, cy, mapWidth, mapHeight, type);
+                        roadParts.insert(roadParts.end(), parts.begin(), parts.end());
+                    }
+
+                    if(roadParts.size() != 0){
+                        auto cleanMap = cleanRoadPath(roadParts, mapWidth, mapHeight);
+
+                        if(map == NULL){
+                            map = cleanMap;
+                        }else{
+                            unsigned int length = mapWidth / 4 * mapHeight;
+                            for(unsigned int i = 0; i<length; i++){
+                                if(cleanMap[i] != 0)
+                                    map[i] = cleanMap[i];
+                            }
+
+                            delete [] cleanMap;
+                        }
+                    }
+                }
+
+                // Paint the road
+                for(unsigned int dx=0; dx<mapWidth; dx++){
+                    for(unsigned int dy=0; dy<mapHeight; dy++){
+                        const unsigned int tx = dx + mapWidth * x;
+                        const unsigned int ty = dy + mapHeight * y;
+                        const unsigned int type = map[(dx/2) + (dy/2)*(mapWidth/2)];
+
+                        if((type & 0x1) == 0x1) {
+                            const unsigned int &bitMask=tx+ty*worldMap.width();
+                            const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+                            if(bitMask/8>=maxMapSize)
+                                abort();
+                            MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                        }
+
+                        if((type & 0x3) == 0x3 && waterLayer->cellAt(tx,ty).isEmpty()){
+                            MapBrush::brushTheMap(worldMap,mapTemplategrass,tx,ty,MapBrush::mapMask);
+                        }
+                    }
+                }
+
+                // Ledges
+                //*
+                {
+                    unsigned int size = mapHeight * mapWidth / 4;
+                    std::vector<QPoint> entry;
+                    std::vector<LedgeMarker> possibleLedge;
+
+                    // LedgeMarker
+                    int maxX = mapWidth/2-1;
+                    int maxY = mapHeight/2-1;
+
+                    for(int ty=1; ty < maxY; ty++){
+                        for(int tx=1; tx < maxX; tx++){
+                            unsigned int coord = tx + ty*(mapWidth/2);
+
+                            if((map[coord] & 0x1) == 0x1){
+                                int orientation = 0;
+                                int directions = 0;
+
+                                if((map[coord-1] & 0x1) == 0x1){
+                                    orientation |= Orientation_left;
+                                    directions ++;
+                                }
+                                if((map[coord+1] & 0x1) == 0x1){
+                                    orientation |= Orientation_right;
+                                    directions ++;
+                                }
+                                if((map[coord-mapWidth/2] & 0x1) == 0x1){
+                                    orientation |= Orientation_top;
+                                    directions ++;
+                                }
+                                if((map[coord+mapWidth/2] & 0x1) == 0x1){
+                                    orientation |= Orientation_bottom;
+                                    directions ++;
+                                }
+
+                                if(directions == 2){
+                                    if(orientation == (Orientation_left | Orientation_right)){
+                                        LedgeMarker m;
+                                        m.horizontal = true;
+                                        m.x = tx;
+                                        m.y = ty;
+                                        m.length = 1;
+                                        possibleLedge.push_back(m);
+                                    }else if(orientation == (Orientation_top | Orientation_bottom)){
+                                        LedgeMarker m;
+                                        m.horizontal = false;
+                                        m.x = tx;
+                                        m.y = ty;
+                                        m.length = 1;
+                                        possibleLedge.push_back(m);
+                                    }
+                                }else if(directions == 3){
+                                    if(orientation == (Orientation_top | Orientation_bottom | Orientation_right)){
+                                        LedgeMarker m;
+                                        m.horizontal = true;
+                                        m.x = tx;
+                                        m.y = ty;
+                                        m.length = 1;
+
+                                        int dx = tx;
+
+                                        while( dx < maxX){
+                                            if((map[coord+m.length-1-mapWidth/2] & 0x1) == 0x1
+                                                    || (map[coord+m.length-1+mapWidth/2] & 0x1) == 0x1){
+                                                break;
+                                            }
+
+                                            if((map[coord+m.length] & 0xF1) == 0x1){
+                                                possibleLedge.push_back(m);
+                                                break;
+                                            }
+                                            dx++;
+                                            m.length++;
+                                        }
+                                    }else if(orientation == (Orientation_left | Orientation_bottom | Orientation_right)){
+                                        LedgeMarker m;
+                                        m.horizontal = false;
+                                        m.x = tx;
+                                        m.y = ty;
+                                        m.length = 1;
+
+                                        int dy = ty;
+
+                                        while( dy < maxY){
+                                            if((map[coord+(m.length-1)*(mapWidth/2)-1] & 0x1) == 0x1
+                                                    || (map[coord+(m.length-1)*(mapWidth/2)+1] & 0x1) == 0x1){
+                                                break;
+                                            }
+
+                                            if((map[coord+m.length*(mapWidth/2)] & 0xF1) == 0x1){
+                                                possibleLedge.push_back(m);
+                                                break;
+                                            }
+                                            dy++;
+                                            m.length++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    while(!possibleLedge.empty()){
+                        int s = rand() % possibleLedge.size();
+
+                        LedgeMarker m = possibleLedge[s];
+
+                        possibleLedge[s] = possibleLedge[possibleLedge.size()-1];
+                        possibleLedge.pop_back();
+
+                        if(rand() / (float)RAND_MAX > 0.7){
+                            bool cancel = false;
+
+                            for(unsigned int i=0; i<m.length; i++){
+                                if(m.horizontal){
+                                    bool inverted = rand()%2;
+                                    if(inverted){
+                                        map[m.x+(i+m.y)*mapWidth/2] |= 0x10;
+                                        if((map[m.x+(i+m.y)*mapWidth/2-1] & 0x20) == 0x20){
+                                            cancel = true;
+                                            break;
+                                        }
+                                        if((map[m.x+(i+m.y)*mapWidth/2+1] & 0x20) == 0x20){
+                                            cancel = true;
+                                            break;
+                                        }
+                                    }else{
+                                        map[i+m.x+(i+m.y)*mapWidth/2] |= 0x20;
+                                        if((map[m.x+(i+m.y)*mapWidth/2-1] & 0x10) == 0x10){
+                                            cancel = true;
+                                            break;
+                                        }
+                                        if((map[m.x+(i+m.y)*mapWidth/2+1] & 0x10) == 0x10){
+                                            cancel = true;
+                                            break;
+                                        }
+                                    }
+                                }else{
+                                    map[i+m.x+i+m.y*mapWidth/2] |= 0x80;
+                                }
+                            }
+
+                            if(cancel){
+                                if(m.horizontal){
+                                    for(unsigned int i=0; i<m.length; i++){
+                                        map[m.x+(i+m.y)*mapWidth/2] &= ~0xF0;
+                                    }
+                                }else{
+                                    for(unsigned int i=0; i<m.length; i++){
+                                        map[i+m.x+m.y*mapWidth/2] &= ~0xF0;
+                                    }
+                                }
+                            }else if(m.horizontal){
+                                if(!checkPathing(map, mapWidth/2, mapHeight/2, m.x-1, m.y, m.x+1, m.y)
+                                        || !checkPathing(map, mapWidth/2, mapHeight/2, m.x+1, m.y, m.x-1, m.y)){
+                                    for(unsigned int i=0; i<m.length; i++){
+                                        map[m.x+(i+m.y)*mapWidth/2] &= ~0xF0;
+                                    }
+                                }
+                            }else{
+                                if(!checkPathing(map, mapWidth/2, mapHeight/2, m.x, m.y-1, m.x, m.y+1)
+                                        || !checkPathing(map, mapWidth/2, mapHeight/2, m.x, m.y+1, m.x, m.y-1)){
+                                    for(unsigned int i=0; i<m.length; i++){
+                                        map[i+m.x+m.y*mapWidth/2] &= ~0xF0;
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+
+                    Tiled::Cell bottomLedge;
+                    bottomLedge.tile=mainTileset->tileAt(740);
+                    bottomLedge.flippedHorizontally=false;
+                    bottomLedge.flippedVertically=false;
+                    bottomLedge.flippedAntiDiagonally=false;
+
+                    Tiled::Cell leftLedge;
+                    leftLedge.tile=mainTileset->tileAt(808);
+                    leftLedge.flippedHorizontally=false;
+                    leftLedge.flippedVertically=false;
+                    leftLedge.flippedAntiDiagonally=false;
+
+                    Tiled::Cell rightLedge;
+                    rightLedge.tile=mainTileset->tileAt(810);
+                    rightLedge.flippedHorizontally=false;
+                    rightLedge.flippedVertically=false;
+                    rightLedge.flippedAntiDiagonally=false;
+
+                    Tiled::Cell topLedge;
+                    topLedge.tile=mainTileset->tileAt(740);
+                    topLedge.flippedHorizontally=false;
+                    topLedge.flippedVertically=true;
+                    topLedge.flippedAntiDiagonally=false;
+
+                    Tiled::Cell empty;
+                    empty.tile=NULL;
+                    empty.flippedHorizontally=false;
+                    empty.flippedVertically=false;
+                    empty.flippedAntiDiagonally=false;
+
+                    for(unsigned int i = 0; i<size; i++){
+                        unsigned int c = map[i] & 0xF0;
+                        switch (c) {
+                        case 0x10:
+                            lleftLayer->setCell((i*2)%mapWidth+x*mapWidth, y*mapHeight+(i*2)/mapWidth*2+1, leftLedge);
+                            grassLayer->setCell((i*2)%mapWidth+x*mapWidth, y*mapHeight+(i*2)/mapWidth*2+1, empty);
+                            lleftLayer->setCell((i*2)%mapWidth+x*mapWidth, y*mapHeight+(i*2)/mapWidth*2, leftLedge);
+                            grassLayer->setCell((i*2)%mapWidth+x*mapWidth, y*mapHeight+(i*2)/mapWidth*2, empty);
+                            break;
+                        case 0x20:
+                            lrighLayer->setCell((i*2)%mapWidth+x*mapWidth+1, y*mapHeight+(i*2)/mapWidth*2+1, rightLedge);
+                            grassLayer->setCell((i*2)%mapWidth+x*mapWidth+1, y*mapHeight+(i*2)/mapWidth*2+1, empty);
+                            lrighLayer->setCell((i*2)%mapWidth+x*mapWidth+1, y*mapHeight+(i*2)/mapWidth*2, rightLedge);
+                            grassLayer->setCell((i*2)%mapWidth+x*mapWidth+1, y*mapHeight+(i*2)/mapWidth*2, empty);
+                            break;
+                        case 0x40: // Unused
+                            ldownLayer->setCell((i*2)%mapWidth+x*mapWidth, y*mapHeight+(i*2)/mapWidth*2, topLedge);
+                            grassLayer->setCell((i*2)%mapWidth+x*mapWidth, y*mapHeight+(i*2)/mapWidth*2, empty);
+                            ldownLayer->setCell((i*2)%mapWidth+x*mapWidth+1, y*mapHeight+(i*2)/mapWidth*2, topLedge);
+                            grassLayer->setCell((i*2)%mapWidth+x*mapWidth+1, y*mapHeight+(i*2)/mapWidth*2, empty);
+                            break;
+                        case 0x80:
+                            ldownLayer->setCell((i*2)%mapWidth+x*mapWidth, y*mapHeight+(i*2)/mapWidth*2+1, bottomLedge);
+                            grassLayer->setCell((i*2)%mapWidth+x*mapWidth, y*mapHeight+(i*2)/mapWidth*2+1, empty);
+                            ldownLayer->setCell((i*2)%mapWidth+x*mapWidth+1, y*mapHeight+(i*2)/mapWidth*2+1, bottomLedge);
+                            grassLayer->setCell((i*2)%mapWidth+x*mapWidth+1, y*mapHeight+(i*2)/mapWidth*2+1, empty);
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                }//*/
+
+                // Add bots
+                {
+                    Tiled::ObjectGroup *objectLayer=LoadMap::searchObjectGroupByName(worldMap,"Object");
+                    LoadMapAll::RoadIndex &roadIndex=LoadMapAll::roadCoordToIndex.at(x).at(y);
+                    const char* directions[] = {"left", "right", "up", "bottom"};
+                    std::string file = getMapFile(x, y);
+                    std::string filename = file.substr(file.find_last_of('/')+1);
+
+                    for(int i = 0; i<15; i++){
+                        unsigned int ox = rand()%mapWidth;
+                        unsigned int oy = rand()%mapHeight;
+                        unsigned int j = (ox/2) + (oy/2)*(mapWidth/2);
+
+                        if((map[j] & 0x5) == 0x1){
+                            map[j] |= 0x4;
+
+                            RoadBot roadBot;
+                            roadBot.x = ox + x * mapWidth;
+                            roadBot.y = oy + y * mapHeight;
+                            roadBot.id = botCount;
+                            roadBot.look_at = rand()%4;
+                            roadBot.skin = rand()%80;
+                            roadIndex.roadBot.push_back(roadBot);
+
+                            Tiled::MapObject *bot = new Tiled::MapObject("", "bot", QPointF(roadBot.x, roadBot.y), QSizeF(1, 1));
+                            bot->setProperty("file", QString::fromStdString(filename+"-bots"));
+                            bot->setProperty("id", QString::number(roadBot.id));
+                            bot->setProperty("lookAt", directions[roadBot.look_at]);
+                            bot->setProperty("skin", QString::number(roadBot.skin));
+                            bot->setCell(newCell);
+                            objectLayer->addObject(bot);
+
+                            botCount++;
+                        }
+                    }
+                    if(map != NULL) delete []map;
+                }
+            }
+            x++;
+        }
+        y++;
+    }
+    LoadMapAll::deleteMapList(mapTemplategrass);
+}
+
+std::vector<LoadMapAll::RoadPart> LoadMapAll::constructRandomRoad(unsigned int orientation, unsigned int sx, unsigned int sy, unsigned int dx, unsigned int dy, unsigned int width, unsigned int height, unsigned int type){
+    std::vector<LoadMapAll::RoadPart> parts;
+    unsigned int main = 7;
+    unsigned int side = 5;
+    unsigned int step = 2;
+    unsigned int size = 2;
+
+    size --;
+
+    dx = (dx/step)*step;
+    dy = (dy/step)*step;
+    sx = (sx/step)*step;
+    sy = (sy/step)*step;
+
+    if(orientation == Orientation_bottom){ // Bottom
+        while(sy > dy){
+            unsigned int tx;
+            unsigned int ty = sy - (rand() % main)*step-step;
+
+            do{
+                tx = sx + (rand() % side  - side / 2 )* step;
+            }while(tx > width);
+
+            RoadPart p(sx, sy, sx+size, ty+size, type);
+            RoadPart p2(sx, ty, tx+size, ty+size, type);
+
+            parts.push_back(p);
+            parts.push_back(p2);
+
+            sx = tx;
+            sy = ty;
+        }
+    }else if(orientation == Orientation_top){ // Top
+        while(sy < dy){
+            unsigned int tx;
+            unsigned int ty = sy + (rand() % main)*step+step;
+
+            do{
+                tx = sx + (rand() % side - side / 2 ) * step;
+            }while(tx > width);
+
+            RoadPart p(sx, sy, sx+size, ty+size, type);
+            RoadPart p2(sx, ty, tx+size, ty+size, type);
+
+            parts.push_back(p);
+            parts.push_back(p2);
+
+            sx = tx;
+            sy = ty;
+        }
+    }else if(orientation == Orientation_left){ // Left
+        while(sx < dx){
+            unsigned int tx = sx + (rand() % main)*step+step;
+            unsigned int ty;
+
+            do{
+                ty = sy + (rand() % side - side / 2 )*step;
+            }while(ty > height);
+
+            RoadPart p(sx, sy, tx+size, sy+size, type);
+            RoadPart p2(tx, sy, tx+size, ty+size, type);
+
+            parts.push_back(p);
+            parts.push_back(p2);
+
+            sx = tx;
+            sy = ty;
+        }
+    }else if(orientation == Orientation_right){ // Right
+        while(sx > dx){
+            unsigned int tx = sx - (rand() % main)*step-step;
+            unsigned int ty;
+
+            do{
+                ty = sy + (rand() % side - side / 2 )*step;
+            }while(ty > height);
+
+            RoadPart p(sx, sy, tx+size, sy+size, type);
+            RoadPart p2(tx, sy, tx+size, ty+size, type);
+
+            parts.push_back(p);
+            parts.push_back(p2);
+
+            sx = tx;
+            sy = ty;
+        }
+    }
+
+    if(sx - dx > size){
+        parts.push_back(RoadPart(sx, sy, dx+size, sy+size, type));
+    }
+
+    if(sy - dy > size){
+        parts.push_back(RoadPart(sx, sy, sx+size, dy+size, type));
+    }
+
+    return parts;
+}
+
+unsigned int* LoadMapAll::cleanRoadPath(std::vector<RoadPart> &path, unsigned int width, unsigned int height){
+    unsigned int size = 2;
+    width /= size;
+    height /= size;
+    unsigned int* map = new unsigned int[width*height];
+
+    for(unsigned int i=0; i<width*height; i++){
+        map[i] = 0;
+    }
+
+    for(RoadPart p: path){
+        unsigned int sx = p.sx;
+        unsigned int sy = p.sy;
+        unsigned int dx = p.dx;
+        unsigned int dy = p.dy;
+
+        if(dx < sx){
+            unsigned int tmp = sx;
+            sx = dx;
+            dx = tmp;
+        }
+        if(dy < sy){
+            unsigned int tmp = sy;
+            sy = dy;
+            dy = tmp;
+        }
+
+        while(sy <= dy){
+            unsigned int tx = sx;
+            while(tx <= dx){
+                map[(tx/size) + ((unsigned int)(sy/size)*width)] = p.type;
+                tx+=size;
+            }
+            sy+=size;
+        }
+    }
+
+    bool done = false;
+
+    //*
+    while(!done){
+        done = true;
+
+        for(unsigned int x=1; x<width-1; x++){
+            for(unsigned int y=1; y<height-1; y++){
+                if(map[x+(y*width)] != 0){
+                    int neighbour = 0;
+
+                    if(map[x-1+y*width] != 0) neighbour++;
+                    if(map[x+(y-1)*width] != 0) neighbour++;
+                    if(map[x+1+y*width] != 0) neighbour++;
+                    if(map[x+(y+1)*width] != 0) neighbour++;
+
+                    if(neighbour < 2){
+                        done = false;
+                        map[x+(y*width)] = 0;
+                        //qDebug() << "neighbour : "<<neighbour<<x<<y;
+                    }
+                }
+            }
+        }
+    }//*/
+
+    return map;
+}
+
+bool LoadMapAll::checkPathing(unsigned int *map, unsigned int width, unsigned int height, unsigned int sx, unsigned int sy, unsigned int dx, unsigned int dy)
+{
+    bool *valid = new bool[width*height];
+    std::vector<unsigned int> pathLeft;
+    unsigned int target = dx+dy*width;
+
+    for(unsigned int i =0; i<width*height;i++){
+        valid[i] = ((map[i] & 0x1) == 0x1);
+    }
+
+    if(!valid[target]){
+        delete[] valid;
+        return false;
+    }
+
+    int s = 0;
+    pathLeft.push_back(sx+sy*width);
+    valid[pathLeft.at(0)] = false;
+
+    while(!pathLeft.empty()){
+        unsigned int point = pathLeft.at(pathLeft.size()-1);
+        pathLeft.pop_back();
+
+        if(!valid[target]){
+            delete[] valid;
+            return true;
+        }
+
+        if((point%width) != 0 && valid[point-1] && (map[point-1]&0xE0) == 0){
+            valid[point-1] = false;
+            pathLeft.push_back(point-1);
+        }
+        if((point%width) != width-1 && valid[point+1] && (map[point+1]&0xD0) == 0){
+            valid[point+1] = false;
+            pathLeft.push_back(point+1);
+        }
+        if(point>=width && valid[point-width] && (map[point-width]&0xB0) == 0){
+            valid[point-width] = false;
+            pathLeft.push_back(point-width);
+        }
+        if(point+width<width*height && valid[point+width] && (map[point+width]&0x70) == 0){
+            valid[point+width] = false;
+            pathLeft.push_back(point+width);
+        }
+        s++;
+    }
+
+    delete[] valid;
+
+    return false;
+}
+
+void LoadMapAll::writeRoadContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount)
+{
+    const unsigned int mapWidth=worldMap.width()/mapXCount;
+    const unsigned int mapHeight=worldMap.height()/mapYCount;
+    const unsigned int w=worldMap.width()/mapWidth;
+    const unsigned int h=worldMap.height()/mapHeight;
+    unsigned int y=0;
+    unsigned fightId = 0;
+
+    QString fightDir = QCoreApplication::applicationDirPath()+"/dest/map/main/official/fight/";
+
+    if(!QDir(fightDir).exists()){
+        QDir().mkdir(fightDir);
+    }
+
+    while(y<h)
+    {
+        unsigned int x=0;
+        while(x<w)
+        {
+            const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
+            const bool isCity=haveCityEntry(citiesCoordToIndex,x,y);
+
+            if(zoneOrientation != 0 && !isCity){
+                std::string file = getMapFile(x, y);
+                std::string filename = file.substr(file.find_last_of('/')+1); // parent folder + name
+                std::string fightname = file.substr(file.find_last_of('/', file.find_last_of('/')-1)+1); // parent folder + name
+                std::replace( fightname.begin(), fightname.end(), '/', '-');
+
+                QString botxml = "<bots>\n";
+                QString fightxml = "<fights>\n";
+                const LoadMapAll::RoadIndex &roadIndex=LoadMapAll::roadCoordToIndex.at(x).at(y);
+
+                for(RoadBot bot: roadIndex.roadBot){
+                    if(bot.x >= mapWidth*x && bot.x < (x+1)*mapWidth
+                            && bot.y >= mapHeight*y && bot.y < (y+1)*mapHeight
+                            && !roadIndex.roadMonsters.empty()){
+                        int monster = rand()%2 + rand()%3 +1; // Max: 4
+                        int reward = roadIndex.level * 30 + 100;
+                        fightId++;
+
+                        botxml += "<bot id=\"" + QString::number(bot.id) + "\">\n";
+                        botxml += " <name>" + QString::number(bot.id) + "</name>\n";
+                        botxml += " <step fightid=\"" + QString::number(fightId) + "\" id=\"1\" type=\"fight\"/>\n";
+                        botxml += "</bot>\n";
+
+                        fightxml += "<fight id=\""+QString::number(fightId)+"\">\n";
+                        fightxml += " <start><![CDATA[I lost to trainers before you, so I don't mind.]]></start>\n";
+
+                        for(int i = 0; i<monster; i++){
+                            int selected = rand() % roadIndex.roadMonsters.size();
+                            int level = roadIndex.level * (95. + rand()%10) / 100.;
+                            fightxml += " <monster id=\""+QString::number(roadIndex.roadMonsters.at(selected).monsterId)+"\" level=\""+QString::number(level)+"\"/>\n";
+                            reward += level * level;
+                        }
+                        fightxml += " <gain cash=\""+QString::number(reward)+"\"/>\n";
+
+                        fightxml += "</fight>\n";
+                    }
+                }
+
+                botxml += "</bots>";
+                fightxml += "</fights>";
+                QFile botinfo(QString::fromStdString(file+"-bots.xml"));
+                QFile fightinfo(fightDir+QString::fromStdString(fightname)+".xml");
+
+                if(botinfo.open(QFile::WriteOnly))
+                {
+                    QByteArray contentData(botxml.toUtf8());
+                    botinfo.write(contentData.constData(),contentData.size());
+                    botinfo.close();
+                }
+                else
+                {
+                    std::cerr << "Unable to write bot file " << filename << std::endl;
+                    abort();
+                }
+
+                if(fightinfo.open(QFile::WriteOnly))
+                {
+                    QByteArray contentData(fightxml.toUtf8());
+                    fightinfo.write(contentData.constData(),contentData.size());
+                    fightinfo.close();
+                }
+                else
+                {
+                    std::cerr << "Unable to write fight file " << fightname << std::endl;
+                    abort();
+                }
+            }
+            x++;
+        }
+        y++;
     }
 }
 
