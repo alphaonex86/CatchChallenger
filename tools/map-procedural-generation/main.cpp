@@ -140,6 +140,10 @@ int main(int argc, char *argv[])
             QHash<QString,Tiled::Tileset *> cachedTileset;
             LoadMap::addTerrainLayer(tiledMap,dotransition);
             LoadMap::loadAllTileset(cachedTileset,tiledMap);
+
+            Tiled::ObjectGroup *layerObject=new Tiled::ObjectGroup("Object",0,0,tiledMap.width(),tiledMap.height());
+            tiledMap.addLayer(layerObject);
+
             if(displayzone)
             {
                 std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainPolygon;
@@ -175,6 +179,7 @@ int main(int argc, char *argv[])
                 qDebug("mergeDown took %d ms", t.elapsed());
                 t.start();
                 LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount,true);
+                LoadMapAll::addRoadContent(tiledMap,mapXCount,mapYCount);
                 LoadMapAll::addMapChange(tiledMap,mapXCount,mapYCount);
                 qDebug("add city content took %d ms", t.elapsed());
                 TransitionTerrain::changeTileLayerOrder(tiledMap);
@@ -392,6 +397,9 @@ int main(int argc, char *argv[])
             }
         }
         qDebug("Write chunk tmx %d ms", t.elapsed());
+        t.start();
+        LoadMapAll::writeRoadContent(tiledMap, mapXCount, mapYCount);
+        qDebug("Write bots xml %d ms", t.elapsed());
         //do the start point
         QFile start(QCoreApplication::applicationDirPath()+"/dest/map/main/official/start.xml");
         if(start.open(QFile::WriteOnly))
