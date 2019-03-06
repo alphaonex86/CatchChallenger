@@ -752,6 +752,19 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const unsigned int &mapXCo
 
                 // Add bots
                 {
+                    // Resize
+                    unsigned int* real_map = new unsigned int[mapWidth * mapHeight];
+                    int factor = 2;
+
+                    for(int i=0; i<mapWidth/factor*mapHeight/factor; i++){
+                        for(int x = 0; x<factor; x++){
+                            for(int y = 0; y<factor; y++){
+                                real_map[i*factor+x+y*mapWidth] = map[i];
+                            }
+                        }
+                    }
+
+                    // Do the random bots
                     Tiled::ObjectGroup *objectLayer=LoadMap::searchObjectGroupByName(worldMap,"Object");
                     LoadMapAll::RoadIndex &roadIndex=LoadMapAll::roadCoordToIndex.at(x).at(y);
                     const char* directions[] = {"left", "right", "up", "bottom"};
@@ -761,32 +774,56 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const unsigned int &mapXCo
                     for(int i = 0; i<15; i++){
                         unsigned int ox = rand()%mapWidth;
                         unsigned int oy = rand()%mapHeight;
-                        unsigned int j = (ox/2) + (oy/2)*(mapWidth/2);
+                        unsigned int j = ox + oy*mapWidth;
 
-                        if((map[j] & 0x5) == 0x1){
-                            map[j] |= 0x4;
+                        if((real_map[j] & 0xF5) == 0x1){
+                            real_map[j] |= 0x4;
 
-                            RoadBot roadBot;
-                            roadBot.x = ox + x * mapWidth;
-                            roadBot.y = oy + y * mapHeight;
-                            roadBot.id = botCount;
-                            roadBot.look_at = rand()%4;
-                            roadBot.skin = rand()%80;
-                            roadIndex.roadBot.push_back(roadBot);
+                            bool valid = true;
 
-                            Tiled::MapObject *bot = new Tiled::MapObject("", "bot", QPointF(roadBot.x, roadBot.y), QSizeF(1, 1));
-                            bot->setProperty("file", QString::fromStdString(filename+"-bots"));
-                            bot->setProperty("id", QString::number(roadBot.id));
-                            bot->setProperty("lookAt", directions[roadBot.look_at]);
-                            bot->setProperty("skin", QString::number(roadBot.skin));
-                            bot->setCell(newCell);
-                            objectLayer->addObject(bot);
+                            for(int start = 0; j<4; j++){
+                                unsigned int sx = start%2 == 1? ox: ox+2-start;
+                                unsigned int sy = start%2 == 0? oy: oy+3-start;
 
-                            botCount++;
+                                if(real_map[sx + sy*mapWidth] & 0x1){
+                                    for(int dest = 0; dest<4; dest++){
+                                        unsigned int dx = dest%2 == 1? ox: ox+2-dest;
+                                        unsigned int dy = dest%2 == 0? oy: oy+3-dest;
+
+                                        if(start != dest && (real_map[dx + dy*mapWidth] & 0x1) && !checkPathing(real_map, mapWidth, mapHeight, sx, sy, dx, dy)){
+                                            valid = false;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(!valid){
+                                real_map[j] &= ~0x4;
+                            }else{
+                                RoadBot roadBot;
+                                roadBot.x = ox + x * mapWidth;
+                                roadBot.y = oy + y * mapHeight;
+                                roadBot.id = botCount;
+                                roadBot.look_at = rand()%4;
+                                roadBot.skin = rand()%80; // read config for this value
+                                roadIndex.roadBot.push_back(roadBot);
+
+                                Tiled::MapObject *bot = new Tiled::MapObject("", "bot", QPointF(roadBot.x, roadBot.y+1), QSizeF(1, 1));
+                                bot->setProperty("file", QString::fromStdString(filename+"-bots"));
+                                bot->setProperty("id", QString::number(roadBot.id));
+                                bot->setProperty("lookAt", directions[roadBot.look_at]);
+                                bot->setProperty("skin", QString::number(roadBot.skin));
+                                bot->setCell(newCell);
+                                objectLayer->addObject(bot);
+
+                                botCount++;
+                            }
                         }
                     }
-                    if(map != NULL) delete []map;
+                    delete []real_map;
                 }
+
+                delete []map;
             }
             x++;
         }
