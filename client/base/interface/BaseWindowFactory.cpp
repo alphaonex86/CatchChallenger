@@ -3,7 +3,7 @@
 #include "../DatapackClientLoader.h"
 #include "../../../general/base/FacilityLib.h"
 #include "../../../general/base/CommonDatapack.h"
-#include "../base/Ultimate.h"
+#include "../Ultimate.h"
 
 #include <QInputDialog>
 #include <iostream>
