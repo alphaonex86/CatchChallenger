@@ -2,6 +2,9 @@
 #include <QImage>
 #include <QCoreApplication>
 #include <iostream>
+#include "LoadMap.h"
+#include "../../client/tiled/tiled_tile.h"
+#include <QPainter>
 
 #include "VoronioForTiledMapTmx.h"
 
@@ -78,4 +81,29 @@ QImage MiniMap::makeMapTiled(const unsigned int widthMap, const unsigned int hei
         y++;
     }
     return destination;
+}
+
+bool MiniMap::makeMapTerrainOverview()
+{
+    QPixmap miniMapColor(QCoreApplication::applicationDirPath()+"/high-map.png");
+    if(miniMapColor.isNull())
+    {
+        std::cerr << QCoreApplication::applicationDirPath().toStdString() << "/high-map.png" << " is not found or invalid" << std::endl;
+        abort();
+    }
+    unsigned int x=0;
+    while(x<5)
+    {
+        unsigned int y=0;
+        while(y<6)
+        {
+            QPixmap tile=LoadMap::terrainList[x][y].tile->image();
+            tile=tile.scaled(32,32,Qt::IgnoreAspectRatio,Qt::FastTransformation);
+            QPainter painter(&miniMapColor);
+            painter.drawPixmap(80+y*(16+32), 80+x*(16+32), tile);
+            y++;
+        }
+        x++;
+    }
+    return miniMapColor.save(QCoreApplication::applicationDirPath()+"/high-map.png");
 }
