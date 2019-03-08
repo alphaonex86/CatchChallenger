@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
                 t.start();
                 MiniMap::makeMap(heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),miniMapDivisor).save(QCoreApplication::applicationDirPath()+"/miniMapLinear.png","PNG");
                 MiniMap::makeMapTiled(tiledMap.width(),tiledMap.height()).save(QCoreApplication::applicationDirPath()+"/miniMapPixel.png","PNG");
+                MiniMap::makeMapTerrainOverview();
                 qDebug("dominimap %d ms", t.elapsed());
             }
             if(dovegetation)
