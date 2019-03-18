@@ -1,4 +1,4 @@
-#ifndef LOADMAPALL_H
+﻿#ifndef LOADMAPALL_H
 #define LOADMAPALL_H
 
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"
@@ -7,6 +7,8 @@
 #include "../../general/base/cpp11addition.h"
 #include "../map-procedural-generation-terrain/MapBrush.h"
 #include "../map-procedural-generation-terrain/znoise/headers/Simplex.hpp"
+
+#include "SettingsAll.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -67,6 +69,7 @@ public:
     static std::vector<City> cities;
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,unsigned int> > citiesCoordToIndex;
     static uint8_t *mapPathDirection;
+    static unsigned int **roadData;
     struct Road
     {
         std::vector<std::pair<uint16_t,uint16_t> > coords;
@@ -85,6 +88,13 @@ public:
         uint8_t maxLevel;
         uint8_t luck;
     };
+    struct RoadBot
+    {
+        uint8_t id;
+        uint8_t look_at;
+        uint8_t skin;
+        unsigned int x,y;
+    };
     struct RoadIndex
     {
         unsigned int roadIndex;
@@ -93,6 +103,7 @@ public:
         uint8_t level;//average zone level
 
         std::vector<RoadMonster> roadMonsters;
+        std::vector<RoadBot> roadBot;
     };
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,RoadIndex> > roadCoordToIndex;
     struct Zone
@@ -100,6 +111,15 @@ public:
         std::string name;
     };
     static std::unordered_map<std::string,Zone> zones;
+
+    struct RoadMountain
+    {
+        QString terrain;
+        QString layer;
+        QString tile;
+        QString tsx;
+    };
+    static RoadMountain mountain;
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
@@ -125,6 +145,23 @@ public:
     static std::vector<Tiled::MapObject*> getDoorsListAndTp(Tiled::Map * map);
     static void addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap, const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
                                  const std::pair<uint8_t,uint8_t> pos, const City &city, const std::string &zone);
+
+    /**
+     * @brief addRoadContent Populate road between the city
+     * @param worldMap The world map
+     * @param mapXCount Number of chunk in a row
+     * @param mapYCount Number of chunk in a column
+     * @param doledge should we do ledge
+     * @param ledgeLeft Tile id for left ledge
+     * @param ledgeRight Tile id for right ledge
+     * @param ledgeBottom Tile id for bottom ledge
+     * @param ledgeChance Chance to create a ledge in a available space
+     */
+    static void generateRoadContent(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting);
+    static void addRoadContent(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting);
+    static void cleanRoadPath(unsigned int *map, unsigned int width, unsigned int height);
+    static bool checkPathing(unsigned int * map, unsigned int width, unsigned int height, unsigned int sx, unsigned int sy, unsigned int dx, unsigned int dy);
+    static void writeRoadContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
 };
 
 #endif // LOADMAPALL_H
