@@ -8,6 +8,8 @@
 #include "../map-procedural-generation-terrain/MapBrush.h"
 #include "../map-procedural-generation-terrain/znoise/headers/Simplex.hpp"
 
+#include "SettingsAll.h"
+
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -67,6 +69,7 @@ public:
     static std::vector<City> cities;
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,unsigned int> > citiesCoordToIndex;
     static uint8_t *mapPathDirection;
+    static unsigned int **roadData;
     struct Road
     {
         std::vector<std::pair<uint16_t,uint16_t> > coords;
@@ -102,28 +105,21 @@ public:
         std::vector<RoadMonster> roadMonsters;
         std::vector<RoadBot> roadBot;
     };
-    struct RoadPart
-    {
-        RoadPart(unsigned int sx,unsigned int sy,unsigned int dx,unsigned int dy,unsigned int type){
-            this->sx = sx; this->sy = sy; this->dx = dx; this->dy = dy; this->type = type;
-        }
-        // Start point
-        unsigned int sx;
-        unsigned int sy;
-
-        // End Point
-        unsigned int dx;
-        unsigned int dy;
-
-        // Main / Secondary / Other
-        unsigned int type;
-    };
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,RoadIndex> > roadCoordToIndex;
     struct Zone
     {
         std::string name;
     };
     static std::unordered_map<std::string,Zone> zones;
+
+    struct RoadMountain
+    {
+        QString terrain;
+        QString layer;
+        QString tile;
+        QString tsx;
+    };
+    static RoadMountain mountain;
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
@@ -150,9 +146,20 @@ public:
     static void addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap, const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,
                                  const std::pair<uint8_t,uint8_t> pos, const City &city, const std::string &zone);
 
-    static void addRoadContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
-    static std::vector<RoadPart> constructRandomRoad(unsigned int orientation, unsigned int sx, unsigned int sy, unsigned int dx, unsigned int dy, unsigned int width, unsigned int height, unsigned int type=1);
-    static unsigned int *cleanRoadPath(std::vector<RoadPart> &path, unsigned int width, unsigned int height);
+    /**
+     * @brief addRoadContent Populate road between the city
+     * @param worldMap The world map
+     * @param mapXCount Number of chunk in a row
+     * @param mapYCount Number of chunk in a column
+     * @param doledge should we do ledge
+     * @param ledgeLeft Tile id for left ledge
+     * @param ledgeRight Tile id for right ledge
+     * @param ledgeBottom Tile id for bottom ledge
+     * @param ledgeChance Chance to create a ledge in a available space
+     */
+    static void generateRoadContent(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting);
+    static void addRoadContent(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting);
+    static void cleanRoadPath(unsigned int *map, unsigned int width, unsigned int height);
     static bool checkPathing(unsigned int * map, unsigned int width, unsigned int height, unsigned int sx, unsigned int sy, unsigned int dx, unsigned int dy);
     static void writeRoadContent(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
 };
