@@ -3,9 +3,10 @@ include(../../client/tiled/tiled.pri)
 TEMPLATE = app
 TARGET = map-procedural-generation-terrain
 
-QMAKE_CXXFLAGS+="-std=c++0x -g"
+QMAKE_CXXFLAGS+="-g"
 QMAKE_CFLAGS += -fno-omit-frame-pointer -g
 QMAKE_CXXFLAGS += -fno-omit-frame-pointer -g
+CONFIG -= c++14
 
 DEFINES += TILED_ZLIB
 LIBS += -lz
