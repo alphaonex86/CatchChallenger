@@ -10,8 +10,7 @@ SOURCES += \
     LoadMapAll.cpp \
     LoadMapCity.cpp \
     PartialMap.cpp \
-    MiniMapAll.cpp \
-    LoadMapRoad.cpp
+    MiniMapAll.cpp
 
 HEADERS += \
     SettingsAll.h \

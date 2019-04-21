@@ -39,24 +39,35 @@ int main(int argc, char *argv[])
         QFile::copy(":/settings.xml",QCoreApplication::applicationDirPath()+"/settings.xml");
     QSettings settings(QCoreApplication::applicationDirPath()+"/settings.xml",QSettings::NativeFormat);
     Settings::putDefaultSettings(settings);
-    Settings::Setting config;
-    Settings::populateSettings(settings, config);
-    srand(config.seed);
+    unsigned int mapWidth;
+    unsigned int mapHeight;
+    unsigned int mapXCount;
+    unsigned int mapYCount;
+    unsigned int seed;
+    float scale_TerrainMap;
+    float scale_TerrainMoisure;
+    float scale_Zone;
+    float miniMapDivisor;
+    bool displayzone,dotransition,dovegetation,dominimap;
+    unsigned int tileStep;
+    Settings::loadSettings(settings,mapWidth,mapHeight,mapXCount,mapYCount,seed,displayzone,dotransition,dovegetation,tileStep,scale_TerrainMap,scale_TerrainMoisure,
+                           scale_Zone,dominimap,miniMapDivisor);
+    srand(seed);
 
     {
-        const unsigned int totalWidth=config.mapWidth*config.mapXCount;
-        const unsigned int totalHeight=config.mapHeight*config.mapYCount;
+        const unsigned int totalWidth=mapWidth*mapXCount;
+        const unsigned int totalHeight=mapHeight*mapYCount;
         t.start();
-        const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,config.seed,30*config.mapXCount*config.mapYCount*config.scale_Zone,VoronioForTiledMapTmx::SCALE);
+        const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,seed,30*mapXCount*mapYCount*scale_Zone,VoronioForTiledMapTmx::SCALE);
         qDebug("generateGrid took %d ms", t.elapsed());
 
-        const float noiseMapScaleMoisure=0.005f/((config.mapXCount+config.mapYCount)/2)*config.scale_TerrainMoisure*((config.mapXCount+config.mapYCount)/2);
-        const float noiseMapScaleMap=0.005f/((config.mapXCount+config.mapYCount)/2)*config.scale_TerrainMap*((config.mapXCount+config.mapYCount)/2);
-        Simplex heighmap(config.seed+500);
-        Simplex moisuremap(config.seed+5200);
+        const float noiseMapScaleMoisure=0.005f/((mapXCount+mapYCount)/2)*scale_TerrainMoisure*((mapXCount+mapYCount)/2);
+        const float noiseMapScaleMap=0.005f/((mapXCount+mapYCount)/2)*scale_TerrainMap*((mapXCount+mapYCount)/2);
+        Simplex heighmap(seed+500);
+        Simplex moisuremap(seed+5200);
 
         t.start();
-        VoronioForTiledMapTmx::voronoiMap=VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,config.tileStep);
+        VoronioForTiledMapTmx::voronoiMap=VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,tileStep);
         VoronioForTiledMapTmx::voronoiMap1px=VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,1);
         if(VoronioForTiledMapTmx::voronoiMap.zones.size()!=grid.size())
             abort();
@@ -65,10 +76,9 @@ int main(int argc, char *argv[])
         {
             Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth,totalHeight,16,16);
             QHash<QString,Tiled::Tileset *> cachedTileset;
-            LoadMap::addTerrainLayer(tiledMap,config.dotransition);
+            LoadMap::addTerrainLayer(tiledMap,dotransition);
             LoadMap::loadAllTileset(cachedTileset,tiledMap);
-
-            if(config.displayzone)
+            if(displayzone)
             {
                 std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainPolygon;
                 Tiled::ObjectGroup *layerZoneWaterPolygon=LoadMap::addDebugLayer(tiledMap,arrayTerrainPolygon,true);
@@ -82,7 +92,7 @@ int main(int argc, char *argv[])
                 LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),0,0,false);
                 qDebug("Add terrain took %d ms", t.elapsed());
                 MapBrush::initialiseMapMask(tiledMap);
-                if(config.dotransition)
+                if(dotransition)
                 {
                     t.start();
                     TransitionTerrain::addTransitionGroupOnMap(tiledMap);
@@ -94,16 +104,15 @@ int main(int argc, char *argv[])
                 qDebug("mergeDown took %d ms", t.elapsed());
                 TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
-            if(config.dominimap)
+            if(dominimap)
             {
                 t.start();
-                MiniMap::makeMap(heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),config.miniMapDivisor).save(QCoreApplication::applicationDirPath()+"/miniMapLinear.png","PNG");
+                MiniMap::makeMap(heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),miniMapDivisor).save(QCoreApplication::applicationDirPath()+"/miniMapLinear.png","PNG");
                 MiniMap::makeMapTiled(tiledMap.width(),tiledMap.height()).save(QCoreApplication::applicationDirPath()+"/miniMapPixel.png","PNG");
                 MiniMap::makeMapTerrainOverview();
                 qDebug("dominimap %d ms", t.elapsed());
             }
-
-            if(config.dovegetation)
+            if(dovegetation)
             {
                 t.start();
                 MapPlants::addVegetation(tiledMap,VoronioForTiledMapTmx::voronoiMap);
@@ -115,13 +124,13 @@ int main(int argc, char *argv[])
                 tiledMap.addLayer(layerZoneChunk);
 
                 unsigned int mapY=0;
-                while(mapY<config.mapYCount)
+                while(mapY<mapYCount)
                 {
                     unsigned int mapX=0;
-                    while(mapX<config.mapXCount)
+                    while(mapX<mapXCount)
                     {
                         Tiled::MapObject *object = new Tiled::MapObject(QString::number(mapX)+","+QString::number(mapY),"",QPointF(0,0), QSizeF(0.0,0.0));
-                        object->setPolygon(QPolygonF(QRectF(mapX*config.mapWidth,mapY*config.mapHeight,config.mapWidth,config.mapHeight)));
+                        object->setPolygon(QPolygonF(QRectF(mapX*mapWidth,mapY*mapHeight,mapWidth,mapHeight)));
                         object->setShape(Tiled::MapObject::Polygon);
                         layerZoneChunk->addObject(object);
                         mapX++;
@@ -130,10 +139,7 @@ int main(int argc, char *argv[])
                 }
                 layerZoneChunk->setVisible(false);
             }
-
-
-            Tiled::MapWriter maprwriter;
-            maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/main/official/all.tmx");
+            Tiled::MapWriter maprwriter;maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/main/official/all.tmx");
         }
         //do tmx split
     }
