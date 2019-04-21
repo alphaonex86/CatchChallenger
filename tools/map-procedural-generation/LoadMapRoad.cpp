@@ -5,6 +5,7 @@
 #include "../../client/tiled/tiled_tileset.h"
 #include "../../client/tiled/tiled_tile.h"
 #include "../../client/tiled/tiled_objectgroup.h"
+#include "../../client/tiled/tiled_mapwriter.h"
 
 #include <iostream>
 #include <algorithm>
@@ -13,8 +14,10 @@
 
 #include <QDir>
 #include <QCoreApplication>
+#include <QSettings>
 
 unsigned int ** LoadMapAll::roadData = NULL;
+int LoadMapAll::botId = 0;
 LoadMapAll::RoadMountain LoadMapAll::mountain;
 
 struct LedgeMarker
@@ -41,6 +44,19 @@ struct ZoneMarker
     int neightbourg;
 };
 
+class ZoneSorter {
+public:
+    ZoneSorter(int w, int h):w(w), h(h){}
+
+    bool operator()(ZoneMarker* &a, ZoneMarker* &b) const
+    {
+        return abs(a->x-w)+abs(a->y-h) < abs(b->x-w)+abs(b->y-h);
+    }
+private:
+    int w;
+    int h;
+};
+
 void findAreaMarker(ZoneMarker *marker, const unsigned int &mapw, unsigned int* area){
     unsigned int w = marker->x+marker->w;
     unsigned int h = marker->y+marker->h;
@@ -55,7 +71,7 @@ void findAreaMarker(ZoneMarker *marker, const unsigned int &mapw, unsigned int* 
     }
 }
 
-void placeZones(unsigned int* map, unsigned int w, unsigned int h, unsigned int orientation, Tiled::Map &worldMap, unsigned int shiftX, unsigned int shiftY, const SettingsAll::SettingsExtra &setting){
+std::vector<ZoneMarker*> placeZones(unsigned int* map, unsigned int w, unsigned int h, unsigned int orientation, const SettingsAll::SettingsExtra &setting){
     std::vector<ZoneMarker*> zones = std::vector<ZoneMarker*>();
 
     unsigned int* area = new unsigned int[w*h]; // All diffrents area
@@ -143,7 +159,7 @@ void placeZones(unsigned int* map, unsigned int w, unsigned int h, unsigned int 
 
     if(zones.size() == 0){
         delete [] area;
-        return;
+        return std::vector<ZoneMarker*>();
     } else if(zones.size() == 1){
         zones.push_back(new ZoneMarker(w/2-1, h/2-1, 2, 2, id++, 0, 0xFF));
         findAreaMarker(zones.at(zones.size()-1), w, area);
@@ -502,35 +518,8 @@ void placeZones(unsigned int* map, unsigned int w, unsigned int h, unsigned int 
         delete toCheck;
     }
 
-    // If can join all the path
-    Tiled::ObjectGroup *objectLayer=LoadMap::searchObjectGroupByName(worldMap,"Object");
-
-    for(unsigned int x = 0; x<w; x++){
-        for(unsigned int y = 0; y<h; y++){
-            map[x+y*w] = 0;
-        }
-    }
-
-    for(const ZoneMarker *marker: zones){
-        Tiled::MapObject *region = new Tiled::MapObject("", "region", QPointF(marker->x*2+shiftX, marker->y*2+shiftY), QSizeF(marker->w*2, marker->h*2));
-        region->setProperty("id", QString::number(marker->id));
-        region->setProperty("from", QString::number(marker->from));
-        region->setProperty("type", QString::number(marker->type));
-        region->setProperty("neightbourg", QString::number(marker->neightbourg));
-        objectLayer->addObject(region);
-
-        //std::cout << marker.id << " " << (marker.x*2+shiftX)*16 << ":" << (marker.y*2+shiftY)*16 << " - " << marker.w*32 << "x" << marker.h*32 <<  " " << marker.x<< ":" << marker.y<<std::endl;
-
-        for(int x = marker->x; x<marker->x+marker->w; x++){
-            for(int y = marker->y; y<marker->y+marker->h; y++){
-                map[x+y*w] = marker->type;
-            }
-        }
-    }
-
-    //std::cout << "region data " << id << " <-> " << zones.size() << std::endl;
-
     delete [] area;
+    return zones;
 }
 
 LoadMap::Terrain* searchWater(){
@@ -563,9 +552,20 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
     LoadMapAll::roadData = new unsigned int*[w*h];
     Tiled::TileLayer *colliLayer=LoadMap::searchTileLayerByName(worldMap,"Collisions");
     Tiled::TileLayer *waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
+    Tiled::Tileset *invis = LoadMap::searchTilesetByName(worldMap, "invisible");
     LoadMap::Terrain* water = searchWater();
 
     Tiled::Cell waterTile = Tiled::Cell();
+    MapBrush::MapTemplate mapTemplatebuildingshop;
+    MapBrush::MapTemplate mapTemplatebuildingheal;
+    MapBrush::MapTemplate mapTemplatebuilding1;
+    MapBrush::MapTemplate mapTemplatebuilding2;
+    MapBrush::MapTemplate mapTemplatebuildingbig1;
+    loadMapTemplate("building-shop/",mapTemplatebuildingshop,"building-shop",mapWidth,mapHeight,worldMap);
+    loadMapTemplate("building-heal/",mapTemplatebuildingheal,"building-heal",mapWidth,mapHeight,worldMap);
+    loadMapTemplate("building-1/",mapTemplatebuilding1,"building-1",mapWidth,mapHeight,worldMap);
+    loadMapTemplate("building-2/",mapTemplatebuilding2,"building-2",mapWidth,mapHeight,worldMap);
+    loadMapTemplate("building-big-1/",mapTemplatebuildingbig1,"building-big-1",mapWidth,mapHeight,worldMap);
 
     if(water != NULL && water->tile != NULL){
         waterTile.tile = water->tile;
@@ -605,7 +605,216 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                 }
 
                 // Step 2: place the random zone
-                placeZones(map, scaleWidth, scaleHeight, zoneOrientation, worldMap, x*mapWidth, y*mapHeight, setting);
+                std::vector<ZoneMarker*> zones = placeZones(map, scaleWidth, scaleHeight, zoneOrientation, setting);
+
+                // If can join all the path
+                for(unsigned int x = 0; x<scaleWidth; x++){
+                    for(unsigned int y = 0; y<scaleHeight; y++){
+                        map[x+y*scaleWidth] = 0;
+                    }
+                }
+                Tiled::ObjectGroup *objectLayer=LoadMap::searchObjectGroupByName(worldMap,"Object");
+
+                if(isCity){
+                    for(ZoneMarker *marker: zones){
+                        if(marker->type != 0 && marker->type != 4){
+                            marker->type = 1;
+                        }
+                    }
+                }
+
+                for(const ZoneMarker *marker: zones){
+                    for(int x = marker->x; x<marker->x+marker->w; x++){
+                        for(int y = marker->y; y<marker->y+marker->h; y++){
+                            map[x+y*scaleWidth] = marker->type;
+                        }
+                    }
+                }
+
+                if(isCity){
+                    // City building
+                    QList<MapBrush::MapTemplate> templates = QList<MapBrush::MapTemplate>();
+
+                    templates.push_back(mapTemplatebuildingheal);
+
+                    if(rand()%2)
+                        templates.push_back(mapTemplatebuildingshop);
+
+                    int building = rand()%4 + 2;
+
+                    for(int i=0; i<building; i++){
+                        switch (rand()%3) {
+                        case 0:
+                            templates.push_back(mapTemplatebuilding1);
+                            break;
+                        case 1:
+                            templates.push_back(mapTemplatebuilding2);
+                            break;
+                        case 2:
+                            templates.push_back(mapTemplatebuildingbig1);
+                            break;
+                        }
+                    }
+
+                    std::sort(zones.begin(), zones.end(), ZoneSorter(scaleWidth, scaleHeight));
+                    City *city = NULL;
+
+                    for(City &c: cities){
+                        if(c.x == x && c.y == y)
+                            city = &c;
+                    }
+
+                    if(city != NULL){
+                        LoadMapAll::RoomSettings rs;
+                        {
+                            std::vector<SettingsAll::Furnitures> tables{};
+                            std::vector<SettingsAll::Furnitures> exits{};
+                            std::vector<SettingsAll::Furnitures> down{};
+                            std::vector<SettingsAll::Furnitures> up{};
+
+                            for(SettingsAll::Furnitures f: setting.room.furnitures){
+                                if(f.tags.contains("table", Qt::CaseInsensitive)){
+                                    tables.push_back(f);
+                                }
+                                if(f.tags.contains("exit", Qt::CaseInsensitive)){
+                                    exits.push_back(f);
+                                }
+                                if(f.tags.contains("stair-down", Qt::CaseInsensitive)){
+                                    down.push_back(f);
+                                }
+                                if(f.tags.contains("stair-up", Qt::CaseInsensitive)){
+                                    up.push_back(f);
+                                }
+                            }
+
+                            if(!tables.empty()){
+                                rs.table = tables.at(rand()%tables.size());
+                            }else{
+                                std::cerr << "No table in furniture" << std::endl;
+                                abort();
+                            }
+
+                            if(!exits.empty()){
+                                rs.exit = exits.at(rand()%exits.size());
+                            }else{
+                                std::cerr << "No exit in furniture" << std::endl;
+                                abort();
+                            }
+
+                            if(!down.empty()){
+                                rs.stairDown = down.at(rand()%down.size());
+                            }else{
+                                std::cerr << "No stair-down in furniture" << std::endl;
+                                abort();
+                            }
+
+                            if(!up.empty()){
+                                rs.stairUp = up.at(rand()%up.size());
+                            }else{
+                                std::cerr << "No stair-up in furniture" << std::endl;
+                                abort();
+                            }
+                        }
+                        rs.wall = setting.room.walls.at(rand()%setting.room.walls.size());
+                        rs.floor = setting.room.floors.at(rand()%setting.room.floors.size());
+
+                        const std::string &cityLowerCaseName=LoadMapAll::lowerCase(city->name);
+
+                        std::vector<std::pair<uint8_t, uint8_t>> startingPoint {};
+
+                        if((zoneOrientation & LoadMapAll::Orientation_bottom) != 0){
+                            startingPoint.push_back(std::pair<uint8_t, uint8_t>(scaleWidth/2, scaleHeight-1));
+                        }
+                        if((zoneOrientation & LoadMapAll::Orientation_left) != 0){
+                            startingPoint.push_back(std::pair<uint8_t, uint8_t>(0, scaleHeight/2));
+                        }
+                        if((zoneOrientation & LoadMapAll::Orientation_right) != 0){
+                            startingPoint.push_back(std::pair<uint8_t, uint8_t>(scaleWidth-1, scaleHeight/2));
+                        }
+                        if((zoneOrientation & LoadMapAll::Orientation_top) != 0){
+                            startingPoint.push_back(std::pair<uint8_t, uint8_t>(scaleWidth/2, 0));
+                        }
+
+                        int buildingId=1;
+
+                        for(MapBrush::MapTemplate &temp: templates){
+                            int i;
+                            int limit = 500;
+                            for(i=0; i<limit; i++){
+                                double index = rand() / (double) RAND_MAX;
+                                ZoneMarker* zone = zones[(1-index*index)*zones.size()];
+
+                                if(zone->type == 1){
+                                    bool valid= true;
+                                    std::pair<uint8_t,uint8_t> pos(zone->x*scale + rand()%(zone->w*scale ), zone->y*scale+ rand()%(zone->h*scale ));
+                                    //std::pair<uint8_t,uint8_t> pos(rand() % setting.mapWidth, rand() % setting.mapHeight);
+                                    unsigned int bx = pos.first/scale;
+                                    unsigned int by = pos.second/scale;
+
+                                    if(bx+ceil((double)temp.width/scale) < scaleWidth
+                                            && by+ceil((double)temp.height/scale) < scaleHeight){
+                                        for(unsigned int tx = bx; tx<bx+ceil((double)temp.width/scale); tx++){
+                                            for(unsigned int ty = by; ty<by+ceil((double)temp.height/scale); ty++){
+                                                if(map[tx+ty*scaleWidth]!= 1){
+                                                    valid =false;
+                                                }
+                                            }
+                                        }
+                                    }else{
+                                        valid = false;
+                                    }
+
+                                    if(valid){
+                                        for(unsigned int tx = bx; tx<bx+ceil((double)temp.width/scale); tx++){
+                                            for(unsigned int ty = by; ty<by+ceil((double)temp.height/scale); ty++){
+                                                map[tx+ty*scaleWidth] = 0;
+                                            }
+                                        }
+
+
+                                        for(std::pair<uint8_t,uint8_t> zone1: startingPoint){
+                                            for(std::pair<uint8_t,uint8_t> zone2: startingPoint){
+                                                if(zone1 != zone2 && !checkPathing(map, scaleWidth, scaleHeight, zone1.first, zone1.second, zone2.first, zone2.second)){
+                                                    valid = false;
+                                                }
+                                            }
+                                        }
+
+                                        if(valid){
+                                            if(temp.name != mapTemplatebuildingheal.name && temp.name != mapTemplatebuildingshop.name){
+                                                generateRoom(worldMap, temp, buildingId++, x, y, pos, *city, cityLowerCaseName, setting, rs);
+                                            }else{
+                                                addBuildingChain(temp.name,temp.name, temp, worldMap, x, y, mapWidth, mapHeight, pos, *city, cityLowerCaseName);
+                                            }
+                                            zone->type = 5;
+                                            for(unsigned int tx = bx; tx<bx+ceil((double)temp.width/scale); tx++){
+                                                for(unsigned int ty = by; ty<by+ceil((double)temp.height/scale); ty++){
+                                                    map[tx+ty*scaleWidth] = 5;
+                                                }
+                                            }
+                                            break;
+                                        }
+
+                                        zone->type = 1;
+
+                                        for(unsigned int tx = bx; tx<bx+ceil((double)temp.width/scale); tx++){
+                                            for(unsigned int ty = by; ty<by+ceil((double)temp.height/scale); ty++){
+                                                map[tx+ty*scaleWidth] = 1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(i >= limit && temp.name == mapTemplatebuildingheal.name){
+                                Tiled::ObjectGroup* moving = LoadMap::searchObjectGroupByName(worldMap, "Moving");
+                                Tiled::MapObject* rescue = new Tiled::MapObject("", "rescue", QPointF((x+.5)*mapWidth, (y+.5)*mapHeight), QSizeF(1,1));
+                                rescue->setCell(Tiled::Cell(invis->tileAt(1)));
+                                moving->addObject(rescue);
+                            }
+                        }
+                    }
+                }
 
                 // Paint the road
                 for(unsigned int dx=0; dx<mapWidth; dx++){
@@ -619,11 +828,42 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         }
                     }
                 }
+
+                if(setting.displayregion){
+                    for(const ZoneMarker *marker: zones){
+                        Tiled::MapObject *region = new Tiled::MapObject("", "region", QPointF(marker->x*2+mapWidth*x, marker->y*2+mapHeight*y), QSizeF(marker->w*2, marker->h*2));
+                        region->setProperty("id", QString::number(marker->id));
+                        region->setProperty("from", QString::number(marker->from));
+                        region->setProperty("type", QString::number(marker->type));
+                        region->setProperty("neightbourg", QString::number(marker->neightbourg));
+                        objectLayer->addObject(region);
+                    }
+                }
+
+                for(ZoneMarker* zone: zones){
+                    delete zone;
+                }
+
+                zones.clear();
+
+                /*
+                if(isCity){
+                    Tiled::MapObject* rescue = new Tiled::MapObject("", "rescue", QPointF((0.5+x)*mapWidth, (0.5+y)*mapHeight), QSizeF(1,1));
+                    rescue->setCell(Tiled::Cell(invisibleTileset->tileAt(1)));
+
+                    movingLayer->addObject(rescue);
+                }
+                */
             }
             x++;
         }
         y++;
     }
+    LoadMapAll::deleteMapList(mapTemplatebuildingshop);
+    LoadMapAll::deleteMapList(mapTemplatebuildingheal);
+    LoadMapAll::deleteMapList(mapTemplatebuilding1);
+    LoadMapAll::deleteMapList(mapTemplatebuilding2);
+    LoadMapAll::deleteMapList(mapTemplatebuildingbig1);
 }
 
 bool checkEmptyRoad( const SettingsAll::SettingsExtra &setting, int tx, int ty){
@@ -752,9 +992,8 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
         QStringList grassData = str.split("->");
 
         if(grassData.size() == 2){
-            QStringList tiledata = grassData.at(1).split("/");
-            Tiled::Cell grassCell = Tiled::Cell(LoadMap::searchTilesetByName(worldMap, tiledata[0] )->tileAt(tiledata[1].toInt()));
-            grassTiles[grassData.at(0).toStdString()] = grassCell;
+            Tiled::Tile* tile = fetchTile(worldMap, grassData[1]);
+            grassTiles[grassData.at(0).toStdString()] = Tiled::Cell(tile);
         }else{
             std::cerr << "Invalid settings [grassData] " << str.toStdString() << std::endl;
         }
@@ -781,13 +1020,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                 QStringList tileData = str.split("->");
 
                 if(tileData.size() == 2){
-                    QStringList sourcedata = tileData.at(0).split("/");
-                    QStringList targetdata = tileData.at(1).split("/");
-                    Tiled::Tile* sourceCell = LoadMap::searchTilesetByName(worldMap, sourcedata[0] )->tileAt(sourcedata[1].toInt());
-                    Tiled::Tile* targetCell = LoadMap::searchTilesetByName(worldMap, targetdata[0] )->tileAt(targetdata[1].toInt());
-
-                    walkway.push_back(QPair<Tiled::Tile*, Tiled::Tile*>(sourceCell, targetCell));
-                }else{
+                    walkway.push_back(QPair<Tiled::Tile*, Tiled::Tile*>(fetchTile(worldMap, tileData[0]), fetchTile(worldMap, tileData[1])));
                 }
             }
         }
@@ -1103,7 +1336,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
 
                     // Do the random bots
                     LoadMapAll::RoadIndex &roadIndex=LoadMapAll::roadCoordToIndex.at(x).at(y);
-                    const char* directions[] = {"left", "right", "up", "bottom"};
+                    const char* directions[] = {"left", "right", "top", "bottom"};
                     std::string file = getMapFile(x, y);
                     std::string filename = file.substr(file.find_last_of('/')+1);
 
@@ -1135,7 +1368,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 RoadBot roadBot;
                                 roadBot.x = ox + x * mapWidth;
                                 roadBot.y = oy + y * mapHeight;
-                                roadBot.id = botCount;
+                                roadBot.id = botId++;
                                 roadBot.look_at = rand()%4;
                                 roadBot.skin = rand()%80; // read config for this value
                                 roadIndex.roadBot.push_back(roadBot);
@@ -1309,7 +1542,7 @@ void LoadMapAll::writeRoadContent(Tiled::Map &worldMap, const unsigned int &mapX
     const unsigned int w=worldMap.width()/mapWidth;
     const unsigned int h=worldMap.height()/mapHeight;
     unsigned int y=0;
-    unsigned fightId = 0;
+    int fightId = 0;
 
     QString fightDir = QCoreApplication::applicationDirPath()+"/dest/map/main/official/fight/";
 
@@ -1395,5 +1628,450 @@ void LoadMapAll::writeRoadContent(Tiled::Map &worldMap, const unsigned int &mapX
             x++;
         }
         y++;
+    }
+}
+
+Tiled::Tile *LoadMapAll::fetchTile(Tiled::Map &worldMap, QString data)
+{
+    QStringList tileData = data.split("/");
+
+    if(tileData.size() == 2){
+        Tiled::Tileset* ts = LoadMap::searchTilesetByName(worldMap, tileData[0]);
+
+        if(tileData[1].toInt() >= ts->tileCount()){
+            std::cout << "tile invalid " << ts->name().toStdString() << "\\" << tileData[1].toInt() << std::endl;
+        }
+
+        return ts->tileAt(tileData[1].toInt());
+    }else{
+        std::cerr << "Invalid settings [fetchTile] " << data.toStdString() << std::endl;
+        return NULL;
+    }
+}
+
+void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate &mapTemplate, const unsigned int id, const uint32_t &x, const uint32_t &y,
+                              const std::pair<uint8_t, uint8_t> pos, const City &city, const std::string &zone,  const SettingsAll::SettingsExtra &setting, RoomSettings &roomSettings)
+{
+    //search the brush door and retarget
+    std::unordered_map<Tiled::MapObject*,Tiled::Properties> oldValue;
+    std::vector<Tiled::MapObject*> mainDoors=getDoorsListAndTp(mapTemplate.tiledMap);
+    std::vector<Tiled::MapObject*> doors{};
+    std::vector<Tiled::Map *> otherMap;
+    int w = mapTemplate.tiledMap->width()+4;
+    int h = mapTemplate.tiledMap->height()+4;
+    unsigned int index=0;
+
+    QString name = "building-"+QString::number(id);
+    unsigned int floorCount = 1 + ((double)rand()/RAND_MAX)*1.337;
+    if(mainDoors.size() > 0){
+        for(unsigned int i=0; i<floorCount; i++){
+            Tiled::Map* room = new Tiled::Map(mapTemplate.tiledMap->orientation(),
+                                              w, h,
+                                              mapTemplate.tiledMap->tileWidth(), mapTemplate.tiledMap->tileHeight());
+
+            roomSettings.id = i;
+            roomSettings.hasFloorDown = (i!=0);
+            roomSettings.hasFloorUp = (i!=floorCount-1);
+            generateRoomContent(*room, setting, roomSettings);
+            otherMap.push_back(room);
+
+            room->setProperty("floor-id", QString::number(i));
+        }
+    }
+
+    while(index<(unsigned int)mainDoors.size())
+    {
+        Tiled::MapObject* object=mainDoors.at(index);
+        Tiled::Properties properties=object->properties();
+        oldValue[object]=object->properties();
+        if(otherMap.size()>1)
+            properties["map"]=name+"/"+"floor-0";
+        else
+            properties["map"]=name;
+        properties["x"]=QString::number(w/2);
+        properties["y"]=QString::number(h-1);
+        object->setProperties(properties);
+        index++;
+    }
+    MapBrush::brushTheMap(worldMap,mapTemplate,x*setting.mapWidth+pos.first,y*setting.mapHeight+pos.second,MapBrush::mapMask,true);
+    index=0;
+    while(index<(unsigned int)mainDoors.size())//reset to the old value
+    {
+        Tiled::MapObject* object=mainDoors.at(index);
+        object->setProperties(oldValue.at(object));
+        index++;
+    }
+    doors.clear();
+    //search next hop door and retarget
+    {
+        unsigned int indexMap=0;
+        while(indexMap<otherMap.size())
+        {
+            std::vector<Tiled::MapObject*> doorsLocale=getDoorsListAndTp(otherMap.at(indexMap));
+            doors.insert(doors.end(),doorsLocale.begin(),doorsLocale.end());
+            unsigned int index=0;
+            while(index<(unsigned int)doorsLocale.size())
+            {
+                Tiled::MapObject* object=doorsLocale.at(index);
+                Tiled::Properties properties=object->properties();
+                oldValue[object]=properties;
+                if(object->name() == "exit")
+                {
+                    if(otherMap.size()>1)
+                        properties["map"]="../"+QString::fromStdString(LoadMapAll::lowerCase(city.name));
+                    else
+                        properties["map"]=QString::fromStdString(LoadMapAll::lowerCase(city.name));
+
+                    Tiled::MapObject* door = mainDoors.at(rand()%mainDoors.size());
+
+                    properties["x"]=QString::number(door->x()+pos.first);
+                    properties["y"]=QString::number(door->y()+pos.second);
+
+                    object->setProperties(properties);
+                    object->setName("");
+                }
+                index++;
+            }
+            indexMap++;
+        }
+    }
+    //write all next hop
+    index=0;
+    while(index<(unsigned int)otherMap.size())
+    {
+        Tiled::Map *nextHopMap=otherMap.at(index);
+        Tiled::Properties properties=nextHopMap->properties();
+        std::string filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+name.toStdString()+".tmx";
+        if(otherMap.size()>1)
+            filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+name.toStdString()+"/floor-"+std::to_string(index)+".tmx";
+
+        QFileInfo fileInfo(QCoreApplication::applicationDirPath()+QString::fromStdString(filePath));
+        QDir mapDir(fileInfo.absolutePath());
+        if(!mapDir.mkpath(fileInfo.absolutePath()))
+        {
+            std::cerr << "Unable to create path: " << fileInfo.absolutePath().toStdString() << std::endl;
+            abort();
+        }
+        Tiled::MapWriter maprwriter;
+        nextHopMap->setProperties(Tiled::Properties());
+        if(!maprwriter.writeMap(nextHopMap,fileInfo.absoluteFilePath()))
+        {
+            std::cerr << "Unable to write " << fileInfo.absoluteFilePath().toStdString() << std::endl;
+            abort();
+        }
+        nextHopMap->setProperties(properties);
+
+        {
+            QString xmlPath(fileInfo.absoluteFilePath());
+            xmlPath.remove(xmlPath.size()-4,4);
+            xmlPath+=".xml";
+            QFile xmlinfo(xmlPath);
+            if(xmlinfo.open(QFile::WriteOnly))
+            {
+                QString content("<map");
+                if(properties.contains("type"))
+                    content+=" type=\""+properties.value("type")+"\"";
+                if(!zone.empty())
+                    content+=" zone=\""+QString::fromStdString(zone)+"\"";
+                content+=">\n"
+                         "  <name>floor-"+QString::number(index)+"</name>\n"
+                                                                        "</map>";
+                QByteArray contentData(content.toUtf8());
+                xmlinfo.write(contentData.constData(),contentData.size());
+                xmlinfo.close();
+            }
+            else
+            {
+                std::cerr << "Unable to write " << xmlPath.toStdString() << std::endl;
+                abort();
+            }
+        }
+        index++;
+    }
+    //reset next hop
+    {
+        unsigned int index=0;
+        while(index<(unsigned int)doors.size())//reset to the old value
+        {
+            Tiled::MapObject* object=doors.at(index);
+            object->setProperties(oldValue.at(object));
+            index++;
+        }
+    }
+
+    // Write bots files
+    for(Tiled::Map* room: otherMap){
+        Tiled::ObjectGroup* npcs = LoadMap::searchObjectGroupByName(*room, "Object");
+
+        if(npcs->objectCount() > 0){
+            const int i = room->property("floor-id").toInt();
+
+            QString botpath;
+
+            if(floorCount > 1){
+                botpath = name+"-bot";
+            }else{
+                botpath = "floor-"+QString::number(i)+"-bot";
+            }
+
+
+            std::string filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+name.toStdString()+"-bot.xml";
+
+            if(floorCount > 1){
+                filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+name.toStdString()+"/floor-"+std::to_string(i)+"-bot.xml";
+            }
+
+            QFile xmlinfo(QCoreApplication::applicationDirPath()+QString::fromStdString(filePath));
+            QString content("<bots>");
+
+            for(Tiled::MapObject* npc: npcs->objects()){
+
+                if(npc->type() == "bot"){
+                    Tiled::Properties properties = npc->properties();
+
+                    properties["file"] = botpath;
+
+                    content += "\n\t<bot id=\""+properties["id"]+"\">";
+                    content += "\n\t\t<name>"+properties["id"]+"</name>";
+                    content += "\n\t\t<step id=\"1\" type=\"text\"><![CDATA[";
+                    content += QString::fromStdString(setting.npcMessage.at(rand()%setting.npcMessage.size()));
+                    content += "]]></step>";
+                    content += "\n\t</bot>";
+                }
+            }
+
+            if(xmlinfo.open(QFile::WriteOnly))
+            {
+                content+= "\n</bots>";
+                QByteArray contentData(content.toUtf8());
+                xmlinfo.write(contentData.constData(),contentData.size());
+                xmlinfo.close();
+            }
+            else
+            {
+                std::cerr << "Unable to write " << filePath << std::endl;
+                abort();
+            }
+        }
+
+        delete room;
+    }
+    doors.clear();
+}
+
+void LoadMapAll::generateRoomContent(Tiled::Map &roomMap, const SettingsAll::SettingsExtra &setting, const RoomSettings& roomSettings)
+{
+    SettingsAll::RoomSetting room = setting.room;
+
+    for(QString tileset: room.tilesets){
+        QStringList tilesetdata = tileset.split("->");
+        Tiled::Tileset* t;
+
+        if(tilesetdata.size() == 2){
+            t = LoadMap::readTileset(QString(tilesetdata.at(1)), &roomMap);
+            t->setName(tilesetdata.at(0));
+        }else{
+            t=LoadMap::readTileset(QString(tileset), &roomMap);
+        }
+    }
+
+    Tiled::TileLayer* walkable = new Tiled::TileLayer("Walkable", 0, 0, roomMap.width(), roomMap.height());
+    Tiled::TileLayer* RSLayer;
+    SettingsAll::RoomStructure wall = roomSettings.wall;
+
+    roomMap.addLayer(walkable);
+    roomMap.addLayer(new Tiled::TileLayer("OnGrass", 0, 0, roomMap.width(), roomMap.height()));
+    roomMap.addLayer(new Tiled::TileLayer("Collisions", 0, 0, roomMap.width(), roomMap.height()));
+    roomMap.addLayer(new Tiled::TileLayer("WalkBehind", 0, 0, roomMap.width(), roomMap.height()));
+    roomMap.addLayer(new Tiled::ObjectGroup("Moving", 0, 0, roomMap.width(), roomMap.height()));
+    roomMap.addLayer(new Tiled::ObjectGroup("Object", 0, 0, roomMap.width(), roomMap.height()));
+    RSLayer = LoadMap::searchTileLayerByName(roomMap, wall.layer);
+
+    // Generate wall & floor
+    {
+        Tiled::Tile* floor = fetchTile(roomMap, roomSettings.floor);
+
+        for(int x=0; x<roomMap.width(); x++){
+            for(int y=0; y<roomMap.height(); y++){
+                if(y < wall.height){
+                    RSLayer->setCell(x, y, Tiled::Cell(fetchTile(roomMap, wall.tiles[x%wall.width+y%wall.height*wall.width])));
+                }else{
+                    walkable->setCell(x, y, Tiled::Cell(floor));
+                }
+            }
+        }
+    }
+
+    // Generate table in the center
+    {
+        SettingsAll::Furnitures table = roomSettings.table;
+        int tx=(roomMap.width()-table.width)/2;
+        int ty=(roomMap.height()+wall.height-table.height)/2;
+
+        placeRoomFurniture(roomMap, table, tx, ty);
+    }
+
+    // Generate exit door
+    if(roomSettings.id == 0){
+        SettingsAll::Furnitures exitDoor = roomSettings.exit;
+        int tx=(roomMap.width()-exitDoor.width)/2;
+        int ty=roomMap.height()-exitDoor.height;
+        placeRoomFurniture(roomMap, exitDoor, tx, ty);
+    }
+
+    // Random Furnitures
+    {
+        std::random_shuffle ( room.limitations.begin(), room.limitations.end() );
+        bool* spots = new bool[roomMap.width()];
+        memset(spots, false, roomMap.width());
+
+        if(roomSettings.hasFloorDown || roomSettings.hasFloorUp){
+            for(int i=roomMap.width()-4; i< roomMap.width(); i++){
+                spots[i] = true;
+            }
+        }
+
+        if(roomSettings.hasFloorDown && roomSettings.hasFloorUp){
+            for(int i=0; i< 4; i++){
+                spots[i] = true;
+            }
+
+            placeRoomFurniture(roomMap, roomSettings.stairDown, 2, wall.height);
+            placeRoomFurniture(roomMap, roomSettings.stairUp, roomMap.width()-roomSettings.stairUp.width, wall.height);
+        }else if(roomSettings.hasFloorDown){
+            placeRoomFurniture(roomMap, roomSettings.stairDown, roomMap.width()-4, wall.height);
+        }else if(roomSettings.hasFloorUp){
+            placeRoomFurniture(roomMap, roomSettings.stairUp, roomMap.width()-roomSettings.stairUp.width, wall.height);
+        }
+
+        for(SettingsAll::FurnituresLimitations limitation : room.limitations){
+            int count = limitation.min;
+            std::vector<SettingsAll::Furnitures> availables{};
+
+            for(int i=limitation.min; i<limitation.max; i++){
+                if((double)rand()/RAND_MAX < limitation.chance) count++;
+            }
+
+            for(SettingsAll::Furnitures f: room.furnitures){
+                if(f.tags.contains(limitation.tag, Qt::CaseInsensitive)){
+                    availables.push_back(f);
+                }
+            }
+
+            if(count > 0 && availables.size() > 0){
+                for(int i=0; i<count; i++){
+                    SettingsAll::Furnitures f = availables.at(rand()%availables.size());
+
+                    for(int j=0; j<4; j++) // Try 4 times to place it
+                    {
+                        int fx = rand()%roomMap.width()+f.offsetX;
+                        bool valid = true;
+                        if(fx+f.width < roomMap.width()){
+                            for(int x=0; x<f.width; x++){
+                                if(x+fx<0 || x+fx>=roomMap.width() || spots[x+fx]){
+                                    valid = false;
+                                    break;
+                                }
+                            }
+                        }else{
+                            valid = false;
+                        }
+
+                        if(valid){
+                            placeRoomFurniture(roomMap, f, fx-f.offsetX, wall.height);
+
+                            for(int x=0; x<f.width; x++){
+                                spots[x+fx]=true;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        delete [] spots;
+    }
+
+    for(Tiled::Tileset* t: roomMap.tilesets()){
+        if(roomSettings.hasFloorDown || roomSettings.hasFloorUp){
+            t->setFileName("../../"+t->fileName());
+        }else{
+            t->setFileName("../"+t->fileName());
+        }
+    }
+
+    {
+        Tiled::ObjectGroup* moving = LoadMap::searchObjectGroupByName(roomMap, "Moving");
+
+        for(Tiled::MapObject* door: moving->objects()){
+            Tiled::Properties properties = door->properties();
+
+            if(door->name() != "exit"){
+                if(door->name()=="stair-up"){
+                    properties["map"] = "floor-"+QString::number(roomSettings.id+1);
+                    properties["x"] = QString::number(roomMap.width()-4+roomSettings.stairDown.width);
+                    properties["y"] = QString::number(wall.height);
+                }else{
+                    properties["map"] = "floor-"+QString::number(roomSettings.id-1);
+                    properties["x"] = QString::number(roomMap.width()-roomSettings.stairUp.width);
+                    properties["y"] = QString::number(wall.height);
+                }
+                door->setName("");
+            }else{
+                properties["map"] = "exit";
+            }
+            door->setProperties(properties);
+        }
+    }
+
+    {
+        Tiled::ObjectGroup* npcs = LoadMap::searchObjectGroupByName(roomMap, "Object");
+        std::vector<QString> directions {"top", "bottom", "left", "right"};
+
+        for(Tiled::MapObject* npc: npcs->objects()){
+
+            if(npc->type() == "bot"){
+                Tiled::Properties properties = npc->properties();
+                if(((double) rand() / RAND_MAX) <= properties.value("chance", "1").toFloat()){
+                    properties.remove("chance");
+
+                    if(!properties.contains("lookAt")){
+                        properties["lookAt"] = directions[rand()%4];
+                    }
+                    if(!properties.contains("skin")){
+                        properties["skin"] = QString::number(rand()%100);
+                    }
+                    properties["id"] = QString::number(botId++);
+
+                    npc->setProperties(properties);
+                }else{
+                    npcs->removeObject(npc);
+                }
+            }
+        }
+    }
+}
+
+void LoadMapAll::placeRoomFurniture(Tiled::Map &roomMap, const SettingsAll::Furnitures &furnitures, int x, int y)
+{
+    x+= furnitures.offsetX;
+    y+= furnitures.offsetY;
+
+    if(!furnitures.templatePath.isEmpty()){
+        MapBrush::MapTemplate furnitureTemplate;
+        loadMapTemplate("",furnitureTemplate, furnitures.templatePath, roomMap.width(), roomMap.height(), roomMap);
+        MapBrush::brushTheMap(roomMap, furnitureTemplate, x, y, NULL, true);
+        LoadMapAll::deleteMapList(furnitureTemplate);
+    }
+
+    if(!furnitures.tiles.empty()){
+        Tiled::TileLayer* RSLayer = LoadMap::searchTileLayerByName(roomMap, furnitures.layer);
+
+        for(int tx=0; tx<furnitures.width; tx++){
+            for(int ty=0; ty<furnitures.height; ty++){
+                RSLayer->setCell(x+tx, y+ty, Tiled::Cell(fetchTile(roomMap, furnitures.tiles[tx+ty*furnitures.width])));
+            }
+        }
     }
 }

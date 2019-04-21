@@ -280,6 +280,12 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
     tiledMap.addLayer(layerZoneOnGrass3);
     Tiled::TileLayer *layerZoneGrass=new Tiled::TileLayer("Grass",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneGrass);
+    Tiled::TileLayer *layerZoneLedgesDown=new Tiled::TileLayer("LedgesDown",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneLedgesDown);
+    Tiled::TileLayer *layerZoneLedgesLeft=new Tiled::TileLayer("LedgesLeft",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneLedgesLeft);
+    Tiled::TileLayer *layerZoneLedgesRight=new Tiled::TileLayer("LedgesRight",0,0,tiledMap.width(),tiledMap.height());
+    tiledMap.addLayer(layerZoneLedgesRight);
     Tiled::TileLayer *layerZoneCollisions=new Tiled::TileLayer("Collisions",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneCollisions);
     Tiled::TileLayer *layerZoneWalkBehind=new Tiled::TileLayer("WalkBehind",0,0,tiledMap.width(),tiledMap.height());
@@ -461,6 +467,16 @@ Tiled::Tileset *LoadMap::searchTilesetByName(const Tiled::Map &tiledMap,const QS
         tilesetIndex++;
     }
     std::cerr << "Unable to found layer with name: " << name.toStdString() << std::endl;
+    std::cerr << std::endl << "Available names: " << std::endl;
+
+    tilesetIndex = 0;
+    while(tilesetIndex<(unsigned int)tiledMap.tilesetCount())
+    {
+        Tiled::Tileset * const layer=tiledMap.tilesetAt(tilesetIndex);
+        std::cerr << " - " << layer->name().toStdString() << std::endl;
+        tilesetIndex++;
+    }
+
     abort();
 }
 
