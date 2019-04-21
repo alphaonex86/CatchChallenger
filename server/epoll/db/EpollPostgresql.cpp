@@ -683,7 +683,7 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
     if(events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
     {
         started=false;
-        if(EPOLLRDHUP)
+        if(events == EPOLLRDHUP)
         {
             std::cerr << "Database disconnected, try reconnect: " << errorMessage() << std::endl;
             syncDisconnect();

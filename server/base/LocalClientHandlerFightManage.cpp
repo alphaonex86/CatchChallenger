@@ -53,12 +53,22 @@ bool Client::learnSkillByMonsterPosition(const uint8_t &monsterPosition, const u
     {
         switch(direction)
         {
-            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
             case Direction_look_at_top:
             case Direction_look_at_right:
             case Direction_look_at_bottom:
             case Direction_look_at_left:
             direction=lookToMove(direction);
+            break;
+            default:
+            break;
+        }
+        switch(direction)
+        {
+            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
+            case Direction_look_at_top:
+            case Direction_look_at_right:
+            case Direction_look_at_bottom:
+            case Direction_look_at_left:
             case Direction_move_at_top:
             case Direction_move_at_right:
             case Direction_move_at_bottom:
@@ -143,6 +153,17 @@ void Client::heal()
             case Direction_look_at_bottom:
             case Direction_look_at_left:
             direction=lookToMove(direction);
+            break;
+            default:
+            return;
+        }
+        switch(direction)
+        {
+            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
+            case Direction_look_at_top:
+            case Direction_look_at_right:
+            case Direction_look_at_bottom:
+            case Direction_look_at_left:
             case Direction_move_at_top:
             case Direction_move_at_right:
             case Direction_move_at_bottom:
@@ -256,6 +277,17 @@ void Client::requestFight(const uint16_t &fightId)
             case Direction_look_at_bottom:
             case Direction_look_at_left:
             direction=lookToMove(direction);
+            break;
+            default:
+            return;
+        }
+        switch(direction)
+        {
+            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
+            case Direction_look_at_top:
+            case Direction_look_at_right:
+            case Direction_look_at_bottom:
+            case Direction_look_at_left:
             case Direction_move_at_top:
             case Direction_move_at_right:
             case Direction_move_at_bottom:
