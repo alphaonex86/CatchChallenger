@@ -1,5 +1,6 @@
 #include "SettingsAll.h"
 #include "../map-procedural-generation-terrain/LoadMap.h"
+#include "LoadMapAll.h"
 
 #include <iostream>
 #include <QFile>
@@ -11,6 +12,8 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
     //do tile to zone converter
     if(!settings.contains("displaycity"))
         settings.setValue("displaycity",false);
+    if(!settings.contains("displayregion"))
+        settings.setValue("displayregion",false);
     if(!settings.contains("scale_City"))
         settings.setValue("scale_City",1.0);
     if(!settings.contains("doallmap"))
@@ -26,6 +29,75 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
     if(!settings.contains("levelmapmax"))
         settings.setValue("levelmapmax",50);
 
+    settings.beginGroup("road");
+    settings.beginGroup("ledge");
+    if(!settings.contains("doledge"))
+        settings.setValue("doledge",true);
+    if(!settings.contains("ledgeleft"))
+        settings.setValue("ledgeleft",808);
+    if(!settings.contains("ledgeright"))
+        settings.setValue("ledgeright",810);
+    if(!settings.contains("ledgebottom"))
+        settings.setValue("ledgebottom",740);
+    if(!settings.contains("ledgechance"))
+        settings.setValue("ledgechance",0.7);
+    if(!settings.contains("tsx"))
+        settings.setValue("tsx","tileset/t1.tsx");
+    settings.endGroup();
+
+    settings.beginGroup("bot");
+    if(!settings.contains("dobot"))
+        settings.setValue("dobot",true);
+    if(!settings.contains("maxbot"))
+        settings.setValue("maxbot",15);
+    if(!settings.contains("maxskin"))
+        settings.setValue("maxskin", 100);
+    if(!settings.contains("cashbase"))
+        settings.setValue("cashbase", 100);
+    if(!settings.contains("cashexp"))
+        settings.setValue("cashexp", 1.5);
+    if(!settings.contains("cashmonster"))
+        settings.setValue("cashmonster", 0.2);
+    settings.endGroup();
+
+    settings.beginGroup("region");
+    if(!settings.contains("grass"))
+        settings.setValue("grass", "");
+    if(!settings.contains("extratileset"))
+        settings.setValue("extratileset", "");
+    if(!settings.contains("mountain_terrain"))
+        settings.setValue("mountain_terrain", "");
+    if(!settings.contains("mountain_layer"))
+        settings.setValue("mountain_layer", "Collisions");
+    if(!settings.contains("mountain_tile"))
+        settings.setValue("mountain_tile", "");
+    if(!settings.contains("mountain_tsx"))
+        settings.setValue("mountain_tsx", "");
+    if(!settings.contains("walkway"))
+        settings.setValue("walkway", "");
+    if(!settings.contains("waterchance"))
+        settings.setValue("waterchance", 0.4);
+    if(!settings.contains("initialregion"))
+        settings.setValue("initialregion", 300);
+    if(!settings.contains("walkwayregion"))
+        settings.setValue("walkwayregion", 20);
+    if(!settings.contains("retrymax"))
+        settings.setValue("retrymax", 500);
+    settings.endGroup();
+    settings.endGroup();
+
+    settings.beginGroup("room");
+    settings.beginGroup("furniture");
+
+    settings.endGroup();
+    settings.beginGroup("limitation");
+
+    settings.endGroup();
+    settings.beginGroup("walls");
+
+    settings.endGroup();
+    settings.endGroup();
+
     settings.beginGroup("wildMonsters");
     settings.beginGroup("0");
     if(!settings.contains("comment"))
@@ -38,19 +110,125 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
     settings.sync();
 }
 
-void SettingsAll::loadSettings(QSettings &settings, bool &displaycity, std::vector<std::string> &citiesNames, float &scale_City, bool &doallmap,
-                               unsigned int &maxCityLinks,unsigned int &cityRadius,
-                               float &levelmapscale, unsigned int &levelmapmin, unsigned int &levelmapmax)
+void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExtra& config)
 {
-    displaycity=settings.value("displaycity").toBool();
-    scale_City=settings.value("scale_City").toFloat();
-    doallmap=settings.value("doallmap").toBool();
-    maxCityLinks=settings.value("maxCityLinks").toUInt();
-    cityRadius=settings.value("cityRadius").toUInt();
+    config.displaycity=settings.value("displaycity").toBool();
+    config.displayregion=settings.value("displayregion").toBool();
+    config.scale_City=settings.value("scale_City").toFloat();
+    config.doallmap=settings.value("doallmap").toBool();
+    config.maxCityLinks=settings.value("maxCityLinks").toUInt();
+    config.cityRadius=settings.value("cityRadius").toUInt();
 
-    levelmapscale=settings.value("levelmapscale").toFloat();
-    levelmapmin=settings.value("levelmapmin").toUInt();
-    levelmapmax=settings.value("levelmapmax").toUInt();
+    config.levelmapscale=settings.value("levelmapscale").toFloat();
+    config.levelmapmin=settings.value("levelmapmin").toUInt();
+    config.levelmapmax=settings.value("levelmapmax").toUInt();
+
+    settings.beginGroup("road");
+    settings.beginGroup("ledge");
+    config.doledge=settings.value("doledge").toBool();
+    config.ledgeleft=settings.value("ledgeleft").toUInt();
+    config.ledgeright=settings.value("ledgeright").toUInt();
+    config.ledgebottom=settings.value("ledgebottom").toUInt();
+    config.ledgechance=settings.value("ledgechance").toFloat();
+    settings.endGroup();
+
+    settings.beginGroup("region");
+    config.grass = settings.value("grass").toString();
+    config.extratileset = settings.value("extratileset").toString();
+    config.walkway = settings.value("walkway").toString();
+
+
+    config.roadWaterChance=settings.value("waterchance").toFloat();
+    config.regionTry=settings.value("initialregion").toUInt();
+    config.walkwayTry=settings.value("walkwayregion").toUInt();
+    config.roadRetry=settings.value("retrymax").toUInt();
+
+    LoadMapAll::RoadMountain mountain;
+    mountain.terrain = settings.value("mountain_terrain").toString();
+    mountain.layer = settings.value("mountain_layer").toString();
+    mountain.tile = settings.value("mountain_tile").toString();
+    mountain.tsx = settings.value("mountain_tsx").toString();
+    LoadMapAll::mountain = mountain;
+    settings.endGroup();
+    settings.endGroup();
+
+    RoomSetting room;
+    room.furnitures = std::vector<Furnitures> ();
+    room.limitations = std::vector<FurnituresLimitations> ();
+    room.walls = std::vector<RoomStructure>();
+
+    settings.beginGroup("room");
+    settings.beginGroup("furniture");
+    for(QString child: settings.childGroups()){
+        settings.beginGroup(child);
+
+        Furnitures f;
+        f.layer = settings.value("layer", "Collisions").toString();
+        f.offsetX = settings.value("offsetX", 0).toInt();
+        f.offsetY = settings.value("offsetY", 0).toInt();
+        f.width = settings.value("width", 1).toInt();
+        f.tags = settings.value("tags").toString().split(",");
+        f.templatePath = settings.value("template").toString();
+
+        if(settings.contains("tiles")){
+            f.tiles = settings.value("tiles").toString().split(",");
+            f.height = settings.value("height", f.tiles.size()/f.width).toInt();
+
+            if(f.tiles.size() == f.width*f.height)
+                room.furnitures.push_back(f);
+            else
+                std::cout << settings.value("tags").toString().toStdString() << " " << settings.value("tiles").toString().toStdString() << " " << f.layer.toStdString() << " " << f.offsetX << " " << f.offsetY << std::endl;
+        }else if(!f.templatePath.isEmpty()){
+            f.tiles = QStringList();
+            f.height = settings.value("height", 1).toInt();
+            room.furnitures.push_back(f);
+        }
+
+        settings.endGroup();
+    }
+    settings.endGroup();
+    settings.beginGroup("limitation");
+    for(QString child: settings.childGroups()){
+        settings.beginGroup(child);
+
+        FurnituresLimitations f;
+        f.tag = child;
+        f.min = settings.value("min", 1).toUInt();
+        f.max = settings.value("max", 1).toUInt();
+        f.chance = settings.value("chance", 0.5).toFloat();
+
+        room.limitations.push_back(f);
+        settings.endGroup();
+    }
+    settings.endGroup();
+    settings.beginGroup("walls");
+    for(QString child: settings.childGroups()){
+        settings.beginGroup(child);
+
+        RoomStructure f;
+        f.layer = settings.value("layer", "Collisions").toString();
+        f.offsetX = settings.value("offsetX", 0).toInt();
+        f.offsetY = settings.value("offsetY", 0).toInt();
+
+        if(settings.contains("tiles")){
+            f.tiles = settings.value("tiles").toString().split(",");
+            f.width = settings.value("width", 1).toInt();
+            f.height = settings.value("height", f.tiles.size()/f.width).toInt();
+
+            if(f.tiles.size() == f.width*f.height)
+                room.walls.push_back(f);
+            else
+                std::cout << settings.value("tiles").toString().toStdString() << " " << f.layer.toStdString() << " " << f.offsetX << " " << f.offsetY << std::endl;
+        }
+        settings.endGroup();
+    }
+    settings.endGroup();
+
+    room.floors = settings.value("floor").toString().split(",");
+    room.tilesets = settings.value("tileset").toString().split(",");
+    config.room = room;
+
+    settings.endGroup();
 
     settings.beginGroup("wildMonsters");
     QStringList monsterId=settings.childGroups();
@@ -142,7 +320,21 @@ void SettingsAll::loadSettings(QSettings &settings, bool &displaycity, std::vect
             {
                 QString line = in.readLine();
                 if(!line.isEmpty())
-                    citiesNames.push_back(line.toStdString());
+                    config.citiesNames.push_back(line.toStdString());
+            }
+            inputFile.close();
+        }
+    }
+    {
+        QFile inputFile("dialog.txt");
+        if(inputFile.open(QIODevice::ReadOnly))
+        {
+            QTextStream in(&inputFile);
+            while(!in.atEnd())
+            {
+                QString line = in.readLine();
+                if(!line.isEmpty())
+                    config.npcMessage.push_back(line.toStdString());
             }
             inputFile.close();
         }

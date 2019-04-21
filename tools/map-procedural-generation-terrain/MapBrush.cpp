@@ -224,7 +224,7 @@ void MapBrush::brushTheMap(Tiled::Map &worldMap, const MapTemplate &selectedTemp
                                 cell.flippedAntiDiagonally=false;
                                 cell.tile=worldTileset->tileAt(tileId);
                                 worldLayer->setCell(x_world,y_world,cell);
-                                if(layerIndex==selectedTemplate.baseLayerIndex || allTileIsMask)
+                                if((layerIndex==selectedTemplate.baseLayerIndex || allTileIsMask)&& mapMask != NULL)
                                 {
                                     const unsigned int &bitMask=x_world+y_world*worldMap.width();
                                     /*const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
