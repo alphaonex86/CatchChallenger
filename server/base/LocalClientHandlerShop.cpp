@@ -59,6 +59,17 @@ void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
             case Direction_look_at_bottom:
             case Direction_look_at_left:
             direction=lookToMove(direction);
+            break;
+            default:
+            break;
+        }
+        switch(direction)
+        {
+            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
+            case Direction_look_at_top:
+            case Direction_look_at_right:
+            case Direction_look_at_bottom:
+            case Direction_look_at_left:
             case Direction_move_at_top:
             case Direction_move_at_right:
             case Direction_move_at_bottom:
@@ -213,6 +224,17 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
             case Direction_look_at_bottom:
             case Direction_look_at_left:
             direction=lookToMove(direction);
+            break;
+            default:
+            return;
+        }
+        switch(direction)
+        {
+            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
+            case Direction_look_at_top:
+            case Direction_look_at_right:
+            case Direction_look_at_bottom:
+            case Direction_look_at_left:
             case Direction_move_at_top:
             case Direction_move_at_right:
             case Direction_move_at_bottom:
@@ -395,6 +417,17 @@ void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uin
             case Direction_look_at_bottom:
             case Direction_look_at_left:
             direction=lookToMove(direction);
+            break;
+            default:
+            return;
+        }
+        switch(direction)
+        {
+            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
+            case Direction_look_at_top:
+            case Direction_look_at_right:
+            case Direction_look_at_bottom:
+            case Direction_look_at_left:
             case Direction_move_at_top:
             case Direction_move_at_right:
             case Direction_move_at_bottom:
