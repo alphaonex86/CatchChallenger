@@ -501,6 +501,12 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                         errorOutput("CommonSettingsServer::commonSettingsServer.subDatapackCode.isEmpty()");
                         return false;
                     }
+                    if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
+                    {
+                        errorOutput("Can't use because mirror is defined");
+                        return false;
+                    }
+                break;
                 case DatapackStatus::Main:
                     if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
                     {
