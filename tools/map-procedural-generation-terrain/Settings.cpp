@@ -39,8 +39,7 @@ void Settings::putDefaultSettings(QSettings &settings)
     settings.sync();
 }
 
-void Settings::loadSettings(QSettings &settings, unsigned int &mapWidth, unsigned int &mapHeight, unsigned int &mapXCount, unsigned int &mapYCount, unsigned int &seed, bool &displayzone,
-                  bool &dotransition, bool &dovegetation, unsigned int &tileStep, float &scale_TerrainMap, float &scale_TerrainMoisure, float &scale_Zone,bool &dominimap, float &miniMapDivisor)
+void Settings::populateSettings(QSettings &settings, Settings::Setting& config)
 {
     bool ok;
     {
@@ -264,59 +263,59 @@ void Settings::loadSettings(QSettings &settings, unsigned int &mapWidth, unsigne
         }
         settings.endGroup();
     }
-    mapWidth=settings.value("mapWidth").toUInt(&ok);
+    config.mapWidth=settings.value("mapWidth").toUInt(&ok);
     if(ok==false)
     {
         std::cerr << "mapWidth not number into the config file" << std::endl;
         abort();
     }
-    mapHeight=settings.value("mapHeight").toUInt(&ok);
+    config.mapHeight=settings.value("mapHeight").toUInt(&ok);
     if(ok==false)
     {
         std::cerr << "mapHeight not number into the config file" << std::endl;
         abort();
     }
-    mapXCount=settings.value("mapXCount").toUInt(&ok);
+    config.mapXCount=settings.value("mapXCount").toUInt(&ok);
     if(ok==false)
     {
         std::cerr << "mapXCount not number into the config file" << std::endl;
         abort();
     }
-    mapYCount=settings.value("mapYCount").toUInt(&ok);
+    config.mapYCount=settings.value("mapYCount").toUInt(&ok);
     if(ok==false)
     {
         std::cerr << "mapYCount not number into the config file" << std::endl;
         abort();
     }
-    seed=settings.value("seed").toUInt(&ok);
+    config.seed=settings.value("seed").toUInt(&ok);
     if(ok==false)
     {
         std::cerr << "seed not number into the config file" << std::endl;
         abort();
     }
-    tileStep=settings.value("tileStep").toUInt(&ok);
-    if(ok==false || tileStep<2)
+    config.tileStep=settings.value("tileStep").toUInt(&ok);
+    if(ok==false || config.tileStep<2)
     {
         std::cerr << "tileStep not number into the config file or lower than 2" << std::endl;
         abort();
     }
-    if(mapWidth%tileStep!=0)
+    if(config.mapWidth%config.tileStep!=0)
     {
-        std::cerr << "width of the map need be a multiple of tileStep: " << std::to_string(tileStep) << std::endl;
+        std::cerr << "width of the map need be a multiple of tileStep: " << std::to_string(config.tileStep) << std::endl;
         abort();
     }
-    if(mapHeight%tileStep!=0)
+    if(config.mapHeight%config.tileStep!=0)
     {
-        std::cerr << "height of the map need be a multiple of tileStep: " << std::to_string(tileStep) << std::endl;
+        std::cerr << "height of the map need be a multiple of tileStep: " << std::to_string(config.tileStep) << std::endl;
         abort();
     }
-    displayzone=settings.value("displayzone").toBool();
-    dotransition=settings.value("dotransition").toBool();
-    dovegetation=settings.value("dovegetation").toBool();
-    dominimap=settings.value("dominimap").toBool();
+    config.displayzone=settings.value("displayzone").toBool();
+    config.dotransition=settings.value("dotransition").toBool();
+    config.dovegetation=settings.value("dovegetation").toBool();
+    config.dominimap=settings.value("dominimap").toBool();
 
-    scale_TerrainMap=settings.value("scale_TerrainMap").toFloat();
-    scale_TerrainMoisure=settings.value("scale_TerrainMoisure").toFloat();
-    scale_Zone=settings.value("scale_Zone").toFloat();
-    miniMapDivisor=settings.value("miniMapDivisor").toFloat();
+    config.scale_TerrainMap=settings.value("scale_TerrainMap").toFloat();
+    config.scale_TerrainMoisure=settings.value("scale_TerrainMoisure").toFloat();
+    config.scale_Zone=settings.value("scale_Zone").toFloat();
+    config.miniMapDivisor=settings.value("miniMapDivisor").toFloat();
 }

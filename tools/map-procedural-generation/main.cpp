@@ -87,49 +87,31 @@ int main(int argc, char *argv[])
         abort();
     }
 
+    SettingsAll::SettingsExtra config;
     Settings::putDefaultSettings(settings);
-    unsigned int mapWidth=0;
-    unsigned int mapHeight=0;
-    unsigned int mapXCount=0;
-    unsigned int mapYCount=0;
-    unsigned int seed=0;
-    float scale_TerrainMap=0;
-    float scale_TerrainMoisure=0;
-    float scale_Zone=0;
-    float miniMapDivisor=0;
-    bool displayzone=false,dotransition=false,dovegetation=false,dominimap=false;
-    unsigned int tileStep=0;
-    Settings::loadSettings(settings,mapWidth,mapHeight,mapXCount,mapYCount,seed,displayzone,dotransition,dovegetation,tileStep,scale_TerrainMap,scale_TerrainMoisure,
-                           scale_Zone,dominimap,miniMapDivisor);
+    Settings::populateSettings(settings, config);
 
     SettingsAll::putDefaultSettings(settings);
-    bool displaycity=false,doallmap=false;
-    float scale_City=0,levelmapscale=0;
-    std::vector<std::string> citiesNames;
-    unsigned int maxCityLinks=0;
-    unsigned int cityRadius=0;
-    unsigned int levelmapmin=0,levelmapmax=0;
-    SettingsAll::loadSettings(settings,displaycity,citiesNames,scale_City,doallmap,maxCityLinks,cityRadius,
-                              levelmapscale,levelmapmin,levelmapmax);
+    SettingsAll::populateSettings(settings, config);
 
-    srand(seed);
+    srand(config.seed);
 
     {
-        const unsigned int totalWidth=mapWidth*mapXCount;
-        const unsigned int totalHeight=mapHeight*mapYCount;
+        const unsigned int totalWidth=config.mapWidth*config.mapXCount;
+        const unsigned int totalHeight=config.mapHeight*config.mapYCount;
         t.start();
-        const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,seed,30*mapXCount*mapYCount*scale_Zone,VoronioForTiledMapTmx::SCALE);
-        const Grid &gridCity = VoronioForTiledMapTmx::generateGrid(mapXCount-1,mapYCount-1,seed,0.1*mapXCount*mapYCount*scale_City,1);
+        const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,config.seed,30*config.mapXCount*config.mapYCount*config.scale_Zone,VoronioForTiledMapTmx::SCALE);
+        const Grid &gridCity = VoronioForTiledMapTmx::generateGrid(config.mapXCount-1,config.mapYCount-1,config.seed,0.1*config.mapXCount*config.mapYCount*config.scale_City,1);
         qDebug("generateGrid took %d ms", t.elapsed());
 
-        const float noiseMapScaleMoisure=0.005f/((mapXCount+mapYCount)/2)*scale_TerrainMoisure*((mapXCount+mapYCount)/2);
-        const float noiseMapScaleMap=0.005f/((mapXCount+mapYCount)/2)*scale_TerrainMap*((mapXCount+mapYCount)/2);
-        Simplex heightmap(seed+500);
-        Simplex moisuremap(seed+5200);
-        Simplex levelmap(seed+212);
+        const float noiseMapScaleMoisure=0.005f/((config.mapXCount+config.mapYCount)/2)*config.scale_TerrainMoisure*((config.mapXCount+config.mapYCount)/2);
+        const float noiseMapScaleMap=0.005f/((config.mapXCount+config.mapYCount)/2)*config.scale_TerrainMap*((config.mapXCount+config.mapYCount)/2);
+        Simplex heightmap(config.seed+500);
+        Simplex moisuremap(config.seed+5200);
+        Simplex levelmap(config.seed+212);
 
         t.start();
-        VoronioForTiledMapTmx::voronoiMap=VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,tileStep);
+        VoronioForTiledMapTmx::voronoiMap=VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,config.tileStep);
         VoronioForTiledMapTmx::voronoiMap1px=VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,1);
         if(VoronioForTiledMapTmx::voronoiMap.zones.size()!=grid.size())
             abort();
@@ -138,9 +120,13 @@ int main(int argc, char *argv[])
         Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth,totalHeight,16,16);
         {
             QHash<QString,Tiled::Tileset *> cachedTileset;
-            LoadMap::addTerrainLayer(tiledMap,dotransition);
+            LoadMap::addTerrainLayer(tiledMap,config.dotransition);
             LoadMap::loadAllTileset(cachedTileset,tiledMap);
-            if(displayzone)
+
+            Tiled::ObjectGroup *layerObject=new Tiled::ObjectGroup("Object",0,0,tiledMap.width(),tiledMap.height());
+            tiledMap.addLayer(layerObject);
+
+            if(config.displayzone)
             {
                 std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainPolygon;
                 Tiled::ObjectGroup *layerZoneWaterPolygon=LoadMap::addDebugLayer(tiledMap,arrayTerrainPolygon,true);
@@ -159,14 +145,23 @@ int main(int argc, char *argv[])
                 qDebug("Add terrain took %d ms", t.elapsed());
                 MapBrush::initialiseMapMask(tiledMap);
                 t.start();
-                LoadMapAll::addCity(tiledMap,gridCity,citiesNames,mapXCount,mapYCount,maxCityLinks,cityRadius,
-                                    levelmap,levelmapscale,levelmapmin,levelmapmax,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap);
-                LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount,false);
+                LoadMapAll::addCity(tiledMap,gridCity,config.citiesNames,config.mapXCount,config.mapYCount,config.maxCityLinks,config.cityRadius,
+                                    levelmap,config.levelmapscale,config.levelmapmin,config.levelmapmax,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap);
+                LoadMapAll::addCityContent(tiledMap,config.mapXCount,config.mapYCount,false);
                 qDebug("place cities took %d ms", t.elapsed());
-                if(dotransition)
+                if(config.dotransition)
                 {
+
                     t.start();
                     TransitionTerrain::addTransitionGroupOnMap(tiledMap);
+                    qDebug("Transitions group took %d ms", t.elapsed());
+                }
+                t.start();
+                LoadMapAll::generateRoadContent(tiledMap, config);
+                qDebug("generate road content took %d ms", t.elapsed());
+                if(config.dotransition)
+                {
+                    t.start();
                     TransitionTerrain::addTransitionOnMap(tiledMap);
                     qDebug("Transitions took %d ms", t.elapsed());
                 }
@@ -174,21 +169,24 @@ int main(int argc, char *argv[])
                 TransitionTerrain::mergeDown(tiledMap);
                 qDebug("mergeDown took %d ms", t.elapsed());
                 t.start();
-                LoadMapAll::addCityContent(tiledMap,mapXCount,mapYCount,true);
-                LoadMapAll::addMapChange(tiledMap,mapXCount,mapYCount);
+                LoadMapAll::addCityContent(tiledMap, config.mapXCount, config.mapYCount,true);
+                LoadMapAll::addMapChange(tiledMap,config.mapXCount,config.mapYCount);
                 qDebug("add city content took %d ms", t.elapsed());
-                TransitionTerrain::changeTileLayerOrder(tiledMap);
+                t.start();
+                LoadMapAll::addRoadContent(tiledMap, config);
+                qDebug("add road content took %d ms", t.elapsed());
+                //TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
-            if(displaycity)
-                LoadMapAll::addDebugCity(tiledMap,mapWidth,mapHeight);
-            if(dominimap)
+            if(config.displaycity)
+                LoadMapAll::addDebugCity(tiledMap,config.mapWidth,config.mapHeight);
+            if(config.dominimap)
             {
                 t.start();
                 //MiniMap::makeMap(heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),miniMapDivisor).save(QCoreApplication::applicationDirPath()+"/miniMapLinear.png","PNG");
-                MiniMapAll::makeMapTiled(tiledMap.width(),tiledMap.height(),mapWidth,mapHeight).save(QCoreApplication::applicationDirPath()+"/miniMapPixel.png","PNG");
+                MiniMapAll::makeMapTiled(tiledMap.width(),tiledMap.height(),config.mapWidth,config.mapHeight).save(QCoreApplication::applicationDirPath()+"/miniMapPixel.png","PNG");
                 qDebug("dominimap %d ms", t.elapsed());
             }
-            if(dovegetation)
+            if(config.dovegetation)
             {
                 t.start();
                 MapPlants::addVegetation(tiledMap,VoronioForTiledMapTmx::voronoiMap);
@@ -201,13 +199,13 @@ int main(int argc, char *argv[])
                 tiledMap.addLayer(layerZoneChunk);
 
                 unsigned int mapY=0;
-                while(mapY<mapYCount)
+                while(mapY<config.mapYCount)
                 {
                     unsigned int mapX=0;
-                    while(mapX<mapXCount)
+                    while(mapX<config.mapXCount)
                     {
                         Tiled::MapObject *object = new Tiled::MapObject(QString::number(mapX)+","+QString::number(mapY),"",QPointF(0,0), QSizeF(0.0,0.0));
-                        object->setPolygon(QPolygonF(QRectF(mapX*mapWidth,mapY*mapHeight,mapWidth,mapHeight)));
+                        object->setPolygon(QPolygonF(QRectF(mapX*config.mapWidth,mapY*config.mapHeight,config.mapWidth,config.mapHeight)));
                         object->setShape(Tiled::MapObject::Polygon);
                         layerZoneChunk->addObject(object);
                         mapX++;
@@ -216,7 +214,7 @@ int main(int argc, char *argv[])
                 }
                 layerZoneChunk->setVisible(false);
             }
-            if(doallmap)
+            if(config.doallmap)
             {
                 Tiled::MapWriter maprwriter;
                 if(!maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/main/official/all.tmx"))
@@ -232,8 +230,8 @@ int main(int argc, char *argv[])
         PartialMap::RecuesPoint startPoint;
         std::vector<PartialMap::RecuesPoint> recuesPoints;
         {
-            const unsigned int singleMapWitdh=tiledMap.width()/mapXCount;
-            const unsigned int singleMapHeight=tiledMap.height()/mapYCount;
+            const unsigned int singleMapWitdh=tiledMap.width()/config.mapXCount;
+            const unsigned int singleMapHeight=tiledMap.height()/config.mapYCount;
 
             unsigned int indexCity=0;
             while(indexCity<LoadMapAll::cities.size())
@@ -255,7 +253,7 @@ int main(int argc, char *argv[])
                     std::cerr << "Unable to write " << file << "" << std::endl;
                     abort();
                 }
-                if(levelmapmin==city.level)
+                if(config.levelmapmin==city.level)
                 {
                     if(newRecuesPoints.empty())
                     {
@@ -301,7 +299,7 @@ int main(int argc, char *argv[])
                     const unsigned int &x=coord.first;
                     const unsigned int &y=coord.second;
 
-                    const uint8_t &zoneOrientation=LoadMapAll::mapPathDirection[x+y*mapXCount];
+                    const uint8_t &zoneOrientation=LoadMapAll::mapPathDirection[x+y*config.mapXCount];
                     if(zoneOrientation!=0)
                     {
                         const LoadMapAll::RoadIndex &roadIndex=LoadMapAll::roadCoordToIndex.at(x).at(y);
@@ -392,6 +390,9 @@ int main(int argc, char *argv[])
             }
         }
         qDebug("Write chunk tmx %d ms", t.elapsed());
+        t.start();
+        LoadMapAll::writeRoadContent(tiledMap, config.mapXCount, config.mapYCount);
+        qDebug("Write bots xml %d ms", t.elapsed());
         //do the start point
         QFile start(QCoreApplication::applicationDirPath()+"/dest/map/main/official/start.xml");
         if(start.open(QFile::WriteOnly))
