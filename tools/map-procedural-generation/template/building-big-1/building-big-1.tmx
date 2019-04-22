@@ -1,35 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="7" height="8" tilewidth="16" tileheight="16" nextobjectid="11">
+<map version="1.0" tiledversion="1.1.2" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="9" height="6" tilewidth="16" tileheight="16" infinite="0" nextobjectid="14">
  <tileset firstgid="1" source="../../dest/map/tileset/building-small.tsx"/>
  <tileset firstgid="1025" source="../../dest/map/tileset/terra.tsx"/>
- <layer name="Collisions" width="7" height="8">
+ <tileset firstgid="2049" source="../../dest/map/tileset/invisible.tsx"/>
+ <layer name="OnGrass" width="9" height="6">
   <data encoding="base64" compression="zlib">
-   eJxjYKAvWMjHwLAIC17Mh1/uIBAfwoIP8+G3DwA1rg9R
+   eJxjYBieAAAA2AAB
   </data>
  </layer>
- <layer name="WalkBehind" width="7" height="8">
+ <layer name="Collisions" width="9" height="6">
   <data encoding="base64" compression="zlib">
-   eJzLEmBgyMaCc4C4C4i7seAeIG7kY2BowoKbgXghEC/CghcDMSEQx4efTyoAAN8yETM=
+   eJytwwsSgQAUAMA3mZFQx+jncwwKuf8JEOUM9hB2ZiP+45FEPH05+vbj5OzX5SIidWXm2o1bcwtLK2sbW3fuPXj05NnO3otXbw7e/QHbuQ0M
   </data>
  </layer>
- <layer name="WalkBehind" width="7" height="8">
+ <layer name="WalkBehind" width="9" height="6">
   <data encoding="base64" compression="zlib">
-   eJxjYCAPrBJgYFiNBa8RgMjH8WGn6Q0AwAcGYg==
+   eJzNwwkRgCAAADDO/jlQQYih4JeJxWB3i0sIq5u7yexhsXp62ezePr5+/s5mAFDrDTk=
   </data>
  </layer>
  <objectgroup name="Moving">
-  <object id="9" type="door" gid="3077" x="32" y="112" width="16" height="32">
+  <object id="12" type="teleport on push" gid="2051" x="16" y="80" width="16" height="16">
    <properties>
     <property name="map" value="floor-0"/>
-    <property name="x" type="int" value="5"/>
-    <property name="y" type="int" value="10"/>
+    <property name="x" value="5"/>
+    <property name="y" value="10"/>
    </properties>
   </object>
-  <object id="10" type="door" gid="3077" x="64" y="112" width="16" height="32">
+  <object id="13" type="teleport on push" gid="2051" x="112" y="80" width="16" height="16">
    <properties>
-    <property name="map" value="floor-1"/>
-    <property name="x" type="int" value="5"/>
-    <property name="y" type="int" value="10"/>
+    <property name="map" value="floor-0"/>
+    <property name="x" value="5"/>
+    <property name="y" value="10"/>
    </properties>
   </object>
  </objectgroup>
