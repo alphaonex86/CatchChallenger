@@ -42,6 +42,13 @@
 
 #   include <sys/endian.h>
 
+#elif defined(__HAIKU__)
+
+#ifndef _BSD_SOURCE
+#define _BSD_SOURCE
+#endif
+#   include <endian.h>
+
 #elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
 
 #   include <sys/endian.h>

@@ -729,7 +729,7 @@ uint8_t ClientFightEngine::getOneSeed(const uint8_t &max)
     std::cout << "Random seed remaining: " << randomSeeds.size() << std::endl;
     #endif
     const uint8_t &number=randomSeeds.at(0);
-    randomSeeds.erase(randomSeeds.cbegin());
+    randomSeeds.erase(randomSeeds.begin());
     return number%(max+1);
 }
 

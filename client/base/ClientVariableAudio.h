@@ -4,7 +4,9 @@
 #include <QObject>
 
 #if ! defined(Q_OS_LINUX) && ! defined(Q_OS_MAC) && ! defined(Q_OS_WIN32)
-#define CATCHCHALLENGER_NOAUDIO
+    #ifndef CATCHCHALLENGER_NOAUDIO
+        #define CATCHCHALLENGER_NOAUDIO
+    #endif
 #endif
 
 #endif // CATCHCHALLENGER_CLIENTVARIABLEAUDIO_H
