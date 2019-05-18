@@ -7,7 +7,7 @@ class MapController : public MapVisualiserPlayer
 {
     Q_OBJECT
 public:
-    explicit MapController(const bool &centerOnPlayer=true,const bool &debugTags=false,const bool &useCache=true,const bool &OpenGL=false);
+    explicit MapController(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true);
     ~MapController();
 
     void setScale(int scaleSize);
@@ -37,6 +37,7 @@ private:
 
     QTimer timerBotMove;
     QTimer timerBotManagement;
+    bool nextPathStep();
 private slots:
     void botMove();
     void botManagement();

@@ -2,9 +2,10 @@
 #include "../../general/base/MoveOnTheMap.h"
 
 #include <QMessageBox>
+#include <QCoreApplication>
 
-MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &OpenGL) :
-    MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,OpenGL)
+MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
+    MapVisualiserPlayer(centerOnPlayer,debugTags,useCache)
 {
     setWindowIcon(QIcon(":/icon.png"));
 
@@ -407,4 +408,9 @@ bool MapController::viewMap(const QString &fileName)
     show();
 
     return true;
+}
+
+bool MapController::nextPathStep()
+{
+    return false;
 }

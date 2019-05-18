@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>239</width>
-    <height>234</height>
+    <width>254</width>
+    <height>276</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -118,13 +118,6 @@
     <widget class="QCheckBox" name="doubleSize">
      <property name="text">
       <string>Double size</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="openGL">
-     <property name="text">
-      <string>OpenGL</string>
      </property>
     </widget>
    </item>
