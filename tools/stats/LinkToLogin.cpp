@@ -248,8 +248,11 @@ void LinkToLogin::readTheFirstSslHeader()
     char buffer[1];
     if(::read(LinkToLogin::linkToLoginSocketFd,buffer,1)<0)
     {
+        //reconnect, need maybe more time
+        EpollSocket::make_non_blocking(LinkToLogin::linkToLoginSocketFd);
+        /*then disable:
         jsonFileContent.clear();
-        displayErrorAndQuit("ERROR reading from socket to login server (abort)");
+        displayErrorAndQuit("ERROR reading from socket to login server (abort)");*/
     }
     #ifdef SERVERSSL
     if(buffer[0]!=0x01)

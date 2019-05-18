@@ -83,7 +83,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
     if (!tempMapObject->tiledMap)
     {
         mLastError=reader.errorString().toStdString();
-        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2").arg(QString::fromStdString(resolvedFileName)).arg(reader.errorString());
+        qDebug() << QStringLiteral("(1) Unable to load the map: %1, error: %2").arg(QString::fromStdString(resolvedFileName)).arg(reader.errorString());
         delete tempMapObject;
         return NULL;
     }
@@ -97,7 +97,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
     if(!map_loader.tryLoadMap(resolvedFileName))
     {
         mLastError=map_loader.errorString();
-        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2")
+        qDebug() << QStringLiteral("(2) Unable to load the map: %1, error: %2")
                     .arg(QString::fromStdString(resolvedFileName))
                     .arg(QString::fromStdString(map_loader.errorString()));
         int index=0;
@@ -181,7 +181,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
     if(tempMapObject->tiledMap->tileHeight()!=CLIENT_BASE_TILE_SIZE || tempMapObject->tiledMap->tileWidth()!=CLIENT_BASE_TILE_SIZE)
     {
         mLastError="Map tile size not multiple of "+std::to_string(CLIENT_BASE_TILE_SIZE);
-        qDebug() << QStringLiteral("Unable to load the map: %1, error: %2")
+        qDebug() << QStringLiteral("(3) Unable to load the map: %1, error: %2")
                     .arg(QString::fromStdString(resolvedFileName))
                     .arg(QString::fromStdString(mLastError));
         delete tempMapObject->tiledMap;
