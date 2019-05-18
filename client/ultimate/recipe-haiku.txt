@@ -5,8 +5,8 @@ COPYRIGHT="2011-2019 BRULE Herman Jacques Roger (alpha_one_x86)"
 LICENSE="GNU GPL v3"
 REVISION="1"
 srcGitRev="a59a486b8b67f8f26c4849e9fbe74fd1e8fe6b90"
-SOURCE_URI="https://github.com/alphaonex86/CatchChallenger/archive/$srcGitRev.tar.gz"
-CHECKSUM_SHA256="780bac14291c6bc69ead080643fe5773bb9dece6bc551d3715bb29f859cd09bc"
+SOURCE_URI="https://github.com/alphaonex86/Ultracopier/archive/$srcGitRev.zip"
+CHECKSUM_SHA256="6e01a6c7af677bd9b90d90bfde4108b1dd21c4bb5c1900ca400821a088feb453"
 SOURCE_FILENAME="catchchallenger-$portVersion.tar.gz"
 SOURCE_DIR="CatchChallenger-$srcGitRev"
 
@@ -14,8 +14,8 @@ ARCHITECTURES="!x86_gcc2 ?x86 x86_64"
 SECONDARY_ARCHITECTURES="x86"
 
 PROVIDES="
-	ultracopier$secondaryArchSuffix = $portVersion
-	app:UltraCopier$secondaryArchSuffix
+	catchchallenger$secondaryArchSuffix = $portVersion
+	app:CatchChallenger$secondaryArchSuffix
 	"
 REQUIRES="
 	haiku$secondaryArchSuffix
@@ -57,6 +57,6 @@ BUILD()
 INSTALL()
 {
 	mkdir -p $appsDir
-	cp ultracopier $appsDir/CatchChallenger
+	cp catchchallenger-ultimate $appsDir/CatchChallenger
 	addAppDeskbarSymlink $appsDir/CatchChallenger
 }
