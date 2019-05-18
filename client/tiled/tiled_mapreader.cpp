@@ -381,8 +381,8 @@ Tileset *MapReaderPrivate::readTileset()
             tileset = p->readExternalTileset(absoluteSource, &error);
 
             if (!tileset) {
-                xml.raiseError(tr("Error while loading tileset '%1': %2")
-                               .arg(absoluteSource, error));
+                //xml.raiseError(tr("Error while loading tileset '%1': %2").arg(absoluteSource, error));
+                qDebug() << tr("Error while loading tileset '%1': %2").arg(absoluteSource, error);
             }
         }
 
