@@ -326,7 +326,7 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
     while(lastConnexionList.size()<connexionList.size())
         lastConnexionList << QString();
     int index=0;
-    const QRegularExpression regexConnexion(QStringLiteral("^[a-zA-Z0-9\\.\\-_]+:[0-9]{1,5}$"));
+    const QRegularExpression regexConnexion(QStringLiteral("^[a-zA-Z0-9\\.\\-_:]+:[0-9]{1,5}$"));
     const QRegularExpression hostRemove(QStringLiteral(":[0-9]{1,5}$"));
     const QRegularExpression postRemove("^.*:");
     while(index<connexionList.size())
@@ -355,12 +355,21 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
                 customServerName << name;
                 connexionInfo.connexionCounter=connexionCounter.toUInt(&ok);
                 if(!ok)
+                {
+                    qDebug() << "ignored bug for connexion : " << connexion << " connexionCounter";
                     connexionInfo.connexionCounter=0;
+                }
                 connexionInfo.lastConnexion=lastConnexion.toUInt(&ok);
                 if(!ok)
+                {
+                    qDebug() << "ignored bug for connexion : " << connexion << " lastConnexion";
                     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
+                }
                 if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
+                {
+                    qDebug() << "ignored bug for connexion : " << connexion << " lastConnexion<time()";
                     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
+                }
                 if(proxy.contains(regexConnexion))
                 {
                     QString host=proxy;
@@ -375,9 +384,15 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
                         connexionInfo.proxyPort=proxy_port;
                     }
                 }
+                else
+                    qDebug() << "dropped connexion, proxy seam wrong: " << proxy;
                 returnedVar << connexionInfo;
             }
+            else
+                qDebug() << "dropped connexion, port wrong: " << port_string;
         }
+        else
+            qDebug() << "dropped connexion, info seam wrong: " << connexion;
         index++;
     }
     return returnedVar;
@@ -732,7 +747,7 @@ void MainWindow::on_server_add_clicked()
     addServer.exec();
     if(!addServer.isOk())
         return;
-    if(!addServer.server().contains(QRegularExpression("^[a-zA-Z0-9\\.\\-_]+$")))
+    if(!addServer.server().contains(QRegularExpression("^[a-zA-Z0-9\\.\\-_:]+$")))
     {
         QMessageBox::warning(this,tr("Error"),tr("The host seam don't be a valid hostname or ip"));
         return;
@@ -905,6 +920,7 @@ void MainWindow::saveConnexionInfoList()
     settings.setValue(QStringLiteral("connexionCounterList"),connexionCounterList);
     settings.setValue(QStringLiteral("lastConnexionList"),lastConnexionList);
     settings.setValue(QStringLiteral("proxyList"),proxyList);
+    settings.sync();
 }
 
 void MainWindow::serverListEntryEnvoluedDoubleClicked()
