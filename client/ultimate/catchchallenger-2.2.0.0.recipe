@@ -1,12 +1,12 @@
 SUMMARY="Game MMORPG/single player game. You can fight, farming, crafting, trading"
-DESCRIPTION="This game is a independent MMORPG or a single player game. You can fight, farming, crafting, trading, ..."
+DESCRIPTION="This game is a independent MMORPG or a single player game."
 HOMEPAGE="https://catchchallenger.first-world.info/"
 COPYRIGHT="2011-2019 BRULE Herman Jacques Roger (alpha_one_x86)"
 LICENSE="GNU GPL v3"
 REVISION="1"
-srcGitRev="a59a486b8b67f8f26c4849e9fbe74fd1e8fe6b90"
-SOURCE_URI="https://github.com/alphaonex86/Ultracopier/archive/$srcGitRev.zip"
-CHECKSUM_SHA256="6e01a6c7af677bd9b90d90bfde4108b1dd21c4bb5c1900ca400821a088feb453"
+srcGitRev="e645be9b0a8413e191f65795964bfb25184d7736"
+SOURCE_URI="https://github.com/alphaonex86/CatchChallenger/archive/$srcGitRev.zip"
+CHECKSUM_SHA256="66800467f554b6a72727ad612753759484228fa1e7775f61be4bfbca51654d5d"
 SOURCE_FILENAME="catchchallenger-$portVersion.tar.gz"
 SOURCE_DIR="CatchChallenger-$srcGitRev"
 
@@ -25,7 +25,7 @@ REQUIRES="
 	lib:libQt5Network$secondaryArchSuffix
 	lib:libQt5Widgets$secondaryArchSuffix
 	lib:libQt5Xml$secondaryArchSuffix
-	lib:libZstd$secondaryArchSuffix
+	lib:libzstd$secondaryArchSuffix
 	"
 
 BUILD_REQUIRES="
@@ -36,7 +36,7 @@ BUILD_REQUIRES="
 	devel:libQt5Network$secondaryArchSuffix
 	devel:libQt5Widgets$secondaryArchSuffix
 	devel:libQt5Xml$secondaryArchSuffix
-	devel:libZstd$secondaryArchSuffix
+	devel:libzstd$secondaryArchSuffix
 	"
 BUILD_PREREQUIRES="
 	cmd:find
