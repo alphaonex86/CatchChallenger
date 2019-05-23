@@ -24,7 +24,13 @@ void BaseWindow::on_character_add_clicked()
     newProfile=new NewProfile(client->datapackPathBase(),this);
     if(!connect(newProfile,&NewProfile::finished,this,&BaseWindow::newProfileFinished))
         abort();
-    newProfile->show();
+    if(newProfile->getProfileCount()==1)
+    {
+        newProfile->on_ok_clicked();
+        BaseWindow::newProfileFinished();
+    }
+    else
+        newProfile->show();
 }
 
 void BaseWindow::newProfileFinished()

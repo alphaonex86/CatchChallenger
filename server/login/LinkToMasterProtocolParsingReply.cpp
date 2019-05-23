@@ -135,7 +135,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     if((size-pos)<4)
                     {
                         std::cerr << "reply to 08 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
-                        abort();
+                        return false;
                     }
                     EpollClientLoginSlave::maxAccountIdList.push_back(le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos))));
                     pos+=4;
@@ -153,7 +153,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                         index++;
                     }
                     std::cerr << std::endl;
-                    abort();
+                    return false;
                 }
             }
             {

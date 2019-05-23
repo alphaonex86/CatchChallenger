@@ -27,7 +27,8 @@ public:
             Client,
             Timer,
             Database,
-            MasterLink,
+            MasterLink,//to have clean backtrace
+            GameLink,//to have clean backtrace
         #endif
         #ifdef CATCHCHALLENGER_CLASS_MASTER
             Server,

@@ -21,6 +21,7 @@ using namespace CatchChallenger;
 EpollClient::EpollClient(const int &infd) :
     infd(infd)
 {
+//    std::cerr << "EpollClient::EpollClient infd: " << infd << std::endl;
 }
 
 EpollClient::~EpollClient()
@@ -30,12 +31,14 @@ EpollClient::~EpollClient()
 
 void EpollClient::reopen(const int &infd)
 {
+//    std::cerr << "EpollClient::reopen infd: " << infd << std::endl;
     close();
     this->infd=infd;
 }
 
 void EpollClient::close()
 {
+    //std::cerr << "EpollClient::close infd: " << infd << std::endl;
     if(infd!=-1)
     {
         char tempBuffer[4096];
@@ -53,6 +56,7 @@ void EpollClient::close()
 
 ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
 {
+    //std::cerr << "EpollClient::read infd: " << infd << std::endl;
     if(infd==-1)
         return -1;
     const auto &bytesAvailableVar=bytesAvailable();

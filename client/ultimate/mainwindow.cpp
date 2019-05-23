@@ -1322,15 +1322,13 @@ void MainWindow::newError(std::string error,std::string detailedError)
 {
     std::cout << "MainWindow::newError(): " << error << ": " << detailedError << std::endl;
     if(client!=NULL)
-    {
         client->tryDisconnect();
-        QMessageBox::critical(this,tr("Error"),QString::fromStdString(error));
-    }
+    QMessageBox::critical(this,tr("Error"),QString::fromStdString(error));
 }
 
 void MainWindow::haveNewError()
 {
-//	QMessageBox::critical(this,tr("Error"),client->errorString());
+    //QMessageBox::critical(this,tr("Error"),client->errorString());
 }
 
 void MainWindow::message(std::string message)

@@ -83,7 +83,7 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
          server->h_length);
     serv_addr.sin_port = htons(port);
 
-    std::cout << "Try connect to game server..." << std::endl;
+    std::cout << "Try connect to game server host: " << host << ", port: " << std::to_string(port) << " ..." << std::endl;
     int connStatusType=::connect(socketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
     if(connStatusType<0)
     {
@@ -117,11 +117,12 @@ void LinkToGameServer::setConnexionSettings()
 {
     if(socketFd==-1)
     {
-        std::cerr << "linkToMaster::setConnexionSettings() linkToMaster::linkToMasterSocketFd==-1 (abort)" << std::endl;
+        std::cerr << "LinkToGameServer::setConnexionSettings() LinkToGameServer::linkToMasterSocketFd==-1 (abort)" << std::endl;
         abort();
     }
     {
         epoll_event event;
+        event.data.u64=0;
         event.data.ptr = this;
         event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
         int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, socketFd, &event);
@@ -165,7 +166,7 @@ void LinkToGameServer::readTheFirstSslHeader()
 {
     if(haveTheFirstSslHeader)
         return;
-    std::cout << "linkToMaster::readTheFirstSslHeader()" << std::endl;
+    std::cout << "LinkToGameServer::readTheFirstSslHeader()" << std::endl;
     char buffer[1];
     const ssize_t &size=::read(socketFd,buffer,1);
     if(size<0)
@@ -195,11 +196,14 @@ void LinkToGameServer::readTheFirstSslHeader()
     #endif
     haveTheFirstSslHeader=true;
     stat=Stat::Connected;
+    std::cout << "LinkToGameServer::readTheFirstSslHeader(): sendProtocolHeader" << std::endl;
     sendProtocolHeader();
 }
 
 bool LinkToGameServer::disconnectClient()
 {
+    abort();
+    std::cerr << "LinkToGameServer::disconnectClient()" << std::endl;
     if(client!=NULL)
     {
         client->closeSocket();
@@ -237,11 +241,12 @@ void LinkToGameServer::messageParsingLayer(const char * const message) const
 
 BaseClassSwitch::EpollObjectType LinkToGameServer::getType() const
 {
-    return BaseClassSwitch::EpollObjectType::Client;
+    return BaseClassSwitch::EpollObjectType::GameLink;
 }
 
 void LinkToGameServer::parseIncommingData()
 {
+    std::cerr << "LinkToGameServer::parseIncommingData()" << std::endl;
     if(!haveTheFirstSslHeader)
         readTheFirstSslHeader();
     if(haveTheFirstSslHeader)
