@@ -127,7 +127,7 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
          server->h_length);
     serv_addr.sin_port = htons(port);
 
-    //std::cout << "Try connect to game server..." << std::endl;
+    //std::cout << "Try connect to game server host: " << host << ", port: " << std::to_string(port) << " ..." << std::endl;
     int connStatusType=::connect(socketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
     if(connStatusType<0)
     {

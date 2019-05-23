@@ -260,14 +260,14 @@ void LinkToMaster::readTheFirstSslHeader()
 bool LinkToMaster::disconnectClient()
 {
     epollSocket.close();
-    messageParsingLayer("Disconnected client");
+    messageParsingLayer("LinkToMaster::disconnectClient()");
     return true;
 }
 
 //input/ouput layer
 void LinkToMaster::errorParsingLayer(const std::string &error)
 {
-    std::cerr << error << std::endl;
+    std::cerr << "LinkToMaster::errorParsingLayer: " << error << std::endl;
     disconnectClient();
 }
 
@@ -278,7 +278,7 @@ void LinkToMaster::messageParsingLayer(const std::string &message) const
 
 void LinkToMaster::errorParsingLayer(const char * const error)
 {
-    std::cerr << error << std::endl;
+    std::cerr << "LinkToMaster::errorParsingLayer: " << error << std::endl;
     disconnectClient();
 }
 
@@ -294,6 +294,7 @@ BaseClassSwitch::EpollObjectType LinkToMaster::getType() const
 
 void LinkToMaster::parseIncommingData()
 {
+    std::cerr << "LinkToMaster::parseIncommingData()" << std::endl;
     ProtocolParsingInputOutput::parseIncommingData();
 }
 

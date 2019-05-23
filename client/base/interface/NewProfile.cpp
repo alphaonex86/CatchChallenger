@@ -160,6 +160,11 @@ int NewProfile::getProfileIndex()
     return 0;
 }
 
+int NewProfile::getProfileCount()
+{
+    return ui->comboBox->count();
+}
+
 void NewProfile::on_ok_clicked()
 {
     mOk=true;

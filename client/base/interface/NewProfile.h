@@ -20,12 +20,14 @@ public:
     };
     std::vector<ProfileText> profileTextList;
     int getProfileIndex();
+    int getProfileCount();
     explicit NewProfile(const std::string &datapackPath,QWidget *parent = 0);
     ~NewProfile();
     void loadProfileText();
     bool ok();
-private slots:
+public slots:
     void on_ok_clicked();
+private slots:
     void on_pushButton_2_clicked();
     void on_comboBox_currentIndexChanged(int index);
     void datapackParsed();
