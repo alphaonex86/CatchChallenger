@@ -9,7 +9,6 @@ using namespace CatchChallenger;
 
 bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
-    std::cout << "LinkToGameServer::parseInputBeforeLogin mainCodeType" << std::to_string(mainCodeType) << std::endl;
     switch(mainCodeType)
     {
         case 0xA0:
@@ -21,8 +20,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                 return false;
             }
             uint8_t returnCode=data[0x00];
-            std::cout << "LinkToGameServer::parseInputBeforeLogin returnCode" << std::to_string(returnCode) << std::endl;
-            if(returnCode==0x04 || returnCode<=0x08)
+            if(returnCode==0x04 || returnCode==0x08)
             {
                 switch(returnCode)
                 {
@@ -57,8 +55,9 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
             {
                 if(client!=NULL)
                 {
+                    stat=Stat::ProtocolGood;
                     //send the network reply
-                    //client->removeFromQueryReceived(queryNumber);
+                    client->removeFromQueryReceived(queryIdToReconnect);
                     uint32_t posOutput=0;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
                     posOutput+=1;
@@ -185,7 +184,6 @@ bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &que
 //send reply
 bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    std::cout << "LinkToGameServer::parseReplyData()" << std::endl;
     if(stat!=Stat::Logged)
     {
         if(mainCodeType==0xA0 && queryNumber==0x01 && stat==Stat::Connected)
