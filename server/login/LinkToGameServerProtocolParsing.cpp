@@ -22,7 +22,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
             }
             uint8_t returnCode=data[0x00];
             std::cout << "LinkToGameServer::parseInputBeforeLogin returnCode" << std::to_string(returnCode) << std::endl;
-            if(returnCode>=0x04 && returnCode<=0x06)
+            if(returnCode==0x04 || returnCode<=0x08)
             {
                 switch(returnCode)
                 {
@@ -58,7 +58,7 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                 if(client!=NULL)
                 {
                     //send the network reply
-                    client->removeFromQueryReceived(queryNumber);
+                    //client->removeFromQueryReceived(queryNumber);
                     uint32_t posOutput=0;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
                     posOutput+=1;
