@@ -209,6 +209,7 @@ BaseClassSwitch::EpollObjectType EpollClientLoginSlave::getType() const
 
 void EpollClientLoginSlave::parseIncommingData()
 {
+    std::cerr << "EpollClientLoginSlave::parseIncommingData()" << std::endl;
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
@@ -219,12 +220,13 @@ bool EpollClientLoginSlave::removeFromQueryReceived(const uint8_t &queryNumber)
 
 void EpollClientLoginSlave::breakNeedMoreData()
 {
+    std::cerr << "EpollClientLoginSlave::breakNeedMoreData()" << std::endl;
     if(stat==EpollClientLoginStat::None)
     {
         disconnectClient();
         return;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    //std::cerr << "Break due to need more in parse data" << std::endl;
+    std::cerr << "Break due to need more in parse data" << std::endl;
     #endif
 }

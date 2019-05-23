@@ -46,8 +46,8 @@ public:
     void readTheFirstSslHeader();
     bool sendRawBlock(const char * const data,const unsigned int &size);
     bool removeFromQueryReceived(const uint8_t &queryNumber);
-protected:
     bool disconnectClient();
+protected:
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;
     void errorParsingLayer(const char * const error);
