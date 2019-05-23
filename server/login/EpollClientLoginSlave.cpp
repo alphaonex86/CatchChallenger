@@ -209,7 +209,6 @@ BaseClassSwitch::EpollObjectType EpollClientLoginSlave::getType() const
 
 void EpollClientLoginSlave::parseIncommingData()
 {
-    std::cerr << "EpollClientLoginSlave::parseIncommingData()" << std::endl;
     ProtocolParsingInputOutput::parseIncommingData();
 }
 

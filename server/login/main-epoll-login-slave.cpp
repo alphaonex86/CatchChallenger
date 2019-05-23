@@ -225,7 +225,6 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::Client:
                 {
-                    std::cerr << "client debug 1: " << events[i].events << std::endl;
                     EpollClientLoginSlave * const client=static_cast<EpollClientLoginSlave *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
@@ -237,7 +236,6 @@ int main(int argc, char *argv[])
                             std::cerr << "client epoll error: " << events[i].events << std::endl;
                         numberOfConnectedClient--;
 
-                        std::cerr << "client epoll error: " << events[i].events << std::endl;
                         client->disconnectClient();
                         elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
                         elementsToDeleteSize++;
@@ -245,22 +243,18 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     //ready to read
-                    std::cerr << "client debug 2: " << events[i].events << std::endl;
                     if(events[i].events & EPOLLIN)
                         client->parseIncommingData();
-                    std::cerr << "client debug 3: " << events[i].events << std::endl;
                     if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || client->socketIsClosed())
                     {
                         numberOfConnectedClient--;
                         //disconnected, remove the object
 
-                        std::cerr << "client debug 4: " << events[i].events << std::endl;
                         client->disconnectClient();
 
                         elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
                         elementsToDeleteSize++;
                     }
-                    std::cerr << "client debug 5: " << events[i].events << std::endl;
                 }
                 break;
                 case BaseClassSwitch::EpollObjectType::Timer:
@@ -306,7 +300,6 @@ int main(int argc, char *argv[])
                 case BaseClassSwitch::EpollObjectType::GameLink:
                 {
                     LinkToGameServer * const client=static_cast<LinkToGameServer *>(events[i].data.ptr);
-                    std::cerr << "client debug 10: " << events[i].events << std::endl;
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -317,7 +310,6 @@ int main(int argc, char *argv[])
                             std::cerr << "client epoll error: " << events[i].events << std::endl;
                         numberOfConnectedClient--;
 
-                        std::cerr << "client epoll error: " << events[i].events << std::endl;
                         client->disconnectClient();
                         elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
                         elementsToDeleteSize++;
@@ -325,22 +317,18 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     //ready to read
-                    std::cerr << "client debug 12: " << events[i].events << std::endl;
                     if(events[i].events & EPOLLIN)
                         client->parseIncommingData();
-                    std::cerr << "client debug 13: " << events[i].events << std::endl;
                     if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || client->socketIsClosed())
                     {
                         numberOfConnectedClient--;
                         //disconnected, remove the object
 
-                        std::cerr << "client debug 14: " << events[i].events << std::endl;
                         client->disconnectClient();
 
                         elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
                         elementsToDeleteSize++;
                     }
-                    std::cerr << "client debug 15: " << events[i].events << std::endl;
                 }
                 break;
                 default:

@@ -166,7 +166,6 @@ void LinkToGameServer::readTheFirstSslHeader()
 {
     if(haveTheFirstSslHeader)
         return;
-    std::cout << "LinkToGameServer::readTheFirstSslHeader()" << std::endl;
     char buffer[1];
     const ssize_t &size=::read(socketFd,buffer,1);
     if(size<0)
@@ -196,14 +195,11 @@ void LinkToGameServer::readTheFirstSslHeader()
     #endif
     haveTheFirstSslHeader=true;
     stat=Stat::Connected;
-    std::cout << "LinkToGameServer::readTheFirstSslHeader(): sendProtocolHeader" << std::endl;
     sendProtocolHeader();
 }
 
 bool LinkToGameServer::disconnectClient()
 {
-    abort();
-    std::cerr << "LinkToGameServer::disconnectClient()" << std::endl;
     if(client!=NULL)
     {
         client->closeSocket();
@@ -246,7 +242,6 @@ BaseClassSwitch::EpollObjectType LinkToGameServer::getType() const
 
 void LinkToGameServer::parseIncommingData()
 {
-    std::cerr << "LinkToGameServer::parseIncommingData()" << std::endl;
     if(!haveTheFirstSslHeader)
         readTheFirstSslHeader();
     if(haveTheFirstSslHeader)
