@@ -294,7 +294,6 @@ BaseClassSwitch::EpollObjectType LinkToMaster::getType() const
 
 void LinkToMaster::parseIncommingData()
 {
-    std::cerr << "LinkToMaster::parseIncommingData()" << std::endl;
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
