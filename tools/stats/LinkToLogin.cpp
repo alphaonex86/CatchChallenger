@@ -230,12 +230,12 @@ void LinkToLogin::connectInternal()
     if(connStatusType==0)
     {
         stat=Stat::Connected;
-        std::cout << "(Re)Connected to login" << std::endl;
+        //std::cout << "(Re)Connected to login" << std::endl;
     }
     else
     {
         stat=Stat::Connecting;
-        std::cout << "(Re)Connecting in progress to login" << std::endl;
+        //std::cout << "(Re)Connecting in progress to login" << std::endl;
     }
     setConnexionSettings(this->tryInterval,this->considerDownAfterNumberOfTry);
 }
@@ -244,7 +244,7 @@ void LinkToLogin::readTheFirstSslHeader()
 {
     if(haveTheFirstSslHeader)
         return;
-    std::cout << "LoginLinkToLogin::readTheFirstSslHeader()" << std::endl;
+    //std::cout << "LoginLinkToLogin::readTheFirstSslHeader()" << std::endl;
     char buffer[1];
     if(::read(LinkToLogin::linkToLoginSocketFd,buffer,1)<0)
     {
@@ -341,14 +341,14 @@ bool LinkToLogin::registerStatsClient(const char * const dynamicToken)
         SHA224_Update(&hashFile,reinterpret_cast<const char *>(LinkToLogin::private_token_statclient),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
         SHA224_Update(&hashFile,dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
         SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput),&hashFile);
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
         std::cerr << "Hash this to reply: " << binarytoHexa(reinterpret_cast<const char *>(LinkToLogin::private_token_statclient),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                   << " + "
                   << binarytoHexa(dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
                   << " = "
                   << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CATCHCHALLENGER_SHA224HASH_SIZE)
                   << std::endl;
-        #endif
+        #endif*/
         posOutput+=CATCHCHALLENGER_SHA224HASH_SIZE;
         //memset(LinkToLogin::private_token,0x00,sizeof(LinkToLogin::private_token));->to reconnect after be disconnected
     }
@@ -365,7 +365,7 @@ void LinkToLogin::tryReconnect()
         return;
     else
     {
-        std::cout << "Try reconnect to login..." << std::endl;
+        //std::cout << "Try reconnect to login..." << std::endl;
         resetForReconnect();
         jsonFileContent.clear();
         #ifndef STATSODROIDSHOW2

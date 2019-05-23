@@ -167,8 +167,8 @@ bool LinkToLogin::parseMessage(const uint8_t &mainCodeType,const char * const da
                     std::unordered_set<uint32_t/*unique key*/> &duplicateDetectEntry=duplicateDetect[server.groupIndex];
                     if(duplicateDetectEntry.find(server.uniqueKey)!=duplicateDetectEntry.cend())//exists, bug
                     {
-                        std::cerr << "Duplicate unique key for packet 45 found: " << std::to_string(server.uniqueKey) << std::endl;
-                        abort();
+                        std::cerr << "Duplicate unique key for packet 0x40 found: " << std::to_string(server.uniqueKey) << " for group " << server.groupIndex << std::endl;
+                        //continue;
                     }
                     else
                         duplicateDetectEntry.insert(server.uniqueKey);
