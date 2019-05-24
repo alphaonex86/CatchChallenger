@@ -147,6 +147,7 @@ protected slots:
     virtual bool haveStopTileAction();
     //have look into another direction, if the key remain pressed, apply like move
     void transformLookToMove();
+    void forcePlayerTileset(QString path);// for /tools/map-visualiser/
 
     //grass
     void loadGrassTile();

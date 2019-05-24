@@ -46,6 +46,7 @@ public:
     std::vector<char> hexatoBinary(const std::string &data,bool *ok=NULL);
     bool setMaxDbQueries(const unsigned int &maxDbQueries);
 private:
+    time_t startTime;
     PGconn *conn;
     int tuleIndex;
     int ntuples;
