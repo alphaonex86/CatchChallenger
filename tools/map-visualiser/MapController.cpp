@@ -3,6 +3,7 @@
 
 #include <QMessageBox>
 #include <QCoreApplication>
+#include <QDebug>
 
 MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
     MapVisualiserPlayer(centerOnPlayer,debugTags,useCache)
@@ -20,29 +21,12 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
         abort();
     timerBotMove.start(66);
     timerBotManagement.start(3000);
-
-    playerTileset = new Tiled::Tileset("player",16,24);
-    QString externalFile=QCoreApplication::applicationDirPath()+"/player_skin.png";
-    if(QFile::exists(externalFile))
-    {
-        QImage externalImage(externalFile);
-        if(!externalImage.isNull() && externalImage.width()==48 && externalImage.height()==96)
-            playerTileset->loadFromImage(externalImage,externalFile);
-        else
-            playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
-    }
-    else
-        playerTileset->loadFromImage(QImage(":/player_skin.png"),":/player_skin.png");
-    playerMapObject = new Tiled::MapObject();
-
-    //the direction
-    direction=CatchChallenger::Direction_look_at_bottom;
-    playerMapObject->setTile(playerTileset->tileAt(7));
+    forcePlayerTileset("player_skin.png");
 }
 
 MapController::~MapController()
 {
-    delete playerTileset;
+    //delete playerTileset;
     delete botTileset;
 }
 
@@ -109,32 +93,34 @@ bool MapController::botMoveStepSlot(Bot *bot)
     }
 
     //apply the right step of the base step defined previously by the direction
+    Tiled::Cell cell=bot->mapObject->cell();
     switch(bot->moveStep)
     {
         //stopped step
         case 0:
-        bot->mapObject->setTile(botTileset->tileAt(baseTile+0));
+        cell.tile=botTileset->tileAt(baseTile+0);
         break;
         //transition step
         case 1:
-        bot->mapObject->setTile(botTileset->tileAt(baseTile-1));
+        cell.tile=botTileset->tileAt(baseTile-1);
         break;
         case 2:
-        bot->mapObject->setTile(botTileset->tileAt(baseTile+1));
+        cell.tile=botTileset->tileAt(baseTile+1);
         break;
         //stopped step
         case 3:
-        bot->mapObject->setTile(botTileset->tileAt(baseTile+0));
+        cell.tile=botTileset->tileAt(baseTile+0);
         break;
     }
+    bot->mapObject->setCell(cell);
 
     bot->moveStep++;
 
     //if have finish the step
     if(bot->moveStep>3)
     {
-        CatchChallenger::Map * old_map=&all_map[bot->map]->logicalMap;
-        CatchChallenger::Map * map=&all_map[bot->map]->logicalMap;
+        CatchChallenger::CommonMap * old_map=&all_map[bot->map.toStdString()]->logicalMap;
+        CatchChallenger::CommonMap * map=&all_map[bot->map.toStdString()]->logicalMap;
         //set the final value (direction, position, ...)
         switch(bot->direction)
         {
@@ -162,16 +148,16 @@ bool MapController::botMoveStepSlot(Bot *bot)
         if(old_map!=map)
         {
             //remove bot
-            if(ObjectGroupItem::objectGroupLink.contains(all_map[old_map->map_file]->objectGroup))
+            if(ObjectGroupItem::objectGroupLink.find(all_map[old_map->map_file]->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
                 ObjectGroupItem::objectGroupLink[all_map[old_map->map_file]->objectGroup]->removeObject(bot->mapObject);
             else
                 qDebug() << QStringLiteral("botMoveStepSlot(), ObjectGroupItem::objectGroupLink not contains bot->mapObject at remove to change the map");
             //add bot
-            if(ObjectGroupItem::objectGroupLink.contains(all_map[map->map_file]->objectGroup))
+            if(ObjectGroupItem::objectGroupLink.find(all_map[map->map_file]->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
                 ObjectGroupItem::objectGroupLink[all_map[map->map_file]->objectGroup]->addObject(bot->mapObject);
             else
                 return false;
-            bot->map=map->map_file;
+            bot->map=QString::fromStdString(map->map_file);
         }
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         bot->mapObject->setPosition(QPoint(bot->x,bot->y+1));
@@ -209,13 +195,13 @@ void MapController::botMove()
         if(!botList.at(index).inMove && !continuedMove.contains(index))
         {
             QList<CatchChallenger::Direction> directions_allowed;
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
+            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,all_map[botList.at(index).map.toStdString()]->logicalMap,botList.at(index).x,botList.at(index).y,true))
                 directions_allowed << CatchChallenger::Direction_move_at_left;
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
+            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,all_map[botList.at(index).map.toStdString()]->logicalMap,botList.at(index).x,botList.at(index).y,true))
                 directions_allowed << CatchChallenger::Direction_move_at_right;
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
+            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,all_map[botList.at(index).map.toStdString()]->logicalMap,botList.at(index).x,botList.at(index).y,true))
                 directions_allowed << CatchChallenger::Direction_move_at_top;
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,all_map[botList.at(index).map]->logicalMap,botList.at(index).x,botList.at(index).y,true))
+            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,all_map[botList.at(index).map.toStdString()]->logicalMap,botList.at(index).x,botList.at(index).y,true))
                 directions_allowed << CatchChallenger::Direction_move_at_bottom;
             if(directions_allowed.size()>0)
             {

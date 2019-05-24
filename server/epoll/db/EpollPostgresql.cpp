@@ -61,6 +61,7 @@ EpollPostgresql::EpollPostgresql() :
         #endif
         EpollPostgresql::informationDisplayed=true;
     }
+    startTime = time(NULL);
 }
 
 EpollPostgresql::~EpollPostgresql()
@@ -233,6 +234,7 @@ bool EpollPostgresql::syncConnectInternal(bool infinityTry)
     PQsetNoticeProcessor(conn,noticeProcessor,NULL);
     started=true;
     std::cout << "Connected to postgresql, Protocol version: " << PQprotocolVersion(conn) << ", Server version:" << PQserverVersion(conn) << std::endl;
+    startTime = time(NULL);
     return true;
 }
 
@@ -619,7 +621,7 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
             ntuples=0;
             result=PQgetResult(conn);
             if(result==NULL)
-                std::cerr << "query async send failed: " << errorMessage() << ", PQgetResult(conn) have returned NULL" << std::endl;
+                std::cerr << "[" << (time(NULL)-startTime) << "] " << queriesList.front().query << ", query async send failed: " << errorMessage() << ", PQgetResult(conn) have returned NULL" << std::endl;
             else
             {
                 auto end = std::chrono::high_resolution_clock::now();
@@ -628,17 +630,17 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                 if(ms>5000)
                 {
                     if(queriesList.empty())
-                        std::cerr << "query too slow, take " << ms << "ms" << std::endl;
+                        std::cerr << "[" << (time(NULL)-startTime) << "] " << "query too slow, take " << ms << "ms" << std::endl;
                     else
-                        std::cerr << queriesList.front().query << ": query too slow, take " << ms << "ms" << std::endl;
+                        std::cerr << "[" << (time(NULL)-startTime) << "] " << queriesList.front().query << ": query too slow, take " << ms << "ms" << std::endl;
                 }
                 #ifdef DEBUG_MESSAGE_CLIENT_SQL
                 else
                 {
                     if(queriesList.empty())
-                        std::cout << "query take " << ms << "ms" << std::endl;
+                        std::cout << "[" << (time(NULL)-startTime) << "] " << "query take " << ms << "ms" << std::endl;
                     else
-                        std::cout << queriesList.front().query << ": query take " << ms << "ms" << std::endl;
+                        std::cout << "[" << (time(NULL)-startTime) << "] " << queriesList.front().query << ": query take " << ms << "ms" << std::endl;
                 }
                 #endif
                 start = std::chrono::high_resolution_clock::now();
