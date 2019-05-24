@@ -4,13 +4,13 @@
 #include <QSettings>
 #include <QInputDialog>
 
-#include "../base/render/MapVisualiserPlayer.h"
+#include "../render/MapVisualiserPlayer.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/SavegameVersion.h"
-#include "../base/DatapackClientLoader.h"
-#include "../base/LanguagesSelect.h"
-#include "../fight/interface/ClientFightEngine.h"
+#include "../DatapackClientLoader.h"
+#include "../LanguagesSelect.h"
+#include "../../fight/interface/ClientFightEngine.h"
 #include "../../general/base/Version.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../InternetUpdater.h"

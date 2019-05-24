@@ -12,11 +12,11 @@
 #include "../../general/base/QFakeSocket.h"
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
-#include "../base/Api_client_real.h"
-#include "../base/Api_client_virtual.h"
-#include "../base/render/MapController.h"
-#include "../base/interface/BaseWindow.h"
-#include "../base/interface/ListEntryEnvolued.h"
+#include "../Api_client_real.h"
+#include "../Api_client_virtual.h"
+#include "../render/MapController.h"
+#include "../interface/BaseWindow.h"
+#include "../interface/ListEntryEnvolued.h"
 #include "InternalServer.h"
 
 namespace Ui {

@@ -1,4 +1,5 @@
-#include "Options.h"
+#include "OptionsV.h"
+#include "../../client/base/LanguagesSelect.h"
 
 #include <QApplication>
 #include <QDebug>
@@ -12,12 +13,12 @@ int main(int argc, char *argv[])
 #endif
 
     QApplication a(argc, argv);
-
+    LanguagesSelect::languagesSelect=new LanguagesSelect();
     a.setOrganizationDomain(QStringLiteral("catchchallenger"));
     a.setApplicationName(QStringLiteral("Map visualiser"));
     a.setApplicationVersion(QStringLiteral("1.0"));
 
-    Options options;
+    OptionsV options;
     options.show();
 
     return a.exec();
