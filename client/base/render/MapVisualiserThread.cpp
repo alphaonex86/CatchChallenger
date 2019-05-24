@@ -739,21 +739,44 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
                                                 }
                                                 else
                                                 {
-                                                    qDebug() << (
-                                                                QStringLiteral("No botId %1 into %2: properties->Name(): %3, file: %4")
-                                                                .arg(botId)
-                                                                .arg(QString::fromStdString(botFile))
-                                                                .arg(bot->Name())
-                                                                .arg(QString::fromStdString(parsedMap->logicalMap.map_file))
-                                                                );
                                                     /// \warn show something to continue to block the path
-                                                    CatchChallenger::Bot &bot=parsedMap->logicalMap.bots[std::pair<uint8_t,uint8_t>(
-                                                        static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
-                                                    bot=botFiles.at(botFile).at(botId);
-                                                    property_parsed.erase("file");
-                                                    property_parsed.erase("id");
-                                                    bot.properties=property_parsed;
-                                                    bot.botId=botId;
+                                                    if(botFiles.find(botFile)!=botFiles.cend())
+                                                    {
+                                                        const auto &botList=botFiles.at(botFile);
+                                                        if(botList.find(botId)!=botList.cend())
+                                                        {
+                                                            qDebug() << (
+                                                                        QStringLiteral("botId %1 into %2: properties->Name(): %3, file: %4")
+                                                                        .arg(botId)
+                                                                        .arg(QString::fromStdString(botFile))
+                                                                        .arg(bot->Name())
+                                                                        .arg(QString::fromStdString(parsedMap->logicalMap.map_file))
+                                                                        );
+                                                            CatchChallenger::Bot &bot=parsedMap->logicalMap.bots[std::pair<uint8_t,uint8_t>(
+                                                                static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
+                                                            bot=botFiles.at(botFile).at(botId);
+                                                            property_parsed.erase("file");
+                                                            property_parsed.erase("id");
+                                                            bot.properties=property_parsed;
+                                                            bot.botId=botId;
+                                                        }
+                                                        else
+                                                            qDebug() << (
+                                                                        QStringLiteral("No botId %1 into %2: properties->Name(): %3, file: %4")
+                                                                        .arg(botId)
+                                                                        .arg(QString::fromStdString(botFile))
+                                                                        .arg(bot->Name())
+                                                                        .arg(QString::fromStdString(parsedMap->logicalMap.map_file))
+                                                                        );
+                                                    }
+                                                    else
+                                                        qDebug() << (
+                                                                    QStringLiteral("missing file botFile, botId %1 into %2: properties->Name(): %3, file: %4")
+                                                                    .arg(botId)
+                                                                    .arg(QString::fromStdString(botFile))
+                                                                    .arg(bot->Name())
+                                                                    .arg(QString::fromStdString(parsedMap->logicalMap.map_file))
+                                                                    );
                                                 }
                                             }
                                             else
