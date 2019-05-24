@@ -13,6 +13,7 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <iostream>
+#include <QCoreApplication>
 
 /* why send the look at because blocked into the wall?
 to be sync if connexion is stop, but use more bandwith
@@ -2289,4 +2290,26 @@ void MapVisualiserPlayer::pathFindingResultInternal(std::vector<PathResolved> &p
         wasPathFindingUsed=true;
         return;
     }
+}
+
+// for /tools/map-visualiser/
+void MapVisualiserPlayer::forcePlayerTileset(QString path)
+{
+    QString externalFile=QCoreApplication::applicationDirPath()+"/"+path;
+    if(QFile::exists(externalFile))
+    {
+        QImage externalImage(externalFile);
+        if(!externalImage.isNull() && externalImage.width()==48 && externalImage.height()==96)
+            playerTileset->loadFromImage(externalImage,externalFile);
+        else
+            playerTileset->loadFromImage(QImage(":/"+path),":/"+path);
+    }
+    else
+        playerTileset->loadFromImage(QImage(":/"+path),":/"+path);
+
+    //the direction
+    direction=CatchChallenger::Direction_look_at_bottom;
+    Tiled::Cell cell=playerMapObject->cell();
+    cell.tile=playerTileset->tileAt(7);
+    playerMapObject->setCell(cell);
 }
