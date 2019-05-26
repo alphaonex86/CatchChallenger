@@ -212,7 +212,6 @@ protected:
     static const std::string text_autostep;
     static const std::string text_yes;
     static const std::string text_true;
-    static const std::string text_step;
     static const std::string text_bot;
     static const std::string text_dotcomma;
     static const std::string text_client_logic;

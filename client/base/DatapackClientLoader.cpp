@@ -46,7 +46,6 @@ const std::string DatapackClientLoader::text_show="show";
 const std::string DatapackClientLoader::text_autostep="autostep";
 const std::string DatapackClientLoader::text_yes="yes";
 const std::string DatapackClientLoader::text_true="true";
-const std::string DatapackClientLoader::text_step="step";
 const std::string DatapackClientLoader::text_bot="bot";
 const std::string DatapackClientLoader::text_dotcomma=";";
 const std::string DatapackClientLoader::text_client_logic="client_logic";
@@ -1164,63 +1163,65 @@ void DatapackClientLoader::parseQuestsExtra()
             const tinyxml2::XMLElement *step = root->FirstChildElement("step");
             while(step!=NULL)
             {
+                int16_t tempid=1;
                 if(step->Attribute("id")!=NULL)
                 {
-                    const uint8_t &tempid=stringtouint8(step->Attribute("id"),&ok);
-                    if(ok)
+                    tempid=stringtouint8(step->Attribute("id"),&ok);
+                    if(!ok)
                     {
-                        const uint16_t &id=static_cast<uint16_t>(tempid);
-                        CatchChallenger::Quest::Step stepObject;
-                        std::string text;
-
-                        if(step->Attribute("bot")!=NULL)
-                        {
-                            const std::vector<std::string> &tempStringList=
-                                    stringsplit(step->Attribute("bot"),';');
-                            unsigned int index=0;
-                            while(index<tempStringList.size())
-                            {
-                                const uint32_t tempInt=stringtouint32(tempStringList.at(index),&ok);
-                                if(ok && tempInt<65536)
-                                    stepObject.bots.push_back(static_cast<uint16_t>(tempInt));
-                                index++;
-                            }
-                        }
-                        const tinyxml2::XMLElement *stepItem = step->FirstChildElement("text");
-                        bool found=false;
-                        if(!language.empty() && language!="en")
-                        {
-                            while(stepItem!=NULL)
-                            {
-                                if(stepItem->Attribute("lang")!=NULL || stepItem->Attribute("lang")==language)
-                                    if(stepItem->GetText()!=NULL)
-                                    {
-                                        found=true;
-                                        text=stepItem->GetText();
-                                    }
-                                stepItem = stepItem->NextSiblingElement("text");
-                            }
-                        }
-                        if(!found)
-                        {
-                            stepItem = step->FirstChildElement("text");
-                            while(stepItem!=NULL)
-                            {
-                                if(stepItem->Attribute("lang")==NULL || strcmp(stepItem->Attribute("lang"),"en")==0)
-                                    if(stepItem->GetText()!=NULL)
-                                        text=stepItem->GetText();
-                                stepItem = stepItem->NextSiblingElement("text");
-                            }
-                            if(text.empty())
-                                text=tr("No text").toStdString();
-                        }
-                        steps[id]=text;
-                    }
-                    else
                         qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.Name(): %2").arg(QString::fromStdString(file)).arg(step->Name());
+                        tempid=-1;
+                    }
                 }
-                else
-                    qDebug() << QStringLiteral("Has attribute: %1, have not id attribute: child.Name(): %2").arg(QString::fromStdString(file)).arg(step->Name());
+                if(tempid>=0)
+                {
+                    const uint16_t &id=static_cast<uint16_t>(tempid);
+                    CatchChallenger::Quest::Step stepObject;
+                    std::string text;
+
+                    if(step->Attribute("bot")!=NULL)
+                    {
+                        const std::vector<std::string> &tempStringList=
+                                stringsplit(step->Attribute("bot"),';');
+                        unsigned int index=0;
+                        while(index<tempStringList.size())
+                        {
+                            const uint32_t tempInt=stringtouint32(tempStringList.at(index),&ok);
+                            if(ok && tempInt<65536)
+                                stepObject.bots.push_back(static_cast<uint16_t>(tempInt));
+                            index++;
+                        }
+                    }
+                    const tinyxml2::XMLElement *stepItem = step->FirstChildElement("text");
+                    bool found=false;
+                    if(!language.empty() && language!="en")
+                    {
+                        while(stepItem!=NULL)
+                        {
+                            if(stepItem->Attribute("lang")!=NULL || stepItem->Attribute("lang")==language)
+                                if(stepItem->GetText()!=NULL)
+                                {
+                                    found=true;
+                                    text=stepItem->GetText();
+                                }
+                            stepItem = stepItem->NextSiblingElement("text");
+                        }
+                    }
+                    if(!found)
+                    {
+                        stepItem = step->FirstChildElement("text");
+                        while(stepItem!=NULL)
+                        {
+                            if(stepItem->Attribute("lang")==NULL || strcmp(stepItem->Attribute("lang"),"en")==0)
+                                if(stepItem->GetText()!=NULL)
+                                    text=stepItem->GetText();
+                            stepItem = stepItem->NextSiblingElement("text");
+                        }
+                        if(text.empty())
+                            text=tr("No text").toStdString();
+                    }
+                    steps[id]=text;
+                }
                 step = step->NextSiblingElement("step");
             }
         }

@@ -30,17 +30,12 @@ class MapVisualiserOrder
 public:
     struct Map_animation_object
     {
-        uint8_t randomOffset;
         Tiled::MapObject * animatedObject;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        int minId;
-        int maxId;
-        #endif
     };
     struct Map_animation
     {
-        uint8_t count;
-        uint8_t frameCountTotal;
+        int minId;
+        int maxId;
         std::vector<Map_animation_object> animatedObjectList;
     };
     struct Map_full
@@ -49,7 +44,7 @@ public:
         Tiled::Map * tiledMap;
         Tiled::MapRenderer * tiledRender;
         Tiled::ObjectGroup * objectGroup;
-        std::unordered_map<uint16_t,Map_animation> animatedObject;
+        std::unordered_map<uint16_t/*ms*/,std::unordered_map<int/*minId*/,Map_animation> > animatedObject;
         int objectGroupIndex;
         int relative_x,relative_y;//needed for the async load
         int relative_x_pixel,relative_y_pixel;
@@ -109,7 +104,6 @@ public:
     static std::string text_slash;
     static std::string text_dotxml;
     static std::string text_dottmx;
-    static std::string text_step;
     static std::string text_properties;
     static std::string text_shop;
     static std::string text_learn;

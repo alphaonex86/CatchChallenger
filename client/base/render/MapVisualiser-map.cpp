@@ -193,68 +193,33 @@ bool MapVisualiser::asyncMapLoaded(const std::string &fileName, MapVisualiserThr
     {
         tempMapObject->displayed=false;
         all_map[tempMapObject->logicalMap.map_file]=tempMapObject;
-        for( const auto& n : tempMapObject->animatedObject ) {
+        for( auto& n : tempMapObject->animatedObject ) {
+            //MapVisualiserOrder::Map_animation &map_animation=n.second;
             const uint16_t &interval=static_cast<uint16_t>(n.first);
             if(animationTimer.find(interval)==animationTimer.cend())
             {
                 QTimer *newTimer=new QTimer();
                 newTimer->setInterval(interval);
                 animationTimer[interval]=newTimer;
-                animationFrame[interval];//creation
                 if(!connect(newTimer,&QTimer::timeout,this,&MapVisualiser::applyTheAnimationTimer))
                     abort();
                 newTimer->start();
             }
-            if(animationFrame.at(interval).find(n.second.count)==animationFrame.at(interval).cend())
-                animationFrame[interval][n.second.count]=0;
-            else
+            /*do at another place unsigned int index=0;
+            while(index<map_animation.animatedObjectList.size())
             {
-                const uint8_t &count=animationFrame.at(interval).at(n.second.count);
-                const int &oldcount=tempMapObject->animatedObject[interval].count;
-                const int &count_diff=count-oldcount;
-                tempMapObject->animatedObject[interval].count+=count_diff;
-                if(count_diff!=0)
-                {
-                    unsigned int index=0;
-                    while(index<n.second.animatedObjectList.size())
-                    {
-                        Tiled::MapObject * mapObject=n.second.animatedObjectList.at(index).animatedObject;
-                        Tiled::Cell cell=mapObject->cell();
-                        Tiled::Tile *tile=mapObject->cell().tile;
-                        Tiled::Tile *newTile;
-                        int diff=0;
-                        const uint8_t &randomOffset=n.second.animatedObjectList.at(index).randomOffset;
-                        const uint8_t &frameCountTotal=n.second.frameCountTotal;
-                        if((oldcount+randomOffset)>=frameCountTotal)
-                            diff=+frameCountTotal;
-                        /*diff+=-oldcount;
-                        diff+=count;
-                        compressed into: */
-                        diff+=count_diff;
-                        if((count+randomOffset)>=frameCountTotal)
-                            diff+=-frameCountTotal;
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        const int &tileid=tile->id();
-                        const int &minId=n.second.animatedObjectList.at(index).minId;
-                        const int &maxId=n.second.animatedObjectList.at(index).maxId;
-                        if((tileid+diff)<minId)
-                        {
-                            qDebug() << "Frame out of range";
-                            return false;
-                        }
-                        if((tileid+diff)>maxId)
-                        {
-                            qDebug() << "Frame out of range";
-                            return false;
-                        }
-                        #endif
-                        newTile=tile->tileset()->tileAt(tile->id()+diff);
-                        cell.tile=newTile;
-                        mapObject->setCell(cell);
-                        index++;
-                    }
-                }
-            }
+                MapVisualiserOrder::Map_animation_object &map_animation_object=map_animation.animatedObjectList.at(index);
+                Tiled::MapObject * mapObject=map_animation_object.animatedObject;
+                Tiled::Cell cell=mapObject->cell();
+                Tiled::Tile *tile=mapObject->cell().tile;
+                Tiled::Tile *newTile=NULL;
+                newTile=tile->tileset()->tileAt(tile->id()+1);
+                if(newTile->id()>=map_animation.maxId)
+                    newTile=tile->tileset()->tileAt(map_animation.minId);
+                cell.tile=newTile;
+                mapObject->setCell(cell);
+                index++;
+            }*/
         }
         //try locate and place it
         if(tempMapObject->logicalMap.map_file==current_map)
@@ -426,16 +391,6 @@ void MapVisualiser::applyTheAnimationTimer()
 {
     QTimer *timer=qobject_cast<QTimer *>(QObject::sender());
     const uint16_t &interval=static_cast<uint16_t>(timer->interval());
-    if(animationFrame.find(interval)!=animationFrame.cend())
-    {
-        std::unordered_map<uint8_t/*frame total*/,uint8_t/*actual frame*/> countList=animationFrame.at(interval);
-        for( const auto& n : countList ) {
-            countList[n.first]++;
-            if(countList.at(n.first)>=n.first)
-                countList[n.first]=0;
-        }
-        animationFrame[interval]=countList;
-    }
     bool isUsed=false;
     for( const auto& n : all_map ) {
         MapVisualiserThread::Map_full * tempMap=n.second;
@@ -443,44 +398,27 @@ void MapVisualiser::applyTheAnimationTimer()
         {
             if(tempMap->animatedObject.find(interval)!=tempMap->animatedObject.cend())
             {
-                const MapVisualiserOrder::Map_animation &map_animation=tempMap->animatedObject.at(interval);
-                if(map_animation.frameCountTotal>1)
+                for(auto& n:tempMap->animatedObject[interval])
                 {
+                    MapVisualiserOrder::Map_animation &map_animation=n.second;
                     isUsed=true;
-                    tempMap->animatedObject[interval].count++;
-                    const std::vector<MapVisualiserThread::Map_animation_object> &animatedObject=map_animation.animatedObjectList;
+                    std::vector<MapVisualiserThread::Map_animation_object> &animatedObject=map_animation.animatedObjectList;
                     unsigned int index=0;
                     while(index<animatedObject.size())
                     {
-                        int8_t frameOffset=1;
-                        if((map_animation.count+animatedObject.at(index).randomOffset)==
-                                map_animation.frameCountTotal)
-                            frameOffset-=map_animation.frameCountTotal;
-                        Tiled::MapObject * mapObject=animatedObject.at(index).animatedObject;
+                        MapVisualiserThread::Map_animation_object &animation_object=animatedObject[index];
+
+                        Tiled::MapObject * mapObject=animation_object.animatedObject;
                         Tiled::Cell cell=mapObject->cell();
                         Tiled::Tile *tile=mapObject->cell().tile;
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        const int &tileid=tile->id();
-                        const int &minId=animatedObject.at(index).minId;
-                        const int &maxId=animatedObject.at(index).maxId;
-                        if((tileid+frameOffset)<minId)
-                        {
-                            qDebug() << "Frame out of range";
-                            return;
-                        }
-                        if((tileid+frameOffset)>maxId)
-                        {
-                            qDebug() << "Frame out of range";
-                            return;
-                        }
-                        #endif
-                        Tiled::Tile *newTile=tile->tileset()->tileAt(tile->id()+frameOffset);
+                        Tiled::Tile *newTile=tile->tileset()->tileAt(tile->id()+1);
+                        if(newTile->id()>=map_animation.maxId)
+                            newTile=tile->tileset()->tileAt(map_animation.minId);
                         cell.tile=newTile;
                         mapObject->setCell(cell);
+
                         index++;
                     }
-                    if(map_animation.count>=map_animation.frameCountTotal)
-                        tempMap->animatedObject[interval].count=0;
                 }
             }
         }

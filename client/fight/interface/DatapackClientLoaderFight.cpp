@@ -579,6 +579,13 @@ void DatapackClientLoader::parseSkillsExtra()
             }
         }
         const tinyxml2::XMLElement *root = domDocument->RootElement();
+        if(root==NULL)
+        {
+            qDebug() << (QStringLiteral("Unable to open the xml root: %1, \"skills\" root balise not found for the xml file")
+                         .arg(QString::fromStdString(file)));
+            file_index++;
+            continue;
+        }
         if(root->Name()!=DatapackClientLoader::text_skills)
         {
             qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"skills\" root balise not found for the xml file")
