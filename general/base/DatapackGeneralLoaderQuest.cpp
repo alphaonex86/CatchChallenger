@@ -269,107 +269,109 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     const tinyxml2::XMLElement * step = root->FirstChildElement("step");
     while(step!=NULL)
     {
+        int16_t id=1;
         if(step->Attribute("id")!=NULL)
         {
-            const uint8_t &id=stringtouint8(step->Attribute("id"),&ok);
-            if(ok)
+            id=stringtouint8(step->Attribute("id"),&ok);
+            if(!ok)
             {
-                CatchChallenger::Quest::Step stepObject;
-                if(step->Attribute("bot")!=NULL)
+                std::cerr << "Unable to open the file: " << file << ", step id is not a number: child->Name(): " << step->Name() << std::endl;
+                id=-1;
+            }
+        }
+        if(id>=0)
+        {
+            CatchChallenger::Quest::Step stepObject;
+            if(step->Attribute("bot")!=NULL)
+            {
+                const std::vector<std::string> &tempStringList=stringsplit(step->Attribute("bot"),';');
+                unsigned int index=0;
+                while(index<tempStringList.size())
                 {
-                    const std::vector<std::string> &tempStringList=stringsplit(step->Attribute("bot"),';');
-                    unsigned int index=0;
-                    while(index<tempStringList.size())
-                    {
-                        const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
-                        if(ok)
-                            stepObject.bots.push_back(tempInt);
-                        index++;
-                    }
+                    const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
+                    if(ok)
+                        stepObject.bots.push_back(tempInt);
+                    index++;
                 }
-                else
-                    stepObject.bots=defaultBots;
-                //do the item
-                {
-                    const tinyxml2::XMLElement * stepItem = step->FirstChildElement("item");
-                    while(stepItem!=NULL)
-                    {
-                        if(stepItem->Attribute("id")!=NULL)
-                        {
-                            CatchChallenger::Quest::Item item;
-                            item.item=stringtouint16(stepItem->Attribute("id"),&ok);
-                            item.quantity=1;
-                            if(ok)
-                            {
-                                if(CommonDatapack::commonDatapack.items.item.find(item.item)==CommonDatapack::commonDatapack.items.item.cend())
-                                {
-                                    std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: "
-                                              << stepItem->Attribute("id") << ": child->Name(): " << stepItem->Name() << std::endl;
-                                    return std::pair<bool,Quest>(false,quest);
-                                }
-                                if(stepItem->Attribute("quantity")!=NULL)
-                                {
-                                    item.quantity=stringtouint32(stepItem->Attribute("quantity"),&ok);
-                                    if(!ok)
-                                        item.quantity=1;
-                                }
-                                stepObject.requirements.items.push_back(item);
-                                if(stepItem->Attribute("monster")!=NULL && stepItem->Attribute("rate")!=NULL)
-                                {
-                                    CatchChallenger::Quest::ItemMonster itemMonster;
-                                    itemMonster.item=item.item;
-
-                                    const std::vector<std::string> &tempStringList=stringsplit(stepItem->Attribute("monster"),';');
-                                    unsigned int index=0;
-                                    while(index<tempStringList.size())
-                                    {
-                                        const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
-                                        if(ok)
-                                            itemMonster.monsters.push_back(tempInt);
-                                        index++;
-                                    }
-
-                                    std::string rateString=stepItem->Attribute("rate");
-                                    stringreplaceOne(rateString,"%","");
-                                    itemMonster.rate=stringtouint8(rateString,&ok);
-                                    if(ok)
-                                        stepObject.itemsMonster.push_back(itemMonster);
-                                }
-                            }
-                            else
-                                std::cerr << "Unable to open the file: " << file << ", step id is not a number " << stepItem->Attribute("id") << ": child->Name(): " << step->Name() << std::endl;
-                        }
-                        else
-                            std::cerr << "Has not the attribute: id, step have not id attribute: child->Name(): " << step->Name() << std::endl;
-                        stepItem = stepItem->NextSiblingElement("item");
-                    }
-                }
-                //do the fight
-                {
-                    const tinyxml2::XMLElement * fightItem = step->FirstChildElement("fight");
-                    while(fightItem!=NULL)
-                    {
-                        if(fightItem->Attribute("id")!=NULL)
-                        {
-                            const uint16_t &fightId=stringtouint16(fightItem->Attribute("id"),&ok);
-                            if(ok)
-                                stepObject.requirements.fightId.push_back(fightId);
-                            else
-                                std::cerr << "Unable to open the file: " << file << ", step id is not a number "
-                                          << fightItem->Attribute("id") << ": child->Name(): " << fightItem->Name() << std::endl;
-                        }
-                        else
-                            std::cerr << "Has attribute: %1, step have not id attribute: child->Name(): " << fightItem->Name() << std::endl;
-                        fightItem = fightItem->NextSiblingElement("fight");
-                    }
-                }
-                steps[id]=stepObject;
             }
             else
-                std::cerr << "Unable to open the file: " << file << ", step id is not a number: child->Name(): " << step->Name() << std::endl;
+                stepObject.bots=defaultBots;
+            //do the item
+            {
+                const tinyxml2::XMLElement * stepItem = step->FirstChildElement("item");
+                while(stepItem!=NULL)
+                {
+                    if(stepItem->Attribute("id")!=NULL)
+                    {
+                        CatchChallenger::Quest::Item item;
+                        item.item=stringtouint16(stepItem->Attribute("id"),&ok);
+                        item.quantity=1;
+                        if(ok)
+                        {
+                            if(CommonDatapack::commonDatapack.items.item.find(item.item)==CommonDatapack::commonDatapack.items.item.cend())
+                            {
+                                std::cerr << "Unable to open the file: " << file << ", rewards item id is not into the item list: "
+                                          << stepItem->Attribute("id") << ": child->Name(): " << stepItem->Name() << std::endl;
+                                return std::pair<bool,Quest>(false,quest);
+                            }
+                            if(stepItem->Attribute("quantity")!=NULL)
+                            {
+                                item.quantity=stringtouint32(stepItem->Attribute("quantity"),&ok);
+                                if(!ok)
+                                    item.quantity=1;
+                            }
+                            stepObject.requirements.items.push_back(item);
+                            if(stepItem->Attribute("monster")!=NULL && stepItem->Attribute("rate")!=NULL)
+                            {
+                                CatchChallenger::Quest::ItemMonster itemMonster;
+                                itemMonster.item=item.item;
+
+                                const std::vector<std::string> &tempStringList=stringsplit(stepItem->Attribute("monster"),';');
+                                unsigned int index=0;
+                                while(index<tempStringList.size())
+                                {
+                                    const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
+                                    if(ok)
+                                        itemMonster.monsters.push_back(tempInt);
+                                    index++;
+                                }
+
+                                std::string rateString=stepItem->Attribute("rate");
+                                stringreplaceOne(rateString,"%","");
+                                itemMonster.rate=stringtouint8(rateString,&ok);
+                                if(ok)
+                                    stepObject.itemsMonster.push_back(itemMonster);
+                            }
+                        }
+                        else
+                            std::cerr << "Unable to open the file: " << file << ", step id is not a number " << stepItem->Attribute("id") << ": child->Name(): " << step->Name() << std::endl;
+                    }
+                    else
+                        std::cerr << "Has not the attribute: id, step have not id attribute: child->Name(): " << step->Name() << std::endl;
+                    stepItem = stepItem->NextSiblingElement("item");
+                }
+            }
+            //do the fight
+            {
+                const tinyxml2::XMLElement * fightItem = step->FirstChildElement("fight");
+                while(fightItem!=NULL)
+                {
+                    if(fightItem->Attribute("id")!=NULL)
+                    {
+                        const uint16_t &fightId=stringtouint16(fightItem->Attribute("id"),&ok);
+                        if(ok)
+                            stepObject.requirements.fightId.push_back(fightId);
+                        else
+                            std::cerr << "Unable to open the file: " << file << ", step id is not a number "
+                                      << fightItem->Attribute("id") << ": child->Name(): " << fightItem->Name() << std::endl;
+                    }
+                    else
+                        std::cerr << "Has attribute: %1, step have not id attribute: child->Name(): " << fightItem->Name() << std::endl;
+                    fightItem = fightItem->NextSiblingElement("fight");
+                }
+            }
+            steps[id]=stepObject;
         }
-        else
-            std::cerr << "Has attribute: %1, step have not id attribute: child->Name(): " << step->Name() << std::endl;
         step = step->NextSiblingElement("step");
     }
 

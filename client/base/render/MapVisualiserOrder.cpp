@@ -32,7 +32,6 @@ std::string MapVisualiserOrder::text_id="id";
 std::string MapVisualiserOrder::text_slash="/";
 std::string MapVisualiserOrder::text_dotxml=".xml";
 std::string MapVisualiserOrder::text_dottmx=".tmx";
-std::string MapVisualiserOrder::text_step="step";
 std::string MapVisualiserOrder::text_properties="properties";
 std::string MapVisualiserOrder::text_shop="shop";
 std::string MapVisualiserOrder::text_learn="learn";
