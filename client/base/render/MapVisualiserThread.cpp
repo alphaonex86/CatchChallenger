@@ -308,8 +308,21 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                         Tiled::Tile *tile=cell.tile;
                         if(tile!=NULL)
                         {
+                            const std::string &random=tile->property("random").toStdString();
                             const std::string &animation=tile->property("animation").toStdString();
-                            if(!animation.empty())
+                            if(!random.empty())
+                            {
+                                bool ok=false;
+                                const uint8_t random_int=stringtouint8(random,&ok);
+                                if(ok)
+                                {
+                                    cell.tile=cell.tile->tileset()->tileAt(cell.tile->id()+rand()%random_int);
+                                    tileLayer->setCell(x,y,cell);
+                                }
+                                else
+                                    qDebug() << "random property not uint8" << tile->property("random");
+                            }
+                            else if(!animation.empty())
                             {
                                 const std::vector<std::string> &animationList=stringsplit(animation,';');
                                 if(animationList.size()>=2)
@@ -348,26 +361,24 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
                                                 objectGroup->addObject(object);
                                                 object->setPosition(QPointF(x,y+1));
                                                 Tiled::Cell cell=object->cell();
-                                                if(tempMapObject->animatedObject.find(ms)==tempMapObject->animatedObject.cend())
+                                                const int tileId=tile->id();//to have const, ignore random
+                                                if(tempMapObject->animatedObject.find(ms)==tempMapObject->animatedObject.cend() ||
+                                                        tempMapObject->animatedObject.at(ms).find(tileId)==tempMapObject->animatedObject.at(ms).cend())
                                                 {
                                                     Map_animation tempAnimationDescriptor;
-                                                    tempAnimationDescriptor.count=0;
-                                                    tempAnimationDescriptor.frameCountTotal=frames;
-                                                    tempMapObject->animatedObject[ms]=tempAnimationDescriptor;
+                                                    tempAnimationDescriptor.minId=tileId;
+                                                    tempAnimationDescriptor.maxId=tileId+frames;
+                                                    tempMapObject->animatedObject[ms][tileId]=tempAnimationDescriptor;
                                                 }
                                                 Map_animation_object map_animation_object;
-                                                map_animation_object.randomOffset=0;
-                                                if(animationList.size()>=3 && animationList.at(2)=="randomoffset")
-                                                    map_animation_object.randomOffset=rand()%frames;
-                                                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                                                map_animation_object.minId=tile->id();
-                                                map_animation_object.maxId=tile->id()+frames;
-                                                #endif
-                                                cell.tile=tile->tileset()->tileAt(tile->id()+map_animation_object.randomOffset);
+                                                if(animationList.size()>=3 && animationList.at(2)=="random-offset")
+                                                    cell.tile=tile->tileset()->tileAt(tileId+rand()%frames);
+                                                else
+                                                    cell.tile=tile;
                                                 object->setCell(cell);
                                                 map_animation_object.animatedObject=object;
                                                 /// \todo control the animation is not out of rame
-                                                tempMapObject->animatedObject[ms].animatedObjectList.push_back(map_animation_object);
+                                                tempMapObject->animatedObject[ms][tileId].animatedObjectList.push_back(map_animation_object);
                                             }
                                             else
                                                 qDebug() << "frames is not in good range" << tile->property("animation");
@@ -825,6 +836,8 @@ bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *pa
         }
     }
     const tinyxml2::XMLElement *root = domDocument->RootElement();
+    if(root==NULL)
+        return false;
     if(root->Name()!=MapVisualiserThread::text_map)
     {
         qDebug() << QString::fromStdString(fileName) << QStringLiteral(", MapVisualiserThread::loadOtherMapMetaData(): \"map\" root balise not found for the xml file");
@@ -916,7 +929,7 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
                     while(step!=NULL)
                     {
                         if(step->Attribute("id")==NULL)
-                            qDebug() << (QStringLiteral("Has not attribute \"type\": bot->Value(): %1").arg(step->Value()));
+                            botFiles[file][botId].step[1]=step;
                         else if(step->Attribute("type")==NULL)
                             qDebug() << (QStringLiteral("Has not attribute \"type\": bot->Value(): %1").arg(step->Value()));
                         else

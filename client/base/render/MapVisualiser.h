@@ -77,7 +77,6 @@ protected:
     MapVisualiserThread mapVisualiserThread;
     std::vector<std::string> asyncMap;
     std::unordered_map<uint16_t/*intervale*/,QTimer *> animationTimer;
-    std::unordered_map<uint16_t/*intervale*/,std::unordered_map<uint8_t/*frame total*/,uint8_t/*actual frame*/> > animationFrame;
 
     virtual void destroyMap(MapVisualiserThread::Map_full *map);
 protected slots:
