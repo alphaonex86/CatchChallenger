@@ -17,7 +17,7 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
     qRegisterMetaType<std::vector<std::pair<uint8_t,CatchChallenger::Direction> > >("std::vector<std::pair<uint8_t,CatchChallenger::Direction> >");
-    qRegisterMetaType<std::vector<MapVisualiserThread::Map_full> >("std::vector<MapVisualiserThread::Map_full>");
+    qRegisterMetaType<std::vector<Map_full> >("std::vector<Map_full>");
     qRegisterMetaType<std::vector<std::pair<CatchChallenger::Direction,uint8_t> > >("std::vector<std::pair<CatchChallenger::Direction,uint8_t> >");
     qRegisterMetaType<std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > >("std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >");
     if(!connect(&pathFinding,&PathFinding::result,this,&MapControllerMP::pathFindingResult))
@@ -393,7 +393,7 @@ void MapControllerMP::finalPlayerStep(bool parseKey)
         qDebug() << "current map not loaded, unable to do finalPlayerStep()";
         return;
     }
-    const MapVisualiserThread::Map_full * current_map_pointer=all_map.at(current_map);
+    const Map_full * current_map_pointer=all_map.at(current_map);
     if(current_map_pointer==NULL)
     {
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
@@ -574,7 +574,7 @@ void MapControllerMP::reinject_signals_on_valid_map()
         qDebug() << QStringLiteral("MapControllerMP::reinject_signals_on_valid_map(): should not pass here because all is not previously loaded");
 }
 
-bool MapControllerMP::asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject)
+bool MapControllerMP::asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject)
 {
     if(!mHaveTheDatapack)
         return false;
@@ -604,7 +604,7 @@ void MapControllerMP::doMoveOtherAnimation()
 
 void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
 {
-    const MapVisualiserThread::Map_full * current_map_pointer=otherPlayer.presumed_map;
+    const Map_full * current_map_pointer=otherPlayer.presumed_map;
     if(current_map_pointer==NULL)
     {
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
@@ -616,7 +616,7 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
         //locate the right layer for monster
         if(otherPlayer.monsterMapObject!=NULL)
         {
-            const MapVisualiserThread::Map_full * current_monster_map_pointer=all_map.at(otherPlayer.current_monster_map);
+            const Map_full * current_monster_map_pointer=all_map.at(otherPlayer.current_monster_map);
             if(current_monster_map_pointer==NULL)
             {
                 qDebug() << "current_monster_map_pointer not loaded null pointer, unable to do finalPlayerStep()";
@@ -710,7 +710,7 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
 }
 
 /// \warning all ObjectGroupItem destroyed into removeMap()
-void MapControllerMP::destroyMap(MapVisualiserThread::Map_full *map)
+void MapControllerMP::destroyMap(Map_full *map)
 {
     //remove the other player
     std::unordered_map<uint16_t,OtherPlayer> otherPlayerList2=otherPlayerList;
@@ -794,7 +794,7 @@ CatchChallenger::Direction MapControllerMP::moveFromPath()
     return CatchChallenger::Direction_move_at_bottom;
 }
 
-void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,uint8_t x,uint8_t y)
+void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y)
 {
     const std::pair<uint8_t,uint8_t> pos(getPos());
     const uint8_t &thisx=pos.first;

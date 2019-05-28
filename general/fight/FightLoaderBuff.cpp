@@ -48,6 +48,12 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
             file_index++;
             continue;
         }
+        if(root->Name()==NULL)
+        {
+            std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found 2 for the xml file" << std::endl;
+            file_index++;
+            continue;
+        }
         if(strcmp(root->Name(),"buffs")!=0)
         {
             std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;

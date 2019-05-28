@@ -65,6 +65,11 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return returnVar;
     }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"profile\" root balise not found 2 for reputation of the xml file" << std::endl;
+        return returnVar;
+    }
     if(strcmp(root->Name(),"profile")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"profile\" root balise not found for reputation of the xml file" << std::endl;
@@ -406,6 +411,11 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
     if(root==NULL)
     {
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return serverProfileList;
+    }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"profile\" root balise not found 2 for reputation of the xml file" << std::endl;
         return serverProfileList;
     }
     if(strcmp(root->Name(),"profile")!=0)

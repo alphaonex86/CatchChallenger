@@ -44,6 +44,11 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
     }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"recipes\" root balise not found 2 for reputation of the xml file" << std::endl;
+        return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
+    }
     if(strcmp(root->Name(),"recipes")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"recipes\" root balise not found for reputation of the xml file" << std::endl;

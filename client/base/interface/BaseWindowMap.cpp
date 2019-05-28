@@ -299,7 +299,7 @@ void BaseWindow::currentMapLoaded()
              << " with type: " << QString::fromStdString(mapController->currentMapType());
     //name
     {
-        MapVisualiserThread::Map_full *mapFull=mapController->currentMapFull();
+        Map_full *mapFull=mapController->currentMapFull();
         std::string visualName;
         if(!mapFull->zone.empty())
             if(DatapackClientLoader::datapackLoader.zonesExtra.find(mapFull->zone)!=
@@ -328,7 +328,7 @@ void BaseWindow::currentMapLoaded()
         if(!backgroundsound.isEmpty() && !soundList.contains(backgroundsound))
             soundList << backgroundsound;
         //zone sound
-        MapVisualiserThread::Map_full *mapFull=mapController->currentMapFull();
+        Map_full *mapFull=mapController->currentMapFull();
         if(!mapFull->zone.isEmpty())
             if(DatapackClientLoader::datapackLoader.zonesExtra.contains(mapFull->zone))
             {

@@ -45,6 +45,11 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return types;
     }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"types\" root balise not found 2 for the xml file" << std::endl;
+        return types;
+    }
     if(strcmp(root->Name(),"types")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"types\" root balise not found for the xml file" << std::endl;

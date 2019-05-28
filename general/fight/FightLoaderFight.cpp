@@ -44,6 +44,12 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
             index_file++;
             continue;
         }
+        if(root->Name()==NULL)
+        {
+            std::cerr << "Unable to open the xml file: " << file << ", \"fights\" root balise not found 2 for the xml file" << std::endl;
+            index_file++;
+            continue;
+        }
         if(strcmp(root->Name(),"fights")!=0)
         {
             std::cerr << "Unable to open the xml file: " << file << ", \"fights\" root balise not found for the xml file" << std::endl;

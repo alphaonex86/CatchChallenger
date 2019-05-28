@@ -19,7 +19,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache) :
     mScene(new QGraphicsScene(this)),
     mark(NULL)
 {
-    qRegisterMetaType<MapVisualiserThread::Map_full *>("MapVisualiserThread::Map_full *");
+    qRegisterMetaType<Map_full *>("Map_full *");
 
     if(!connect(this,&MapVisualiser::loadOtherMapAsync,&mapVisualiserThread,&MapVisualiserThread::loadOtherMapAsync,Qt::QueuedConnection))
         abort();
@@ -100,7 +100,7 @@ MapVisualiser::~MapVisualiser()
         delete mark;
     //remove the not used map
     /// \todo re-enable this
-    /*std::unordered_map<QString,MapVisualiserThread::Map_full *>::const_iterator i = all_map.constBegin();
+    /*std::unordered_map<QString,Map_full *>::const_iterator i = all_map.constBegin();
     while (i != all_map.constEnd()) {
         destroyMap(*i);
         i = all_map.constBegin();//needed
@@ -110,7 +110,7 @@ MapVisualiser::~MapVisualiser()
     //delete playerMapObject;
 }
 
-MapVisualiserThread::Map_full * MapVisualiser::getMap(const std::string &map) const
+Map_full * MapVisualiser::getMap(const std::string &map) const
 {
     if(all_map.find(map)!=all_map.cend())
         return all_map.at(map);
@@ -174,7 +174,7 @@ void MapVisualiser::setTargetFPS(int targetFPS)
     }
 }
 
-void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,uint8_t x,uint8_t y)
+void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y)
 {
     if(event==CatchChallenger::MapEvent_SimpleClick)
     {

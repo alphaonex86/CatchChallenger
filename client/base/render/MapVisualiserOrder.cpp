@@ -60,7 +60,35 @@ MapVisualiserOrder::~MapVisualiserOrder()
 {
 }
 
-void MapVisualiserOrder::layerChangeLevelAndTagsChange(MapVisualiserOrder::Map_full *tempMapObject,bool hideTheDoors)
+Map_full::Map_full()
+{
+    logicalMap.xmlRoot=NULL;
+    logicalMap.border.bottom.map=NULL;
+    logicalMap.border.bottom.x_offset=0;
+    logicalMap.border.top.map=NULL;
+    logicalMap.border.top.x_offset=0;
+    logicalMap.border.right.map=NULL;
+    logicalMap.border.right.y_offset=0;
+    logicalMap.border.left.map=NULL;
+    logicalMap.border.left.y_offset=0;
+    logicalMap.teleporter=NULL;
+    logicalMap.teleporter_list_size=0;
+    logicalMap.width=0;
+    logicalMap.height=0;
+    logicalMap.group=0;
+    logicalMap.id=0;
+    tiledMap=NULL;
+    tiledRender=NULL;
+    objectGroup=NULL;
+    objectGroupIndex=0;
+    relative_x=0;
+    relative_y=0;
+    relative_x_pixel=0;
+    relative_y_pixel=0;
+    displayed=0;
+}
+
+void MapVisualiserOrder::layerChangeLevelAndTagsChange(Map_full *tempMapObject,bool hideTheDoors)
 {
     //remove the hidden tags, and unknown layer
     int index=0;

@@ -18,7 +18,7 @@ MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
     cache=useCache;
 }
 
-void MapItem::addMap(MapVisualiserThread::Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
+void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
 {
     if(displayed_layer.contains(map))
     {

@@ -430,9 +430,15 @@ std::string SoloWindow::getMapName(const std::string &file)
     const tinyxml2::XMLElement *root = domDocument.RootElement();
     if(root==NULL)
         return std::string();
-    if(strcmp(root->Name(),"map")!=0)
+    if(root->Name()==NULL)
     {
-        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file")
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"map\" root balise not found 2 for the xml file")
+                     .arg(QString::fromStdString(file)));
+        return std::string();
+    }
+    if(root->Name()==NULL || strcmp(root->Name(),"map")!=0)
+    {
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"map\" root balise not found for the xml file")
                      .arg(QString::fromStdString(file)));
         return std::string();
     }
@@ -465,9 +471,14 @@ std::string SoloWindow::getMapZone(const std::string &file)
     const tinyxml2::XMLElement *root = domDocument.RootElement();
     if(root==NULL)
         return std::string();
+    if(root->Name()==NULL)
+    {
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"map\" root balise not found 2 for the xml file").arg(QString::fromStdString(file)));
+        return std::string();
+    }
     if(strcmp(root->Name(),"map")!=0)
     {
-        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(QString::fromStdString(file)));
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"map\" root balise not found for the xml file").arg(QString::fromStdString(file)));
         return std::string();
     }
     const tinyxml2::XMLElement *properties = root->FirstChildElement("properties");
@@ -499,9 +510,9 @@ std::string SoloWindow::getZoneName(const std::string &zone)
     const tinyxml2::XMLElement *root = domDocument.RootElement();
     if(root==NULL)
         return std::string();
-    if(strcmp(root->Name(),"zone")!=0)
+    if(root->Name()==NULL || strcmp(root->Name(),"zone")!=0)
     {
-        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"plants\" root balise not found for the xml file").arg(QString::fromStdString(file)));
+        qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"zone\" root balise not found for the xml file").arg(QString::fromStdString(file)));
         return std::string();
     }
 

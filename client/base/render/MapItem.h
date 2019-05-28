@@ -34,7 +34,7 @@ class MapItem : public QGraphicsObject
     Q_OBJECT
 public:
     MapItem(QGraphicsItem *parent = 0,const bool &useCache=true);
-    void addMap(MapVisualiserThread::Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex);
+    void addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex);
     bool haveMap(Tiled::Map *map);
     void removeMap(Tiled::Map *map);
     void setMapPosition(Tiled::Map *map, int16_t x, int16_t y);
@@ -44,7 +44,7 @@ private:
     QMultiMap<Tiled::Map *,QGraphicsItem *> displayed_layer;
     bool cache;
 signals:
-    void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,uint8_t x,uint8_t y);
+    void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y);
 };
 
 #endif

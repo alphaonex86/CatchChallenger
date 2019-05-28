@@ -43,12 +43,12 @@ public:
     bool showFPS();
     void setShowFPS(const bool &showFPS);
     void setTargetFPS(int targetFPS);
-    virtual void eventOnMap(CatchChallenger::MapEvent event,MapVisualiserThread::Map_full * tempMapObject,uint8_t x,uint8_t y);
+    virtual void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y);
 
-    MapVisualiserThread::Map_full * getMap(const std::string &map) const;
+    Map_full * getMap(const std::string &map) const;
 
     std::string current_map;
-    std::unordered_map<std::string,MapVisualiserThread::Map_full *> all_map,old_all_map;
+    std::unordered_map<std::string,Map_full *> all_map,old_all_map;
     std::unordered_map<std::string,QDateTime> old_all_map_time;
 protected:
     Tiled::MapReader reader;
@@ -78,25 +78,25 @@ protected:
     std::vector<std::string> asyncMap;
     std::unordered_map<uint16_t/*intervale*/,QTimer *> animationTimer;
 
-    virtual void destroyMap(MapVisualiserThread::Map_full *map);
+    virtual void destroyMap(Map_full *map);
 protected slots:
     virtual void resetAll();
 public slots:
     void loadOtherMap(const std::string &resolvedFileName);
-    virtual void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y,
+    virtual void loadBotOnTheMap(Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y,
                                  const std::string &lookAt, const std::string &skin);
-    //virtual std::unordered_set<QString> loadMap(MapVisualiserThread::Map_full *map, const bool &display);
+    //virtual std::unordered_set<QString> loadMap(Map_full *map, const bool &display);
     virtual void removeUnusedMap();
     virtual void hideNotloadedMap();
 private slots:
-    void loadTeleporter(MapVisualiserThread::Map_full *map);
+    void loadTeleporter(Map_full *map);
     void paintEvent(QPaintEvent * event);
     void updateFPS();
-    void asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObject);
+    void asyncDetectBorder(Map_full * tempMapObject);
     void applyTheAnimationTimer();
 protected slots:
     void render();
-    virtual bool asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject);
+    virtual bool asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject);
     void passMapIntoOld();
 signals:
     void loadOtherMapAsync(const std::string &fileName);

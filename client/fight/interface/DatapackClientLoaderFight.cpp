@@ -47,7 +47,7 @@ void DatapackClientLoader::parseMonstersExtra()
             }
         }
         const tinyxml2::XMLElement *root = domDocument->RootElement();
-        if(strcmp(root->Name(),"monsters")!=0)
+        if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"monsters")!=0)
         {
             //qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"monsters\" root balise not found for the xml file").arg(QString::fromStdString(file)));
             file_index++;
@@ -291,7 +291,7 @@ void DatapackClientLoader::parseTypesExtra()
         }
     }
     const tinyxml2::XMLElement *root = domDocument->RootElement();
-    if(strcmp(root->Name(),"types")!=0)
+    if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"types")!=0)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"types\" root balise not found for the xml file").arg(QString::fromStdString(file));
         return;
@@ -411,7 +411,7 @@ void DatapackClientLoader::parseBuffExtra()
             }
         }
         const tinyxml2::XMLElement *root = domDocument->RootElement();
-        if(strcmp(root->Name(),"buffs")!=0)
+        if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"buffs")!=0)
         {
             qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"buffs\" root balise not found for the xml file")
                          .arg(QString::fromStdString(file)));
@@ -738,7 +738,7 @@ void DatapackClientLoader::parseBotFightsExtra()
                 }
             }
             const tinyxml2::XMLElement *root = domDocument->RootElement();
-            if(strcmp(root->Name(),"fights")!=0)
+            if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"fights")!=0)
             {
                 qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"fights\" root balise not found for the xml file: %2!=%3")
                              .arg(QString::fromStdString(file))

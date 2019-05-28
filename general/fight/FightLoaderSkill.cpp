@@ -64,6 +64,12 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
             file_index++;
             continue;
         }
+        if(root->Name()==NULL)
+        {
+            std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found 2 for the xml file" << std::endl;
+            file_index++;
+            continue;
+        }
         if(strcmp(root->Name(),"skills")!=0)
         {
             std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found for the xml file" << std::endl;
