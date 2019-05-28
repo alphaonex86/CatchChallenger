@@ -20,7 +20,7 @@
 #include "../FacilityLibClient.h"
 
 /// \warning all ObjectGroupItem destroyed into removeMap()
-void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
+void MapVisualiser::destroyMap(Map_full *map)
 {
     //logicalMap.plantList, delete plants useless, destroyed into removeMap()
     //logicalMap.botsDisplay, delete bot useless, destroyed into removeMap()
@@ -60,7 +60,7 @@ void MapVisualiser::destroyMap(MapVisualiserThread::Map_full *map)
 void MapVisualiser::resetAll()
 {
     ///remove the not used map, then where no player is susceptible to switch (by border or teleporter)
-    std::vector<MapVisualiserThread::Map_full *> mapListToDelete;
+    std::vector<Map_full *> mapListToDelete;
     for(auto /*& crash with ref*/n : old_all_map)
         mapListToDelete.push_back(n.second);
     for(auto /*& crash with ref*/n : all_map)
@@ -94,7 +94,7 @@ void MapVisualiser::loadOtherMap(const std::string &resolvedFileName)
     //previously loaded
     if(old_all_map.find(resolvedFileName)!=old_all_map.cend())
     {
-        MapVisualiserThread::Map_full * tempMapObject=old_all_map.at(resolvedFileName);
+        Map_full * tempMapObject=old_all_map.at(resolvedFileName);
         tempMapObject->displayed=false;
         old_all_map.erase(resolvedFileName);
         old_all_map_time.erase(resolvedFileName);
@@ -116,7 +116,7 @@ void MapVisualiser::loadOtherMap(const std::string &resolvedFileName)
     emit loadOtherMapAsync(resolvedFileName);
 }
 
-void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObject)
+void MapVisualiser::asyncDetectBorder(Map_full * tempMapObject)
 {
     if(tempMapObject==NULL)
     {
@@ -179,7 +179,7 @@ void MapVisualiser::asyncDetectBorder(MapVisualiserThread::Map_full * tempMapObj
     }
 }
 
-bool MapVisualiser::asyncMapLoaded(const std::string &fileName, MapVisualiserThread::Map_full * tempMapObject)
+bool MapVisualiser::asyncMapLoaded(const std::string &fileName, Map_full * tempMapObject)
 {
     if(current_map.empty())
         return false;
@@ -242,7 +242,7 @@ bool MapVisualiser::asyncMapLoaded(const std::string &fileName, MapVisualiserThr
                 {
                     if(all_map.at(tempMapObject->logicalMap.border_semi.top.fileName)->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map.at(tempMapObject->logicalMap.border_semi.top.fileName);
+                        Map_full *border_map=all_map.at(tempMapObject->logicalMap.border_semi.top.fileName);
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.bottom.fileName)
                         {
@@ -275,7 +275,7 @@ bool MapVisualiser::asyncMapLoaded(const std::string &fileName, MapVisualiserThr
                 {
                     if(all_map.at(tempMapObject->logicalMap.border_semi.bottom.fileName)->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map.at(tempMapObject->logicalMap.border_semi.bottom.fileName);
+                        Map_full *border_map=all_map.at(tempMapObject->logicalMap.border_semi.bottom.fileName);
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.top.fileName)
                         {
@@ -308,7 +308,7 @@ bool MapVisualiser::asyncMapLoaded(const std::string &fileName, MapVisualiserThr
                 {
                     if(all_map.at(tempMapObject->logicalMap.border_semi.right.fileName)->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map.at(tempMapObject->logicalMap.border_semi.right.fileName);
+                        Map_full *border_map=all_map.at(tempMapObject->logicalMap.border_semi.right.fileName);
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.left.fileName)
                         {
@@ -341,7 +341,7 @@ bool MapVisualiser::asyncMapLoaded(const std::string &fileName, MapVisualiserThr
                 {
                     if(all_map.at(tempMapObject->logicalMap.border_semi.left.fileName)->displayed)
                     {
-                        MapVisualiserThread::Map_full *border_map=all_map.at(tempMapObject->logicalMap.border_semi.left.fileName);
+                        Map_full *border_map=all_map.at(tempMapObject->logicalMap.border_semi.left.fileName);
                         //if both border match
                         if(tempMapObject->logicalMap.map_file==border_map->logicalMap.border_semi.right.fileName)
                         {
@@ -393,7 +393,7 @@ void MapVisualiser::applyTheAnimationTimer()
     const uint16_t &interval=static_cast<uint16_t>(timer->interval());
     bool isUsed=false;
     for( const auto& n : all_map ) {
-        MapVisualiserThread::Map_full * tempMap=n.second;
+        Map_full * tempMap=n.second;
         if(tempMap->displayed)
         {
             if(tempMap->animatedObject.find(interval)!=tempMap->animatedObject.cend())
@@ -434,7 +434,7 @@ void MapVisualiser::applyTheAnimationTimer()
     }
 }
 
-void MapVisualiser::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const uint32_t &botId,
+void MapVisualiser::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,
                                     const uint8_t &x,const uint8_t &y,const std::string &lookAt,const std::string &skin)
 {
     Q_UNUSED(botId);
@@ -478,7 +478,7 @@ void MapVisualiser::passMapIntoOld()
     all_map.clear();
 }
 
-void MapVisualiser::loadTeleporter(MapVisualiserThread::Map_full *map)
+void MapVisualiser::loadTeleporter(Map_full *map)
 {
     //load the teleporter
     unsigned int index=0;

@@ -34,12 +34,12 @@ void MapVisualiserThread::loadOtherMapAsync(const std::string &fileName)
 {
     /*cash due to the pointerif(mapCache.contains(fileName))
     {
-        MapVisualiserThread::Map_full *tempMapObject=new MapVisualiserThread::Map_full();
+        Map_full *tempMapObject=new Map_full();
         *tempMapObject=mapCache.value(fileName);
         emit asyncMapLoaded(fileName,tempMapObject);
         return;
     }*/
-    MapVisualiserThread::Map_full *tempMapObject=loadOtherMap(fileName);
+    Map_full *tempMapObject=loadOtherMap(fileName);
     /*if(mapCache.size()>200)
         mapCache.clear();
     mapCache[fileName]=*tempMapObject;*/
@@ -52,11 +52,11 @@ std::string MapVisualiserThread::error()
 }
 
 //open the file, and load it into the variables
-MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
+Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
 {
     if(stopIt)
         return NULL;
-    MapVisualiserThread::Map_full *tempMapObject=new MapVisualiserThread::Map_full();
+    Map_full *tempMapObject=new Map_full();
 
     tileToTriggerAnimationContent.clear();
 
@@ -564,7 +564,7 @@ MapVisualiserThread::Map_full *MapVisualiserThread::loadOtherMap(const std::stri
 }
 
 //drop and remplace by Map_loader info
-bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *parsedMap)
+bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap)
 {
     tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
@@ -583,6 +583,13 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
         }
     }
     const tinyxml2::XMLElement *root = domDocument->RootElement();
+    if(root->Name()==NULL)
+    {
+        qDebug() << QString::fromStdString(fileName)
+                 << QStringLiteral(", MapVisualiserThread::loadOtherMapClientPart(): \"map\" root balise not found 2 for the xml file: ")
+                 << root->Name();
+        return false;
+    }
     if(strcmp(root->Name(),"map")!=0)
     {
         qDebug() << QString::fromStdString(fileName)
@@ -816,7 +823,7 @@ bool MapVisualiserThread::loadOtherMapClientPart(MapVisualiserThread::Map_full *
     return true;
 }
 
-bool MapVisualiserThread::loadOtherMapMetaData(MapVisualiserThread::Map_full *parsedMap)
+bool MapVisualiserThread::loadOtherMapMetaData(Map_full *parsedMap)
 {
     tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
@@ -904,6 +911,11 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
     const tinyxml2::XMLElement * root = domDocument->RootElement();
     if(root==NULL)
         return;
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"reputations\" root balise not found 2 for reputation of the xml file" << std::endl;
+        return;
+    }
     if(strcmp(root->Name(),"bots")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"reputations\" root balise not found for reputation of the xml file" << std::endl;

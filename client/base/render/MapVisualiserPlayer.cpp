@@ -294,7 +294,7 @@ void MapVisualiserPlayer::doMoveAnimation()
 
 void MapVisualiserPlayer::moveStepSlot()
 {
-    MapVisualiserThread::Map_full * map_full=all_map.at(current_map);
+    Map_full * map_full=all_map.at(current_map);
     if(!animationDisplayed)
     {
         //leave
@@ -671,7 +671,7 @@ void MapVisualiserPlayer::moveStepSlot()
         moveTimer.start();
 }
 
-bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject)
+bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject)
 {
     if(current_map.empty())
         return false;
@@ -826,7 +826,7 @@ bool MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
         qDebug() << "current map not loaded, unable to do finalPlayerStep()";
         return false;
     }
-    const MapVisualiserThread::Map_full * current_map_pointer=all_map.at(current_map);
+    const Map_full * current_map_pointer=all_map.at(current_map);
     if(current_map_pointer==NULL)
     {
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
@@ -876,7 +876,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
         qDebug() << "current map not loaded, unable to do finalPlayerStep()";
         return;
     }
-    const MapVisualiserThread::Map_full * current_map_pointer=all_map.at(current_map);
+    const Map_full * current_map_pointer=all_map.at(current_map);
     if(current_map_pointer==NULL)
     {
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
@@ -889,7 +889,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
         //locate the right layer for monster
         if(monsterMapObject!=NULL)
         {
-            const MapVisualiserThread::Map_full * current_monster_map_pointer=all_map.at(current_monster_map);
+            const Map_full * current_monster_map_pointer=all_map.at(current_monster_map);
             if(current_monster_map_pointer==NULL)
             {
                 qDebug() << "current_monster_map_pointer not loaded null pointer, unable to do finalPlayerStep()";
@@ -1452,7 +1452,7 @@ std::string MapVisualiserPlayer::currentMap() const
     return current_map;
 }
 
-MapVisualiserThread::Map_full * MapVisualiserPlayer::currentMapFull() const
+Map_full * MapVisualiserPlayer::currentMapFull() const
 {
     return all_map.at(current_map);
 }
@@ -1468,7 +1468,7 @@ std::string MapVisualiserPlayer::currentMapType() const
 {
     if(all_map.find(current_map)==all_map.cend())
         return std::string();
-    const MapVisualiserThread::Map_full * const mapFull=all_map.at(current_map);
+    const Map_full * const mapFull=all_map.at(current_map);
     const Tiled::Map * const tiledMap=mapFull->tiledMap;
     const Tiled::Properties &properties=tiledMap->properties();
     if(properties.find("type")!=properties.cend())
@@ -1484,7 +1484,7 @@ std::string MapVisualiserPlayer::currentMapType() const
 
 std::string MapVisualiserPlayer::currentZone() const
 {
-    const MapVisualiserThread::Map_full * const mapFull=all_map.at(current_map);
+    const Map_full * const mapFull=all_map.at(current_map);
     const Tiled::Map * const tiledMap=mapFull->tiledMap;
     const Tiled::Properties &properties=tiledMap->properties();
     if(properties.find("zone")!=properties.cend())
@@ -1500,7 +1500,7 @@ std::string MapVisualiserPlayer::currentZone() const
 
 std::string MapVisualiserPlayer::currentBackgroundsound() const
 {
-    const MapVisualiserThread::Map_full * const mapFull=all_map.at(current_map);
+    const Map_full * const mapFull=all_map.at(current_map);
     const Tiled::Map * const tiledMap=mapFull->tiledMap;
     const Tiled::Properties &properties=tiledMap->properties();
     if(properties.find("backgroundsound")!=properties.cend())

@@ -55,6 +55,11 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
             file_index++;
             continue;
         }
+        if(root->Name()==NULL)
+        {
+            file_index++;
+            continue;
+        }
         if(strcmp(root->Name(),"items")!=0)
         {
             file_index++;

@@ -27,6 +27,15 @@ const char* __asan_default_options() { return "alloc_dealloc_mismatch=0:detect_c
 
 Map_loader::Map_loader()
 {
+    /// \warning more init at try Load
+    map_to_send.border.bottom.x_offset=0;
+    map_to_send.border.top.x_offset=0;
+    map_to_send.border.left.y_offset=0;
+    map_to_send.border.right.y_offset=0;
+    map_to_send.xmlRoot=NULL;
+    map_to_send.monstersCollisionMap=NULL;
+    map_to_send.width=0;
+    map_to_send.height=0;
 }
 
 Map_loader::~Map_loader()
@@ -141,7 +150,7 @@ void Map_loader::removeMapLayer(const ParsedLayer &parsed_layer)
 
 bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer)
 {
-    tinyxml2::XMLDocument *domDocument;
+    tinyxml2::XMLDocument *domDocument=NULL;
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -168,11 +177,17 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
         std::cerr << file+", loadMonsterMap(): no root balise found for the xml file" << std::endl;
         return false;
     }
+    if(this->map_to_send.xmlRoot->Name()==NULL)
+    {
+        std::cerr << file+", loadMonsterMap(): \"map\" root balise not found 2 for the xml file" << std::endl;
+        return false;
+    }
     if(strcmp(this->map_to_send.xmlRoot->Name(),"map")!=0)
     {
         std::cerr << file+", loadMonsterMap(): \"map\" root balise not found for the xml file" << std::endl;
         return false;
     }
+    //std::cerr << file+", loadMonsterMap(): this->map_to_send.xmlRoot->Name()" << this->map_to_send.xmlRoot->Name() << std::endl;
 
     //found the cave name
     std::vector<std::string> caveName;
@@ -487,6 +502,11 @@ tinyxml2::XMLElement *Map_loader::getXmlCondition(const std::string &fileName,co
     if(root==NULL)
     {
         std::cerr << "no root balise found for the xml file " << file << std::endl;
+        return NULL;
+    }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "\"conditions\" root balise not found (2) for the xml file " << file << std::endl;
         return NULL;
     }
     if(strcmp(root->Name(),"conditions")!=0)

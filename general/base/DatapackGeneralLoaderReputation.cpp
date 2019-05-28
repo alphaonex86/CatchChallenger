@@ -36,6 +36,11 @@ std::vector<Reputation> DatapackGeneralLoader::loadReputation(const std::string 
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return reputation;
     }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"reputations\" root balise not found 2 for reputation of the xml file" << std::endl;
+        return reputation;
+    }
     if(strcmp(root->Name(),"reputations")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"reputations\" root balise not found for reputation of the xml file" << std::endl;

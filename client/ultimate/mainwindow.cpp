@@ -428,6 +428,11 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
         std::cerr << "Unable to open the file: MainWindow::loadXmlConnexionInfoList, no root balise found for the xml file" << std::endl;
         return returnedVar;
     }
+    if(root->Name()==NULL)
+    {
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"servers\" root balise not found 2 for the xml file").arg("server_list.xml");
+        return returnedVar;
+    }
     if(strcmp(root->Name(),"servers")!=0)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"servers\" root balise not found for the xml file").arg("server_list.xml");
@@ -1398,6 +1403,12 @@ std::pair<std::string,std::string> MainWindow::getDatapackInformations(const std
     if(root==NULL)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"informations\" root balise not found for the xml file")
+                    .arg(QString::fromStdString(filePath));
+        return returnVar;
+    }
+    if(root->Name()==NULL)
+    {
+        qDebug() << QStringLiteral("Unable to open the file: %1, \"informations\" root balise not found 2 for the xml file")
                     .arg(QString::fromStdString(filePath));
         return returnVar;
     }
