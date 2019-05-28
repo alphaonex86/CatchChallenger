@@ -759,7 +759,14 @@ bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,MapVisualis
                                 }
                                 else
                                 {
-                                    ObjectGroupItem::objectGroupLink.at(objectGroup)->removeObject(object);
+                                    //The tiled object not exist on this layer
+                                    if(ObjectGroupItem::objectGroupLink.find(objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
+                                    {
+                                        ObjectGroupItem::objectGroupLink.at(objectGroup)->removeObject(object);
+                                        tempMapObject->logicalMap.itemsOnMap[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))].tileObject=NULL;
+                                    }
+                                    else
+                                        std::cerr << "Try removeObject(object) on not existant ObjectGroupItem::objectGroupLink.at(objectGroup)" << std::endl;
                                     objects.removeAt(index2);
                                 }
                             }
