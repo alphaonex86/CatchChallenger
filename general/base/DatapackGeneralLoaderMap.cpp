@@ -54,6 +54,11 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return returnVar;
     }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"layers\" root balise not found 2 for reputation of the xml file" << std::endl;
+        return returnVar;
+    }
     if(strcmp(root->Name(),"layers")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"layers\" root balise not found for reputation of the xml file" << std::endl;
@@ -243,6 +248,12 @@ LayersOptions DatapackGeneralLoader::loadLayersOptions(const std::string &file)
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return returnVar;
     }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"layers\" root balise not found 2 for reputation of the xml file" << std::endl;
+        std::cerr << "Unable to open the xml file: " << file << ", \"list\" root balise not found 2 for the xml file" << std::endl;
+        return returnVar;
+    }
     if(strcmp(root->Name(),"layers")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"layers\" root balise not found for reputation of the xml file" << std::endl;
@@ -301,6 +312,11 @@ std::vector<Event> DatapackGeneralLoader::loadEvents(const std::string &file)
     if(root==NULL)
     {
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return returnVar;
+    }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"events\" root balise not found 2 for reputation of the xml file" << std::endl;
         return returnVar;
     }
     if(strcmp(root->Name(),"events")!=0)
@@ -372,6 +388,11 @@ std::unordered_map<uint16_t, Shop> DatapackGeneralLoader::preload_shop(const std
     if(root==NULL)
     {
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
+        return shops;
+    }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"shops\" root balise not found 2 for reputation of the xml file" << std::endl;
         return shops;
     }
     if(strcmp(root->Name(),"shops")!=0)

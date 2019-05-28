@@ -80,6 +80,11 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return std::pair<bool,Quest>(false,quest);
     }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"quest\" root balise not found 2 for reputation of the xml file" << std::endl;
+        return std::pair<bool,Quest>(false,quest);
+    }
     if(strcmp(root->Name(),"quest")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"quest\" root balise not found for reputation of the xml file" << std::endl;

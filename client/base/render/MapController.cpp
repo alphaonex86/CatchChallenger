@@ -65,7 +65,7 @@ MapController::~MapController()
     }
 }
 
-bool MapController::asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject)
+bool MapController::asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject)
 {
     if(MapControllerMP::asyncMapLoaded(fileName,tempMapObject))
     {
@@ -122,7 +122,7 @@ void MapController::updateBot()
         return;
     if(all_map.find(current_map)==all_map.cend())
         return;
-    MapVisualiserThread::Map_full * currentMap=all_map.at(current_map);
+    Map_full * currentMap=all_map.at(current_map);
     if(currentMap==NULL)
         return;
 
@@ -242,7 +242,7 @@ bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchCha
     return true;
 }
 
-void MapController::loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap,const uint32_t &botId,const uint8_t &x,const uint8_t &y,
+void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,const uint8_t &x,const uint8_t &y,
                                     const std::string &lookAt,const std::string &skin)
 {
     Q_UNUSED(botId);

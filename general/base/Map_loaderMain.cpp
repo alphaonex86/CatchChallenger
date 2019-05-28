@@ -16,6 +16,10 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     map_to_send_temp.border.top.x_offset=0;
     map_to_send_temp.border.left.y_offset=0;
     map_to_send_temp.border.right.y_offset=0;
+    map_to_send_temp.xmlRoot=NULL;
+    map_to_send_temp.monstersCollisionMap=NULL;
+    map_to_send_temp.width=0;
+    map_to_send_temp.height=0;
 
     std::vector<std::string> detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer;
     std::vector<char> Walkable,Collisions,Dirt,LedgesRight,LedgesLeft,LedgesBottom,LedgesTop;
@@ -47,6 +51,11 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     if(root==NULL)
     {
         error=file+", tryLoadMap(): no root balise found for the xml file";
+        return false;
+    }
+    if(root->Name()==NULL)
+    {
+        error=file+", tryLoadMap(): \"map\" root balise not found 2 for the xml file";
         return false;
     }
     if(strcmp(root->Name(),"map")!=0)

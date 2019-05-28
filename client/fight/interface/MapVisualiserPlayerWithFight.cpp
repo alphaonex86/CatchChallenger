@@ -117,7 +117,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
     if(fightMonster!=NULL)
     {
         std::pair<uint8_t,uint8_t> pos(getPos());
-        const MapVisualiserThread::Map_full * current_map_pointer=all_map.at(current_map);
+        const Map_full * current_map_pointer=all_map.at(current_map);
         const std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>,pairhash> &botsFightTrigger=current_map_pointer->logicalMap.botsFightTrigger;
 
         if(botsFightTrigger.find(pos)!=botsFightTrigger.cend())

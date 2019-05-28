@@ -23,7 +23,7 @@ PathFinding::~PathFinding()
     wait();
 }
 
-void PathFinding::searchPath(const std::unordered_map<std::string, MapVisualiserThread::Map_full *> &all_map,
+void PathFinding::searchPath(const std::unordered_map<std::string, Map_full *> &all_map,
                              const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,
                              const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::unordered_map<uint16_t,uint32_t> &items)
 {
