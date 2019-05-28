@@ -2,14 +2,14 @@
 #include <QDebug>
 #include <qmath.h>
 
-PreparedLayer::PreparedLayer(MapVisualiserThread::Map_full * tempMapObject,QGraphicsItem *parent) :
+PreparedLayer::PreparedLayer(Map_full * tempMapObject,QGraphicsItem *parent) :
     QGraphicsPixmapItem(parent),
     tempMapObject(tempMapObject)
 {
     setAcceptHoverEvents(true);
 }
 
-PreparedLayer::PreparedLayer(MapVisualiserThread::Map_full * tempMapObject,const QPixmap &pixmap, QGraphicsItem *parent) :
+PreparedLayer::PreparedLayer(Map_full * tempMapObject,const QPixmap &pixmap, QGraphicsItem *parent) :
     QGraphicsPixmapItem(pixmap,parent),
     tempMapObject(tempMapObject)
 {

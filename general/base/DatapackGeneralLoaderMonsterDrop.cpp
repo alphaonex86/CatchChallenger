@@ -51,6 +51,11 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
             file_index++;
             continue;
         }
+        if(root->Name()==NULL)
+        {
+            file_index++;
+            continue;
+        }
         if(strcmp(root->Name(),"monsters")!=0)
         {
             file_index++;

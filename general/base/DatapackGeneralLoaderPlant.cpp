@@ -43,6 +43,11 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return plants;
     }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"plants\" root balise not found 2 for reputation of the xml file" << std::endl;
+        return plants;
+    }
     if(strcmp(root->Name(),"plants")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"plants\" root balise not found for reputation of the xml file" << std::endl;

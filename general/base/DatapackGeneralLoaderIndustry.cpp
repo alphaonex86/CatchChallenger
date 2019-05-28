@@ -283,6 +283,11 @@ std::unordered_map<uint16_t,IndustryLink> DatapackGeneralLoader::loadIndustriesL
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
         return industriesLink;
     }
+    if(root->Name()==NULL)
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"industries\" root balise not found 2 for reputation of the xml file" << std::endl;
+        return industriesLink;
+    }
     if(strcmp(root->Name(),"industries")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"industries\" root balise not found for reputation of the xml file" << std::endl;

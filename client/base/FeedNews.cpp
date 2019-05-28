@@ -91,7 +91,9 @@ void FeedNews::loadFeeds(const QByteArray &data)
     if(root==NULL)
         return;
 
-    if(strcmp(root->Name(),"rss")==0)
+    if(root->Name()==NULL)
+        emit feedEntryList(std::vector<FeedEntry>(),tr("Not Rss or Atom feed").toStdString());
+    else if(strcmp(root->Name(),"rss")==0)
         loadRss(root);
     else if(strcmp(root->Name(),"feed")==0)
         loadAtom(root);

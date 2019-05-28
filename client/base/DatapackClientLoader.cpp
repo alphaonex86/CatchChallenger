@@ -281,7 +281,7 @@ void DatapackClientLoader::parseVisualCategory()
         return;
     }
     const tinyxml2::XMLElement *root = domDocument.RootElement();
-    if(root==NULL || strcmp(root->Name(),"visual")!=0)
+    if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"visual")!=0)
     {
         qDebug() << (QStringLiteral("Unable to open the file: %1, \"visual\" root balise not found for the xml file").arg(QString::fromStdString(file)));
         return;
@@ -429,7 +429,7 @@ void DatapackClientLoader::parseReputationExtra()
         return;
     }
     const tinyxml2::XMLElement *root = domDocument.RootElement();
-    if(root==NULL || strcmp(root->Name(),"reputations")!=0)
+    if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"reputations")!=0)
     {
         qDebug() << (QStringLiteral("Unable to open the file: %1, \"reputations\" root balise not found for the xml file").arg(QString::fromStdString(file)));
         return;
@@ -688,7 +688,7 @@ void DatapackClientLoader::parseItemsExtra()
             continue;
         }
         const tinyxml2::XMLElement *root = domDocument.RootElement();
-        if(root==NULL || strcmp(root->Name(),"items")!=0)
+        if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"items")!=0)
         {
             //qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(QString::fromStdString(file));
             file_index++;
@@ -883,7 +883,7 @@ void DatapackClientLoader::parseMaps()
             }
 
             const tinyxml2::XMLElement *root = domDocument.RootElement();
-            if(root==NULL || strcmp(root->Name(),"map")!=0)
+            if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"map")!=0)
             {
                 qDebug() << QStringLiteral("Unable to open the file: %1, \"map\" root balise not found for the xml file").arg(QString::fromStdString(file));
                 index++;
@@ -1092,7 +1092,7 @@ void DatapackClientLoader::parseQuestsExtra()
             continue;
         }
         const tinyxml2::XMLElement *root = domDocument.RootElement();
-        if(root==NULL || strcmp(root->Name(),"quest")!=0)
+        if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"quest")!=0)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(QString::fromStdString(file));
             index++;
@@ -1277,7 +1277,7 @@ void DatapackClientLoader::parseQuestsText()
         }
 
         const tinyxml2::XMLElement *root = domDocument.RootElement();
-        if(root==NULL || strcmp(root->Name(),"text")!=0)
+        if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"text")!=0)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(QString::fromStdString(file));
             index++;
@@ -1382,7 +1382,7 @@ void DatapackClientLoader::parseAudioAmbiance()
         return;
     }
     const tinyxml2::XMLElement *root = domDocument.RootElement();
-    if(root==NULL || strcmp(root->Name(),"musics")!=0)
+    if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"musics")!=0)
     {
         qDebug() << QStringLiteral("Unable to open the file: %1, \"musics\" root balise not found for the xml file").arg(QString::fromStdString(file));
         return;
@@ -1466,7 +1466,7 @@ void DatapackClientLoader::parseZoneExtra()
         }
 
         const tinyxml2::XMLElement *root = domDocument.RootElement();
-        if(root==NULL || strcmp(root->Name(),"zone")!=0)
+        if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"zone")!=0)
         {
             qDebug() << QStringLiteral("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(QString::fromStdString(file));
             index++;

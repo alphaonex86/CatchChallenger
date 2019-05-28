@@ -46,7 +46,7 @@ public:
         uint8_t monster_x,monster_y;
 
         //presumed map
-        MapVisualiserThread::Map_full *presumed_map;
+        Map_full *presumed_map;
         uint8_t presumed_x,presumed_y;
         CatchChallenger::Direction presumed_direction;
         //pointer to allow copy of OtherPlayer
@@ -74,7 +74,7 @@ public slots:
     bool dropAllPlayerOnTheMap_final(bool inReplayMode);
 
     bool teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
-    virtual bool asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject);
+    virtual bool asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject);
 
     //player info
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
@@ -166,10 +166,10 @@ private slots:
     void finalOtherPlayerStep(OtherPlayer &otherPlayer);
     void doMoveOtherAnimation();
     /// \warning all ObjectGroupItem destroyed into removeMap()
-    virtual void destroyMap(MapVisualiserThread::Map_full *map);
-    void eventOnMap(CatchChallenger::MapEvent event, MapVisualiserThread::Map_full * tempMapObject, uint8_t x, uint8_t y);
+    virtual void destroyMap(Map_full *map);
+    void eventOnMap(CatchChallenger::MapEvent event, Map_full * tempMapObject, uint8_t x, uint8_t y);
     CatchChallenger::Direction moveFromPath();
-    //virtual std::unordered_set<std::string> loadMap(MapVisualiserThread::Map_full *map,const bool &display);
+    //virtual std::unordered_set<std::string> loadMap(Map_full *map,const bool &display);
     void updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const uint16_t &monster);
     void resetOtherMonsterTile(OtherPlayer &tempPlayer);
     void loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlayer);
@@ -184,7 +184,7 @@ protected slots:
     bool nextPathStep();//true if have step
     virtual void keyPressParse();
 signals:
-    void searchPath(std::vector<MapVisualiserThread::Map_full> mapList);
+    void searchPath(std::vector<Map_full> mapList);
     void pathFindingNotFound();
 };
 

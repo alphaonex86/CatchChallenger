@@ -25,6 +25,8 @@
 #include "MapDoor.h"
 #include "TriggerAnimation.h"
 
+class Map_full;
+
 class MapVisualiserOrder
 {
 public:
@@ -37,23 +39,6 @@ public:
         int minId;
         int maxId;
         std::vector<Map_animation_object> animatedObjectList;
-    };
-    struct Map_full
-    {
-        CatchChallenger::Map_client logicalMap;
-        Tiled::Map * tiledMap;
-        Tiled::MapRenderer * tiledRender;
-        Tiled::ObjectGroup * objectGroup;
-        std::unordered_map<uint16_t/*ms*/,std::unordered_map<int/*minId*/,Map_animation> > animatedObject;
-        int objectGroupIndex;
-        int relative_x,relative_y;//needed for the async load
-        int relative_x_pixel,relative_y_pixel;
-        bool displayed;
-        std::unordered_map<std::pair<uint8_t,uint8_t>,MapDoor*,pairhash> doors;
-        std::unordered_map<std::pair<uint8_t,uint8_t>,TriggerAnimation*,pairhash> triggerAnimations;
-        std::string visualType;
-        std::string name;
-        std::string zone;
     };
     struct TriggerAnimationContent
     {
@@ -123,6 +108,27 @@ protected:
     static QRegularExpression regexFrames;
     static QRegularExpression regexTrigger;
     static QRegularExpression regexTriggerAgain;
+};
+
+class Map_full
+{
+public:
+    Map_full();
+public:
+    CatchChallenger::Map_client logicalMap;
+    Tiled::Map * tiledMap;
+    Tiled::MapRenderer * tiledRender;
+    Tiled::ObjectGroup * objectGroup;
+    std::unordered_map<uint16_t/*ms*/,std::unordered_map<int/*minId*/,MapVisualiserOrder::Map_animation> > animatedObject;
+    int objectGroupIndex;
+    int relative_x,relative_y;//needed for the async load
+    int relative_x_pixel,relative_y_pixel;
+    bool displayed;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,MapDoor*,pairhash> doors;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,TriggerAnimation*,pairhash> triggerAnimations;
+    std::string visualType;
+    std::string name;
+    std::string zone;
 };
 
 #endif // MapVisualiserOrder_H

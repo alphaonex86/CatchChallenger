@@ -58,7 +58,7 @@ void MapController::insert_plant_full(const std::string &map,const uint8_t &x,co
         qDebug() << "plant_id don't exists";
         return;
     }
-    MapVisualiserThread::Map_full * map_full=all_map[map];
+    Map_full * map_full=all_map[map];
     unsigned int index=0;
     while(index<map_full->logicalMap.plantList.size())
     {
@@ -191,7 +191,7 @@ void MapController::remove_plant_full(const std::string &map, const uint8_t &x, 
         qDebug() << QString("map (%1) not show, ignore it").arg(QString::fromStdString(map));
         return;
     }
-    MapVisualiserThread::Map_full * map_full=all_map[map];
+    Map_full * map_full=all_map[map];
     unsigned int index=0;
     while(index<map_full->logicalMap.plantList.size())
     {

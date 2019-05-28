@@ -23,7 +23,7 @@ public:
     void remove_plant_full(const std::string &map,const uint8_t &x,const uint8_t &y);
     void insert_plant_full(const std::string &map,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
     void setColor(const QColor &color, const uint32_t &timeInMS=0);
-    virtual bool asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full * tempMapObject);
+    virtual bool asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject);
 private:
     //the delayed action
     struct DelayedPlantInsert
@@ -67,7 +67,7 @@ public slots:
     virtual void datapackParsedMainSub();
     virtual void reinject_signals();
 private slots:
-    void loadBotOnTheMap(MapVisualiserThread::Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y, const std::string &lookAt, const std::string &skin);
+    void loadBotOnTheMap(Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y, const std::string &lookAt, const std::string &skin);
 protected:
     static std::string text_random;
     static std::string text_loop;

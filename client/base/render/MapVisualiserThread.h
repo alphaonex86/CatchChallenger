@@ -43,18 +43,18 @@ public:
     bool hideTheDoors;
     std::string error();
 signals:
-    void asyncMapLoaded(const std::string &fileName,MapVisualiserThread::Map_full *parsedMap);
+    void asyncMapLoaded(const std::string &fileName,Map_full *parsedMap);
 public slots:
     void loadOtherMapAsync(const std::string &fileName);
     Map_full * loadOtherMap(const std::string &fileName);
     //drop and remplace by Map_loader info
-    bool loadOtherMapClientPart(MapVisualiserThread::Map_full *parsedMap);
-    bool loadOtherMapMetaData(MapVisualiserThread::Map_full *parsedMap);
+    bool loadOtherMapClientPart(Map_full *parsedMap);
+    bool loadOtherMapMetaData(Map_full *parsedMap);
     void loadBotFile(const std::string &file);
 public slots:
     virtual void resetAll();
 private:
-    std::unordered_map<std::string,MapVisualiserThread::Map_full> mapCache;
+    std::unordered_map<std::string,Map_full> mapCache;
     Tiled::MapReader reader;
     std::unordered_map<std::string/*name*/,std::unordered_map<uint32_t/*bot id*/,CatchChallenger::Bot> > botFiles;
     std::string language;
