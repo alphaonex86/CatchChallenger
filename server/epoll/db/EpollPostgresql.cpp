@@ -626,6 +626,11 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                 if(!queriesList.empty())
                     std::cerr << queriesList.front().query << ", ";
                 std::cerr << "query async send failed: " << errorMessage() << ", PQgetResult(conn) have returned NULL" << std::endl;
+                time_t secs=time(0);
+                tm *t=localtime(&secs);
+                printf("%04d-%02d-%02d %02d:%02d:%02d\n",
+                    t->tm_year+1900,t->tm_mon+1,t->tm_mday,
+                    t->tm_hour,t->tm_min,t->tm_sec);
             }
             else
             {
