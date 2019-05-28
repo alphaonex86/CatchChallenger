@@ -28,6 +28,8 @@
 #include <QMultiMap>
 #include <QHash>
 #include <QGraphicsObject>
+#include <unordered_map>
+#include <unordered_set>
 
 class MapItem : public QGraphicsObject
 {
@@ -41,7 +43,7 @@ public:
     QRectF boundingRect() const;
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
 private:
-    QMultiMap<Tiled::Map *,QGraphicsItem *> displayed_layer;
+    std::unordered_map<Tiled::Map *,std::unordered_set<QGraphicsItem *> > displayed_layer;
     bool cache;
 signals:
     void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y);
