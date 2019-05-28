@@ -330,7 +330,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(
     const unsigned int &stringlen=static_cast<unsigned int>(query.size());
     if(stringlen==0)
     {
-        std::cerr << "query " << query << ", stringlen==0" << std::endl;
+        std::cerr << "[" << (time(NULL)-startTime) << "] query " << query << ", stringlen==0" << std::endl;
         abort();
     }
     #endif
@@ -340,7 +340,7 @@ CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(
     const int &query_id=PQsendQueryPrepared(conn,id,static_cast<int>(values.size()),paramValues, NULL, NULL, 0);
     if(query_id==0)
     {
-        std::cerr << "query send failed: " << errorMessage() << std::endl;
+        std::cerr << "[" << (time(NULL)-startTime) << "] query send failed: " << errorMessage() << std::endl;
         return NULL;
     }
     queue.push_back(tempCallback);
@@ -396,7 +396,7 @@ bool EpollPostgresql::asyncPreparedWrite(const std::string &query,char * const i
     const int &stringlen=static_cast<int>(query.size());
     if(stringlen==0)
     {
-        std::cerr << "query " << query << ", stringlen==0" << std::endl;
+        std::cerr << "[" << (time(NULL)-startTime) << "] query " << query << ", stringlen==0" << std::endl;
         abort();
     }
     #endif
@@ -406,7 +406,7 @@ bool EpollPostgresql::asyncPreparedWrite(const std::string &query,char * const i
     const int &query_id=PQsendQueryPrepared(conn,id,static_cast<int>(values.size()),paramValues, NULL, NULL, 0);
     if(query_id==0)
     {
-        std::cerr << "query send failed" << std::endl;
+        std::cerr << "[" << (time(NULL)-startTime) << "] query send failed" << std::endl;
         return false;
     }
     queue.push_back(emptyCallback);
@@ -621,7 +621,12 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
             ntuples=0;
             result=PQgetResult(conn);
             if(result==NULL)
-                std::cerr << "[" << (time(NULL)-startTime) << "] " << queriesList.front().query << ", query async send failed: " << errorMessage() << ", PQgetResult(conn) have returned NULL" << std::endl;
+            {
+                std::cerr << "[" << (time(NULL)-startTime) << "] ";
+                if(!queriesList.empty())
+                    std::cerr << queriesList.front().query << ", ";
+                std::cerr << "query async send failed: " << errorMessage() << ", PQgetResult(conn) have returned NULL" << std::endl;
+            }
             else
             {
                 auto end = std::chrono::high_resolution_clock::now();
