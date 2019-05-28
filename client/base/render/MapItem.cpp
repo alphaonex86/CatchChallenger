@@ -8,6 +8,7 @@
 #include <QImage>
 #include <QDebug>
 #include <QLabel>
+#include <iostream>
 
 MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
     : QGraphicsObject(parent)
@@ -20,7 +21,7 @@ MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
 
 void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
 {
-    if(displayed_layer.contains(map))
+    if(displayed_layer.find(map)!=displayed_layer.cend())
     {
         qDebug() << "Map already displayed";
         return;
@@ -70,7 +71,7 @@ void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRendere
                     if(!connect(static_cast<PreparedLayer *>(graphicsItem),&PreparedLayer::eventOnMap,this,&MapItem::eventOnMap))
                         abort();
                     graphicsItem->setZValue(index-1);
-                    displayed_layer.insert(map,graphicsItem);
+                    displayed_layer[map].insert(graphicsItem);
                     image=QImage();
                 }
             }
@@ -84,7 +85,7 @@ void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRendere
         if(graphicsItem!=NULL)
         {
             graphicsItem->setZValue(index);
-            displayed_layer.insert(map,graphicsItem);
+            displayed_layer[map].insert(graphicsItem);
         }
         index++;
         index2++;
@@ -103,7 +104,7 @@ void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRendere
             if(!connect(static_cast<PreparedLayer *>(graphicsItem),&PreparedLayer::eventOnMap,this,&MapItem::eventOnMap))
                 abort();
             graphicsItem->setZValue(index);
-            displayed_layer.insert(map,graphicsItem);
+            displayed_layer[map].insert(graphicsItem);
         }
     }
 
@@ -115,29 +116,29 @@ void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRendere
 
 bool MapItem::haveMap(Tiled::Map *map)
 {
-    return displayed_layer.contains(map);
+    return displayed_layer.find(map)!=displayed_layer.cend();
 }
 
 void MapItem::removeMap(Tiled::Map *map)
 {
-    const QList<QGraphicsItem *> values = displayed_layer.values(map);
-    int index=0;
-    while(index<values.size())
-    {
-        delete values.at(index);
-        index++;
+    std::cerr << "map: " << map << std::endl;
+    if(displayed_layer.find(map)==displayed_layer.cend())
+            return;
+    const std::unordered_set<QGraphicsItem *> &values = displayed_layer.at(map);
+    for( const auto& value : values ) {
+        std::cerr << "values.at(index): " << value << std::endl;
+        delete value;
     }
-    displayed_layer.remove(map);
+    displayed_layer.erase(map);
 }
 
 void MapItem::setMapPosition(Tiled::Map *map, int16_t x/*pixel, need be 16Bits*/, int16_t y/*pixel, need be 16Bits*/)
 {
-    const QList<QGraphicsItem *> values = displayed_layer.values(map);
-    int index=0;
-    while(index<values.size())
-    {
-        values.at(index)->setPos(static_cast<qreal>(static_cast<double>(x)),static_cast<qreal>(static_cast<double>(y)));
-        index++;
+    if(displayed_layer.find(map)==displayed_layer.cend())
+            return;
+    const std::unordered_set<QGraphicsItem *> &values = displayed_layer.at(map);
+    for( const auto& value : values ) {
+        value->setPos(static_cast<qreal>(static_cast<double>(x)),static_cast<qreal>(static_cast<double>(y)));
     }
 }
 
