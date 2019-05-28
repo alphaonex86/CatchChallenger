@@ -79,6 +79,7 @@ SOURCES += \
     ../base/DatabaseBase.cpp \
     ../base/BaseServerMasterSendDatapack.cpp \
     ../base/DatabaseFunction.cpp \
+    ../base/SqlFunction.cpp \
     ../base/TinyXMLSettings.cpp
 
 HEADERS += \
@@ -116,6 +117,7 @@ HEADERS += \
     ../base/TinyXMLSettings.h \
     ../base/DatabaseFunction.h \
     ../base/BaseServerMasterSendDatapack.h \
+    ../base/SqlFunction.h \
     ../VariableServer.h
 
 #choose one of:
