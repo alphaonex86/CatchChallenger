@@ -545,12 +545,12 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
         return;
     if(root->Name()==NULL)
     {
-        std::cerr << "\"bots\" root balise not found 2 for the xml file" << std::endl;
+        std::cerr << "\"bots\" root balise not found 2 for the xml file: " << file << std::endl;
         return;
     }
     if(strcmp(root->Name(),"bots")!=0)
     {
-        std::cerr << "\"bots\" root balise not found for the xml file" << std::endl;
+        std::cerr << "\"bots\" root balise not found for the xml file: " << file << std::endl;
         return;
     }
     //load the bots
@@ -558,7 +558,7 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     while(child!=NULL)
     {
         if(child->Attribute("id")==NULL)
-            std::cerr << "Has not attribute \"id\": child->Name(): " << child->Name() << std::endl;
+            std::cerr << "Has not attribute \"id\": child->Name(): " << file << ", " << child->Name() << std::endl;
         else
         {
             const uint16_t &id=stringtouint16(child->Attribute("id"),&ok);
@@ -572,9 +572,12 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
                 while(step!=NULL)
                 {
                     if(step->Attribute("id")==NULL)
-                        std::cerr << "Has not attribute \"type\": bot->Name(): " << step->Name() << std::endl;
+                    {
+                        //std::cerr << "Has not attribute \"id\": bot->Name(): " << file << ", " << step->Name() << std::endl;
+                        botFiles[file][id].step[1]=step;
+                    }
                     else if(step->Attribute("type")==NULL)
-                        std::cerr << "Has not attribute \"type\": bot->Name(): " << step->Name() << std::endl;
+                        std::cerr << "Has not attribute \"type\": bot->Name(): " << file << ", " << step->Name() << std::endl;
                     else
                     {
                         const uint8_t &stepId=stringtouint8(step->Attribute("id"),&ok);

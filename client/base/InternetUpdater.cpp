@@ -26,8 +26,7 @@
     typedef BOOL (WINAPI *PGPI) (DWORD, DWORD, DWORD, DWORD, PDWORD);
 #endif
 #ifdef Q_OS_MAC
-#include <QStringList>
-#include <QFile>
+#include "../../general/base/tinyXML2/tinyxml2.h"
 #endif
 
 InternetUpdater *InternetUpdater::internetUpdater=NULL;
@@ -361,71 +360,51 @@ std::string InternetUpdater::GetOSDisplayString()
 #ifdef Q_OS_MAC
 std::string InternetUpdater::GetOSDisplayString()
 {
-        QStringList key;
-    QStringList string;
-    QFile xmlFile(QStringLiteral("/System/Library/CoreServices/SystemVersion.plist"));
-    if(xmlFile.open(QIODevice::ReadOnly))
+    tinyxml2::XMLDocument *domDocument=new tinyxml2::XMLDocument();
+    const auto loadOkay = domDocument->LoadFile("/System/Library/CoreServices/SystemVersion.plist");
+    if(loadOkay!=0)
     {
-        QString content=xmlFile.readAll();
-        xmlFile.close();
-        QString errorStr;
-        int errorLine;
-        int errorColumn;
-        QDomDocument domDocument;
-        if (!domDocument.setContent(content, false, &errorStr,&errorLine,&errorColumn))
-            return "Mac OS X";
-        else
+        delete domDocument;
+        return std::string("Mac OS X");
+    }
+    const tinyxml2::XMLElement * root = domDocument->RootElement();
+    if(root==NULL)
+    {
+        delete domDocument;
+        return std::string("Mac OS X");
+    }
+    if(root->Name()==NULL)
+    {
+        delete domDocument;
+        return std::string("Mac OS X");
+    }
+    if(strcmp(root->Name(),"plist")!=0)
+    {
+        delete domDocument;
+        return std::string("Mac OS X");
+    }
+    const tinyxml2::XMLElement * dictItem = root->FirstChildElement("dict");
+    if(dictItem!=NULL)
+    {
+        const tinyxml2::XMLElement * keyItem = root->FirstChildElement("key");
+        while(keyItem!=NULL)
         {
-            QDomElement root = domDocument.documentElement();
-            if(root.tagName()!=QStringLiteral("plist"))
-                return "Mac OS X";
-            else
+            if(keyItem->Value()!=NULL && strcmp(keyItem->Value(),"Mac OS X")==0)
             {
-                if(root.isElement())
+                keyItem = keyItem->NextSiblingElement("string");
+                if(keyItem==NULL || keyItem->Value()==NULL)
                 {
-                    QDomElement SubChild=root.firstChildElement(QStringLiteral("dict"));
-                    while(!SubChild.isNull())
-                    {
-                        if(SubChild.isElement())
-                        {
-                            QDomElement SubChild2=SubChild.firstChildElement(QStringLiteral("key"));
-                            while(!SubChild2.isNull())
-                            {
-                                if(SubChild2.isElement())
-                                    key << SubChild2.text();
-                                else
-                                    return "Mac OS X";
-                                SubChild2 = SubChild2.nextSiblingElement(QStringLiteral("key"));
-                            }
-                            SubChild2=SubChild.firstChildElement(QStringLiteral("string"));
-                            while(!SubChild2.isNull())
-                            {
-                                if(SubChild2.isElement())
-                                    string << SubChild2.text();
-                                else
-                                    return "Mac OS X";
-                                SubChild2 = SubChild2.nextSiblingElement(QStringLiteral("string"));
-                            }
-                        }
-                        else
-                            return "Mac OS X";
-                        SubChild = SubChild.nextSiblingElement(QStringLiteral("property"));
-                    }
+                    delete domDocument;
+                    return std::string("Mac OS X");
                 }
-                else
-                    return "Mac OS X";
+                std::string str(keyItem->Value());
+                delete domDocument;
+                return str;
             }
+            keyItem = keyItem->NextSiblingElement("key");
         }
     }
-    if(key.size()!=string.size())
-        return "Mac OS X";
-    int index=0;
-    while(index<key.size())
-    {
-        if(key.at(index)==QStringLiteral("ProductVersion"))
-            return "Mac OS X "+string.at(index).toStdString();
-        index++;
-    }
+    delete domDocument;
     return "Mac OS X";
 }
 #endif
