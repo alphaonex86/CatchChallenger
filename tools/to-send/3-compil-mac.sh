@@ -2,7 +2,7 @@
 
 export TEMP_PATH="/mnt/data/world/CatchChallenger-temp/"
 export CATCHCHALLENGER_SOURCE="/home/user/Desktop/CatchChallenger/"
-export DATAPACK_SOURCE="/home/user/Desktop/CatchChallenger/git-datapack/datapack/"
+export DATAPACK_SOURCE="/home/user/Desktop/CatchChallenger/CatchChallenger-datapack/"
 export BASE_PWD=`pwd`
 
 cd ${BASE_PWD}
