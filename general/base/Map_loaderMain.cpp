@@ -441,8 +441,16 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         }
                                     }
                                     else
-                                        std::cerr << "Missing \"bot\" properties for the bot: " << SubChild->Name()
-                                                  << ", file: " << file << std::endl;
+                                    {
+
+                                        std::cerr << "Missing \"bot\" properties ";
+                                        if(property_text.find("file")==property_text.cend())
+                                            std::cerr << "file, ";
+                                        if(property_text.find("id")==property_text.cend())
+                                            std::cerr << "id, ";
+                                        std::cerr << " for the bot: " << SubChild->Name()
+                                                  << ", file: " << file << ", text: " << SubChild->Value() << std::endl;
+                                    }
                                 }
                                 else if(type=="object")
                                 {
@@ -466,9 +474,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         }
                                     }
                                     else
-                                        std::cerr << "Missing \"bot\" properties for the bot: " << SubChild->Name()
-                                                  << ", file: " << file
-                                                  << std::endl;
+                                        std::cerr << "Missing \"object\" properties (item) for the bot: " << SubChild->Name()
+                                                  << ", file: " << file << ", text: " << SubChild->Value() << std::endl;
                                 }
                                 else if(type=="StrengthBoulder")
                                 {}

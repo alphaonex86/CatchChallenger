@@ -275,7 +275,7 @@ Tiled::Tileset * Map2Png::getTileset(Tiled::Map * map,const QString &file)
 
 QString Map2Png::loadOtherMap(const QString &fileName)
 {
-    Map_full *tempMapObject=new Map_full();
+    Map_full_map2png *tempMapObject=new Map_full_map2png();
     QFileInfo fileInformations(fileName);
     QString resolvedFileName=fileInformations.absoluteFilePath();
     if(other_map.contains(resolvedFileName))
@@ -292,7 +292,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     }
 
     {
-        MapVisualiserThread::Map_full *tempMapObjectFull=new MapVisualiserThread::Map_full();
+        Map_full *tempMapObjectFull=new Map_full();
         tempMapObjectFull->tiledMap=tempMapObject->tiledMap;
 
         //do the object group to move the player on it
@@ -433,7 +433,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
 void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
 {
     //qDebug() << QStringLiteral("loadCurrentMap(%1)").arg(fileName);
-    Map_full *tempMapObject;
+    Map_full_map2png *tempMapObject;
     if(!other_map.contains(fileName))
     {
         qDebug() << QStringLiteral("loadCurrentMap(): the current map is unable to load: %1").arg(fileName);
@@ -589,7 +589,7 @@ void Map2Png::displayMap()
 {
     //qDebug() << QStringLiteral("displayMap()");
 
-    QHash<QString,Map_full *>::const_iterator i = other_map.constBegin();
+    QHash<QString,Map_full_map2png *>::const_iterator i = other_map.constBegin();
      while (i != other_map.constEnd()) {
          //qDebug() << QStringLiteral("displayMap(): %1 at %2,%3").arg(i.key()).arg(i.value()->x).arg(i.value()->y);
          mapItem->addMap(i.value()->tiledMap,i.value()->tiledRender);
