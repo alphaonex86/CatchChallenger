@@ -247,9 +247,9 @@ bool MapReaderPrivate::openFile(QFile *file)
 
 void MapReaderPrivate::readUnknownElement()
 {
-    qDebug().nospace() << "Unknown element (fixme): " << xml.name()
+    /*qDebug().nospace() << "Unknown element (fixme): " << xml.name()
                        << " at line " << xml.lineNumber()
-                       << ", column " << xml.columnNumber();
+                       << ", column " << xml.columnNumber();*/
     xml.skipCurrentElement();
 }
 
@@ -902,7 +902,7 @@ MapObject *MapReaderPrivate::readObject()
 
 QPolygonF MapReaderPrivate::readPolygon()
 {
-    Q_ASSERT(xml.isStartElement() && (xml.name() == MapReader::text_polygon ||
+    /*Q_ASSERT(xml.isStartElement() && (xml.name() == MapReader::text_polygon ||
                                       xml.name() == MapReader::text_polyline));
 
     const QXmlStreamAttributes atts = xml.attributes();
@@ -931,10 +931,11 @@ QPolygonF MapReaderPrivate::readPolygon()
     }
 
     if (!ok)
-        xml.raiseError(tr("Invalid points data for polygon"));
+        xml.raiseError(tr("Invalid points data for polygon"));*/
 
     xml.skipCurrentElement();
-    return polygon;
+    //return polygon;
+    return QPolygonF();
 }
 
 Properties MapReaderPrivate::readProperties()
