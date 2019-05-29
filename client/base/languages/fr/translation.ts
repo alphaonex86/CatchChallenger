@@ -470,6 +470,92 @@
     </message>
 </context>
 <context>
+    <name>CatchChallenger::Api_client_real</name>
+    <message>
+        <location filename="../../Api_client_real.cpp" line="151"/>
+        <location filename="../../Api_client_real.cpp" line="176"/>
+        <location filename="../../Api_client_real.cpp" line="211"/>
+        <location filename="../../Api_client_real.cpp" line="235"/>
+        <location filename="../../Api_client_real.cpp" line="270"/>
+        <location filename="../../Api_client_real.cpp" line="294"/>
+        <location filename="../../Api_client_real.cpp" line="316"/>
+        <source>Procotol wrong or corrupted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../Api_client_real_base.cpp" line="121"/>
+        <location filename="../../Api_client_real_base.cpp" line="129"/>
+        <location filename="../../Api_client_real_base.cpp" line="178"/>
+        <location filename="../../Api_client_real_base.cpp" line="410"/>
+        <location filename="../../Api_client_real_base.cpp" line="638"/>
+        <location filename="../../Api_client_real_main.cpp" line="109"/>
+        <location filename="../../Api_client_real_main.cpp" line="117"/>
+        <location filename="../../Api_client_real_main.cpp" line="164"/>
+        <location filename="../../Api_client_real_main.cpp" line="436"/>
+        <location filename="../../Api_client_real_main.cpp" line="684"/>
+        <location filename="../../Api_client_real_sub.cpp" line="103"/>
+        <location filename="../../Api_client_real_sub.cpp" line="111"/>
+        <location filename="../../Api_client_real_sub.cpp" line="150"/>
+        <location filename="../../Api_client_real_sub.cpp" line="417"/>
+        <location filename="../../Api_client_real_sub.cpp" line="658"/>
+        <source>Datapack downloading error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../Api_client_real_base.cpp" line="151"/>
+        <location filename="../../Api_client_real_base.cpp" line="160"/>
+        <location filename="../../Api_client_real_base.cpp" line="168"/>
+        <location filename="../../Api_client_real_base.cpp" line="395"/>
+        <location filename="../../Api_client_real_main.cpp" line="137"/>
+        <location filename="../../Api_client_real_main.cpp" line="146"/>
+        <location filename="../../Api_client_real_main.cpp" line="154"/>
+        <location filename="../../Api_client_real_main.cpp" line="421"/>
+        <location filename="../../Api_client_real_sub.cpp" line="121"/>
+        <location filename="../../Api_client_real_sub.cpp" line="130"/>
+        <location filename="../../Api_client_real_sub.cpp" line="139"/>
+        <location filename="../../Api_client_real_sub.cpp" line="397"/>
+        <source>Unable to download the datapack</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../Api_client_real_base.cpp" line="359"/>
+        <location filename="../../Api_client_real_main.cpp" line="387"/>
+        <location filename="../../Api_client_real_sub.cpp" line="357"/>
+        <source>Disk error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../Api_client_real_base.cpp" line="367"/>
+        <location filename="../../Api_client_real_main.cpp" line="394"/>
+        <location filename="../../Api_client_real_sub.cpp" line="364"/>
+        <source>Security error, file not allowed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../Api_client_real_base.cpp" line="475"/>
+        <location filename="../../Api_client_real_base.cpp" line="484"/>
+        <location filename="../../Api_client_real_base.cpp" line="494"/>
+        <location filename="../../Api_client_real_main.cpp" line="506"/>
+        <location filename="../../Api_client_real_main.cpp" line="515"/>
+        <location filename="../../Api_client_real_main.cpp" line="525"/>
+        <source>Wrong datapack format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../Api_client_real_base.cpp" line="523"/>
+        <location filename="../../Api_client_real_base.cpp" line="532"/>
+        <location filename="../../Api_client_real_base.cpp" line="544"/>
+        <location filename="../../Api_client_real_main.cpp" line="554"/>
+        <location filename="../../Api_client_real_main.cpp" line="563"/>
+        <location filename="../../Api_client_real_main.cpp" line="575"/>
+        <location filename="../../Api_client_real_sub.cpp" line="539"/>
+        <location filename="../../Api_client_real_sub.cpp" line="548"/>
+        <location filename="../../Api_client_real_sub.cpp" line="560"/>
+        <source>Unable to get datapack file</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CatchChallenger::Api_protocol</name>
     <message>
         <location filename="../../Api_protocol_reply.cpp" line="137"/>
@@ -676,12 +762,12 @@
     </message>
     <message>
         <location filename="../../interface/BaseWindowCharacter.cpp" line="19"/>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="56"/>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="79"/>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="115"/>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="117"/>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="119"/>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="190"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="62"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="85"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="121"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="123"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="125"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="196"/>
         <location filename="../../interface/BaseWindowMarket.cpp" line="273"/>
         <location filename="../../interface/BaseWindowMarket.cpp" line="286"/>
         <location filename="../../interface/BaseWindowMarket.cpp" line="329"/>
@@ -709,119 +795,119 @@
         <translation>Vous avez déjà le nombre maximum de personnages</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="79"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="85"/>
         <source>Your psuedo can&apos;t contains space</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="93"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="99"/>
         <source>Creating your new character</source>
         <translation>Créer votre nouveau personnage</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="115"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="121"/>
         <source>This pseudo is already taken</source>
         <translation>Ce pseudo est déjà pris</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="117"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="123"/>
         <source>Have already the max caraters taken</source>
         <translation>Vous avez déjà le nombre maximum d&apos;avatar</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="119"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="125"/>
         <source>Unable to create the character</source>
         <translation>Impossible de créé l&apos;avatar</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="138"/>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="386"/>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="388"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="144"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="392"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="394"/>
         <source>%1 played</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="142"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="148"/>
         <source>Never played</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="144"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="150"/>
         <source>%1 to be deleted</source>
         <translation>%1 pour être supprimé</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="373"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="379"/>
         <source>Server group: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="379"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="385"/>
         <source>Default server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="406"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="412"/>
         <source>Played time greater than 5y, bug?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="411"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="417"/>
         <source>Played before 2015, bug?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="417"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="423"/>
         <source>maxPlayer&lt;currentPlayer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="419"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="425"/>
         <source>maxPlayer==0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="431"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="437"/>
         <source>Played time greater than 24h, last connect in this last 24h</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="436"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="442"/>
         <source>Played time greater than 24h, last connect not in this last 24h</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="444"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="450"/>
         <source>Into the more recent server used, out of the most used server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="449"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="455"/>
         <source>Into the more recent server used, into the most used server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="457"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="463"/>
         <source>Out of the more recent server used, out of the most used server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="462"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="468"/>
         <source>Out of the more recent server used, into the most used server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="190"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="196"/>
         <source>Deleting already planned</source>
         <translation>Suppression déjà prévu</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="207"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="213"/>
         <source>Your charater will be deleted into %1</source>
         <translation>Votre personnage vas être supprimé dans %1</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="225"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="231"/>
         <source>Selecting your character</source>
         <translation>Selection de votre personnage</translation>
     </message>
@@ -1160,7 +1246,7 @@ Repporter le bug au mainteneur du datapack.</translation>
         <translation>Sélectionnez la quantité</translation>
     </message>
     <message>
-        <location filename="../../interface/BaseWindowCharacter.cpp" line="207"/>
+        <location filename="../../interface/BaseWindowCharacter.cpp" line="213"/>
         <location filename="../../interface/BaseWindowFactory.cpp" line="179"/>
         <location filename="../../interface/BaseWindowFactory.cpp" line="183"/>
         <location filename="../../interface/BaseWindowFactory.cpp" line="223"/>
@@ -2587,27 +2673,27 @@ Cout en SP: %3</translation>
 <context>
     <name>DatapackClientLoader</name>
     <message>
-        <location filename="../../DatapackClientLoader.cpp" line="779"/>
+        <location filename="../../DatapackClientLoader.cpp" line="778"/>
         <source>Unknown object</source>
         <translation>Objet inconnu</translation>
     </message>
     <message>
-        <location filename="../../DatapackClientLoader.cpp" line="816"/>
+        <location filename="../../DatapackClientLoader.cpp" line="815"/>
         <source>This object is not listed as know object. The information can&apos;t be found.</source>
         <translation>Cet objet n&apos;est pas listé dans les objets connus. Les informations ne peuvent être trouver.</translation>
     </message>
     <message>
-        <location filename="../../DatapackClientLoader.cpp" line="1215"/>
-        <location filename="../../DatapackClientLoader.cpp" line="1303"/>
+        <location filename="../../DatapackClientLoader.cpp" line="1221"/>
+        <location filename="../../DatapackClientLoader.cpp" line="1304"/>
         <source>No text</source>
         <translation>Pas de texte</translation>
     </message>
     <message>
-        <location filename="../../DatapackClientLoader.cpp" line="480"/>
-        <location filename="../../DatapackClientLoader.cpp" line="533"/>
-        <location filename="../../DatapackClientLoader.cpp" line="651"/>
-        <location filename="../../DatapackClientLoader.cpp" line="653"/>
-        <location filename="../../DatapackClientLoader.cpp" line="655"/>
+        <location filename="../../DatapackClientLoader.cpp" line="479"/>
+        <location filename="../../DatapackClientLoader.cpp" line="532"/>
+        <location filename="../../DatapackClientLoader.cpp" line="650"/>
+        <location filename="../../DatapackClientLoader.cpp" line="652"/>
+        <location filename="../../DatapackClientLoader.cpp" line="654"/>
         <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="205"/>
         <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="207"/>
         <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="261"/>
@@ -2616,22 +2702,22 @@ Cout en SP: %3</translation>
         <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="504"/>
         <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="536"/>
         <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="537"/>
-        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="669"/>
-        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="671"/>
-        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="692"/>
-        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="693"/>
+        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="676"/>
+        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="678"/>
+        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="699"/>
+        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="700"/>
         <source>Unknown</source>
         <translation>Inconnu</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="761"/>
-        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="846"/>
+        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="768"/>
+        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="853"/>
         <source>Ready for the fight?</source>
         <translation>Pret pour le combat?</translation>
     </message>
     <message>
-        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="762"/>
-        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="847"/>
+        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="769"/>
+        <location filename="../../../fight/interface/DatapackClientLoaderFight.cpp" line="854"/>
         <source>You are so strong for me!</source>
         <translation>Vous êtes trop fort pour moi!</translation>
     </message>
@@ -2642,6 +2728,20 @@ Cout en SP: %3</translation>
         <location filename="../../../fight/interface/QmlInterface/EvolutionControl.cpp" line="13"/>
         <source>Your %1 will evolve into %2</source>
         <translation>Votre %1 vas évoluer en %2</translation>
+    </message>
+</context>
+<context>
+    <name>FeedNews</name>
+    <message>
+        <location filename="../../FeedNews.cpp" line="76"/>
+        <source>Redirection denied to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../FeedNews.cpp" line="95"/>
+        <location filename="../../FeedNews.cpp" line="101"/>
+        <source>Not Rss or Atom feed</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2704,6 +2804,249 @@ Cout en SP: %3</translation>
     </message>
 </context>
 <context>
+    <name>MainWindow</name>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="171"/>
+        <source>Connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="179"/>
+        <source>Host:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="220"/>
+        <source>Login:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="230"/>
+        <source>Password:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="259"/>
+        <source>Multiple connexion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="265"/>
+        <source>Multiple connexion where %NUMBER% into login change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="277"/>
+        <source>Max diff connect - selected:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="307"/>
+        <source>Connect by seconds:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="317"/>
+        <source> connect/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="59"/>
+        <source>Connexion count target:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="338"/>
+        <source>Proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="374"/>
+        <source>Connect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="27"/>
+        <source>Servers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="14"/>
+        <source>Bot connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="34"/>
+        <source>Server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="39"/>
+        <source>Players</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="47"/>
+        <source>Autocreate character if no one exists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="81"/>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="402"/>
+        <source>Select</source>
+        <translation type="unfinished">Selectionner</translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="91"/>
+        <source>Options</source>
+        <translation type="unfinished">Options</translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="97"/>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="104"/>
+        <source>Random text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="111"/>
+        <source>Do global chat random reply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="118"/>
+        <source>Do bug in direction</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="128"/>
+        <source>Connexion informations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="134"/>
+        <source>Number of bot connected: ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="141"/>
+        <source>Selected character: ?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="148"/>
+        <source>Last reply time: ?</source>
+        <translation type="unfinished">Dernier temps de réponse: ?</translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="155"/>
+        <source>Running query: ? Query with worse time: ?</source>
+        <translation type="unfinished">Requete en cour: ? Requete avec le pire temps: ?</translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.ui" line="384"/>
+        <source>Character</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="101"/>
+        <source>Last reply time: %1ms</source>
+        <translation type="unfinished">Dernier temps de réponse: %1ms</translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="108"/>
+        <source>Running query: %1 Query with worse time: %2h</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="110"/>
+        <source>Running query: %1 Query with worse time: %2min</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="112"/>
+        <source>Running query: %1 Query with worse time: %2s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="114"/>
+        <source>Running query: %1 Query with worse time: %2ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="186"/>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="191"/>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="298"/>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="309"/>
+        <source>Error</source>
+        <translation type="unfinished">Erreur</translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="186"/>
+        <source>Your password need to be at minimum of 6 characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="191"/>
+        <source>Your login need to be at minimum of 3 characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="250"/>
+        <source>Number of bot connected: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="255"/>
+        <source>Selected character: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="298"/>
+        <source>The group index is wrong, maybe the server list have change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="309"/>
+        <source>Too many connexion count target for the free slot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="402"/>
+        <source>Default server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="409"/>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="411"/>
+        <source>%1 played</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="427"/>
+        <source>Played time greater than 5y, bug?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="429"/>
+        <source>Played before 2015, bug?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="433"/>
+        <source>maxPlayer&lt;currentPlayer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../../../tools/bot-connection/MainWindow.cpp" line="435"/>
+        <source>maxPlayer==0</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MapReader</name>
     <message>
         <location filename="../../../tiled/tiled_mapreader.cpp" line="198"/>
@@ -2744,7 +3087,7 @@ Line %1, column %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../../tiled/tiled_mapreader.cpp" line="384"/>
+        <location filename="../../../tiled/tiled_mapreader.cpp" line="385"/>
         <source>Error while loading tileset &apos;%1&apos;: %2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2821,18 +3164,26 @@ Line %1, column %2</source>
 <context>
     <name>MapVisualiserPlayer</name>
     <message>
-        <location filename="../../render/MapVisualiserPlayer.cpp" line="1580"/>
-        <location filename="../../render/MapVisualiserPlayer.cpp" line="1620"/>
-        <location filename="../../render/MapVisualiserPlayer.cpp" line="2158"/>
+        <location filename="../../render/MapVisualiserPlayer.cpp" line="1588"/>
+        <location filename="../../render/MapVisualiserPlayer.cpp" line="1628"/>
+        <location filename="../../render/MapVisualiserPlayer.cpp" line="2166"/>
         <source>Internal error</source>
         <translation type="unfinished">Erreur interne</translation>
     </message>
     <message>
-        <location filename="../../render/MapVisualiserPlayer.cpp" line="1580"/>
-        <location filename="../../render/MapVisualiserPlayer.cpp" line="1620"/>
-        <location filename="../../render/MapVisualiserPlayer.cpp" line="2158"/>
+        <location filename="../../render/MapVisualiserPlayer.cpp" line="1588"/>
+        <location filename="../../render/MapVisualiserPlayer.cpp" line="1628"/>
+        <location filename="../../render/MapVisualiserPlayer.cpp" line="2166"/>
         <source>The direction send by the server is wrong</source>
         <translation type="unfinished">La direction envoyé par le serveur est fausse</translation>
+    </message>
+</context>
+<context>
+    <name>MultipleBotConnectionImplForGui</name>
+    <message>
+        <location filename="../../../../tools/bot/MultipleBotConnectionImplForGui.cpp" line="485"/>
+        <source>Error</source>
+        <translation type="unfinished">Erreur</translation>
     </message>
 </context>
 <context>
@@ -2975,6 +3326,29 @@ Line %1, column %2</source>
     <message>
         <location filename="../../Api_protocol.cpp" line="387"/>
         <source>Hostname too big</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SslCert</name>
+    <message>
+        <location filename="../../SslCert.ui" line="14"/>
+        <source>Security problem</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../SslCert.ui" line="20"/>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The key have changed, &lt;span style=&quot; font-weight:600;&quot;&gt;it&apos;s maybe a hack&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;If the &lt;span style=&quot; font-weight:600;&quot;&gt;administrator inform you&lt;/span&gt; about this change, &lt;span style=&quot; font-weight:600;&quot;&gt;continue&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;Else, if the administrator &lt;span style=&quot; font-weight:600;&quot;&gt;don&apos;t inform you&lt;/span&gt; then &lt;span style=&quot; font-weight:600; text-decoration: underline;&quot;&gt;abort&lt;/span&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../SslCert.ui" line="58"/>
+        <source>Continue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../SslCert.ui" line="65"/>
+        <source>Abort</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

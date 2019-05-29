@@ -288,7 +288,15 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                 }
                                 else if(type=="teleport on push" || type=="teleport on it" || type=="door")
                                 {
-                                    if(property_text.find("map")!=property_text.cend() && property_text.find("x")!=property_text.cend() &&
+                                    if(property_text.find("map")==property_text.cend())
+                                    {
+                                        const auto &pos=file.find_last_of('/');
+                                        if(pos==std::string::npos)
+                                            property_text["map"]=file;
+                                        else
+                                            property_text["map"]=file.substr(pos+1);
+                                    }
+                                    if(property_text.find("x")!=property_text.cend() &&
                                             property_text.find("y")!=property_text.cend())
                                     {
                                         Map_semi_teleport new_tp;
@@ -474,8 +482,9 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                               << std::endl;
                                 }
                             }
-                            else
-                                std::cerr << "Missing attribute type missing: SubChild->Name(): " << SubChild->Name() << ", file: " << file << std::endl;
+                            /* ignore, can be informationnal text for mapper
+                             * else
+                                std::cerr << "Missing attribute type missing: SubChild->Name(): " << SubChild->Name() << ", file: " << file << std::endl;*/
                         }
                     }
                     else
