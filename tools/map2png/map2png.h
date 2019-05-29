@@ -115,7 +115,7 @@ public:
     QRegularExpression regexFrames;
     QStringList folderListSkin;
 private:
-    struct Map_full
+    struct Map_full_map2png
     {
         CatchChallenger::Map_client logicalMap;
         Tiled::Map * tiledMap;
@@ -132,7 +132,7 @@ private:
     bool hideTheDoors;
     bool mRenderAll;
 
-    QHash<QString,Map_full *> other_map;
+    QHash<QString,Map_full_map2png *> other_map;
 private slots:
     Tiled::Tileset * getTileset(Tiled::Map * map,const QString &file);
     QString loadOtherMap(const QString &fileName);
