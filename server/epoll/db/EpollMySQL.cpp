@@ -332,9 +332,9 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
     }
     if(events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
     {
-        started=false;
         if(EPOLLRDHUP)
         {
+            started=false;
             std::cerr << "Database disconnected, try reconnect: " << errorMessage() << std::endl;
             syncDisconnect();
             conn=NULL;
