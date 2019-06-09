@@ -34,7 +34,16 @@
     <property name="spacing">
      <number>0</number>
     </property>
-    <property name="margin">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
      <number>0</number>
     </property>
     <item>
@@ -103,7 +112,16 @@
              <property name="spacing">
               <number>0</number>
              </property>
-             <property name="margin">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
               <number>0</number>
              </property>
              <item>
@@ -144,8 +162,8 @@ QLabel { padding:2px; }</string>
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>750</width>
-                     <height>292</height>
+                     <width>746</width>
+                     <height>268</height>
                     </rect>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_5">

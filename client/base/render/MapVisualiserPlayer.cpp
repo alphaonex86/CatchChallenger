@@ -1681,6 +1681,7 @@ void MapVisualiserPlayer::resetAll()
     lastTileset=defaultTileset;
     playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
     playerTilesetCache[lastTileset]=playerTileset;
+    playerMapObject = new Tiled::MapObject();
 }
 
 void MapVisualiserPlayer::setSpeed(const SPEED_TYPE &speed)
@@ -2179,7 +2180,7 @@ bool MapVisualiserPlayer::nextPathStepInternal(std::vector<PathResolved> &pathLi
     const std::pair<uint8_t,uint8_t> pos(getPos());
     const uint8_t &x=pos.first;
     const uint8_t &y=pos.second;
-    if(!pathList.empty())
+    //if(!pathList.empty()) -> wrong, to get direction, get from direction
     {
         if(!inMove)
         {
@@ -2280,16 +2281,21 @@ void MapVisualiserPlayer::pathFindingResultInternal(std::vector<PathResolved> &p
             inMove=true;
             if(this->current_map==current_map && this->x==x && this->y==y)
             {
+                std::cout << "this->current_map==current_map && this->x==x && this->y==y" << std::endl;
                 if(pathList.size()>1)
                     pathList.pop_back();
                 pathList.push_back(pathResolved);
                 if(!nextPathStep())
                 {
+                    std::cout << "this->current_map==current_map && this->x==x && this->y==y stopAndSend" << std::endl;
                     stopAndSend();
                     parseStop();
                 }
                 if(keyPressed.empty())
+                {
+                    std::cout << "this->current_map==current_map && this->x==x && this->y==y !keyPressed" << std::endl;
                     parseAction();
+                }
             }
             else
                 std::cerr << "Wrong start point to start the path finding" << std::endl;
