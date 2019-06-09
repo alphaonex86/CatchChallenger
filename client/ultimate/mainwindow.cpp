@@ -92,6 +92,8 @@ MainWindow::MainWindow(QWidget *parent) :
     if(!connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play))
         abort();
     //ui->stackedWidget->addWidget(solowindow);
+    if(ui->stackedWidget->indexOf(solowindow)<0)
+        ui->solo->hide();
     ui->stackedWidget->setCurrentWidget(ui->mode);
     ui->warning->setVisible(false);
     ui->server_refresh->setEnabled(true);
@@ -1920,6 +1922,8 @@ void MainWindow::on_solo_clicked()
     int index=ui->stackedWidget->indexOf(solowindow);
     if(index>=0)
         ui->stackedWidget->setCurrentWidget(solowindow);
+    else
+        QMessageBox::critical(this,"Bug prevent","Sorry but some Qt version is buggy, it's why this section is closed.");
 }
 
 void MainWindow::on_languages_clicked()

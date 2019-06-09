@@ -820,7 +820,7 @@ bool MapControllerMP::nextPathStep()//true if have step
     if(!pathList.empty())
     {
         const CatchChallenger::Direction &direction=MapControllerMP::moveFromPath();
-        MapVisualiserPlayer::nextPathStepInternal(pathList,direction);
+        return MapVisualiserPlayer::nextPathStepInternal(pathList,direction);
     }
     return false;
 }
