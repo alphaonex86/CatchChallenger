@@ -1,7 +1,7 @@
 #include "PathFinding.h"
 #include <QMutexLocker>
 #include <QTime>
-#include <QDebug>
+#include <iostream>
 
 PathFinding::PathFinding() :
     tryCancel(false)
@@ -63,7 +63,10 @@ void PathFinding::searchPath(const std::unordered_map<std::string, Map_full *> &
                 memcpy(simplifiedMap.ledges,n.second->logicalMap.parsed_layer.ledges,simplifiedMap.width*simplifiedMap.height);
             }
             if(n.second->logicalMap.parsed_layer.walkable==NULL)
+            {
+                std::cout << "PathFinding n.second->logicalMap.parsed_layer.walkable " << n.first << std::endl;
                 simplifiedMap.walkable=NULL;
+            }
             else
             {
                 simplifiedMap.walkable=new bool[simplifiedMap.width*simplifiedMap.height];
@@ -125,28 +128,6 @@ void PathFinding::searchPath(const std::unordered_map<std::string, Map_full *> &
     //load for thread and unload if needed
     {
         QMutexLocker locker(&mutex);
-        for ( auto &n : simplifiedMapList ) {
-            if(n.second.dirt!=NULL)
-            {
-                delete n.second.dirt;
-                n.second.dirt=NULL;
-            }
-            if(n.second.ledges!=NULL)
-            {
-                delete n.second.ledges;
-                n.second.ledges=NULL;
-            }
-            if(n.second.walkable!=NULL)
-            {
-                delete n.second.walkable;
-                n.second.walkable=NULL;
-            }
-            if(n.second.monstersCollisionMap!=NULL)
-            {
-                delete n.second.monstersCollisionMap;
-                n.second.monstersCollisionMap=NULL;
-            }
-        }
         this->simplifiedMapList=simplifiedMapList;
     }
     emit emitSearchPath(destination_map,destination_x,destination_y,current_map,x,y,items);
@@ -179,14 +160,14 @@ void PathFinding::extraControlOnData(const std::vector<std::pair<CatchChallenger
             const std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> &controlVarCurrent=controlVar.at(index);
             if(controlVarCurrent.second<1)
             {
-                qDebug() << "wrong path finding data, lower than 1 step";
+                std::cerr << "wrong path finding data, lower than 1 step" << std::endl;
                 abort();
             }
             if(lastOrientation==CatchChallenger::Orientation_left)
             {
                 if(controlVarCurrent.first!=CatchChallenger::Orientation_bottom && controlVarCurrent.first!=CatchChallenger::Orientation_top)
                 {
-                    qDebug() << "wrong path finding data (1)";
+                    std::cerr << "wrong path finding data (1)" << std::endl;
                     abort();
                 }
             }
@@ -194,7 +175,7 @@ void PathFinding::extraControlOnData(const std::vector<std::pair<CatchChallenger
             {
                 if(controlVarCurrent.first!=CatchChallenger::Orientation_bottom && controlVarCurrent.first!=CatchChallenger::Orientation_top)
                 {
-                    qDebug() << "wrong path finding data (2)";
+                    std::cerr << "wrong path finding data (2)" << std::endl;
                     abort();
                 }
             }
@@ -202,7 +183,7 @@ void PathFinding::extraControlOnData(const std::vector<std::pair<CatchChallenger
             {
                 if(controlVarCurrent.first!=CatchChallenger::Orientation_right && controlVarCurrent.first!=CatchChallenger::Orientation_left)
                 {
-                    qDebug() << "wrong path finding data (3)";
+                    std::cerr << "wrong path finding data (3)" << std::endl;
                     abort();
                 }
             }
@@ -210,7 +191,7 @@ void PathFinding::extraControlOnData(const std::vector<std::pair<CatchChallenger
             {
                 if(controlVarCurrent.first!=CatchChallenger::Orientation_right && controlVarCurrent.first!=CatchChallenger::Orientation_left)
                 {
-                    qDebug() << "wrong path finding data (4)";
+                    std::cerr << "wrong path finding data (4)" << std::endl;
                     abort();
                 }
             }
@@ -219,7 +200,7 @@ void PathFinding::extraControlOnData(const std::vector<std::pair<CatchChallenger
         }
         if(controlVar.back().first!=orientation)
         {
-            qDebug() << "wrong path finding data, last data wrong";
+            std::cerr << "wrong path finding data, last data wrong" << std::endl;
             abort();
         }
     }
@@ -241,6 +222,8 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
         simplifiedMapList=this->simplifiedMapList;
         this->simplifiedMapList.clear();
     }
+    if(simplifiedMapList.at(current_map).walkable==NULL)
+        std::cout << "PathFinding::canGoOn() walkable is NULL for " << current_map << std::endl;
     //resolv the path
     if(!tryCancel)
     {
@@ -274,7 +257,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
             mapPointToParseList.erase(mapPointToParseList.cbegin());
             SimplifiedMapForPathFinding::PathToGo pathToGo;
             if(destination_map==current_map && tempPoint.x==destination_x && tempPoint.y==destination_y)
-                qDebug() << "final dest";
+                std::cerr << "final dest" << std::endl;
             //resolv the own point
             int index=0;
             while(index<1)/*2*/
@@ -403,12 +386,12 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                 {
                     if(returnedVar.back().second<=1)
                     {
-                        qDebug() << "Bug due for last step";
+                        std::cerr << "Bug due for last step" << std::endl;
                         return;
                     }
                     else
                     {
-                        qDebug() << "Path result into " << time.elapsed() << "ms";
+                        std::cout << "Path result into " << time.elapsed() << "ms" << std::endl;
                         returnedVar.back().second--;
                         emit result(current_map,x,y,returnedVar);
                         return;
@@ -417,7 +400,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                 else
                 {
                     returnedVar.clear();
-                    qDebug() << "Bug due to resolved path is empty";
+                    std::cerr << "Bug due to resolved path is empty" << std::endl;
                     return;
                 }
             }
@@ -530,7 +513,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
     }
     tryCancel=false;
     emit result(std::string(),0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >());
-    qDebug() << "Path not found into " << time.elapsed() << "ms";
+    std::cerr << "Path not found into " << time.elapsed() << "ms" << std::endl;
 }
 
 void PathFinding::cancel()
