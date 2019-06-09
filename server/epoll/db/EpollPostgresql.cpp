@@ -625,7 +625,7 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                 std::cerr << "[" << (time(NULL)-startTime) << "] ";
                 if(!queriesList.empty())
                     std::cerr << queriesList.front().query << ", ";
-                std::cerr << "query async send failed: " << errorMessage() << ", PQgetResult(conn) have returned NULL" << std::endl;
+                std::cerr << strCoPG << " query async send failed: " << errorMessage() << ", PQgetResult(conn) have returned NULL" << std::endl;
                 time_t secs=time(0);
                 tm *t=localtime(&secs);
                 printf("%04d-%02d-%02d %02d:%02d:%02d\n",
@@ -694,12 +694,14 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
     }
     if(events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
     {
-        started=false;
-        if(events == EPOLLRDHUP)
+        std::cerr << strCoPG << "Database disconnected, events: " << events << std::endl;
+        if(events | EPOLLRDHUP)
         {
-            std::cerr << "Database disconnected, try reconnect: " << errorMessage() << std::endl;
+            started=false;//if set this, try reconnect
+            std::cerr << strCoPG << "Database disconnected, try reconnect: " << errorMessage() << std::endl;
             syncDisconnect();
             conn=NULL;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             syncReconnect();
         }
     }
