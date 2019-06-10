@@ -536,6 +536,13 @@ std::string SoloWindow::getZoneName(const std::string &zone)
     return std::string();
 }
 
+//work around QSS crash
+void SoloWindow::setBuggyStyle()
+{
+    ui->page->setStyleSheet("#page{background-image: url(:/images/background.jpg);}");
+    ui->frame_login_2->setStyleSheet("#frame_login_2{background-image: url(:/images/savegame-select.png);}");
+}
+
 void SoloWindow::on_SaveGame_Delete_clicked()
 {
     if(QMessageBox::question(this,tr("Remove"),tr("Are you sure remove this savegame?"),QMessageBox::Yes|QMessageBox::No,QMessageBox::No)!=QMessageBox::Yes)
