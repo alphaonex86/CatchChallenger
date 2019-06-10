@@ -332,8 +332,8 @@ QLabel { padding:2px; }</string>
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>746</width>
-                     <height>245</height>
+                     <width>81</width>
+                     <height>47</height>
                     </rect>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -638,8 +638,8 @@ QLabel { padding:2px; }</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>746</width>
-                   <height>268</height>
+                   <width>81</width>
+                   <height>47</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_6">

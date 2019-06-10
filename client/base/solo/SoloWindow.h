@@ -31,6 +31,7 @@ public:
     ~SoloWindow();
     void updateSavegameList();
     void setOnlySolo();
+    void setBuggyStyle();//work around QSS crash
 protected:
     void changeEvent(QEvent *e);
 private slots:

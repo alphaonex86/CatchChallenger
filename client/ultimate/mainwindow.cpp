@@ -91,9 +91,11 @@ MainWindow::MainWindow(QWidget *parent) :
         abort();
     if(!connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play))
         abort();
-    //ui->stackedWidget->addWidget(solowindow);
+    ui->stackedWidget->addWidget(solowindow);
     if(ui->stackedWidget->indexOf(solowindow)<0)
         ui->solo->hide();
+    //work around QSS crash
+    solowindow->setBuggyStyle();
     ui->stackedWidget->setCurrentWidget(ui->mode);
     ui->warning->setVisible(false);
     ui->server_refresh->setEnabled(true);
