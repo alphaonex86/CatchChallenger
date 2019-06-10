@@ -52,9 +52,6 @@
        <number>0</number>
       </property>
       <widget class="QWidget" name="page">
-       <property name="styleSheet">
-        <string notr="true">#page{background-image: url(:/images/background.jpg);}</string>
-       </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QLabel" name="version">
@@ -104,9 +101,6 @@
               <width>777</width>
               <height>379</height>
              </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">#frame_login_2{background-image: url(:/images/savegame-select.png);}</string>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_6">
              <property name="spacing">
