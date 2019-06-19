@@ -1,3 +1,4 @@
+include(../base/lib.pri)
 include(../tiled/tiled.pri)
 
 QT       += gui network core widgets
@@ -67,11 +68,6 @@ SOURCES += \
     $$PWD/DatapackClientLoader.cpp \
     $$PWD/DatapackChecksum.cpp \
     $$PWD/Api_client_virtual.cpp \
-    $$PWD/Api_protocol.cpp \
-    $$PWD/Api_protocol_loadchar.cpp \
-    $$PWD/Api_protocol_message.cpp \
-    $$PWD/Api_protocol_query.cpp \
-    $$PWD/Api_protocol_reply.cpp \
     $$PWD/Options.cpp \
     $$PWD/LanguagesSelect.cpp \
     $$PWD/InternetUpdater.cpp \
@@ -128,7 +124,6 @@ HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/ClientVariable.h \
     $$PWD/Options.h \
     $$PWD/Api_client_virtual.h \
-    $$PWD/Api_protocol.h \
     $$PWD/FacilityLibClient.h \
     $$PWD/ClientVariableAudio.h \
     $$PWD/Ultimate.h
