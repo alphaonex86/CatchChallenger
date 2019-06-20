@@ -18,12 +18,14 @@ SOURCES += \
     $$PWD/opusfile/internal.c \
     $$PWD/opusfile/opusfile.c \
     $$PWD/opusfile/stream.c \
-    $$PWD/Audio.cpp
+    $$PWD/Audio.cpp \
+    $$PWD/QInfiniteBuffer.cpp
 
 HEADERS  += \
     $$PWD/opusfile/internal.h \
     $$PWD/opusfile/opusfile.h \
-    $$PWD/Audio.h
+    $$PWD/Audio.h \
+    $$PWD/QInfiniteBuffer.h
 }
 
 SOURCES += \

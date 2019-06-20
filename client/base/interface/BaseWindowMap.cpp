@@ -396,7 +396,7 @@ void BaseWindow::currentMapLoaded()
                 ambiance.data=new QByteArray;
                 if(Audio::decodeOpus(finalSound,*ambiance.data))
                 {
-                    ambiance.buffer=new QBuffer(ambiance.data);
+                    ambiance.buffer=new QInfiniteBuffer(ambiance.data);
                     ambiance.buffer->open(QBuffer::ReadOnly);
                     ambiance.buffer->seek(0);
                     ambiance.player->start(ambiance.buffer);
