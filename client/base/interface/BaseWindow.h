@@ -4,6 +4,7 @@
 #include "../ClientVariableAudio.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <QAudioOutput>
+#include "../QInfiniteBuffer.h"
 #endif
 
 #include <QWidget>
@@ -693,7 +694,7 @@ private:
     {
         #ifndef CATCHCHALLENGER_NOAUDIO
         QAudioOutput *player;
-        QBuffer *buffer;
+        QInfiniteBuffer *buffer;
         QByteArray *data;
         #endif
         std::string file;
