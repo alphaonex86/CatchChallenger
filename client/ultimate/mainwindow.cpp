@@ -97,8 +97,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->stackedWidget->addWidget(solowindow);
     if(ui->stackedWidget->indexOf(solowindow)<0)
         ui->solo->hide();
+    #ifdef __EMSCRIPTEN__
+    ui->solo->hide();
+    #else
     //work around QSS crash
     solowindow->setBuggyStyle();
+    #endif
     ui->stackedWidget->setCurrentWidget(ui->mode);
     ui->warning->setVisible(false);
     ui->server_refresh->setEnabled(true);
