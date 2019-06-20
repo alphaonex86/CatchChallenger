@@ -144,15 +144,17 @@ void BaseWindow::resetAll()
     }*/
 
     #ifndef CATCHCHALLENGER_NOAUDIO
-    if(currentAmbiance.manager!=NULL)
+    if(currentAmbiance.player!=NULL)
     {
-        libvlc_event_detach(currentAmbiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,currentAmbiance.player);
-        libvlc_event_detach(currentAmbiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,currentAmbiance.player);
-        libvlc_media_player_stop(currentAmbiance.player);
-        libvlc_media_player_release(currentAmbiance.player);
         Audio::audio.removePlayer(currentAmbiance.player);
-        currentAmbiance.manager=NULL;
+        currentAmbiance.player->stop();
+        currentAmbiance.buffer->close();
+        delete currentAmbiance.player;
+        delete currentAmbiance.buffer;
+        delete currentAmbiance.data;
         currentAmbiance.player=NULL;
+        currentAmbiance.buffer=NULL;
+        currentAmbiance.data=NULL;
         currentAmbiance.file.clear();
     }
     #endif

@@ -322,46 +322,46 @@ void BaseWindow::currentMapLoaded()
     #ifndef CATCHCHALLENGER_NOAUDIO
     //sound
     {
-        QStringList soundList;
+        std::vector<std::string> soundList;
         const std::string &backgroundsound=mapController->currentBackgroundsound();
         //map sound
-        if(!backgroundsound.isEmpty() && !soundList.contains(backgroundsound))
-            soundList << backgroundsound;
+        if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
+            soundList.push_back(backgroundsound);
         //zone sound
         Map_full *mapFull=mapController->currentMapFull();
-        if(!mapFull->zone.isEmpty())
-            if(DatapackClientLoader::datapackLoader.zonesExtra.contains(mapFull->zone))
+        if(!mapFull->zone.empty())
+            if(DatapackClientLoader::datapackLoader.zonesExtra.find(mapFull->zone)!=DatapackClientLoader::datapackLoader.zonesExtra.cend())
             {
-                const DatapackClientLoader::ZoneExtra &zoneExtra=DatapackClientLoader::datapackLoader.zonesExtra.value(mapFull->zone);
-                if(zoneExtra.audioAmbiance.contains(type))
+                const DatapackClientLoader::ZoneExtra &zoneExtra=DatapackClientLoader::datapackLoader.zonesExtra.at(mapFull->zone);
+                if(zoneExtra.audioAmbiance.find(type)!=zoneExtra.audioAmbiance.cend())
                 {
-                    const std::string &backgroundsound=zoneExtra.audioAmbiance.value(type);
-                    if(!backgroundsound.isEmpty() && !soundList.contains(backgroundsound))
-                        soundList << backgroundsound;
+                    const std::string &backgroundsound=zoneExtra.audioAmbiance.at(type);
+                    if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
+                        soundList.push_back(backgroundsound);
                 }
             }
         //general sound
-        if(DatapackClientLoader::datapackLoader.audioAmbiance.contains(type))
+        if(DatapackClientLoader::datapackLoader.audioAmbiance.find(type)!=DatapackClientLoader::datapackLoader.audioAmbiance.cend())
         {
-            const std::string &backgroundsound=DatapackClientLoader::datapackLoader.audioAmbiance.value(type);
-            if(!backgroundsound.isEmpty() && !soundList.contains(backgroundsound))
-                soundList << backgroundsound;
+            const std::string &backgroundsound=DatapackClientLoader::datapackLoader.audioAmbiance.at(type);
+            if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
+                soundList.push_back(backgroundsound);
         }
 
         std::string finalSound;
-        int index=0;
+        unsigned int index=0;
         while(index<soundList.size())
         {
             //search into main datapack
-            const std::string &fileToSearchMain=QDir::toNativeSeparators(client->datapackPathMain()+soundList.at(index));
-            if(QFileInfo(fileToSearchMain).isFile())
+            const std::string &fileToSearchMain=client->datapackPathMain()+soundList.at(index);
+            if(QFileInfo(QString::fromStdString(fileToSearchMain)).isFile())
             {
                 finalSound=fileToSearchMain;
                 break;
             }
             //search into base datapack
-            const std::string &fileToSearchBase=QDir::toNativeSeparators(client->datapackPathBase()+soundList.at(index));
-            if(QFileInfo(fileToSearchBase).isFile())
+            const std::string &fileToSearchBase=client->datapackPathBase()+soundList.at(index);
+            if(QFileInfo(QString::fromStdString(fileToSearchBase)).isFile())
             {
                 finalSound=fileToSearchBase;
                 break;
@@ -370,42 +370,47 @@ void BaseWindow::currentMapLoaded()
         }
 
         //set the sound
-        if(Audio::audio.vlcInstance && !finalSound.isEmpty() && currentAmbiance.file!=finalSound)
+        if(!finalSound.empty() && currentAmbiance.file!=finalSound)
         {
             // reset the audio ambiance
-            if(currentAmbiance.manager!=NULL)
+            if(currentAmbiance.player!=NULL)
             {
-                libvlc_event_detach(currentAmbiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,currentAmbiance.player);
-                libvlc_event_detach(currentAmbiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,currentAmbiance.player);
-                libvlc_media_player_stop(currentAmbiance.player);
-                libvlc_media_player_release(currentAmbiance.player);
                 Audio::audio.removePlayer(currentAmbiance.player);
-                currentAmbiance.manager=NULL;
+                currentAmbiance.player->stop();
+                currentAmbiance.buffer->close();
+                delete currentAmbiance.player;
+                delete currentAmbiance.buffer;
+                delete currentAmbiance.data;
                 currentAmbiance.player=NULL;
+                currentAmbiance.buffer=NULL;
+                currentAmbiance.data=NULL;
                 currentAmbiance.file.clear();
             }
 
+            Ambiance ambiance;
+            ambiance.player = new QAudioOutput(Audio::audio.format(), this);
             // Create a new Media
-            libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, finalSound.toUtf8().constData());
-            if(vlcMedia!=NULL)
+            if(ambiance.player!=NULL)
             {
-                Ambiance ambiance;
-                // Create a new libvlc player
-                ambiance.player = libvlc_media_player_new_from_media (vlcMedia);
-                // Get event manager for the player instance
-                ambiance.manager = libvlc_media_player_event_manager(ambiance.player);
-                // Attach the event handler to the media player error's events
-                libvlc_event_attach(ambiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,ambiance.player);
-                libvlc_event_attach(ambiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,ambiance.player);
-                // Release the media
-                libvlc_media_release(vlcMedia);
-                // And start playback
-                libvlc_media_player_play(ambiance.player);
+                //decode file
+                ambiance.data=new QByteArray;
+                if(Audio::decodeOpus(finalSound,*ambiance.data))
+                {
+                    ambiance.buffer=new QBuffer(ambiance.data);
+                    ambiance.buffer->open(QBuffer::ReadOnly);
+                    ambiance.buffer->seek(0);
+                    ambiance.player->start(ambiance.buffer);
 
-                ambiance.file=finalSound;
-                currentAmbiance=ambiance;
+                    ambiance.file=finalSound;
+                    currentAmbiance=ambiance;
 
-                Audio::audio.addPlayer(ambiance.player);
+                    Audio::audio.addPlayer(ambiance.player);
+                }
+                else
+                {
+                    delete ambiance.player;
+                    delete ambiance.data;
+                }
             }
         }
     }
@@ -444,38 +449,3 @@ void BaseWindow::currentMapLoaded()
         }
     }
 }
-
-#ifndef CATCHCHALLENGER_NOAUDIO
-void BaseWindow::vlceventStatic(const libvlc_event_t *event, void *ptr)
-{
-    libvlc_media_player_t * const player=static_cast<libvlc_media_player_t *>(ptr);
-    Q_UNUSED(player);
-    switch(event->type)
-    {
-        case libvlc_MediaPlayerEncounteredError:
-        {
-            const char * string=libvlc_errmsg();
-            if(string==NULL)
-                qDebug() << "vlc error";
-            else
-                qDebug() << string;
-        }
-        break;
-        case libvlc_MediaPlayerEndReached:
-            //BaseWindow::baseWindow->audioLoopRestart(player);
-            //audioLoop(player);
-        break;
-        default:
-            qDebug() << "vlc event: " << event->type;
-        break;
-    }
-}
-
-void BaseWindow::audioLoop(void *player)
-{
-    libvlc_media_player_t * const vlcPlayer=static_cast<libvlc_media_player_t *>(player);
-    libvlc_media_player_stop(vlcPlayer);
-    libvlc_media_player_play(vlcPlayer);
-}
-#endif
-

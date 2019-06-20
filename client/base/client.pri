@@ -7,11 +7,23 @@ QT       += qml quick
 DEFINES += CATCHCHALLENGER_CLIENT
 
 # see the file ClientVariableAudio.h
-DEFINES += CATCHCHALLENGER_NOAUDIO
+#DEFINES += CATCHCHALLENGER_NOAUDIO
 !contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
-linux:LIBS += -lvlc
-macx:LIBS += -lvlc
-win32:LIBS += -lvlc
+QT += multimedia
+linux:LIBS += -logg -lopus
+macx:LIBS += -logg -lopus
+win32:LIBS += -logg -lopus
+SOURCES += \
+    $$PWD/opusfile/info.c \
+    $$PWD/opusfile/internal.c \
+    $$PWD/opusfile/opusfile.c \
+    $$PWD/opusfile/stream.c \
+    $$PWD/Audio.cpp
+
+HEADERS  += \
+    $$PWD/opusfile/internal.h \
+    $$PWD/opusfile/opusfile.h \
+    $$PWD/Audio.h
 }
 
 SOURCES += \
@@ -73,14 +85,13 @@ SOURCES += \
     $$PWD/InternetUpdater.cpp \
     $$PWD/ExtraSocket.cpp \
     $$PWD/LocalListener.cpp \
-    $$PWD/Audio.cpp \
     $$PWD/CachedString.cpp \
     $$PWD/Map_client.cpp \
     $$PWD/FacilityLibClient.cpp \
     $$PWD/Api_protocol_Qt.cpp \
     $$PWD/Ultimate.cpp
 
-HEADERS  += $$PWD/ClientStructures.h \
+HEADERS  += \
     $$PWD/render/TileLayerItem.h \
     $$PWD/render/ObjectGroupItem.h \
     $$PWD/render/MapVisualiserPlayer.h \
@@ -119,7 +130,6 @@ HEADERS  += $$PWD/ClientStructures.h \
     $$PWD/ExtraSocket.h \
     $$PWD/LocalListener.h \
     $$PWD/DisplayStructures.h \
-    $$PWD/Audio.h \
     $$PWD/Map_client.h \
     $$PWD/ClientVariable.h \
     $$PWD/Options.h \

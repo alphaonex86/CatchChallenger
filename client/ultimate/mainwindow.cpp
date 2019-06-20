@@ -47,6 +47,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     toQuit(false),
     ui(new Ui::MainWindow)
+    #ifndef CATCHCHALLENGER_NOAUDIO
+    ,buffer(&data)
+    #endif
 {
     qDebug() << "QStandardPaths::writableLocation(QStandardPaths::DataLocation)" << QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     serverMode=ServerMode_None;
@@ -129,64 +132,28 @@ MainWindow::MainWindow(QWidget *parent) :
     downloadFile();
 
     #ifndef CATCHCHALLENGER_NOAUDIO
-    vlcPlayer=NULL;
-    if(Audio::audio.vlcInstance!=NULL)
+    // Create a new Media
     {
-        const QString &soundFile=QCoreApplication::applicationDirPath()+QStringLiteral(CATCHCHALLENGER_CLIENT_MUSIC_LOADING);
-        if(QFile(soundFile).exists())
+        player=NULL;
+        const std::string &soundFile=QCoreApplication::applicationDirPath().toStdString()+CATCHCHALLENGER_CLIENT_MUSIC_LOADING;
+        struct stat sb;
+        if(stat(soundFile.c_str(),&sb)==0)
         {
-            const QString &musicPath=QDir::toNativeSeparators(soundFile);
-            // Create a new Media
-            libvlc_media_t *vlcMedia = libvlc_media_new_path(Audio::audio.vlcInstance, musicPath.toUtf8().constData());
-            if(vlcMedia!=NULL)
+            player = new QAudioOutput(Audio::audio.format(), this);
+            if(Audio::decodeOpus(soundFile,data))
             {
-                // Create a new libvlc player
-                vlcPlayer = libvlc_media_player_new_from_media(vlcMedia);
-                if(vlcPlayer!=NULL)
-                {
-                    // Get event manager for the player instance
-                    libvlc_event_manager_t *manager = libvlc_media_player_event_manager(vlcPlayer);
-                    // Attach the event handler to the media player error's events
-                    libvlc_event_attach(manager,libvlc_MediaPlayerEncounteredError,MainWindow::vlceventStatic,this);
-                    libvlc_event_attach(manager,libvlc_MediaPlayerEndReached,MainWindow::vlceventStatic,this);
-                    // Release the media
-                    libvlc_media_release(vlcMedia);
-//                    libvlc_media_add_option(vlcMedia, "input-repeat=-1");
-                    // And start playback
-                    libvlc_media_player_play(vlcPlayer);
-                    Audio::audio.addPlayer(vlcPlayer);
-                    //audio
-                    if(!connect(this,&MainWindow::audioLoopRestart,this,&MainWindow::audioLoop,Qt::QueuedConnection))
-                    {
-                        std::cerr << "!connect(this,&MainWindow::audioLoopRestart,this,&MainWindow::audioLoop,Qt::QueuedConnection)" << std::endl;
-                        abort();
-                    }
-                }
-                else
-                {
-                    qDebug() << "problem with vlc media player";
-                    const char * string=libvlc_errmsg();
-                    if(string!=NULL)
-                        qDebug() << string;
-                }
+                buffer.open(QBuffer::ReadOnly);
+                buffer.seek(0);
+                player->start(&buffer);
+
+                Audio::audio.addPlayer(player);
             }
             else
             {
-                qDebug() << "problem with vlc media" << musicPath;
-                const char * string=libvlc_errmsg();
-                if(string!=NULL)
-                    qDebug() << string;
+                delete player;
+                player=NULL;
             }
         }
-        else
-            qDebug() << "The loading file sound not exists: " << soundFile;
-    }
-    else
-    {
-        qDebug() << "no vlc instance";
-        const char * string=libvlc_errmsg();
-        if(string!=NULL)
-            qDebug() << string;
     }
     #endif
     if(!connect(baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded))
@@ -208,10 +175,13 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     #ifndef CATCHCHALLENGER_NOAUDIO
-    if(vlcPlayer!=NULL)
+    if(player!=NULL)
     {
-        libvlc_media_player_stop(vlcPlayer);
-        Audio::audio.removePlayer(vlcPlayer);
+        player->stop();
+        buffer.close();
+        Audio::audio.removePlayer(player);
+        delete player;
+        player=NULL;
     }
     #endif
     if(baseWindow!=NULL)
@@ -268,8 +238,13 @@ bool MainWindow::askForUltimateCopy()
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     #ifndef CATCHCHALLENGER_NOAUDIO
-    if(vlcPlayer!=NULL)
-        libvlc_media_player_stop(vlcPlayer);
+    if(player!=NULL)
+    {
+        buffer.close();
+        player->stop();
+        delete player;
+        player=NULL;
+    }
     #endif
     event->ignore();
     hide();
@@ -940,8 +915,8 @@ void MainWindow::serverListEntryEnvoluedDoubleClicked()
 void MainWindow::resetAll()
 {
     #ifndef CATCHCHALLENGER_NOAUDIO
-    if(vlcPlayer!=NULL)
-        libvlc_media_player_play(vlcPlayer);
+    if(player!=NULL)
+        player->start();
     #endif
     if(client!=NULL)
     {
@@ -1991,8 +1966,8 @@ void MainWindow::logged()
 void MainWindow::gameIsLoaded()
 {
     #ifndef CATCHCHALLENGER_NOAUDIO
-    if(vlcPlayer!=NULL)
-        libvlc_media_player_stop(vlcPlayer);
+    if(player!=NULL)
+        player->stop();
     #endif
     this->setWindowTitle(QStringLiteral("CatchChallenger Ultimate - %1").arg(QString::fromStdString(client->getPseudo())));
 }
@@ -2041,42 +2016,6 @@ void MainWindow::updateTheOkButton()
         return;
     }
 }
-
-#ifndef CATCHCHALLENGER_NOAUDIO
-void MainWindow::vlceventStatic(const libvlc_event_t *event, void *ptr)
-{
-    static_cast<MainWindow *>(ptr)->vlcevent(event);
-}
-
-void MainWindow::vlcevent(const libvlc_event_t *event)
-{
-    switch(event->type)
-    {
-        case libvlc_MediaPlayerEncounteredError:
-        {
-            const char * string=libvlc_errmsg();
-            if(string==NULL)
-                qDebug() << "vlc error";
-            else
-                qDebug() << string;
-        }
-        break;
-        case libvlc_MediaPlayerEndReached:
-            emit audioLoopRestart(vlcPlayer);
-        break;
-        default:
-            qDebug() << "vlc event: " << event->type;
-        break;
-    }
-}
-
-void MainWindow::audioLoop(void *player)
-{
-    libvlc_media_player_t * const vlcPlayer=static_cast<libvlc_media_player_t *>(player);
-    libvlc_media_player_stop(vlcPlayer);
-    libvlc_media_player_play(vlcPlayer);
-}
-#endif
 
 void MainWindow::on_server_edit_clicked()
 {
