@@ -13,8 +13,9 @@
 #include <QSet>
 #include <QCompleter>
 #include "../base/ClientVariableAudio.h"
-/*#ifndef CATCHCHALLENGER_NOAUDIO
-#endif*/
+#ifndef CATCHCHALLENGER_NOAUDIO
+#include "../base/QInfiniteBuffer.h"
+#endif
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
@@ -172,7 +173,7 @@ private:
     QString lastServer;
     #ifndef CATCHCHALLENGER_NOAUDIO
     QAudioOutput *player;
-    QBuffer buffer;
+    QInfiniteBuffer buffer;
     QByteArray data;
     #endif
 };
