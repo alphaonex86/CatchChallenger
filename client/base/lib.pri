@@ -8,4 +8,5 @@ SOURCES += \
     $$PWD/Api_protocol_reply.cpp
 
 HEADERS  += \
-    $$PWD/Api_protocol.h
+    $$PWD/Api_protocol.h \
+    $$PWD/ClientStructures.h

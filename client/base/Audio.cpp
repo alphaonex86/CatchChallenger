@@ -2,75 +2,75 @@
 #include "Audio.h"
 #include "PlatformMacro.h"
 #include "../../general/base/GeneralVariable.h"
+#include "../../general/base/cpp11addition.h"
 #include <QCoreApplication>
 #include <QSettings>
-#include <QDebug>
+#include <iostream>
 
 Audio Audio::audio;
 
-Audio::Audio() :
-    vlcInstance(NULL)
+Audio::Audio()
 {
     QSettings settings;
     if(!settings.contains(QStringLiteral("audio_init")) || settings.value(QStringLiteral("audio_init")).toInt()==2)
     {
         settings.setValue(QStringLiteral("audio_init"),1);
         settings.sync();
-        /* Initialize libVLC */
-        /*const char * const vlc_args[] = {
-              "-vvv"
-        };
-        vlcInstance = libvlc_new(1,vlc_args);*/
-        vlcInstance = libvlc_new(0,NULL);
-        /* Complain in case of broken installation */
-        if (vlcInstance == NULL)
-            qDebug() << "Qt libVLC player, Could not init libVLC";
-        const char * string=libvlc_errmsg();
-        if(string!=NULL)
-            qDebug() << string;
+
+        //init audio here
+        m_format.setSampleRate(48000);
+        m_format.setChannelCount(2);
+        m_format.setSampleSize(16);
+        m_format.setCodec("audio/pcm");
+        m_format.setByteOrder(QAudioFormat::LittleEndian);
+        m_format.setSampleType(QAudioFormat::SignedInt);
+
+        QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+        if (!info.isFormatSupported(m_format)) {
+            std::cerr << "raw audio format not supported by backend, cannot play audio." << std::endl;
+            return;
+        }
+
         settings.setValue(QStringLiteral("audio_init"),2);
     }
     else
-        qDebug() << "Audio disabled due to previous crash";
+        std::cerr << "Audio disabled due to previous crash" << std::endl;
+}
+
+QAudioFormat Audio::format() const
+{
+    return m_format;
 }
 
 void Audio::setVolume(const int &volume)
 {
-    if(vlcInstance==NULL)
-        return;
-    qDebug() << "Audio volume set to: " << volume;
-    int index=0;
+    std::cout << "Audio volume set to: " << volume << std::endl;
+    unsigned int index=0;
     while(index<playerList.size())
     {
-        libvlc_audio_set_volume(playerList.at(index),volume);
-        libvlc_audio_set_mute(playerList.at(index),0);
+        playerList.at(index)->setVolume(volume);
         index++;
     }
     this->volume=volume;
 }
 
-void Audio::addPlayer(libvlc_media_player_t * const player)
+void Audio::addPlayer(QAudioOutput * const player)
 {
-    if(vlcInstance==NULL)
+    if(vectorcontainsAtLeastOne(playerList,player))
         return;
-    if(playerList.contains(player))
-        return;
-    playerList << player;
-    libvlc_audio_set_volume(player,volume);
-    libvlc_audio_set_mute(player,0);
+    playerList.push_back(player);
+    player->setVolume(volume);
 }
 
-void Audio::setPlayerVolume(libvlc_media_player_t * const player)
+void Audio::setPlayerVolume(QAudioOutput * const player)
 {
-    if(vlcInstance==NULL)
-        return;
-    libvlc_audio_set_volume(player,volume);
-    libvlc_audio_set_mute(player,0);
+    /*libvlc_audio_set_volume(player,volume);
+    libvlc_audio_set_mute(player,0);*/
 }
 
-void Audio::removePlayer(libvlc_media_player_t * const player)
+void Audio::removePlayer(QAudioOutput * const player)
 {
-    playerList.removeOne(player);
+    vectorremoveOne(playerList,player);
 }
 
 QStringList Audio::output_list()
@@ -88,10 +88,61 @@ QStringList Audio::output_list()
 Audio::~Audio()
 {
     /* Release libVLC instance on quit */
-    if(vlcInstance)
+    /*if(vlcInstance)
     {
         libvlc_release(vlcInstance);
         vlcInstance=NULL;
+    }*/
+}
+
+bool Audio::decodeOpus(const std::string &filePath,QByteArray &data)
+{
+    QBuffer buffer(&data);
+    buffer.open(QBuffer::ReadWrite);
+
+    int           ret;
+    OggOpusFile  *of=op_open_file(filePath.c_str(),&ret);
+    if(of==NULL) {
+        fprintf(stderr,"Failed to open file '%s': %i\n","file.opus",ret);
+        return false;
     }
+    ogg_int64_t pcm_offset;
+    ogg_int64_t nsamples;
+    nsamples=0;
+    pcm_offset=op_pcm_tell(of);
+    if(pcm_offset!=0)
+        fprintf(stderr,"Non-zero starting PCM offset: %li\n",(long)pcm_offset);
+    for(;;) {
+        ogg_int64_t   next_pcm_offset;
+        opus_int16    pcm[120*48*2];
+        unsigned char out[120*48*2*2];
+        int           si;
+        ret=op_read_stereo(of,pcm,sizeof(pcm)/sizeof(*pcm));
+        if(ret==OP_HOLE) {
+            fprintf(stderr,"\nHole detected! Corrupt file segment?\n");
+            continue;
+        }
+        else if(ret<0) {
+            fprintf(stderr,"\nError decoding '%s': %i\n","file.opus",ret);
+            ret=EXIT_FAILURE;
+            break;
+        }
+        next_pcm_offset=op_pcm_tell(of);
+        pcm_offset=next_pcm_offset;
+        if(ret<=0) {
+            ret=EXIT_SUCCESS;
+            break;
+        }
+        for(si=0;si<2*ret;si++) { /// Ensure the data is little-endian before writing it out.
+            out[2*si+0]=(unsigned char)(pcm[si]&0xFF);
+            out[2*si+1]=(unsigned char)(pcm[si]>>8&0xFF);
+        }
+        buffer.write(reinterpret_cast<char *>(out),sizeof(*out)*4*ret);
+        nsamples+=ret;
+    }
+    op_free(of);
+
+    buffer.seek(0);
+    return ret==EXIT_SUCCESS;
 }
 #endif

@@ -3,8 +3,9 @@
 
 #include "../ClientVariableAudio.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include <vlc/vlc.h>
+#include <QAudioOutput>
 #endif
+
 #include <QWidget>
 #include <QMessageBox>
 #include <QAbstractSocket>
@@ -24,6 +25,7 @@
 #include <unordered_set>
 #include <set>
 #include <map>
+#include <QBuffer>
 
 #include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
 #include "../../../general/base/ChatParsing.h"
@@ -220,11 +222,6 @@ private slots:
     void evolutionCanceled();
     void teleportConditionNotRespected(const std::string &text);
     static std::string reputationRequirementsToText(const ReputationRequirements &reputationRequirements);
-
-    #ifndef CATCHCHALLENGER_NOAUDIO
-    static void vlceventStatic(const libvlc_event_t *event, void *ptr);
-    static void audioLoop(void *player);
-    #endif
 
     //datapack
     void haveTheDatapack();
@@ -695,8 +692,9 @@ private:
     struct Ambiance
     {
         #ifndef CATCHCHALLENGER_NOAUDIO
-        libvlc_media_player_t *player;
-        libvlc_event_manager_t *manager;
+        QAudioOutput *player;
+        QBuffer *buffer;
+        QByteArray *data;
         #endif
         std::string file;
     };

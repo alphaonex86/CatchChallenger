@@ -27,9 +27,6 @@
 #include <QtQml>
 #include <QComboBox>
 #include <iostream>
-#ifndef CATCHCHALLENGER_NOAUDIO
-#include <vlc/vlc.h>
-#endif
 
 //do buy queue
 //do sell queue
@@ -122,7 +119,6 @@ BaseWindow::BaseWindow() :
     datapackFileSize=0;
     craftingAnimationObject=NULL;
     #ifndef CATCHCHALLENGER_NOAUDIO
-    currentAmbiance.manager=NULL;
     currentAmbiance.player=NULL;
     #endif
 
@@ -330,15 +326,15 @@ BaseWindow::~BaseWindow()
         newProfile=NULL;
     }
     #ifndef CATCHCHALLENGER_NOAUDIO
-    if(currentAmbiance.manager!=NULL)
+    if(currentAmbiance.player!=NULL)
     {
-        libvlc_event_detach(currentAmbiance.manager,libvlc_MediaPlayerEncounteredError,BaseWindow::vlceventStatic,currentAmbiance.player);
-        libvlc_event_detach(currentAmbiance.manager,libvlc_MediaPlayerEndReached,BaseWindow::vlceventStatic,currentAmbiance.player);
-        libvlc_media_player_stop(currentAmbiance.player);
-        libvlc_media_player_release(currentAmbiance.player);
-        Audio::audio.removePlayer(currentAmbiance.player);
-        currentAmbiance.manager=NULL;
+        currentAmbiance.buffer->close();
+        delete currentAmbiance.player;
+        delete currentAmbiance.buffer;
+        delete currentAmbiance.data;
         currentAmbiance.player=NULL;
+        currentAmbiance.buffer=NULL;
+        currentAmbiance.data=NULL;
         currentAmbiance.file.clear();
     }
     #endif

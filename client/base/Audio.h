@@ -2,10 +2,12 @@
 #define Audio_H
 
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include <vlc/vlc.h>
+#include "opusfile/opusfile.h"
 
 #include <QString>
+#include <QAudioOutput>
 #include <QList>
+#include <QBuffer>
 
 class Audio
 {
@@ -13,15 +15,17 @@ public:
     Audio();
     ~Audio();
     static Audio audio;
-    libvlc_instance_t *vlcInstance;
     void setVolume(const int &volume);
     QStringList output_list();
-    void addPlayer(libvlc_media_player_t * const player);
-    void removePlayer(libvlc_media_player_t * const player);
-    void setPlayerVolume(libvlc_media_player_t * const player);
+    void addPlayer(QAudioOutput * const player);
+    void removePlayer(QAudioOutput * const player);
+    void setPlayerVolume(QAudioOutput * const player);
+    QAudioFormat format() const;
+    static bool decodeOpus(const std::string &filePath,QByteArray &data);
 private:
-    QList<libvlc_media_player_t *> playerList;
+    std::vector<QAudioOutput *> playerList;
     int volume;
+    QAudioFormat m_format;
 };
 #endif
 
