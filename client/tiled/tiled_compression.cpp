@@ -29,11 +29,15 @@
 #include "tiled_compression.h"
 
 #ifdef TILED_ZLIB
-#if defined(Q_OS_WIN) && defined(Q_CC_MSVC)
-#include "QtZlib/zlib.h"
-#else
-#include <zlib.h>
-#endif
+    #if defined(Q_OS_WIN) && defined(Q_CC_MSVC)
+        #include "QtZlib/zlib.h"
+    #else
+        #ifndef __EMSCRIPTEN__
+            #include <zlib.h>
+        #else
+            #include <QtZlib/zlib.h>
+        #endif
+    #endif
 #endif
 #include <zstd.h>      // presumes zstd library is installed
 
@@ -63,7 +67,7 @@ static void logZlibError(int error)
 }
 #endif
 
-QByteArray Tiled::decompress(const QByteArray &data, int expectedSize, CompressionMethod method)
+QByteArray Tiled::decompressData(const QByteArray &data, int expectedSize, CompressionMethod method)
 {
     if (data.isEmpty())
         return QByteArray();
@@ -139,7 +143,7 @@ QByteArray Tiled::decompress(const QByteArray &data, int expectedSize, Compressi
     }
 }
 
-QByteArray Tiled::compress(const QByteArray &data, const CompressionMethod method, const unsigned int compressionlevel)
+QByteArray Tiled::compressData(const QByteArray &data, const CompressionMethod method, const unsigned int compressionlevel)
 {
     if (data.isEmpty())
         return QByteArray();

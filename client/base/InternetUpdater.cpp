@@ -9,6 +9,7 @@
 #include <QNetworkRequest>
 #include <QUrl>
 #include <QRegularExpression>
+#include <iostream>
 
 #if defined(__unix__) || defined(Q_OS_UNIX) || !defined(Q_OS_WIN32)
     #include <unistd.h>
@@ -66,7 +67,7 @@ void InternetUpdater::httpFinished()
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if (!reply->isFinished())
     {
-        qDebug() << (QStringLiteral("get the new update failed: not finished"));
+        std::cerr << "get the new update failed: not finished" << std::endl;
         reply->deleteLater();
         return;
     }
@@ -74,25 +75,25 @@ void InternetUpdater::httpFinished()
     {
         newUpdateTimer.stop();
         newUpdateTimer.start(24*60*60*1000);
-        qDebug() << (QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
+        std::cerr << "get the new update failed: "+reply->errorString().toStdString() << std::endl;
         reply->deleteLater();
         return;
     } else if (!redirectionTarget.isNull()) {
-        qDebug() << (QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
+        std::cerr << "redirection denied to: "+redirectionTarget.toUrl().toString().toStdString() << std::endl;
         reply->deleteLater();
         return;
     }
     std::string newVersion=QString::fromUtf8(reply->readAll()).toStdString();
     if(newVersion.empty())
     {
-        qDebug() << (QStringLiteral("version string is empty"));
+        std::cerr << "version string is empty" << std::endl;
         reply->deleteLater();
         return;
     }
     stringreplaceAll(newVersion,"\n","");
     if(!QString::fromStdString(newVersion).contains(QRegularExpression(QStringLiteral("^[0-9]+(\\.[0-9]+)+$"))))
     {
-        qDebug() << (QStringLiteral("version string don't match: %1").arg(QString::fromStdString(newVersion)));
+        std::cerr << "version string don't match: "+newVersion << std::endl;
         reply->deleteLater();
         return;
     }

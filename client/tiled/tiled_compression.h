@@ -52,7 +52,7 @@ enum CompressionMethod {
  * @param expectedSize the expected size of the uncompressed data in bytes
  * @return the uncompressed data, or a null QByteArray if decompressing failed
  */
-QByteArray decompress(const QByteArray &data,
+QByteArray decompressData(const QByteArray &data,
                                          const int expectedSize = 1024,
                                          const CompressionMethod method = Zstandard);
 
@@ -65,7 +65,7 @@ QByteArray decompress(const QByteArray &data,
  * @param data the uncompressed data
  * @return the compressed data, or a null QByteArray if compression failed
  */
-QByteArray compress(const QByteArray &data,
+QByteArray compressData(const QByteArray &data,
                                        const CompressionMethod method = Zstandard,
                                        const unsigned int compressionlevel = 22);
 
