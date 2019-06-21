@@ -698,12 +698,12 @@ void MapReaderPrivate::decodeBinaryLayerData(TileLayer *tileLayer,
 
     #ifdef TILED_ZLIB
     if (compression == "zlib" || compression == "gzip") {
-        tileData = decompress(tileData, size, Zlib);
+        tileData = decompressData(tileData, size, Zlib);
     }
     else
         #endif
         if (compression == MapReader::text_zstd) {
-         tileData = decompress(tileData, size, Zstandard);
+         tileData = decompressData(tileData, size, Zstandard);
      } else if (!compression.isEmpty()) {
         xml.raiseError(tr("Compression method '%1' not supported")
                        .arg(compression.toString()));
