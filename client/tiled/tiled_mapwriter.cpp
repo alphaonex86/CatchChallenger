@@ -383,7 +383,7 @@ void MapWriterPrivate::writeTileLayer(QXmlStreamWriter &w,
         }
 
         if (mLayerDataFormat == Map::Base64Zstandard)
-            tileData = compress(tileData, Zstandard);
+            tileData = compressData(tileData, Zstandard);
 
         w.writeCharacters(QStringLiteral("\n   "));
         w.writeCharacters(QString::fromLatin1(tileData.toBase64()));

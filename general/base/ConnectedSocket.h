@@ -3,14 +3,18 @@
 
 #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
 
+#include <QSslError>
 #include <QIODevice>
-#include <QSslSocket>
-#include <QAbstractSocket>
+#ifndef __EMSCRIPTEN__
+    #include <QSslSocket>
+    #include <QAbstractSocket>
+    #include <QHostAddress>
+    #include "QFakeSocket.h"
+#else
+    #include <QtWebSockets/QWebSocket>
+#endif
 #include <QObject>
-#include <QHostAddress>
 #include <QByteArray>
-
-#include "QFakeSocket.h"
 
 namespace CatchChallenger {
 
@@ -18,9 +22,13 @@ class ConnectedSocket : public QIODevice
 {
     Q_OBJECT
 public:
+    #ifndef __EMSCRIPTEN__
     explicit ConnectedSocket(QFakeSocket *socket);
     explicit ConnectedSocket(QSslSocket *socket);
     explicit ConnectedSocket(QTcpSocket *socket);
+    #else
+    explicit ConnectedSocket(QWebSocket *socket);
+    #endif
     ~ConnectedSocket();
     void	abort();
     void	connectToHost(const QString & hostName,quint16 port);
@@ -44,22 +52,36 @@ public:
     qint64	readData(char * data, qint64 maxSize);
     qint64	writeData(const char * data, qint64 maxSize);
     void	close();
+    #ifndef __EMSCRIPTEN__
     QFakeSocket *fakeSocket;
     QSslSocket *sslSocket;
     QTcpSocket *tcpSocket;
+    #else
+    QWebSocket *webSocket;
+    #endif
 protected:
     bool	isSequential() const;
     bool canReadLine() const;
     QList<QSslError> sslErrors() const;
+    #ifdef __EMSCRIPTEN__
+    QByteArray buffer;
+    QList<QSslError> m_sslErrors;
+    void saveSslErrors(const QList<QSslError> &errors);
+    #endif
     //workaround because QSslSocket don't return correct value for i2p via proxy
     QString hostName;
     uint16_t port;
+    #ifdef __EMSCRIPTEN__
+    void binaryMessageReceived(const QByteArray &message);
+    #endif
 signals:
     void	connected();
     void	disconnected();
     void	error(QAbstractSocket::SocketError socketError);
     void	stateChanged(QAbstractSocket::SocketState socketState);
+    #ifndef __EMSCRIPTEN__
     void    sslErrors(const QList<QSslError> &errors);
+    #endif
 private:
     void destroyedSocket();
     void purgeBuffer();

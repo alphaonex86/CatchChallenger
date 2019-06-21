@@ -28,7 +28,9 @@
 #include "../base/render/MapController.h"
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/ListEntryEnvolued.h"
+#ifndef __EMSCRIPTEN__
 #include "../base/solo/SoloWindow.h"
+#endif
 #include "../base/LanguagesSelect.h"
 
 namespace Ui {
@@ -155,7 +157,9 @@ private:
     ListEntryEnvolued * selectedServer;
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
+    #ifndef __EMSCRIPTEN__
     SoloWindow *solowindow;
+    #endif
     QString pass;
     uint64_t timeLaunched;
     QString launchedGamePath;

@@ -4,7 +4,11 @@
 #include "CommonDatapackServerSpec.h"
 
 #ifdef TILED_ZLIB
-#include <zlib.h>
+    #ifndef __EMSCRIPTEN__
+        #include <zlib.h>
+    #else
+        #include <QtZlib/zlib.h>
+    #endif
 #endif
 #include <iostream>
 

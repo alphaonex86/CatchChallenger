@@ -4,7 +4,7 @@
 #include "ProtocolParsingCheck.h"
 #include <iostream>
 #include <cstring>
-#include <openssl/sha.h>
+//#include <openssl/sha.h>
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QMetaType>
@@ -66,7 +66,7 @@ ProtocolParsing::ProtocolParsing()
 void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType)
 {
     //test the sha224 lib
-    {
+    /*{
         static const unsigned char ibuf[]={0xBA,0xD9,0x39,0xE0,0x62,0x4C,0x48,0x1B,0x6B,0x60,0x49,0x63,0x18,0x77,0x01,0xBA,0x0A,0x37,0x2C,0x15,0x4D,0xA4,0x0C,0x1D,0x82,0x8A,0xE8,0xF2};
         static const unsigned char requiredResult[]={0x1c,0x82,0x16,0x18,0xa8,0xaa,0xd1,0x00,0xf7,0x41,0xba,0xfc,0x84,0x0f,0xcd,0x61,0x3a,0x9d,0xee,0x51,0x84,0xe0,0x5e,0xfd,0x45,0x8c,0x8f,0x9d};
         unsigned char obuf[sizeof(requiredResult)];
@@ -76,7 +76,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             std::cerr << "Sha224 lib don't return the correct result" << std::endl;
             abort();
         }
-    }
+    }*/
 
     switch(initialiseTheVariableType)
     {
@@ -269,17 +269,19 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
 
             //register meta type
             #ifndef EPOLLCATCHCHALLENGERSERVER
-            qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol::tradeAddTradeMonster()
-            qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
-            qRegisterMetaType<std::vector<uint8_t> >("std::vector<uint8_t>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-            qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-            qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
-            qRegisterMetaType<std::vector<uint8_t> >("std::vector<uint8_t>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-            qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-            qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
-            #if ! defined (ONLYMAPRENDER)
-            qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
-            #endif
+                qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol::tradeAddTradeMonster()
+                qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
+                qRegisterMetaType<std::vector<uint8_t> >("std::vector<uint8_t>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+                qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+                qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
+                qRegisterMetaType<std::vector<uint8_t> >("std::vector<uint8_t>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+                qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
+                qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
+                #ifndef __EMSCRIPTEN__
+                    #if ! defined (ONLYMAPRENDER)
+                        qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
+                    #endif
+                #endif
             #endif
         break;
     }
