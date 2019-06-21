@@ -13,6 +13,7 @@ using namespace CatchChallenger;
 #include <QRegularExpression>
 #include <QNetworkReply>
 #include <QDataStream>
+#include <QDebug>
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"

@@ -85,6 +85,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
 
     if(!QObject::connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::QtsocketDestroyed))
         abort();
+    #ifndef __EMSCRIPTEN__
     if(socket->sslSocket!=NULL)
     {
         if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader))
@@ -96,11 +97,14 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
     {
         if(socket->fakeSocket!=NULL)
             haveFirstHeader=true;
+        #endif
         if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection))//put queued to don't have circular loop Client -> Server -> Client
             abort();
         if(socket->bytesAvailable())
             parseIncommingData();
+    #ifndef __EMSCRIPTEN__
     }
+    #endif
 
     if(!Api_protocol::internalVersionDisplayed)
     {
@@ -1874,7 +1878,11 @@ void Api_protocol::resetAll()
     token.clear();
     message("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
     stageConnexion=StageConnexion::Stage1;
-    if(socket==NULL || socket->fakeSocket==NULL)
+    if(socket==NULL
+            #ifndef __EMSCRIPTEN__
+            || socket->fakeSocket==NULL
+            #endif
+            )
         haveFirstHeader=false;
     else
         haveFirstHeader=true;
@@ -2215,11 +2223,19 @@ void Api_protocol::readForFirstHeader()
 {
     if(haveFirstHeader)
         return;
+    #ifndef __EMSCRIPTEN__
     if(socket->sslSocket==NULL)
     {
         newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
         return;
     }
+    #else
+    if(socket->webSocket==NULL)
+    {
+        newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
+        return;
+    }
+    #endif
     if(stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2 && stageConnexion!=StageConnexion::Stage3)
     {
         newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2"));
@@ -2231,13 +2247,14 @@ void Api_protocol::readForFirstHeader()
         stageConnexion=StageConnexion::Stage3;
     }
     {
+        #ifndef __EMSCRIPTEN__
         if(socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
         {
             newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
             return;
         }
         uint8_t value;
-        if(socket->sslSocket->read((char*)&value,sizeof(value))==sizeof(value))
+        if(socket->read((char*)&value,sizeof(value))==sizeof(value))
         {
             haveFirstHeader=true;
             if(value==0x01)
@@ -2251,6 +2268,16 @@ void Api_protocol::readForFirstHeader()
             else
                 connectTheExternalSocketInternal();
         }
+        #else
+        uint8_t value;
+        if(socket->read((char*)&value,sizeof(value))==sizeof(value))
+        {
+            if(value==0x01)
+                newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
+            else
+                connectTheExternalSocketInternal();
+        }
+        #endif
     }
 }
 
@@ -2261,6 +2288,7 @@ void Api_protocol::sslHandcheckIsFinished()
 
 void Api_protocol::connectTheExternalSocketInternal()
 {
+    #ifndef __EMSCRIPTEN__
     if(socket->sslSocket==NULL)
     {
         newError(std::string("Internal problem"),std::string("Api_protocol::connectTheExternalSocket() socket->sslSocket==NULL"));
@@ -2342,6 +2370,7 @@ void Api_protocol::connectTheExternalSocketInternal()
 
         }
     }
+    #endif
     //continue the normal procedure
     if(stageConnexion==StageConnexion::Stage1)
         connectedOnLoginServer();
@@ -2361,6 +2390,7 @@ void Api_protocol::connectTheExternalSocketInternal()
         parseIncommingData();
 }
 
+#ifndef __EMSCRIPTEN__
 void Api_protocol::saveCert(const std::string &file)
 {
     if(socket->sslSocket==NULL)
@@ -2385,6 +2415,7 @@ void Api_protocol::saveCert(const std::string &file)
         }
     }
 }
+#endif
 
 bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const data,const int &size)
 {

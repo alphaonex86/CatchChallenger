@@ -1,6 +1,6 @@
 #include "DatapackChecksum.h"
 
-#include <openssl/sha.h>
+#include <QCryptographicHash>
 #include <regex>
 #include <string>
 #include <unordered_set>
@@ -45,12 +45,7 @@ void DatapackChecksum::stopThread()
 
 std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPath)
 {
-    SHA256_CTX hash;
-    if(SHA224_Init(&hash)!=1)
-    {
-        std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
-        abort();
-    }
+    QCryptographicHash hash(QCryptographicHash::Sha224);
     {
         std::regex excludePath("^map[/\\\\]main[/\\\\]");
 
@@ -76,7 +71,7 @@ std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPa
                     if(file!=NULL)
                     {
                         const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
-                        SHA224_Update(&hash,data.data(),data.size());
+                        hash.addData(QByteArray(reinterpret_cast<const char *>(data.data()),data.size()));
                     }
                     else
                     {
@@ -91,7 +86,7 @@ std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPa
     std::vector<char> hashResult;
     {
         hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        SHA224_Final(reinterpret_cast<unsigned char *>(hashResult.data()),&hash);
+        memcpy(hashResult.data(),hash.result().constData(),hashResult.size());
     }
     return hashResult;
 }
@@ -133,7 +128,9 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                     const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
                     std::vector<char> hashResult;
                     hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                    SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(hashResult.data()));
+                    memcpy(reinterpret_cast<unsigned char *>(hashResult.data()),
+                        QCryptographicHash::hash(QByteArray(reinterpret_cast<const char *>(data.data()),data.size()),QCryptographicHash::Sha224).constData(),
+                        hashResult.size());
                     fullDatapackChecksumReturn.partialHashList.push_back(*reinterpret_cast<const int *>(hashResult.data()));
                 }
                 else
@@ -151,12 +148,7 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
 
 std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPath)
 {
-    SHA256_CTX hash;
-    if(SHA224_Init(&hash)!=1)
-    {
-        std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
-        abort();
-    }
+    QCryptographicHash hash(QCryptographicHash::Sha224);
     {
         std::regex excludePath("^sub[/\\\\]");
 
@@ -182,7 +174,7 @@ std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPa
                     if(file!=NULL)
                     {
                         const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
-                        SHA224_Update(&hash,data.data(),data.size());
+                        hash.addData(QByteArray(reinterpret_cast<const char *>(data.data()),data.size()));
                     }
                     else
                     {
@@ -197,7 +189,7 @@ std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPa
     std::vector<char> hashResult;
     {
         hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        SHA224_Final(reinterpret_cast<unsigned char *>(hashResult.data()),&hash);
+        memcpy(hashResult.data(),hash.result().constData(),hashResult.size());
     }
     return hashResult;
 }
@@ -239,7 +231,9 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                     const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
                     std::vector<char> hashResult;
                     hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                    SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(hashResult.data()));
+                    memcpy(reinterpret_cast<unsigned char *>(hashResult.data()),
+                        QCryptographicHash::hash(QByteArray(reinterpret_cast<const char *>(data.data()),data.size()),QCryptographicHash::Sha224).constData(),
+                        hashResult.size());
                     fullDatapackChecksumReturn.partialHashList.push_back(*reinterpret_cast<const int *>(hashResult.data()));
                 }
                 else
@@ -257,12 +251,7 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
 
 std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPath)
 {
-    SHA256_CTX hash;
-    if(SHA224_Init(&hash)!=1)
-    {
-        std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
-        abort();
-    }
+    QCryptographicHash hash(QCryptographicHash::Sha224);
     {
         const std::vector<std::string> &extensionAllowedList=stringsplit(CATCHCHALLENGER_EXTENSION_ALLOWED,';');
         const std::unordered_set<std::string> extensionAllowed(extensionAllowedList.cbegin(),extensionAllowedList.cend());
@@ -286,7 +275,7 @@ std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPat
                     if(file!=NULL)
                     {
                         const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
-                        SHA224_Update(&hash,data.data(),data.size());
+                        hash.addData(QByteArray(reinterpret_cast<const char *>(data.data()),data.size()));
                     }
                     else
                     {
@@ -301,7 +290,7 @@ std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPat
     std::vector<char> hashResult;
     {
         hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        SHA224_Final(reinterpret_cast<unsigned char *>(hashResult.data()),&hash);
+        memcpy(hashResult.data(),hash.result().constData(),hashResult.size());
     }
     return hashResult;
 }
@@ -342,7 +331,9 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                     const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
                     std::vector<char> hashResult;
                     hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                    SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(hashResult.data()));
+                    memcpy(reinterpret_cast<unsigned char *>(hashResult.data()),
+                        QCryptographicHash::hash(QByteArray(reinterpret_cast<const char *>(data.data()),data.size()),QCryptographicHash::Sha224).constData(),
+                        hashResult.size());
                     fullDatapackChecksumReturn.partialHashList.push_back(*reinterpret_cast<const int *>(hashResult.data()));
                 }
                 else

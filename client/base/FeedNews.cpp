@@ -9,6 +9,7 @@
 #include <QNetworkRequest>
 #include <QUrl>
 #include <QRegularExpression>
+#include <QDebug>
 
 FeedNews *FeedNews::feedNews=NULL;
 

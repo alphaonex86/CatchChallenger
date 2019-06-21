@@ -148,7 +148,9 @@ protected:
     void readForFirstHeader();
     void sslHandcheckIsFinished();
     void connectTheExternalSocketInternal();
+    #ifndef __EMSCRIPTEN__
     void saveCert(const std::string &file);
+    #endif
 
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;
