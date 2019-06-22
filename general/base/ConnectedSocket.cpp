@@ -11,7 +11,7 @@
 #endif
 
 using namespace CatchChallenger;
-#ifndef __EMSCRIPTEN__
+#ifndef NOTCPSOCKET
 ConnectedSocket::ConnectedSocket(QFakeSocket *socket) :
     fakeSocket(socket),
     sslSocket(NULL),
@@ -78,7 +78,8 @@ ConnectedSocket::ConnectedSocket(QTcpSocket *socket) :
         abort();
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
 }
-#else
+#endif
+#ifndef NOWEBSOCKET
 ConnectedSocket::ConnectedSocket(QWebSocket *socket) :
     webSocket(socket)
 {
@@ -102,20 +103,21 @@ ConnectedSocket::ConnectedSocket(QWebSocket *socket) :
 
 ConnectedSocket::~ConnectedSocket()
 {
-    #ifndef __EMSCRIPTEN__
-    if(sslSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(sslSocket!=nullptr)
         sslSocket->deleteLater();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         tcpSocket->deleteLater();
-    if(fakeSocket!=NULL)
+    if(fakeSocket!=nullptr)
         fakeSocket->deleteLater();
-    #else
-    if(webSocket!=NULL)
+    #endif
+    #ifndef NOWEBSOCKET
+    if(webSocket!=nullptr)
         webSocket->deleteLater();
     #endif
 }
 
-#ifdef __EMSCRIPTEN__
+#ifndef NOWEBSOCKET
 void ConnectedSocket::binaryMessageReceived(const QByteArray &message)
 {
     buffer.push_back(message);
@@ -131,8 +133,8 @@ void ConnectedSocket::binaryMessageReceived(const QByteArray &message)
 #ifndef __EMSCRIPTEN__
 QList<QSslError> ConnectedSocket::sslErrors() const
 {
-    #ifndef __EMSCRIPTEN__
-    if(sslSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(sslSocket!=nullptr)
         return sslSocket->sslErrors();
     #else
     return m_sslErrors;
@@ -143,8 +145,8 @@ QList<QSslError> ConnectedSocket::sslErrors() const
 
 void ConnectedSocket::purgeBuffer()
 {
-    #ifndef __EMSCRIPTEN__
-    if(sslSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(sslSocket!=nullptr)
     {
         if(sslSocket->bytesAvailable())
             emit readyRead();
@@ -156,10 +158,10 @@ void ConnectedSocket::purgeBuffer()
 
 void ConnectedSocket::destroyedSocket()
 {
-    #ifndef __EMSCRIPTEN__
-    sslSocket=NULL;
-    tcpSocket=NULL;
-    fakeSocket=NULL;
+    #ifndef NOTCPSOCKET
+    sslSocket=nullptr;
+    tcpSocket=nullptr;
+    fakeSocket=nullptr;
     #endif
     hostName.clear();
     port=0;
@@ -170,13 +172,17 @@ void ConnectedSocket::abort()
     hostName.clear();
     port=0;
 
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         fakeSocket->abort();
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         sslSocket->abort();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         tcpSocket->abort();
+    #endif
+    #ifndef NOWEBSOCKET
+    if(webSocket!=nullptrptr)
+        webSocket->abort();
     #endif
 }
 
@@ -184,8 +190,8 @@ void ConnectedSocket::connectToHost(const QString & hostName, quint16 port)
 {
     if(state()!=QAbstractSocket::UnconnectedState)
         return;
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         fakeSocket->connectToHost();
     else
     {
@@ -193,19 +199,30 @@ void ConnectedSocket::connectToHost(const QString & hostName, quint16 port)
         this->hostName=hostName;
         this->port=port;
 
-        if(sslSocket!=NULL)
+        if(sslSocket!=nullptr)
+        {
             sslSocket->connectToHost(hostName,port);
-        else if(tcpSocket!=NULL)
+            return;
+        }
+        else if(tcpSocket!=nullptr)
+        {
             tcpSocket->connectToHost(hostName,port);
+            return;
+        }
     }
-    #else
-    QString tempHost(hostName);
-    if(tempHost.contains(":") && !tempHost.contains("["))
-        tempHost="["+tempHost+"]";
-    QUrl url{QString("ws://"+tempHost+":"+QString::number(port)+"/")};
-    QNetworkRequest request{url};
-    request.setRawHeader("Sec-WebSocket-Protocol", "binary");
-    webSocket->open(request);
+    #endif
+    #ifndef NOWEBSOCKET
+    if(webSocket!=nullptr)
+    {
+        QString tempHost(hostName);
+        if(tempHost.contains(":") && !tempHost.contains("["))
+            tempHost="["+tempHost+"]";
+        QUrl url{QString("ws://"+tempHost+":"+QString::number(port)+"/")};
+        QNetworkRequest request{url};
+        request.setRawHeader("Sec-WebSocket-Protocol", "binary");
+        webSocket->open(request);
+        return;
+    }
     #endif
 }
 
@@ -213,15 +230,29 @@ void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)
 {
     if(state()!=QAbstractSocket::UnconnectedState)
         return;
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
+    {
         fakeSocket->connectToHost();
-    else if(sslSocket!=NULL)
+        return;
+    }
+    else if(sslSocket!=nullptr)
+    {
         sslSocket->connectToHost(address.toString(),port);
-    else if(tcpSocket!=NULL)
+        return;
+    }
+    else if(tcpSocket!=nullptr)
+    {
         tcpSocket->connectToHost(address,port);
-    #else
-    connectToHost(address.toString(),port);
+        return;
+    }
+    #endif
+    #ifndef NOWEBSOCKET
+    if(webSocket!=nullptr)
+    {
+        connectToHost(address.toString(),port);
+        return;
+    }
     #endif
 }
 
@@ -231,59 +262,67 @@ void ConnectedSocket::disconnectFromHost()
         return;
     hostName.clear();
     port=0;
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         fakeSocket->disconnectFromHost();
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         sslSocket->disconnectFromHost();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         tcpSocket->disconnectFromHost();
-    #else
-    webSocket->close();
+    #endif
+    #ifndef NOWEBSOCKET
+    if(webSocket!=nullptr)
+        webSocket->close();
     #endif
 }
 
 QAbstractSocket::SocketError ConnectedSocket::error() const
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return fakeSocket->error();
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->error();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->error();
-    #else
-    webSocket->error();
+    #endif
+    #ifndef NOWEBSOCKET
+    if(webSocket!=nullptr)
+        return webSocket->error();
     #endif
     return QAbstractSocket::UnknownSocketError;
 }
 
 bool ConnectedSocket::flush()
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return true;
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->flush();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->flush();
-    #else
-    webSocket->flush();
+    #endif
+    #ifndef NOWEBSOCKET
+    if(webSocket!=nullptr)
+        return webSocket->flush();
     #endif
     return false;
 }
 
 bool ConnectedSocket::isValid() const
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return fakeSocket->isValid();
-    else if(sslSocket!=NULL)
+    else if(sslSocket!=nullptr)
         return sslSocket->isValid();
-    else if(tcpSocket!=NULL)
+    else if(tcpSocket!=nullptr)
         return tcpSocket->isValid();
-    #else
-    webSocket->isValid();
+    #endif
+    #ifndef NOWEBSOCKET
+    if(webSocket!=nullptr)
+        webSocket->isValid();
     #endif
     return false;
 }
@@ -292,7 +331,7 @@ void ConnectedSocket::setTcpCork(const bool &cork)
 {
     #ifndef __EMSCRIPTEN__
     #ifdef __linux__
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
     {
         #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
         const qintptr &infd=
@@ -307,7 +346,7 @@ void ConnectedSocket::setTcpCork(const bool &cork)
                 std::cerr << "Unable to apply tcp cork" << std::endl;
         }
     }
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
     {
         #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
         const qintptr &infd=
@@ -333,12 +372,12 @@ QHostAddress ConnectedSocket::localAddress() const
     //deprecated form incorrect value for i2p
     std::cerr << "ConnectedSocket::localAddress(): deprecated form incorrect value for i2p" << std::endl;
 
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return QHostAddress::LocalHost;
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->localAddress();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->localAddress();
     #endif
     return QHostAddress::Null;
@@ -346,12 +385,12 @@ QHostAddress ConnectedSocket::localAddress() const
 
 quint16	ConnectedSocket::localPort() const
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return 9999;
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->localPort();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->localPort();
     #endif
     return 0;
@@ -362,12 +401,12 @@ QHostAddress	ConnectedSocket::peerAddress() const
     //deprecated form incorrect value for i2p
     std::cerr << "ConnectedSocket::peerAddress(): deprecated form incorrect value for i2p" << std::endl;
 
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return QHostAddress::LocalHost;
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->peerAddress();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->peerAddress();
     #endif
     return QHostAddress::Null;
@@ -375,32 +414,33 @@ QHostAddress	ConnectedSocket::peerAddress() const
 
 QString ConnectedSocket::peerName() const
 {
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOTCPSOCKET
     /// \warning via direct value for i2p. Never pass by peerAddress()
     QString pearName;
-    if(fakeSocket!=NULL)
+    if(fakeSocket!=nullptr)
         return QString();
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         pearName=sslSocket->peerName();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         pearName=tcpSocket->peerName();
     if(!pearName.isEmpty())
         return pearName;
     else
         return hostName;
-    #else
+    #endif
+    #ifndef NOWEBSOCKET
     return QString();
     #endif
 }
 
 quint16	ConnectedSocket::peerPort() const
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return 15000;
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->peerPort();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->peerPort();
     #endif
     return 0;
@@ -408,73 +448,75 @@ quint16	ConnectedSocket::peerPort() const
 
 QAbstractSocket::SocketState ConnectedSocket::state() const
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return fakeSocket->state();
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->state();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->state();
-    #else
-    webSocket->state();
+    #endif
+    #ifndef NOWEBSOCKET
+    if(webSocket!=nullptr)
+        webSocket->state();
     #endif
     return QAbstractSocket::UnconnectedState;
 }
 
 bool ConnectedSocket::waitForConnected(int msecs)
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return true;
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->waitForConnected(msecs);
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->waitForConnected(msecs);
-    #else
-    Q_UNUSED(msecs);
     #endif
+    Q_UNUSED(msecs);
     return false;
 }
 
 bool ConnectedSocket::waitForDisconnected(int msecs)
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return true;
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->waitForDisconnected(msecs);
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->waitForDisconnected(msecs);
-    #else
-    Q_UNUSED(msecs);
     #endif
+    Q_UNUSED(msecs);
     return false;
 }
 
 qint64 ConnectedSocket::bytesAvailable() const
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return fakeSocket->bytesAvailable();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->bytesAvailable();
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->bytesAvailable();
         else
-    #else
-    return buffer.size();
+    #endif
+    #ifndef NOWEBSOCKET
+    if(webSocket!=nullptr)
+        return buffer.size();
     #endif
     return -1;
 }
 
 QIODevice::OpenMode ConnectedSocket::openMode() const
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return fakeSocket->openMode();
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->openMode();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->openMode();
     #endif
     return QIODevice::ReadWrite;
@@ -482,15 +524,16 @@ QIODevice::OpenMode ConnectedSocket::openMode() const
 
 QString ConnectedSocket::errorString() const
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return fakeSocket->errorString();
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->errorString();
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->errorString();
     #else
-    webSocket->errorString();
+    if(webSocket!=nullptr)
+        webSocket->errorString();
     #endif
     return QString();
 }
@@ -502,33 +545,37 @@ void ConnectedSocket::close()
 
 qint64 ConnectedSocket::readData(char * data, qint64 maxSize)
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return fakeSocket->read(data,maxSize);
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->read(data,maxSize);
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->read(data,maxSize);
     #else
-    QByteArray temp(buffer.mid(0,maxSize));
-    buffer.remove(0,temp.size());
-    memcpy(data,temp.constData(),temp.size());
-    return temp.size();
+    if(webSocket!=nullptr)
+    {
+        QByteArray temp(buffer.mid(0,maxSize));
+        buffer.remove(0,temp.size());
+        memcpy(data,temp.constData(),temp.size());
+        return temp.size();
+    }
     #endif
     return -1;
 }
 
 qint64 ConnectedSocket::writeData(const char * data, qint64 maxSize)
 {
-    #ifndef __EMSCRIPTEN__
-    if(fakeSocket!=NULL)
+    #ifndef NOTCPSOCKET
+    if(fakeSocket!=nullptr)
         return fakeSocket->write(data,maxSize);
-    if(tcpSocket!=NULL)
+    if(tcpSocket!=nullptr)
         return tcpSocket->write(data,maxSize);
-    if(sslSocket!=NULL)
+    if(sslSocket!=nullptr)
         return sslSocket->write(data,maxSize);
     #else
-    return webSocket->sendBinaryMessage(QByteArray(data,maxSize));
+    if(webSocket!=nullptr)
+        return webSocket->sendBinaryMessage(QByteArray(data,maxSize));
     #endif
     return -1;
 }
