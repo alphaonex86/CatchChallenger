@@ -48,7 +48,7 @@ void Audio::setVolume(const int &volume)
     unsigned int index=0;
     while(index<playerList.size())
     {
-        playerList.at(index)->setVolume(volume);
+        playerList.at(index)->setVolume((qreal)volume/100);
         index++;
     }
     this->volume=volume;
@@ -59,13 +59,12 @@ void Audio::addPlayer(QAudioOutput * const player)
     if(vectorcontainsAtLeastOne(playerList,player))
         return;
     playerList.push_back(player);
-    player->setVolume(volume);
+    player->setVolume((qreal)volume/100);
 }
 
 void Audio::setPlayerVolume(QAudioOutput * const player)
 {
-    /*libvlc_audio_set_volume(player,volume);
-    libvlc_audio_set_mute(player,0);*/
+    player->setVolume((qreal)volume/100);
 }
 
 void Audio::removePlayer(QAudioOutput * const player)
@@ -87,12 +86,6 @@ QStringList Audio::output_list()
 
 Audio::~Audio()
 {
-    /* Release libVLC instance on quit */
-    /*if(vlcInstance)
-    {
-        libvlc_release(vlcInstance);
-        vlcInstance=NULL;
-    }*/
 }
 
 bool Audio::decodeOpus(const std::string &filePath,QByteArray &data)

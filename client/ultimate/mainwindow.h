@@ -44,18 +44,26 @@ namespace Ui {
 class ConnexionInfo
 {
 public:
+    QString unique_code;
+    QString name;
+
+    //hightest priority
     QString host;
     uint16_t port;
-    QString name;
+    //lower priority
+    QString ws;
+
     uint32_t connexionCounter;
     uint32_t lastConnexion;
+
     QString register_page;
     QString lost_passwd_page;
     QString site_page;
-    QString unique_code;
-    bool operator<(const ConnexionInfo &connexionInfo) const;
+
     QString proxyHost;
     uint16_t proxyPort;
+
+    bool operator<(const ConnexionInfo &connexionInfo) const;
 };
 
 class MainWindow : public QMainWindow
@@ -158,9 +166,10 @@ private:
     bool haveShowDisconnectionReason;
     QStringList server_list;
     CatchChallenger::ConnectedSocket *socket;
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOTCPSOCKET
     QSslSocket *realSslSocket;
-    #else
+    #endif
+    #ifndef NOWEBSOCKET
     QWebSocket *realWebSocket;
     #endif
     std::vector<ListEntryEnvolued *> datapack,server;
