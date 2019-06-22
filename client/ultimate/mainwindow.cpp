@@ -1613,6 +1613,7 @@ void MainWindow::on_deleteDatapack_clicked()
 
 void MainWindow::downloadFile()
 {
+    #ifndef __EMSCRIPTEN__
     QString catchChallengerVersion;
     #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
     catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
@@ -1631,9 +1632,12 @@ void MainWindow::downloadFile()
     catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(QString::fromStdString(InternetUpdater::GetOSDisplayString()));
     #endif
     catchChallengerVersion+=QStringLiteral(" ")+CATCHCHALLENGER_PLATFORM_CODE;
+    #endif
 
     QNetworkRequest networkRequest(QString(CATCHCHALLENGER_SERVER_LIST_URL));
+    #ifndef __EMSCRIPTEN__
     networkRequest.setHeader(QNetworkRequest::UserAgentHeader,catchChallengerVersion);
+    #endif
     reply = qnam.get(networkRequest);
     if(!connect(reply, &QNetworkReply::finished, this, &MainWindow::httpFinished))
         abort();
