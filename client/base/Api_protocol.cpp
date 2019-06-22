@@ -85,7 +85,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
 
     if(!QObject::connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::QtsocketDestroyed))
         abort();
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOTCPSOCKET
     if(socket->sslSocket!=NULL)
     {
         if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader))
@@ -102,7 +102,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
             abort();
         if(socket->bytesAvailable())
             parseIncommingData();
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOTCPSOCKET
     }
     #endif
 
@@ -1879,7 +1879,7 @@ void Api_protocol::resetAll()
     message("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
     stageConnexion=StageConnexion::Stage1;
     if(socket==NULL
-            #ifndef __EMSCRIPTEN__
+            #ifndef NOTCPSOCKET
             || socket->fakeSocket==NULL
             #endif
             )
@@ -2223,13 +2223,14 @@ void Api_protocol::readForFirstHeader()
 {
     if(haveFirstHeader)
         return;
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOTCPSOCKET
     if(socket->sslSocket==NULL)
     {
         newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
         return;
     }
-    #else
+    #endif
+    #ifndef NOWEBSOCKET
     if(socket->webSocket==NULL)
     {
         newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
@@ -2247,37 +2248,32 @@ void Api_protocol::readForFirstHeader()
         stageConnexion=StageConnexion::Stage3;
     }
     {
-        #ifndef __EMSCRIPTEN__
+        #ifndef NOTCPSOCKET
         if(socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
         {
             newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
             return;
         }
+        #endif
         uint8_t value;
         if(socket->read((char*)&value,sizeof(value))==sizeof(value))
         {
             haveFirstHeader=true;
             if(value==0x01)
             {
+                #ifndef NOTCPSOCKET
                 socket->sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
                 socket->sslSocket->ignoreSslErrors();
                 socket->sslSocket->startClientEncryption();
                 if(!QObject::connect(socket->sslSocket,&QSslSocket::encrypted,this,&Api_protocol::sslHandcheckIsFinished))
                     abort();
+                #else
+                newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
+                #endif
             }
             else
                 connectTheExternalSocketInternal();
         }
-        #else
-        uint8_t value;
-        if(socket->read((char*)&value,sizeof(value))==sizeof(value))
-        {
-            if(value==0x01)
-                newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
-            else
-                connectTheExternalSocketInternal();
-        }
-        #endif
     }
 }
 
@@ -2288,7 +2284,7 @@ void Api_protocol::sslHandcheckIsFinished()
 
 void Api_protocol::connectTheExternalSocketInternal()
 {
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOTCPSOCKET
     if(socket->sslSocket==NULL)
     {
         newError(std::string("Internal problem"),std::string("Api_protocol::connectTheExternalSocket() socket->sslSocket==NULL"));
@@ -2390,7 +2386,7 @@ void Api_protocol::connectTheExternalSocketInternal()
         parseIncommingData();
 }
 
-#ifndef __EMSCRIPTEN__
+#ifndef NOTCPSOCKET
 void Api_protocol::saveCert(const std::string &file)
 {
     if(socket->sslSocket==NULL)

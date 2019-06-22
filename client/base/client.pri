@@ -28,6 +28,16 @@ HEADERS  += \
     $$PWD/Audio.h \
     $$PWD/QInfiniteBuffer.h
 }
+wasm: {
+    DEFINES += NOTCPSOCKET
+}
+else
+{
+    DEFINES += NOWEBSOCKET
+}
+!contains(DEFINES, NOWEBSOCKET) {
+    QT += websockets
+}
 
 SOURCES += \
     $$PWD/render/TileLayerItem.cpp \
