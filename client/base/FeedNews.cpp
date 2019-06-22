@@ -40,6 +40,7 @@ FeedNews::~FeedNews()
 
 void FeedNews::downloadFile()
 {
+    #ifndef __EMSCRIPTEN__
     QString catchChallengerVersion;
     if(Ultimate::ultimate.isUltimate())
         catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
@@ -48,10 +49,13 @@ void FeedNews::downloadFile()
     #if defined(_WIN32) || defined(Q_OS_MAC)
     catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(QString::fromStdString(InternetUpdater::GetOSDisplayString()));
     #endif
+    #endif
     if(qnam==NULL)
         qnam=new QNetworkAccessManager(this);
     QNetworkRequest networkRequest(QStringLiteral(CATCHCHALLENGER_RSS_URL));
+    #ifndef __EMSCRIPTEN__
     networkRequest.setHeader(QNetworkRequest::UserAgentHeader,catchChallengerVersion);
+    #endif
     reply = qnam->get(networkRequest);
     connect(reply, &QNetworkReply::finished, this, &FeedNews::httpFinished);
 }
