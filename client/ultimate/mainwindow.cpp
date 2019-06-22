@@ -403,14 +403,9 @@ std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
 std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList()
 {
     if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).isDir())
-    {
         if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml")).isFile())
             return loadXmlConnexionInfoList(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml"));
-        else
-            return loadXmlConnexionInfoList(QStringLiteral(":/other/default_server_list.xml"));
-    }
-    else
-        return loadXmlConnexionInfoList(QStringLiteral(":/other/default_server_list.xml"));
+    return loadXmlConnexionInfoList(QStringLiteral(":/other/default_server_list.xml"));
 }
 
 std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlContent)
@@ -447,116 +442,121 @@ std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray
     const tinyxml2::XMLElement *server = root->FirstChildElement("server");
     while(server!=NULL)
     {
-        if(server->Attribute("host")!=NULL && server->Attribute("port")!=NULL && server->Attribute("unique_code")!=NULL)
+        if(server->Attribute("unique_code")!=NULL)
         {
             ConnexionInfo connexionInfo;
-            connexionInfo.host=server->Attribute("host");
             connexionInfo.unique_code=server->Attribute("unique_code");
-            uint32_t temp_port=stringtouint32(server->Attribute("port"),&ok);
-            if(!connexionInfo.host.contains(regexHost))
-                qDebug() << QStringLiteral("Unable to open the file: %1, host is wrong: %3 child->Name(): %2")
-                            .arg("server_list.xml").arg(server->Name()).arg(connexionInfo.host);
-            else if(!ok)
-                qDebug() << QStringLiteral("Unable to open the file: %1, port is not a number: %3 child->Name(): %2")
-                            .arg("server_list.xml").arg(server->Name()).arg(server->Attribute("port"));
-            else if(temp_port<1 || temp_port>65535)
-                qDebug() << QStringLiteral("Unable to open the file: %1, port is not in range: %3 child->Name(): %2")
-                            .arg("server_list.xml").arg(server->Name()).arg(server->Attribute("port"));
-            else if(connexionInfo.unique_code.isEmpty())
-                qDebug() << QStringLiteral("Unable to open the file: %1, unique_code can't be empty: %3 child->Name(): %2")
-                            .arg("server_list.xml").arg(server->Name()).arg(server->Attribute("port"));
-            else
+
+            if(server->Attribute("host")!=NULL)
+                connexionInfo.host=server->Attribute("host");
+            if(server->Attribute("port")!=NULL)
             {
-                connexionInfo.port=static_cast<uint16_t>(temp_port);
-                const tinyxml2::XMLElement *lang;
-                const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-                bool found=false;
-                if(!language.empty() && language!="en")
-                {
-                    lang = server->FirstChildElement("lang");
-                    while(lang!=NULL)
-                    {
-                        if(lang->Attribute("lang") && lang->Attribute("lang")==language)
-                        {
-                            const tinyxml2::XMLElement *name = lang->FirstChildElement("name");
-                            if(name!=NULL && name->GetText()!=NULL)
-                                connexionInfo.name=name->GetText();
-                            const tinyxml2::XMLElement *register_page = lang->FirstChildElement("register_page");
-                            if(register_page!=NULL && register_page->GetText()!=NULL)
-                                connexionInfo.register_page=register_page->GetText();
-                            const tinyxml2::XMLElement *lost_passwd_page = lang->FirstChildElement("lost_passwd_page");
-                            if(lost_passwd_page!=NULL && lost_passwd_page->GetText()!=NULL)
-                                connexionInfo.lost_passwd_page=lost_passwd_page->GetText();
-                            const tinyxml2::XMLElement *site_page = lang->FirstChildElement("site_page");
-                            if(site_page!=NULL && site_page->GetText()!=NULL)
-                                connexionInfo.site_page=site_page->GetText();
-                            found=true;
-                            break;
-                        }
-                        lang = lang->NextSiblingElement("lang");
-                    }
-                }
-                if(!found)
-                {
-                    lang = server->FirstChildElement("lang");
-                    while(lang!=NULL)
-                    {
-                        if(lang->Attribute("lang")==NULL || strcmp(lang->Attribute("lang"),"en")==0)
-                        {
-                            const tinyxml2::XMLElement *name = lang->FirstChildElement("name");
-                            if(name!=NULL && name->GetText()!=NULL)
-                                connexionInfo.name=name->GetText();
-                            const tinyxml2::XMLElement *register_page = lang->FirstChildElement("register_page");
-                            if(register_page!=NULL && register_page->GetText()!=NULL)
-                                connexionInfo.register_page=register_page->GetText();
-                            const tinyxml2::XMLElement *lost_passwd_page = lang->FirstChildElement("lost_passwd_page");
-                            if(lost_passwd_page!=NULL && lost_passwd_page->GetText()!=NULL)
-                                connexionInfo.lost_passwd_page=lost_passwd_page->GetText();
-                            const tinyxml2::XMLElement *site_page = lang->FirstChildElement("site_page");
-                            if(site_page!=NULL && site_page->GetText()!=NULL)
-                                connexionInfo.site_page=site_page->GetText();
-                            break;
-                        }
-                        lang = lang->NextSiblingElement("lang");
-                    }
-                }
-                settings.beginGroup(QStringLiteral("Xml-%1").arg(server->Attribute("unique_code")));
-                if(settings.contains(QStringLiteral("connexionCounter")))
-                {
-                    connexionInfo.connexionCounter=settings.value("connexionCounter").toUInt(&ok);
-                    if(!ok)
-                        connexionInfo.connexionCounter=0;
-                }
+                uint32_t temp_port=stringtouint32(server->Attribute("port"),&ok);
+                if(!connexionInfo.host.contains(regexHost))
+                    qDebug() << QStringLiteral("Unable to open the file: %1, host is wrong: %3 child->Name(): %2")
+                                .arg("server_list.xml").arg(server->Name()).arg(connexionInfo.host);
+                else if(!ok)
+                    qDebug() << QStringLiteral("Unable to open the file: %1, port is not a number: %3 child->Name(): %2")
+                                .arg("server_list.xml").arg(server->Name()).arg(server->Attribute("port"));
+                else if(temp_port<1 || temp_port>65535)
+                    qDebug() << QStringLiteral("Unable to open the file: %1, port is not in range: %3 child->Name(): %2")
+                                .arg("server_list.xml").arg(server->Name()).arg(server->Attribute("port"));
+                else if(connexionInfo.unique_code.isEmpty())
+                    qDebug() << QStringLiteral("Unable to open the file: %1, unique_code can't be empty: %3 child->Name(): %2")
+                                .arg("server_list.xml").arg(server->Name()).arg(server->Attribute("port"));
                 else
-                    connexionInfo.connexionCounter=0;
-
-                //proxy
-                if(settings.contains(QStringLiteral("proxyPort")))
-                {
-                    connexionInfo.proxyPort=static_cast<uint16_t>(settings.value("proxyPort").toUInt(&ok));
-                    if(!ok)
-                        connexionInfo.proxyPort=9050;
-                }
-                else
-                    connexionInfo.proxyPort=9050;
-                if(settings.contains(QStringLiteral("proxyHost")))
-                    connexionInfo.proxyHost=settings.value(QStringLiteral("proxyHost")).toString();
-                else
-                    connexionInfo.proxyHost=QString();
-
-                if(settings.contains(QStringLiteral("lastConnexion")))
-                {
-                    connexionInfo.lastConnexion=settings.value(QStringLiteral("lastConnexion")).toUInt(&ok);
-                    if(!ok)
-                        connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-                }
-                else
-                    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-                settings.endGroup();
-                if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
-                    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-                returnedVar.push_back(connexionInfo);
+                    connexionInfo.port=static_cast<uint16_t>(temp_port);
             }
+            if(server->Attribute("ws")!=NULL)
+                connexionInfo.ws=server->Attribute("ws");
+            const tinyxml2::XMLElement *lang;
+            const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+            bool found=false;
+            if(!language.empty() && language!="en")
+            {
+                lang = server->FirstChildElement("lang");
+                while(lang!=NULL)
+                {
+                    if(lang->Attribute("lang") && lang->Attribute("lang")==language)
+                    {
+                        const tinyxml2::XMLElement *name = lang->FirstChildElement("name");
+                        if(name!=NULL && name->GetText()!=NULL)
+                            connexionInfo.name=name->GetText();
+                        const tinyxml2::XMLElement *register_page = lang->FirstChildElement("register_page");
+                        if(register_page!=NULL && register_page->GetText()!=NULL)
+                            connexionInfo.register_page=register_page->GetText();
+                        const tinyxml2::XMLElement *lost_passwd_page = lang->FirstChildElement("lost_passwd_page");
+                        if(lost_passwd_page!=NULL && lost_passwd_page->GetText()!=NULL)
+                            connexionInfo.lost_passwd_page=lost_passwd_page->GetText();
+                        const tinyxml2::XMLElement *site_page = lang->FirstChildElement("site_page");
+                        if(site_page!=NULL && site_page->GetText()!=NULL)
+                            connexionInfo.site_page=site_page->GetText();
+                        found=true;
+                        break;
+                    }
+                    lang = lang->NextSiblingElement("lang");
+                }
+            }
+            if(!found)
+            {
+                lang = server->FirstChildElement("lang");
+                while(lang!=NULL)
+                {
+                    if(lang->Attribute("lang")==NULL || strcmp(lang->Attribute("lang"),"en")==0)
+                    {
+                        const tinyxml2::XMLElement *name = lang->FirstChildElement("name");
+                        if(name!=NULL && name->GetText()!=NULL)
+                            connexionInfo.name=name->GetText();
+                        const tinyxml2::XMLElement *register_page = lang->FirstChildElement("register_page");
+                        if(register_page!=NULL && register_page->GetText()!=NULL)
+                            connexionInfo.register_page=register_page->GetText();
+                        const tinyxml2::XMLElement *lost_passwd_page = lang->FirstChildElement("lost_passwd_page");
+                        if(lost_passwd_page!=NULL && lost_passwd_page->GetText()!=NULL)
+                            connexionInfo.lost_passwd_page=lost_passwd_page->GetText();
+                        const tinyxml2::XMLElement *site_page = lang->FirstChildElement("site_page");
+                        if(site_page!=NULL && site_page->GetText()!=NULL)
+                            connexionInfo.site_page=site_page->GetText();
+                        break;
+                    }
+                    lang = lang->NextSiblingElement("lang");
+                }
+            }
+            settings.beginGroup(QStringLiteral("Xml-%1").arg(server->Attribute("unique_code")));
+            if(settings.contains(QStringLiteral("connexionCounter")))
+            {
+                connexionInfo.connexionCounter=settings.value("connexionCounter").toUInt(&ok);
+                if(!ok)
+                    connexionInfo.connexionCounter=0;
+            }
+            else
+                connexionInfo.connexionCounter=0;
+
+            //proxy
+            if(settings.contains(QStringLiteral("proxyPort")))
+            {
+                connexionInfo.proxyPort=static_cast<uint16_t>(settings.value("proxyPort").toUInt(&ok));
+                if(!ok)
+                    connexionInfo.proxyPort=9050;
+            }
+            else
+                connexionInfo.proxyPort=9050;
+            if(settings.contains(QStringLiteral("proxyHost")))
+                connexionInfo.proxyHost=settings.value(QStringLiteral("proxyHost")).toString();
+            else
+                connexionInfo.proxyHost=QString();
+
+            if(settings.contains(QStringLiteral("lastConnexion")))
+            {
+                connexionInfo.lastConnexion=settings.value(QStringLiteral("lastConnexion")).toUInt(&ok);
+                if(!ok)
+                    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
+            }
+            else
+                connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
+            settings.endGroup();
+            if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
+                connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
+            returnedVar.push_back(connexionInfo);
         }
         else
             qDebug() << QStringLiteral("Unable to open the file: %1, missing host or port: child->Name(): %2")
@@ -1129,18 +1129,26 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         socket->abort();
         delete socket;
         socket=NULL;
-        #ifndef __EMSCRIPTEN__
+        #ifndef NOTCPSOCKET
         realSslSocket=nullptr;
-        #else
+        #endif
+        #ifndef NOWEBSOCKET
         realWebSocket=nullptr;
         #endif
     }
-    #ifndef __EMSCRIPTEN__
-    realSslSocket=new QSslSocket();
-    socket=new CatchChallenger::ConnectedSocket(realSslSocket);
-    #else
-    realWebSocket=new QWebSocket();
-    socket=new CatchChallenger::ConnectedSocket(realWebSocket);
+    #ifndef NOTCPSOCKET
+    if(!selectedServerConnexion->host.isEmpty())
+    {
+        realSslSocket=new QSslSocket();
+        socket=new CatchChallenger::ConnectedSocket(realSslSocket);
+    }
+    #endif
+    #ifndef NOWEBSOCKET
+    else if(!selectedServerConnexion->ws.isEmpty())
+    {
+        realWebSocket=new QWebSocket();
+        socket=new CatchChallenger::ConnectedSocket(realWebSocket);
+    }
     #endif
     CatchChallenger::Api_client_real *client=new CatchChallenger::Api_client_real(socket);
     this->client=client;
@@ -1155,41 +1163,58 @@ void MainWindow::on_pushButtonTryLogin_clicked()
 
     if(!selectedServerConnexion->proxyHost.isEmpty())
     {
-        #ifndef __EMSCRIPTEN__
-        QNetworkProxy proxy=realSslSocket->proxy();
-        #else
-        QNetworkProxy proxy=realWebSocket->proxy();
+        QNetworkProxy proxy;
+        #ifndef NOTCPSOCKET
+        if(realSslSocket!=nullptr)
+            proxy=realSslSocket->proxy();
+        #endif
+        #ifndef NOWEBSOCKET
+        if(realWebSocket!=nullptr)
+            proxy=realWebSocket->proxy();
         #endif
         proxy.setType(QNetworkProxy::Socks5Proxy);
         proxy.setHostName(selectedServerConnexion->proxyHost);
         proxy.setPort(selectedServerConnexion->proxyPort);
-        #ifndef __EMSCRIPTEN__
-        realSslSocket->setProxy(proxy);
-        #else
-        realWebSocket->setProxy(proxy);
+        #ifndef NOTCPSOCKET
+        if(realSslSocket!=nullptr)
+            realSslSocket->setProxy(proxy);
+        #endif
+        #ifndef NOWEBSOCKET
+        if(realWebSocket!=nullptr)
+            realWebSocket->setProxy(proxy);
         #endif
     }
     ui->stackedWidget->setCurrentWidget(baseWindow);
     baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
     baseWindow->stateChanged(QAbstractSocket::ConnectingState);
-    #ifndef __EMSCRIPTEN__
-    if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection))
-        abort();
-    if(!connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection))
-        abort();
-    if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&MainWindow::error,Qt::QueuedConnection))
-        abort();
+    #ifndef NOTCPSOCKET
+    if(realSslSocket!=nullptr)
+    {
+        if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection))
+            abort();
+        if(!connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection))
+            abort();
+        if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&MainWindow::error,Qt::QueuedConnection))
+            abort();
 
-    lastServer=selectedServerConnexion->host+":"+QString::number(selectedServerConnexion->port);
-    socket->connectToHost(selectedServerConnexion->host,selectedServerConnexion->port);
-    #else
-    if(!connect(realWebSocket,&QWebSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection))
-        abort();
-    if(!connect(realWebSocket,static_cast<void(QWebSocket::*)(QAbstractSocket::SocketError)>(&QWebSocket::error),           this,&MainWindow::error,Qt::QueuedConnection))
-        abort();
+        lastServer=selectedServerConnexion->host+":"+QString::number(selectedServerConnexion->port);
+        socket->connectToHost(selectedServerConnexion->host,selectedServerConnexion->port);
+    }
+    #endif
+    #ifndef NOWEBSOCKET
+    if(realWebSocket!=nullptr)
+    {
+        if(!connect(realWebSocket,&QWebSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection))
+            abort();
+        if(!connect(realWebSocket,static_cast<void(QWebSocket::*)(QAbstractSocket::SocketError)>(&QWebSocket::error),           this,&MainWindow::error,Qt::QueuedConnection))
+            abort();
 
-    lastServer=selectedServerConnexion->host+":"+QString::number(selectedServerConnexion->port);
-    socket->connectToHost(selectedServerConnexion->host,selectedServerConnexion->port);
+        lastServer=selectedServerConnexion->ws;
+        QUrl url{QString(selectedServerConnexion->ws)};
+        QNetworkRequest request{url};
+        request.setRawHeader("Sec-WebSocket-Protocol", "binary");
+        realWebSocket->open(request);
+    }
     #endif
     selectedServerConnexion->connexionCounter++;
     selectedServerConnexion->lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
@@ -1213,10 +1238,14 @@ void MainWindow::connectTheExternalSocket()
     //continue the normal procedure
     if(!serverConnexion.value(selectedServer)->proxyHost.isEmpty())
     {
-        #ifndef __EMSCRIPTEN__
-        QNetworkProxy proxy=realSslSocket->proxy();
-        #else
-        QNetworkProxy proxy=realWebSocket->proxy();
+        QNetworkProxy proxy;
+        #ifndef NOTCPSOCKET
+        if(realSslSocket!=nullptr)
+            proxy=realSslSocket->proxy();
+        #endif
+        #ifndef NOWEBSOCKET
+        if(realWebSocket!=nullptr)
+            proxy=realWebSocket->proxy();
         #endif
         proxy.setType(QNetworkProxy::Socks5Proxy);
         proxy.setHostName(serverConnexion.value(selectedServer)->proxyHost);
@@ -1257,9 +1286,12 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
     std::cout << "MainWindow::stateChanged(" << std::to_string((int)socketState) << ")" << std::endl;
     if(socketState==QAbstractSocket::ConnectedState)
     {
-        #ifndef __EMSCRIPTEN__
-        if(realSslSocket==NULL)//If comment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
-        #else
+        //If comment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
+        #if !defined(NOTCPSOCKET) && !defined(NOWEBSOCKET)
+        if(realSslSocket==NULL && realWebSocket==NULL)
+        #elif !defined(NOTCPSOCKET)
+        if(realSslSocket==NULL)
+        #elif !defined(NOWEBSOCKET)
         if(realWebSocket==NULL)
         #endif
             client->sendProtocol();
@@ -1297,13 +1329,14 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             internalServer->stop();
         #endif
         /* to fix bug: firstly try connect but connexion refused on localhost, secondly try local game */
-        #ifndef __EMSCRIPTEN__
+        #ifndef NOTCPSOCKET
         if(realSslSocket!=NULL)
         {
             realSslSocket->deleteLater();
             realSslSocket=NULL;
         }
-        #else
+        #endif
+        #ifndef NOWEBSOCKET
         if(realWebSocket!=NULL)
         {
             realWebSocket->deleteLater();
@@ -1340,10 +1373,11 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
     switch(socketError)
     {
     case QAbstractSocket::RemoteHostClosedError:
-        #ifndef __EMSCRIPTEN__
+        #ifndef NOTCPSOCKET
         if(realSslSocket!=NULL)
             return;
-        #else
+        #endif
+        #ifndef NOWEBSOCKET
         if(realWebSocket!=NULL)
             return;
         #endif

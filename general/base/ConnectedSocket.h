@@ -4,12 +4,13 @@
 #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
 
 #include <QIODevice>
-#ifndef __EMSCRIPTEN__
+#ifndef NOTCPSOCKET
     #include <QSslSocket>
     #include <QAbstractSocket>
     #include <QHostAddress>
     #include "QFakeSocket.h"
-#else
+#endif
+#ifndef NOWEBSOCKET
     #include <QtWebSockets/QWebSocket>
 #endif
 #include <QObject>
@@ -21,11 +22,12 @@ class ConnectedSocket : public QIODevice
 {
     Q_OBJECT
 public:
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOTCPSOCKET
     explicit ConnectedSocket(QFakeSocket *socket);
     explicit ConnectedSocket(QSslSocket *socket);
     explicit ConnectedSocket(QTcpSocket *socket);
-    #else
+    #endif
+    #ifndef NOWEBSOCKET
     explicit ConnectedSocket(QWebSocket *socket);
     #endif
     ~ConnectedSocket();
@@ -51,11 +53,12 @@ public:
     qint64	readData(char * data, qint64 maxSize);
     qint64	writeData(const char * data, qint64 maxSize);
     void	close();
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOTCPSOCKET
     QFakeSocket *fakeSocket;
     QSslSocket *sslSocket;
     QTcpSocket *tcpSocket;
-    #else
+    #endif
+    #ifndef NOWEBSOCKET
     QWebSocket *webSocket;
     #endif
 protected:
@@ -72,7 +75,7 @@ protected:
     //workaround because QSslSocket don't return correct value for i2p via proxy
     QString hostName;
     uint16_t port;
-    #ifdef __EMSCRIPTEN__
+    #ifndef NOWEBSOCKET
     void binaryMessageReceived(const QByteArray &message);
     #endif
 signals:
