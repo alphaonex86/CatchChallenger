@@ -1,5 +1,7 @@
 DEFINES += TILED_ZLIB
+!wasm: {
 LIBS += -lz
+}
 
 HEADERS += $$PWD/tiled_compression.h \
 $$PWD/tiled_gidmapper.h \

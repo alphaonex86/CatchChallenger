@@ -2,6 +2,8 @@
 #include "mainwindow.h"
 #include "../base/LanguagesSelect.h"
 #include "../base/LocalListener.h"
+#include "../../general/base/FacilityLibGeneral.h"
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
