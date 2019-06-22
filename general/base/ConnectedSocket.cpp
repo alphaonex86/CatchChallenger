@@ -122,12 +122,13 @@ void ConnectedSocket::binaryMessageReceived(const QByteArray &message)
     emit readyRead();
 }
 
-void ConnectedSocket::saveSslErrors(const QList<QSslError> &errors)
+/*void ConnectedSocket::saveSslErrors(const QList<QSslError> &errors)
 {
     m_sslErrors=errors;
-}
+}*/
 #endif
 
+#ifndef __EMSCRIPTEN__
 QList<QSslError> ConnectedSocket::sslErrors() const
 {
     #ifndef __EMSCRIPTEN__
@@ -138,6 +139,7 @@ QList<QSslError> ConnectedSocket::sslErrors() const
     #endif
     return QList<QSslError>();
 }
+#endif
 
 void ConnectedSocket::purgeBuffer()
 {

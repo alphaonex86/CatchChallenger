@@ -1,3 +1,4 @@
+#ifndef __EMSCRIPTEN__
 #include "InternetUpdater.h"
 #include "PlatformMacro.h"
 #include "../../general/base/GeneralVariable.h"
@@ -409,3 +410,5 @@ std::string InternetUpdater::GetOSDisplayString()
     return "Mac OS X";
 }
 #endif
+
+#endif // #ifndef __EMSCRIPTEN__

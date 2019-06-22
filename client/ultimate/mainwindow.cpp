@@ -3,6 +3,8 @@
 #include "ui_mainwindow.h"
 #include "../base/InternetUpdater.h"
 #include "../base/BlacklistPassword.h"
+#include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/CommonSettingsServer.h"
 #include "../base/Ultimate.h"
 #include <QStandardPaths>
 #include <QNetworkProxy>
@@ -65,8 +67,14 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<QList<FeedNews::FeedEntry> >("QList<FeedNews::FeedEntry>");
 
     socket=NULL;
+    #ifndef __EMSCRIPTEN__
     realSslSocket=NULL;
+    #else
+    realWebSocket=NULL;
+    #endif
+    #ifndef __EMSCRIPTEN__
     internalServer=NULL;
+    #endif
     client=NULL;
     reply=NULL;
     spacer=new QSpacerItem(0,0,QSizePolicy::Expanding,QSizePolicy::Expanding);
@@ -80,12 +88,15 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     else
         ui->news->setVisible(false);
+    #ifndef __EMSCRIPTEN__
     InternetUpdater::internetUpdater=new InternetUpdater();
     if(!connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate))
         abort();
+    #endif
     FeedNews::feedNews=new FeedNews();
     if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList))
         qDebug() << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed";
+    #ifndef __EMSCRIPTEN__
     solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+
                               "/datapack/internal/",
                               QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+
@@ -97,6 +108,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->stackedWidget->addWidget(solowindow);
     if(ui->stackedWidget->indexOf(solowindow)<0)
         ui->solo->hide();
+    #endif
     #ifdef __EMSCRIPTEN__
     ui->solo->hide();
     #else
@@ -108,8 +120,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->server_refresh->setEnabled(true);
     temp_xmlConnexionInfoList=loadXmlConnexionInfoList();
     temp_customConnexionInfoList=loadConfigConnexionInfoList();
-    mergedConnexionInfoList=temp_customConnexionInfoList+temp_xmlConnexionInfoList;
-    qSort(mergedConnexionInfoList);
+    mergedConnexionInfoList=temp_customConnexionInfoList;
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
     selectedServer=NULL;
     displayServerList();
     baseWindow=new CatchChallenger::BaseWindow();
@@ -252,8 +265,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
     #endif
     event->ignore();
     hide();
-    if(socket!=NULL || internalServer!=NULL)
+    if(socket!=NULL
+    #ifndef __EMSCRIPTEN__
+            || internalServer!=NULL
+    #endif
+            )
     {
+        #ifndef __EMSCRIPTEN__
         if(internalServer!=NULL)
         {
             if(internalServer->isListen())
@@ -263,6 +281,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         }
         else
             QCoreApplication::quit();
+        #endif
         if(socket!=NULL)
         {
             socket->disconnectFromHost();
@@ -274,9 +293,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
         QCoreApplication::quit();
 }
 
-QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
+std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
 {
-    QList<ConnexionInfo> returnedVar;
+    std::vector<ConnexionInfo> returnedVar;
     QStringList connexionList;
     QStringList nameList;
     QStringList connexionCounterList;
@@ -369,7 +388,7 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
                 }
                 else
                     qDebug() << "dropped connexion, proxy seam wrong: " << proxy;
-                returnedVar << connexionInfo;
+                returnedVar.push_back(connexionInfo);
             }
             else
                 qDebug() << "dropped connexion, port wrong: " << port_string;
@@ -381,7 +400,7 @@ QList<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
     return returnedVar;
 }
 
-QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList()
+std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList()
 {
     if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).isDir())
     {
@@ -394,9 +413,9 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList()
         return loadXmlConnexionInfoList(QStringLiteral(":/other/default_server_list.xml"));
 }
 
-QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlContent)
+std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlContent)
 {
-    QList<ConnexionInfo> returnedVar;
+    std::vector<ConnexionInfo> returnedVar;
     tinyxml2::XMLDocument domDocument;
     const auto loadOkay = domDocument.Parse(xmlContent.data(),xmlContent.size());
     if(loadOkay!=0)
@@ -536,7 +555,7 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
                 settings.endGroup();
                 if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
                     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-                returnedVar << connexionInfo;
+                returnedVar.push_back(connexionInfo);
             }
         }
         else
@@ -547,9 +566,9 @@ QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlC
     return returnedVar;
 }
 
-QList<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QString &file)
+std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QString &file)
 {
-    QList<ConnexionInfo> returnedVar;
+    std::vector<ConnexionInfo> returnedVar;
     //open and quick check the file
     QFile itemsFile(file);
     QByteArray xmlContent;
@@ -601,15 +620,15 @@ void MainWindow::displayServerList()
     }
     const ListEntryEnvolued * tempSelectedServer=selectedServer;
     selectedServer=NULL;
-    int index=0;
-    while(server.size()>0)
+    unsigned int index=0;
+    while(!server.empty())
     {
         delete server.at(0);
-        server.removeAt(0);
+        server.erase(server.begin());
         index++;
     }
     serverConnexion.clear();
-    if(mergedConnexionInfoList.isEmpty())
+    if(mergedConnexionInfoList.empty())
         ui->serverEmpty->setText(QStringLiteral("<html><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>").arg(tr("Empty")));
     index=0;
     while(index<mergedConnexionInfoList.size())
@@ -682,7 +701,7 @@ void MainWindow::displayServerList()
 
         ui->scrollAreaWidgetContentsServer->layout()->addWidget(newEntry);
 
-        server << newEntry;
+        server.push_back(newEntry);
         serverConnexion[newEntry]=&mergedConnexionInfoList[index];
         if(connexionInfo.unique_code.isEmpty())
             customServerConnexion << newEntry;
@@ -715,7 +734,7 @@ void MainWindow::serverListEntryEnvoluedClicked()
 
 void MainWindow::serverListEntryEnvoluedUpdate()
 {
-    int index=0;
+    unsigned int index=0;
     while(index<server.size())
     {
         if(server.at(index)==selectedServer)
@@ -753,7 +772,7 @@ void MainWindow::on_server_add_clicked()
     connexionInfo.port=addServer.port();
     connexionInfo.proxyHost=addServer.proxyServer();
     connexionInfo.proxyPort=addServer.proxyPort();
-    mergedConnexionInfoList << connexionInfo;
+    mergedConnexionInfoList.push_back(connexionInfo);
     saveConnexionInfoList();
     displayServerList();
 }
@@ -835,13 +854,13 @@ void MainWindow::on_server_remove_clicked()
         return;
     if(!customServerConnexion.contains(selectedServer))
         return;
-    int index=0;
+    unsigned int index=0;
     while(index<mergedConnexionInfoList.size())
     {
         if(serverConnexion[selectedServer]==&mergedConnexionInfoList.at(index))
         {
             customServerName.remove(serverConnexion[selectedServer]->name);
-            mergedConnexionInfoList.removeAt(index);
+            mergedConnexionInfoList.erase(mergedConnexionInfoList.begin()+index);
             if(customServerConnexion.contains(selectedServer))
                 saveConnexionInfoList();
             else
@@ -870,8 +889,7 @@ void MainWindow::saveConnexionInfoList()
     QStringList connexionCounterList;
     QStringList lastConnexionList;
     QStringList proxyList;
-    int index;
-    index=0;
+    unsigned int index=0;
     while(index<mergedConnexionInfoList.size())
     {
         const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(index);
@@ -939,6 +957,7 @@ void MainWindow::resetAll()
     switch(serverMode)
     {
         case ServerMode_Internal:
+        #ifndef __EMSCRIPTEN__
             ui->stackedWidget->setCurrentWidget(solowindow);
             /* do just at game starting
              *if(internalServer!=NULL)
@@ -948,6 +967,7 @@ void MainWindow::resetAll()
                 internalServer=NULL;
             }*/
             saveTime();
+        #endif
         break;
         case ServerMode_Remote:
             ui->stackedWidget->setCurrentWidget(ui->poolServersList);
@@ -978,6 +998,7 @@ void MainWindow::resetAll()
     //stateChanged(QAbstractSocket::UnconnectedState);//don't call here, else infinity rescursive call
 }
 
+#ifndef __EMSCRIPTEN__
 void MainWindow::sslErrors(const QList<QSslError> &errors)
 {
     haveShowDisconnectionReason=true;
@@ -992,6 +1013,7 @@ void MainWindow::sslErrors(const QList<QSslError> &errors)
     /*QMessageBox::warning(this,tr("Ssl error"),sslErrors.join("\n"));
     realSocket->disconnectFromHost();*/
 }
+#endif
 
 void MainWindow::disconnected(std::string reason)
 {
@@ -1107,10 +1129,19 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         socket->abort();
         delete socket;
         socket=NULL;
-        realSslSocket=NULL;
+        #ifndef __EMSCRIPTEN__
+        realSslSocket=nullptr;
+        #else
+        realWebSocket=nullptr;
+        #endif
     }
+    #ifndef __EMSCRIPTEN__
     realSslSocket=new QSslSocket();
     socket=new CatchChallenger::ConnectedSocket(realSslSocket);
+    #else
+    realWebSocket=new QWebSocket();
+    socket=new CatchChallenger::ConnectedSocket(realWebSocket);
+    #endif
     CatchChallenger::Api_client_real *client=new CatchChallenger::Api_client_real(socket);
     this->client=client;
 
@@ -1124,23 +1155,42 @@ void MainWindow::on_pushButtonTryLogin_clicked()
 
     if(!selectedServerConnexion->proxyHost.isEmpty())
     {
+        #ifndef __EMSCRIPTEN__
         QNetworkProxy proxy=realSslSocket->proxy();
+        #else
+        QNetworkProxy proxy=realWebSocket->proxy();
+        #endif
         proxy.setType(QNetworkProxy::Socks5Proxy);
         proxy.setHostName(selectedServerConnexion->proxyHost);
         proxy.setPort(selectedServerConnexion->proxyPort);
+        #ifndef __EMSCRIPTEN__
         realSslSocket->setProxy(proxy);
+        #else
+        realWebSocket->setProxy(proxy);
+        #endif
     }
     ui->stackedWidget->setCurrentWidget(baseWindow);
     baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
     baseWindow->stateChanged(QAbstractSocket::ConnectingState);
+    #ifndef __EMSCRIPTEN__
     if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&MainWindow::sslErrors,Qt::QueuedConnection))
         abort();
     if(!connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection))
         abort();
     if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&MainWindow::error,Qt::QueuedConnection))
         abort();
+
     lastServer=selectedServerConnexion->host+":"+QString::number(selectedServerConnexion->port);
-    realSslSocket->connectToHost(selectedServerConnexion->host,selectedServerConnexion->port);
+    socket->connectToHost(selectedServerConnexion->host,selectedServerConnexion->port);
+    #else
+    if(!connect(realWebSocket,&QWebSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection))
+        abort();
+    if(!connect(realWebSocket,static_cast<void(QWebSocket::*)(QAbstractSocket::SocketError)>(&QWebSocket::error),           this,&MainWindow::error,Qt::QueuedConnection))
+        abort();
+
+    lastServer=selectedServerConnexion->host+":"+QString::number(selectedServerConnexion->port);
+    socket->connectToHost(selectedServerConnexion->host,selectedServerConnexion->port);
+    #endif
     selectedServerConnexion->connexionCounter++;
     selectedServerConnexion->lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
     saveConnexionInfoList();
@@ -1163,7 +1213,11 @@ void MainWindow::connectTheExternalSocket()
     //continue the normal procedure
     if(!serverConnexion.value(selectedServer)->proxyHost.isEmpty())
     {
+        #ifndef __EMSCRIPTEN__
         QNetworkProxy proxy=realSslSocket->proxy();
+        #else
+        QNetworkProxy proxy=realWebSocket->proxy();
+        #endif
         proxy.setType(QNetworkProxy::Socks5Proxy);
         proxy.setHostName(serverConnexion.value(selectedServer)->proxyHost);
         proxy.setPort(serverConnexion.value(selectedServer)->proxyPort);
@@ -1203,7 +1257,11 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
     std::cout << "MainWindow::stateChanged(" << std::to_string((int)socketState) << ")" << std::endl;
     if(socketState==QAbstractSocket::ConnectedState)
     {
+        #ifndef __EMSCRIPTEN__
         if(realSslSocket==NULL)//If comment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
+        #else
+        if(realWebSocket==NULL)
+        #endif
             client->sendProtocol();
         else
             qDebug() << "Tcp socket found, skip sendProtocol()";
@@ -1223,21 +1281,35 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             }
         }
         std::cout << "MainWindow::stateChanged(" << std::to_string((int)socketState) << ") mostly quit" << std::endl;
-        if(!isVisible() && internalServer==NULL)
+        if(!isVisible()
+                #ifndef __EMSCRIPTEN__
+                && internalServer==NULL
+                #endif
+                )
         {
             QCoreApplication::quit();
             return;
         }
         if(client!=NULL && client->protocolWrong())
             QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));
+        #ifndef __EMSCRIPTEN__
         if(internalServer!=NULL)
             internalServer->stop();
+        #endif
         /* to fix bug: firstly try connect but connexion refused on localhost, secondly try local game */
+        #ifndef __EMSCRIPTEN__
         if(realSslSocket!=NULL)
         {
             realSslSocket->deleteLater();
             realSslSocket=NULL;
         }
+        #else
+        if(realWebSocket!=NULL)
+        {
+            realWebSocket->deleteLater();
+            realWebSocket=NULL;
+        }
+        #endif
         if(socket!=NULL)
         {
             socket->deleteLater();
@@ -1268,8 +1340,13 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
     switch(socketError)
     {
     case QAbstractSocket::RemoteHostClosedError:
+        #ifndef __EMSCRIPTEN__
         if(realSslSocket!=NULL)
             return;
+        #else
+        if(realWebSocket!=NULL)
+            return;
+        #endif
         if(haveShowDisconnectionReason)
         {
             haveShowDisconnectionReason=false;
@@ -1348,7 +1425,7 @@ void MainWindow::ListEntryEnvoluedClicked()
 
 void MainWindow::ListEntryEnvoluedUpdate()
 {
-    int index=0;
+    unsigned int index=0;
     while(index<datapack.size())
     {
         if(datapack.at(index)==selectedDatapack)
@@ -1462,7 +1539,7 @@ void MainWindow::on_manageDatapack_clicked()
     while(datapack.size()>0)
     {
         delete datapack.at(0);
-        datapack.removeAt(0);
+        datapack.erase(datapack.begin());
         index++;
     }
     datapackPathList.clear();
@@ -1503,7 +1580,7 @@ void MainWindow::on_manageDatapack_clicked()
                           );
         ui->scrollAreaWidgetContents->layout()->addWidget(newEntry);
 
-        datapack << newEntry;
+        datapack.push_back(newEntry);
         datapackPathList[newEntry]=fileInfo.absoluteFilePath();
         index++;
     }
@@ -1642,8 +1719,9 @@ void MainWindow::httpFinished()
         cache.close();
     }
     temp_xmlConnexionInfoList=loadXmlConnexionInfoList(content);
-    mergedConnexionInfoList=temp_customConnexionInfoList+temp_xmlConnexionInfoList;
-    qSort(mergedConnexionInfoList);
+    mergedConnexionInfoList=temp_customConnexionInfoList;
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());//qSort(mergedConnexionInfoList);
     displayServerList();
     reply->deleteLater();
     reply=NULL;
@@ -1659,6 +1737,7 @@ void MainWindow::on_server_back_clicked()
     ui->stackedWidget->setCurrentWidget(ui->mode);
 }
 
+#ifndef __EMSCRIPTEN__
 void MainWindow::gameSolo_play(const std::string &savegamesPath)
 {
     resetAll();
@@ -1712,77 +1791,18 @@ void MainWindow::gameSolo_play(const std::string &savegamesPath)
     baseWindow->serverIsLoading();
 }
 
-void MainWindow::serverError(const QString &error)
+void MainWindow::gameSolo_back()
 {
-    QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(error));
-    resetAll();
+    ui->stackedWidget->setCurrentWidget(ui->mode);
 }
 
-void MainWindow::serverErrorStd(const std::string &error)
+void MainWindow::on_solo_clicked()
 {
-    QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(QString::fromStdString(error)));
-    resetAll();
-}
-
-void MainWindow::is_started(bool started)
-{
-    if(!started)
-    {
-        if(internalServer!=NULL)
-        {
-            delete internalServer;
-            internalServer=NULL;
-        }
-        if(!isVisible())
-            QCoreApplication::quit();
-        else
-            resetAll();
-    }
+    int index=ui->stackedWidget->indexOf(solowindow);
+    if(index>=0)
+        ui->stackedWidget->setCurrentWidget(solowindow);
     else
-    {
-        baseWindow->serverIsReady();
-        lastServer="localhost:9999";
-        socket->connectToHost(QStringLiteral("localhost"),9999);
-    }
-}
-
-void MainWindow::saveTime()
-{
-    if(serverMode!=ServerMode_Internal)
-        return;
-    if(internalServer==NULL)
-        return;
-    //save the time
-    if(haveLaunchedGame)
-    {
-        bool settingOk=false;
-        QSettings metaData(launchedGamePath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
-        if(metaData.isWritable())
-        {
-            if(metaData.status()==QSettings::NoError)
-            {
-                QString locaction=QString::fromStdString(baseWindow->lastLocation());
-                const QString &mapPath=QString::fromStdString(internalServer->getSettings().datapack_basePath)+DATAPACK_BASE_PATH_MAPMAIN+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/";//internalServer->getSettings().mainDatapackCode
-                if(locaction.startsWith(mapPath))
-                    locaction.remove(0,mapPath.size());
-                if(!locaction.isEmpty())
-                    metaData.setValue(QStringLiteral("location"),locaction);
-                uint64_t current_date_time=QDateTime::currentDateTimeUtc().toTime_t();
-                if(current_date_time>timeLaunched)
-                    metaData.setValue("time_played",metaData.value("time_played").toUInt()+(uint32_t)(current_date_time-timeLaunched));
-                settingOk=true;
-            }
-            else
-                qDebug() << "Settings error: " << metaData.status();
-        }
-        solowindow->updateSavegameList();
-        if(!settingOk)
-        {
-            QMessageBox::critical(NULL,tr("Error"),tr("Unable to save internal value at game stopping"));
-            return;
-        }
-        haveLaunchedGame=false;
-    }
+        QMessageBox::critical(this,"Bug prevent","Sorry but some Qt version is buggy, it's why this section is closed.");
 }
 
 bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath)
@@ -1893,18 +1913,80 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     return true;
 }
 
-void MainWindow::gameSolo_back()
+void MainWindow::saveTime()
 {
-    ui->stackedWidget->setCurrentWidget(ui->mode);
+    if(serverMode!=ServerMode_Internal)
+        return;
+    if(internalServer==NULL)
+        return;
+    //save the time
+    if(haveLaunchedGame)
+    {
+        bool settingOk=false;
+        QSettings metaData(launchedGamePath+QStringLiteral("metadata.conf"),QSettings::IniFormat);
+        if(metaData.isWritable())
+        {
+            if(metaData.status()==QSettings::NoError)
+            {
+                QString locaction=QString::fromStdString(baseWindow->lastLocation());
+                const QString &mapPath=QString::fromStdString(internalServer->getSettings().datapack_basePath)+DATAPACK_BASE_PATH_MAPMAIN+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/";//internalServer->getSettings().mainDatapackCode
+                if(locaction.startsWith(mapPath))
+                    locaction.remove(0,mapPath.size());
+                if(!locaction.isEmpty())
+                    metaData.setValue(QStringLiteral("location"),locaction);
+                uint64_t current_date_time=QDateTime::currentDateTimeUtc().toTime_t();
+                if(current_date_time>timeLaunched)
+                    metaData.setValue("time_played",metaData.value("time_played").toUInt()+(uint32_t)(current_date_time-timeLaunched));
+                settingOk=true;
+            }
+            else
+                qDebug() << "Settings error: " << metaData.status();
+        }
+        solowindow->updateSavegameList();
+        if(!settingOk)
+        {
+            QMessageBox::critical(NULL,tr("Error"),tr("Unable to save internal value at game stopping"));
+            return;
+        }
+        haveLaunchedGame=false;
+    }
+}
+#endif
+
+void MainWindow::serverError(const QString &error)
+{
+    QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(error));
+    resetAll();
 }
 
-void MainWindow::on_solo_clicked()
+void MainWindow::serverErrorStd(const std::string &error)
 {
-    int index=ui->stackedWidget->indexOf(solowindow);
-    if(index>=0)
-        ui->stackedWidget->setCurrentWidget(solowindow);
+    QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(QString::fromStdString(error)));
+    resetAll();
+}
+
+void MainWindow::is_started(bool started)
+{
+    if(!started)
+    {
+        #ifndef __EMSCRIPTEN__
+        if(internalServer!=NULL)
+        {
+            delete internalServer;
+            internalServer=NULL;
+        }
+        #endif
+        if(!isVisible())
+            QCoreApplication::quit();
+        else
+            resetAll();
+    }
     else
-        QMessageBox::critical(this,"Bug prevent","Sorry but some Qt version is buggy, it's why this section is closed.");
+    {
+        baseWindow->serverIsReady();
+        lastServer="localhost:9999";
+        socket->connectToHost(QStringLiteral("localhost"),9999);
+    }
 }
 
 void MainWindow::on_languages_clicked()
@@ -1912,11 +1994,13 @@ void MainWindow::on_languages_clicked()
     LanguagesSelect::languagesSelect->exec();
 }
 
+#ifndef __EMSCRIPTEN__
 void MainWindow::newUpdate(const std::string &version)
 {
     ui->update->setText(QString::fromStdString(InternetUpdater::getText(version)));
     ui->update->setVisible(true);
 }
+#endif
 
 void MainWindow::feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList, std::string error=std::string())
 {
@@ -2027,7 +2111,7 @@ void MainWindow::on_server_edit_clicked()
         return;
     if(!customServerConnexion.contains(selectedServer))
         return;
-    int index=0;
+    unsigned int index=0;
     while(index<mergedConnexionInfoList.size())
     {
         ConnexionInfo * connexionInfo=serverConnexion.value(selectedServer);
