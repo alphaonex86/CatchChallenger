@@ -4,7 +4,11 @@
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QRegularExpression>
+#ifndef __EMSCRIPTEN__
 #include <QSslSocket>
+#else
+#include <QtWebSockets/QWebSocket>
+#endif
 #include <QSettings>
 #include <QTimer>
 #include <QNetworkAccessManager>
@@ -77,7 +81,9 @@ private slots:
     void disconnected(std::string reason);
     void protocol_is_good();
     void needQuit();
+    #ifndef __EMSCRIPTEN__
     void sslErrors(const QList<QSslError> &errors);
+    #endif
     void ListEntryEnvoluedClicked();
     void ListEntryEnvoluedDoubleClicked();
     void ListEntryEnvoluedUpdate();
@@ -95,26 +101,30 @@ private slots:
     void on_server_remove_clicked();
     void on_server_refresh_clicked();
     void on_login_cancel_clicked();
-    QList<ConnexionInfo> loadXmlConnexionInfoList();
-    QList<ConnexionInfo> loadXmlConnexionInfoList(const QByteArray &xmlContent);
-    QList<ConnexionInfo> loadXmlConnexionInfoList(const QString &file);
-    QList<ConnexionInfo> loadConfigConnexionInfoList();
+    std::vector<ConnexionInfo> loadXmlConnexionInfoList();
+    std::vector<ConnexionInfo> loadXmlConnexionInfoList(const QByteArray &xmlContent);
+    std::vector<ConnexionInfo> loadXmlConnexionInfoList(const QString &file);
+    std::vector<ConnexionInfo> loadConfigConnexionInfoList();
     void closeEvent(QCloseEvent *event);
     void downloadFile();
     void metaDataChanged();
     void httpFinished();
     void on_multiplayer_clicked();
     void on_server_back_clicked();
+    #ifndef __EMSCRIPTEN__
     void gameSolo_play(const std::string &savegamesPath);
     void gameSolo_back();
     void on_solo_clicked();
     bool sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath);
-    void is_started(bool started);
     void saveTime();
+    #endif
+    void is_started(bool started);
     void serverError(const QString &error);
     void serverErrorStd(const std::string &error);
     void on_languages_clicked();
+    #ifndef __EMSCRIPTEN__
     void newUpdate(const std::string &version);
+    #endif
     void feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList, std::string error);
     void on_lineEditLogin_textChanged(const QString &arg1);
     void logged();
@@ -132,7 +142,7 @@ private:
         ServerMode_None
     };
     ServerMode serverMode;
-    QList<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
+    std::vector<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QSpacerItem *spacer;
     QSpacerItem *spacerServer;
     Ui::MainWindow *ui;
@@ -148,8 +158,12 @@ private:
     bool haveShowDisconnectionReason;
     QStringList server_list;
     CatchChallenger::ConnectedSocket *socket;
+    #ifndef __EMSCRIPTEN__
     QSslSocket *realSslSocket;
-    QList<ListEntryEnvolued *> datapack,server;
+    #else
+    QWebSocket *realWebSocket;
+    #endif
+    std::vector<ListEntryEnvolued *> datapack,server;
     QHash<ListEntryEnvolued *,QString> datapackPathList;
     QHash<ListEntryEnvolued *,ConnexionInfo *> serverConnexion;
     QSet<ListEntryEnvolued *> customServerConnexion;
@@ -164,7 +178,9 @@ private:
     uint64_t timeLaunched;
     QString launchedGamePath;
     bool haveLaunchedGame;
+    #ifndef __EMSCRIPTEN__
     CatchChallenger::InternalServer * internalServer;
+    #endif
     QSet<QString> customServerName;
     QHash<QString,QString> serverLoginList;
     QHash<QString,QDateTime> lastServerConnect;
