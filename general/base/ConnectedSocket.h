@@ -3,7 +3,6 @@
 
 #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
 
-#include <QSslError>
 #include <QIODevice>
 #ifndef __EMSCRIPTEN__
     #include <QSslSocket>
@@ -62,11 +61,13 @@ public:
 protected:
     bool	isSequential() const;
     bool canReadLine() const;
+    #ifndef __EMSCRIPTEN__
     QList<QSslError> sslErrors() const;
+    #endif
     #ifdef __EMSCRIPTEN__
     QByteArray buffer;
-    QList<QSslError> m_sslErrors;
-    void saveSslErrors(const QList<QSslError> &errors);
+    //QList<QSslError> m_sslErrors;
+    //void saveSslErrors(const QList<QSslError> &errors);
     #endif
     //workaround because QSslSocket don't return correct value for i2p via proxy
     QString hostName;

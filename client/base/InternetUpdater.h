@@ -1,3 +1,4 @@
+#ifndef __EMSCRIPTEN__
 #ifndef INTERNETUPDATER_H
 #define INTERNETUPDATER_H
 
@@ -31,3 +32,4 @@ private slots:
 };
 
 #endif // INTERNETUPDATER_H
+#endif // #ifndef __EMSCRIPTEN__
