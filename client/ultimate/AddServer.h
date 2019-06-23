@@ -23,14 +23,17 @@ public:
     QString name() const;
     QString proxyServer() const;
     uint16_t proxyPort() const;
+    int type() const;
 
     void setServer(const QString &server);
     void setPort(const uint16_t &port);
     void setName(const QString &name);
     void setProxyServer(const QString &proxyServer);
     void setProxyPort(const uint16_t &proxyPort);
+    void setType(const int &type);
 private slots:
     void on_ok_clicked();
+    void on_type_currentIndexChanged(int index);
 private:
     Ui::AddServer *ui;
     bool ok;

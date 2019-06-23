@@ -9,11 +9,24 @@ AddOrEditServer::AddOrEditServer(QWidget *parent) :
 {
     ui->setupUi(this);
     ok=false;
+    #if defined(NOTCPSOCKET) || defined(NOWEBSOCKET)
+    ui->type->hide();
+    #endif
 }
 
 AddOrEditServer::~AddOrEditServer()
 {
     delete ui;
+}
+
+int AddOrEditServer::type() const
+{
+    return ui->type->currentIndex();
+}
+
+void AddOrEditServer::setType(const int &type)
+{
+    ui->type->setCurrentIndex(type);
 }
 
 void AddOrEditServer::setEdit(const bool &edit)
@@ -86,4 +99,20 @@ void AddOrEditServer::setProxyPort(const uint16_t &proxyPort)
 bool AddOrEditServer::isOk() const
 {
     return ok;
+}
+
+void AddOrEditServer::on_type_currentIndexChanged(int index)
+{
+    switch(index) {
+    case 0:
+        ui->port->show();
+        ui->server->setPlaceholderText("www.server.com");
+        break;
+    case 1:
+        ui->port->hide();
+        ui->server->setPlaceholderText("ws://www.server.com:9999/");
+        break;
+    default:
+        return;
+    }
 }
