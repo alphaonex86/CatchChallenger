@@ -1301,14 +1301,20 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         //If comment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
         #if !defined(NOTCPSOCKET) && !defined(NOWEBSOCKET)
         if(realSslSocket==NULL && realWebSocket==NULL)
-        #elif !defined(NOTCPSOCKET)
-        if(realSslSocket==NULL)
-        #elif !defined(NOWEBSOCKET)
-        if(realWebSocket==NULL)
-        #endif
             client->sendProtocol();
         else
             qDebug() << "Tcp socket found, skip sendProtocol()";
+        #elif !defined(NOTCPSOCKET)
+        if(realSslSocket==NULL)
+            client->sendProtocol();
+        else
+            qDebug() << "Tcp socket found, skip sendProtocol()";
+        #elif !defined(NOWEBSOCKET)
+        if(realWebSocket==NULL)
+            client->sendProtocol();
+        else
+            qDebug() << "Tcp socket found, skip sendProtocol()";
+        #endif
     }
     if(socketState==QAbstractSocket::UnconnectedState)
     {
