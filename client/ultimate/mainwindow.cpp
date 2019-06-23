@@ -67,9 +67,10 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<QList<FeedNews::FeedEntry> >("QList<FeedNews::FeedEntry>");
 
     socket=NULL;
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOTCPSOCKET
     realSslSocket=NULL;
-    #else
+    #endif
+    #ifndef NOWEBSOCKET
     realWebSocket=NULL;
     #endif
     #ifndef __EMSCRIPTEN__
@@ -766,10 +767,21 @@ void MainWindow::on_server_add_clicked()
     }
     ConnexionInfo connexionInfo;
     connexionInfo.connexionCounter=0;
-    connexionInfo.host=addServer.server();
     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
+
     connexionInfo.name=addServer.name();
-    connexionInfo.port=addServer.port();
+
+    if(addServer.type()==0)
+    {
+        connexionInfo.port=addServer.port();
+        connexionInfo.host=addServer.server();
+    }
+    else
+    {
+        connexionInfo.host=addServer.server();
+        connexionInfo.ws=addServer.server();
+    }
+
     connexionInfo.proxyHost=addServer.proxyServer();
     connexionInfo.proxyPort=addServer.proxyPort();
     mergedConnexionInfoList.push_back(connexionInfo);
@@ -2156,9 +2168,21 @@ void MainWindow::on_server_edit_clicked()
         if(connexionInfo==&mergedConnexionInfoList.at(index))
         {
             AddOrEditServer editServer(this);
-            editServer.setServer(connexionInfo->host);
-            editServer.setPort(connexionInfo->port);
             editServer.setName(connexionInfo->name);
+
+            if(connexionInfo->ws.isEmpty())
+            {
+                editServer.setType(0);
+                editServer.setServer(connexionInfo->host);
+                editServer.setPort(connexionInfo->port);
+            }
+            else
+            {
+                editServer.setType(1);
+                editServer.setServer(connexionInfo->ws);
+                editServer.setPort(connexionInfo->port);
+            }
+
             editServer.setProxyServer(connexionInfo->proxyHost);
             editServer.setProxyPort(connexionInfo->proxyPort);
             editServer.exec();
