@@ -20,6 +20,20 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
+      <widget class="QComboBox" name="type">
+       <item>
+        <property name="text">
+         <string notr="true">Tcp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">Ws</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Server:</string>
