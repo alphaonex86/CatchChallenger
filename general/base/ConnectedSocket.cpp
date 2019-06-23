@@ -136,7 +136,8 @@ QList<QSslError> ConnectedSocket::sslErrors() const
     #ifndef NOTCPSOCKET
     if(sslSocket!=nullptr)
         return sslSocket->sslErrors();
-    #else
+    #endif
+    #ifndef NOWEBSOCKET
     return m_sslErrors;
     #endif
     return QList<QSslError>();
@@ -531,7 +532,8 @@ QString ConnectedSocket::errorString() const
         return sslSocket->errorString();
     if(tcpSocket!=nullptr)
         return tcpSocket->errorString();
-    #else
+    #endif
+    #ifndef NOWEBSOCKET
     if(webSocket!=nullptr)
         webSocket->errorString();
     #endif
@@ -552,7 +554,8 @@ qint64 ConnectedSocket::readData(char * data, qint64 maxSize)
         return tcpSocket->read(data,maxSize);
     if(sslSocket!=nullptr)
         return sslSocket->read(data,maxSize);
-    #else
+    #endif
+    #ifndef NOWEBSOCKET
     if(webSocket!=nullptr)
     {
         QByteArray temp(buffer.mid(0,maxSize));
@@ -573,7 +576,8 @@ qint64 ConnectedSocket::writeData(const char * data, qint64 maxSize)
         return tcpSocket->write(data,maxSize);
     if(sslSocket!=nullptr)
         return sslSocket->write(data,maxSize);
-    #else
+    #endif
+    #ifndef NOWEBSOCKET
     if(webSocket!=nullptr)
         return webSocket->sendBinaryMessage(QByteArray(data,maxSize));
     #endif
