@@ -4,10 +4,10 @@
 #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
 
 #include <QIODevice>
+#include <QHostAddress>
 #ifndef NOTCPSOCKET
     #include <QSslSocket>
     #include <QAbstractSocket>
-    #include <QHostAddress>
     #include "QFakeSocket.h"
 #endif
 #ifndef NOWEBSOCKET
