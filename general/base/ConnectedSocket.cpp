@@ -30,6 +30,9 @@ ConnectedSocket::ConnectedSocket(QFakeSocket *socket) :
     if(!connect(socket,&QFakeSocket::readyRead,     this,&ConnectedSocket::readyRead,Qt::DirectConnection))
         abort();
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
+    #ifndef NOWEBSOCKET
+    webSocket=nullptr;
+    #endif
 }
 
 ConnectedSocket::ConnectedSocket(QSslSocket *socket) :
@@ -56,6 +59,9 @@ ConnectedSocket::ConnectedSocket(QSslSocket *socket) :
         abort();
     purgeBuffer();
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
+    #ifndef NOWEBSOCKET
+    webSocket=nullptr;
+    #endif
 }
 
 ConnectedSocket::ConnectedSocket(QTcpSocket *socket) :
@@ -77,6 +83,9 @@ ConnectedSocket::ConnectedSocket(QTcpSocket *socket) :
     if(!connect(socket,&QTcpSocket::stateChanged,   this,&ConnectedSocket::stateChanged,Qt::QueuedConnection))
         abort();
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
+    #ifndef NOWEBSOCKET
+    webSocket=nullptr;
+    #endif
 }
 #endif
 #ifndef NOWEBSOCKET
@@ -98,6 +107,11 @@ ConnectedSocket::ConnectedSocket(QWebSocket *socket) :
 /*    if(!connect(socket,&QWebSocket::sslErrors,      this,&ConnectedSocket::saveSslErrors,Qt::QueuedConnection))
         abort();*/
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
+    #ifndef NOTCPSOCKET
+    fakeSocket=nullptr;
+    sslSocket=nullptr;
+    tcpSocket=nullptr;
+    #endif
 }
 #endif
 
@@ -182,7 +196,7 @@ void ConnectedSocket::abort()
         tcpSocket->abort();
     #endif
     #ifndef NOWEBSOCKET
-    if(webSocket!=nullptrptr)
+    if(webSocket!=nullptr)
         webSocket->abort();
     #endif
 }
