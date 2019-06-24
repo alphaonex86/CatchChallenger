@@ -2223,19 +2223,27 @@ void Api_protocol::readForFirstHeader()
 {
     if(haveFirstHeader)
         return;
-    #ifndef NOTCPSOCKET
-    if(socket->sslSocket==NULL)
+    #if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
+    if(socket->sslSocket==NULL && socket->webSocket==NULL)
     {
         newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
         return;
     }
-    #endif
-    #ifndef NOWEBSOCKET
-    if(socket->webSocket==NULL)
-    {
-        newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
-        return;
-    }
+    #else
+        #ifndef NOTCPSOCKET
+        if(socket->sslSocket==NULL)
+        {
+            newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
+            return;
+        }
+        #endif
+        #ifndef NOWEBSOCKET
+        if(socket->webSocket==NULL)
+        {
+            newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
+            return;
+        }
+        #endif
     #endif
     if(stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2 && stageConnexion!=StageConnexion::Stage3)
     {
