@@ -14,6 +14,7 @@ QT += multimedia
 linux:LIBS += -logg -lopus
 macx:LIBS += -logg -lopus
 win32:LIBS += -logg -lopus
+wasm:LIBS += -Logg -Lopus
 SOURCES += \
     $$PWD/opusfile/info.c \
     $$PWD/opusfile/internal.c \
@@ -33,7 +34,7 @@ wasm: {
 }
 else
 {
-    DEFINES += NOWEBSOCKET
+#    DEFINES += NOWEBSOCKET
 }
 !contains(DEFINES, NOWEBSOCKET) {
     QT += websockets

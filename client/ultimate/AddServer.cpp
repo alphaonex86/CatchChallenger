@@ -10,7 +10,11 @@ AddOrEditServer::AddOrEditServer(QWidget *parent) :
     ui->setupUi(this);
     ok=false;
     #if defined(NOTCPSOCKET) || defined(NOWEBSOCKET)
-    ui->type->hide();
+        ui->type->hide();
+        #if defined(NOTCPSOCKET)
+            ui->port->hide();
+            ui->server->setPlaceholderText("ws://www.server.com:9999/");
+        #endif
     #endif
 }
 

@@ -339,19 +339,33 @@ std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
         QString connexionCounter=connexionCounterList.at(index);
         QString lastConnexion=lastConnexionList.at(index);
         QString proxy=proxyList.at(index);
-        if(connexion.contains(regexConnexion))
+        if(connexion.contains(regexConnexion) || connexion.startsWith("ws://") || connexion.startsWith("wss://"))
         {
             QString host=connexion;
-            host.remove(hostRemove);
-            QString port_string=connexion;
-            port_string.remove(postRemove);
-            bool ok;
-            uint16_t port=static_cast<uint16_t>(port_string.toInt(&ok));
+            bool ok=true;
+            uint16_t port=0;
+            if(connexion.startsWith("ws://") || connexion.startsWith("wss://"))
+            {}
+            else
+            {
+                host=connexion;
+                host.remove(hostRemove);
+                QString port_string=connexion;
+                port_string.remove(postRemove);
+                port=static_cast<uint16_t>(port_string.toInt(&ok));
+                if(!ok)
+                    qDebug() << "dropped connexion, port wrong: " << port_string;
+            }
             if(ok)
             {
                 ConnexionInfo connexionInfo;
-                connexionInfo.host=host;
-                connexionInfo.port=port;
+                if(connexion.startsWith("ws://") || connexion.startsWith("wss://"))
+                    connexionInfo.ws=connexion;
+                else
+                {
+                    connexionInfo.host=host;
+                    connexionInfo.port=port;
+                }
                 connexionInfo.name=name;
                 while(customServerName.contains(connexionInfo.name))
                     connexionInfo.name=tr("Copy of %1").arg(connexionInfo.name);
@@ -387,12 +401,8 @@ std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
                         connexionInfo.proxyPort=proxy_port;
                     }
                 }
-                else
-                    qDebug() << "dropped connexion, proxy seam wrong: " << proxy;
                 returnedVar.push_back(connexionInfo);
             }
-            else
-                qDebug() << "dropped connexion, port wrong: " << port_string;
         }
         else
             qDebug() << "dropped connexion, info seam wrong: " << connexion;
@@ -601,23 +611,38 @@ void MainWindow::displayServerList()
     QString unique_code;
     if(serverConnexion.contains(selectedServer))
     {
-        if(serverConnexion.value(selectedServer)->unique_code.isEmpty())
+        ConnexionInfo * connexionInfo=serverConnexion.value(selectedServer);
+        if(connexionInfo->unique_code.isEmpty())
         {
-            if(serverConnexion.value(selectedServer)->proxyHost.isEmpty())
-                unique_code=QString("%1:%2")
-                        .arg(serverConnexion.value(selectedServer)->host)
-                        .arg(serverConnexion.value(selectedServer)->port)
+            if(connexionInfo->proxyHost.isEmpty())
+            {
+                if(!connexionInfo->host.isEmpty())
+                    unique_code=QString("%1:%2")
+                        .arg(connexionInfo->host)
+                        .arg(connexionInfo->port)
                         ;
+                else
+                    unique_code=QString(connexionInfo->ws.toUtf8().toHex());
+            }
             else
-                unique_code=QString("%1:%2:%3:%4")
-                        .arg(serverConnexion.value(selectedServer)->host)
-                        .arg(serverConnexion.value(selectedServer)->port)
-                        .arg(serverConnexion.value(selectedServer)->proxyHost)
-                        .arg(serverConnexion.value(selectedServer)->proxyPort)
+            {
+                if(!connexionInfo->host.isEmpty())
+                    unique_code=QString("%1:%2:%3:%4")
+                        .arg(connexionInfo->host)
+                        .arg(connexionInfo->port)
+                        .arg(connexionInfo->proxyHost)
+                        .arg(connexionInfo->proxyPort)
                         ;
+                else
+                    unique_code=QString("%1:%2:%3")
+                        .arg(QString(connexionInfo->ws.toUtf8().toHex()))
+                        .arg(connexionInfo->proxyHost)
+                        .arg(connexionInfo->proxyPort)
+                        ;
+            }
         }
         else
-            unique_code=serverConnexion.value(selectedServer)->unique_code;
+            unique_code=connexionInfo->unique_code;
     }
     const ListEntryEnvolued * tempSelectedServer=selectedServer;
     selectedServer=NULL;
@@ -640,7 +665,11 @@ void MainWindow::displayServerList()
         if(!connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&MainWindow::serverListEntryEnvoluedDoubleClicked,Qt::QueuedConnection))
             abort();
         const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(index);
-        QString connexionInfoHost=connexionInfo.host;
+        QString connexionInfoHost;
+        if(!connexionInfo.host.isEmpty())
+            connexionInfoHost=connexionInfo.host;
+        else
+            connexionInfoHost=connexionInfo.ws;
         if(connexionInfoHost.size()>32)
             connexionInfoHost=connexionInfoHost.left(15)+"..."+connexionInfoHost.right(15);
         QString name;
@@ -656,17 +685,31 @@ void MainWindow::displayServerList()
             custom=QStringLiteral(" (%1)").arg(tr("Custom"));
             QString tempUniqueCode;
             if(connexionInfo.proxyHost.isEmpty())
-                tempUniqueCode=QString("%1:%2")
+            {
+                if(!connexionInfo.host.isEmpty())
+                    tempUniqueCode=QString("%1:%2")
                         .arg(connexionInfo.host)
                         .arg(connexionInfo.port)
                         ;
+                else
+                    tempUniqueCode=QString(connexionInfo.ws.toUtf8().toHex());
+            }
             else
-                tempUniqueCode=QString("%1:%2:%3:%4")
+            {
+                if(!connexionInfo.host.isEmpty())
+                    tempUniqueCode=QString("%1:%2:%3:%4")
                         .arg(connexionInfo.host)
                         .arg(connexionInfo.port)
                         .arg(connexionInfo.proxyHost)
                         .arg(connexionInfo.proxyPort)
                         ;
+                else
+                    tempUniqueCode=QString("%1:%2:%3")
+                        .arg(QString(connexionInfo.ws.toUtf8().toHex()))
+                        .arg(connexionInfo.proxyHost)
+                        .arg(connexionInfo.proxyPort)
+                        ;
+            }
             if(unique_code==tempUniqueCode)
                 selectedServer=newEntry;
         }
@@ -675,12 +718,18 @@ void MainWindow::displayServerList()
             if(unique_code==connexionInfo.unique_code)
                 selectedServer=newEntry;
         }
+        QString stringPort;
+        if(!connexionInfo.host.isEmpty())
+            stringPort=":"+QString::number(connexionInfo.port);
         if(connexionInfo.name.isEmpty())
         {
-            name=QStringLiteral("%1:%2").arg(connexionInfoHost).arg(connexionInfo.port);
-            newEntry->setText(QStringLiteral("%3<span style=\"font-size:12pt;font-weight:600;\">%1:%2</span><br/><span style=\"color:#909090;\">%4%5</span>")
+            if(!connexionInfo.host.isEmpty())
+                name=QStringLiteral("%1:%2").arg(connexionInfoHost).arg(connexionInfo.port);
+            else
+                name=connexionInfoHost;
+            newEntry->setText(QStringLiteral("%3<span style=\"font-size:12pt;font-weight:600;\">%1%2</span><br/><span style=\"color:#909090;\">%4%5</span>")
                               .arg(connexionInfoHost)
-                              .arg(connexionInfo.port)
+                              .arg(stringPort)
                               .arg(star)
                               .arg(lastConnexion)
                               .arg(custom)
@@ -689,10 +738,10 @@ void MainWindow::displayServerList()
         else
         {
             name=connexionInfo.name;
-            newEntry->setText(QStringLiteral("%4<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2:%3 %5%6</span>")
+            newEntry->setText(QStringLiteral("%4<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2%3 %5%6</span>")
                               .arg(connexionInfo.name)
                               .arg(connexionInfoHost)
-                              .arg(connexionInfo.port)
+                              .arg(stringPort)
                               .arg(star)
                               .arg(lastConnexion)
                               .arg(custom)
@@ -755,16 +804,30 @@ void MainWindow::on_server_add_clicked()
     addServer.exec();
     if(!addServer.isOk())
         return;
-    if(!addServer.server().contains(QRegularExpression("^[a-zA-Z0-9\\.\\-_:]+$")))
+    if(addServer.type()==0)
     {
-        QMessageBox::warning(this,tr("Error"),tr("The host seam don't be a valid hostname or ip"));
-        return;
+        if(!addServer.server().contains(QRegularExpression("^[a-zA-Z0-9\\.:\\-_]+$")))
+        {
+            QMessageBox::warning(this,tr("Error"),tr("The host seam don't be a valid hostname or ip"));
+            return;
+        }
+    }
+    else
+    {
+        if(!addServer.server().startsWith("ws://") && !addServer.server().startsWith("wss://"))
+        {
+            QMessageBox::warning(this,tr("Error"),tr("The web socket url seam wrong, not start with ws:// or wss://"));
+            return;
+        }
     }
     if(customServerName.contains(addServer.name()))
     {
         QMessageBox::warning(this,tr("Error"),tr("The name is already taken"));
         return;
     }
+    #ifdef __EMSCRIPTEN__
+    std::cerr << "AddOrEditServer returned" <<  std::endl;
+    #endif
     ConnexionInfo connexionInfo;
     connexionInfo.connexionCounter=0;
     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
@@ -775,10 +838,12 @@ void MainWindow::on_server_add_clicked()
     {
         connexionInfo.port=addServer.port();
         connexionInfo.host=addServer.server();
+        connexionInfo.ws.clear();
     }
     else
     {
-        connexionInfo.host=addServer.server();
+        connexionInfo.port=0;
+        connexionInfo.host.clear();
         connexionInfo.ws=addServer.server();
     }
 
@@ -798,10 +863,13 @@ void MainWindow::on_server_select_clicked()
     }
     ui->stackedWidget->setCurrentWidget(ui->login);
     updateTheOkButton();
-    if(customServerConnexion.contains(selectedServer))
-        settings.beginGroup(QStringLiteral("%1-%2").arg(serverConnexion[selectedServer]->host).arg(serverConnexion[selectedServer]->port));
+    ConnexionInfo * connexionInfo=serverConnexion[selectedServer];
+    if(connexionInfo->host.isEmpty())
+        settings.beginGroup(QString(connexionInfo->ws.toUtf8().toHex()));
+    else if(customServerConnexion.contains(selectedServer))
+        settings.beginGroup(QStringLiteral("%1-%2").arg(connexionInfo->host).arg(connexionInfo->port));
     else
-        settings.beginGroup(QStringLiteral("Xml-%1").arg(serverConnexion[selectedServer]->unique_code));
+        settings.beginGroup(QStringLiteral("Xml-%1").arg(connexionInfo->unique_code));
     if(!serverConnexion.value(selectedServer)->register_page.isEmpty())
     {
         ui->label_login_register->setVisible(true);
@@ -869,15 +937,16 @@ void MainWindow::on_server_remove_clicked()
     unsigned int index=0;
     while(index<mergedConnexionInfoList.size())
     {
-        if(serverConnexion[selectedServer]==&mergedConnexionInfoList.at(index))
+        ConnexionInfo * connexionInfo=serverConnexion[selectedServer];
+        if(connexionInfo==&mergedConnexionInfoList.at(index))
         {
-            customServerName.remove(serverConnexion[selectedServer]->name);
+            customServerName.remove(connexionInfo->name);
             mergedConnexionInfoList.erase(mergedConnexionInfoList.begin()+index);
             if(customServerConnexion.contains(selectedServer))
                 saveConnexionInfoList();
             else
             {
-                settings.beginGroup(QStringLiteral("Xml-%1").arg(serverConnexion[selectedServer]->unique_code));
+                settings.beginGroup(QStringLiteral("Xml-%1").arg(connexionInfo->unique_code));
                 if(settings.contains(QStringLiteral("connexionCounter")))
                     settings.setValue(QStringLiteral("connexionCounter"),settings.value(QStringLiteral("connexionCounter")).toUInt()+1);
                 else
@@ -912,7 +981,10 @@ void MainWindow::saveConnexionInfoList()
                 proxy=QStringLiteral("%1:%2").arg(connexionInfo.proxyHost).arg(connexionInfo.proxyPort);
             else
                 proxy=QStringLiteral("");
-            connexionList << QStringLiteral("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port);
+            if(!connexionInfo.host.isEmpty())
+                connexionList << QStringLiteral("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port);
+            else
+                connexionList << connexionInfo.ws;
             nameList << connexionInfo.name;
             connexionCounterList << QString::number(connexionInfo.connexionCounter);
             lastConnexionList << QString::number(connexionInfo.lastConnexion);
@@ -1106,10 +1178,18 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     }
     serverMode=ServerMode_Remote;
     ConnexionInfo * const selectedServerConnexion=serverConnexion.value(selectedServer);
-    lastServerConnect[selectedServerConnexion->host]=QDateTime::currentDateTime();
-    lastServerIsKick[selectedServerConnexion->host]=false;
+    if(selectedServerConnexion->host.isEmpty())
+    {
+        lastServerConnect[selectedServerConnexion->host]=QDateTime::currentDateTime();
+        lastServerIsKick[selectedServerConnexion->host]=false;
+    }
     if(customServerConnexion.contains(selectedServer))
-        settings.beginGroup(QStringLiteral("%1-%2").arg(selectedServerConnexion->host).arg(selectedServerConnexion->port));
+    {
+        if(selectedServerConnexion->host.isEmpty())
+            settings.beginGroup(QString(selectedServerConnexion->ws.toUtf8().toHex()));
+        else
+            settings.beginGroup(QStringLiteral("%1-%2").arg(selectedServerConnexion->host).arg(selectedServerConnexion->port));
+    }
     else
         settings.beginGroup(QStringLiteral("Xml-%1").arg(selectedServerConnexion->unique_code));
 
@@ -2194,10 +2274,21 @@ void MainWindow::on_server_edit_clicked()
             editServer.exec();
             if(!editServer.isOk())
                 return;
-            if(!editServer.server().contains(QRegularExpression("^[a-zA-Z0-9\\.\\-_]+$")))
+            if(editServer.type()==0)
             {
-                QMessageBox::warning(this,tr("Error"),tr("The host seam don't be a valid hostname or ip"));
-                return;
+                if(!editServer.server().contains(QRegularExpression("^[a-zA-Z0-9\\.:\\-_]+$")))
+                {
+                    QMessageBox::warning(this,tr("Error"),tr("The host seam don't be a valid hostname or ip"));
+                    return;
+                }
+            }
+            else
+            {
+                if(!editServer.server().startsWith("ws://") && !editServer.server().startsWith("wss://"))
+                {
+                    QMessageBox::warning(this,tr("Error"),tr("The web socket url seam wrong, not start with ws:// or wss://"));
+                    return;
+                }
             }
             if(customServerName.contains(editServer.name()) && editServer.name()!=connexionInfo->name)
             {
@@ -2210,9 +2301,19 @@ void MainWindow::on_server_edit_clicked()
                 customServerName << editServer.name();
             }
 
-            connexionInfo->host=editServer.server();
             connexionInfo->name=editServer.name();
-            connexionInfo->port=editServer.port();
+            if(editServer.type()==0)
+            {
+                connexionInfo->host=editServer.server();
+                connexionInfo->port=editServer.port();
+                connexionInfo->ws.clear();
+            }
+            else
+            {
+                connexionInfo->ws=editServer.server();
+                connexionInfo->port=editServer.port();
+                connexionInfo->host.clear();
+            }
             connexionInfo->proxyHost=editServer.proxyServer();
             connexionInfo->proxyPort=editServer.proxyPort();
 
