@@ -94,7 +94,19 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
             readForFirstHeader();
     }
     else
+    #endif
+    #ifndef NOWEBSOCKET
+    if(socket->webSocket!=NULL)
     {
+        if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader))
+            abort();
+        if(socket->bytesAvailable())
+            readForFirstHeader();
+    }
+    else
+    #endif
+    {
+        #ifndef NOTCPSOCKET
         if(socket->fakeSocket!=NULL)
             haveFirstHeader=true;
         #endif
@@ -102,9 +114,7 @@ Api_protocol::Api_protocol(ConnectedSocket *socket,bool tolerantMode) :
             abort();
         if(socket->bytesAvailable())
             parseIncommingData();
-    #ifndef NOTCPSOCKET
     }
-    #endif
 
     if(!Api_protocol::internalVersionDisplayed)
     {
@@ -2257,24 +2267,29 @@ void Api_protocol::readForFirstHeader()
     }
     {
         #ifndef NOTCPSOCKET
-        if(socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
+        if(socket->sslSocket!=NULL && socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
         {
             newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
             return;
         }
         #endif
         uint8_t value;
-        if(socket->read((char*)&value,sizeof(value))==sizeof(value))
+        if(socket!=NULL && socket->read((char*)&value,sizeof(value))==sizeof(value))
         {
             haveFirstHeader=true;
             if(value==0x01)
             {
                 #ifndef NOTCPSOCKET
-                socket->sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
-                socket->sslSocket->ignoreSslErrors();
-                socket->sslSocket->startClientEncryption();
-                if(!QObject::connect(socket->sslSocket,&QSslSocket::encrypted,this,&Api_protocol::sslHandcheckIsFinished))
-                    abort();
+                if(socket->sslSocket!=NULL)
+                {
+                    socket->sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
+                    socket->sslSocket->ignoreSslErrors();
+                    socket->sslSocket->startClientEncryption();
+                    if(!QObject::connect(socket->sslSocket,&QSslSocket::encrypted,this,&Api_protocol::sslHandcheckIsFinished))
+                        abort();
+                }
+                else
+                    newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
                 #else
                 newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
                 #endif
@@ -2293,64 +2308,45 @@ void Api_protocol::sslHandcheckIsFinished()
 void Api_protocol::connectTheExternalSocketInternal()
 {
     #ifndef NOTCPSOCKET
-    if(socket->sslSocket==NULL)
+    if(socket->sslSocket!=NULL)
     {
-        newError(std::string("Internal problem"),std::string("Api_protocol::connectTheExternalSocket() socket->sslSocket==NULL"));
-        return;
-    }
-    if(socket->peerName().isEmpty() || socket->sslSocket->state()!=QSslSocket::SocketState::ConnectedState)
-    {
-        newError(std::string("Internal problem"),std::string("Api_protocol::connectTheExternalSocket() socket->sslSocket->peerAddress()==QHostAddress::Null: ")+
-                 socket->peerName().toStdString()+"-"+std::to_string(socket->peerPort())+
-                 ", state: "+std::to_string(socket->sslSocket->state())
-                 );
-        return;
-    }
-    //check the certificat
-    {
-        QDir datapackCert(QString("%1/cert/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)));
-        datapackCert.mkpath(datapackCert.absolutePath());
-        QFile certFile;
-        if(stageConnexion==StageConnexion::Stage1)
-            certFile.setFileName(datapackCert.absolutePath()+"/"+socket->peerName()+"-"+QString::number(socket->peerPort()));
-        else if(stageConnexion==StageConnexion::Stage3 || stageConnexion==StageConnexion::Stage4)
+        if(socket->peerName().isEmpty() || socket->sslSocket->state()!=QSslSocket::SocketState::ConnectedState)
         {
-            if(selectedServerIndex==-1)
-            {
-                parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("Api_protocol::connectTheExternalSocket() selectedServerIndex==-1"));
-                return;
-            }
-            const ServerFromPoolForDisplay &serverFromPoolForDisplay=serverOrdenedList.at(selectedServerIndex);
-            certFile.setFileName(
-                        datapackCert.absolutePath()+QString("/")+
-                                 QString::fromStdString(serverFromPoolForDisplay.host)+QString("-")+
-                        QString::number(serverFromPoolForDisplay.port)
-                        );
-        }
-        else
-        {
-            parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("Api_protocol::connectTheExternalSocket() stageConnexion!=StageConnexion::Stage1/3"));
+            newError(std::string("Internal problem"),std::string("Api_protocol::connectTheExternalSocket() socket->sslSocket->peerAddress()==QHostAddress::Null: ")+
+                     socket->peerName().toStdString()+"-"+std::to_string(socket->peerPort())+
+                     ", state: "+std::to_string(socket->sslSocket->state())
+                     );
             return;
         }
-        if(certFile.exists())
+        //check the certificat
         {
-            if(socket->sslSocket->mode()==QSslSocket::UnencryptedMode)
+            QDir datapackCert(QString("%1/cert/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)));
+            datapackCert.mkpath(datapackCert.absolutePath());
+            QFile certFile;
+            if(stageConnexion==StageConnexion::Stage1)
+                certFile.setFileName(datapackCert.absolutePath()+"/"+socket->peerName()+"-"+QString::number(socket->peerPort()));
+            else if(stageConnexion==StageConnexion::Stage3 || stageConnexion==StageConnexion::Stage4)
             {
-                #if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(BOTTESTCONNECT)
-                SslCert sslCert(NULL);
-                sslCert.exec();
-                if(sslCert.validated())
-                    saveCert(certFile.fileName().toStdString());
-                else
+                if(selectedServerIndex==-1)
                 {
-                    socket->sslSocket->disconnectFromHost();
+                    parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("Api_protocol::connectTheExternalSocket() selectedServerIndex==-1"));
                     return;
                 }
-                #endif
+                const ServerFromPoolForDisplay &serverFromPoolForDisplay=serverOrdenedList.at(selectedServerIndex);
+                certFile.setFileName(
+                            datapackCert.absolutePath()+QString("/")+
+                                     QString::fromStdString(serverFromPoolForDisplay.host)+QString("-")+
+                            QString::number(serverFromPoolForDisplay.port)
+                            );
             }
-            else if(certFile.open(QIODevice::ReadOnly))
+            else
             {
-                if(socket->sslSocket->peerCertificate().publicKey().toPem()!=certFile.readAll())
+                parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("Api_protocol::connectTheExternalSocket() stageConnexion!=StageConnexion::Stage1/3"));
+                return;
+            }
+            if(certFile.exists())
+            {
+                if(socket->sslSocket->mode()==QSslSocket::UnencryptedMode)
                 {
                     #if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(BOTTESTCONNECT)
                     SslCert sslCert(NULL);
@@ -2364,16 +2360,38 @@ void Api_protocol::connectTheExternalSocketInternal()
                     }
                     #endif
                 }
-                certFile.close();
+                else if(certFile.open(QIODevice::ReadOnly))
+                {
+                    if(socket->sslSocket->peerCertificate().publicKey().toPem()!=certFile.readAll())
+                    {
+                        #if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(BOTTESTCONNECT)
+                        SslCert sslCert(NULL);
+                        sslCert.exec();
+                        if(sslCert.validated())
+                            saveCert(certFile.fileName().toStdString());
+                        else
+                        {
+                            socket->sslSocket->disconnectFromHost();
+                            return;
+                        }
+                        #endif
+                    }
+                    certFile.close();
+                }
+            }
+            else
+            {
+                if(socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
+                    saveCert(certFile.fileName().toStdString());
+
             }
         }
-        else
-        {
-            if(socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
-                saveCert(certFile.fileName().toStdString());
-
-        }
     }
+    /*else
+    {
+        newError(std::string("Internal problem"),std::string("Api_protocol::connectTheExternalSocket() socket->sslSocket==NULL"));
+        return;
+    }*/
     #endif
     //continue the normal procedure
     if(stageConnexion==StageConnexion::Stage1)
