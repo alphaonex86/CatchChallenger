@@ -65,12 +65,14 @@ protected:
     bool	isSequential() const;
     bool canReadLine() const;
     #ifndef __EMSCRIPTEN__
-    QList<QSslError> sslErrors() const;
+        QList<QSslError> sslErrors() const;
     #endif
-    #ifdef __EMSCRIPTEN__
-    QByteArray buffer;
-    //QList<QSslError> m_sslErrors;
-    //void saveSslErrors(const QList<QSslError> &errors);
+    #ifndef NOWEBSOCKET
+        QByteArray buffer;
+        #ifndef __EMSCRIPTEN__
+            QList<QSslError> m_sslErrors;
+            void saveSslErrors(const QList<QSslError> &errors);
+        #endif
     #endif
     //workaround because QSslSocket don't return correct value for i2p via proxy
     QString hostName;
