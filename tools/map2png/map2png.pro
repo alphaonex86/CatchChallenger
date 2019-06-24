@@ -7,7 +7,7 @@ QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g"
 
 QT += xml
 
-DEFINES += ONLYMAPRENDER
+DEFINES += ONLYMAPRENDER NOWEBSOCKET
 
 include(../../general/general.pri)
 
