@@ -21,7 +21,7 @@ SGBD for Qt version: Mysql 5+, SQLite, PostgreSQL 9+. SGBD for epoll version (as
 
 ## Compiling
 
-Use C++11
+Use **C++11**
 
 Dependency:
 * zlib (can be disabled but it's for tiled map editor)
@@ -76,20 +76,6 @@ Dependency:
 * git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
 * mkdir -p datapack/
 * mv CatchChallenger-datapack/datapack/ datapack/internal/
-
-### Assemble it for the SERVER AND GAME SOLO
-https://github.com/alphaonex86/CatchChallenger-datapack
-
-near the application, you nead have then: CatchChallenger-application(.exe), the datapack -> then datapack/informations.xml
-
-See the compiled example for windows, you need follow the same organisation for the other OS.
-
-* Under linux I have for the server:
-  * /home/user/CatchChallenger/build-catchchallenger-server-gui-Qt5_5_2-Debug/catchchallenger-server-gui (application)
-  * /home/user/CatchChallenger/build-catchchallenger-server-gui-Qt5_5_2-Debug/datapack/ (datapack)
-* Under linux I have for the client:
-  * /home/user/CatchChallenger/client/build-catchchallenger-ultimate-Qt5_5_2-Debug/catchchallenger-single-player (application)
-  * /home/user/CatchChallenger/client/build-catchchallenger-ultimate-Qt5_5_2-Debug/datapack/ (datapack)
 
 # Sources
 * The sources of the client/server: https://github.com/alphaonex86/CatchChallenger
