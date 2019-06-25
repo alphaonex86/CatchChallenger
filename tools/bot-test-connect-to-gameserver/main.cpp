@@ -1,5 +1,6 @@
 #include "GlobalControler.h"
 #include <QCoreApplication>
+#include <iostream>
 
 /* return code:
  * 23: server or charactersGroupIndex not found
@@ -23,6 +24,18 @@ const char* __asan_default_options() { return "alloc_dealloc_mismatch=0:detect_c
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    std::string config=QCoreApplication::applicationDirPath().toStdString();
+    if(!QCoreApplication::applicationDirPath().endsWith("/"))
+        config+="/";
+    config+="bottest.xml";
+    if(argc==2)
+    {
+        QString v(argv[1]);
+        v=v.replace("\\\\","\\");
+        v=v.replace("//","/");
+        config=v.toStdString();
+    }
+    std::cerr << "\e[32m\e[1m" << config  << "\e[39m\e[0m" << std::endl;
     a.setOrganizationDomain("CatchChallenger");
     a.setOrganizationName("bot-test-connect-to-gameserver");
     {
@@ -30,6 +43,6 @@ int main(int argc, char *argv[])
         proxy.setType(QNetworkProxy::NoProxy);
         QNetworkProxy::setApplicationProxy(proxy);
     }
-    GlobalControler w;
+    GlobalControler w(config);
     return a.exec();
 }
