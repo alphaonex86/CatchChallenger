@@ -279,6 +279,11 @@ void BaseWindow::haveCharacter()
 
 void BaseWindow::sendDatapackContentMainSub()
 {
+    if(client==nullptr)
+    {
+        std::cerr << "sendDatapackContentMainSub(): client==nullptr" << std::endl;
+        abort();
+    }
     if(settings.contains("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())) &&
             settings.contains("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())))
         client->sendDatapackContentMainSub(settings.value("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())).toString().toStdString(),
@@ -404,6 +409,11 @@ void BaseWindow::haveTheDatapack()
 
 void BaseWindow::haveDatapackMainSubCode()
 {
+    if(client==nullptr)
+    {
+        std::cerr << "sendDatapackContentMainSub(): client==nullptr" << std::endl;
+        return;
+    }
     sendDatapackContentMainSub();
     updateConnectingStatus();
 }

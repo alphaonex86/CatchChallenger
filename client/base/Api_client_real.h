@@ -33,6 +33,7 @@ public:
     explicit Api_client_real(ConnectedSocket *socket,bool tolerantMode=false);
     ~Api_client_real();
     void resetAll();
+    void closeDownload();
 
     //connection related
     void tryConnect(std::string host,uint16_t port);
