@@ -1420,6 +1420,8 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             QCoreApplication::quit();
             return;
         }
+        if(client!=NULL)
+            static_cast<CatchChallenger::Api_client_real *>(this->client)->closeDownload();
         if(client!=NULL && client->protocolWrong())
             QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));
         #ifndef __EMSCRIPTEN__
