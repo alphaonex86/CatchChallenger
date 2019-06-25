@@ -216,6 +216,10 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                         ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumber;
                         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(size);//set the dynamic size
 
+                        /// \warning
+                        /// multiple game server mean multiple max client, then multiple packet size
+                        setMaxPlayers(*reinterpret_cast<const uint16_t *>(data+1));
+
                         memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,data,size);
 
                         client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+4+size);

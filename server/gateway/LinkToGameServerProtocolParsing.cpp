@@ -765,6 +765,10 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     }
     else if(mainCodeType==0x93 || mainCodeType==0xAC)//Select character
     {
+        /// \warning
+        /// multiple game server mean multiple max client, then multiple packet size
+        setMaxPlayers(*reinterpret_cast<const uint16_t *>(data+1));
+
         if(gameServerMode==GameServerMode::Reconnect)
         {
             if(selectedServer.host.empty())

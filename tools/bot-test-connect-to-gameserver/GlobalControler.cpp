@@ -5,9 +5,9 @@
 #include <iostream>
 #include <stdlib.h>
 
-GlobalControler::GlobalControler(QObject *parent) :
+GlobalControler::GlobalControler(const std::string &config, QObject *parent) :
     QObject(parent),
-    settings(QCoreApplication::applicationDirPath()+"/bottest.xml",QSettings::NativeFormat)
+    settings(QString::fromStdString(config),QSettings::NativeFormat)
 {
     srand(time(NULL));
 
