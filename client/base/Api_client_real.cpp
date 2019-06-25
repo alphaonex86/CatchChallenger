@@ -347,7 +347,18 @@ void Api_client_real::resetAll()
     wait_datapack_content_main=false;
     wait_datapack_content_sub=false;
 
+    closeDownload();
     Api_protocol::resetAll();
+}
+
+void Api_client_real::closeDownload()
+{
+    for( auto& n : urlInWaitingListBase )
+        n.first->abort();
+    for( auto& n : urlInWaitingListMain )
+        n.first->abort();
+    for( auto& n : urlInWaitingListSub )
+        n.first->abort();
 }
 
 void Api_client_real::tryConnect(std::string host,uint16_t port)
