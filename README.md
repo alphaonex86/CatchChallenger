@@ -16,31 +16,32 @@ client/tiled/ is extracted version of http://www.mapeditor.org/, https://github.
 ## Programing
 
 Asynchronous protocol with no influence of internet and server latency. Thread isolation for the important or heavy server task. It can be hosted on ADSL connection.
-Qt programming to have multi-platform and assembly access. Internal implementation with event. CLI and GUI server, but no epoll server.
+
 SGBD for Qt version: Mysql 5+, SQLite, PostgreSQL 9+. SGBD for epoll version (async to high performance): Mysql 5.5+, PostgreSQL 9+.
-The code source is into 3 part: server, client, datapack.
-Use C++11, you need compatible compiler with good std::regex support, like llvm/clang 3.5+, gcc 4.9+.
-Epoll server use libpg (postgresql).
-The gateway need too curl.
 
 ## Compiling
+
+Use C++11
 
 Dependency:
 * zlib (can be disabled but it's for tiled map editor)
 * zstd
 * openssl
-* Qt openssl enabled to have QSslSocket or QtWebSocket
 * Client
+  * Qt openssl enabled to have QSslSocket or QtWebSocket
   * libogg
   * libopus
 * Server
+  * Qt if generic server
   * db
   * db driver (mysql, sqlite for game solo, postgresql, depands of you choice)
-
+* Gateway
+  * curl to download datapack via http
   
 ### Linux distro
-Ubuntu: apt-get install build-essential gcc automake qt5-qmake qt5-default libzstd-dev zlib1g-dev libssl-dev libpq-dev libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
-Debian stretch: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default libqt5sql5-psql libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
+**Ubuntu**: apt-get install build-essential gcc automake qt5-qmake qt5-default libzstd-dev zlib1g-dev libssl-dev libpq-dev libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
+
+**Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default libqt5sql5-psql libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
 
 ### Gui server
 * cd server/
@@ -58,7 +59,9 @@ Debian stretch: apt-get install build-essential gcc automake qt5-qmake libzstd-d
 
 ### Epoll server (linux only, high performance)
 **Ubuntu**: apt-get install libzstd-dev zlib1g-dev libssl-dev libpq-dev
+
 **Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default
+
 * cd server/
 * qmake catchchallenger-server-cli-epoll.pro
 * make
@@ -76,14 +79,17 @@ Debian stretch: apt-get install build-essential gcc automake qt5-qmake libzstd-d
 
 ### Assemble it for the SERVER AND GAME SOLO
 https://github.com/alphaonex86/CatchChallenger-datapack
+
 near the application, you nead have then: CatchChallenger-application(.exe), the datapack -> then datapack/informations.xml
+
 See the compiled example for windows, you need follow the same organisation for the other OS.
-Under linux I have for the server:
-/home/user/CatchChallenger/build-catchchallenger-server-gui-Qt5_5_2-Debug/catchchallenger-server-gui (application)
-/home/user/CatchChallenger/build-catchchallenger-server-gui-Qt5_5_2-Debug/datapack/ (datapack)
-Under linux I have for the client:
-/home/user/CatchChallenger/client/build-catchchallenger-ultimate-Qt5_5_2-Debug/catchchallenger-single-player (application)
-/home/user/CatchChallenger/client/build-catchchallenger-ultimate-Qt5_5_2-Debug/datapack/ (datapack)
+
+* Under linux I have for the server:
+  * /home/user/CatchChallenger/build-catchchallenger-server-gui-Qt5_5_2-Debug/catchchallenger-server-gui (application)
+  * /home/user/CatchChallenger/build-catchchallenger-server-gui-Qt5_5_2-Debug/datapack/ (datapack)
+* Under linux I have for the client:
+  * /home/user/CatchChallenger/client/build-catchchallenger-ultimate-Qt5_5_2-Debug/catchchallenger-single-player (application)
+  * /home/user/CatchChallenger/client/build-catchchallenger-ultimate-Qt5_5_2-Debug/datapack/ (datapack)
 
 # Sources
 * The sources of the client/server: https://github.com/alphaonex86/CatchChallenger
@@ -92,4 +98,5 @@ Under linux I have for the client:
 
 # Hardware
 You need CPU with support of unaligned access on 8/16/32Bits for the server at least (plan to support all CPU)
+
 The server is actually 10-20MB of memory (1MB measured by massif) and 2KB by player
