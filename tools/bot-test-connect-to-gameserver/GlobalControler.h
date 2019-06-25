@@ -19,7 +19,7 @@ class GlobalControler : public QObject
 {
     Q_OBJECT
 public:
-    explicit GlobalControler(QObject *parent = 0);
+    explicit GlobalControler(const std::string &config,QObject *parent = 0);
     ~GlobalControler();
 private:
     QSettings settings;

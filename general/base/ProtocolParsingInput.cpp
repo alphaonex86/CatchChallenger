@@ -311,7 +311,7 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(returnVar==0)
-                errorParsingLayer("Break due to need more in query number");
+                errorParsingLayer("Break due to need more in query number (1)");
             else
                 errorParsingLayer("parseIncommingDataRaw() Have bug");
             #endif
@@ -331,7 +331,7 @@ int8_t ProtocolParsingBase::parseIncommingDataRaw(const char * const commonBuffe
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(returnVar==0)
-                errorParsingLayer("Break due to need more in query number");
+                errorParsingLayer("Break due to need more in query number (2)");
             else
                 errorParsingLayer("Not a reply to a query or similar bug");
             #endif

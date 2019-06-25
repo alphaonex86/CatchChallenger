@@ -42,6 +42,13 @@
 #define CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT 0x7F
 #define CATCHCHALLENGER_PROTOCOL_REPLY_CLIENT_TO_SERVER 0x01
 
+#if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLASS_GATEWAY)
+/// \warning can't be static where open multiple connexion to game server as:
+/// - login in proxy mode
+/// - gateway
+#define DYNAMICPACKETFIXEDSIZE
+#endif
+
 namespace CatchChallenger {
 
 #if ! defined (ONLYMAPRENDER)
@@ -84,10 +91,24 @@ public:
     static CompressionType compressionTypeServer;
     static uint8_t compressionLevel;
     #endif
+    /// \warning can't be static where open multiple connexion to game server as:
+    /// - login in proxy mode
+    /// - gateway
+    #ifndef DYNAMICPACKETFIXEDSIZE
     static uint8_t packetFixedSize[256+128];
+    #else
+    static uint8_t packetFixedSize8[256+128];
+    static uint8_t packetFixedSize16[256+128];
+    uint8_t *packetFixedSize;
+    #endif
+
     ProtocolParsing();
     static void initialiseTheVariable(const InitialiseTheVariableType &initialiseTheVariableType=InitialiseTheVariableType::AllInOne);
+    #ifndef DYNAMICPACKETFIXEDSIZE
     static void setMaxPlayers(const uint16_t &maxPlayers);
+    #else
+    void setMaxPlayers(const uint16_t &maxPlayers);
+    #endif
     static int32_t decompressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
     static int32_t compressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
 
