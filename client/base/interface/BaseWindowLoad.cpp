@@ -149,9 +149,9 @@ void BaseWindow::resetAll()
         Audio::audio.removePlayer(currentAmbiance.player);
         currentAmbiance.player->stop();
         currentAmbiance.buffer->close();
-        delete currentAmbiance.player;
-        delete currentAmbiance.buffer;
-        delete currentAmbiance.data;
+        currentAmbiance.player->deleteLater();
+        currentAmbiance.buffer->deleteLater();
+        currentAmbiance.data->clear();//memleak but to prevent one crash
         currentAmbiance.player=NULL;
         currentAmbiance.buffer=NULL;
         currentAmbiance.data=NULL;
