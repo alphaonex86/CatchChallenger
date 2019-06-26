@@ -768,6 +768,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
         /// \warning
         /// multiple game server mean multiple max client, then multiple packet size
         setMaxPlayers(*reinterpret_cast<const uint16_t *>(data+1));
+        client->setMaxPlayers(*reinterpret_cast<const uint16_t *>(data+1));
 
         if(gameServerMode==GameServerMode::Reconnect)
         {

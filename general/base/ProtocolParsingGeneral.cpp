@@ -410,6 +410,14 @@ void ProtocolParsingInputOutput::resetForReconnect()
     memset(inputQueryNumberToPacketCode,0x00,sizeof(inputQueryNumberToPacketCode));
 }
 
+#ifdef DYNAMICPACKETFIXEDSIZE
+void ProtocolParsingInputOutput::setMaxPlayers(const uint16_t &maxPlayers)
+{
+    ProtocolParsing::setMaxPlayers(maxPlayers);
+    protocolParsingCheck->setMaxPlayers(maxPlayers);
+}
+#endif
+
 ProtocolParsingInputOutput::ProtocolParsingInputOutput(
         #if defined(EPOLLCATCHCHALLENGERSERVER) || defined (ONLYMAPRENDER)
             #ifdef SERVERSSL
