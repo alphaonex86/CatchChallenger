@@ -107,7 +107,7 @@ public:
     #ifndef DYNAMICPACKETFIXEDSIZE
     static void setMaxPlayers(const uint16_t &maxPlayers);
     #else
-    void setMaxPlayers(const uint16_t &maxPlayers);
+    virtual void setMaxPlayers(const uint16_t &maxPlayers);
     #endif
     static int32_t decompressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
     static int32_t compressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
@@ -243,6 +243,9 @@ public:
     bool socketIsClosed();//for epoll delete
     #endif
     void resetForReconnect();
+    #ifdef DYNAMICPACKETFIXEDSIZE
+    void setMaxPlayers(const uint16_t &maxPlayers) override;
+    #endif
 protected:
     /*virtual for void LinkToGameServer::parseIncommingData()
     of gateway, readTheFirstSslHeader() */virtual void parseIncommingData();
