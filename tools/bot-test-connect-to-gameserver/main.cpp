@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
         v=v.replace("//","/");
         config=v.toStdString();
     }
-    std::cerr << "\e[32m\e[1m" << config  << "\e[39m\e[0m" << std::endl;
+    std::cerr << "\e[32m\e[1m" << config << "\e[39m\e[0m" << std::endl;
     a.setOrganizationDomain("CatchChallenger");
     a.setOrganizationName("bot-test-connect-to-gameserver");
     {
