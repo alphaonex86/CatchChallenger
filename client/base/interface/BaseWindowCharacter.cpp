@@ -376,7 +376,7 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
                 //comment the if to always show it
                 if(groupInt>=icon_server_list_color.size())
                     groupText=QStringLiteral(" (%1)").arg(groupInt).toStdString();
-                itemServer->setToolTip(0,tr("Server group: %1").arg(groupInt));
+                itemServer->setToolTip(0,tr("Server group: %1, UID: %2").arg(groupInt).arg(server.uniqueKey));
                 if(!icon_server_list_color.empty())
                     itemServer->setIcon(0,icon_server_list_color.at(groupInt%icon_server_list_color.size()));
             }
