@@ -23,15 +23,16 @@ void MainWindow::on_convert_clicked()
 {
     QAudioOutput* audio;
     QAudioFormat format;
-    format.setSampleRate(48000);
-    format.setChannelCount(2);
-    format.setSampleSize(16);
-    format.setCodec("audio/pcm");
-    format.setByteOrder(QAudioFormat::LittleEndian);
-    format.setSampleType(QAudioFormat::SignedInt);
+    format.setSampleRate(ui->SampleRate->value());
+    format.setChannelCount(ui->ChannelCount->value());
+    format.setSampleSize(ui->SampleSize->value());
+    format.setCodec(ui->Codec->text());
+    format.setByteOrder((QAudioFormat::Endian)ui->ByteOrder->currentIndex());
+    format.setSampleType((QAudioFormat::SampleType)ui->SampleType->currentIndex());
 
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
     if (!info.isFormatSupported(format)) {
+        ui->statusBar->showMessage("audio format not supported by backend, cannot play audio");
         std::cerr << "raw audio format not supported by backend, cannot play audio." << std::endl;
         return;
     }
