@@ -36,6 +36,7 @@ void MainWindow::on_convert_clicked()
         std::cerr << "raw audio format not supported by backend, cannot play audio." << std::endl;
         return;
     }
+    ui->statusBar->showMessage("audio format is supported by backend");
     audio = new QAudioOutput(format, this);
     buffer.open(QBuffer::ReadWrite);
 
