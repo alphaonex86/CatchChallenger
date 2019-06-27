@@ -1,0 +1,53 @@
+#!/sbin/runscript
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: /var/cvsroot/gentoo-x86/dev-db/mysql-init-scripts/files/mysql-5.1.67-init.d,v 1.1 2013/01/18 01:51:47 robbat2 Exp $
+
+start() {
+        ebegin "Starting CatchChallenger stats"
+
+        local piddir="/run/catchchallenger/"
+        checkpath -d --owner catchchallenger:catchchallenger --mode 0755 "$piddir"
+        rc=$?
+        if [ $rc -ne 0 ]; then
+                eerror "Directory $piddir for pidfile does not exist and cannot be created"
+                return 1
+        fi
+
+        local tmpnice="${NICE:+"--nicelevel "}${NICE}"
+        local tmpionice="${IONICE:+"--ionice "}${IONICE}"
+        ASAN_OPTIONS=alloc_dealloc_mismatch=0 start-stop-daemon \
+                ${DEBUG:+"--verbose"} \
+                --verbose \
+                --start \
+                --exec /usr/bin/gdb \
+                --chdir /home/catchchallenger/stats/ \
+                --pidfile /run/catchchallenger/stats.pid --make-pidfile \
+                --background \
+                --group nginx \
+                --user catchchallenger \
+                --stderr /var/log/catchchallenger-stats.log \
+                --stdout /var/log/catchchallenger-stats.log \
+                --wait 300 \
+                ${tmpnice} \
+                ${tmpionice} \
+                -- /home/catchchallenger/stats/catchchallenger-stats --batch --quiet -ex "handle SIGPIPE nostop" -ex "run" -ex "bt full" -ex "quit"
+        local ret=$?
+        if [ ${ret} -ne 0 ] ; then
+                eend ${ret}
+                return ${ret}
+        fi
+        eend $? || return 1
+}
+
+stop() {
+        ebegin "Stopping CatchChallenger stats"
+        local stop_timeout=${STOP_TIMEOUT:-120}
+        start-stop-daemon \
+                ${DEBUG:+"--verbose"} \
+                --stop \
+                --pidfile /run/catchchallenger/stats.pid \
+                --retry ${stop_timeout}
+        eend $?
+}
+# vim: filetype=gentoo-init-d sw=2 ts=2 sts=2 noet:

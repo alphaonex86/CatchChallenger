@@ -1,0 +1,53 @@
+#!/sbin/runscript
+# Copyright 1999-2013 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: /var/cvsroot/gentoo-x86/dev-db/mysql-init-scripts/files/mysql-5.1.67-init.d,v 1.1 2013/01/18 01:51:47 robbat2 Exp $
+
+start() {
+        ebegin "Starting CatchChallenger game server test"
+
+        local piddir="/run/catchchallenger/"
+        checkpath -d --owner catchchallenger:catchchallenger --mode 0755 "$piddir"
+        rc=$?
+        if [ $rc -ne 0 ]; then
+                eerror "Directory $piddir for pidfile does not exist and cannot be created"
+                return 1
+        fi
+
+        local tmpnice="${NICE:+"--nicelevel "}${NICE}"
+        local tmpionice="${IONICE:+"--ionice "}${IONICE}"
+        ASAN_OPTIONS=alloc_dealloc_mismatch=0 start-stop-daemon \
+                ${DEBUG:+"--verbose"} \
+                --verbose \
+                --start \
+                --exec /usr/bin/gdb \
+                --chdir /home/catchchallenger/server_test/ \
+                --pidfile /run/catchchallenger/server-test.pid --make-pidfile \
+                --background \
+                --group catchchallenger \
+                --user catchchallenger \
+                --stderr /var/log/catchchallenger-server-test.log \
+                --stdout /var/log/catchchallenger-server-test.log \
+                --wait 300 \
+                ${tmpnice} \
+                ${tmpionice} \
+                -- /home/catchchallenger/server_test/catchchallenger-game-server-alone --batch --quiet -ex "handle SIGPIPE nostop" -ex "run" -ex "bt full" -ex "quit"
+        local ret=$?
+        if [ ${ret} -ne 0 ] ; then
+                eend ${ret}
+                return ${ret}
+        fi
+        eend $? || return 1
+}
+
+stop() {
+        ebegin "Stopping CatchChallenger game server"
+        local stop_timeout=${STOP_TIMEOUT:-120}
+        start-stop-daemon \
+                ${DEBUG:+"--verbose"} \
+                --stop \
+                --pidfile /run/catchchallenger/server-test.pid \
+                --retry ${stop_timeout}
+        eend $?
+}
+# vim: filetype=gentoo-init-d sw=2 ts=2 sts=2 noet:

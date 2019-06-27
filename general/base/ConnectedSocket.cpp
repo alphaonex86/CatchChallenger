@@ -119,15 +119,42 @@ ConnectedSocket::~ConnectedSocket()
 {
     #ifndef NOTCPSOCKET
     if(sslSocket!=nullptr)
+    {
         sslSocket->deleteLater();
+        sslSocket=nullptr;
+    }
     if(tcpSocket!=nullptr)
+    {
         tcpSocket->deleteLater();
+        tcpSocket=nullptr;
+    }
     if(fakeSocket!=nullptr)
+    {
         fakeSocket->deleteLater();
+        fakeSocket=nullptr;
+    }
     #endif
     #ifndef NOWEBSOCKET
+    /*generate crash because delete in internal by Qt:
+    Address 0x1fb0bac8 is 8 bytes inside a block of size 16 free'd
+    at 0x483808B: operator delete(void*, unsigned long) (vg_replace_malloc.c:595)
+    by 0x666F287: QObject::event(QEvent*) (qobject.cpp:1251)
+    by 0x4D455A0: QApplicationPrivate::notify_helper(QObject*, QEvent*) (qapplication.cpp:3736)
+    by 0x4D4CB3F: QApplication::notify(QObject*, QEvent*) (qapplication.cpp:3483)
+    by 0x6646EA1: QCoreApplication::notifyInternal2(QObject*, QEvent*) (qcoreapplication.cpp:1060)
+    by 0x664A006: QCoreApplicationPrivate::sendPostedEvents(QObject*, int, QThreadData*) (qcoreapplication.cpp:1799)
+    by 0x6698672: postEventSourceDispatch(_GSource*, int (*)(void*), void*) (qeventdispatcher_glib.cpp:276)
+    by 0x763CA0D: g_main_dispatch (gmain.c:3182)
+    by 0x763CA0D: g_main_context_dispatch (gmain.c:3847)
+    by 0x763CCA7: g_main_context_iterate.isra.26 (gmain.c:3920)
+    by 0x763CD3B: g_main_context_iteration (gmain.c:3981)
+    by 0x6698412: QEventDispatcherGlib::processEvents(QFlags<QEventLoop::ProcessEventsFlag>) (qeventdispatcher_glib.cpp:422)
+    by 0x6645E7A: QEventLoop::exec(QFlags<QEventLoop::ProcessEventsFlag>) (qeventloop.cpp:225)
     if(webSocket!=nullptr)
+    {
         webSocket->deleteLater();
+        webSocket=nullptr;
+    }*/
     #endif
 }
 
