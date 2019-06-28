@@ -1,13 +1,11 @@
 include(../base/client.pri)
 include(../../general/general.pri)
 include(../base/multi.pri)
-!wasm: {
-include(../base/solo.pri)
-include(../../server/catchchallenger-server-qt.pri)
-INCLUDEPATH += -I/usr/include/
-}
-else {
-QT += websockets
+
+!contains(DEFINES, NOSINGLEPLAYER) {
+    include(../base/solo.pri)
+    include(../../server/catchchallenger-server-qt.pri)
+    INCLUDEPATH += -I/usr/include/
 }
 include(specific.pri)
 
