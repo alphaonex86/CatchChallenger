@@ -41,3 +41,6 @@ FORMS += \
         MainWindow.ui
 
 LIBS += -lopus -logg
+
+RESOURCES += \
+    res.qrc
