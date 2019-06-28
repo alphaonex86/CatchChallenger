@@ -1888,14 +1888,16 @@ void Api_protocol::resetAll()
     token.clear();
     message("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
     stageConnexion=StageConnexion::Stage1;
-    if(socket==NULL
-            #ifndef NOTCPSOCKET
-            || socket->fakeSocket==NULL
-            #endif
-            )
-        haveFirstHeader=false;
-    else
+    #ifndef NOTCPSOCKET
+    if(socket!=NULL && socket->fakeSocket!=NULL)
         haveFirstHeader=true;
+    else
+    #else
+    if(socket==NULL)
+        haveFirstHeader=true;
+    else
+    #endif
+        haveFirstHeader=false;
     character_select_send=false;
     delayedLogin.data.clear();
     delayedLogin.packetCode=0;
