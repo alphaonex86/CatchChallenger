@@ -373,6 +373,7 @@ void ConnectedSocket::setTcpCork(const bool &cork)
 {
     #ifndef __EMSCRIPTEN__
     #ifdef __linux__
+    #ifndef NOTCPSOCKET
     if(sslSocket!=nullptr)
     {
         #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
@@ -404,9 +405,9 @@ void ConnectedSocket::setTcpCork(const bool &cork)
         }
     }
     #endif
-    #else
-    Q_UNUSED(cork);
     #endif
+    #endif
+    Q_UNUSED(cork);
 }
 
 QHostAddress ConnectedSocket::localAddress() const

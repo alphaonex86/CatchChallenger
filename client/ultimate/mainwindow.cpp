@@ -73,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
     #ifndef NOWEBSOCKET
     realWebSocket=NULL;
     #endif
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOSINGLEPLAYER
     internalServer=NULL;
     #endif
     client=NULL;
@@ -97,7 +97,7 @@ MainWindow::MainWindow(QWidget *parent) :
     FeedNews::feedNews=new FeedNews();
     if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList))
         qDebug() << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed";
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOSINGLEPLAYER
     solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+
                               "/datapack/internal/",
                               QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+
@@ -110,7 +110,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if(ui->stackedWidget->indexOf(solowindow)<0)
         ui->solo->hide();
     #endif
-    #ifdef __EMSCRIPTEN__
+    #ifdef NOSINGLEPLAYER
     ui->solo->hide();
     #else
     //work around QSS crash
@@ -267,12 +267,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
     event->ignore();
     hide();
     if(socket!=NULL
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOSINGLEPLAYER
             || internalServer!=NULL
     #endif
             )
     {
-        #ifndef __EMSCRIPTEN__
+        #ifndef NOSINGLEPLAYER
         if(internalServer!=NULL)
         {
             if(internalServer->isListen())
@@ -341,13 +341,16 @@ std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
         QString proxy=proxyList.at(index);
         if(connexion.contains(regexConnexion) || connexion.startsWith("ws://") || connexion.startsWith("wss://"))
         {
-            QString host=connexion;
             bool ok=true;
+            #ifndef NOTCPSOCKET
+            QString host=connexion;
             uint16_t port=0;
+            #endif
             if(connexion.startsWith("ws://") || connexion.startsWith("wss://"))
             {}
             else
             {
+                #ifndef NOTCPSOCKET
                 host=connexion;
                 host.remove(hostRemove);
                 QString port_string=connexion;
@@ -355,16 +358,25 @@ std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
                 port=static_cast<uint16_t>(port_string.toInt(&ok));
                 if(!ok)
                     qDebug() << "dropped connexion, port wrong: " << port_string;
+                #else
+                ok=false;
+                #endif
             }
             if(ok)
             {
                 ConnexionInfo connexionInfo;
                 if(connexion.startsWith("ws://") || connexion.startsWith("wss://"))
+                {
+                    #ifndef NOWEBSOCKET
                     connexionInfo.ws=connexion;
+                    #endif
+                }
                 else
                 {
+                    #ifndef NOTCPSOCKET
                     connexionInfo.host=host;
                     connexionInfo.port=port;
+                    #endif
                 }
                 connexionInfo.name=name;
                 while(customServerName.contains(connexionInfo.name))
@@ -656,6 +668,10 @@ void MainWindow::displayServerList()
     serverConnexion.clear();
     if(mergedConnexionInfoList.empty())
         ui->serverEmpty->setText(QStringLiteral("<html><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>").arg(tr("Empty")));
+    #if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
+    #error Web socket and tcp socket are both not supported
+    return;
+    #endif
     index=0;
     while(index<mergedConnexionInfoList.size())
     {
@@ -666,10 +682,23 @@ void MainWindow::displayServerList()
             abort();
         const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(index);
         QString connexionInfoHost;
-        if(!connexionInfo.host.isEmpty())
+        #ifdef NOTCPSOCKET
+        connexionInfoHost=connexionInfo.ws;
+        #else
+            #ifdef NOWEBSOCKET
             connexionInfoHost=connexionInfo.host;
-        else
-            connexionInfoHost=connexionInfo.ws;
+            #else
+            if(!connexionInfo.host.isEmpty())
+                connexionInfoHost=connexionInfo.host;
+            else
+                connexionInfoHost=connexionInfo.ws;
+            #endif
+        #endif
+        if(connexionInfoHost.isEmpty())
+        {
+            index++;
+            continue;
+        }
         if(connexionInfoHost.size()>32)
             connexionInfoHost=connexionInfoHost.left(15)+"..."+connexionInfoHost.right(15);
         QString name;
@@ -686,16 +715,19 @@ void MainWindow::displayServerList()
             QString tempUniqueCode;
             if(connexionInfo.proxyHost.isEmpty())
             {
+                #ifndef NOTCPSOCKET
                 if(!connexionInfo.host.isEmpty())
                     tempUniqueCode=QString("%1:%2")
                         .arg(connexionInfo.host)
                         .arg(connexionInfo.port)
                         ;
                 else
+                #endif
                     tempUniqueCode=QString(connexionInfo.ws.toUtf8().toHex());
             }
             else
             {
+                #ifndef NOTCPSOCKET
                 if(!connexionInfo.host.isEmpty())
                     tempUniqueCode=QString("%1:%2:%3:%4")
                         .arg(connexionInfo.host)
@@ -704,6 +736,7 @@ void MainWindow::displayServerList()
                         .arg(connexionInfo.proxyPort)
                         ;
                 else
+                #endif
                     tempUniqueCode=QString("%1:%2:%3")
                         .arg(QString(connexionInfo.ws.toUtf8().toHex()))
                         .arg(connexionInfo.proxyHost)
@@ -719,13 +752,17 @@ void MainWindow::displayServerList()
                 selectedServer=newEntry;
         }
         QString stringPort;
+        #ifndef NOTCPSOCKET
         if(!connexionInfo.host.isEmpty())
             stringPort=":"+QString::number(connexionInfo.port);
+        #endif
         if(connexionInfo.name.isEmpty())
         {
+            #ifndef NOTCPSOCKET
             if(!connexionInfo.host.isEmpty())
                 name=QStringLiteral("%1:%2").arg(connexionInfoHost).arg(connexionInfo.port);
             else
+            #endif
                 name=connexionInfoHost;
             newEntry->setText(QStringLiteral("%3<span style=\"font-size:12pt;font-weight:600;\">%1%2</span><br/><span style=\"color:#909090;\">%4%5</span>")
                               .arg(connexionInfoHost)
@@ -837,14 +874,18 @@ void MainWindow::on_server_add_clicked()
     if(addServer.type()==0)
     {
         connexionInfo.port=addServer.port();
+        #ifndef NOTCPSOCKET
         connexionInfo.host=addServer.server();
+        #endif
         connexionInfo.ws.clear();
     }
     else
     {
         connexionInfo.port=0;
         connexionInfo.host.clear();
+        #ifndef NOWEBSOCKET
         connexionInfo.ws=addServer.server();
+        #endif
     }
 
     connexionInfo.proxyHost=addServer.proxyServer();
@@ -1041,7 +1082,7 @@ void MainWindow::resetAll()
     switch(serverMode)
     {
         case ServerMode_Internal:
-        #ifndef __EMSCRIPTEN__
+        #ifndef NOSINGLEPLAYER
             ui->stackedWidget->setCurrentWidget(solowindow);
             /* do just at game starting
              *if(internalServer!=NULL)
@@ -1383,7 +1424,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         if(realSslSocket==NULL && realWebSocket==NULL)
             client->sendProtocol();
         else
-            qDebug() << "Tcp socket found, skip sendProtocol()";
+            qDebug() << "Tcp/Web socket found, skip sendProtocol()";
         #elif !defined(NOTCPSOCKET)
         if(realSslSocket==NULL)
             client->sendProtocol();
@@ -1393,7 +1434,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         if(realWebSocket==NULL)
             client->sendProtocol();
         else
-            qDebug() << "Tcp socket found, skip sendProtocol()";
+            qDebug() << "Web socket found, skip sendProtocol()";
         #endif
     }
     if(socketState==QAbstractSocket::UnconnectedState)
@@ -1412,7 +1453,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         }
         std::cout << "MainWindow::stateChanged(" << std::to_string((int)socketState) << ") mostly quit" << std::endl;
         if(!isVisible()
-                #ifndef __EMSCRIPTEN__
+                #ifndef NOSINGLEPLAYER
                 && internalServer==NULL
                 #endif
                 )
@@ -1424,7 +1465,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             static_cast<CatchChallenger::Api_client_real *>(this->client)->closeDownload();
         if(client!=NULL && client->protocolWrong())
             QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));
-        #ifndef __EMSCRIPTEN__
+        #ifndef NOSINGLEPLAYER
         if(internalServer!=NULL)
             internalServer->stop();
         #endif
@@ -1875,7 +1916,7 @@ void MainWindow::on_server_back_clicked()
     ui->stackedWidget->setCurrentWidget(ui->mode);
 }
 
-#ifndef __EMSCRIPTEN__
+#ifndef NOSINGLEPLAYER
 void MainWindow::gameSolo_play(const std::string &savegamesPath)
 {
     resetAll();
@@ -2107,7 +2148,7 @@ void MainWindow::is_started(bool started)
 {
     if(!started)
     {
-        #ifndef __EMSCRIPTEN__
+        #ifndef NOSINGLEPLAYER
         if(internalServer!=NULL)
         {
             delete internalServer;
@@ -2306,13 +2347,17 @@ void MainWindow::on_server_edit_clicked()
             connexionInfo->name=editServer.name();
             if(editServer.type()==0)
             {
+                #ifndef NOTCPSOCKET
                 connexionInfo->host=editServer.server();
+                #endif
                 connexionInfo->port=editServer.port();
                 connexionInfo->ws.clear();
             }
             else
             {
+                #ifndef NOWEBSOCKET
                 connexionInfo->ws=editServer.server();
+                #endif
                 connexionInfo->port=editServer.port();
                 connexionInfo->host.clear();
             }

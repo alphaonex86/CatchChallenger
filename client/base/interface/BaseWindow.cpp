@@ -329,9 +329,9 @@ BaseWindow::~BaseWindow()
     if(currentAmbiance.player!=NULL)
     {
         currentAmbiance.buffer->close();
-        delete currentAmbiance.player;
-        delete currentAmbiance.buffer;
-        delete currentAmbiance.data;
+        /*currentAmbiance.player.deleteLater();
+        currentAmbiance.buffer.deleteLater();
+        currentAmbiance.data.deleteLater(); prevent crash for now*/
         currentAmbiance.player=NULL;
         currentAmbiance.buffer=NULL;
         currentAmbiance.data=NULL;

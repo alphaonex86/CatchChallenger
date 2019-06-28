@@ -32,7 +32,7 @@
 #include "../base/render/MapController.h"
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/ListEntryEnvolued.h"
-#ifndef __EMSCRIPTEN__
+#ifndef NOSINGLEPLAYER
 #include "../base/solo/SoloWindow.h"
 #endif
 #include "../base/LanguagesSelect.h"
@@ -119,7 +119,7 @@ private slots:
     void httpFinished();
     void on_multiplayer_clicked();
     void on_server_back_clicked();
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOSINGLEPLAYER
     void gameSolo_play(const std::string &savegamesPath);
     void gameSolo_back();
     void on_solo_clicked();
@@ -180,14 +180,14 @@ private:
     ListEntryEnvolued * selectedServer;
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOSINGLEPLAYER
     SoloWindow *solowindow;
     #endif
     QString pass;
     uint64_t timeLaunched;
     QString launchedGamePath;
     bool haveLaunchedGame;
-    #ifndef __EMSCRIPTEN__
+    #ifndef NOSINGLEPLAYER
     CatchChallenger::InternalServer * internalServer;
     #endif
     QSet<QString> customServerName;
