@@ -87,3 +87,8 @@ void MainWindow::on_convert_clicked()
     buffer.seek(0);
     audio->start(&buffer);
 }
+
+void MainWindow::on_playDirectly_clicked()
+{
+    QSound(":/file.opus").play();
+}

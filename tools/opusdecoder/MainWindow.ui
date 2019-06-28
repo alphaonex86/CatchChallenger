@@ -97,6 +97,13 @@
       </property>
      </widget>
     </item>
+    <item>
+     <widget class="QPushButton" name="playDirectly">
+      <property name="text">
+       <string>Play directly</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>

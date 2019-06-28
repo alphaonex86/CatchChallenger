@@ -19,6 +19,8 @@ public:
 private slots:
     void on_convert_clicked();
 
+    void on_playDirectly_clicked();
+
 private:
     Ui::MainWindow *ui;
     QBuffer buffer;
