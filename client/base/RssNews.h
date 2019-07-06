@@ -1,7 +1,7 @@
 #ifndef RSSNEWS_H
 #define RSSNEWS_H
 
-#include <QThread>
+#include <QObject>
 #include <QList>
 #include <QString>
 #include <QTimer>
@@ -9,7 +9,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
-class RssNews : public QThread
+class RssNews : public QOject
 {
     Q_OBJECT
 public:

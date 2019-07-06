@@ -476,8 +476,12 @@ void Api_client_real::httpFinishedForDatapackListMain()
             newdata.resize(olddata.size());
             memcpy(newdata.data(),olddata.constData(),olddata.size());
             zstdDecodeThreadMain.setData(newdata);
-            zstdDecodeThreadMain.start(QThread::LowestPriority);
             zstdDecodeThreadMain.setObjectName("zstddtm");
+            #ifndef NOTHREADS
+            zstdDecodeThreadMain.start(QThread::LowestPriority);
+            #else
+            zstdDecodeThreadMain.run();
+            #endif
             return;
         }
         else

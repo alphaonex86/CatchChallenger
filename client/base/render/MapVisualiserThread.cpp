@@ -18,16 +18,20 @@
 
 MapVisualiserThread::MapVisualiserThread()
 {
+    #ifndef NOTHREADS
     moveToThread(this);
     start(QThread::IdlePriority);
+    #endif
     hideTheDoors=false;
     language=LanguagesSelect::languagesSelect->getCurrentLanguages();
 }
 
 MapVisualiserThread::~MapVisualiserThread()
 {
+    #ifndef NOTHREADS
     quit();
     wait();
+    #endif
 }
 
 void MapVisualiserThread::loadOtherMapAsync(const std::string &fileName)

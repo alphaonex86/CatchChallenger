@@ -388,7 +388,7 @@ void BaseWindow::currentMapLoaded()
             }
 
             Ambiance ambiance;
-            ambiance.player = new QAudioOutput(Audio::audio.format(), this);
+            ambiance.player = new QAudioOutput(Audio::audio.format());
             // Create a new Media
             if(ambiance.player!=NULL)
             {

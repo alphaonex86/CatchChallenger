@@ -9,7 +9,9 @@ MapDoor::MapDoor(Tiled::MapObject* object, const uint8_t &framesCount, const uin
     framesCount(framesCount),
     ms(ms)
 {
+    #ifndef NOTHREADS
     moveToThread(QApplication::instance()->thread());
+    #endif
 }
 
 MapDoor::~MapDoor()

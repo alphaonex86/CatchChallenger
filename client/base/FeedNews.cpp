@@ -17,8 +17,6 @@ FeedNews::FeedNews()
 {
     qRegisterMetaType<std::vector<FeedNews::FeedEntry> >("std::vector<FeedNews::FeedEntry>");
     setObjectName("FeedNews");
-    start();
-    moveToThread(this);
     qnam=NULL;
     if(!connect(&newUpdateTimer,&QTimer::timeout,this,&FeedNews::downloadFile))
         abort();
@@ -33,9 +31,6 @@ FeedNews::~FeedNews()
 {
     if(qnam!=NULL)
         delete qnam;
-    exit();
-    quit();
-    wait();
 }
 
 void FeedNews::downloadFile()

@@ -13,8 +13,6 @@ RssNews *RssNews::rssNews=NULL;
 RssNews::RssNews()
 {
     setObjectName("RssNews");
-    start();
-    moveToThread(this);
     qnam=NULL;
     if(!connect(&newUpdateTimer,&QTimer::timeout,this,&RssNews::downloadFile))
         abort();

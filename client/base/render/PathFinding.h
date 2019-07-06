@@ -1,12 +1,21 @@
 #ifndef PATHFINDING_H
 #define PATHFINDING_H
 
+#ifndef NOTHREADS
+#include <QThread>
+#else
 #include <QObject>
+#endif
 #include <QMutex>
 #include "../../../general/base/GeneralStructures.h"
 #include "../render/MapVisualiserThread.h"
 
-class PathFinding : public QThread
+class PathFinding
+        #ifndef NOTHREADS
+        : public QThread
+        #else
+        : public QObject
+        #endif
 {
     Q_OBJECT
 public:

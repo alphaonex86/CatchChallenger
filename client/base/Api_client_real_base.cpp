@@ -197,6 +197,7 @@ void Api_client_real::httpFinishedBase()
 
 void Api_client_real::datapackChecksumDoneBase(const std::vector<std::string> &datapackFilesList,const std::vector<char> &hash,const std::vector<uint32_t> &partialHashList)
 {
+    std::cerr << "Api_client_real::datapackChecksumDoneBase" << std::endl;
     if((uint32_t)datapackFilesListBase.size()!=partialHashList.size())
     {
         qDebug() << "datapackFilesListBase.size()!=partialHash.size():" << datapackFilesListBase.size() << "!=" << partialHashList.size();
@@ -330,8 +331,12 @@ void Api_client_real::test_mirror_base()
 
 void Api_client_real::decodedIsFinishBase()
 {
+    qDebug() << "Api_client_real::decodedIsFinishBase()";
     if(zstdDecodeThreadBase.errorFound())
+    {
+        qDebug() << "Api_client_real::decodedIsFinishBase() error";
         test_mirror_base();
+    }
     else
     {
         const std::vector<char> &decodedData=zstdDecodeThreadBase.decodedData();
@@ -372,10 +377,14 @@ void Api_client_real::decodedIsFinishBase()
                 index++;
             }
             wait_datapack_content_base=false;
+            qDebug() << "Api_client_real::decodedIsFinishBase() finish";
             datapackDownloadFinishedBase();
         }
         else
+        {
+            qDebug() << "Api_client_real::decodedIsFinishBase(): test_mirror_base()";
             test_mirror_base();
+        }
     }
 }
 
@@ -448,8 +457,13 @@ void Api_client_real::httpFinishedForDatapackListBase()
             newdata.resize(olddata.size());
             memcpy(newdata.data(),olddata.constData(),olddata.size());
             zstdDecodeThreadBase.setData(newdata);
-            zstdDecodeThreadBase.start(QThread::LowestPriority);
             zstdDecodeThreadBase.setObjectName("zstddtb");
+            #ifndef NOTHREADS
+            zstdDecodeThreadBase.start(QThread::LowestPriority);
+            #else
+            zstdDecodeThreadBase.run();
+            #endif
+            qDebug() << "datapack.tar.zst start processing";
             return;
         }
         else
@@ -647,6 +661,7 @@ void Api_client_real::httpErrorEventBase()
 
 void Api_client_real::sendDatapackContentBase(const std::string &hashBase)
 {
+    std::cerr << "Api_client_real::sendDatapackContentBase()" << std::endl;
     if(wait_datapack_content_base)
     {
         qDebug() << (QStringLiteral("already in wait of datapack content base"));
@@ -683,5 +698,6 @@ void Api_client_real::sendDatapackContentBase(const std::string &hashBase)
     wait_datapack_content_base=true;
     datapackFilesListBase=listDatapackBase();
     std::sort(datapackFilesListBase.begin(),datapackFilesListBase.end());
+    std::cerr << "Api_client_real::sendDatapackContentBase() doDifferedChecksumBase" << std::endl;
     emit doDifferedChecksumBase(mDatapackBase);
 }
