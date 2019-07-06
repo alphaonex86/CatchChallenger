@@ -1,7 +1,6 @@
 #ifndef RSSNEWS_H
 #define RSSNEWS_H
 
-#include <QThread>
 #include <vector>
 #include <string>
 #include <QTimer>
@@ -11,7 +10,7 @@
 
 #include "../../general/base/tinyXML2/tinyxml2.h"
 
-class FeedNews : public QThread
+class FeedNews : public QObject
 {
     Q_OBJECT
 public:

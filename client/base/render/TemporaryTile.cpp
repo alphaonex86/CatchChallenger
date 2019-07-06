@@ -9,7 +9,9 @@ TemporaryTile::TemporaryTile(Tiled::MapObject* object) :
     object(object),
     index(0)
 {
+    #ifndef NOTHREADS
     moveToThread(QApplication::instance()->thread());
+    #endif
     Tiled::Cell cell=object->cell();
     cell.tile=TemporaryTile::empty;
     object->setCell(cell);
