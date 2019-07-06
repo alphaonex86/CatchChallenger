@@ -95,8 +95,10 @@ DatapackClientLoader::DatapackClientLoader()
 {
     mDefaultInventoryImage=NULL;
     inProgress=false;
+    #ifndef NOTHREADS
     start();
     moveToThread(this);
+    #endif
     setObjectName("DatapackClientLoader");
 }
 
@@ -104,8 +106,10 @@ DatapackClientLoader::~DatapackClientLoader()
 {
     if(mDefaultInventoryImage==NULL)
         delete mDefaultInventoryImage;
+    #ifndef NOTHREADS
     quit();
     wait();
+    #endif
 }
 
 QPixmap DatapackClientLoader::defaultInventoryImage()
@@ -115,7 +119,9 @@ QPixmap DatapackClientLoader::defaultInventoryImage()
 
 void DatapackClientLoader::run()
 {
+    #ifndef NOTHREADS
     exec();
+    #endif
 }
 
 bool DatapackClientLoader::isParsingDatapack()

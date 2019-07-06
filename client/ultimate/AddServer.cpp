@@ -25,12 +25,35 @@ AddOrEditServer::~AddOrEditServer()
 
 int AddOrEditServer::type() const
 {
-    return ui->type->currentIndex();
+#if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
+return ui->type->currentIndex();
+#else
+    #if defined(NOTCPSOCKET)
+    return 1;
+    #else
+        #if defined(NOWEBSOCKET)
+        return 0;
+        #else
+        return -1;
+        #endif
+    #endif
+#endif
 }
 
 void AddOrEditServer::setType(const int &type)
 {
-    ui->type->setCurrentIndex(type);
+#if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
+ui->type->setCurrentIndex(type);
+#else
+    #if defined(NOTCPSOCKET)
+    ui->type->setCurrentIndex(1);
+    #else
+        #if defined(NOWEBSOCKET)
+        ui->type->setCurrentIndex(0);
+        #endif
+    #endif
+#endif
+        Q_UNUSED(type);
 }
 
 void AddOrEditServer::setEdit(const bool &edit)
@@ -47,7 +70,8 @@ void AddOrEditServer::on_ok_clicked()
         return;
     }
     ok=true;
-    close();
+    accept();
+    //close();
 }
 
 QString AddOrEditServer::server() const

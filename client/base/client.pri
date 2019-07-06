@@ -30,7 +30,7 @@ HEADERS  += \
     $$PWD/QInfiniteBuffer.h
 }
 wasm: {
-    DEFINES += NOTCPSOCKET
+    DEFINES += NOTCPSOCKET NOSINGLEPLAYER NOTHREADS
 }
 else
 {

@@ -89,6 +89,7 @@ Api_client_real::~Api_client_real()
         if(socket->state()!=QAbstractSocket::UnconnectedState)
             socket->waitForDisconnected();
     }
+    #ifndef NOTHREADS
     zstdDecodeThreadBase.exit();
     zstdDecodeThreadBase.quit();
     zstdDecodeThreadMain.exit();
@@ -99,6 +100,7 @@ Api_client_real::~Api_client_real()
     zstdDecodeThreadBase.wait();
     zstdDecodeThreadMain.wait();
     zstdDecodeThreadSub.wait();
+    #endif
 }
 
 bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)

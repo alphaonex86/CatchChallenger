@@ -1,7 +1,11 @@
 #ifndef DATAPACKCLIENTLOADER_H
 #define DATAPACKCLIENTLOADER_H
 
+#ifndef NOTHREADS
 #include <QThread>
+#else
+#include <QObject>
+#endif
 #include <QPixmap>
 #include <QHash>
 #include <string>
@@ -14,7 +18,12 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../tiled/tiled_tileset.h"
 
-class DatapackClientLoader : public QThread
+class DatapackClientLoader
+        #ifndef NOTHREADS
+        : public QThread
+        #else
+        : public QObject
+        #endif
 {
     Q_OBJECT
 public:

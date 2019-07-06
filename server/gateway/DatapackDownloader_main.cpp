@@ -264,7 +264,12 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
             }
             const CURLcode res = curl_easy_perform(curl);
             long http_code = 0;
-            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+            unsigned int retry=0;
+            do
+            {
+                curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+                retry++;
+            } while(retry<3 && res==CURLE_GOT_NOTHING);
             if(res!=CURLE_OK || http_code!=200)
             {
                 std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", error string: " << curl_easy_strerror(res) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
@@ -318,7 +323,12 @@ void DatapackDownloaderMainSub::test_mirror_main()
         }
         const CURLcode res = curl_easy_perform(curl);
         long http_code = 0;
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+        unsigned int retry=0;
+        do
+        {
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+            retry++;
+        } while(retry<3 && res==CURLE_GOT_NOTHING);
         if(res!=CURLE_OK || http_code!=200)
         {
             std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", error string: " << curl_easy_strerror(res) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
@@ -371,7 +381,12 @@ void DatapackDownloaderMainSub::test_mirror_main()
         }
         const CURLcode res = curl_easy_perform(curl);
         long http_code = 0;
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+        unsigned int retry=0;
+        do
+        {
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+            retry++;
+        } while(retry<3 && res==CURLE_GOT_NOTHING);
         if(res!=CURLE_OK || http_code!=200)
         {
             std::cerr << "get url " << url << ": " << res << " failed with code " << http_code << ", error string: " << curl_easy_strerror(res) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl;
@@ -594,6 +609,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
 
             int handle_count=0;
             CURLMsg *msg;
+            std::unordered_map<std::string,uint8_t> retry;
             do
             {
                 /*const CURLMcode res = */curl_multi_perform(DatapackDownloaderBase::curlm, &handle_count);
@@ -621,6 +637,25 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                         {
                             std::cerr << "curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url)!=CURLE_OK: " << curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &url) << ", file: " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
                             abort();
+                        }
+                        if(res==CURLE_GOT_NOTHING)
+                        {
+                            uint8_t count=1;
+                            if(retry.find(url)!=retry.cend())
+                            {
+                                retry[url]++;
+                                count=retry.at(url);
+                            }
+                            else
+                                retry[url]=1;
+                            if(count<3)
+                            {
+                                curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
+                                curl_easy_cleanup(curl);
+                                curl_multi_add_handle(DatapackDownloaderBase::curlm, url);
+                                DatapackDownloaderBase::DatapackDownloaderBase::curlmCount++;
+                                continue;
+                            }
                         }
                         if(res!=CURLE_OK || http_code!=200)
                         {

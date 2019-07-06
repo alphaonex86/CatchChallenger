@@ -3,7 +3,9 @@
 
 QZstdDecodeThread::QZstdDecodeThread()
 {
+    #ifndef NOTHREADS
     moveToThread(this);
+    #endif
 }
 
 QZstdDecodeThread::~QZstdDecodeThread()
