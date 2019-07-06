@@ -41,6 +41,8 @@ namespace Ui {
     class MainWindow;
 }
 
+class AddOrEditServer;
+
 class ConnexionInfo
 {
 public:
@@ -104,6 +106,7 @@ private slots:
     void on_deleteDatapack_clicked();
     void displayServerList();
     void on_server_add_clicked();
+    void server_add_finished();
     void saveConnexionInfoList();
     void on_server_select_clicked();
     void on_server_remove_clicked();
@@ -153,6 +156,7 @@ private:
     std::vector<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QSpacerItem *spacer;
     QSpacerItem *spacerServer;
+    AddOrEditServer *addServer;
     Ui::MainWindow *ui;
     void resetAll();
     QStringList chat_list_player_pseudo;

@@ -7,8 +7,10 @@ PathFinding::PathFinding() :
     tryCancel(false)
 {
     setObjectName("PathFinding");
+    #ifndef NOTHREADS
     start();
     moveToThread(this);
+    #endif
     if(!connect(this,&PathFinding::internalCancel,this,&PathFinding::cancel,Qt::BlockingQueuedConnection))
         abort();
     if(!connect(this,&PathFinding::emitSearchPath,this,&PathFinding::internalSearchPath,Qt::QueuedConnection))
@@ -17,10 +19,12 @@ PathFinding::PathFinding() :
 
 PathFinding::~PathFinding()
 {
+    #ifndef NOTHREADS
     exit();
     quit();
     //emit internalCancel();
     wait();
+    #endif
 }
 
 void PathFinding::searchPath(const std::unordered_map<std::string, Map_full *> &all_map,

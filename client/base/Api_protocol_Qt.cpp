@@ -1,4 +1,5 @@
 #include "Api_protocol_Qt.h"
+#include <iostream>
 
 using namespace CatchChallenger;
 
@@ -179,6 +180,7 @@ void Api_protocol_Qt::remove_to_inventory(const std::unordered_map<uint16_t,uint
 //datapack
 void Api_protocol_Qt::haveTheDatapack()
 {
+    std::cerr << "Api_protocol_Qt::haveTheDatapack()" << std::endl;
     emit QthaveTheDatapack();
 }
 void Api_protocol_Qt::haveTheDatapackMainSub()

@@ -53,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ,buffer(&data)
     #endif
 {
+    addServer=nullptr;
     qDebug() << "QStandardPaths::writableLocation(QStandardPaths::DataLocation)" << QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     serverMode=ServerMode_None;
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
@@ -211,6 +212,11 @@ MainWindow::~MainWindow()
     {
         delete completer;
         completer=NULL;
+    }
+    if(addServer!=nullptr)
+    {
+        delete addServer;
+        addServer=nullptr;
     }
     if(client!=NULL)
     {
@@ -673,6 +679,7 @@ void MainWindow::displayServerList()
     return;
     #endif
     index=0;
+    std::cout << "display mergedConnexionInfoList.size(): " << mergedConnexionInfoList.size() << std::endl;
     while(index<mergedConnexionInfoList.size())
     {
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
@@ -837,13 +844,25 @@ void MainWindow::serverListEntryEnvoluedUpdate()
 
 void MainWindow::on_server_add_clicked()
 {
-    AddOrEditServer addServer(this);
-    addServer.exec();
-    if(!addServer.isOk())
+    if(addServer!=nullptr)
+        delete addServer;
+    addServer=new AddOrEditServer(this);
+    if(!connect(addServer,&QDialog::accepted,this,&MainWindow::server_add_finished))
+        abort();
+    if(!connect(addServer,&QDialog::rejected,this,&MainWindow::server_add_finished))
+        abort();
+    addServer->show();
+}
+
+void MainWindow::server_add_finished()
+{
+    if(addServer==nullptr)
         return;
-    if(addServer.type()==0)
+    if(!addServer->isOk())
+        return;
+    if(addServer->type()==0)
     {
-        if(!addServer.server().contains(QRegularExpression("^[a-zA-Z0-9\\.:\\-_]+$")))
+        if(!addServer->server().contains(QRegularExpression("^[a-zA-Z0-9\\.:\\-_]+$")))
         {
             QMessageBox::warning(this,tr("Error"),tr("The host seam don't be a valid hostname or ip"));
             return;
@@ -851,13 +870,13 @@ void MainWindow::on_server_add_clicked()
     }
     else
     {
-        if(!addServer.server().startsWith("ws://") && !addServer.server().startsWith("wss://"))
+        if(!addServer->server().startsWith("ws://") && !addServer->server().startsWith("wss://"))
         {
             QMessageBox::warning(this,tr("Error"),tr("The web socket url seam wrong, not start with ws:// or wss://"));
             return;
         }
     }
-    if(customServerName.contains(addServer.name()))
+    if(customServerName.contains(addServer->name()))
     {
         QMessageBox::warning(this,tr("Error"),tr("The name is already taken"));
         return;
@@ -869,13 +888,13 @@ void MainWindow::on_server_add_clicked()
     connexionInfo.connexionCounter=0;
     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
 
-    connexionInfo.name=addServer.name();
+    connexionInfo.name=addServer->name();
 
-    if(addServer.type()==0)
+    if(addServer->type()==0)
     {
-        connexionInfo.port=addServer.port();
+        connexionInfo.port=addServer->port();
         #ifndef NOTCPSOCKET
-        connexionInfo.host=addServer.server();
+        connexionInfo.host=addServer->server();
         #endif
         connexionInfo.ws.clear();
     }
@@ -884,12 +903,12 @@ void MainWindow::on_server_add_clicked()
         connexionInfo.port=0;
         connexionInfo.host.clear();
         #ifndef NOWEBSOCKET
-        connexionInfo.ws=addServer.server();
+        connexionInfo.ws=addServer->server();
         #endif
     }
 
-    connexionInfo.proxyHost=addServer.proxyServer();
-    connexionInfo.proxyPort=addServer.proxyPort();
+    connexionInfo.proxyHost=addServer->proxyServer();
+    connexionInfo.proxyPort=addServer->proxyPort();
     mergedConnexionInfoList.push_back(connexionInfo);
     saveConnexionInfoList();
     displayServerList();
@@ -1816,8 +1835,8 @@ void MainWindow::downloadFile()
     reply = qnam.get(networkRequest);
     if(!connect(reply, &QNetworkReply::finished, this, &MainWindow::httpFinished))
         abort();
-    if(!connect(reply, &QNetworkReply::metaDataChanged, this, &MainWindow::metaDataChanged))
-        abort();
+    /*if(!connect(reply, &QNetworkReply::metaDataChanged, this, &MainWindow::metaDataChanged))
+        abort(); seam buggy*/
     ui->warning->setVisible(true);
     ui->warning->setText(tr("Loading the server list..."));
     ui->server_refresh->setEnabled(false);
@@ -1859,15 +1878,18 @@ void MainWindow::httpFinished()
     if (reply->error())
     {
         ui->warning->setText(tr("Get server list failed: %1").arg(reply->errorString()));
+        std::cerr << "Get server list failed: " << reply->errorString().toStdString() << std::endl;
         reply->deleteLater();
         reply=NULL;
         return;
     } else if (!redirectionTarget.isNull()) {
         ui->warning->setText(tr("Get server list redirection denied to: %1").arg(reply->errorString()));
+        std::cerr << "Get server list redirection denied to: " << reply->errorString().toStdString() << std::endl;
         reply->deleteLater();
         reply=NULL;
         return;
     }
+    std::cout << "Got new server list" << std::endl;
     ui->warning->setVisible(false);
     QByteArray content=reply->readAll();
     QFile cache(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml"));
@@ -1900,6 +1922,7 @@ void MainWindow::httpFinished()
     temp_xmlConnexionInfoList=loadXmlConnexionInfoList(content);
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    std::cout << "mergedConnexionInfoList.size(): " << mergedConnexionInfoList.size() << std::endl;
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());//qSort(mergedConnexionInfoList);
     displayServerList();
     reply->deleteLater();

@@ -1662,9 +1662,11 @@ void MapVisualiserPlayer::resetAll()
     MapVisualiser::resetAll();
     lastAction.restart();
     mapVisualiserThread.stopIt=true;
+    #ifndef NOTHREADS
     mapVisualiserThread.quit();
     mapVisualiserThread.wait();
     mapVisualiserThread.start(QThread::IdlePriority);
+    #endif
 
     //delete playerTileset;
     {

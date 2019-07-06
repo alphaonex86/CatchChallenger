@@ -1,7 +1,11 @@
 #ifndef MAPVISUALISERTHREAD_H
 #define MAPVISUALISERTHREAD_H
 
+#ifndef NOTHREADS
 #include <QThread>
+#else
+#include <QObject>
+#endif
 #include <QSet>
 #include <QString>
 #include <QHash>
@@ -27,7 +31,13 @@
 #include "TriggerAnimation.h"
 #include "MapVisualiserOrder.h"
 
-class MapVisualiserThread : public QThread, public MapVisualiserOrder
+class MapVisualiserThread
+        #ifndef NOTHREADS
+        : public QThread
+        #else
+        : public QObject
+        #endif
+        , public MapVisualiserOrder
 {
     Q_OBJECT
 public:
