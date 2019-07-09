@@ -157,8 +157,11 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     settings.beginGroup("commandUpdateDatapack");
     DatapackDownloaderBase::commandUpdateDatapackBase=settings.value("base");
+    std::cout << "commandUpdateDatapackBase: " << DatapackDownloaderBase::commandUpdateDatapackBase << std::endl;
     DatapackDownloaderMainSub::commandUpdateDatapackMain=settings.value("main");
+    std::cout << "commandUpdateDatapackMain: " << DatapackDownloaderMainSub::commandUpdateDatapackMain << std::endl;
     DatapackDownloaderMainSub::commandUpdateDatapackSub=settings.value("sub");
+    std::cout << "commandUpdateDatapackSub: " << DatapackDownloaderMainSub::commandUpdateDatapackSub << std::endl;
     settings.endGroup();
 
     settings.sync();
