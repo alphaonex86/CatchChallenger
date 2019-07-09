@@ -53,10 +53,25 @@ DatapackDownloaderBase::~DatapackDownloaderBase()
 
 void DatapackDownloaderBase::haveTheDatapack()
 {
+    std::cout << "DatapackDownloaderBase::haveTheDatapack()" << std::endl;
     if(DatapackDownloaderBase::httpDatapackMirrorBaseList.empty())
-    {
         std::cout << "Have the datapack base" << std::endl;
+
+    if(!DatapackDownloaderBase::commandUpdateDatapackBase.empty())
+    {
+        if(numberOfFileWritten>0)
+        {
+            const int ret = system(DatapackDownloaderBase::commandUpdateDatapackBase.c_str());
+            if(ret==-1)
+                std::cerr << "Unable to execute " << DatapackDownloaderBase::commandUpdateDatapackBase << std::endl;
+            else
+                std::cout << "Correctly execute " << DatapackDownloaderBase::commandUpdateDatapackBase << " with return code: " << std::to_string(ret) << std::endl;
+        }
+        else
+            std::cout << "Not execute due to no file writen " << DatapackDownloaderBase::commandUpdateDatapackBase << std::endl;
     }
+    else
+        std::cout << "No command defined" << std::endl;
 
     unsigned int index=0;
     while(index<clientInSuspend.size())
@@ -73,15 +88,6 @@ void DatapackDownloaderBase::haveTheDatapack()
         EpollClientLoginSlave::datapack_file_base.datapack_file_hash_cache=EpollClientLoginSlave::datapack_file_list(mDatapackBase);
 
     resetAll();
-
-    if(numberOfFileWritten>0 && !DatapackDownloaderBase::commandUpdateDatapackBase.empty())
-    {
-        const int ret = system(DatapackDownloaderBase::commandUpdateDatapackBase.c_str());
-        if(ret==-1)
-            std::cerr << "Unable to execute " << DatapackDownloaderBase::commandUpdateDatapackBase << std::endl;
-        else
-            std::cout << "Correctly execute " << DatapackDownloaderBase::commandUpdateDatapackBase << " with return code: " << std::to_string(ret) << std::endl;
-    }
 }
 
 void DatapackDownloaderBase::resetAll()
@@ -249,6 +255,7 @@ bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::
 
 void DatapackDownloaderBase::datapackDownloadFinishedBase()
 {
+    std::cout << "DatapackDownloaderBase::datapackDownloadFinishedBase()" << std::endl;
     haveTheDatapack();
 }
 
@@ -833,6 +840,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                             return;
                         }
                         std::cout << "Downloaded: " << url << std::endl;
+                        numberOfFileWritten++;
                         if(DatapackDownloaderBase::DatapackDownloaderBase::curlmCount<10 && !DatapackDownloaderBase::curlSuspendList.empty())
                         {
                             curl_multi_add_handle(DatapackDownloaderBase::curlm, DatapackDownloaderBase::curlSuspendList.back());
@@ -886,10 +894,10 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                 }
                 if(handle_count == 0)
                     break;
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
             }
             while(handle_count>0 || !DatapackDownloaderBase::curlSuspendList.empty() || DatapackDownloaderBase::curlmCount>0);
-            std::cout << "handle_count == 0: leave the curl loop" << " into " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            std::cout << "handle_count == 0: leave the curl loop into " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             curl_multi_cleanup(DatapackDownloaderBase::curlm);
 
             index=0;
