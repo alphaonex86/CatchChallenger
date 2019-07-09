@@ -607,6 +607,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                 index++;
             }
 
+            numberOfFileWrittenMain=0;
             int handle_count=0;
             CURLMsg *msg;
             std::unordered_map<std::string,uint8_t> retry;
@@ -685,6 +686,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                             return;
                         }
                         std::cout << "Downloaded: " << url << std::endl;
+                        numberOfFileWrittenMain++;
                         if(DatapackDownloaderBase::DatapackDownloaderBase::curlmCount<10 && !DatapackDownloaderBase::curlSuspendList.empty())
                         {
                             curl_multi_add_handle(DatapackDownloaderBase::curlm, DatapackDownloaderBase::curlSuspendList.back());
@@ -738,7 +740,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                 }
                 if(handle_count == 0)
                     break;
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
             }
             while(handle_count>0 || !DatapackDownloaderBase::curlSuspendList.empty() || DatapackDownloaderBase::curlmCount>0);
             std::cout << "handle_count == 0: leave the curl loop" << " into " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
