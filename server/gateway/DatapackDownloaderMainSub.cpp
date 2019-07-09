@@ -214,6 +214,33 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
         std::cout << "Have the datapack main sub" << std::endl;
     }
 
+    if(numberOfFileWrittenMain)
+    {
+        if(!DatapackDownloaderMainSub::commandUpdateDatapackMain.empty() && !mainDatapackCode.empty())
+        {
+            const int ret = system((DatapackDownloaderMainSub::commandUpdateDatapackMain+" "+mainDatapackCode).c_str());
+            if(ret==-1)
+                std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackMain << " " << mainDatapackCode << std::endl;
+            else
+                std::cout << "Correctly execute " << DatapackDownloaderMainSub::commandUpdateDatapackMain << " " << mainDatapackCode << " with return code: " << std::to_string(ret) << std::endl;
+        }
+    }
+    else
+        std::cout << "no change to do commandUpdateDatapackMain: " << DatapackDownloaderMainSub::commandUpdateDatapackMain << std::endl;
+    if(numberOfFileWrittenSub>0)
+    {
+        if(!DatapackDownloaderMainSub::commandUpdateDatapackSub.empty() && !mainDatapackCode.empty() && !subDatapackCode.empty())
+        {
+            const int ret = system((DatapackDownloaderMainSub::commandUpdateDatapackSub+" "+mainDatapackCode+" "+subDatapackCode).c_str());
+            if(ret==-1)
+                std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mainDatapackCode << " " << subDatapackCode << std::endl;
+            else
+                std::cout << "Correctly execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mainDatapackCode << " " << subDatapackCode << " with return code: " << std::to_string(ret) << std::endl;
+        }
+    }
+    else
+        std::cout << "no change to do commandUpdateDatapackSub: " << DatapackDownloaderMainSub::commandUpdateDatapackSub << std::endl;
+
     unsigned int index=0;
     while(index<clientInSuspend.size())
     {
@@ -232,23 +259,6 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
     }
 
     resetAll();
-
-    if(numberOfFileWrittenMain>0 && !DatapackDownloaderMainSub::commandUpdateDatapackMain.empty() && !mainDatapackCode.empty())
-    {
-        const int ret = system((DatapackDownloaderMainSub::commandUpdateDatapackMain+" "+mainDatapackCode).c_str());
-        if(ret==-1)
-            std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackMain << " " << mainDatapackCode << std::endl;
-        else
-            std::cout << "Correctly execute " << DatapackDownloaderMainSub::commandUpdateDatapackMain << " " << mainDatapackCode << " with return code: " << std::to_string(ret) << std::endl;
-    }
-    if(numberOfFileWrittenSub>0 && !DatapackDownloaderMainSub::commandUpdateDatapackSub.empty() && !mainDatapackCode.empty() && !subDatapackCode.empty())
-    {
-        const int ret = system((DatapackDownloaderMainSub::commandUpdateDatapackSub+" "+mainDatapackCode+" "+subDatapackCode).c_str());
-        if(ret==-1)
-            std::cerr << "Unable to execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mainDatapackCode << " " << subDatapackCode << std::endl;
-        else
-            std::cout << "Correctly execute " << DatapackDownloaderMainSub::commandUpdateDatapackSub << " " << mainDatapackCode << " " << subDatapackCode << " with return code: " << std::to_string(ret) << std::endl;
-    }
 }
 
 void DatapackDownloaderMainSub::checkIfContinueOrFinished()
