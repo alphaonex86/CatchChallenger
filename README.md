@@ -29,7 +29,6 @@ Dependency:
 * openssl
 * Client
   * Qt openssl enabled to have QSslSocket or QtWebSocket
-  * libogg
   * libopus
 * Server
   * Qt if generic server
