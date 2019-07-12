@@ -11,11 +11,13 @@ wasm: DEFINES += CATCHCHALLENGER_NOAUDIO
 #DEFINES += CATCHCHALLENGER_NOAUDIO
 !contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
 QT += multimedia
-linux:LIBS += -logg -lopus
-macx:LIBS += -logg -lopus
-win32:LIBS += -logg -lopus
-wasm:LIBS += -Logg -Lopus
+linux:LIBS += -lopus
+macx:LIBS += -lopus
+win32:LIBS += -lopus
+wasm:LIBS += -Lopus
 SOURCES += \
+    $$PWD/libogg/bitwise.c \
+    $$PWD/libogg/framing.c \
     $$PWD/opusfile/info.c \
     $$PWD/opusfile/internal.c \
     $$PWD/opusfile/opusfile.c \
@@ -24,6 +26,8 @@ SOURCES += \
     $$PWD/QInfiniteBuffer.cpp
 
 HEADERS  += \
+    $$PWD/libogg/ogg.h \
+    $$PWD/libogg/os_types.h \
     $$PWD/opusfile/internal.h \
     $$PWD/opusfile/opusfile.h \
     $$PWD/Audio.h \
