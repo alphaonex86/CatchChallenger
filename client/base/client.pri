@@ -28,7 +28,6 @@ SOURCES += \
 HEADERS  += \
     $$PWD/libogg/ogg.h \
     $$PWD/libogg/os_types.h \
-    $$PWD/libogg/config_types.h \
     $$PWD/opusfile/internal.h \
     $$PWD/opusfile/opusfile.h \
     $$PWD/Audio.h \
