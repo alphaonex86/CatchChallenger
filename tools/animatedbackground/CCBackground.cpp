@@ -7,7 +7,7 @@ CCBackground::CCBackground(QWidget *parent) :
     zoom=0;
 }
 
-void scalePix(QPixmap &pix,unsigned int zoom)
+void CCBackground::scalePix(QPixmap &pix,unsigned int zoom)
 {
     pix=pix.scaled(pix.width()*zoom,pix.height()*zoom);
 }
