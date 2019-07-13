@@ -369,7 +369,7 @@ bool ConnectedSocket::isValid() const
 
 void ConnectedSocket::setTcpCork(const bool &cork)
 {
-    #ifndef __EMSCRIPTEN__
+    #if ! defined(__EMSCRIPTEN__) && ! defined(ANDROID_NDK) && ! defined(__ANDROID_API__)
     #ifdef __linux__
     #ifndef NOTCPSOCKET
     if(sslSocket!=nullptr)
