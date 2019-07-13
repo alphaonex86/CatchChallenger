@@ -15,3 +15,8 @@ TRANSLATIONS    = $$PWD/languages/en/specific.ts \
     $$PWD/languages/fr/specific.ts
 
 DEFINES += CATCHCHALLENGER_VERSION_ULTIMATE
+
+ANDROID_PACKAGE_SOURCE_DIR = $$PWD/../base/android-sources
+
+DISTFILES += \
+    ../base/android-sources/AndroidManifest.xml
