@@ -24,6 +24,9 @@ else
     LIBS += -lzstd
     LIBS += -lcrypto
 }
+android: {
+INCLUDEPATH += /opt/android-sdk/ndk-r18b/platforms/android-21/arch-arm/usr/include
+}
 
 TEMPLATE = app
 
