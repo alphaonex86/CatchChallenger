@@ -5,10 +5,8 @@
 #include <iostream>
 #include <fcntl.h>
 
-#ifdef __linux__
 #include <netinet/tcp.h>
 #include <netdb.h>
-#endif
 
 using namespace CatchChallenger;
 #ifndef NOTCPSOCKET

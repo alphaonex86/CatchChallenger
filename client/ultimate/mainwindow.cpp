@@ -1275,6 +1275,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
     }
 
     settings.endGroup();
+    settings.sync();
     if(socket!=NULL)
     {
         socket->disconnectFromHost();
