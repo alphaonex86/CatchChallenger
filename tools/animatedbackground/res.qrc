@@ -3,7 +3,6 @@
         <file>treefront.png</file>
         <file>treeback.png</file>
         <file>sun.png</file>
-        <file>sky.png</file>
         <file>grass.png</file>
         <file>cloud.png</file>
     </qresource>
