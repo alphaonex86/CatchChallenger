@@ -12,6 +12,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_CCBackground->move(0,0);
     m_CCBackground->setMinimumSize(size());
     m_CCBackground->setMaximumSize(size());
+    setMinimumHeight(120);
+    setMinimumWidth(120);
 }
 
 MainWindow::~MainWindow()
