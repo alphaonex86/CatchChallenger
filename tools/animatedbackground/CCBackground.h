@@ -3,17 +3,26 @@
 
 #include <QWidget>
 #include <QPixmap>
+#include <QTimer>
 
 class CCBackground : public QWidget
 {
 public:
     CCBackground(QWidget *parent = nullptr);
     void paintEvent(QPaintEvent *) override;
-    void resizeEvent(QResizeEvent*) override;
 private:
     QPixmap cloud,grass,sun,treeback,treefront;
     void scalePix(QPixmap &pix,unsigned int zoom);
+    void grassSlot();
+    void treebackSlot();
+    void treefrontSlot();
+    unsigned int getTargetZoom();
+    void update();
+
     unsigned int zoom;
+    int grassMove,treebackMove,treefrontMove;
+    QTimer grassTimer,treebackTimer,treefrontTimer;
+    QTimer updateTimer;
 };
 
 #endif // PROGRESSBARDARK_H
