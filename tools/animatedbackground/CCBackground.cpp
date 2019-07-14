@@ -8,6 +8,18 @@ CCBackground::CCBackground(QWidget *parent) :
     zoom=0;
     setMinimumHeight(120);
     setMinimumWidth(120);
+    grassMove=0;
+    treebackMove=0;
+    treefrontMove=0;
+    connect(&grassTimer,&QTimer::timeout,this,&CCBackground::grassSlot);
+    connect(&treebackTimer,&QTimer::timeout,this,&CCBackground::treebackSlot);
+    connect(&treefrontTimer,&QTimer::timeout,this,&CCBackground::treefrontSlot);
+    unsigned int baseTime=20;
+    grassTimer.start(baseTime);
+    treefrontTimer.start(baseTime*3);
+    treebackTimer.start(baseTime*9);
+    connect(&updateTimer,&QTimer::timeout,this,&CCBackground::update);
+    updateTimer.start(40);
 }
 
 void CCBackground::scalePix(QPixmap &pix,unsigned int zoom)
@@ -15,11 +27,42 @@ void CCBackground::scalePix(QPixmap &pix,unsigned int zoom)
     pix=pix.scaled(pix.width()*zoom,pix.height()*zoom);
 }
 
-void CCBackground::resizeEvent(QResizeEvent*)
+void CCBackground::update()
 {
+    QWidget::update();
 }
 
-void CCBackground::paintEvent(QPaintEvent *)
+void CCBackground::grassSlot()
+{
+    if(grass.isNull())
+        return;
+    grassMove++;
+    unsigned int targetZoom=getTargetZoom();
+    if(grassMove>=grass.width()*targetZoom)
+        grassMove=0;
+}
+
+void CCBackground::treebackSlot()
+{
+    if(treeback.isNull())
+        return;
+    treebackMove++;
+    unsigned int targetZoom=getTargetZoom();
+    if(treebackMove>=treeback.width()*targetZoom)
+        treebackMove=0;
+}
+
+void CCBackground::treefrontSlot()
+{
+    if(treefront.isNull())
+        return;
+    treefrontMove++;
+    unsigned int targetZoom=getTargetZoom();
+    if(treefrontMove>=treefront.width()*targetZoom)
+        treefrontMove=0;
+}
+
+unsigned int CCBackground::getTargetZoom()
 {
     unsigned int targetZoomHeight=(unsigned int)height()/120;
     if(targetZoomHeight<1)
@@ -34,6 +77,12 @@ void CCBackground::paintEvent(QPaintEvent *)
     unsigned int targetZoom=targetZoomHeight;
     if(targetZoomWidth<targetZoomHeight)
         targetZoom=targetZoomWidth;
+    return targetZoom;
+}
+
+void CCBackground::paintEvent(QPaintEvent *)
+{
+    unsigned int targetZoom=getTargetZoom();
     if(zoom!=targetZoom)
     {
         //std::cout << "new zoom: " << targetZoom << " with " << width() << "*" << height() << std::endl;
@@ -93,24 +142,19 @@ void CCBackground::paintEvent(QPaintEvent *)
     unsigned int treeFrontOffset=grassOffset+4*targetZoom-treefront.height();
     unsigned int treebackOffset=grassOffset+4*targetZoom-treeback.height();
 
-    paint.drawPixmap(0,treebackOffset,treeback.width(),    treeback.height(),    treeback);
-    int lastTreebackX=treeback.width();
+    int lastTreebackX=-treebackMove;
     while(width()>lastTreebackX)
     {
         paint.drawPixmap(lastTreebackX,treebackOffset,treeback.width(),    treeback.height(),    treeback);
         lastTreebackX+=treeback.width();
     }
-
-    paint.drawPixmap(0,treeFrontOffset,treefront.width(),    treefront.height(),    treefront);
-    int lastTreefrontX=treefront.width();
+    int lastTreefrontX=-treefrontMove;
     while(width()>lastTreefrontX)
     {
         paint.drawPixmap(lastTreefrontX,treeFrontOffset,treefront.width(),    treefront.height(),    treefront);
         lastTreefrontX+=treefront.width();
     }
-
-    paint.drawPixmap(0,grassOffset,grass.width(),    grass.height(),    grass);
-    int lastGrassX=grass.width();
+    int lastGrassX=-grassMove;
     while(width()>lastGrassX)
     {
         paint.drawPixmap(lastGrassX,grassOffset,grass.width(),    grass.height(),    grass);
