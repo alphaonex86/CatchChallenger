@@ -27,11 +27,13 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         MainWindow.cpp \
-    CCBackground.cpp
+    CCBackground.cpp \
+    View.cpp
 
 HEADERS += \
         MainWindow.h \
-    CCBackground.h
+    CCBackground.h \
+    View.h
 
 FORMS += \
         MainWindow.ui
