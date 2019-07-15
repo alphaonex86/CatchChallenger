@@ -6,16 +6,20 @@
 class CustomButton : public QPushButton
 {
 public:
-    CustomButton(QPixmap pix,QWidget *parent = nullptr);
+    CustomButton(QString pix, QWidget *parent = nullptr);
+    ~CustomButton();
     void paintEvent(QPaintEvent *) override;
     void setText(const QString &text);
+    void setFont(const QFont &font);
 protected:
     void enterEvent(QEvent *e) override;
     void leaveEvent(QEvent *e) override;
 private:
-    QPixmap background;
+    QPixmap scaledBackground;
+    QString background;
     bool over;
-    QPainterPath textPath;
+    QPainterPath *textPath;
+    QFont *font;
 };
 
 #endif // PROGRESSBARDARK_H

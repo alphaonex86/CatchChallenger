@@ -2,48 +2,76 @@
 #include <QPainter>
 #include <iostream>
 
-CustomButton::CustomButton(QPixmap pix,QWidget *parent) :
+CustomButton::CustomButton(QString pix,QWidget *parent) :
     QPushButton(parent)
 {
-    setMinimumWidth(223);
-    setMinimumHeight(93);
-    setMaximumWidth(223);
-    setMaximumHeight(93);
+    textPath=nullptr;
+
+    font=new QFont();
+    font->setFamily("Comic Sans MS");
+    font->setPointSize(35);
+    font->setStyleHint(QFont::Monospace);
+    font->setBold(true);
+    font->setStyleStrategy(QFont::ForceOutline);
+
     over=false;
     background=pix;
+}
 
-    /*QFont font("Comic Sans MS");
-    font.setStyleHint(QFont::Monospace);
-    font.setBold(true);
-    font.setPixelSize(30);
-    p->setFont( font );*/
+CustomButton::~CustomButton()
+{
+    if(textPath!=nullptr)
+    {
+        delete textPath;
+        textPath=nullptr;
+    }
+    if(font!=nullptr)
+    {
+        delete font;
+        font=nullptr;
+    }
 }
 
 void CustomButton::paintEvent(QPaintEvent *)
 {
     QPainter paint;
     paint.begin(this);
-    paint.drawPixmap(0,0,background.width(),    background.height(),    background);
+    if(scaledBackground.width()!=width() || scaledBackground.height()!=height())
+    {
+        scaledBackground=background;
+        scaledBackground=scaledBackground.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+    }
+    paint.drawPixmap(0,0,width(),height(),scaledBackground);
 
-    paint.setRenderHint(QPainter::Antialiasing);
+    if(textPath!=nullptr)
+    {
+        paint.setRenderHint(QPainter::Antialiasing);
 
-    paint.setPen(QPen(QColor(217,145,0)/*penColor*/, 2/*penWidth*/, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-    paint.setBrush(Qt::white);
-    paint.drawPath(textPath);
+        paint.setPen(QPen(QColor(217,145,0)/*penColor*/, 2/*penWidth*/, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        paint.setBrush(Qt::white);
+        paint.drawPath(*textPath);
+    }
 }
 
 void CustomButton::setText(const QString &text)
 {
-    QFont timesFont("Comic Sans MS",35);
-    timesFont.setStyleHint(QFont::Monospace);
-    timesFont.setBold(true);
-    timesFont.setStyleStrategy(QFont::ForceOutline);
-    textPath=QPainterPath();
-    textPath.addText(0, 56, timesFont, text);
-    QRectF rect=textPath.boundingRect();
-    textPath=QPainterPath();
-    textPath.addText(width()/2-rect.width()/2, 56, timesFont, text);
+    if(textPath!=nullptr)
+        delete textPath;
+    QPainterPath tempPath;
+    tempPath.addText(0, 0, *font, text);
+    QRectF rect=tempPath.boundingRect();
+    textPath=new QPainterPath();
+    const int h=height();
+    const int newHeight=(h*80/100);
+    const int p=font->pointSize();
+    const int tempHeight=newHeight/2+p/2;
+    textPath->addText(width()/2-rect.width()/2, tempHeight, *font, text);
     QPushButton::setText(text);
+}
+
+void CustomButton::setFont(const QFont &font)
+{
+    *this->font=font;
 }
 
 void CustomButton::enterEvent(QEvent *e)
