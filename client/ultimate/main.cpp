@@ -4,6 +4,7 @@
 #include "../base/LocalListener.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include <iostream>
+#include <QFontDatabase>
 
 int main(int argc, char *argv[])
 {
@@ -30,6 +31,8 @@ int main(int argc, char *argv[])
         if(!localListener.tryListen())
             return 0;
     }
+
+    //QFontDatabase::addApplicationFont(":/fonts/komika_font.ttf");
 
     LanguagesSelect::languagesSelect=new LanguagesSelect();
     MainWindow w;

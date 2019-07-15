@@ -28,12 +28,12 @@ SOURCES += \
         main.cpp \
         MainWindow.cpp \
     CCBackground.cpp \
-    View.cpp
+    CustomButton.cpp
 
 HEADERS += \
         MainWindow.h \
     CCBackground.h \
-    View.h
+    CustomButton.h
 
 FORMS += \
         MainWindow.ui

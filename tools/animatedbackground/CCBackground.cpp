@@ -163,4 +163,8 @@ void CCBackground::paintEvent(QPaintEvent *)
 
     paint.drawPixmap(width()*2/3/*66%*/-sun.width()/2,sunOffset,sun.width(),    sun.height(),    sun);
     paint.drawPixmap(width()/3/*33%*/-cloud.width()/2,skyOffset+(endOfGrass-skyOffset)/4/*16%*/,cloud.width(),    cloud.height(),    cloud);
+
+    list << time();
+    if(all value>updateTimer.time())
+        stop animation
 }

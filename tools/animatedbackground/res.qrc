@@ -5,5 +5,7 @@
         <file>sun.png</file>
         <file>grass.png</file>
         <file>cloud.png</file>
+        <file>quit.png</file>
+        <file>empty.png</file>
     </qresource>
 </RCC>

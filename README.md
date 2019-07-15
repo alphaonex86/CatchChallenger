@@ -12,6 +12,8 @@ The gameplay have strong team part, but remain interresting in single player. Ha
 
 ## License
 client/tiled/ is extracted version of http://www.mapeditor.org/, https://github.com/bjorn/tiled
+libogg and fileopus is extracted from other project
+Interface UI is from buyed template (then under copyright)
 
 ## Programing
 
