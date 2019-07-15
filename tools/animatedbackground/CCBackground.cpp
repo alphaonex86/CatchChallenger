@@ -1,11 +1,12 @@
 #include "CCBackground.h"
 #include <QPainter>
-#include <iostream>
+#include <QTime>
 
 CCBackground::CCBackground(QWidget *parent) :
     QWidget(parent)
 {
     zoom=0;
+    benchmark=true;
     setMinimumHeight(120);
     setMinimumWidth(120);
     grassMove=0;
@@ -14,12 +15,12 @@ CCBackground::CCBackground(QWidget *parent) :
     connect(&grassTimer,&QTimer::timeout,this,&CCBackground::grassSlot);
     connect(&treebackTimer,&QTimer::timeout,this,&CCBackground::treebackSlot);
     connect(&treefrontTimer,&QTimer::timeout,this,&CCBackground::treefrontSlot);
-    unsigned int baseTime=20;
+    connect(&updateTimer,&QTimer::timeout,this,&CCBackground::update);
+    /*unsigned int baseTime=20;
     grassTimer.start(baseTime);
     treefrontTimer.start(baseTime*3);
     treebackTimer.start(baseTime*9);
-    connect(&updateTimer,&QTimer::timeout,this,&CCBackground::update);
-    updateTimer.start(40);
+    updateTimer.start(40);*/
 }
 
 void CCBackground::scalePix(QPixmap &pix,unsigned int zoom)
@@ -38,7 +39,7 @@ void CCBackground::grassSlot()
         return;
     grassMove++;
     unsigned int targetZoom=getTargetZoom();
-    if(grassMove>=grass.width()*targetZoom)
+    if((unsigned int)grassMove>=grass.width()*targetZoom)
         grassMove=0;
 }
 
@@ -48,7 +49,7 @@ void CCBackground::treebackSlot()
         return;
     treebackMove++;
     unsigned int targetZoom=getTargetZoom();
-    if(treebackMove>=treeback.width()*targetZoom)
+    if((unsigned int)treebackMove>=treeback.width()*targetZoom)
         treebackMove=0;
 }
 
@@ -58,7 +59,7 @@ void CCBackground::treefrontSlot()
         return;
     treefrontMove++;
     unsigned int targetZoom=getTargetZoom();
-    if(treefrontMove>=treefront.width()*targetZoom)
+    if((unsigned int)treefrontMove>=treefront.width()*targetZoom)
         treefrontMove=0;
 }
 
@@ -82,6 +83,8 @@ unsigned int CCBackground::getTargetZoom()
 
 void CCBackground::paintEvent(QPaintEvent *)
 {
+    QTime time;
+    time.start();
     unsigned int targetZoom=getTargetZoom();
     if(zoom!=targetZoom)
     {
@@ -109,6 +112,9 @@ void CCBackground::paintEvent(QPaintEvent *)
             scalePix(treeback,targetZoom);
             scalePix(treefront,targetZoom);
         }
+        grassMove=rand()%grass.width()*targetZoom;
+        treebackMove=rand()%treeback.width()*targetZoom;
+        treefrontMove=rand()%treefront.width()*targetZoom;
         zoom=targetZoom;
     }
     QPainter paint;
@@ -164,7 +170,23 @@ void CCBackground::paintEvent(QPaintEvent *)
     paint.drawPixmap(width()*2/3/*66%*/-sun.width()/2,sunOffset,sun.width(),    sun.height(),    sun);
     paint.drawPixmap(width()/3/*33%*/-cloud.width()/2,skyOffset+(endOfGrass-skyOffset)/4/*16%*/,cloud.width(),    cloud.height(),    cloud);
 
-    list << time();
-    if(all value>updateTimer.time())
-        stop animation
+    results.push_back(time.msec());
+    if(results.size()*updateTimer.interval()>1000)/*benchmark on 1s*/
+    {
+        benchmark=false;
+        unsigned int index=0;
+        while(index<results.size())
+        {
+            if(results.at(index)<(unsigned int)updateTimer.interval()/2)
+                break;
+            index++;
+        }
+        if(index>=results.size())
+        {
+            /*grassTimer.stop();
+            treebackTimer.stop();
+            treefrontTimer.stop();
+            updateTimer.stop();*/
+        }
+    }
 }
