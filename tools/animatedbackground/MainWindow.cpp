@@ -15,17 +15,12 @@ MainWindow::MainWindow(QWidget *parent) :
     setMinimumHeight(120);
     setMinimumWidth(120);
 
-    p=new CustomButton(QPixmap(":/quit.png"),m_CCBackground);
+    p=new CustomButton(":/quit.png",m_CCBackground);
     p->setText(tr("Normal"));
     if(!connect(p,&QPushButton::clicked,&QCoreApplication::quit))
         abort();
-    /*p->setStyleSheet("QPushButton::hover {background-position:left center;} QPushButton::pressed {background-position:left bottom;} "
-                     "QPushButton {background-image: url(:/quit.png);"
-                     "border-image: url(:/empty.png);color: rgb(255, 255, 255);padding-left:0px;"
-                     "padding-right:0px;padding-top:0px;padding-bottom:16px;}");
     p->setMinimumWidth(223);
-    p->setMinimumHeight(93);*/
-
+    p->setMinimumHeight(93);
     setStyleSheet("");
 
     //showFullScreen();
@@ -54,5 +49,11 @@ void MainWindow::resizeEvent(QResizeEvent *event)
         text="фхцчшщ";
         break;
     }
+    const int w=rand()%173+50;
+    const int h=rand()%73+20;
+    p->setMinimumWidth(w);
+    p->setMinimumHeight(h);
+    p->setMaximumWidth(w);
+    p->setMaximumHeight(h);
     p->setText(text);
 }

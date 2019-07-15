@@ -23,6 +23,8 @@ private:
     int grassMove,treebackMove,treefrontMove;
     QTimer grassTimer,treebackTimer,treefrontTimer;
     QTimer updateTimer;
+    bool benchmark;
+    std::vector<unsigned int> results;
 };
 
 #endif // PROGRESSBARDARK_H
