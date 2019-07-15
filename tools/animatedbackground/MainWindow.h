@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include "CCBackground.h"
-#include "View.h"
+#include "CustomButton.h"
 
 namespace Ui {
 class MainWindow;
@@ -21,8 +21,7 @@ protected:
 private:
     Ui::MainWindow *ui;
     CCBackground *m_CCBackground;
-    View *view;
-
+    CustomButton *p;
 };
 
 #endif // MAINWINDOW_H
