@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     p=new CustomButton(":/quit.png",m_CCBackground);
     p->setText(tr("Normal"));
-    if(!connect(p,&QPushButton::clicked,&QCoreApplication::quit))
+    if(!connect(p,&CustomButton::clicked,&QCoreApplication::quit))
         abort();
     p->setMinimumWidth(223);
     p->setMinimumHeight(93);

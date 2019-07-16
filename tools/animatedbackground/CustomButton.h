@@ -14,10 +14,13 @@ public:
 protected:
     void enterEvent(QEvent *e) override;
     void leaveEvent(QEvent *e) override;
+    void mousePressEvent(QMouseEvent *e) override;
+    void mouseReleaseEvent(QMouseEvent *e) override;
 private:
-    QPixmap scaledBackground;
+    QPixmap scaledBackground,scaledBackgroundPressed,scaledBackgroundOver;
     QString background;
     bool over;
+    bool pressed;
     QPainterPath *textPath;
     QFont *font;
 };
