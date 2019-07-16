@@ -16,11 +16,12 @@ CCBackground::CCBackground(QWidget *parent) :
     connect(&treebackTimer,&QTimer::timeout,this,&CCBackground::treebackSlot);
     connect(&treefrontTimer,&QTimer::timeout,this,&CCBackground::treefrontSlot);
     connect(&updateTimer,&QTimer::timeout,this,&CCBackground::update);
-    /*unsigned int baseTime=20;
+    //*
+    unsigned int baseTime=20;
     grassTimer.start(baseTime);
     treefrontTimer.start(baseTime*3);
     treebackTimer.start(baseTime*9);
-    updateTimer.start(40);*/
+    updateTimer.start(40);//*/
 }
 
 void CCBackground::scalePix(QPixmap &pix,unsigned int zoom)
@@ -84,7 +85,7 @@ unsigned int CCBackground::getTargetZoom()
 void CCBackground::paintEvent(QPaintEvent *)
 {
     QTime time;
-    time.start();
+    time.restart();
     unsigned int targetZoom=getTargetZoom();
     if(zoom!=targetZoom)
     {
@@ -170,23 +171,28 @@ void CCBackground::paintEvent(QPaintEvent *)
     paint.drawPixmap(width()*2/3/*66%*/-sun.width()/2,sunOffset,sun.width(),    sun.height(),    sun);
     paint.drawPixmap(width()/3/*33%*/-cloud.width()/2,skyOffset+(endOfGrass-skyOffset)/4/*16%*/,cloud.width(),    cloud.height(),    cloud);
 
-    results.push_back(time.msec());
-    if(results.size()*updateTimer.interval()>1000)/*benchmark on 1s*/
+    if(benchmark)
     {
-        benchmark=false;
-        unsigned int index=0;
-        while(index<results.size())
+        results.push_back(time.elapsed());
+        if(results.size()*updateTimer.interval()>1000)/*benchmark on 1s*/
         {
-            if(results.at(index)<(unsigned int)updateTimer.interval()/2)
-                break;
-            index++;
-        }
-        if(index>=results.size())
-        {
-            /*grassTimer.stop();
-            treebackTimer.stop();
-            treefrontTimer.stop();
-            updateTimer.stop();*/
+            benchmark=false;
+            unsigned int index=0;
+            unsigned int minimalTime=(unsigned int)updateTimer.interval()/2;
+            while(index<results.size())
+            {
+                if(results.at(index)<minimalTime)
+                    break;
+                index++;
+            }
+            if(index>=results.size())
+            {
+                grassTimer.stop();
+                treebackTimer.stop();
+                treefrontTimer.stop();
+                updateTimer.stop();
+            }
+            results.clear();
         }
     }
 }
