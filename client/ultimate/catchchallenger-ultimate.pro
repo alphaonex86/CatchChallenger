@@ -10,3 +10,4 @@ include(../base/multi.pri)
 include(specific.pri)
 
 TARGET = catchchallenger
+
