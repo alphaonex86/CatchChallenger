@@ -162,7 +162,8 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/GetPrice.ui \
     $$PWD/interface/NewProfile.ui \
     $$PWD/interface/NewGame.ui \
-    $$PWD/LanguagesSelect.ui
+    $$PWD/LanguagesSelect.ui \
+    $$PWD/Options.ui
 
 #commented to workaround to compil under wine
 win32:RC_FILE += $$PWD/resources/resources-windows.rc

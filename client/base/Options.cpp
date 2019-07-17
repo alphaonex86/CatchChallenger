@@ -1,10 +1,13 @@
 #include "Options.h"
+#include "ui_Options.h"
 
 #include <QCoreApplication>
 
 Options Options::options;
 
-Options::Options()
+Options::Options(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::Options)
 {
     bool ok;
     settings=new QSettings("CatchChallenger","client-options");
