@@ -1,19 +1,15 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include <QWidget>
+#include <QObject>
 #include <QSettings>
 #include <QStringList>
 
-namespace Ui {
-class Options;
-}
-
-class Options : public QWidget
+class Options : public QObject
 {
     Q_OBJECT
 private:
-    explicit Options(QWidget *parent=nullptr);
+    explicit Options();
     ~Options();
 public:
     static Options options;
@@ -42,7 +38,6 @@ public slots:
 
     void setAudioDeviceList(const QStringList &devices);
 private:
-    Ui::Options *ui;
     QSettings *settings;
     uint16_t fps;
     bool limitedFPS;
