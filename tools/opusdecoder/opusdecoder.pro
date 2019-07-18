@@ -27,15 +27,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         MainWindow.cpp \
-    opusfile/internal.c \
-    opusfile/opusfile.c \
-    opusfile/info.c \
-    opusfile/stream.c
+    qopusfile/internal.c \
+    qopusfile/opusfile.c \
+    qopusfile/info.c \
+    qopusfile/stream.cpp
 
 HEADERS += \
         MainWindow.h \
-    opusfile/internal.h \
-    opusfile/opusfile.h
+    qopusfile/internal.h \
+    qopusfile/opusfile.h
 
 FORMS += \
         MainWindow.ui

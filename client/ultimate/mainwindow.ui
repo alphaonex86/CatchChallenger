@@ -48,16 +48,10 @@
     </property>
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
-      <property name="styleSheet">
-       <string notr="true">#datapack{background-image: url(:/images/background.png);}</string>
-      </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="mode">
-       <property name="styleSheet">
-        <string notr="true">#mode{background-image: url(:/images/background.jpg);}</string>
-       </property>
        <layout class="QVBoxLayout" name="verticalLayout_9">
         <item>
          <widget class="QLabel" name="version">
@@ -237,9 +231,6 @@ color: rgb(0, 0, 0);</string>
        </layout>
       </widget>
       <widget class="QWidget" name="poolServersList">
-       <property name="styleSheet">
-        <string notr="true">#poolServersList{background-image: url(:/images/background.jpg);}</string>
-       </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
          <spacer name="verticalSpacer_login_2">
@@ -332,8 +323,8 @@ QLabel { padding:2px; }</string>
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>81</width>
-                     <height>47</height>
+                     <width>746</width>
+                     <height>245</height>
                     </rect>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -558,9 +549,6 @@ color: rgb(0, 0, 0);</string>
        </layout>
       </widget>
       <widget class="QWidget" name="datapack">
-       <property name="styleSheet">
-        <string notr="true">#datapack{background-image: url(:/images/background.jpg);}</string>
-       </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <spacer name="verticalSpacer_2">
@@ -638,8 +626,8 @@ QLabel { padding:2px; }</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>81</width>
-                   <height>47</height>
+                   <width>746</width>
+                   <height>268</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -775,9 +763,6 @@ QLabel { padding:2px; }</string>
        </layout>
       </widget>
       <widget class="QWidget" name="login">
-       <property name="styleSheet">
-        <string notr="true">#login{background-image: url(:/images/background.jpg);}</string>
-       </property>
        <layout class="QVBoxLayout" name="verticalLayout_7">
         <item>
          <spacer name="verticalSpacer_3">

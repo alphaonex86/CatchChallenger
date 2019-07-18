@@ -1,14 +1,14 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2019-07-16T21:59:54
+# Project created by QtCreator 2019-05-30T12:37:58
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
+QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = QGVanimatedbackground
+TARGET = CCprogressbar
 TEMPLATE = app
 
 # The following define makes your compiler emit warnings if you use
@@ -22,25 +22,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-CONFIG += c++11
-
-SOURCES += \
-        main.cpp \
-        MainWindow.cpp \
-    CCBackground.cpp \
-    CustomButton.cpp
+FORMS += \
+    MainWindow.ui
 
 HEADERS += \
-        MainWindow.h \
-    CCBackground.h \
-    CustomButton.h
+    MainWindow.h \
+    CCprogressbar.h
 
-FORMS +=
-
-# Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
+SOURCES += \
+    main.cpp \
+    MainWindow.cpp \
+    CCprogressbar.cpp
 
 RESOURCES += \
     res.qrc
+
+DISTFILES +=

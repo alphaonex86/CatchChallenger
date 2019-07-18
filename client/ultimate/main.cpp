@@ -1,5 +1,6 @@
 #include <QApplication>
-#include "mainwindow.h"
+#include "../base/CCBackground.h"
+#include "../base/LoadingScreen.h"
 #include "../base/LanguagesSelect.h"
 #include "../base/LocalListener.h"
 #include "../../general/base/FacilityLibGeneral.h"
@@ -19,6 +20,11 @@ int main(int argc, char *argv[])
     }
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
 
+    QFont font("Comic Sans MS");
+    font.setStyleHint(QFont::Monospace);
+    font.setBold(true);
+    QApplication::setFont(font);
+
     LocalListener localListener;
     const QStringList &arguments=QCoreApplication::arguments();
     if(arguments.size()==2 && arguments.last()=="quit")
@@ -35,13 +41,19 @@ int main(int argc, char *argv[])
     //QFontDatabase::addApplicationFont(":/fonts/komika_font.ttf");
 
     LanguagesSelect::languagesSelect=new LanguagesSelect();
-    MainWindow w;
+    /*MainWindow w;
     if(w.toQuit)
         return 523;
-    w.show();
+    w.show();*/
+    CCBackground background;
+    background.setWindowTitle(QObject::tr("CatchChallenger loading..."));
+    background.show();
+    /*LoadingScreen l;
+    l.show();*/
     const auto returnCode=a.exec();
-    if(w.toQuit)
+    /*if(w.toQuit)
         return 523;
     else
-        return returnCode;
+        return returnCode;*/
+    return returnCode;
 }

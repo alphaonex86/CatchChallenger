@@ -7,7 +7,7 @@
 class CustomButton : public QGraphicsItem
 {
 public:
-    CustomButton(QString pix);
+    CustomButton(QString pix,QGraphicsItem *item=nullptr);
     ~CustomButton();
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
     void setText(const QString &text);
