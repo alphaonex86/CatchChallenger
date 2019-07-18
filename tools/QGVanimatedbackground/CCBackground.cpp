@@ -36,7 +36,7 @@ void CCBackground::scalePix(QPixmap &pix,unsigned int zoom)
 
 void CCBackground::update()
 {
-    QGraphicsItem::update();
+    //QGraphicsItem::update();
 }
 
 void CCBackground::grassSlot()
