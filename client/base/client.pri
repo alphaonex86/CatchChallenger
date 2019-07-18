@@ -107,7 +107,10 @@ SOURCES += \
     $$PWD/Map_client.cpp \
     $$PWD/FacilityLibClient.cpp \
     $$PWD/Api_protocol_Qt.cpp \
-    $$PWD/Ultimate.cpp
+    $$PWD/Ultimate.cpp \
+    $$PWD/LoadingScreen.cpp \
+    $$PWD/CCBackground.cpp \
+    $$PWD/CustomButton.cpp
 
 HEADERS  += \
     $$PWD/render/TileLayerItem.h \
@@ -154,7 +157,10 @@ HEADERS  += \
     $$PWD/Api_client_virtual.h \
     $$PWD/FacilityLibClient.h \
     $$PWD/ClientVariableAudio.h \
-    $$PWD/Ultimate.h
+    $$PWD/Ultimate.h \
+    $$PWD/LoadingScreen.h \
+    $$PWD/CCBackground.h \
+    $$PWD/CustomButton.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
@@ -163,7 +169,7 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/NewProfile.ui \
     $$PWD/interface/NewGame.ui \
     $$PWD/LanguagesSelect.ui \
-    $$PWD/Options.ui
+    $$PWD/LoadingScreen.ui
 
 #commented to workaround to compil under wine
 win32:RC_FILE += $$PWD/resources/resources-windows.rc

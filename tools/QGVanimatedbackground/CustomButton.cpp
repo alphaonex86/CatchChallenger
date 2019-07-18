@@ -3,7 +3,8 @@
 #include <QPainter>
 #include <QWidget>
 
-CustomButton::CustomButton(QString pix)
+CustomButton::CustomButton(QString pix, QGraphicsItem *item) :
+    QGraphicsItem(item)
 {
     textPath=nullptr;
 
@@ -35,30 +36,30 @@ CustomButton::~CustomButton()
 
 void CustomButton::paint(QPainter * paint, const QStyleOptionGraphicsItem *, QWidget * widget)
 {
-    /*if(pressed) {
-            if(scaledBackgroundPressed.width()!=width() || scaledBackgroundPressed.height()!=height())
+    if(pressed) {
+            if(scaledBackgroundPressed.width()!=widget->width() || scaledBackgroundPressed.height()!=widget->height())
             {
                 QPixmap temp(background);
                 scaledBackgroundPressed=temp.copy(0,temp.height()/3,temp.width(),temp.height()/3);
-                scaledBackgroundPressed=scaledBackgroundPressed.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+                scaledBackgroundPressed=scaledBackgroundPressed.scaled(widget->width(),widget->height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
             }
-            paint->drawPixmap(0,0,width(),height(),scaledBackgroundPressed);
+            paint->drawPixmap(0,0,widget->width(),widget->height(),scaledBackgroundPressed);
     } else if(over) {
-        if(scaledBackgroundOver.width()!=width() || scaledBackgroundOver.height()!=height())
+        if(scaledBackgroundOver.width()!=widget->width() || scaledBackgroundOver.height()!=widget->height())
         {
             QPixmap temp(background);
             scaledBackgroundOver=temp.copy(0,temp.height()/3*2,temp.width(),temp.height()/3);
-            scaledBackgroundOver=scaledBackgroundOver.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+            scaledBackgroundOver=scaledBackgroundOver.scaled(widget->width(),widget->height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
         }
-        paint->drawPixmap(0,0,width(),height(),scaledBackgroundOver);
+        paint->drawPixmap(0,0,widget->width(),widget->height(),scaledBackgroundOver);
     } else {
-        if(scaledBackground.width()!=width() || scaledBackground.height()!=height())
+        if(scaledBackground.width()!=widget->width() || scaledBackground.height()!=widget->height())
         {
             QPixmap temp(background);
             scaledBackground=temp.copy(0,0,temp.width(),temp.height()/3);
-            scaledBackground=scaledBackground.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+            scaledBackground=scaledBackground.scaled(widget->width(),widget->height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
         }
-        paint->drawPixmap(0,0,width(),height(),scaledBackground);
+        paint->drawPixmap(0,0,widget->width(),widget->height(),scaledBackground);
     }
 
     if(textPath!=nullptr)
@@ -67,7 +68,7 @@ void CustomButton::paint(QPainter * paint, const QStyleOptionGraphicsItem *, QWi
         paint->setPen(QPen(QColor(217,145,0), 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
         paint->setBrush(Qt::white);
         paint->drawPath(*textPath);
-    }*/
+    }
 }
 
 void CustomButton::setText(const QString &text)

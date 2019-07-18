@@ -62,5 +62,10 @@
         <file>images/colorflags/2.png</file>
         <file>images/colorflags/3.png</file>
         <file>images/interface/option-admin.png</file>
+        <file>images/animatedbackground/cloud.png</file>
+        <file>images/animatedbackground/grass.png</file>
+        <file>images/animatedbackground/sun.png</file>
+        <file>images/animatedbackground/treeback.png</file>
+        <file>images/animatedbackground/treefront.png</file>
     </qresource>
 </RCC>
