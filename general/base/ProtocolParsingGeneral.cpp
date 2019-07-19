@@ -291,22 +291,6 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             packetFixedSize16[0x64]=2;
             #endif
 
-            //register meta type
-            #ifndef EPOLLCATCHCHALLENGERSERVER
-                qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol::tradeAddTradeMonster()
-                qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
-                qRegisterMetaType<std::vector<uint8_t> >("std::vector<uint8_t>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-                qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-                qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
-                qRegisterMetaType<std::vector<uint8_t> >("std::vector<uint8_t>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-                qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
-                qRegisterMetaType<std::vector<CharacterEntry> >("std::vector<CharacterEntry>");
-                #ifndef __EMSCRIPTEN__
-                    #if ! defined (ONLYMAPRENDER)
-                        qRegisterMetaType<QSslSocket::SslMode>("QSslSocket::SslMode");
-                    #endif
-                #endif
-            #endif
         break;
     }
 }
@@ -419,17 +403,8 @@ void ProtocolParsingInputOutput::setMaxPlayers(const uint16_t &maxPlayers)
 #endif
 
 ProtocolParsingInputOutput::ProtocolParsingInputOutput(
-        #if defined(EPOLLCATCHCHALLENGERSERVER) || defined (ONLYMAPRENDER)
-            #ifdef SERVERSSL
-                const int &infd, SSL_CTX *ctx
-            #else
-                const int &infd
-            #endif
-        #else
-        ConnectedSocket *socket
-        #endif
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        ,const PacketModeTransmission &packetModeTransmission
+        const PacketModeTransmission &packetModeTransmission
         #endif
         ) :
     ProtocolParsingBase(
@@ -437,19 +412,8 @@ ProtocolParsingInputOutput::ProtocolParsingInputOutput(
         packetModeTransmission
         #endif
         ),
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-        #ifdef SERVERSSL
-            epollSocket(infd,ctx)
-        #else
-            epollSocket(infd)
-        #endif
-    #else
-        #if ! defined (ONLYMAPRENDER)
-        socket(socket)
-        #endif
-    #endif
       #ifdef CATCHCHALLENGER_EXTRA_CHECK
-      ,parseIncommingDataCount(0)
+      parseIncommingDataCount(0)
       #endif
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK

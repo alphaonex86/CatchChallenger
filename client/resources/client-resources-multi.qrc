@@ -1,0 +1,33 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/smiles/face-wink.png</file>
+        <file>images/smiles/face-angel.png</file>
+        <file>images/smiles/face-embarrassed.png</file>
+        <file>images/smiles/face-kiss.png</file>
+        <file>images/smiles/face-laugh.png</file>
+        <file>images/smiles/face-plain.png</file>
+        <file>images/smiles/face-raspberry.png</file>
+        <file>images/smiles/face-sad.png</file>
+        <file>images/smiles/face-smile-big.png</file>
+        <file>images/smiles/face-smile.png</file>
+        <file>images/smiles/face-surprise.png</file>
+        <file>images/smiles/face-uncertain.png</file>
+        <file>images/interface/top.png</file>
+        <file>other/default_server_list.xml</file>
+        <file>images/interface/server_list/star1.png</file>
+        <file>images/interface/server_list/star2.png</file>
+        <file>images/interface/server_list/star3.png</file>
+        <file>images/interface/server_list/star4.png</file>
+        <file>images/interface/server_list/star5.png</file>
+        <file>images/interface/server_list/star6.png</file>
+        <file>images/interface/server_list/stat1.png</file>
+        <file>images/interface/server_list/stat2.png</file>
+        <file>images/interface/server_list/stat3.png</file>
+        <file>images/interface/server_list/stat4.png</file>
+        <file>images/interface/server_list/bug.png</file>
+        <file>images/multi/slow.png</file>
+        <file>images/multi/busy.png</file>
+        <file>images/multi/warning.png</file>
+        <file>images/multi/showpassword.png</file>
+    </qresource>
+</RCC>

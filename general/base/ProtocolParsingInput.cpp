@@ -6,9 +6,7 @@
 #include <iostream>
 #include <cstring>
 
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #include "zstd.h"
-#endif
 
 using namespace CatchChallenger;
 
