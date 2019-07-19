@@ -1,2 +1,0 @@
-click.ogg, crafting.ogg loading.ogg: from http://opengameart.org/
-shop.ogg, text.ogg: http://opengameart.org/content/inventory-sound-effects CC-BY 3.0, CC-BY-SA 3.0, GPL3.0, GPL2.0
