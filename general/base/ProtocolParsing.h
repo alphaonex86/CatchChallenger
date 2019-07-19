@@ -8,15 +8,6 @@
 #include <string>
 
 #include "GeneralVariable.h"
-#ifdef EPOLLCATCHCHALLENGERSERVER
-    #ifdef SERVERSSL
-        #include "../../server/epoll/EpollSslClient.h"
-    #else
-        #include "../../server/epoll/EpollClient.h"
-    #endif
-#else
-#include "ConnectedSocket.h"
-#endif
 
 #define CATCHCHALLENGER_COMMONBUFFERSIZE 4096
 
@@ -215,17 +206,8 @@ class ProtocolParsingInputOutput : public ProtocolParsingBase
 {
 public:
     ProtocolParsingInputOutput(
-        #if defined(EPOLLCATCHCHALLENGERSERVER) || defined (ONLYMAPRENDER)
-            #ifdef SERVERSSL
-                const int &infd, SSL_CTX *ctx
-            #else
-                const int &infd
-            #endif
-        #else
-        ConnectedSocket *socket
-        #endif
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        ,const PacketModeTransmission &packetModeTransmission
+        const PacketModeTransmission &packetModeTransmission
         #endif
        );
     virtual ~ProtocolParsingInputOutput();
@@ -252,17 +234,8 @@ protected:
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     ProtocolParsing::CompressionType getCompressType() const;
     #endif
-    #if defined(EPOLLCATCHCHALLENGERSERVER) || defined (ONLYMAPRENDER)
-        #ifdef SERVERSSL
-            EpollSslClient epollSocket;
-        #elif ! defined (ONLYMAPRENDER)
-            EpollClient epollSocket;
-        #endif
-    #else
-        ConnectedSocket *socket;
-    #endif
-    ssize_t read(char * data, const size_t &size);
-    ssize_t write(const char * const data, const size_t &size);
+    virtual ssize_t read(char * data, const size_t &size);
+    virtual ssize_t write(const char * const data, const size_t &size);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ProtocolParsingCheck *protocolParsingCheck;
     #endif

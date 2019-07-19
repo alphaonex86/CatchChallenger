@@ -31,8 +31,6 @@ INCLUDEPATH += /opt/android-sdk/ndk-r18b/platforms/android-21/arch-arm/usr/inclu
 TEMPLATE = app
 
 SOURCES += $$PWD/base/ChatParsing.cpp \
-    $$PWD/base/QFakeSocket.cpp \
-    $$PWD/base/QFakeServer.cpp \
     $$PWD/base/ProtocolParsingGeneral.cpp \
     $$PWD/base/ProtocolParsingInput.cpp \
     $$PWD/base/ProtocolParsingOutput.cpp \
@@ -42,7 +40,6 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/base/Map_loaderMain.cpp \
     $$PWD/base/FacilityLib.cpp \
     $$PWD/base/FacilityLibGeneral.cpp \
-    $$PWD/base/ConnectedSocket.cpp \
     $$PWD/base/DatapackGeneralLoader.cpp \
     $$PWD/base/DatapackGeneralLoaderCrafting.cpp \
     $$PWD/base/DatapackGeneralLoaderIndustry.cpp \
@@ -76,17 +73,14 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
 HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/ClientBase.h \
     $$PWD/base/ChatParsing.h \
-    $$PWD/base/QFakeServer.h \
     $$PWD/base/ProtocolParsing.h \
     $$PWD/base/ProtocolParsingCheck.h \
     $$PWD/base/MoveOnTheMap.h \
     $$PWD/base/Map_loader.h \
     $$PWD/base/CommonMap.h \
     $$PWD/base/GeneralVariable.h \
-    $$PWD/base/QFakeSocket.h \
     $$PWD/base/FacilityLib.h \
     $$PWD/base/FacilityLibGeneral.h \
-    $$PWD/base/ConnectedSocket.h \
     $$PWD/base/DatapackGeneralLoader.h \
     $$PWD/base/CommonDatapack.h \
     $$PWD/base/CommonDatapackServerSpec.h \
