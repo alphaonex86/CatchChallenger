@@ -2239,7 +2239,7 @@ void Api_protocol::have_main_and_sub_datapack_loaded()//can now load player_info
     delayedMessages.clear();
 }
 
-bool Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int &size,PlayerMonster &monster)
+int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int &size,PlayerMonster &monster)
 {
     int pos=0;
     uint32_t sub_index;
