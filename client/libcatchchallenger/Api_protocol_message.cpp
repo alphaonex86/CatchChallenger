@@ -1100,9 +1100,9 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             else
                 decompressedSize=computeDecompression(data.data()+in.device()->pos(),ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
 
-            const QByteArray data2(ProtocolParsingBase::tempBigBufferForUncompressedInput,decompressedSize);
-            QDataStream in2(data2);
-            in2.setVersion(QDataStream::Qt_4_4);in2.setByteOrder(QDataStream::LittleEndian);
+            const char * const data2=ProtocolParsingBase::tempBigBufferForUncompressedInput;
+            int pos2=0;
+            int size2=decompressedSize;
 
             //std::cout << QString(QByteArray(data.data(),data.size()).mid(0,static_cast<int>(in.device()->size())).toHex()).toStdString() << " " << std::string("%1:%2").arg(__FILE__).arg(__LINE__).toStdString() << std::endl;
 
