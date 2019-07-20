@@ -2218,7 +2218,8 @@ void Api_protocol::have_main_and_sub_datapack_loaded()//can now load player_info
 {
     if(!delayedLogin.data.empty())
     {
-        bool returnCode=parseCharacterBlockCharacter(delayedLogin.packetCode,delayedLogin.queryNumber,delayedLogin.data);
+        bool returnCode=parseCharacterBlockCharacter(delayedLogin.packetCode,delayedLogin.queryNumber,
+            delayedLogin.data.data(),delayedLogin.data.size());
         delayedLogin.data.clear();
         delayedLogin.packetCode=0;
         delayedLogin.queryNumber=0;
@@ -2229,7 +2230,7 @@ void Api_protocol::have_main_and_sub_datapack_loaded()//can now load player_info
     while(index<delayedMessages.size())
     {
         const DelayedMessage &delayedMessageTemp=delayedMessages.at(index);
-        if(!parseMessage(delayedMessageTemp.packetCode,delayedMessageTemp.data))
+        if(!parseMessage(delayedMessageTemp.packetCode,delayedMessageTemp.data.data(),delayedMessageTemp.data.size()))
         {
             delayedMessages.clear();
             return;
