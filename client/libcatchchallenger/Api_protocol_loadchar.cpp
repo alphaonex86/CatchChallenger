@@ -136,25 +136,29 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the rates_xp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.rates_xp;
+    CommonSettingsServer::commonSettingsServer.rates_xp=*reinterpret_cast<const float *>(data+pos);
+    pos+=sizeof(float);
     if((size-pos)<(int)sizeof(float))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the rates_gold, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.rates_gold;
+    CommonSettingsServer::commonSettingsServer.rates_gold=*reinterpret_cast<const float *>(data+pos);
+    pos+=sizeof(float);
     if((size-pos)<(int)sizeof(float))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the chat_allow_all, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.rates_xp_pow;
+    CommonSettingsServer::commonSettingsServer.rates_xp_pow=*reinterpret_cast<const float *>(data+pos);
+    pos+=sizeof(float);
     if((size-pos)<(int)sizeof(float))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the rates_gold, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.rates_drop;
+    CommonSettingsServer::commonSettingsServer.rates_drop=*reinterpret_cast<const float *>(data+pos);
+    pos+=sizeof(float);
 
     if((size-pos)<(int)sizeof(uint8_t))
     {
@@ -208,9 +212,8 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
                 parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            QByteArray rawText=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()),textSize);
-            CommonSettingsServer::commonSettingsServer.mainDatapackCode=std::string(rawText.data(),rawText.size());
-            in.device()->seek(in.device()->pos()+rawText.size());
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode=std::string(data+pos,textSize);
+            pos+=textSize;
 
             if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.empty())
             {
@@ -250,9 +253,8 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
                 parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            QByteArray rawText=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()),textSize);
-            CommonSettingsServer::commonSettingsServer.subDatapackCode=std::string(rawText.data(),rawText.size());
-            in.device()->seek(in.device()->pos()+rawText.size());
+            CommonSettingsServer::commonSettingsServer.subDatapackCode=std::string(data+pos,textSize);
+            pos+=textSize;
 
             if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
             {
@@ -277,9 +279,9 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the datapack checksum, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(28);
-    memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()),28).constData(),28);
-    in.device()->seek(in.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size());
+    CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+    memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+    pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
 
     if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
     {
@@ -288,9 +290,9 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the datapack checksum, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(28);
-        memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()),28).constData(),28);
-        in.device()->seek(in.device()->pos()+CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size());
+        CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+        memcpy(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),data+pos,CATCHCHALLENGER_SHA224HASH_SIZE);
+        pos+=CATCHCHALLENGER_SHA224HASH_SIZE;
     }
 
     {
@@ -309,9 +311,8 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
                 parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            QByteArray rawText=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()),mirrorSize);
-            CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=std::string(rawText.data(),rawText.size());
-            in.device()->seek(in.device()->pos()+rawText.size());
+            CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=std::string(data+pos,mirrorSize);
+            pos+=mirrorSize;;
             if(!regex_search(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer,std::regex("^https?://")))
             {
                 parseError("Procotol wrong or corrupted",std::string("mirror with not http(s) protocol with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -327,11 +328,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
     {
         if(delayedLogin.data.empty())
         {
-            QByteArray tdata=QByteArray(data.data(),data.size()).mid(
-                        static_cast<int>(in.device()->pos()),
-                        static_cast<int>(in.device()->size()-in.device()->pos())
-                        );
-            delayedLogin.data=std::string(tdata.data(),tdata.size());
+            delayedLogin.data=std::string(data+pos,size-pos);
             delayedLogin.packetCode=packetCode;
             delayedLogin.queryNumber=queryNumber;
             return true;
@@ -350,11 +347,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
     {
         if(delayedLogin.data.empty())
         {
-            QByteArray tdata=QByteArray(data.data(),data.size()).mid(
-                        static_cast<int>(in.device()->pos()),
-                        static_cast<int>(in.device()->size()-in.device()->pos())
-                        );
-            delayedLogin.data=std::string(tdata.data(),tdata.size());
+            delayedLogin.data=std::string(data+pos,size-pos);
             delayedLogin.packetCode=packetCode;
             delayedLogin.queryNumber=queryNumber;
             return true;
@@ -370,12 +363,8 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         }
     }
 
-    QByteArray tdata=QByteArray(data.data(),data.size()).mid(
-                static_cast<int>(in.device()->pos()),
-                static_cast<int>(in.device()->size()-in.device()->pos())
-                );
-    delayedLogin.data=std::string(tdata.data(),tdata.size());
-    parseCharacterBlockCharacter(packetCode,queryNumber,std::string(tdata.data(),tdata.size()));
+    delayedLogin.data=std::string(data+pos,size-pos);
+    parseCharacterBlockCharacter(packetCode,queryNumber,data+pos,size-pos);
     return true;
 }
 
@@ -456,9 +445,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            QByteArray rawText=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()),textSize);
-            player_informations.public_informations.pseudo=std::string(rawText.data(),rawText.size());
-            in.device()->seek(in.device()->pos()+rawText.size());
+            player_informations.public_informations.pseudo=std::string(data+pos,textSize);
+            pos+=textSize;
         }
         else
             player_informations.public_informations.pseudo.clear();
@@ -613,14 +601,15 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     if(ProtocolParsingBase::compressionTypeClient==CompressionType::None)
     {
         decompressedSize=sub_size32;
-        memcpy(ProtocolParsingBase::tempBigBufferForUncompressedInput,data.data()+in.device()->pos(),sub_size32);
+        memcpy(ProtocolParsingBase::tempBigBufferForUncompressedInput,data+pos,sub_size32);
     }
     else
-        decompressedSize=computeDecompression(data.data()+in.device()->pos(),ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
+        decompressedSize=computeDecompression(data+pos,ProtocolParsingBase::tempBigBufferForUncompressedInput,
+            sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
     {
-        const QByteArray data2(ProtocolParsingBase::tempBigBufferForUncompressedInput,decompressedSize);
-        QDataStream in2(data2);
-        in2.setVersion(QDataStream::Qt_4_4);in2.setByteOrder(QDataStream::LittleEndian);
+        const char * const data2=ProtocolParsingBase::tempBigBufferForUncompressedInput;
+        int pos2=0;
+        int size2=decompressedSize;
 
         //alloc
         if(player_informations.recipes!=NULL)
@@ -676,8 +665,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
-            pos+=sizeof(uint16_t);
+            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data2+pos2));
+            pos2+=sizeof(uint16_t);
             if(sub_size16>0)
             {
                 if((size2-pos2)<sub_size16)
@@ -688,11 +677,11 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 if(CommonDatapack::commonDatapack.crafingRecipesMaxId>0)
                 {
                     if(sub_size16>CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1)
-                        memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+                        memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
                     else
-                        memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                        memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }
-                in2.device()->seek(in2.device()->pos()+sub_size16);
+                in2.device()->seek(pos2+sub_size16);
             }
         }
 
@@ -703,8 +692,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
-            pos+=sizeof(uint16_t);
+            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data2+pos2));
+            pos2+=sizeof(uint16_t);
             if(sub_size16>0)
             {
                 if((size2-pos2)<sub_size16)
@@ -715,11 +704,11 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 if(CommonDatapack::commonDatapack.monstersMaxId>0)
                 {
                     if(sub_size16>CommonDatapack::commonDatapack.monstersMaxId/8+1)
-                        memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapack::commonDatapack.monstersMaxId/8+1);
+                        memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.monstersMaxId/8+1);
                     else
-                        memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                        memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }
-                in2.device()->seek(in2.device()->pos()+sub_size16);
+                in2.device()->seek(pos2+sub_size16);
             }
         }
 
@@ -730,8 +719,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
-            pos+=sizeof(uint16_t);
+            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data2+pos2));
+            pos2+=sizeof(uint16_t);
             if(sub_size16>0)
             {
                 if((size2-pos2)<sub_size16)
@@ -742,11 +731,11 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 if(CommonDatapack::commonDatapack.items.itemMaxId>0)
                 {
                     if(sub_size16>CommonDatapack::commonDatapack.items.itemMaxId/8+1)
-                        memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+                        memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
                     else
-                        memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
+                        memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }
-                in2.device()->seek(in2.device()->pos()+sub_size16);
+                in2.device()->seek(pos2+sub_size16);
             }
         }
 
@@ -755,13 +744,13 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in2.device()->seek(in2.device()->pos()+sizeof(uint8_t));
+        in2.device()->seek(pos2+sizeof(uint8_t));
 
-        if(in2.device()->size()!=in2.device()->pos())
+        if(in2.device()->size()!=pos2)
         {
             parseError("Procotol wrong or corrupted","wrong size to get the in2.device()->size() "+
-                                                                 std::to_string(in2.device()->size())+" != in2.device()->pos() "+
-                                                                 std::to_string(in2.device()->pos())+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                                                 std::to_string(in2.device()->size())+" != pos2 "+
+                                                                 std::to_string(pos2)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
     }
@@ -833,9 +822,9 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     else
         decompressedSize=computeDecompression(data.data()+in.device()->pos(),ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
     {
-        const QByteArray data2(ProtocolParsingBase::tempBigBufferForUncompressedInput,decompressedSize);
-        QDataStream in2(data2);
-        in2.setVersion(QDataStream::Qt_4_4);in2.setByteOrder(QDataStream::LittleEndian);
+        const char * const data2=ProtocolParsingBase::tempBigBufferForUncompressedInput;
+        int pos2=0;
+        int size2=decompressedSize;
 
         //alloc
         if(player_informations.bot_already_beaten!=NULL)
@@ -855,8 +844,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
-            pos+=sizeof(uint16_t);
+            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data2+pos2));
+            pos2+=sizeof(uint16_t);
             if(sub_size16>0)
             {
                 if((size2-pos2)<sub_size16)
@@ -865,18 +854,18 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     return false;
                 }
                 if(sub_size16>CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1)
-                    memcpy(player_informations.bot_already_beaten,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+                    memcpy(player_informations.bot_already_beaten,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
                 else
-                    memcpy(player_informations.bot_already_beaten,ProtocolParsingBase::tempBigBufferForUncompressedInput+in2.device()->pos(),sub_size16);
-                in2.device()->seek(in2.device()->pos()+sub_size16);
+                    memcpy(player_informations.bot_already_beaten,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,sub_size16);
+                in2.device()->seek(pos2+sub_size16);
             }
         }
 
-        if(in2.device()->size()!=in2.device()->pos())
+        if(in2.device()->size()!=pos2)
         {
             parseError("Procotol wrong or corrupted","wrong size to get the in2.device()->size() "+
-                       std::to_string(in2.device()->size())+" != in2.device()->pos() "+
-                       std::to_string(in2.device()->pos())+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                       std::to_string(in2.device()->size())+" != pos2 "+
+                       std::to_string(pos2)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
     }
