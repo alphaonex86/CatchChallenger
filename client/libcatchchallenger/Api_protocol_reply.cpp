@@ -19,10 +19,6 @@ using namespace CatchChallenger;
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/GeneralType.h"
 
-#include <QCoreApplication>
-#include <QRegularExpression>
-#include <QDataStream>
-
 #ifdef BENCHMARKMUTIPLECLIENT
 #include <iostream>
 #include <fstream>
@@ -66,7 +62,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         case 0xA0:
         {
             //Protocol initialization
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -151,7 +147,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         //Get first data and send the login
         case 0xA8:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -205,19 +201,19 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                );
                     return false;
                 }
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+                if((size-pos)<(int)sizeof(uint32_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the max_pseudo_size, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 in >> CommonSettingsCommon::commonSettingsCommon.character_delete_time;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                if((size-pos)<(int)sizeof(uint8_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the max_character, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 in >> CommonSettingsCommon::commonSettingsCommon.max_character;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                if((size-pos)<(int)sizeof(uint8_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the min_character, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
@@ -228,37 +224,37 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError("Procotol wrong or corrupted","max_character<min_character, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                if((size-pos)<(int)sizeof(uint8_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the max_pseudo_size, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 in >> CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                if((size-pos)<(int)sizeof(uint8_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the maxPlayerMonsters, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 in >> CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
+                if((size-pos)<(int)sizeof(uint16_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the maxWarehousePlayerMonsters, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 in >> CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                if((size-pos)<(int)sizeof(uint8_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the maxPlayerItems, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 in >> CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
+                if((size-pos)<(int)sizeof(uint16_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the maxWarehousePlayerItems, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 in >> CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<28)
+                if((size-pos)<28)
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the datapack checksum, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
@@ -268,7 +264,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 in.device()->seek(in.device()->pos()+CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
                 {
                     //the mirror
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                    if((size-pos)<(int)sizeof(uint8_t))
                     {
                         QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -280,7 +276,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     in >> mirrorSize;
                     if(mirrorSize>0)
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)mirrorSize)
+                        if((size-pos)<(int)mirrorSize)
                         {
                             QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                             parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -302,7 +298,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 }
                 //characters
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                    if((size-pos)<(int)sizeof(uint8_t))
                     {
                         QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -315,7 +311,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     uint8_t charatersGroupIndex=0;
                     while(charatersGroupIndex<charatersGroupSize)
                     {
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                        if((size-pos)<(int)sizeof(uint8_t))
                         {
                             QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                             parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -335,7 +331,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         {
                             CharacterEntry characterEntry;
                             //characterId
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+                            if((size-pos)<(int)sizeof(uint32_t))
                             {
                                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -346,7 +342,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                             in >> characterEntry.character_id;
                             {
                                 //pseudo
-                                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                                if((size-pos)<(int)sizeof(uint8_t))
                                 {
                                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -358,7 +354,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                 in >> pseudoSize;
                                 if(pseudoSize>0)
                                 {
-                                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)pseudoSize)
+                                    if((size-pos)<(int)pseudoSize)
                                     {
                                         QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -372,7 +368,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                 }
                             }
                             //Skin id
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                            if((size-pos)<(int)sizeof(uint8_t))
                             {
                                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -382,7 +378,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                             }
                             in >> characterEntry.skinId;
                             //Time left before delete
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+                            if((size-pos)<(int)sizeof(uint32_t))
                             {
                                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -392,7 +388,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                             }
                             in >> characterEntry.delete_time_left;
                             //Played time
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+                            if((size-pos)<(int)sizeof(uint32_t))
                             {
                                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -402,7 +398,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                             }
                             in >> characterEntry.played_time;
                             //Last connect
-                            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+                            if((size-pos)<(int)sizeof(uint32_t))
                             {
                                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -429,7 +425,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 }
                 //servers
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                    if((size-pos)<(int)sizeof(uint8_t))
                     {
                         QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -443,7 +439,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     while(serverListIndex<serverListSize)
                     {
                         //Server index
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+                        if((size-pos)<(int)sizeof(uint8_t))
                         {
                             QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                             parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -454,7 +450,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         uint8_t serverIndex;
                         in >> serverIndex;
                         //Played time
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+                        if((size-pos)<(int)sizeof(uint32_t))
                         {
                             QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                             parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -465,7 +461,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         uint32_t playedTime;
                         in >> playedTime;
                         //Last connect
-                        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+                        if((size-pos)<(int)sizeof(uint32_t))
                         {
                             QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                             parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -514,7 +510,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         //Account creation
         case 0xA9:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -555,7 +551,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         //Get the character id return
         case 0xAA:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -565,7 +561,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             }
             uint8_t returnCode;
             in >> returnCode;
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+            if((size-pos)<(int)(sizeof(uint32_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -582,7 +578,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         //Get the character id return
         case 0xAB:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -600,7 +596,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         //get the character selection return on game server
         case 0x93:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -701,7 +697,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             switch(returnCode)
             {
                 case 0x01:
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+                    if((size-pos)<(int)sizeof(uint32_t))
                         clanActionSuccess(0);
                     else
                     {
@@ -726,7 +722,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         //Use seed into dirt
         case 0x83:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -750,7 +746,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         //Collect mature plant
         case 0x84:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -781,7 +777,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         //Usage of recipe
         case 0x85:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -813,7 +809,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         {
             const uint16_t item=lastObjectUsed.front();
             lastObjectUsed.erase(lastObjectUsed.cbegin());
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -848,7 +844,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         //Get shop list
         case 0x87:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint16_t)))
+            if((size-pos)<(int)(sizeof(uint16_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -862,7 +858,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             std::vector<ItemToSellOrBuy> items;
             while(index<shopListSize)
             {
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)*2+sizeof(uint16_t)))
+                if((size-pos)<(int)(sizeof(uint32_t)*2+sizeof(uint16_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -883,7 +879,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         //Buy object
         case 0x88:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -902,7 +898,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 break;
                 case 0x03:
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                    if((size-pos)<(int)(sizeof(uint32_t)))
                     {
                         QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -928,7 +924,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         //Sell object
         case 0x89:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -947,7 +943,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 break;
                 case 0x03:
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                    if((size-pos)<(int)(sizeof(uint32_t)))
                     {
                         QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -972,7 +968,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         break;
         case 0x8A:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+            if((size-pos)<(int)(sizeof(uint32_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -982,7 +978,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             }
             uint32_t remainingProductionTime;
             in >> remainingProductionTime;
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+            if((size-pos)<(int)(sizeof(uint32_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -997,7 +993,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             std::vector<ItemToSellOrBuy> resources;
             while(index<shopListSize)
             {
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)*2+sizeof(uint16_t)))
+                if((size-pos)<(int)(sizeof(uint32_t)*2+sizeof(uint16_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1012,7 +1008,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 resources.push_back(item);
                 index++;
             }
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint16_t)))
+            if((size-pos)<(int)(sizeof(uint16_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1025,7 +1021,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             std::vector<ItemToSellOrBuy> products;
             while(index<shopListSize)
             {
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)*2+sizeof(uint16_t)))
+                if((size-pos)<(int)(sizeof(uint32_t)*2+sizeof(uint16_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1045,7 +1041,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         break;
         case 0x8B:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1064,7 +1060,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 break;
                 case 0x02:
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                    if((size-pos)<(int)(sizeof(uint32_t)))
                     {
                         QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1089,7 +1085,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         break;
         case 0x8C:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1108,7 +1104,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 break;
                 case 0x02:
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                    if((size-pos)<(int)(sizeof(uint32_t)))
                     {
                         QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1138,7 +1134,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             std::vector<MarketMonster> marketMonsterList;
             std::vector<MarketObject> marketOwnObjectList;
             std::vector<MarketMonster> marketOwnMonsterList;
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint64_t)))
+            if((size-pos)<(int)(sizeof(uint64_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1148,7 +1144,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             }
             quint64 cash;
             in >> cash;
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+            if((size-pos)<(int)(sizeof(uint32_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1161,7 +1157,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             while(index<listSize)
             {
                 MarketObject marketObject;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                if((size-pos)<(int)(sizeof(uint32_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1170,7 +1166,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> marketObject.marketObjectUniqueId;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint16_t)))
+                if((size-pos)<(int)(sizeof(uint16_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1179,7 +1175,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> marketObject.item;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                if((size-pos)<(int)(sizeof(uint32_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1188,7 +1184,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> marketObject.quantity;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint64_t)))
+                if((size-pos)<(int)(sizeof(uint64_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1207,7 +1203,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             while(index<listSize)
             {
                 MarketMonster marketMonster;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                if((size-pos)<(int)(sizeof(uint32_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1216,7 +1212,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> marketMonster.index;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint16_t)))
+                if((size-pos)<(int)(sizeof(uint16_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1225,7 +1221,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> marketMonster.monster;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+                if((size-pos)<(int)(sizeof(uint8_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1234,7 +1230,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> marketMonster.level;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint64_t)))
+                if((size-pos)<(int)(sizeof(uint64_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1253,7 +1249,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             while(index<listSize)
             {
                 MarketObject marketObject;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                if((size-pos)<(int)(sizeof(uint32_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1262,7 +1258,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> marketObject.marketObjectUniqueId;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint16_t)))
+                if((size-pos)<(int)(sizeof(uint16_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1271,7 +1267,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> marketObject.item;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                if((size-pos)<(int)(sizeof(uint32_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1280,7 +1276,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> marketObject.quantity;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint64_t)))
+                if((size-pos)<(int)(sizeof(uint64_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1299,7 +1295,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             while(index<listSize)
             {
                 MarketMonster marketMonster;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                if((size-pos)<(int)(sizeof(uint32_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1308,7 +1304,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> marketMonster.index;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint16_t)))
+                if((size-pos)<(int)(sizeof(uint16_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1317,7 +1313,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> marketMonster.monster;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+                if((size-pos)<(int)(sizeof(uint8_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1326,7 +1322,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     return false;
                 }
                 in >> marketMonster.level;
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint64_t)))
+                if((size-pos)<(int)(sizeof(uint64_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1345,7 +1341,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         break;
         case 0x8E:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1379,7 +1375,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         }
         break;
         case 0x8F:
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1403,7 +1399,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             }
         break;
         case 0x90:
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint64_t)))
+            if((size-pos)<(int)(sizeof(uint64_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1417,7 +1413,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
         break;
         case 0x91:
         {
-            if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+            if((size-pos)<(int)(sizeof(uint8_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1440,7 +1436,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
             }
             if(returnCode==0x01)
             {
-                if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint8_t)))
+                if((size-pos)<(int)(sizeof(uint8_t)))
                 {
                     QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1461,7 +1457,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                 }
                 if(returnType==0x01)
                 {
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                    if((size-pos)<(int)(sizeof(uint32_t)))
                     {
                         QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
@@ -1471,7 +1467,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     }
                     uint32_t objectId;
                     in >> objectId;
-                    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)(sizeof(uint32_t)))
+                    if((size-pos)<(int)(sizeof(uint32_t)))
                     {
                         QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+

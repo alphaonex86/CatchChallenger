@@ -294,43 +294,21 @@ bool Api_protocol::tryLogin(const std::string &login, const std::string &pass)
         newError(std::string("Internal problem"),std::string("Token is empty"));
         return false;
     }
-    std::string outputData;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    std::string tempDoubleHash;
-    #endif
+    char outputData[CATCHCHALLENGER_SHA224HASH_SIZE*2];
     {
-        QCryptographicHash hashLogin(QCryptographicHash::Sha224);
-        hashLogin.addData((QString::fromStdString(login)+/*salt*/"RtR3bm9Z1DFMfAC3").toUtf8());
-        loginHash=std::string(hashLogin.result().constData(),hashLogin.result().size());
-        outputData+=loginHash;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        {
-            QCryptographicHash hashLogin2(QCryptographicHash::Sha224);
-            hashLogin2.addData(QByteArray(loginHash.data(),loginHash.size()));
-            tempDoubleHash=std::string(hashLogin2.result().data(),hashLogin2.result().size());
-        }
-        #endif
+        std::string loginAndSalt=login+/*salt*/"RtR3bm9Z1DFMfAC3";
+        hashSha224(loginAndSalt.data(),loginAndSalt.size(),outputData);
     }
-    QCryptographicHash hashAndToken(QCryptographicHash::Sha224);
     {
-        QCryptographicHash hashPass(QCryptographicHash::Sha224);
-        hashPass.addData((QString::fromStdString(pass)+/*salt*/"AwjDvPIzfJPTTgHs"+QString::fromStdString(login)/*add unique salt*/).toUtf8());
-        passHash=std::string(hashPass.result().data(),hashPass.result().size());
+        char passHash[CATCHCHALLENGER_SHA224HASH_SIZE];
+        std::string passAndSaltAndLogin=pass+/*salt*/"AwjDvPIzfJPTTgHs"+login;
+        hashSha224(passAndSaltAndLogin.data(),passAndSaltAndLogin.size(),passHash);
 
-        hashAndToken.addData(QByteArray(passHash.data(),passHash.size()));
-        hashAndToken.addData(QByteArray(token.data(),token.size()));
-        outputData+=std::string(hashAndToken.result().data(),hashAndToken.result().size());
+        std::string hashAndTokenString=std::string(passHash,CATCHCHALLENGER_SHA224HASH_SIZE)+token;
+        hashSha224(hashAndTokenString.data(),hashAndTokenString.size(),outputData+CATCHCHALLENGER_SHA224HASH_SIZE);
     }
-    /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
-    std::cout << "Try auth: password " << binarytoHexa(passHash.data(),passHash.size())
-              << ", token: " << binarytoHexa(token.data(),token.size())
-              << ", password+token " << binarytoHexa(hashAndToken.result().data(),hashAndToken.result().size())
-              << " (" << binarytoHexa(tempDoubleHash.data(),tempDoubleHash.size())
-              << ") for the login: "
-              << binarytoHexa(passHash.data(),passHash.size());
-    #endif*/
 
-    packOutcommingQuery(0xA8,queryNumber(),outputData.data(),outputData.size());
+    packOutcommingQuery(0xA8,queryNumber(),outputData,sizeof(outputData));
     return true;
 }
 
@@ -349,16 +327,12 @@ bool Api_protocol::tryCreateAccount()
     /*double hashing on client part
      * '''Prevent login leak in case of MiM attack re-ask the password''' (Trafic modification, replace the server return code OK by ACCOUNT CREATION)
      * Do some DDOS protection because it offload the hashing */
-    std::string outputData;
-    {
-        QCryptographicHash hashLogin(QCryptographicHash::Sha224);
-        hashLogin.addData(QByteArray(loginHash.data(),loginHash.size()));
-        outputData+=std::string(hashLogin.result().data(),hashLogin.result().size());
-    }
+    char outputData[CATCHCHALLENGER_SHA224HASH_SIZE+passHash.size()];
+    hashSha224(loginHash.data(),loginHash.size(),outputData);
     //pass
-    outputData+=passHash;
+    memcpy(outputData+CATCHCHALLENGER_SHA224HASH_SIZE,passHash.data(),passHash.size());
 
-    packOutcommingQuery(0xA9,queryNumber(),outputData.data(),outputData.size());
+    packOutcommingQuery(0xA9,queryNumber(),outputData,sizeof(outputData));
     std::cout << "Try create account: login: " << binarytoHexa(loginHash.data(),loginHash.size())
               << " and pass: " << binarytoHexa(passHash.data(),passHash.size()) << std::endl;
     return true;
@@ -444,12 +418,10 @@ void Api_protocol::send_player_move_internal(const uint8_t &moved_unit,const Cat
         std::cerr << "direction given wrong: " << directionInt << std::endl;
         abort();
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << moved_unit;
-    out << directionInt;
-    packOutcommingData(0x02,outputData.constData(),outputData.size());
+    char buffer[2];
+    buffer[0]=moved_unit;
+    buffer[1]=directionInt;
+    packOutcommingData(0x02,buffer,sizeof(buffer));
 }
 
 void Api_protocol::send_player_direction(const Direction &the_direction)
@@ -484,22 +456,16 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const std::string &te
         std::cerr << "chatType wrong: " << chatType << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)chatType;
+    if(text.size()>255)
     {
-        const std::string &tempText=text;
-        if(tempText.size()>255)
-        {
-            std::cerr << "text in Utf8 too big, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-            return;
-        }
-        out << (uint8_t)tempText.size();
-        outputData+=QByteArray(tempText.data(),tempText.size());
-        out.device()->seek(out.device()->pos()+tempText.size());
+        std::cerr << "text in Utf8 too big, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
     }
-    packOutcommingData(0x03,outputData.constData(),outputData.size());
+    char buffer[2+text.size()];
+    buffer[0]=(uint8_t)chatType;
+    buffer[1]=(uint8_t)text.size();
+    memcmp(buffer,text.data(),text.size());
+    packOutcommingData(0x03,buffer,sizeof(buffer));
 }
 
 void Api_protocol::sendPM(const std::string &text,const std::string &pseudo)
@@ -516,33 +482,23 @@ void Api_protocol::sendPM(const std::string &text,const std::string &pseudo)
     }
     if(this->player_informations.public_informations.pseudo==pseudo)
         return;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)Chat_type_pm;
+    if(text.size()>255)
     {
-        const std::string &tempText=text;
-        if(tempText.size()>255)
-        {
-            std::cerr << "text in Utf8 too big, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-            return;
-        }
-        out << (uint8_t)tempText.size();
-        outputData+=QByteArray(tempText.data(),tempText.size());
-        out.device()->seek(out.device()->pos()+tempText.size());
+        std::cerr << "text in Utf8 too big, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
     }
+    if(pseudo.size()>255)
     {
-        const std::string &tempText=pseudo;
-        if(tempText.size()>255)
-        {
-            std::cerr << "text in Utf8 too big, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-            return;
-        }
-        out << (uint8_t)tempText.size();
-        outputData+=QByteArray(tempText.data(),tempText.size());
-        out.device()->seek(out.device()->pos()+tempText.size());
+        std::cerr << "text in Utf8 too big, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
     }
-    packOutcommingData(0x03,outputData.constData(),outputData.size());
+    char buffer[2+text.size()+1+pseudo.size()];
+    buffer[0]=(uint8_t)Chat_type_pm;
+    buffer[1]=text.size();
+    memcpy(buffer+2,text.data(),text.size());
+    buffer[2+text.size()]=pseudo.size();
+    memcpy(buffer+2+text.size()+1,pseudo.data(),pseudo.size());
+    packOutcommingData(0x03,buffer,sizeof(buffer));
 }
 
 bool Api_protocol::teleportDone()
@@ -589,24 +545,14 @@ bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_
         newError(std::string("Internal problem"),"skin provided: "+std::to_string(skinId)+" is not into profile "+std::to_string(profileIndex)+" forced skin list");
         return false;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)charactersGroupIndex;
-    out << (uint8_t)profileIndex;
-    {
-        const std::string &rawPseudo=toUTF8WithHeader(pseudo);
-        if(rawPseudo.size()>255 || rawPseudo.empty())
-        {
-            std::cerr << "rawPseudo too big or not compatible with utf8" << std::endl;
-            return false;
-        }
-        outputData+=QByteArray(rawPseudo.data(),rawPseudo.size());
-        out.device()->seek(out.device()->size());
-    }
-    out << (uint8_t)monsterGroupId;
-    out << (uint8_t)skinId;
-    is_logged=packOutcommingQuery(0xAA,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[2+1+pseudo.size()+2];
+    buffer[0]=(uint8_t)charactersGroupIndex;
+    buffer[1]=(uint8_t)profileIndex;
+    buffer[2]=pseudo.size();
+    memcpy(buffer+3,pseudo.data(),pseudo.size());
+    buffer[3+pseudo.size()]=(uint8_t)monsterGroupId;
+    buffer[3+pseudo.size()+1]=(uint8_t)skinId;
+    is_logged=packOutcommingQuery(0xAA,queryNumber(),buffer,sizeof(buffer));
     return true;
 }
 
@@ -617,12 +563,11 @@ bool Api_protocol::removeCharacter(const uint8_t &charactersGroupIndex,const uin
         std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)charactersGroupIndex;
-    out << characterId;
-    is_logged=packOutcommingQuery(0xAB,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1+4];
+    buffer[0]=(uint8_t)charactersGroupIndex;
+    const uint32_t &characterIdLittleEndian=htole32(characterId);
+    memcpy(buffer+1,&characterIdLittleEndian,sizeof(characterIdLittleEndian));
+    is_logged=packOutcommingQuery(0xAB,queryNumber(),buffer,sizeof(buffer));
     return true;
 }
 
@@ -669,13 +614,13 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
     }
 
     character_select_send=true;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)charactersGroupIndex;
-    out << (uint32_t)serverUniqueKey;
-    out << characterId;
-    is_logged=packOutcommingQuery(0xAC,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1+4+4];
+    buffer[0]=(uint8_t)charactersGroupIndex;
+    const uint32_t &serverUniqueKeyLittleEndian=htole32(serverUniqueKey);
+    memcpy(buffer+1,&serverUniqueKeyLittleEndian,sizeof(serverUniqueKeyLittleEndian));
+    const uint32_t &characterIdLittleEndian=htole32(characterId);
+    memcpy(buffer+1+4,&characterIdLittleEndian,sizeof(characterIdLittleEndian));
+    is_logged=packOutcommingQuery(0xAC,queryNumber(),buffer,sizeof(buffer));
     this->selectedServerIndex=serverIndex;
     //std::cout << "this: " << this << ", socket: " << socket << ", select char: " << characterId << ", charactersGroupIndex: " << (uint32_t)charactersGroupIndex << ", serverUniqueKey: " << serverUniqueKey << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
     return true;
@@ -718,12 +663,10 @@ void Api_protocol::monsterMoveUp(const uint8_t &number)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x01;
-    out << number;
-    packOutcommingData(0x0D,outputData.constData(),outputData.size());
+    char buffer[2];
+    buffer[0]=(uint8_t)0x01;
+    buffer[1]=number;
+    packOutcommingData(0x0D,buffer,sizeof(buffer));
 }
 
 void Api_protocol::confirmEvolutionByPosition(const uint8_t &monterPosition)
@@ -738,11 +681,9 @@ void Api_protocol::confirmEvolutionByPosition(const uint8_t &monterPosition)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)monterPosition;
-    packOutcommingData(0x0F,outputData.constData(),outputData.size());
+    char buffer[2];
+    buffer[0]=(uint8_t)monterPosition;
+    packOutcommingData(0x0F,buffer,sizeof(buffer));
 }
 
 void Api_protocol::monsterMoveDown(const uint8_t &number)
@@ -758,12 +699,10 @@ void Api_protocol::monsterMoveDown(const uint8_t &number)
         return;
     }
     std::cerr << "confirm evolution of monster position: " << std::to_string(number) << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x02;
-    out << number;
-    packOutcommingData(0x0D,outputData.constData(),outputData.size());
+    char buffer[2];
+    buffer[0]=(uint8_t)0x02;
+    buffer[1]=number;
+    packOutcommingData(0x0D,buffer,sizeof(buffer));
 }
 
 //inventory
@@ -779,12 +718,12 @@ void Api_protocol::destroyObject(const uint16_t &object, const uint32_t &quantit
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << object;
-    out << quantity;
-    packOutcommingData(0x13,outputData.constData(),outputData.size());
+    char buffer[2+4];
+    const uint16_t &objectLittleEndian=htole16(object);
+    memcpy(buffer,&objectLittleEndian,sizeof(objectLittleEndian));
+    const uint32_t &quantityLittleEndian=htole32(quantity);
+    memcpy(buffer+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    packOutcommingData(0x13,buffer,sizeof(buffer));
 }
 
 bool Api_protocol::useObject(const uint16_t &object)
@@ -799,11 +738,10 @@ bool Api_protocol::useObject(const uint16_t &object)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << object;
-    packOutcommingQuery(0x86,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[2];
+    const uint16_t &objectLittleEndian=htole16(object);
+    memcpy(buffer,&objectLittleEndian,sizeof(objectLittleEndian));
+    packOutcommingQuery(0x86,queryNumber(),buffer,sizeof(buffer));
     lastObjectUsed.push_back(object);
     return true;
 }
@@ -820,12 +758,11 @@ bool Api_protocol::useObjectOnMonsterByPosition(const uint16_t &object,const uin
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << object;
-    out << monsterPosition;
-    packOutcommingData(0x10,outputData.constData(),outputData.size());
+    char buffer[2+1];
+    const uint16_t &objectLittleEndian=htole16(object);
+    memcpy(buffer,&objectLittleEndian,sizeof(objectLittleEndian));
+    buffer[2]=monsterPosition;
+    packOutcommingData(0x10,buffer,sizeof(buffer));
     return true;
 }
 
@@ -843,36 +780,42 @@ void Api_protocol::wareHouseStore(const int64_t &cash, const std::vector<std::pa
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (quint64)cash;
+    char buffer[8+2+(2+4)+4+(4)+4+(4)];
+    const uint64_t &cashLittleEndian=htole64(cash);
+    memcpy(buffer,&cashLittleEndian,sizeof(cashLittleEndian));
 
-    out << (uint16_t)items.size();
+    const uint16_t &index16=htole16(items.size());
+    memcpy(buffer+8,&index16,sizeof(index16));
     unsigned int index=0;
     while(index<items.size())
     {
-        out << (uint16_t)items.at(index).first;
-        out << (int32_t)items.at(index).second;
+        const uint16_t &index16=htole16(items.at(index).first);
+        memcpy(buffer+8+2+(2+4)*index,&index16,sizeof(index16));
+        const uint32_t &index32=htole32(items.at(index).second);
+        memcpy(buffer+8+2+(2+4)*index+2,&index32,sizeof(index32));
         index++;
     }
 
-    out << (uint32_t)withdrawMonsters.size();
+    uint32_t index32=htole32(withdrawMonsters.size());
+    memcpy(buffer+8+2+(2+4)*items.size(),&index32,sizeof(index32));
     index=0;
     while(index<withdrawMonsters.size())
     {
-        out << (uint32_t)withdrawMonsters.at(index);
+        uint32_t index32=htole32(withdrawMonsters.at(index));
+        memcpy(buffer+8+2+(2+4)*items.size()+4+4*index,&index32,sizeof(index32));
         index++;
     }
-    out << (uint32_t)depositeMonsters.size();
+    index32=htole32(depositeMonsters.size());
+    memcpy(buffer+8+2+(2+4)*items.size()+4+4*withdrawMonsters.size(),&index32,sizeof(index32));
     index=0;
     while(index<depositeMonsters.size())
     {
-        out << (uint32_t)depositeMonsters.at(index);
+        index32=htole32(depositeMonsters.at(index));
+        memcpy(buffer+8+2+(2+4)*items.size()+4+4*withdrawMonsters.size()+4+4*index,&index32,sizeof(index32));
         index++;
     }
 
-    packOutcommingData(0x17,outputData.constData(),outputData.size());
+    packOutcommingData(0x17,buffer,sizeof(buffer));
 }
 
 void Api_protocol::takeAnObjectOnMap()
@@ -893,11 +836,10 @@ void Api_protocol::getShopList(const uint16_t &shopId)/// \see CommonMap, std::u
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)shopId;
-    packOutcommingQuery(0x87,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[2];
+    const uint16_t &shopIdLittleEndian=htole16(shopId);
+    memcpy(buffer,&shopIdLittleEndian,sizeof(shopIdLittleEndian));
+    packOutcommingQuery(0x87,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::buyObject(const uint16_t &shopId, const uint16_t &objectId, const uint32_t &quantity, const uint32_t &price)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
@@ -912,14 +854,16 @@ void Api_protocol::buyObject(const uint16_t &shopId, const uint16_t &objectId, c
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)shopId;
-    out << (uint16_t)objectId;
-    out << (uint32_t)quantity;
-    out << (uint32_t)price;
-    packOutcommingQuery(0x88,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[2+2+4+4];
+    const uint16_t &shopIdLittleEndian=htole16(shopId);
+    memcpy(buffer,&shopIdLittleEndian,sizeof(shopIdLittleEndian));
+    const uint16_t &objectIdLittleEndian=htole16(objectId);
+    memcpy(buffer+2,&objectIdLittleEndian,sizeof(objectIdLittleEndian));
+    const uint32_t &quantityLittleEndian=htole32(quantity);
+    memcpy(buffer+2+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    const uint32_t &priceLittleEndian=htole32(price);
+    memcpy(buffer+2+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
+    packOutcommingQuery(0x88,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::sellObject(const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
@@ -934,14 +878,16 @@ void Api_protocol::sellObject(const uint16_t &shopId,const uint16_t &objectId,co
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)shopId;
-    out << (uint16_t)objectId;
-    out << (uint32_t)quantity;
-    out << (uint32_t)price;
-    packOutcommingQuery(0x89,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[2+2+4+4];
+    const uint16_t &shopIdLittleEndian=htole16(shopId);
+    memcpy(buffer,&shopIdLittleEndian,sizeof(shopIdLittleEndian));
+    const uint16_t &objectIdLittleEndian=htole16(objectId);
+    memcpy(buffer+2,&objectIdLittleEndian,sizeof(objectIdLittleEndian));
+    const uint32_t &quantityLittleEndian=htole32(quantity);
+    memcpy(buffer+2+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    const uint32_t &priceLittleEndian=htole32(price);
+    memcpy(buffer+2+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
+    packOutcommingQuery(0x89,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::getFactoryList(const uint16_t &factoryId)
@@ -956,11 +902,10 @@ void Api_protocol::getFactoryList(const uint16_t &factoryId)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)factoryId;
-    packOutcommingQuery(0x8A,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[2];
+    const uint16_t &factoryIdLittleEndian=htole16(factoryId);
+    memcpy(buffer,&factoryIdLittleEndian,sizeof(factoryIdLittleEndian));
+    packOutcommingQuery(0x8A,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::buyFactoryProduct(const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
@@ -975,14 +920,16 @@ void Api_protocol::buyFactoryProduct(const uint16_t &factoryId,const uint16_t &o
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)factoryId;
-    out << (uint16_t)objectId;
-    out << (uint32_t)quantity;
-    out << (uint32_t)price;
-    packOutcommingQuery(0x8B,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[2+2+4+4];
+    const uint16_t &factoryIdLittleEndian=htole16(factoryId);
+    memcpy(buffer,&factoryIdLittleEndian,sizeof(factoryIdLittleEndian));
+    const uint16_t &objectIdLittleEndian=htole16(objectId);
+    memcpy(buffer+2,&objectIdLittleEndian,sizeof(objectIdLittleEndian));
+    const uint32_t &quantityLittleEndian=htole32(quantity);
+    memcpy(buffer+2+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    const uint32_t &priceLittleEndian=htole32(price);
+    memcpy(buffer+2+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
+    packOutcommingQuery(0x8B,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::sellFactoryResource(const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
@@ -997,14 +944,16 @@ void Api_protocol::sellFactoryResource(const uint16_t &factoryId,const uint16_t 
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)factoryId;
-    out << (uint16_t)objectId;
-    out << (uint32_t)quantity;
-    out << (uint32_t)price;
-    packOutcommingQuery(0x8C,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[2+2+4+4];
+    const uint16_t &factoryIdLittleEndian=htole16(factoryId);
+    memcpy(buffer,&factoryIdLittleEndian,sizeof(factoryIdLittleEndian));
+    const uint16_t &objectIdLittleEndian=htole16(objectId);
+    memcpy(buffer+2,&objectIdLittleEndian,sizeof(objectIdLittleEndian));
+    const uint32_t &quantityLittleEndian=htole32(quantity);
+    memcpy(buffer+2+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    const uint32_t &priceLittleEndian=htole32(price);
+    memcpy(buffer+2+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
+    packOutcommingQuery(0x8C,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::tryEscape()
@@ -1059,11 +1008,10 @@ void Api_protocol::requestFight(const uint16_t &fightId)
         std::cerr << "player_informations.bot_already_beaten["+std::to_string(fightId)+"], line: " << __FILE__ << ": " << __LINE__ << std::endl;
         abort();
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)fightId;
-    packOutcommingData(0x0C,outputData.constData(),outputData.size());
+    char buffer[2];
+    const uint16_t &fightIdLittleEndian=htole16(fightId);
+    memcpy(buffer,&fightIdLittleEndian,sizeof(fightIdLittleEndian));
+    packOutcommingData(0x0C,buffer,sizeof(buffer));
 }
 
 void Api_protocol::changeOfMonsterInFightByPosition(const uint8_t &monsterPosition)
@@ -1078,11 +1026,9 @@ void Api_protocol::changeOfMonsterInFightByPosition(const uint8_t &monsterPositi
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)monsterPosition;
-    packOutcommingData(0x0E,outputData.constData(),outputData.size());
+    char buffer[1];
+    buffer[0]=(uint8_t)monsterPosition;
+    packOutcommingData(0x0E,buffer,sizeof(buffer));
 }
 
 void Api_protocol::useSkill(const uint16_t &skill)
@@ -1097,11 +1043,10 @@ void Api_protocol::useSkill(const uint16_t &skill)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)skill;
-    packOutcommingData(0x11,outputData.constData(),outputData.size());
+    char buffer[2];
+    const uint16_t &skillLittleEndian=htole16(skill);
+    memcpy(buffer,&skillLittleEndian,sizeof(skillLittleEndian));
+    packOutcommingData(0x11,buffer,sizeof(buffer));
 }
 
 void Api_protocol::learnSkillByPosition(const uint8_t &monsterPosition,const uint16_t &skill)
@@ -1116,12 +1061,11 @@ void Api_protocol::learnSkillByPosition(const uint8_t &monsterPosition,const uin
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)monsterPosition;
-    out << (uint16_t)skill;
-    packOutcommingData(0x09,outputData.constData(),outputData.size());
+    char buffer[1+2];
+    buffer[0]=monsterPosition;
+    const uint16_t &skillLittleEndian=htole16(skill);
+    memcpy(buffer+1,&skillLittleEndian,sizeof(skillLittleEndian));
+    packOutcommingData(0x09,buffer,sizeof(buffer));
 }
 
 void Api_protocol::startQuest(const uint16_t &questId)
@@ -1136,11 +1080,10 @@ void Api_protocol::startQuest(const uint16_t &questId)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)questId;
-    packOutcommingData(0x1B,outputData.constData(),outputData.size());
+    char buffer[2];
+    const uint16_t &questIdLittleEndian=htole16(questId);
+    memcpy(buffer,&questIdLittleEndian,sizeof(questIdLittleEndian));
+    packOutcommingData(0x1B,buffer,sizeof(buffer));
 }
 
 void Api_protocol::finishQuest(const uint16_t &questId)
@@ -1155,11 +1098,10 @@ void Api_protocol::finishQuest(const uint16_t &questId)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)questId;
-    packOutcommingData(0x1C,outputData.constData(),outputData.size());
+    char buffer[2];
+    const uint16_t &questIdLittleEndian=htole16(questId);
+    memcpy(buffer,&questIdLittleEndian,sizeof(questIdLittleEndian));
+    packOutcommingData(0x1C,buffer,sizeof(buffer));
 }
 
 void Api_protocol::cancelQuest(const uint16_t &questId)
@@ -1174,11 +1116,10 @@ void Api_protocol::cancelQuest(const uint16_t &questId)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)questId;
-    packOutcommingData(0x1D,outputData.constData(),outputData.size());
+    char buffer[2];
+    const uint16_t &questIdLittleEndian=htole16(questId);
+    memcpy(buffer,&questIdLittleEndian,sizeof(questIdLittleEndian));
+    packOutcommingData(0x1D,buffer,sizeof(buffer));
 }
 
 void Api_protocol::nextQuestStep(const uint16_t &questId)
@@ -1193,11 +1134,10 @@ void Api_protocol::nextQuestStep(const uint16_t &questId)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)questId;
-    packOutcommingData(0x1E,outputData.constData(),outputData.size());
+    char buffer[2];
+    const uint16_t &questIdLittleEndian=htole16(questId);
+    memcpy(buffer,&questIdLittleEndian,sizeof(questIdLittleEndian));
+    packOutcommingData(0x1E,buffer,sizeof(buffer));
 }
 
 void Api_protocol::createClan(const std::string &name)
@@ -1212,21 +1152,16 @@ void Api_protocol::createClan(const std::string &name)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x01;
+    if(name.size()>255 || name.empty())
     {
-        const std::string &rawText=toUTF8WithHeader(name);
-        if(rawText.size()>255 || rawText.empty())
-        {
-            std::cerr << "rawText too big or not compatible with utf8" << std::endl;
-            return;
-        }
-        outputData+=QByteArray(rawText.data(),rawText.size());
-        out.device()->seek(out.device()->size());
+        std::cerr << "rawText too big or not compatible with utf8" << std::endl;
+        return;
     }
-    packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1+1+name.size()];
+    buffer[0]=(uint8_t)0x01;
+    buffer[1]=name.size();
+    memcpy(buffer+1+1,name.data(),name.size());
+    packOutcommingQuery(0x92,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::leaveClan()
@@ -1241,11 +1176,9 @@ void Api_protocol::leaveClan()
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x02;
-    packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1];
+    buffer[0]=(uint8_t)0x02;
+    packOutcommingQuery(0x92,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::dissolveClan()
@@ -1260,11 +1193,9 @@ void Api_protocol::dissolveClan()
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x03;
-    packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1];
+    buffer[0]=(uint8_t)0x03;
+    packOutcommingQuery(0x92,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::inviteClan(const std::string &pseudo)
@@ -1279,21 +1210,16 @@ void Api_protocol::inviteClan(const std::string &pseudo)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x04;
+    if(pseudo.size()>255 || pseudo.empty())
     {
-        const std::string &rawText=toUTF8WithHeader(pseudo);
-        if(rawText.size()>255 || rawText.empty())
-        {
-            std::cerr << "rawText too big or not compatible with utf8" << std::endl;
-            return;
-        }
-        outputData+=QByteArray(rawText.data(),rawText.size());
-        out.device()->seek(out.device()->size());
+        std::cerr << "rawText too big or not compatible with utf8" << std::endl;
+        return;
     }
-    packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1+1+pseudo.size()];
+    buffer[0]=(uint8_t)0x04;
+    buffer[1]=(uint8_t)pseudo.size();
+    memcpy(buffer+1+1,pseudo.data(),pseudo.size());
+    packOutcommingQuery(0x92,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::ejectClan(const std::string &pseudo)
@@ -1308,21 +1234,16 @@ void Api_protocol::ejectClan(const std::string &pseudo)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x05;
+    if(pseudo.size()>255 || pseudo.empty())
     {
-        const std::string &rawText=toUTF8WithHeader(pseudo);
-        if(rawText.size()>255 || rawText.empty())
-        {
-            std::cerr << "rawText too big or not compatible with utf8" << std::endl;
-            return;
-        }
-        outputData+=QByteArray(rawText.data(),rawText.size());
-        out.device()->seek(out.device()->size());
+        std::cerr << "rawText too big or not compatible with utf8" << std::endl;
+        return;
     }
-    packOutcommingQuery(0x92,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1+1+pseudo.size()];
+    buffer[0]=(uint8_t)0x05;
+    buffer[1]=(uint8_t)pseudo.size();
+    memcpy(buffer+1+1,pseudo.data(),pseudo.size());
+    packOutcommingQuery(0x92,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::inviteAccept(const bool &accept)
@@ -1337,14 +1258,12 @@ void Api_protocol::inviteAccept(const bool &accept)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    char buffer[1];
     if(accept)
-        out << (uint8_t)0x01;
+        buffer[0]=(uint8_t)0x01;
     else
-        out << (uint8_t)0x02;
-    packOutcommingData(0x04,outputData.constData(),outputData.size());
+        buffer[0]=(uint8_t)0x02;
+    packOutcommingData(0x04,buffer,sizeof(buffer));
 }
 
 void Api_protocol::waitingForCityCapture(const bool &cancel)
@@ -1359,14 +1278,12 @@ void Api_protocol::waitingForCityCapture(const bool &cancel)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
+    char buffer[1];
     if(!cancel)
-        out << (uint8_t)0x00;
+        buffer[0]=(uint8_t)0x00;
     else
-        out << (uint8_t)0x01;
-    packOutcommingData(0x1F,outputData.constData(),outputData.size());
+        buffer[0]=(uint8_t)0x01;
+    packOutcommingData(0x1F,buffer,sizeof(buffer));
 }
 
 //market
@@ -1397,13 +1314,13 @@ void Api_protocol::buyMarketObject(const uint32_t &marketObjectId, const uint32_
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x01;
-    out << marketObjectId;
-    out << quantity;
-    packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1+4+4];
+    buffer[0]=(uint8_t)0x01;
+    const uint32_t &marketObjectIdLittleEndian=htole32(marketObjectId);
+    memcpy(buffer+1,&marketObjectIdLittleEndian,sizeof(marketObjectIdLittleEndian));
+    const uint32_t &quantityLittleEndian=htole32(quantity);
+    memcpy(buffer+1+4,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    packOutcommingQuery(0x8E,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::buyMarketMonster(const uint32_t &monsterMarketId)
@@ -1418,12 +1335,11 @@ void Api_protocol::buyMarketMonster(const uint32_t &monsterMarketId)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x02;
-    out << monsterMarketId;
-    packOutcommingQuery(0x8E,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1+4];
+    buffer[0]=(uint8_t)0x02;
+    const uint32_t &monsterMarketIdLittleEndian=htole32(monsterMarketId);
+    memcpy(buffer+1,&monsterMarketIdLittleEndian,sizeof(monsterMarketIdLittleEndian));
+    packOutcommingQuery(0x8E,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::putMarketObject(const uint16_t &objectId, const uint32_t &quantity, const uint64_t &price)
@@ -1438,14 +1354,15 @@ void Api_protocol::putMarketObject(const uint16_t &objectId, const uint32_t &qua
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x01;
-    out << (quint16)objectId;
-    out << (quint32)quantity;
-    out << (quint64)price;
-    packOutcommingQuery(0x8F,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1+2+4+8];
+    buffer[0]=(uint8_t)0x01;
+    const uint16_t &objectIdIdLittleEndian=htole16(objectId);
+    memcpy(buffer+1,&objectIdIdLittleEndian,sizeof(objectIdIdLittleEndian));
+    const uint32_t &quantityLittleEndian=htole32(quantity);
+    memcpy(buffer+1+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    const uint64_t &priceLittleEndian=htole64(price);
+    memcpy(buffer+1+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
+    packOutcommingQuery(0x8F,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::putMarketMonsterByPosition(const uint8_t &monsterPosition,const uint64_t &price)
@@ -1460,13 +1377,12 @@ void Api_protocol::putMarketMonsterByPosition(const uint8_t &monsterPosition,con
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x02;
-    out << (uint8_t)monsterPosition;
-    out << (quint64)price;
-    packOutcommingQuery(0x8F,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1+1+8];
+    buffer[0]=(uint8_t)0x02;
+    buffer[1]=monsterPosition;
+    const uint64_t &priceLittleEndian=htole64(price);
+    memcpy(buffer+1+1,&priceLittleEndian,sizeof(priceLittleEndian));
+    packOutcommingQuery(0x8F,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::recoverMarketCash()
@@ -1496,13 +1412,13 @@ void Api_protocol::withdrawMarketObject(const uint16_t &objectPosition,const uin
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x01;
-    out << objectPosition;
-    out << quantity;
-    packOutcommingQuery(0x91,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1+2+4];
+    buffer[0]=(uint8_t)0x01;
+    const uint16_t &objectPositionLittleEndian=htole16(objectPosition);
+    memcpy(buffer+1,&objectPositionLittleEndian,sizeof(objectPositionLittleEndian));
+    const uint32_t &quantityLittleEndian=htole32(quantity);
+    memcpy(buffer+1+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    packOutcommingQuery(0x91,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::withdrawMarketMonster(const uint32_t &monsterMarketId)
@@ -1517,12 +1433,11 @@ void Api_protocol::withdrawMarketMonster(const uint32_t &monsterMarketId)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x02;
-    out << monsterMarketId;
-    packOutcommingQuery(0x91,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[1+4];
+    buffer[0]=(uint8_t)0x02;
+    const uint32_t &monsterMarketIdLittleEndian=htole32(monsterMarketId);
+    memcpy(buffer+1,&monsterMarketIdLittleEndian,sizeof(monsterMarketIdLittleEndian));
+    packOutcommingQuery(0x91,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::collectMaturePlant()
@@ -1556,11 +1471,10 @@ void Api_protocol::useRecipe(const uint16_t &recipeId)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint16_t)recipeId;
-    packOutcommingQuery(0x85,queryNumber(),outputData.constData(),outputData.size());
+    char buffer[2];
+    const uint16_t &recipeIdLittleEndian=htole16(recipeId);
+    memcpy(buffer,&recipeIdLittleEndian,sizeof(recipeIdLittleEndian));
+    packOutcommingQuery(0x85,queryNumber(),buffer,sizeof(buffer));
 }
 
 void Api_protocol::addRecipe(const uint16_t &recipeId)
@@ -1590,11 +1504,8 @@ void Api_protocol::battleRefused()
         newError(std::string("Internal problem"),std::string("no battle request to refuse"));
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x02;
-    postReplyData(battleRequestId.front(),outputData.data(),outputData.size());
+    char buffer[1]={0x02};
+    postReplyData(battleRequestId.front(),buffer,sizeof(buffer));
     battleRequestId.erase(battleRequestId.cbegin());
 }
 
@@ -1615,11 +1526,8 @@ void Api_protocol::battleAccepted()
         newError(std::string("Internal problem"),std::string("no battle request to accept"));
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x01;
-    postReplyData(battleRequestId.front(),outputData.data(),outputData.size());
+    char buffer[1]={0x01};
+    postReplyData(battleRequestId.front(),buffer,sizeof(buffer));
     battleRequestId.erase(battleRequestId.cbegin());
 }
 
@@ -1641,11 +1549,8 @@ void Api_protocol::tradeRefused()
         newError(std::string("Internal problem"),std::string("no trade request to refuse"));
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x02;
-    postReplyData(tradeRequestId.front(),outputData.data(),outputData.size());
+    char buffer[1]={0x02};
+    postReplyData(tradeRequestId.front(),buffer,sizeof(buffer));
     tradeRequestId.erase(tradeRequestId.cbegin());
 }
 
@@ -1666,11 +1571,8 @@ void Api_protocol::tradeAccepted()
         newError(std::string("Internal problem"),std::string("no trade request to accept"));
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x01;
-    postReplyData(tradeRequestId.front(),outputData.constData(),outputData.size());
+    char buffer[1]={0x01};
+    postReplyData(tradeRequestId.front(),buffer,sizeof(buffer));
     tradeRequestId.erase(tradeRequestId.cbegin());
     isInTrade=true;
 }
@@ -1738,12 +1640,10 @@ void Api_protocol::addTradeCash(const uint64_t &cash)
         newError(std::string("Internal problem"),std::string("no in trade to send cash"));
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x01;
-    out << (quint64)cash;
-    packOutcommingData(0x14,outputData.data(),outputData.size());
+    char buffer[1+8]={0x01};
+    const uint64_t &cashLittleEndian=htole64(cash);
+    memcpy(buffer+1,&cashLittleEndian,sizeof(cashLittleEndian));
+    packOutcommingData(0x14,buffer,sizeof(buffer));
 }
 
 void Api_protocol::addObject(const uint16_t &item, const uint32_t &quantity)
@@ -1768,13 +1668,12 @@ void Api_protocol::addObject(const uint16_t &item, const uint32_t &quantity)
         newError(std::string("Internal problem"),std::string("no in trade to send object"));
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x02;
-    out << item;
-    out << quantity;
-    packOutcommingData(0x14,outputData.constData(),outputData.size());
+    char buffer[1+2+4]={0x02};
+    const uint16_t &itemLittleEndian=htole16(item);
+    memcpy(buffer+1,&itemLittleEndian,sizeof(itemLittleEndian));
+    const uint32_t &quantityLittleEndian=htole32(quantity);
+    memcpy(buffer+1+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    packOutcommingData(0x14,buffer,sizeof(buffer));
 }
 
 void Api_protocol::addMonsterByPosition(const uint8_t &monsterPosition)
@@ -1794,12 +1693,9 @@ void Api_protocol::addMonsterByPosition(const uint8_t &monsterPosition)
         newError(std::string("Internal problem"),std::string("no in trade to send monster"));
         return;
     }
-    QByteArray outputData;
-    QDataStream out(&outputData, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_4_4);out.setByteOrder(QDataStream::LittleEndian);
-    out << (uint8_t)0x03;
-    out << monsterPosition;
-    packOutcommingData(0x14,outputData.constData(),outputData.size());
+    char buffer[1+1]={0x03};
+    buffer[1]=monsterPosition;
+    packOutcommingData(0x14,buffer,sizeof(buffer));
 }
 
 Api_protocol::StageConnexion Api_protocol::stage() const
@@ -1864,7 +1760,7 @@ void Api_protocol::resetAll()
     tradeRequestId.clear();
     isInBattle=false;
     battleRequestId.clear();
-    mDatapackBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
+    mDatapackBase="datapack/";
     mDatapackMain=mDatapackBase+"map/main/[main]/";
     mDatapackSub=mDatapackMain+"sub/[sub]/";
     CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
@@ -2343,60 +2239,61 @@ void Api_protocol::have_main_and_sub_datapack_loaded()//can now load player_info
     delayedMessages.clear();
 }
 
-bool Api_protocol::dataToPlayerMonster(QDataStream &in,PlayerMonster &monster)
+bool Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int &size,PlayerMonster &monster)
 {
-    quint32 sub_index;
+    int pos=0;
+    uint32_t sub_index;
     PlayerBuff buff;
     PlayerMonster::PlayerSkill skill;
-    /*if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
-    {
-        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster id bd, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
-    }
-    in >> monster.id;*/
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
+    if((size-pos)<(int)sizeof(uint16_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster id, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> monster.monster;
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+    monster.monster=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+    pos+=sizeof(uint16_t);
+    if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> monster.level;
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+    monster.level=*(data+pos);
+    pos+=sizeof(uint8_t);
+    if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster remaining_xp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> monster.remaining_xp;
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+    monster.remaining_xp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+    pos+=sizeof(uint32_t);
+    if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster hp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> monster.hp;
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+    monster.hp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+    pos+=sizeof(uint32_t);
+    if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster sp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> monster.sp;
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
+    monster.sp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+    pos+=sizeof(uint32_t);
+    if((size-pos)<(int)sizeof(uint16_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster captured_with, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> monster.catched_with;
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+    monster.catched_with=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+    pos+=sizeof(uint16_t);
+    if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster captured_with, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    quint8 gender;
-    in >> gender;
+    uint8_t gender=*(data+pos);
+    pos+=sizeof(uint8_t);
     switch(gender)
     {
         case 0x01:
@@ -2409,83 +2306,90 @@ bool Api_protocol::dataToPlayerMonster(QDataStream &in,PlayerMonster &monster)
             return false;
         break;
     }
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint32_t))
+    if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster egg_step, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> monster.egg_step;
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+    monster.egg_step=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+    pos+=sizeof(uint32_t);
+    if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster character_origin, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
     {
-        quint8 character_origin;
-        in >> character_origin;
+        uint8_t character_origin=*(data+pos);
+        pos+=sizeof(uint8_t);
         monster.character_origin=character_origin;
     }
 
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+    if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster size of list of the buff monsters, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    uint8_t sub_size8;
-    in >> sub_size8;
+    uint8_t sub_size8=*(data+pos);
+    pos+=sizeof(uint8_t);
     sub_index=0;
     while(sub_index<sub_size8)
     {
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+        if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster buff, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in >> buff.buff;
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+        buff.buff=*(data+pos);
+        pos+=sizeof(uint8_t);
+        if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster buff level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in >> buff.level;
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+        buff.level=*(data+pos);
+        pos+=sizeof(uint8_t);
+        if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster buff level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in >> buff.remainingNumberOfTurn;
+        buff.remainingNumberOfTurn=*(data+pos);
+        pos+=sizeof(uint8_t);
         monster.buffs.push_back(buff);
         sub_index++;
     }
 
-    if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
+    if((size-pos)<(int)sizeof(uint16_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster size of list of the skill monsters, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    uint16_t sub_size16;
-    in >> sub_size16;
+    uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+    pos+=sizeof(uint16_t);
     sub_index=0;
     while(sub_index<sub_size16)
     {
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint16_t))
+        if((size-pos)<(int)sizeof(uint16_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster skill, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in >> skill.skill;
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+        skill.skill=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+        pos+=sizeof(uint16_t);
+        if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster skill level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in >> skill.level;
-        if(in.device()->pos()<0 || !in.device()->isOpen() || (in.device()->size()-in.device()->pos())<(int)sizeof(uint8_t))
+        skill.level=*(data+pos);
+        pos+=sizeof(uint8_t);
+        if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster skill level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in >> skill.endurance;
+        skill.endurance=*(data+pos);
+        pos+=sizeof(uint8_t);
         monster.skills.push_back(skill);
         sub_index++;
     }

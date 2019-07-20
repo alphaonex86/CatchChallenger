@@ -74,6 +74,24 @@ void Api_protocol_Qt::socketDestroyed()
     Api_protocol::socketDestroyed();
 }
 
+void Api_protocol_Qt::resetAll()
+{
+    Api_protocol::resetAll();
+    mDatapackBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
+    #ifdef Q_OS_ANDROID
+    mDatapackBase=QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+"/datapack/";
+    #endif
+    mDatapackMain=mDatapackBase+"map/main/[main]/";
+    mDatapackSub=mDatapackMain+"sub/[sub]/";
+}
+
+void Api_protocol_Qt::hashSha224(const char * const data,const int size,char *buffer)
+{
+    QCryptographicHash hashLogin(QCryptographicHash::Sha224);
+    hashLogin.addData(data,size);
+    mempcy(buffer,hashAndToken.result(),CATCHCHALLENGER_SHA224HASH_SIZE);
+}
+
 void Api_protocol_Qt::connectTheExternalSocketInternal()
 {
     #ifndef NOTCPSOCKET
