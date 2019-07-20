@@ -20,12 +20,14 @@ public:
     const ServerFromPoolForDisplay &getCurrentServer(const unsigned int &index);
 
     //protocol command
+    virtual void hashSha224(const char * const data,const int size,char *buffer) = 0;
     bool tryLogin(const std::string &login,const std::string &pass);
     bool tryCreateAccount();
     bool sendProtocol();
     bool protocolWrong() const;
     virtual std::string socketDisconnectedForReconnect();
     const std::vector<ServerFromPoolForDisplay> &getServerOrdenedList();
+    bool dataToPlayerMonster(const char * const data, const unsigned int &size, PlayerMonster &monster);
 
     //get the stored data
     Player_private_and_public_informations &get_player_informations();
